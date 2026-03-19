@@ -1,0 +1,188 @@
+<?php
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+if (empty($treuhand_data) || !is_array($treuhand_data)) {
+    return;
+}
+
+$active_tab  = $treuhand_data['active_tab'] ?? 'settings';
+$psbt_notice = $treuhand_data['psbt_notice'] ?? '';
+
+$order_panels = [
+    'orders-seller' => 'seller',
+    'orders-buyer'  => 'buyer',
+];
+
+$rendered_orders = false;
+
+foreach ($order_panels as $tab_key => $order_role) {
+    $is_active = ($active_tab === $tab_key);
+    $orders    = $treuhand_data['orders'][$order_role] ?? [];
+    $panel_id  = 'weo-treuhand-panel-'.$tab_key;
+    $tab_id    = 'weo-treuhand-tab-'.$tab_key;
+    ?>
+    <div
+        id="<?php echo esc_attr($panel_id); ?>"
+        class="weo-treuhand-panel weo-treuhand-panel--orders"
+        role="tabpanel"
+        aria-labelledby="<?php echo esc_attr($tab_id); ?>"
+        aria-hidden="<?php echo $is_active ? 'false' : 'true'; ?>"
+        data-tab-panel="<?php echo esc_attr($tab_key); ?>"
+        <?php echo $is_active ? '' : ' hidden'; ?>
+    >
+        <?php if ($is_active && !empty($psbt_notice)) : ?>
+            <?php echo $psbt_notice; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+        <?php endif; ?>
+
+        <p><?php esc_html_e('PSBTs können jederzeit auf dieser Treuhand-Seite erneut abgerufen und signiert werden.', 'weo'); ?></p>
+
+        <?php if (!empty($orders)) :
+            $rendered_orders = true;
+            ?>
+            <?php foreach ($orders as $o) : ?>
+            <div class="weo-escrow-order">
+                <h3><?php echo esc_html(sprintf(__('Bestellung #%s', 'weo'), $o['number'])); ?></h3>
+                <p><?php esc_html_e('Status', 'weo'); ?>: <strong><?php echo esc_html($o['state']); ?></strong></p>
+                <?php if ($o['state'] === 'dispute') : ?>
+                    <div class="notice weo weo-warning"><p><?php esc_html_e('Dispute offen – bitte warte auf die Entscheidung des Administrators.', 'weo'); ?></p></div>
+                <?php endif; ?>
+                <?php if (!empty($o['funding'])) :
+                    $f = $o['funding'];
+                    $txid = esc_html($f['txid'] ?? '');
+                    $confs = intval($f['confirmations'] ?? 0);
+                    $val = isset($f['value_sat']) ? intval($f['value_sat']).' sats' : '';
+                    ?>
+                    <p><?php esc_html_e('Funding TX', 'weo'); ?>: <code><?php echo $txid; ?></code> • <?php esc_html_e('Confs', 'weo'); ?>: <?php echo $confs; ?> • <?php esc_html_e('Betrag', 'weo'); ?>: <?php echo esc_html($val); ?></p>
+                <?php else : ?>
+                    <p><?php esc_html_e('Noch keine Einzahlung erkannt.', 'weo'); ?></p>
+                <?php endif; ?>
+                <?php if (!empty($o['payout_txid'])) : ?>
+                    <p><?php esc_html_e('Auszahlungs-TXID', 'weo'); ?>: <code><?php echo esc_html($o['payout_txid']); ?></code></p>
+                <?php endif; ?>
+                <?php if (!empty($o['addr'])) : ?>
+                    <p><strong><?php esc_html_e('Escrow-Adresse', 'weo'); ?>:</strong> <code id="weo_addr_<?php echo intval($o['id']); ?>"><?php echo esc_html($o['addr']); ?></code></p>
+                    <div class="weo-qr" id="weo_qr_<?php echo intval($o['id']); ?>" data-addr="<?php echo esc_attr($o['addr']); ?>"></div>
+                <?php endif; ?>
+
+                <p><?php esc_html_e('Versand', 'weo'); ?>: <?php echo $o['shipped'] ? esc_html(date_i18n(get_option('date_format'), $o['shipped'])) : esc_html__('noch nicht bestätigt', 'weo'); ?></p>
+                <p><?php esc_html_e('Empfang', 'weo'); ?>: <?php echo $o['received'] ? esc_html(date_i18n(get_option('date_format'), $o['received'])) : esc_html__('noch nicht bestätigt', 'weo'); ?></p>
+
+                <?php $can_release = $o['shipped'] && $o['received']; ?>
+
+                <?php $ship_nonce = wp_create_nonce('weo_ship_'.$o['id']); ?>
+                <?php if ($o['role'] === 'vendor' && empty($o['shipped'])) : ?>
+                    <form method="post" class="sk-form" style="margin-top:10px;">
+                        <input type="hidden" name="order_id" value="<?php echo intval($o['id']); ?>">
+                        <input type="hidden" name="weo_nonce" value="<?php echo esc_attr($ship_nonce); ?>">
+                        <input type="hidden" name="weo_action" value="mark_shipped">
+                        <button type="submit" class="sk-btn"><?php esc_html_e('Als versendet markieren', 'weo'); ?></button>
+                    </form>
+                <?php endif; ?>
+                <?php $recv_nonce = wp_create_nonce('weo_recv_'.$o['id']); ?>
+                <?php if ($o['role'] === 'buyer' && $o['shipped'] && empty($o['received'])) : ?>
+                    <form method="post" class="sk-form" style="margin-top:10px;">
+                        <input type="hidden" name="order_id" value="<?php echo intval($o['id']); ?>">
+                        <input type="hidden" name="weo_nonce" value="<?php echo esc_attr($recv_nonce); ?>">
+                        <input type="hidden" name="weo_action" value="mark_received">
+                        <button type="submit" class="sk-btn"><?php esc_html_e('Empfang bestätigen', 'weo'); ?></button>
+                    </form>
+                <?php endif; ?>
+
+                <?php if (in_array($o['state'], ['escrow_funded', 'signing'], true)) : ?>
+                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="sk-form weo-open-dispute" style="margin-top:10px;">
+                        <input type="hidden" name="action" value="weo_open_dispute">
+                        <input type="hidden" name="order_id" value="<?php echo intval($o['id']); ?>">
+                        <div class="sk-form-group">
+                            <label class="sk-form-label" for="weo_dispute_note_<?php echo intval($o['id']); ?>"><?php esc_html_e('Problem beschreiben', 'weo'); ?></label>
+                            <textarea name="weo_dispute_note" id="weo_dispute_note_<?php echo intval($o['id']); ?>" rows="4" style="width:100%"></textarea>
+                        </div>
+                        <div class="sk-form-group">
+                            <button type="submit" class="sk-btn"><?php esc_html_e('Dispute eröffnen', 'weo'); ?></button>
+                        </div>
+                    </form>
+                <?php endif; ?>
+
+                <?php if ($o['role'] === 'vendor' && in_array($o['state'], ['escrow_funded', 'signing', 'dispute'], true)) : ?>
+                    <?php $nonce = wp_create_nonce('weo_psbt_'.$o['id']); ?>
+                    <?php if ($o['state'] !== 'dispute') : ?>
+                        <form method="post" class="sk-form" style="margin-top:10px;">
+                            <input type="hidden" name="order_id" value="<?php echo intval($o['id']); ?>">
+                            <input type="hidden" name="weo_nonce" value="<?php echo esc_attr($nonce); ?>">
+                            <input type="hidden" name="weo_action" value="build_psbt_payout">
+                            <button type="submit" class="sk-btn"><?php esc_html_e('PSBT (Auszahlung an Verkäufer) erstellen', 'weo'); ?></button>
+                        </form>
+                    <?php endif; ?>
+                <?php endif; ?>
+
+                <?php if ($o['role'] === 'vendor') : ?>
+                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="sk-form" style="margin-top:10px;">
+                    <input type="hidden" name="action" value="weo_upload_psbt_seller">
+                    <input type="hidden" name="order_id" value="<?php echo intval($o['id']); ?>">
+                    <div class="sk-form-group">
+                        <label class="sk-form-label" for="weo_signed_psbt_<?php echo intval($o['id']); ?>"><?php esc_html_e('Signierte PSBT (Base64)', 'weo'); ?></label>
+                        <textarea name="weo_signed_psbt" id="weo_signed_psbt_<?php echo intval($o['id']); ?>" rows="6" style="width:100%" placeholder="PSBT..."></textarea>
+                    </div>
+                    <div class="sk-form-group">
+                        <?php if ($can_release) : ?>
+                            <label><input type="checkbox" name="weo_release_funds" value="1"> <?php esc_html_e('Freigabe der Escrow-Mittel bestätigen', 'weo'); ?></label>
+                        <?php else : ?>
+                            <p><?php esc_html_e('Versand/Empfang noch offen – Freigabe nicht möglich.', 'weo'); ?></p>
+                        <?php endif; ?>
+                    </div>
+                    <div class="sk-form-group">
+                        <button type="submit" class="sk-btn sk-btn-theme"><?php esc_html_e('PSBT hochladen', 'weo'); ?></button>
+                    </div>
+                </form>
+                <?php endif; ?>
+
+                <?php if ($o['role'] === 'buyer') : ?>
+                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="sk-form" style="margin-top:10px;">
+                    <input type="hidden" name="action" value="weo_upload_psbt_buyer">
+                    <input type="hidden" name="order_id" value="<?php echo intval($o['id']); ?>">
+                    <div class="sk-form-group">
+                        <label class="sk-form-label" for="weo_signed_psbt_<?php echo intval($o['id']); ?>"><?php esc_html_e('Signierte PSBT (Base64)', 'weo'); ?></label>
+                        <textarea name="weo_signed_psbt" id="weo_signed_psbt_<?php echo intval($o['id']); ?>" rows="6" style="width:100%" placeholder="PSBT..."></textarea>
+                    </div>
+                    <div class="sk-form-group">
+                        <?php if ($can_release) : ?>
+                            <label><input type="checkbox" name="weo_release_funds" value="1"> <?php esc_html_e('Freigabe der Escrow-Mittel bestätigen', 'weo'); ?></label>
+                        <?php else : ?>
+                            <p><?php esc_html_e('Versand/Empfang noch offen – Freigabe nicht möglich.', 'weo'); ?></p>
+                        <?php endif; ?>
+                    </div>
+                    <div class="sk-form-group">
+                        <button type="submit" class="sk-btn sk-btn-theme"><?php esc_html_e('PSBT hochladen', 'weo'); ?></button>
+                    </div>
+                </form>
+                <?php endif; ?>
+            </div>
+            <?php endforeach; ?>
+        <?php else : ?>
+            <p><?php esc_html_e('Keine Escrow-Bestellungen gefunden.', 'weo'); ?></p>
+        <?php endif; ?>
+    </div>
+    <?php
+}
+
+if ($rendered_orders) :
+    ?>
+    <script>
+    (function(){
+        if (window.QRCode) {
+            document.querySelectorAll('.weo-qr[data-addr]').forEach(function(el){
+                new QRCode(el, el.getAttribute('data-addr'));
+            });
+        }
+        document.querySelectorAll('form.weo-open-dispute').forEach(function(f){
+            f.addEventListener('submit', function(e){
+                if (!confirm('<?php echo esc_js(__('Disput wirklich eröffnen? Die Bestellung wird in den Disput-Status versetzt und nur der Admin entscheidet über die Auszahlung.', 'weo')); ?>')) {
+                    e.preventDefault();
+                }
+            });
+        });
+    })();
+    </script>
+<?php
+endif;

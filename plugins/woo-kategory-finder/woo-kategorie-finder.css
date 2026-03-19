@@ -1,0 +1,59 @@
+.wkf-autocomplete-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 2rem auto;
+    position: relative;
+    max-width: 400px;
+    width: 100%;
+}
+
+#wkf-cat-search {
+    width: 100%;
+    padding: 0.5rem;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    outline: none;
+    box-sizing: border-box;
+    z-index: 1;
+    position: relative;
+}
+
+#wkf-results {
+    list-style: none;
+    padding: 0;
+    margin: 0.2rem 0 0 0;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 2;
+    position: absolute;
+    top: 100%; /* direkt unter dem Input */
+    left: 0;
+    right: 0;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+#wkf-results li {
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+}
+
+#wkf-results li:last-child {
+    border-bottom: none;
+}
+
+#wkf-results li a {
+    text-decoration: none;
+    color: #333;
+    display: block;
+}
+
+#wkf-results li a:hover {
+    background-color: #f2f2f2;
+}

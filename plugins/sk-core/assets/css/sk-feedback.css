@@ -1,0 +1,7 @@
+.wpsf-box{
+  max-width:900px;margin:1.5rem auto 2rem;border:1px solid #e5e5e5;padding:1rem;border-radius:.5rem
+}
+.wpsf-title{margin-top:0;margin-bottom:.25rem}
+.wpsf-description{margin-bottom:.75rem;line-height:1.5}
+.wpsf-form textarea{width:100%;box-sizing:border-box;min-height:180px;margin-top:.5rem;margin-bottom:1rem}
+.wpsf-form .wpsf-honeypot{display:none!important;position:absolute;left:-9999px;height:0;width:0;opacity:0;pointer-events:none}

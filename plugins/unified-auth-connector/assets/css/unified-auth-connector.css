@@ -1,0 +1,467 @@
+/**
+ * Unified Auth Connector Styles
+ * Bitcoin-themed dark design matching Kadence Child theme
+ */
+
+
+
+/* === Authentication Methods Grid === */
+.uac-auth-methods {
+    display: grid;
+    gap: 24px;
+    margin-top: 30px;
+}
+
+/* === Authentication Method Cards === */
+.uac-auth-method-card {
+    background: #1e2b3c;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    padding: 24px;
+    transition: background .15s, border-color .15s;
+}
+
+.uac-auth-method-card:hover {
+    background: #233044;
+    border-color: rgba(255,255,255,0.12);
+}
+
+/* === Card Header === */
+.uac-auth-method-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.uac-auth-method-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.uac-icon {
+    font-size: 28px;
+    line-height: 1;
+}
+
+/* === Status Badges === */
+.uac-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.uac-badge-success {
+    background-color: #2e7d32;
+    color: #ffffff;
+}
+
+.uac-badge-secondary {
+    background-color: #2b3240;
+    color: #9aa4b2;
+}
+
+/* === Card Body === */
+.uac-auth-method-body {
+    padding: 16px 0 0;
+}
+
+.uac-method-description {
+    color: #9aa4b2;
+    margin-bottom: 20px;
+    line-height: 1.7;
+    font-size: 15px;
+}
+
+/* === Linked Info Display === */
+.uac-linked-info {
+    background: rgba(255,255,255,0.04);
+    padding: 18px;
+    border-radius: 8px;
+    margin-top: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid rgba(255,255,255,0.07);
+}
+
+.uac-linked-info strong {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.uac-key-display {
+    background: rgba(255,255,255,0.04);
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    color: #cfd6df;
+    border: 1px solid rgba(255,255,255,0.07);
+    flex: 1;
+    min-width: 200px;
+    word-break: break-all;
+}
+
+.uac-primary-badge {
+    background: #f7931a;
+    color: #ffffff;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* === Buttons === */
+.uac-unlink-btn,
+.uac-unlink-btn.button {
+    margin-left: auto;
+    background: #d32f2f !important;
+    color: #ffffff !important;
+    border: 1px solid #d32f2f !important;
+    padding: 8px 18px !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    box-shadow: none !important;
+}
+
+.uac-unlink-btn:hover,
+.uac-unlink-btn.button:hover {
+    background: #b71c1c !important;
+    border-color: #b71c1c !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 8px rgba(211, 47, 47, 0.3) !important;
+}
+
+.uac-link-nostr-btn,
+.uac-link-nostr-btn.button,
+.uac-link-nostr-btn.button-primary,
+.uac-link-lnurl-btn,
+.uac-link-lnurl-btn.button,
+.uac-link-lnurl-btn.button-primary {
+    background: #f7931a !important;
+    color: #ffffff !important;
+    border: 1px solid #f7931a !important;
+    padding: 12px 24px !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    box-shadow: none !important;
+}
+
+.uac-link-nostr-btn:hover,
+.uac-link-nostr-btn.button:hover,
+.uac-link-lnurl-btn:hover,
+.uac-link-lnurl-btn.button:hover {
+    background: #d97e10 !important;
+    border-color: #d97e10 !important;
+    color: #ffffff !important;
+    box-shadow: 0 6px 16px rgba(247, 147, 26, 0.4) !important;
+}
+
+.uac-link-nostr-btn:disabled,
+.uac-link-nostr-btn.button:disabled,
+.uac-link-lnurl-btn:disabled,
+.uac-link-lnurl-btn.button:disabled {
+    background: #2b3240 !important;
+    border-color: #2b3240 !important;
+    color: #9aa4b2 !important;
+    cursor: not-allowed !important;
+    box-shadow: none !important;
+}
+
+/* === Status Messages === */
+.uac-status-message {
+    margin-top: 20px;
+    padding: 14px 18px;
+    border-radius: 8px;
+    display: none;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.uac-status-message.success {
+    background: rgba(76, 175, 80, 0.15);
+    color: #81c784;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    display: block;
+}
+
+.uac-status-message.error {
+    background: rgba(244, 67, 54, 0.15);
+    color: #ef5350;
+    border: 1px solid rgba(244, 67, 54, 0.3);
+    display: block;
+}
+
+.uac-status-message.info {
+    background: rgba(247, 147, 26, 0.15);
+    color: #f7931a;
+    border: 1px solid rgba(247, 147, 26, 0.3);
+    display: block;
+}
+
+/* === QR Code Container === */
+.uac-lnurl-qr-container {
+    margin-top: 24px;
+    padding: 28px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 10px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.07);
+}
+
+.uac-qr-code {
+    max-width: 300px;
+    margin: 0 auto 20px;
+    padding: 16px;
+    background: #ffffff;
+    border-radius: 12px;
+}
+
+.uac-qr-code img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    display: block;
+}
+
+.uac-qr-instructions {
+    color: #cfd6df;
+    font-size: 15px;
+    margin: 16px 0;
+    line-height: 1.6;
+}
+
+.uac-qr-timer {
+    font-size: 18px;
+    font-weight: 700;
+    color: #f7931a;
+    margin-top: 16px;
+    font-family: 'Courier New', monospace;
+}
+
+/* === Primary Info Card === */
+.uac-primary-info {
+    background: #1e2b3c;
+    border-color: rgba(255,255,255,0.07);
+}
+
+.uac-primary-info .uac-auth-method-header {
+    border-bottom-color: #2b3240;
+}
+
+.uac-primary-info .uac-icon {
+    color: #f7931a;
+}
+
+.uac-note {
+    color: #9aa4b2;
+    font-size: 14px;
+    font-style: italic;
+    margin-top: 12px;
+    line-height: 1.6;
+}
+
+/* === Loading State === */
+.uac-loading {
+    opacity: 0.6;
+    pointer-events: none;
+    position: relative;
+}
+
+.uac-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 24px;
+    height: 24px;
+    margin: -12px 0 0 -12px;
+    border: 3px solid #2b3240;
+    border-top: 3px solid #f7931a;
+    border-radius: 50%;
+    animation: uac-spin 0.8s linear infinite;
+}
+
+@keyframes uac-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* === Alert Boxes === */
+.uac-content .sk-alert {
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    border-radius: 8px;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.uac-content .sk-alert-info {
+    background: rgba(247, 147, 26, 0.1);
+    color: #cfd6df;
+    border-left: 4px solid #f7931a;
+}
+
+.uac-content .sk-alert-warning {
+    background: rgba(255, 152, 0, 0.1);
+    color: #ffb74d;
+    border-left: 4px solid #ff9800;
+}
+
+.uac-content .sk-alert-error {
+    background: rgba(244, 67, 54, 0.1);
+    color: #ef5350;
+    border-left: 4px solid #f44336;
+}
+
+/* === Responsive Design === */
+@media (max-width: 768px) {
+    .sk-auth-connector-content {
+        padding: 16px;
+    }
+
+    .uac-auth-method-card {
+        padding: 20px;
+    }
+
+    .uac-auth-method-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .uac-badge {
+        align-self: flex-start;
+    }
+
+    .uac-linked-info {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .uac-key-display {
+        width: 100%;
+        min-width: auto;
+    }
+
+    .uac-unlink-btn {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .uac-link-nostr-btn,
+    .uac-link-lnurl-btn {
+        width: 100%;
+    }
+
+    .uac-lnurl-qr-container {
+        padding: 20px;
+    }
+
+    .uac-qr-code {
+        max-width: 250px;
+    }
+}
+
+@media (max-width: 480px) {
+    .uac-auth-method-header h3 {
+        font-size: 18px;
+    }
+
+    .uac-icon {
+        font-size: 24px;
+    }
+
+    .uac-method-description {
+        font-size: 14px;
+    }
+}
+
+/* === Dark Theme Enhancements === */
+.uac-content a {
+    color: #f7931a;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.uac-content a:hover {
+    color: #d97e10;
+    text-decoration: underline;
+}
+
+/* === Smooth Transitions === */
+.uac-auth-method-card,
+.uac-link-nostr-btn,
+.uac-link-lnurl-btn,
+.uac-unlink-btn {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* === Focus States for Accessibility === */
+.uac-link-nostr-btn:focus,
+.uac-link-lnurl-btn:focus,
+.uac-unlink-btn:focus {
+    outline: 2px solid #f7931a;
+    outline-offset: 2px;
+}
+
+/* === Manual Sync Button (Bitcoin Orange) === */
+#uac-manual-sync-btn,
+#uac-manual-sync-btn.button,
+#uac-manual-sync-btn.button-secondary {
+    background: #f7931a !important;
+    color: #ffffff !important;
+    border: 1px solid #f7931a !important;
+    padding: 10px 20px !important;
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+    box-shadow: none !important;
+}
+
+#uac-manual-sync-btn:hover,
+#uac-manual-sync-btn.button:hover {
+    background: #d97e10 !important;
+    border-color: #d97e10 !important;
+    box-shadow: 0 6px 16px rgba(247, 147, 26, 0.4) !important;
+}
+
+#uac-manual-sync-btn:disabled,
+#uac-manual-sync-btn.button:disabled {
+    background: #2b3240 !important;
+    border-color: #2b3240 !important;
+    color: #9aa4b2 !important;
+    cursor: not-allowed !important;
+    box-shadow: none !important;
+}
+
+/* === Print Styles === */
+@media print {
+    .uac-link-nostr-btn,
+    .uac-link-lnurl-btn,
+    .uac-unlink-btn {
+        display: none;
+    }
+}

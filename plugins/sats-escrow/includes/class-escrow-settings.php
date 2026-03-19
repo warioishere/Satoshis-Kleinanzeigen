@@ -1,0 +1,107 @@
+<?php
+if (!defined('ABSPATH')) exit;
+
+class WEO_Settings {
+  public function __construct() {
+    add_action('admin_init', [$this, 'register']);
+    add_action('admin_menu', [$this, 'menu']);
+  }
+
+  public function register() {
+    register_setting('weo_settings', WEO_OPT, ['sanitize_callback'=>[$this,'sanitize']]);
+    register_setting('weo_settings', 'weo_vendor_payout_fallback', ['sanitize_callback'=>[$this,'sanitize_fallback_address']]);
+
+    add_settings_section('weo_main', 'Escrow Einstellungen', '__return_false', 'weo');
+    add_settings_field('api_base', 'Escrow-API Base URL', [$this,'field_api'], 'weo', 'weo_main');
+    add_settings_field('escrow_xpub', 'Escrow xpub (dein Key)', [$this,'field_xpub'], 'weo', 'weo_main');
+    add_settings_field('min_conf', 'Min. Bestätigungen', [$this,'field_conf'], 'weo', 'weo_main');
+    add_settings_field('api_key', 'API Key', [$this,'field_api_key'], 'weo', 'weo_main');
+    add_settings_field('hmac_secret', 'Webhook HMAC Secret', [$this,'field_hmac_secret'], 'weo', 'weo_main');
+    add_settings_field('timeout_days', 'Signatur-Timeout (Tage)', [$this,'field_timeout'], 'weo', 'weo_main');
+    add_settings_field('vendor_escrow_enabled', __('Treuhand für Verkäufer aktiv', 'weo'), [$this,'field_vendor_escrow_enabled'], 'weo', 'weo_main');
+    add_settings_field('vendor_escrow_admin_only', __('Treuhand nur für Administratoren anzeigen', 'weo'), [$this,'field_vendor_escrow_admin_only'], 'weo', 'weo_main');
+    add_settings_field('vendor_payout_fallback', 'Fallback Vendor-Payout-Adresse', [$this,'field_vendor_payout_fallback'], 'weo', 'weo_main');
+  }
+
+  public function sanitize($opts) {
+    $clean = [];
+    $clean['api_base']   = esc_url_raw($opts['api_base'] ?? '');
+    $clean['escrow_xpub']= weo_sanitize_xpub($opts['escrow_xpub'] ?? '');
+    $clean['min_conf']   = max(0, intval($opts['min_conf'] ?? 1));
+    $clean['api_key']    = sanitize_text_field($opts['api_key'] ?? '');
+    $clean['hmac_secret']= sanitize_text_field($opts['hmac_secret'] ?? '');
+    $clean['timeout_days']= max(1, intval($opts['timeout_days'] ?? 7));
+    $clean['vendor_escrow_enabled'] = !empty($opts['vendor_escrow_enabled']) ? '1' : '';
+    $clean['vendor_escrow_admin_only'] = !empty($opts['vendor_escrow_admin_only']) ? '1' : '';
+    return $clean;
+  }
+
+  public function menu() {
+    add_menu_page('Treuhand', 'Treuhand', 'manage_woocommerce', 'weo-treuhand', [$this,'render'], 'dashicons-lock', 56);
+    add_submenu_page('weo-treuhand', 'Einstellungen', 'Einstellungen', 'manage_woocommerce', 'weo', [$this,'render']);
+    remove_submenu_page('weo-treuhand', 'weo-treuhand');
+  }
+
+  public function field_api() {
+    $v = esc_attr(weo_get_option('api_base','https://escrow.example.com'));
+    echo "<input type='url' name='".WEO_OPT."[api_base]' value='$v' class='regular-text' placeholder='https://escrow.yourdevice.ch/api' />";
+  }
+  public function field_xpub() {
+    $v = esc_attr(weo_get_option('escrow_xpub',''));
+    echo "<input type='text' name='".WEO_OPT."[escrow_xpub]' value='$v' class='regular-text code' />";
+  }
+  public function field_conf() {
+    $v = intval(weo_get_option('min_conf',2));
+    echo "<input type='number' name='".WEO_OPT."[min_conf]' value='$v' min='0' max='6' />";
+  }
+
+  public function field_api_key() {
+    $v = esc_attr(weo_get_option('api_key',''));
+    echo "<input type='text' name='".WEO_OPT."[api_key]' value='$v' class='regular-text' />";
+  }
+
+  public function field_hmac_secret() {
+    $v = esc_attr(weo_get_option('hmac_secret',''));
+    echo "<input type='text' name='".WEO_OPT."[hmac_secret]' value='$v' class='regular-text' />"; 
+  }
+
+  public function field_timeout() {
+    $v = intval(weo_get_option('timeout_days',7));
+    echo "<input type='number' name='".WEO_OPT."[timeout_days]' value='$v' min='1' />";
+  }
+
+  public function field_vendor_escrow_enabled() {
+    $enabled = weo_get_option('vendor_escrow_enabled', '1') === '1';
+    echo "<label><input type='checkbox' name='".WEO_OPT."[vendor_escrow_enabled]' value='1' "
+      . checked($enabled, true, false) . " /> " . esc_html__('Verkäufer dürfen Treuhand nutzen', 'weo') . '</label>';
+    echo '<p class="description">' . esc_html__('Deaktiviert Treuhand-Funktionen im SK-Dashboard und auf Produktseiten für Verkäufer.', 'weo') . '</p>';
+  }
+
+  public function field_vendor_escrow_admin_only() {
+    $enabled = weo_get_option('vendor_escrow_admin_only', '') === '1';
+    echo "<label><input type='checkbox' name='".WEO_OPT."[vendor_escrow_admin_only]' value='1' "
+      . checked($enabled, true, false) . " /> " . esc_html__('Administratoren behalten Zugriff auf Treuhand im SK-Dashboard.', 'weo') . '</label>';
+    echo '<p class="description">' . esc_html__('Blendet die Treuhand-Seite, die Einstellungen und die Produktaktivierung für Verkäufer aus, während Administratoren sie weiterhin sehen.', 'weo') . '</p>';
+  }
+
+  public function field_vendor_payout_fallback() {
+    $v = esc_attr(get_option('weo_vendor_payout_fallback',''));
+    echo "<input type='text' name='weo_vendor_payout_fallback' value='$v' class='regular-text code' required />";
+    echo '<p class="description">Adresse, an die Verkäufer-Auszahlungen gehen, falls keine individuelle Adresse hinterlegt ist. Ohne gültige Adresse werden Auszahlungen abgebrochen.</p>';
+  }
+
+  public function sanitize_fallback_address($addr) {
+    $addr = weo_sanitize_btc_address($addr);
+    if (!$addr) add_settings_error('weo_vendor_payout_fallback','required',__('Bitte eine gültige Fallback-Adresse angeben.','weo'));
+    return $addr;
+  }
+
+  public function render() { ?>
+    <div class="wrap">
+      <h1>Escrow On-Chain</h1>
+      <form method="post" action="options.php">
+        <?php settings_fields('weo_settings'); do_settings_sections('weo'); submit_button(); ?>
+      </form>
+    </div>
+  <?php }
+}

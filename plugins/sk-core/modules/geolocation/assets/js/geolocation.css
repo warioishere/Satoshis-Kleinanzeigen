@@ -1,0 +1,90 @@
+.sk-geolocation-options {
+  margin-bottom: 20px;
+}
+.sk-geolocation-product-location-container {
+  position: relative;
+  display: block;
+}
+.sk-geolocation-product-location-container #_sk_geolocation_product_location {
+  padding-right: 40px;
+}
+.sk-geolocation-product-location-container i.locate-icon {
+  width: 20px;
+  height: 20px;
+  margin-top: -10px;
+  cursor: pointer;
+  right: 10px;
+  position: absolute;
+  top: 50%;
+  background-size: contain;
+}
+#sk-geolocation-product-location-map {
+  width: 100%;
+  height: 250px;
+  margin-top: 10px;
+}
+.sk-geolocation-row {
+  display: -ms-flex;
+  display: flex;
+  margin-right: -15px;
+  margin-left: -15px;
+}
+.sk-geolocation-row:before,
+.sk-geolocation-row:after {
+  content: " ";
+  display: table;
+}
+.sk-geolocation-row:after {
+  clear: both;
+}
+.sk-geolocation-row .sk-geolocation-col-7,
+.sk-geolocation-row .sk-geolocation-col-5 {
+  float: left;
+  padding-right: 15px;
+  padding-left: 15px;
+}
+.sk-geolocation-row .sk-geolocation-col-7 {
+  width: 58.333333%;
+}
+.sk-geolocation-row .sk-geolocation-col-5 {
+  width: 41.666667%;
+}
+.sk-geolocation-row #sk-seller-listing-wrap ul.sk-seller-wrap {
+  margin: 0;
+}
+#sk-geolocation-product-location-map.sk-maps-mapbox {
+  width: 100%;
+}
+#sk-geolocation-product-location-map.sk-maps-mapbox .sk-mapboxgl-ctrl.mapboxgl-ctrl-group > button {
+  width: auto;
+  padding: 1px 8px;
+}
+#sk-geolocation-product-location-map.sk-maps-mapbox .sk-mapboxgl-ctrl.mapboxgl-ctrl-group > button i {
+  margin-right: 5px;
+}
+#sk-geolocation-product-location-map.sk-maps-mapbox .mapboxgl-ctrl-top-left .mapboxgl-ctrl-geocoder {
+  display: none;
+}
+#sk-geolocation-product-location-map.sk-maps-mapbox .mapboxgl-ctrl-top-left.show-geocoder .mapboxgl-ctrl-geocoder {
+  display: block;
+}
+#sk-geolocation-product-location-map.sk-maps-mapbox .mapboxgl-ctrl-top-left.show-geocoder .sk-mapboxgl-ctrl {
+  display: none;
+}
+.sk-geolocation-map-right #sk-geolocation-locations-map,
+.sk-geolocation-map-left #sk-geolocation-locations-map {
+  max-height: 600px;
+}
+.mapboxgl-ctrl-group > button {
+  width: 30px !important;
+  display: block !important;
+}
+.mapboxgl-ctrl-icon.mapboxgl-ctrl-compass > .mapboxgl-ctrl-compass-arrow {
+  width: 20px !important;
+  display: inline-block !important;
+}
+.sk-geolocation-map-left,
+.sk-geolocation-map-right {
+  margin-top: 20px;
+}
+

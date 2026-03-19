@@ -1,0 +1,160 @@
+<?php
+
+namespace SK_Lightning\Admin;
+
+use SK_Lightning\LNURL\Resolver;
+use SK_Lightning\LNURL\ExchangeRate;
+
+defined( 'ABSPATH' ) || exit;
+
+class AdminPage {
+
+    public function __construct() {
+        add_action( 'admin_menu', [ $this, 'add_menu' ], 20 );
+        add_action( 'admin_post_skl_resolve_dispute', [ $this, 'handle_dispute_action' ] );
+    }
+
+    public function add_menu() {
+        add_submenu_page(
+            'sk',
+            '⚡ Lightning',
+            '⚡ Lightning',
+            'manage_options',
+            'sk-lightning',
+            [ $this, 'render_page' ]
+        );
+    }
+
+    public function render_page() {
+        require SK_LIGHTNING_DIR . 'templates/admin-overview.php';
+    }
+
+    /**
+     * Handle dispute resolution from admin.
+     */
+    public function handle_dispute_action() {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( 'Keine Berechtigung.' );
+        }
+
+        check_admin_referer( 'skl_dispute_action' );
+
+        $payment_id = absint( $_POST['payment_id'] ?? 0 );
+        $action     = sanitize_text_field( $_POST['dispute_action'] ?? '' );
+
+        if ( ! $payment_id || ! in_array( $action, [ 'confirm_dispute', 'reject_dispute' ], true ) ) {
+            wp_safe_redirect( admin_url( 'admin.php?page=sk-lightning&msg=invalid' ) );
+            exit;
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'sk_lightning_payments';
+
+        if ( $action === 'confirm_dispute' ) {
+            // Confirm dispute — block reputation permanently.
+            $wpdb->update(
+                $table,
+                [
+                    'reputation_valid' => 0,
+                    'reputation_at'    => null,
+                ],
+                [ 'id' => $payment_id ],
+                [ '%d', '%s' ],
+                [ '%d' ]
+            );
+        } else {
+            // Reject dispute — restore to confirmed, re-enable reputation.
+            $payment = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $payment_id ) );
+            $rep_at  = $payment && $payment->confirmed_at
+                ? wp_date( 'Y-m-d H:i:s', strtotime( $payment->confirmed_at ) + 7 * DAY_IN_SECONDS )
+                : null;
+
+            $wpdb->update(
+                $table,
+                [
+                    'status'        => 'confirmed',
+                    'reputation_at' => $rep_at,
+                ],
+                [ 'id' => $payment_id ],
+                [ '%s', '%s' ],
+                [ '%d' ]
+            );
+        }
+
+        wp_safe_redirect( admin_url( 'admin.php?page=sk-lightning&msg=updated' ) );
+        exit;
+    }
+
+    /**
+     * Get system status checks.
+     */
+    public static function get_system_status(): array {
+        $status = [];
+
+        // LNURL Resolve check.
+        $test = Resolver::resolve( 'satoshi@getalby.com' );
+        $status['lnurl_resolve'] = ! is_wp_error( $test );
+
+        // Exchange rate check.
+        $rate = ExchangeRate::get_btc_eur_rate();
+        $status['exchange_rate']       = ! is_wp_error( $rate );
+        $status['exchange_rate_value'] = is_wp_error( $rate ) ? 0 : $rate;
+
+        // Cron check.
+        $status['cron_registered'] = (bool) wp_next_scheduled( 'sk_recalculate_reputation_scores' );
+        $status['cron_next']       = wp_next_scheduled( 'sk_recalculate_reputation_scores' );
+
+        // VendorChat check: Modul muss existieren UND via dvc_enabled aktiviert sein.
+        $status['vendor_chat'] = class_exists( 'SK\Core\Dashboard\Modules\VendorChat' )
+            && get_option( 'dvc_enabled', 'no' ) === 'yes';
+
+        // Vendors with Lightning address.
+        global $wpdb;
+        $status['vendors_with_ln'] = (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$wpdb->usermeta}
+             WHERE meta_key = 'sk_profile_settings'
+             AND meta_value LIKE '%lightning_address%'
+             AND meta_value NOT LIKE '%\"lightning_address\";\"%\";%'
+             AND meta_value NOT LIKE '%\"lightning_address\";s:0:%'"
+        );
+
+        return $status;
+    }
+
+    /**
+     * Get statistics.
+     */
+    public static function get_stats(): array {
+        global $wpdb;
+        $table = $wpdb->prefix . 'sk_lightning_payments';
+
+        $table_exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+        if ( ! $table_exists ) {
+            return [
+                'total_requests'   => 0,
+                'paid_total'       => 0,
+                'paid_7d'          => 0,
+                'paid_30d'         => 0,
+                'paid_volume'      => 0,
+                'open_disputes'    => 0,
+                'rep_credited'     => 0,
+            ];
+        }
+
+        return [
+            'total_requests'   => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" ),
+            'paid_total'       => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE status = 'confirmed'" ),
+            'paid_7d'          => (int) $wpdb->get_var( $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$table} WHERE status = 'confirmed' AND confirmed_at >= %s",
+                gmdate( 'Y-m-d H:i:s', time() - 7 * DAY_IN_SECONDS )
+            ) ),
+            'paid_30d'         => (int) $wpdb->get_var( $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$table} WHERE status = 'confirmed' AND confirmed_at >= %s",
+                gmdate( 'Y-m-d H:i:s', time() - 30 * DAY_IN_SECONDS )
+            ) ),
+            'paid_volume'      => (int) $wpdb->get_var( "SELECT COALESCE(SUM(amount_sats), 0) FROM {$table} WHERE status = 'confirmed'" ),
+            'open_disputes'    => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE status = 'disputed'" ),
+            'rep_credited'     => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE reputation_valid = 1" ),
+        ];
+    }
+}

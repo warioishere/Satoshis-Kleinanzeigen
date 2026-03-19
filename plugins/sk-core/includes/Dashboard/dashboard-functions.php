@@ -1,0 +1,135 @@
+<?php
+/**
+ * Standalone function shims for Dashboard module templates.
+ *
+ * Loaded unconditionally by ModuleLoader before any module is instantiated,
+ * so templates can call these global functions regardless of autoload order
+ * or opcode-cache state.
+ *
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+// =============================================================================
+// Gesuche shims
+// =============================================================================
+
+if ( ! function_exists( 'dg_render_gesuche_dashboard' ) ) {
+	function dg_render_gesuche_dashboard(): string {
+		return \SK\Core\Dashboard\Modules\Gesuche::render_dashboard();
+	}
+}
+
+// =============================================================================
+// Merkliste shims
+// =============================================================================
+
+if ( ! function_exists( 'dm_get_merkliste_products' ) ) {
+	function dm_get_merkliste_products( int $user_id ): array {
+		global $wpdb;
+		if ( ! $user_id ) {
+			return [];
+		}
+		$table = $wpdb->prefix . 'sk_merkliste';
+		return $wpdb->get_results(
+			$wpdb->prepare( "SELECT * FROM {$table} WHERE user_id = %d ORDER BY added_date DESC", $user_id )
+		) ?: [];
+	}
+}
+
+if ( ! function_exists( 'dm_remove_from_merkliste' ) ) {
+	function dm_remove_from_merkliste( int $product_id, int $user_id ): bool {
+		global $wpdb;
+		if ( ! $user_id || ! $product_id ) {
+			return false;
+		}
+		$table  = $wpdb->prefix . 'sk_merkliste';
+		$result = $wpdb->delete( $table, [ 'user_id' => $user_id, 'product_id' => $product_id ], [ '%d', '%d' ] );
+		return $result !== false;
+	}
+}
+
+// =============================================================================
+// VendorChat shims
+// =============================================================================
+
+if ( ! function_exists( 'dvc_get_user_chats' ) ) {
+	function dvc_get_user_chats( $user_id, $archived = false ) {
+		$all_chats = get_posts( [
+			'post_type'      => 'vendor_chat',
+			'post_status'    => 'publish',
+			'posts_per_page' => -1,
+			'orderby'        => 'meta_value_num',
+			'meta_key'       => '_dvc_last_message_time',
+			'order'          => 'DESC',
+			'meta_query'     => [
+				'relation' => 'OR',
+				[ 'key' => '_dvc_participant_1', 'value' => $user_id, 'compare' => '=' ],
+				[ 'key' => '_dvc_participant_2', 'value' => $user_id, 'compare' => '=' ],
+			],
+		] );
+
+		$filtered = [];
+		foreach ( $all_chats as $chat ) {
+			$archived_by = get_post_meta( $chat->ID, '_dvc_archived_by', true );
+			$archived_by = is_array( $archived_by ) ? $archived_by : [];
+			if ( $archived === in_array( $user_id, $archived_by ) ) {
+				$filtered[] = $chat;
+			}
+		}
+		return $filtered;
+	}
+}
+
+if ( ! function_exists( 'dvc_is_chat_participant' ) ) {
+	function dvc_is_chat_participant( $chat_id, $user_id ) {
+		$p1 = get_post_meta( $chat_id, '_dvc_participant_1', true );
+		$p2 = get_post_meta( $chat_id, '_dvc_participant_2', true );
+		return ( $p1 == $user_id || $p2 == $user_id );
+	}
+}
+
+if ( ! function_exists( 'dvc_mark_chat_as_read' ) ) {
+	function dvc_mark_chat_as_read( $chat_id, $user_id ) {
+		$notifications = get_user_meta( $user_id, '_dvc_notifications', true );
+		$notifications = is_array( $notifications ) ? $notifications : [];
+		foreach ( $notifications as $key => $n ) {
+			if ( isset( $n['chat_id'] ) && $n['chat_id'] == $chat_id ) {
+				$notifications[ $key ]['read'] = true;
+			}
+		}
+		update_user_meta( $user_id, '_dvc_notifications', $notifications );
+	}
+}
+
+if ( ! function_exists( 'dvc_get_other_participant' ) ) {
+	function dvc_get_other_participant( $chat_id, $user_id ) {
+		$p1 = get_post_meta( $chat_id, '_dvc_participant_1', true );
+		$p2 = get_post_meta( $chat_id, '_dvc_participant_2', true );
+		if ( $p1 == $user_id ) return $p2;
+		if ( $p2 == $user_id ) return $p1;
+		return null;
+	}
+}
+
+if ( ! function_exists( 'dvc_get_chat_messages' ) ) {
+	function dvc_get_chat_messages( $chat_id ) {
+		$messages = get_post_meta( $chat_id, '_dvc_messages', true );
+		return is_array( $messages ) ? $messages : [];
+	}
+}
+
+if ( ! function_exists( 'dvc_has_unread_messages' ) ) {
+	function dvc_has_unread_messages( $chat_id, $user_id ) {
+		$notifications = get_user_meta( $user_id, '_dvc_notifications', true );
+		$notifications = is_array( $notifications ) ? $notifications : [];
+		foreach ( $notifications as $n ) {
+			if ( isset( $n['chat_id'] ) && $n['chat_id'] == $chat_id && empty( $n['read'] ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+}

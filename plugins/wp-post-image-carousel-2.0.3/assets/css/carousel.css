@@ -1,0 +1,40 @@
+/* Viewport */
+.wppis-slider{
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* NUR HORIZONTAL: Genau dein CSS */
+.wppis-slider.horizontal .wppis-track {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 15px !important;   /* Abstand zwischen den Bildern */
+}
+
+/* Vertikal: KEIN horizontales Flex-Layout erzwingen */
+/* (Track bleibt Standard-Blockfluss; Bilder untereinander) */
+
+/* Slides / Bild-Style */
+.wppis-slide{ display:block; }
+.wppis-figure{ margin:0; }
+.wppis-figure img{
+  display:block;
+  border:3px solid #f7931a; border-radius:5px;
+  object-fit: cover;
+}
+
+/* Dimensionierung aus Settings */
+.wppis-slider.horizontal .wppis-figure img{ height: var(--wppic-h, 200px); width: auto; }
+.wppis-slider.vertical   .wppis-figure img{ width:  var(--wppic-v, 200px); height: auto; }
+
+/* Arrows (toggle per data-arrows) */
+.wppis-arrow{
+  position:absolute; top:50%; transform:translateY(-50%);
+  width:36px; height:36px; border-radius:999px; border:0;
+  background:rgba(0,0,0,.45); color:#fff; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; z-index:5;
+}
+.wppis-slider[data-arrows="false"] .wppis-arrow{ display:none !important; }
+.wppis-arrow.prev{ left:6px } .wppis-arrow.next{ right:6px }
+.wppis-arrow:hover{ background:rgba(0,0,0,.7) }

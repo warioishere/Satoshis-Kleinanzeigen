@@ -1,0 +1,275 @@
+/* SK PHP Admin Dashboard Styles
+   All selectors use .wrap.sk-php-dashboard as root to beat WP specificity */
+
+/* ── WP admin sidebar: prevent reflow on tab navigation ─── */
+/* The selected submenu item gains bold weight, causing the sidebar
+   to shift width. Pre-bold all SK submenu links to prevent this. */
+#adminmenu #toplevel_page_sk .wp-submenu a {
+    font-weight: 600;
+}
+
+/* ── Layout wrapper ──────────────────────────────────────── */
+.wrap.sk-php-dashboard {
+    max-width: 1400px;
+}
+
+.wrap.sk-php-dashboard h1 {
+    margin-bottom: 12px;
+}
+
+.wrap.sk-php-dashboard .sk-php-dashboard-content {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-top: none;
+    padding: 24px 28px;
+}
+
+/* ── Top tab nav ─────────────────────────────────────────── */
+.wrap.sk-php-dashboard nav.nav-tab-wrapper {
+    margin-bottom: 0;
+    border-bottom: 1px solid #c3c4c7;
+}
+
+.wrap.sk-php-dashboard nav.nav-tab-wrapper .nav-tab {
+    font-size: 13px;
+    padding: 8px 16px;
+    margin-bottom: -1px;
+    border-bottom-color: transparent;
+}
+
+.wrap.sk-php-dashboard nav.nav-tab-wrapper .nav-tab:hover {
+    background: #f0f0f1;
+    color: #1d2327;
+    border-bottom-color: transparent;
+}
+
+.wrap.sk-php-dashboard nav.nav-tab-wrapper .nav-tab-active,
+.wrap.sk-php-dashboard nav.nav-tab-wrapper .nav-tab-active:hover {
+    background: #fff;
+    border-bottom-color: #fff;
+    color: #1d2327;
+    font-weight: 600;
+}
+
+/* ── Settings: section sub-tabs ─────────────────────────── */
+.wrap.sk-php-dashboard .sk-settings-wrap > h2.nav-tab-wrapper {
+    margin: 0 0 20px;
+    padding-bottom: 0;
+    border-bottom: 1px solid #c3c4c7;
+    font-size: 1em;
+}
+
+.wrap.sk-php-dashboard .sk-settings-wrap > h2.nav-tab-wrapper .nav-tab {
+    font-size: 13px;
+    padding: 7px 14px;
+    margin-bottom: -1px;
+}
+
+.wrap.sk-php-dashboard .sk-settings-wrap > h2.nav-tab-wrapper .nav-tab:hover {
+    background: #f0f0f1;
+    color: #1d2327;
+    border-bottom-color: transparent;
+}
+
+.wrap.sk-php-dashboard .sk-settings-wrap > h2.nav-tab-wrapper .nav-tab-active,
+.wrap.sk-php-dashboard .sk-settings-wrap > h2.nav-tab-wrapper .nav-tab-active:hover {
+    background: #fff;
+    border-bottom-color: #fff;
+    font-weight: 600;
+}
+
+/* ── form-table: override WP defaults ───────────────────── */
+.wrap.sk-php-dashboard table.form-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 4px;
+    table-layout: fixed;
+}
+
+.wrap.sk-php-dashboard table.form-table th {
+    width: 260px !important;
+    min-width: 180px;
+    padding: 16px 24px 16px 0 !important;
+    vertical-align: top !important;
+    font-weight: 600;
+    font-size: 13px;
+    color: #1d2327;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wrap.sk-php-dashboard table.form-table td {
+    width: auto;
+}
+
+.wrap.sk-php-dashboard table.form-table td {
+    padding: 12px 0 !important;
+    vertical-align: top;
+}
+
+.wrap.sk-php-dashboard table.form-table tr {
+    border-bottom: 1px solid #f0f0f1;
+}
+
+.wrap.sk-php-dashboard table.form-table tr:last-child {
+    border-bottom: none;
+}
+
+/* inputs */
+.wrap.sk-php-dashboard table.form-table input[type="text"],
+.wrap.sk-php-dashboard table.form-table input[type="number"],
+.wrap.sk-php-dashboard table.form-table input[type="search"] {
+    width: 360px;
+    max-width: 100%;
+}
+
+.wrap.sk-php-dashboard table.form-table select {
+    min-width: 200px;
+    max-width: 360px;
+}
+
+.wrap.sk-php-dashboard table.form-table .description {
+    color: #646970;
+    font-size: 12px;
+    margin-top: 6px;
+    display: block;
+    max-width: 520px;
+}
+
+/* switcher / checkbox */
+.wrap.sk-php-dashboard table.form-table td label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+/* sub_section h3 divider */
+.wrap.sk-php-dashboard table.form-table td h3 {
+    margin: 6px 0 2px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1d2327;
+    border-bottom: 1px solid #e5e5e5;
+    padding-bottom: 6px;
+}
+
+/* tooltip icon */
+.wrap.sk-php-dashboard table.form-table th .dashicons-info {
+    font-size: 15px;
+    vertical-align: middle;
+    margin-left: 4px;
+    color: #999;
+    cursor: help;
+}
+
+/* fieldsets (radio / multicheck) */
+.wrap.sk-php-dashboard table.form-table fieldset {
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+.wrap.sk-php-dashboard table.form-table fieldset label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    font-size: 13px;
+}
+
+/* ── Submit button ───────────────────────────────────────── */
+.wrap.sk-php-dashboard p.submit {
+    padding: 16px 0 4px;
+    border-top: 1px solid #f0f0f1;
+    margin-top: 0;
+}
+
+/* ── List tables ─────────────────────────────────────────── */
+.wrap.sk-php-dashboard .wp-list-table {
+    margin-top: 12px;
+    border: 1px solid #c3c4c7;
+}
+
+.wrap.sk-php-dashboard .wp-list-table thead th,
+.wrap.sk-php-dashboard .wp-list-table thead td {
+    font-weight: 600;
+    font-size: 13px;
+    background: #f6f7f7;
+    padding: 10px 12px;
+}
+
+.wrap.sk-php-dashboard .wp-list-table tbody td,
+.wrap.sk-php-dashboard .wp-list-table tbody th {
+    padding: 10px 12px;
+    vertical-align: middle;
+    font-size: 13px;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+.wrap.sk-php-dashboard .wp-list-table tbody tr:last-child td,
+.wrap.sk-php-dashboard .wp-list-table tbody tr:last-child th {
+    border-bottom: none;
+}
+
+.wrap.sk-php-dashboard .wp-list-table tbody tr:hover td,
+.wrap.sk-php-dashboard .wp-list-table tbody tr:hover th {
+    background: #f6f7f7;
+}
+
+.wrap.sk-php-dashboard .wp-list-table .button {
+    margin-right: 4px;
+}
+
+/* ── Page headings ───────────────────────────────────────── */
+.wrap.sk-php-dashboard .sk-php-dashboard-content h2 {
+    font-size: 1.1em;
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+.wrap.sk-php-dashboard .sk-php-dashboard-content h2 .page-title-action {
+    margin-left: 10px;
+    font-size: 13px;
+}
+
+/* ── Search box ──────────────────────────────────────────── */
+.wrap.sk-php-dashboard .search-box {
+    margin: 0 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ── Pagination ──────────────────────────────────────────── */
+.wrap.sk-php-dashboard .tablenav {
+    margin-top: 8px;
+    display: flex;
+    justify-content: flex-end;
+    height: auto;
+    clear: both;
+}
+
+/* ── Modules grid ────────────────────────────────────────── */
+.wrap.sk-php-dashboard .sk-modules-wrap .card {
+    border: 1px solid #c3c4c7;
+    border-radius: 2px;
+    background: #fafafa;
+}
+
+.wrap.sk-php-dashboard .sk-modules-wrap .card:hover {
+    border-color: #2271b1;
+}
+
+.wrap.sk-php-dashboard .sk-modules-wrap .card h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 6px;
+}
+
+/* ── Notices inside content ──────────────────────────────── */
+.wrap.sk-php-dashboard .sk-php-dashboard-content .notice {
+    margin: 0 0 16px;
+}

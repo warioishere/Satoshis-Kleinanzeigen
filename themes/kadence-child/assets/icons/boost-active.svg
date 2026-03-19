@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <!-- Bitcoin Orange Hintergrund-Kreis -->
+  <circle cx="12" cy="12" r="12" fill="#F7931A"/>
+  <!-- Weißer Blitz -->
+  <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" fill="white"/>
+</svg>

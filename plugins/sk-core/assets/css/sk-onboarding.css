@@ -1,0 +1,520 @@
+/**
+ * User Onboarding Modal Styles
+ * Matches the chat modal styling with Bitcoin orange and dark theme
+ */
+
+/* === Modal Overlay ===================================================== */
+.uob-modal {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.85);
+	backdrop-filter: blur(4px);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 999999;
+	opacity: 0;
+	animation: uobFadeIn 0.3s ease forwards;
+	padding: 20px;
+	overflow: hidden;
+}
+
+@keyframes uobFadeIn {
+	to {
+		opacity: 1;
+	}
+}
+
+/* === Modal Content ==================================================== */
+.uob-modal-content {
+	background: #181e27;
+	border-radius: 12px;
+	max-width: 600px;
+	width: 100%;
+	position: relative;
+	box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+	animation: uobSlideUp 0.4s ease;
+	padding: 40px;
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+
+@keyframes uobSlideUp {
+	from {
+		transform: translateY(30px);
+		opacity: 0;
+	}
+	to {
+		transform: translateY(0);
+		opacity: 1;
+	}
+}
+
+/* === Close Button ===================================================== */
+.uob-close {
+	position: absolute;
+	top: 20px;
+	right: 20px;
+	background: transparent;
+	border: none;
+	color: #9aa4b2;
+	font-size: 24px;
+	cursor: pointer;
+	width: 36px;
+	height: 36px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.2s ease;
+	z-index: 10;
+}
+
+.uob-close:hover,
+.uob-close:focus {
+	background: #2b3240;
+	color: #ffffff;
+	transform: rotate(90deg);
+}
+
+/* === Progress Dots ==================================================== */
+.uob-progress {
+	display: flex;
+	gap: 8px;
+	justify-content: center;
+	margin-bottom: 30px;
+}
+
+.uob-dot {
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background: #2b3240;
+	transition: all 0.3s ease;
+	cursor: pointer;
+}
+
+.uob-dot.active {
+	background: #f7931a;
+	width: 32px;
+	border-radius: 5px;
+}
+
+.uob-dot:hover {
+	background: #f7931a;
+	opacity: 0.7;
+}
+
+/* === Slides =========================================================== */
+.uob-slide {
+	display: none;
+	text-align: center;
+	color: #ffffff;
+	min-height: 400px;
+	overflow-x: hidden;
+}
+
+.uob-slide.active {
+	display: block;
+	animation: uobSlideContent 0.4s ease;
+}
+
+@keyframes uobSlideContent {
+	from {
+		opacity: 0;
+		transform: translateX(20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+.uob-slide-icon {
+	font-size: 64px;
+	color: #f7931a;
+	margin-bottom: 20px;
+	animation: uobIconBounce 0.6s ease;
+}
+
+@keyframes uobIconBounce {
+	0%, 100% {
+		transform: scale(1);
+	}
+	50% {
+		transform: scale(1.1);
+	}
+}
+
+.uob-slide h2 {
+	font-size: 28px;
+	font-weight: 700;
+	color: #ffffff;
+	margin: 0 0 16px 0;
+}
+
+.uob-slide p {
+	font-size: 16px;
+	line-height: 1.6;
+	color: #c5ccd6;
+	margin: 0 0 12px 0;
+}
+
+.uob-subtitle {
+	font-size: 14px !important;
+	color: #9aa4b2 !important;
+	font-style: italic;
+}
+
+/* === Feature List ===================================================== */
+.uob-feature-list {
+	list-style: none;
+	padding: 0;
+	margin: 30px 0;
+	text-align: left;
+}
+
+.uob-feature-list li {
+	display: flex;
+	gap: 16px;
+	align-items: flex-start;
+	padding: 16px;
+	background: #2b3240;
+	border-radius: 8px;
+	margin-bottom: 12px;
+	transition: all 0.3s ease;
+}
+
+.uob-feature-list li:hover {
+	background: #343d4d;
+	transform: translateX(4px);
+}
+
+.uob-feature-list li > i {
+	font-size: 24px;
+	color: #f7931a;
+	min-width: 24px;
+	margin-top: 2px;
+}
+
+.uob-feature-list li > div {
+	flex: 1;
+}
+
+.uob-feature-list strong {
+	display: block;
+	font-size: 16px;
+	color: #ffffff;
+	margin-bottom: 4px;
+}
+
+.uob-feature-list span {
+	font-size: 14px;
+	color: #9aa4b2;
+	line-height: 1.5;
+}
+
+.uob-feature-list span a {
+	color: #f7931a;
+	text-decoration: underline;
+	transition: color 0.2s ease;
+}
+
+.uob-feature-list span a:hover,
+.uob-feature-list span a:focus {
+	color: #ff9d2e;
+	text-decoration: none;
+}
+
+/* === Contact Icons ==================================================== */
+.uob-contact-icons {
+	display: flex;
+	gap: 16px;
+	justify-content: center;
+	flex-wrap: wrap;
+	margin: 30px 0;
+}
+
+.uob-contact-method {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8px;
+	padding: 16px;
+	background: #2b3240;
+	border-radius: 8px;
+	min-width: 90px;
+	transition: all 0.3s ease;
+}
+
+.uob-contact-method:hover {
+	background: #343d4d;
+	transform: translateY(-4px);
+}
+
+.uob-contact-method i {
+	font-size: 32px;
+}
+
+.uob-icon-chat {
+	color: #f7931a;
+}
+
+.uob-icon-telegram {
+	color: #0088cc;
+}
+
+.uob-icon-email {
+	color: #ffffff;
+}
+
+.uob-icon-phone {
+	color: #4caf50;
+}
+
+.uob-icon-nostr {
+	color: #a855f7;
+}
+
+.uob-contact-method span {
+	font-size: 13px;
+	color: #c5ccd6;
+	font-weight: 500;
+}
+
+/* === Tip Box ========================================================== */
+.uob-tip {
+	background: #2b3240;
+	border-left: 4px solid #f7931a;
+	padding: 12px 16px;
+	border-radius: 4px;
+	font-size: 14px !important;
+	color: #c5ccd6 !important;
+	margin-top: 30px !important;
+	text-align: center;
+	display: block;
+}
+
+.uob-tip i {
+	color: #f7931a;
+	font-size: 28px;
+	display: block;
+	margin-bottom: 8px;
+}
+
+/* === Action Cards ===================================================== */
+.uob-action-cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+	gap: 16px;
+	margin: 30px 0;
+}
+
+.uob-action-card {
+	background: #2b3240;
+	border: 2px solid transparent;
+	border-radius: 8px;
+	padding: 20px;
+	text-decoration: none;
+	transition: all 0.3s ease;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 12px;
+	text-align: center;
+}
+
+.uob-action-card:hover,
+.uob-action-card:focus {
+	background: #343d4d;
+	border-color: #f7931a;
+	transform: translateY(-4px);
+}
+
+.uob-action-card i {
+	font-size: 32px;
+	color: #f7931a;
+}
+
+.uob-action-card strong {
+	font-size: 14px;
+	color: #ffffff;
+	font-weight: 600;
+}
+
+/* === Navigation ======================================================= */
+.uob-navigation {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-top: 40px;
+	padding-top: 30px;
+	border-top: 1px solid #2b3240;
+}
+
+.uob-nav-buttons {
+	display: flex;
+	gap: 12px;
+}
+
+/* === Buttons ========================================================== */
+.uob-btn {
+	background: #2b3240;
+	border: 2px solid #2b3240;
+	color: #ffffff;
+	font-weight: 600;
+	padding: 12px 24px;
+	border-radius: 8px;
+	cursor: pointer;
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	font-size: 13px;
+	font-family: inherit;
+}
+
+.uob-btn:hover,
+.uob-btn:focus {
+	background: #343d4d;
+	border-color: #343d4d;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.uob-btn-primary {
+	background: #f7931a;
+	border-color: #f7931a;
+	color: #181e27;
+	font-weight: 700;
+}
+
+.uob-btn-primary:hover,
+.uob-btn-primary:focus {
+	background: #ff9d2e;
+	border-color: #ff9d2e;
+	box-shadow: 0 4px 16px rgba(247, 147, 26, 0.4);
+}
+
+.uob-btn-skip {
+	background: transparent;
+	border-color: transparent;
+	color: #9aa4b2;
+	padding: 12px 16px;
+}
+
+.uob-btn-skip:hover,
+.uob-btn-skip:focus {
+	background: transparent;
+	border-color: transparent;
+	color: #ffffff;
+	transform: none;
+	box-shadow: none;
+}
+
+.uob-btn i {
+	font-size: 14px;
+}
+
+/* === Responsive ======================================================= */
+@media (max-width: 768px) {
+	.uob-modal {
+		padding: 10px;
+	}
+
+	.uob-modal-content {
+		padding: 25px 15px;
+		max-height: 90vh;
+		overflow-y: auto;
+	}
+
+	.uob-slide {
+		min-height: 350px;
+	}
+
+	.uob-slide h2 {
+		font-size: 24px;
+	}
+
+	.uob-slide p {
+		font-size: 15px;
+	}
+
+	.uob-slide-icon {
+		font-size: 48px;
+	}
+
+	.uob-feature-list li {
+		flex-direction: column;
+		text-align: center;
+		align-items: center;
+	}
+
+	.uob-feature-list li > i {
+		margin-left: 0;
+	}
+
+	.uob-contact-icons {
+		gap: 12px;
+	}
+
+	.uob-contact-method {
+		min-width: 70px;
+		padding: 12px;
+	}
+
+	.uob-contact-method i {
+		font-size: 24px;
+	}
+
+	.uob-contact-method span {
+		font-size: 11px;
+	}
+
+	.uob-action-cards {
+		grid-template-columns: 1fr;
+	}
+
+	.uob-navigation {
+		flex-direction: row;
+		gap: 12px;
+		justify-content: center;
+	}
+
+	.uob-nav-buttons {
+		width: auto;
+		justify-content: center;
+		gap: 8px;
+	}
+
+	.uob-btn {
+		font-size: 10px;
+		padding: 6px 10px;
+	}
+
+	.uob-btn-skip {
+		order: -1;
+	}
+}
+
+@media (max-width: 480px) {
+	.uob-slide {
+		min-height: 300px;
+	}
+
+	.uob-close {
+		top: 15px;
+		right: 15px;
+		font-size: 20px;
+		width: 32px;
+		height: 32px;
+	}
+
+	.uob-progress {
+		margin-bottom: 20px;
+	}
+}

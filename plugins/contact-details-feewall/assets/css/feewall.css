@@ -1,0 +1,437 @@
+/**
+ * Contact Details Feewall - CSS
+ */
+
+/* Locked icon styling */
+.dkp-contact-icon.cdf-locked {
+    position: relative;
+    opacity: 0.5;
+    cursor: pointer;
+    transition: opacity 0.3s ease, transform 0.2s ease;
+}
+
+.dkp-contact-icon.cdf-locked:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.dkp-contact-icon.cdf-locked::after {
+    content: '🔒';
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    font-size: 10px;
+    background: #f7931a;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Payment modal */
+.cdf-payment-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(4px);
+    z-index: 999999;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.cdf-payment-modal.active {
+    display: flex;
+    opacity: 0;
+    animation: cdfFadeIn 0.3s ease forwards;
+}
+
+@keyframes cdfFadeIn {
+    to {
+        opacity: 1;
+    }
+}
+
+.cdf-payment-content {
+    background: #181e27;
+    border-radius: 12px;
+    padding: 40px;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    position: relative;
+    animation: cdf-slide-up 0.4s ease;
+}
+
+@keyframes cdf-slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.cdf-payment-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: transparent;
+    border: none;
+    color: #9aa4b2;
+    font-size: 24px;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    padding: 0;
+    line-height: 1;
+}
+
+.cdf-payment-close:hover,
+.cdf-payment-close:focus {
+    background: #2b3240;
+    color: #ffffff;
+    transform: rotate(90deg);
+}
+
+.cdf-payment-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.cdf-payment-icon {
+    font-size: 64px;
+    color: #f7931a;
+    margin-bottom: 20px;
+    animation: cdfIconBounce 0.6s ease;
+}
+
+@keyframes cdfIconBounce {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.cdf-payment-header h3 {
+    margin: 0 0 16px 0;
+    font-size: 28px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.cdf-payment-header p {
+    margin: 0 0 8px 0;
+    color: #c5ccd6;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.cdf-payment-details {
+    background: #2b3240;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+
+.cdf-payment-amount {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.cdf-payment-amount-value {
+    font-size: 40px;
+    font-weight: bold;
+    color: #f7931a;
+}
+
+.cdf-payment-amount-label {
+    font-size: 20px;
+    color: #c5ccd6;
+    font-weight: 600;
+}
+
+.cdf-payment-info {
+    text-align: left;
+    color: #c5ccd6;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.cdf-payment-info p {
+    margin: 0 0 12px 0;
+    color: #c5ccd6;
+}
+
+.cdf-payment-info p:last-child {
+    margin-bottom: 0;
+}
+
+.cdf-payment-info strong {
+    color: #f7931a;
+    font-weight: 600;
+}
+
+.cdf-protection-box {
+    background: #1a2029;
+    border-left: 4px solid #f7931a;
+    padding: 16px;
+    border-radius: 4px;
+    margin-top: 16px;
+}
+
+.cdf-protection-box p {
+    margin: 0 0 8px 0;
+    color: #c5ccd6;
+    font-size: 14px;
+}
+
+.cdf-protection-box p:last-child {
+    margin-bottom: 0;
+}
+
+.cdf-protection-box strong {
+    color: #ffffff;
+}
+
+.cdf-protection-icon {
+    color: #f7931a;
+    margin-right: 8px;
+}
+
+.cdf-payment-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+}
+
+.cdf-btn {
+    flex: 1;
+    padding: 14px 24px;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.cdf-btn-primary {
+    background: #f7931a;
+    border-color: #f7931a;
+    color: #181e27;
+}
+
+.cdf-btn-primary:hover,
+.cdf-btn-primary:focus {
+    background: #ff9d2e;
+    border-color: #ff9d2e;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(247, 147, 26, 0.4);
+}
+
+.cdf-btn-primary:active {
+    transform: translateY(0);
+}
+
+.cdf-btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.cdf-btn-secondary {
+    background: #2b3240;
+    border-color: #2b3240;
+    color: #ffffff;
+}
+
+.cdf-btn-secondary:hover,
+.cdf-btn-secondary:focus {
+    background: #343d4d;
+    border-color: #343d4d;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Loading spinner */
+.cdf-loading {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: cdf-spin 0.6s linear infinite;
+    margin-right: 8px;
+}
+
+@keyframes cdf-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Payment success overlay */
+.cdf-success-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 1000000;
+    align-items: center;
+    justify-content: center;
+}
+
+.cdf-success-overlay.active {
+    display: flex;
+}
+
+.cdf-success-content {
+    text-align: center;
+    color: #fff;
+    animation: cdf-scale-in 0.5s ease;
+}
+
+@keyframes cdf-scale-in {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.cdf-success-icon {
+    font-size: 80px;
+    margin-bottom: 20px;
+    animation: cdf-bounce 0.6s ease;
+}
+
+@keyframes cdf-bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-20px);
+    }
+}
+
+.cdf-success-message {
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.cdf-success-submessage {
+    font-size: 16px;
+    opacity: 0.8;
+}
+
+/* Unlocked icon animation - instant unlock after payment */
+.dkp-contact-icon.cdf-unlocked {
+    animation: cdfUnlock 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes cdfUnlock {
+    0% {
+        opacity: 0.5;
+        transform: scale(0.8) rotateZ(-10deg);
+    }
+    50% {
+        transform: scale(1.15) rotateZ(5deg);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) rotateZ(0deg);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .cdf-payment-modal {
+        padding: 10px;
+    }
+
+    .cdf-payment-content {
+        padding: 30px 20px;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .cdf-payment-icon {
+        font-size: 48px;
+    }
+
+    .cdf-payment-header h3 {
+        font-size: 24px;
+    }
+
+    .cdf-payment-header p {
+        font-size: 15px;
+    }
+
+    .cdf-payment-amount-value {
+        font-size: 32px;
+    }
+
+    .cdf-payment-amount-label {
+        font-size: 18px;
+    }
+
+    .cdf-btn {
+        font-size: 13px;
+        padding: 12px 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .cdf-payment-close {
+        top: 15px;
+        right: 15px;
+        font-size: 20px;
+        width: 32px;
+        height: 32px;
+    }
+
+    .cdf-payment-actions {
+        flex-direction: column;
+    }
+
+    .cdf-btn {
+        width: 100%;
+    }
+}

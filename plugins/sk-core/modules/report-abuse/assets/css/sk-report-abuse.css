@@ -1,0 +1,54 @@
+/* Dark theme for report abuse modal */
+.sk-report-abuse-form-popup-wrapper {
+    color: #e2e8f0;
+}
+.sk-report-abuse-form-popup-wrapper .sk-form-control {
+    background: #2b3240;
+    border: 1px solid #3d4a5c;
+    color: #e2e8f0;
+    border-radius: 6px;
+    padding: 8px 12px;
+    width: 100%;
+    box-sizing: border-box;
+}
+.sk-report-abuse-form-popup-wrapper .sk-form-control:focus {
+    border-color: #f7931a;
+    outline: none;
+}
+.sk-report-abuse-form-popup-wrapper label {
+    color: #c9d1d9;
+    display: block;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+.sk-report-abuse-form-popup-wrapper .sk-form-group {
+    margin-bottom: 16px;
+}
+.sk-report-abuse-form-popup-wrapper ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 16px;
+}
+.sk-report-abuse-form-popup-wrapper ul li {
+    margin-bottom: 8px;
+}
+.sk-report-abuse-form-popup-wrapper ul li label {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.sk-report-abuse-form-popup-wrapper input[type="radio"] {
+    accent-color: #f7931a;
+}
+.sk-report-abuse-form-popup-wrapper textarea {
+    resize: vertical;
+}
+.sk-report-abuse-form-popup-wrapper .sk-popup-error {
+    color: #ef4444;
+    margin-bottom: 8px;
+}
+.sk-report-abuse-form-popup-wrapper .sk-btn {
+    width: 100%;
+    box-sizing: border-box;
+}

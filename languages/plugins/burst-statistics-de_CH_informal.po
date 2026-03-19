@@ -1,0 +1,2543 @@
+# Translation of Plugins - Burst Statistics &#8211; Privacy-Friendly Analytics for WordPress - Stable (latest release) in German (Switzerland)
+# This file is distributed under the same license as the Plugins - Burst Statistics &#8211; Privacy-Friendly Analytics for WordPress - Stable (latest release) package.
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2025-08-14 08:16:07+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: GlotPress/4.0.1\n"
+"Language: de_CH\n"
+"Project-Id-Version: Plugins - Burst Statistics &#8211; Privacy-Friendly Analytics for WordPress - Stable (latest release)\n"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/SelectorField.jsx:350
+msgid "Step through matches"
+msgstr "Durch Treffer schalten"
+
+#: src/Traits/trait-sanitize.php:621
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:1
+#: src/Admin/App/src/hooks/useFilterDisplay.js:82
+msgid "Bounced visitors"
+msgstr "Absprungrate-Besucher"
+
+#. translators: %d is the number of visits detected from a single user in 24
+#. hours.
+#: src/Admin/App/config/tasks.php:119
+msgid "Burst has detected an anomalous number of visits (%d in 24 hours) from one user. As these visits distort your statistics, these have been removed."
+msgstr "Burst hat eine ungewöhnliche Anzahl von Besuchen (%d in 24 Stunden) von einem Nutzer festgestellt. Da diese Besuche deine Statistiken verfälschen, wurden sie entfernt."
+
+#: src/Admin/App/config/fields.php:309
+msgid "Enable statistics shortcodes for use on your website."
+msgstr "Aktiviere Statistik-Shortcodes zur Verwendung auf deiner Website."
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/SelectorField.jsx:406
+msgid "%s elements match your selector. Use arrow keys to cycle through matches."
+msgstr "%s Elemente entsprechen deinem Selektor. Benutze die Pfeiltasten, um durch die Treffer zu navigieren."
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/SelectorField.jsx:378
+msgid "Set logged out mode"
+msgstr "Abgemeldeten Modus einstellen"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/SelectorField.jsx:378
+msgid "Set logged in mode"
+msgstr "Angemeldeten Modus aktivieren"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/SelectorField.jsx:368
+msgid "Next match"
+msgstr "Nächster Treffer"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/SelectorField.jsx:357
+msgid "Previous match"
+msgstr "Vorheriger Treffer"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/SelectorField.jsx:337
+msgid "Preview panel, use arrow keys to navigate"
+msgstr "Vorschaufenster, verwenden Sie die Pfeiltasten zur Navigation"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/SelectorField.jsx:274
+msgid "Selects .nav-item elements that do not have the \"active\" class."
+msgstr "Wählt .nav-item-Elemente aus, die nicht die \"active\"-Klasse haben."
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/SelectorField.jsx:269
+msgid "Selects links whose href starts with \"https\"."
+msgstr "Wählt Links aus, deren href mit \"https\" beginnt."
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/SelectorField.jsx:264
+msgid "Selects all <button> elements."
+msgstr "Wählt alle <button>-Elemente aus."
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/SelectorField.jsx:259
+msgid "Selects the element with ID \"element-id\"."
+msgstr "Wählt das Element mit der ID \"element-id\" aus."
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/SelectorField.jsx:254
+msgid "Selects all elements with class \"class-name\"."
+msgstr "Wählt alle Elemente mit der Klasse \"class-name\" aus."
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/SelectorField.jsx:248
+msgid "Selector Examples:"
+msgstr "Beispiele für Selektoren:"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/SelectorField.jsx:241
+msgid "(Logged in)"
+msgstr "(Angemeldet)"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/SelectorField.jsx:241
+msgid "(Logged out)"
+msgstr "(Abgemeldet)"
+
+#. translators: 1: number of elements found 2: the URL of the preview 3: logged
+#. in/out status
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/SelectorField.jsx:233
+msgid "Found %1$d element on %2$s %3$s"
+msgid_plural "Found %1$d elements on %2$s %3$s"
+msgstr[0] "%1$d Element auf %2$s %3$s gefunden"
+msgstr[1] "%1$d Elemente auf %2$s %3$s gefunden"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:1
+#: src/Admin/App/src/components/Fields/SelectorField.jsx:209
+msgid "Warning: this element might be hidden via CSS."
+msgstr "Warnung: Dieses Element könnte über CSS verborgen sein."
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:1
+#: src/Admin/App/src/components/Fields/SelectorField.jsx:127
+msgid "Warning: The current element is hidden via CSS."
+msgstr "Warnung: Das aktuelle Element ist über CSS verborgen."
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:1
+#: src/Admin/App/src/components/Common/DisabledBadge.jsx:17
+msgid "Disabled"
+msgstr "Deaktiviert"
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:7
+#: src/Admin/App/src/routes/sources.jsx:75
+msgid "Upgrade Plan"
+msgstr "Plan aktualisieren"
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:7
+#: src/Admin/App/src/routes/sources.jsx:58
+msgid "Already have a license? Activate it to access these features."
+msgstr "Haben Sie bereits eine Lizenz? Aktivieren Sie diese, um auf diese Funktionen zuzugreifen."
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:7
+#: src/Admin/App/src/routes/sources.jsx:55
+msgid "Get detailed insights into where your traffic comes from."
+msgstr "Erhalten Sie detaillierte Einblicke, woher Ihr Traffic kommt."
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:7
+#: src/Admin/App/src/routes/sources.jsx:52
+msgid "Unlock Source Insights"
+msgstr "Quellen-Einblicke freischalten"
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:7
+#: src/Admin/App/src/components/Sources/WorldMapBlock.jsx:20
+#: src/Admin/App/src/components/Upsell/GhostWorldMapBlock.jsx:20
+msgid "World View"
+msgstr "Weltansicht"
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:7
+#: src/Admin/App/src/components/Sources/WorldMap/MapSettingsPopover.jsx:246
+msgid "Add patterns for colorblind accessibility"
+msgstr "Muster für Farbenblindheit-Zugänglichkeit hinzufügen"
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:7
+#: src/Admin/App/src/components/Sources/WorldMap/MapSettingsPopover.jsx:243
+msgid "Colorblind Patterns"
+msgstr "Farbenblind-Muster"
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:7
+#: src/Admin/App/src/components/Sources/WorldMap/MapSettingsPopover.jsx:238
+msgid "Accessibility"
+msgstr "Barrierefreiheit"
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:7
+#: src/Admin/App/src/components/Sources/WorldMap/MapSettingsPopover.jsx:193
+msgid "Auto-select"
+msgstr "Automatisch auswählen"
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:7
+#: src/Admin/App/src/components/Sources/WorldMap/MapSettingsPopover.jsx:184
+msgid "A classification method determines how data values are grouped into ranges or categories to color regions on a choropleth map. The recommended method is based on the selected metric. For more information for each method, see the help icon next to each method."
+msgstr "Eine Klassifizierungsmethode bestimmt, wie Datenwerte in Bereiche oder Kategorien gruppiert werden, um Regionen auf einer Choroplethenkarte einzufärben. Die empfohlene Methode basiert auf der ausgewählten Metrik. Für weitere Informationen zu jeder Methode sehen Sie das Hilfesymbol neben jeder Methode."
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:7
+#: src/Admin/App/src/components/Sources/WorldMap/MapSettingsPopover.jsx:176
+msgid "Classification method"
+msgstr "Klassifizierungsmethode"
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:7
+#: src/Admin/App/src/components/Sources/WorldMap/MapSettingsPopover.jsx:130
+#: src/Admin/App/src/components/Sources/WorldMap/MapSettingsPopover.jsx:146
+msgid "Metrics & options"
+msgstr "Metriken & Optionen"
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:7
+#: src/Admin/App/src/components/Sources/WorldMap/WorldMap.jsx:326
+msgid "No metrics available for display."
+msgstr "Keine Metriken zur Anzeige verfügbar."
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:7
+#: src/Admin/App/src/components/Sources/WorldMap/WorldMap.jsx:514
+msgctxt "statistic label"
+msgid "Method"
+msgstr "Methode"
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:7
+#: src/Admin/App/src/components/Sources/WorldMap/WorldMap.jsx:506
+msgctxt "statistic label"
+msgid "Total"
+msgstr "Gesamt"
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:7
+#: src/Admin/App/src/components/Sources/WorldMap/WorldMap.jsx:500
+msgctxt "statistic label"
+msgid "Median"
+msgstr "Median"
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:7
+#: src/Admin/App/src/components/Sources/WorldMap/WorldMap.jsx:494
+msgctxt "statistic label"
+msgid "Average"
+msgstr "Durchschnitt"
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:7
+#: src/Admin/App/src/components/Sources/WorldMap/WorldMap.jsx:485
+msgctxt "statistic label"
+msgid "Range"
+msgstr "Bereich"
+
+#. translators: %d: Number of visitors with unknown region, %s: metric label
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:7
+#: src/Admin/App/src/components/Sources/WorldMap/WorldMap.jsx:470
+msgid "%d %s with unknown region"
+msgstr "%d %s mit unbekannter Region"
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:6
+#: src/Admin/App/src/components/Sources/WorldMap/WorldMap.jsx:461
+msgid "Patterns enabled"
+msgstr "Muster aktiviert"
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:6
+#: src/Admin/App/src/components/Sources/WorldMap/WorldMap.jsx:450
+msgid "%d region with data"
+msgid_plural "%d regions with data"
+msgstr[0] "%d Region mit Daten"
+msgstr[1] "%d Regionen mit Daten"
+
+#. translators: %d: Number of locations that have data
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:6
+#: src/Admin/App/src/components/Sources/WorldMap/WorldMap.jsx:444
+msgid "%d country with data"
+msgid_plural "%d countries with data"
+msgstr[0] "%d Land mit Daten"
+msgstr[1] "%d Länder mit Daten"
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:5
+#: src/Admin/App/src/components/Sources/WorldMap/WorldMap.jsx:434
+msgctxt "location type"
+msgid "region"
+msgstr "region"
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:5
+#: src/Admin/App/src/components/Sources/WorldMap/WorldMap.jsx:433
+msgctxt "location type"
+msgid "country"
+msgstr "land"
+
+#. translators: 1: Metric name (e.g., "Pageviews", "Visitors"), 2: Location
+#. type (e.g., "Country" or "Region")
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:5
+#: src/Admin/App/src/components/Sources/WorldMap/WorldMap.jsx:430
+msgctxt "metric by location"
+msgid "%1$s per %2$s"
+msgstr "%1$s pro %2$s"
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:4
+#: src/Admin/App/src/components/Sources/WorldMap/WorldMap.jsx:410
+msgid "Dismiss"
+msgstr "Verwerfen"
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:4
+#: src/Admin/App/src/components/Sources/WorldMap/WorldMap.jsx:408
+msgid "Dismiss for 30 days"
+msgstr "Für 30 Tage ausblenden"
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:4
+#: src/Admin/App/src/components/Sources/WorldMap/WorldMap.jsx:384
+msgid "Region tracking is a new feature, so this data is only available for visits recorded after it was enabled."
+msgstr "Die Regionserfassung ist eine neue Funktion, daher sind diese Daten nur für Besuche verfügbar, die nach der Aktivierung aufgezeichnet wurden."
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:4
+#: src/Admin/App/src/components/Sources/WorldMap/WorldMap.jsx:374
+msgid "Region-level data is available for visits after %s."
+msgstr "Regionale Daten sind für Besuche nach %s verfügbar."
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:4
+#: src/Admin/App/src/components/Sources/WorldMap/WorldMap.jsx:344
+msgid "Loading analytics..."
+msgstr "Lade Analysen..."
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:4
+#: src/Admin/App/src/components/Sources/WorldMap/WorldMap.jsx:318
+#: src/Admin/App/src/components/Sources/WorldMap/WorldMap.jsx:343
+msgid "Loading map data..."
+msgstr "Lade Kartendaten..."
+
+#. translators: %s: Error message
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:4
+#: src/Admin/App/src/components/Sources/WorldMap/WorldMap.jsx:306
+msgid "Error: %s"
+msgstr "Fehler: %s"
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:3
+#: src/Admin/App/src/components/Sources/WorldMap/MapBreadcrumbs.jsx:75
+msgctxt "aria label"
+msgid "Map navigation"
+msgstr "Karten-Navigation"
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:3
+#: src/Admin/App/src/components/Sources/WorldMap/MapBreadcrumbs.jsx:60
+msgctxt "button title"
+msgid "No previous page"
+msgstr "Keine vorherige Seite"
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:3
+#: src/Admin/App/src/components/Sources/WorldMap/MapBreadcrumbs.jsx:59
+msgctxt "button title"
+msgid "Go back"
+msgstr "Zurückgehen"
+
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:3
+#: src/Admin/App/src/components/Sources/WorldMap/MapBreadcrumbs.jsx:26
+msgctxt "navigation item"
+msgid "World"
+msgstr "Welt"
+
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:1
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:7
+#: src/Admin/App/src/components/Common/PopoverFilter.js:122
+#: src/Admin/App/src/components/Sources/WorldMap/MapSettingsPopover.jsx:154
+msgid "Select metric"
+msgstr "Metrik auswählen"
+
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:1
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:1
+#: src/Admin/App/src/components/Common/RecommendBadge.jsx:17
+msgid "Recommended"
+msgstr "Empfohlen"
+
+#: src/Traits/trait-sanitize.php:625 src/Traits/trait-sanitize.php:628
+msgid "Platform"
+msgstr "Plattform"
+
+#: src/Traits/trait-sanitize.php:618
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:1
+#: src/Admin/App/build/953.ad0a2497bc58d39f1f00.js:1
+#: src/Admin/App/src/components/Statistics/DataTableBlock.js:40
+#: src/Admin/App/src/store/useFiltersStore.js:91
+#: src/Admin/App/src/store/useGeoStore.js:59
+msgid "Conversion Rate"
+msgstr "Konversionsrate"
+
+#: src/Traits/trait-sanitize.php:617
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:1
+#: src/Admin/App/src/store/useGeoStore.js:49
+msgid "Avg. Session Duration"
+msgstr "Durchschnittliche Sitzungsdauer"
+
+#. translators: %s: number of seconds
+#: src/Frontend/class-shortcodes.php:471
+msgid "%s second"
+msgid_plural "%s seconds"
+msgstr[0] "%s Sekunde"
+msgstr[1] "%s Sekunden"
+
+#: src/Frontend/class-shortcodes.php:299
+msgid "Error fetching statistics"
+msgstr "Fehler beim Abrufen der Statistiken"
+
+#: src/Frontend/class-shortcodes.php:253
+msgid "Invalid statistic type"
+msgstr "Ungültiger Statistiktyp"
+
+#: src/Admin/App/config/tasks.php:107
+msgid "Because your cron has not been triggered more than 24 hours, some functionality might not work as expected, like updating the page views counter in a post."
+msgstr "Da Ihr Cron-Job seit mehr als 24 Stunden nicht ausgelöst wurde, funktionieren einige Funktionen möglicherweise nicht wie erwartet, z. B. das Aktualisieren des Seitenaufrufzählers in einem Beitrag."
+
+#: src/Admin/App/config/menu.php:117
+msgid "Secret Settings"
+msgstr "Geheime Einstellungen"
+
+#: src/Admin/App/config/menu.php:111
+msgid "Secret"
+msgstr "Geheimnis"
+
+#: src/Admin/App/config/menu.php:100
+msgid "Tracking behavior"
+msgstr "Verhalten verfolgen"
+
+#: src/Admin/App/config/menu.php:96
+msgid "Tracking exclusions"
+msgstr "Tracking-Ausschlüsse"
+
+#: src/Admin/App/config/menu.php:27
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:1
+#: src/Admin/App/build/953.ad0a2497bc58d39f1f00.js:1
+#: src/Admin/App/src/store/useFiltersStore.js:15
+msgid "Sources"
+msgstr "Quellen"
+
+#: src/Admin/App/config/fields.php:307
+msgid "Enable shortcodes"
+msgstr "Shortcodes aktivieren"
+
+#: src/Admin/App/config/fields.php:208
+msgid "Enable this to exclude \"bounced\" visits (typically single-page views) from your statistics. This helps highlight users who interact more deeply with your content."
+msgstr "Aktivieren Sie diese Option, um \"abgesprungene\" Besuche (typischerweise Einzelseitenaufrufe) aus Ihren Statistiken auszuschließen. Dies hilft, Nutzer hervorzuheben, die intensiver mit Ihren Inhalten interagieren."
+
+#: src/Admin/App/config/fields.php:207
+msgid "Exclude bounced visits"
+msgstr "Absprünge ausschließen"
+
+#: src/Admin/App/config/fields.php:179
+msgid "Provides basic location insights. This uses a smaller database for faster tracking and less data storage."
+msgstr "Bietet grundlegende Standortinformationen. Es wird eine kleinere Datenbank verwendet, um eine schnellere Nachverfolgung und weniger Datenspeicherung zu ermöglichen."
+
+#: src/Admin/App/config/fields.php:178
+msgid "Country only"
+msgstr "Nur Land"
+
+#: src/Admin/App/config/fields.php:174
+msgid "Provides detailed location data including city and region. This uses a larger database and may result in slightly slower tracking."
+msgstr "Bietet detaillierte Standortdaten einschließlich Stadt und Region. Dies verwendet eine größere Datenbank und kann zu einer leicht langsameren Verfolgung führen."
+
+#: src/Admin/App/config/fields.php:173
+msgid "Country, City & Region details"
+msgstr "Details zu Land, Stadt & Region"
+
+#: src/Admin/App/config/fields.php:165
+msgid "Visitor location detail"
+msgstr "Besucherstandortdetails"
+
+#: src/Admin/App/config/fields.php:154
+msgid "Exclude IP addresses from being tracked"
+msgstr "IP-Adressen von der Nachverfolgung ausschließen"
+
+#: src/TeamUpdraft/Onboarding/build/index.js:1
+#: src/TeamUpdraft/Onboarding/src/components/Fields/Plugins.jsx:84
+msgid "Already installed"
+msgstr "Bereits installiert"
+
+#: src/TeamUpdraft/Onboarding/build/index.js:1
+#: src/TeamUpdraft/Onboarding/src/components/Fields/Email.jsx:14
+msgid "Enter your e-mail address"
+msgstr "Geben Sie Ihre E-Mail-Adresse ein"
+
+#: src/TeamUpdraft/Onboarding/build/index.js:1
+#: src/TeamUpdraft/Onboarding/src/components/Fields/TrackingTest.jsx:241
+msgid "Successfully detected a visit on your site!"
+msgstr "Ein Besuch auf Ihrer Seite wurde erfolgreich erkannt!"
+
+#: src/TeamUpdraft/Onboarding/build/index.js:1
+#: src/TeamUpdraft/Onboarding/src/components/Fields/TrackingTest.jsx:238
+msgid "Unfortunately, Burst could not detect the test visit."
+msgstr "Leider konnte Burst den Testbesuch nicht erkennen."
+
+#: src/TeamUpdraft/Onboarding/build/index.js:1
+#: src/TeamUpdraft/Onboarding/src/components/Fields/TrackingTest.jsx:235
+msgid "One more attempt, hang tight..."
+msgstr "Ein weiterer Versuch, bitte gedulden Sie sich..."
+
+#: src/TeamUpdraft/Onboarding/build/index.js:1
+#: src/TeamUpdraft/Onboarding/src/components/Fields/TrackingTest.jsx:234
+msgid "Hmm, let's try that again..."
+msgstr "Hmm, versuchen wir es noch einmal..."
+
+#: src/TeamUpdraft/Onboarding/build/index.js:1
+#: src/TeamUpdraft/Onboarding/src/components/Fields/TrackingTest.jsx:233
+msgid "Running test, please wait..."
+msgstr "Test wird durchgeführt, bitte warten..."
+
+#: src/TeamUpdraft/Onboarding/build/index.js:1
+#: src/TeamUpdraft/Onboarding/src/components/Fields/Checkbox.jsx:33
+msgid "Privacy Statement"
+msgstr "Datenschutzerklärung"
+
+#: src/TeamUpdraft/Onboarding/build/index.js:1
+#: src/TeamUpdraft/Onboarding/src/components/Fields/License.jsx:18
+msgid "Enter your license key here"
+msgstr "Geben Sie hier Ihren Lizenzschlüssel ein"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/LicenseField.jsx:114
+msgid "Enter your license key here."
+msgstr "Geben Sie hier Ihren Lizenzschlüssel ein."
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/LicenseField.jsx:93
+msgid "If that does not help, please %sopen a support ticket%s so we can help you out!"
+msgstr "Wenn das nicht hilft, %söffnen Sie bitte ein Support-Ticket%s, damit wir Ihnen weiterhelfen können!"
+
+#: src/TeamUpdraft/Other_Plugins/class-other-plugins.php:156
+msgid "Action could not be completed"
+msgstr "Aktion konnte nicht abgeschlossen werden"
+
+#: src/TeamUpdraft/Other_Plugins/class-other-plugins.php:153
+msgid "Unknown action"
+msgstr "Unbekannte Aktion"
+
+#: src/TeamUpdraft/Other_Plugins/class-other-plugins.php:110
+#: src/TeamUpdraft/Other_Plugins/class-other-plugins.php:129
+msgid "You do not have permission to do this."
+msgstr "Sie haben keine Berechtigung, dies zu tun."
+
+#: src/TeamUpdraft/Other_Plugins/class-other-plugins.php:89
+#: src/TeamUpdraft/Other_Plugins/class-other-plugins.php:116
+#: src/TeamUpdraft/Other_Plugins/class-other-plugins.php:133
+msgid "Nonce verification failed"
+msgstr "Nonce-Überprüfung fehlgeschlagen"
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:839
+msgid "An error occurred while installing the plugin."
+msgstr "Beim Installieren des Plugins ist ein Fehler aufgetreten."
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:467
+msgid "Ready!"
+msgstr "Fertig!"
+
+#. translators: 1: Plugin name to be installed.
+#: src/Admin/AutoInstaller/class-auto-installer.php:466
+msgid "Installing %s..."
+msgstr "Installiere %s..."
+
+#. translators: 1: Plugin name to be installed.
+#: src/Admin/AutoInstaller/class-auto-installer.php:464
+msgid "Ready to install %s!"
+msgstr "Bereit zur Installation von %s!"
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:430
+msgid "Start"
+msgstr "Starten"
+
+#: src/Integrations/translations.php:102
+msgid "Submit button clicked"
+msgstr "Absenden-Button geklickt"
+
+#: src/Integrations/translations.php:98
+msgid "Form submitted"
+msgstr "Formular übermittelt"
+
+#: src/Integrations/translations.php:88
+msgid "Donation completed"
+msgstr "Spende abgeschlossen"
+
+#: src/Integrations/translations.php:83
+msgid "Donation button"
+msgstr "Spendenbutton"
+
+#: src/Integrations/translations.php:79
+msgid "Open donation modal"
+msgstr "Spendenfenster öffnen"
+
+#: src/Integrations/translations.php:59
+msgid "Purchase button"
+msgstr "Kaufen-Button"
+
+#: src/Integrations/translations.php:55
+msgid "Go to checkout"
+msgstr "Zum Checkout gehen"
+
+#: src/Integrations/translations.php:51
+msgid "Add to cart"
+msgstr "In den Warenkorb legen"
+
+#: src/Integrations/translations.php:38
+msgid "Checkout button"
+msgstr "Checkout-Button"
+
+#: src/Integrations/translations.php:34
+msgid "Add to cart button"
+msgstr "In den Warenkorb-Button"
+
+#: src/Admin/Burst_Onboarding/steps.php:157
+#: src/TeamUpdraft/Onboarding/config/steps.php:157
+msgid "Go to the dashboard and explore Burst!"
+msgstr "Gehen Sie zum Dashboard und entdecken Sie Burst!"
+
+#: src/Admin/Burst_Onboarding/steps.php:153
+#: src/TeamUpdraft/Onboarding/config/steps.php:153
+msgid "Premium support"
+msgstr "Premium-Support"
+
+#: src/Admin/Burst_Onboarding/steps.php:152
+#: src/TeamUpdraft/Onboarding/config/steps.php:152
+msgid "Track multiple goals to measure conversions"
+msgstr "Verfolgen Sie mehrere Ziele, um Konversionen zu messen"
+
+#: src/Admin/Burst_Onboarding/steps.php:151
+#: src/TeamUpdraft/Onboarding/config/steps.php:151
+msgid "Measure marketing campaigns with UTM tracking"
+msgstr "Messen Sie Marketingkampagnen mit UTM-Tracking"
+
+#: src/Admin/Burst_Onboarding/steps.php:150
+#: src/TeamUpdraft/Onboarding/config/steps.php:150
+msgid "See in which country your visitors are"
+msgstr "Sehen Sie, aus welchem Land Ihre Besucher kommen"
+
+#: src/Admin/Burst_Onboarding/steps.php:148
+#: src/TeamUpdraft/Onboarding/config/steps.php:148
+msgid "All done, Awesome!"
+msgstr "Alles erledigt, großartig!"
+
+#: src/Admin/Burst_Onboarding/steps.php:142
+#: src/TeamUpdraft/Onboarding/config/steps.php:142
+msgid "Install and continue"
+msgstr "Installieren und fortfahren"
+
+#: src/Admin/Burst_Onboarding/steps.php:137
+#: src/TeamUpdraft/Onboarding/config/steps.php:137
+msgid "Install TeamUpdraft plugins"
+msgstr "TeamUpdraft-Plugins installieren"
+
+#: src/Admin/Burst_Onboarding/steps.php:132
+#: src/TeamUpdraft/Onboarding/config/steps.php:132
+msgid "Based on your website configuration, we recommend the following plugins:"
+msgstr "Basierend auf Ihrer Website-Konfiguration empfehlen wir die folgenden Plugins:"
+
+#: src/Admin/Burst_Onboarding/steps.php:131
+#: src/TeamUpdraft/Onboarding/config/steps.php:131
+msgid "Recommended for your setup"
+msgstr "Empfohlen für Ihre Einrichtung"
+
+#: src/Admin/Burst_Onboarding/steps.php:116
+#: src/TeamUpdraft/Onboarding/config/steps.php:116
+msgid "Join our mailinglist and get 3 tips to improve conversions."
+msgstr "Treten Sie unserer Mailingliste bei und erhalten Sie 3 Tipps zur Verbesserung der Konversionen."
+
+#: src/Admin/Burst_Onboarding/steps.php:106
+#: src/TeamUpdraft/Onboarding/config/steps.php:106
+msgid "Stay up to date with your website's performance."
+msgstr "Bleiben Sie auf dem Laufenden über die Leistung Ihrer Website."
+
+#: src/Admin/Burst_Onboarding/steps.php:105
+#: src/TeamUpdraft/Onboarding/config/steps.php:105
+msgid "Receive weekly email reports"
+msgstr "Wöchentliche E-Mail-Berichte erhalten"
+
+#: src/Admin/Burst_Onboarding/steps.php:91
+#: src/TeamUpdraft/Onboarding/config/steps.php:91
+msgid "Exclude administrators from being tracked"
+msgstr "Administratoren von der Nachverfolgung ausschließen"
+
+#: src/Admin/Burst_Onboarding/steps.php:80
+#: src/TeamUpdraft/Onboarding/config/steps.php:80
+msgid "Excluding data gives a clearer picture of your website visitors."
+msgstr "Das Ausschließen von Daten bietet ein klareres Bild Ihrer Website-Besucher."
+
+#: src/Admin/Burst_Onboarding/steps.php:79
+#: src/TeamUpdraft/Onboarding/config/steps.php:79
+msgid "Setup recommended settings"
+msgstr "Empfohlene Einstellungen einrichten"
+
+#: src/Admin/Burst_Onboarding/steps.php:72
+#: src/TeamUpdraft/Onboarding/config/steps.php:72
+msgid "Continue"
+msgstr "Fortfahren"
+
+#: src/Admin/Burst_Onboarding/steps.php:62
+#: src/TeamUpdraft/Onboarding/config/steps.php:62
+msgid "Please check your security settings."
+msgstr "Bitte überprüfen Sie Ihre Sicherheitseinstellungen."
+
+#: src/Admin/Burst_Onboarding/steps.php:61
+#: src/TeamUpdraft/Onboarding/config/steps.php:61
+msgid "Please clear your cache and try again."
+msgstr "Bitte leeren Sie Ihren Cache und versuchen Sie es erneut."
+
+#: src/Admin/Burst_Onboarding/steps.php:58
+#: src/TeamUpdraft/Onboarding/config/steps.php:58
+msgid "Let's check if tracking is setup correctly"
+msgstr "Lassen Sie uns überprüfen, ob das Tracking korrekt eingerichtet ist"
+
+#: src/Admin/Burst_Onboarding/steps.php:29
+#: src/TeamUpdraft/Onboarding/config/steps.php:29
+msgid "Activate your license to get access to all features, and easy plugin updates!"
+msgstr "Aktivieren Sie Ihre Lizenz, um Zugriff auf alle Funktionen und einfache Plugin-Updates zu erhalten!"
+
+#: src/Admin/Burst_Onboarding/steps.php:28
+#: src/TeamUpdraft/Onboarding/config/steps.php:28
+msgid "Activate your license"
+msgstr "Aktivieren Sie Ihre Lizenz"
+
+#: src/Admin/Burst_Onboarding/steps.php:22
+#: src/TeamUpdraft/Onboarding/config/steps.php:22
+msgid "Start onboarding"
+msgstr "Onboarding starten"
+
+#: src/Admin/Burst_Onboarding/steps.php:19
+#: src/TeamUpdraft/Onboarding/config/steps.php:19
+msgid "In a few steps, we'll help you activate your license and configure your Pro features."
+msgstr "In wenigen Schritten helfen wir Ihnen, Ihre Lizenz zu aktivieren und Ihre Pro-Funktionen zu konfigurieren."
+
+#: src/Admin/Burst_Onboarding/steps.php:18
+#: src/TeamUpdraft/Onboarding/config/steps.php:18
+msgid "In a few steps, we'll help you select the best options and verify whether your website is tracking correctly."
+msgstr "In wenigen Schritten helfen wir Ihnen, die besten Optionen auszuwählen und zu überprüfen, ob Ihre Website korrekt verfolgt wird."
+
+#: src/Admin/Burst_Onboarding/steps.php:17
+#: src/TeamUpdraft/Onboarding/config/steps.php:17
+msgid "Thanks for upgrading to Burst Pro!"
+msgstr "Vielen Dank für das Upgrade auf Burst Pro!"
+
+#: src/Admin/Burst_Onboarding/steps.php:16
+#: src/TeamUpdraft/Onboarding/config/steps.php:16
+msgid "Take a minute to configure Burst!"
+msgstr "Nehmen Sie sich einen Moment Zeit, um Burst zu konfigurieren!"
+
+#. translators: %s is the user's IP address.
+#: src/Admin/Burst_Onboarding/class-burst-onboarding.php:253
+#: src/TeamUpdraft/Burst/trait-burst-plugin.php:183
+msgid "Exclude your IP (%s) from being tracked"
+msgstr "Schließen Sie Ihre IP (%s) von der Verfolgung aus"
+
+#: src/Admin/App/src/routes/settings.$settingsId.jsx:19
+msgid "Settings page not found"
+msgstr "Einstellungsseite nicht gefunden"
+
+#: src/Admin/App/src/routes/settings.$settingsId.jsx:13
+msgid "Settings section not found"
+msgstr "Einstellungsbereich nicht gefunden"
+
+#: src/Admin/App/build/258.fd4eaecbcae341cd7f22.js:1
+#: src/Admin/App/src/routes/settings.$settingsId.jsx:46
+msgid "An error occurred loading settings"
+msgstr "Beim Laden der Einstellungen ist ein Fehler aufgetreten"
+
+#: src/Admin/App/build/718.4785f8a2b1d9d7975188.js:1
+#: src/Admin/App/build/961.7109b993c8bef9db1ac9.js:1
+#: src/Admin/App/src/routes/sources.jsx:26
+#: src/Admin/App/src/routes/statistics.jsx:17
+msgid "An error occurred loading statistics"
+msgstr "Beim Laden der Statistiken ist ein Fehler aufgetreten"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Settings/SettingsFooter.jsx:24
+msgid "You have unsaved changes"
+msgstr "Sie haben ungespeicherte Änderungen"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Settings/SettingsFooter.jsx:19
+msgid "Validating..."
+msgstr "Wird überprüft..."
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Settings/SettingsFooter.jsx:14
+msgid "Saving..."
+msgstr "Speichern..."
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Settings/SettingsGroupBlock.jsx:30
+msgid "This setting is exclusive to Pro users."
+msgstr "Diese Einstellung ist ausschließlich für Pro-Nutzer verfügbar."
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Settings/SettingsGroupBlock.jsx:28
+msgid "Unlock Advanced Features with Burst Pro"
+msgstr "Erweitern Sie Ihre Möglichkeiten mit Burst Pro"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/Field.jsx:150
+msgid "Duplicate IP addresses found: "
+msgstr "Doppelte IP-Adressen gefunden: "
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/Field.jsx:123
+msgid "Invalid IP address format: "
+msgstr "Ungültiges IP-Adressformat: "
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/Field.jsx:178
+msgid "Invalid format"
+msgstr "Ungültiges Format"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/Field.jsx:169
+msgid "This field is required"
+msgstr "Dieses Feld ist erforderlich"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/LogoEditorField.jsx:110
+msgid "Reset to Default"
+msgstr "Auf Standard zurücksetzen"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/LicenseField.jsx:146
+msgid "License status"
+msgstr "Lizenzstatus"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:7
+#: src/Admin/App/src/components/Fields/LicenseField.jsx:135
+#: src/Admin/App/src/routes/sources.jsx:66
+msgid "Activate License"
+msgstr "Lizenz aktivieren"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/LicenseField.jsx:126
+msgid "Deactivate License"
+msgstr "Lizenz deaktivieren"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/LicenseField.jsx:86
+msgid "Having trouble? %sCheck our installation guide%s."
+msgstr "Haben Sie Probleme? %sSehen Sie sich unseren Installationsleitfaden an%s."
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/LicenseField.jsx:80
+msgid "Activating your license gives you automatic updates and support."
+msgstr "Durch die Aktivierung Ihrer Lizenz erhalten Sie automatische Updates und Support."
+
+#: src/Admin/Burst_Onboarding/steps.php:34
+#: src/TeamUpdraft/Onboarding/config/steps.php:34
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/LicenseField.jsx:47
+msgid "Enter your license key"
+msgstr "Geben Sie Ihren Lizenzschlüssel ein"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:1
+#: src/Admin/App/src/components/Fields/EmailReportsField.jsx:191
+msgid "Enter email address"
+msgstr "E-Mail-Adresse eingeben"
+
+#: src/Admin/Mailer/class-mail-reports.php:45
+msgid "E-mail report sent."
+msgstr "E-Mail-Bericht gesendet."
+
+#: src/Admin/class-admin.php:901
+msgid "Your data securely on your own server."
+msgstr "Ihre Daten sicher auf Ihrem eigenen Server."
+
+#: src/Admin/class-admin.php:900
+msgid "Asking consent for statistics often not required."
+msgstr "Die Einholung der Zustimmung für Statistiken ist oft nicht erforderlich."
+
+#: src/Admin/class-admin.php:899
+msgid "You have access to your analytical data"
+msgstr "Sie haben Zugriff auf Ihre Analysedaten"
+
+#: src/Admin/class-admin.php:897
+msgid "Are you sure? With Burst Statistics active:"
+msgstr "Sind Sie sicher? Mit aktivierten Burst-Statistiken:"
+
+#: src/Admin/App/config/tasks.php:95
+msgid "Statistics are now shown including bounces. Your data has not changed, only the bounces are now included in what you see."
+msgstr "Statistiken werden jetzt inklusive Absprünge angezeigt. Ihre Daten haben sich nicht geändert, nur die Absprünge sind jetzt in dem enthalten, was Sie sehen."
+
+#: src/Admin/App/config/menu.php:84
+msgid "With Pro, you can archive old data to keep your dashboard clean and restore it anytime when needed. No more lost data. No more clutter. Just seamless control."
+msgstr "Mit Pro können Sie alte Daten archivieren, um Ihr Dashboard sauber zu halten, und sie bei Bedarf jederzeit wiederherstellen. Keine verlorenen Daten mehr. Kein Durcheinander mehr. Einfach nahtlose Kontrolle."
+
+#: src/Admin/App/config/fields.php:218
+msgid "Boost site speed by merging the Burst settings into the Burst script."
+msgstr "Steigern Sie die Geschwindigkeit Ihrer Website, indem Sie die Burst-Einstellungen in das Burst-Skript integrieren."
+
+#: src/Admin/App/config/fields.php:198
+msgid "URL changes such as parameters or fragments will be tracked as separate pageviews. Useful for single-page applications or dynamic websites."
+msgstr "URL-Änderungen wie Parameter oder Fragmente werden als separate Seitenaufrufe erfasst. Nützlich für Single-Page-Anwendungen oder dynamische Websites."
+
+#: src/Admin/App/config/fields.php:155
+msgid "Enter one IP address per line"
+msgstr "Geben Sie pro Zeile eine IP-Adresse ein"
+
+#: src/Admin/App/config/fields.php:114
+msgid "This will send an e-mail to all listed recipients."
+msgstr "Dies wird eine E-Mail an alle aufgeführten Empfänger senden."
+
+#: src/Admin/App/config/fields.php:113
+msgid "Send an e-mail report"
+msgstr "Einen E-Mail-Bericht senden"
+
+#: src/Admin/App/config/fields.php:112
+msgid "Send"
+msgstr "Senden"
+
+#: src/Admin/App/config/fields.php:90
+msgid "Recommended size is 200 pixels by 70 pixels and try to keep the filesize under 200 kb."
+msgstr "Die empfohlene Größe beträgt 200 Pixel mal 70 Pixel, und versuchen Sie, die Dateigröße unter 200 kb zu halten."
+
+#: src/Admin/App/config/fields.php:62
+msgid "Stop tracking visitors who have 'Do Not Track' enabled in their browser."
+msgstr "Beenden Sie das Tracking von Besuchern, die 'Do Not Track' in ihrem Browser aktiviert haben."
+
+#: src/Admin/App/config/fields.php:50
+msgid "Track visitors without cookies using browser & device info."
+msgstr "Verfolgen Sie Besucher ohne Cookies mithilfe von Browser- und Geräteinformationen."
+
+#: src/Admin/App/config/fields.php:37
+msgid "Load the tracking script later for better pagespeed, could cause visitors who leave quickly to be missed."
+msgstr "Laden Sie das Tracking-Skript später, um die Seitengeschwindigkeit zu verbessern. Dies könnte dazu führen, dass Besucher, die schnell die Seite verlassen, nicht erfasst werden."
+
+#: src/Admin/App/class-app.php:1448
+msgid "No changes were made"
+msgstr "Es wurden keine Änderungen vorgenommen"
+
+#: src/Admin/App/class-app.php:1447
+msgid "Settings saved successfully"
+msgstr "Einstellungen erfolgreich gespeichert"
+
+#: src/Admin/App/config/fields.php:71
+msgid "Dismiss all notices in your dashboard except critical ones"
+msgstr "Alle Hinweise in Ihrem Dashboard außer den kritischen schließen"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/build/953.ad0a2497bc58d39f1f00.js:1
+#: src/Admin/App/src/components/Dashboard/GoalsHeader.js:29
+#: src/Admin/App/src/components/Fields/EditableTextField.jsx:73
+msgid "Untitled goal"
+msgstr "Unbenanntes Ziel"
+
+#: src/Admin/App/config/fields.php:197
+msgid "Track URL changes as separate pageviews"
+msgstr "Verfolgen Sie URL-Änderungen als separate Seitenaufrufe"
+
+#: src/Admin/App/config/tasks.php:56
+msgid "Last chance!"
+msgstr "Letzte Chance!"
+
+#: src/Admin/App/config/tasks.php:56
+msgid "Cyber Monday"
+msgstr "Cyber Monday"
+
+#: src/Admin/App/config/tasks.php:44
+msgid "Limited time offer!"
+msgstr "Angebot für begrenzte Zeit!"
+
+#: src/Admin/App/config/tasks.php:44 src/Admin/App/config/tasks.php:56
+msgid "Get 40% Off Burst Pro!"
+msgstr "Sichern Sie sich 40% Rabatt auf Burst Pro!"
+
+#: src/Admin/App/config/tasks.php:44
+msgid "Black Friday"
+msgstr "Black Friday"
+
+#: src/Admin/class-tasks.php:226
+msgid "Sale"
+msgstr "Verkauf"
+
+#: src/Admin/App/config/goal-fields.php:40
+msgid "Track execution of a WordPress hook"
+msgstr "Verfolgen Sie die Ausführung eines WordPress-Hooks"
+
+#: src/Admin/App/config/goal-fields.php:39
+msgid "Hook"
+msgstr "Hook"
+
+#: src/Admin/App/Fields/class-fields.php:45
+msgid "Using summary tables speeds up the dashboard on higher traffic environments, but can show small differences from the actual data."
+msgstr "Die Verwendung von Zusammenfassungstabellen beschleunigt das Dashboard in Umgebungen mit höherem Datenverkehr, kann jedoch kleine Abweichungen von den tatsächlichen Daten aufweisen."
+
+#: src/Admin/App/Fields/class-fields.php:44
+msgid "Disable the usage of summary tables"
+msgstr "Deaktivieren Sie die Verwendung von Zusammenfassungstabellen"
+
+#: src/Integrations/translations.php:111 src/Integrations/translations.php:115
+#: src/Integrations/translations.php:124 src/Integrations/translations.php:136
+#: src/Integrations/translations.php:145 src/Integrations/translations.php:149
+#: src/Integrations/translations.php:158 src/Integrations/translations.php:167
+msgid "Submit form"
+msgstr "Formular absenden"
+
+#: src/Integrations/translations.php:71
+msgid "Subscription Cancelled"
+msgstr "Abonnement gekündigt"
+
+#: src/Integrations/translations.php:67
+msgid "Subscription Created"
+msgstr "Abonnement erstellt"
+
+#: src/Integrations/translations.php:47
+msgid "Purchase"
+msgstr "Kauf"
+
+#: src/Integrations/translations.php:30
+msgid "Payment Completed"
+msgstr "Zahlung abgeschlossen"
+
+#: src/Integrations/translations.php:26
+msgid "Order Created"
+msgstr "Bestellung erstellt"
+
+#: src/Integrations/translations.php:22
+msgid "Add to Cart"
+msgstr "In den Warenkorb legen"
+
+#: src/Integrations/translations.php:13
+msgid "Form Submission"
+msgstr "Formularübermittlung"
+
+#: src/Admin/App/config/tasks.php:75
+msgid "New! Send weekly or monthly email reports to multiple recipients."
+msgstr "Neu! Senden Sie wöchentliche oder monatliche E-Mail-Berichte an mehrere Empfänger."
+
+#: src/Admin/DB_Upgrade/class-db-upgrade.php:71
+msgid "For large databases this process may take a while. Your data will be tracked as usual."
+msgstr "Bei großen Datenbanken kann dieser Vorgang eine Weile dauern. Ihre Daten werden wie gewohnt erfasst."
+
+#. translators: %s: progress of the upgrade.
+#: src/Admin/DB_Upgrade/class-db-upgrade.php:68
+msgid "An upgrade is running in the background, and is currently at %s."
+msgstr "Ein Upgrade läuft im Hintergrund und ist derzeit bei %s."
+
+#. Author of the plugin
+#: burst.php
+msgid "Burst Statistics - Stats & Analytics for WordPress"
+msgstr "Burst-Statistiken - Statistiken & Analysen für WordPress"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:1
+#: src/Admin/App/src/components/Fields/EmailReportsField.jsx:200
+msgid "Add to list"
+msgstr "Zur Liste hinzufügen"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:1
+#: src/Admin/App/src/components/Fields/EmailReportsField.jsx:112
+msgid "Frequency"
+msgstr "Häufigkeit"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:1
+#: src/Admin/App/src/components/Fields/EmailReportsField.jsx:108
+msgid "Email"
+msgstr "E-Mail"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:1
+#: src/Admin/App/src/components/Fields/EmailReportsField.jsx:159
+msgid "No emails added yet"
+msgstr "Noch keine E-Mails hinzugefügt"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:1
+#: src/Admin/App/src/components/Fields/EmailReportsField.jsx:152
+msgid "Recipients will receive weekly or monthly reports with statistics about your website. Add or remove email addresses in the list below."
+msgstr "Empfänger erhalten wöchentliche oder monatliche Berichte mit Statistiken über Ihre Website. Fügen Sie unten E-Mail-Adressen hinzu oder entfernen Sie diese."
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:1
+#: src/Admin/App/src/components/Fields/EmailReportsField.jsx:49
+#: src/Admin/App/src/components/Fields/EmailReportsField.jsx:68
+msgid "Invalid email address"
+msgstr "Ungültige E-Mail-Adresse"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:1
+#: src/Admin/App/src/components/Fields/EmailReportsField.jsx:64
+msgid "Email address is required"
+msgstr "E-Mail-Adresse ist erforderlich"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:1
+#: src/Admin/App/src/components/Fields/EmailReportsField.jsx:76
+msgid "Email address already added"
+msgstr "E-Mail-Adresse bereits hinzugefügt"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:1
+#: src/Admin/App/src/components/Fields/EmailReportsField.jsx:72
+msgid "Maximum 10 emails allowed"
+msgstr "Maximal 10 E-Mails erlaubt"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:1
+#: src/Admin/App/src/components/Fields/EmailReportsField.jsx:39
+msgid "Monthly"
+msgstr "Monatlich"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:1
+#: src/Admin/App/src/components/Fields/EmailReportsField.jsx:38
+msgid "Weekly"
+msgstr "Wöchentlich"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/LogoEditorField.jsx:56
+msgid "Set logo"
+msgstr "Logo festlegen"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/LogoEditorField.jsx:54
+msgid "Select a logo"
+msgstr "Wählen Sie ein Logo aus"
+
+#: src/Admin/App/media/media-override.php:281
+msgid "Add to Video Playlist"
+msgstr "Zur Videoplaylist hinzufügen"
+
+#: src/Admin/App/media/media-override.php:280
+msgid "Add to video playlist"
+msgstr "Zur Videoplaylist hinzufügen"
+
+#: src/Admin/App/media/media-override.php:279
+msgid "Update video playlist"
+msgstr "Videoplaylist aktualisieren"
+
+#: src/Admin/App/media/media-override.php:278
+msgid "Insert video playlist"
+msgstr "Video-Playlist einfügen"
+
+#: src/Admin/App/media/media-override.php:277
+msgid "&#8592; Cancel Video Playlist"
+msgstr "&#8592; Video-Playlist abbrechen"
+
+#: src/Admin/App/media/media-override.php:276
+msgid "Edit Video Playlist"
+msgstr "Videoplaylist bearbeiten"
+
+#: src/Admin/App/media/media-override.php:275
+msgid "Create Video Playlist"
+msgstr "Video-Playlist erstellen"
+
+#: src/Admin/App/media/media-override.php:274
+msgid "Drag and drop to reorder videos."
+msgstr "Ziehen Sie die Videos per Drag & Drop, um sie neu anzuordnen."
+
+#: src/Admin/App/media/media-override.php:271
+msgid "Add to Audio Playlist"
+msgstr "Zur Audio-Playlist hinzufügen"
+
+#: src/Admin/App/media/media-override.php:270
+msgid "Add to audio playlist"
+msgstr "Zur Audiowiedergabeliste hinzufügen"
+
+#: src/Admin/App/media/media-override.php:269
+msgid "Update audio playlist"
+msgstr "Audio-Playlist aktualisieren"
+
+#: src/Admin/App/media/media-override.php:268
+msgid "Insert audio playlist"
+msgstr "Audio-Playlist einfügen"
+
+#: src/Admin/App/media/media-override.php:267
+msgid "&#8592; Cancel Audio Playlist"
+msgstr "&#8592; Audio-Playlist abbrechen"
+
+#: src/Admin/App/media/media-override.php:266
+msgid "Edit Audio Playlist"
+msgstr "Audio-Playlist bearbeiten"
+
+#: src/Admin/App/media/media-override.php:265
+msgid "Create Audio Playlist"
+msgstr "Audio-Playlist erstellen"
+
+#: src/Admin/App/media/media-override.php:264
+msgid "Drag and drop to reorder tracks."
+msgstr "Ziehen Sie die Titel per Drag & Drop, um sie neu anzuordnen."
+
+#: src/Admin/App/media/media-override.php:261
+msgid "Add Subtitles"
+msgstr "Untertitel hinzufügen"
+
+#: src/Admin/App/media/media-override.php:260
+msgid "Select Poster Image"
+msgstr "Posterbild auswählen"
+
+#: src/Admin/App/media/media-override.php:258
+msgid "Add Video Source"
+msgstr "Videoquelle hinzufügen"
+
+#: src/Admin/App/media/media-override.php:257
+msgid "Replace Video"
+msgstr "Video ersetzen"
+
+#: src/Admin/App/media/media-override.php:256
+msgid "Video Details"
+msgstr "Videodetails"
+
+#: src/Admin/App/media/media-override.php:252
+msgid "Add Audio Source"
+msgstr "Audioquelle hinzufügen"
+
+#: src/Admin/App/media/media-override.php:251
+msgid "Replace Audio"
+msgstr "Audio ersetzen"
+
+#: src/Admin/App/media/media-override.php:250
+msgid "Audio Details"
+msgstr "Audio-Details"
+
+#: src/Admin/App/media/media-override.php:247
+msgid "There has been an error cropping your image."
+msgstr "Beim Zuschneiden Ihres Bildes ist ein Fehler aufgetreten."
+
+#: src/Admin/App/media/media-override.php:246
+msgid "Suggested image dimensions:"
+msgstr "Empfohlene Bildabmessungen:"
+
+#: src/Admin/App/media/media-override.php:245
+msgid "Cropping&hellip;"
+msgstr "Zuschneiden&hellip;"
+
+#: src/Admin/App/media/media-override.php:244
+msgid "Crop your image"
+msgstr "Zuschneiden Ihres Bildes"
+
+#: src/Admin/App/media/media-override.php:243
+msgid "Crop Image"
+msgstr "Bild zuschneiden"
+
+#: src/Admin/App/media/media-override.php:242
+msgid "Skip Cropping"
+msgstr "Zuschneiden überspringen"
+
+#: src/Admin/App/media/media-override.php:241
+msgid "Select and Crop"
+msgstr "Auswählen und Zuschneiden"
+
+#: src/Admin/App/media/media-override.php:240
+msgid "Choose Image"
+msgstr "Bild auswählen"
+
+#: src/Admin/App/media/media-override.php:237
+msgid "Edit Image"
+msgstr "Bild bearbeiten"
+
+#: src/Admin/App/media/media-override.php:236
+#: src/Admin/App/media/media-override.php:253
+#: src/Admin/App/media/media-override.php:259
+msgid "Cancel Edit"
+msgstr "Bearbeitung abbrechen"
+
+#: src/Admin/App/media/media-override.php:235
+msgid "Replace Image"
+msgstr "Bild ersetzen"
+
+#: src/Admin/App/media/media-override.php:234
+msgid "Image Details"
+msgstr "Bilddetails"
+
+#: src/Admin/App/media/media-override.php:231
+msgid "Reverse order"
+msgstr "Reihenfolge umkehren"
+
+#: src/Admin/App/media/media-override.php:230
+msgid "Add to Gallery"
+msgstr "Zur Galerie hinzufügen"
+
+#: src/Admin/App/media/media-override.php:229
+msgid "Add to gallery"
+msgstr "Zur Galerie hinzufügen"
+
+#: src/Admin/App/media/media-override.php:228
+msgid "Update gallery"
+msgstr "Galerie aktualisieren"
+
+#: src/Admin/App/media/media-override.php:227
+msgid "Insert gallery"
+msgstr "Galerie einfügen"
+
+#: src/Admin/App/media/media-override.php:226
+msgid "&#8592; Cancel Gallery"
+msgstr "&#8592; Galerie abbrechen"
+
+#: src/Admin/App/media/media-override.php:225
+msgid "Edit Gallery"
+msgstr "Galerie bearbeiten"
+
+#: src/Admin/App/media/media-override.php:224
+msgid "Create Gallery"
+msgstr "Galerie erstellen"
+
+#: src/Admin/App/media/media-override.php:221
+msgid "Set featured image"
+msgstr "Beitragsbild festlegen"
+
+#: src/Admin/App/media/media-override.php:220
+msgid "Set Featured Image"
+msgstr "Beitragsbild festlegen"
+
+#: src/Admin/App/media/media-override.php:217
+msgid "Insert from URL"
+msgstr "Von URL einfügen"
+
+#: src/Admin/App/media/media-override.php:214
+msgid "Attachment Details"
+msgstr "Anhangdetails"
+
+#: src/Admin/App/media/media-override.php:211
+msgid "No media attachments found."
+msgstr "Keine Medienanhänge gefunden."
+
+#: src/Admin/App/media/media-override.php:210
+msgid "Search Media"
+msgstr "Medien durchsuchen"
+
+#: src/Admin/App/media/media-override.php:209
+msgid "Filter by type"
+msgstr "Nach Typ filtern"
+
+#: src/Admin/App/media/media-override.php:208
+msgid "Filter by date"
+msgstr "Nach Datum filtern"
+
+#: src/Admin/App/media/media-override.php:206
+msgid "Delete Permanently"
+msgstr "Endgültig löschen"
+
+#: src/Admin/App/media/media-override.php:205
+msgid "Delete Selected"
+msgstr "Ausgewählte löschen"
+
+#: src/Admin/App/media/media-override.php:204
+msgid "Untrash Selected"
+msgstr "Ausgewählte wiederherstellen"
+
+#: src/Admin/App/media/media-override.php:203
+msgid "Trash Selected"
+msgstr "Ausgewählte in den Papierkorb verschieben"
+
+#: src/Admin/App/media/media-override.php:202
+msgid "Cancel Selection"
+msgstr "Auswahl aufheben"
+
+#: src/Admin/App/media/media-override.php:201
+msgid "Bulk Select"
+msgstr "Mehrfachauswahl"
+
+#: src/Admin/App/media/media-override.php:200
+msgid ""
+"You are about to trash these items.\n"
+"  'Cancel' to stop, 'OK' to delete."
+msgstr ""
+"Sie sind dabei, diese Elemente in den Papierkorb zu verschieben.\n"
+"  'Abbrechen', um zu stoppen, 'OK', um zu löschen."
+
+#: src/Admin/App/media/media-override.php:199
+msgid ""
+"You are about to permanently delete these items.\n"
+"  'Cancel' to stop, 'OK' to delete."
+msgstr ""
+"Sie sind dabei, diese Elemente dauerhaft zu löschen.\n"
+"  'Abbrechen', um zu stoppen, 'OK', um zu löschen."
+
+#: src/Admin/App/media/media-override.php:198
+msgid ""
+"You are about to permanently delete this item.\n"
+"  'Cancel' to stop, 'OK' to delete."
+msgstr ""
+"Sie sind dabei, dieses Element dauerhaft zu löschen.\n"
+"  'Abbrechen', um den Vorgang zu stoppen, 'OK', um zu löschen."
+
+#: src/Admin/App/media/media-override.php:197
+msgid "Uploaded to this post"
+msgstr "Zu diesem Beitrag hochgeladen"
+
+#: src/Admin/App/media/media-override.php:197
+msgid "Uploaded to this page"
+msgstr "Auf diese Seite hochgeladen"
+
+#: src/Admin/App/media/media-override.php:196
+msgctxt "noun"
+msgid "Trash"
+msgstr "Papierkorb"
+
+#: src/Admin/App/media/media-override.php:195
+msgid "Unattached"
+msgstr "Nicht zugeordnet"
+
+#: src/Admin/App/media/media-override.php:194
+msgid "Insert into post"
+msgstr "In Beitrag einfügen"
+
+#: src/Admin/App/media/media-override.php:194
+msgid "Insert into page"
+msgstr "In Seite einfügen"
+
+#: src/Admin/App/media/media-override.php:193
+msgid "No items found."
+msgstr "Keine Elemente gefunden."
+
+#: src/Admin/App/media/media-override.php:192
+msgid "All dates"
+msgstr "Alle Daten"
+
+#: src/Admin/App/media/media-override.php:191
+msgid "All media items"
+msgstr "Alle Medienobjekte"
+
+#: src/Admin/App/media/media-override.php:190
+msgid "&#8592; Return to library"
+msgstr "&#8592; Zurück zur Bibliothek"
+
+#: src/Admin/App/media/media-override.php:189
+msgid "Create a new video playlist"
+msgstr "Erstellen Sie eine neue Videoplaylist"
+
+#: src/Admin/App/media/media-override.php:188
+msgid "Create a new playlist"
+msgstr "Erstellen Sie eine neue Playlist"
+
+#: src/Admin/App/media/media-override.php:187
+msgid "Create a new gallery"
+msgstr "Erstellen Sie eine neue Galerie"
+
+#: src/Admin/App/media/media-override.php:186
+msgid "Insert Media"
+msgstr "Medien einfügen"
+
+#: src/Admin/App/media/media-override.php:185
+msgid "Media Library"
+msgstr "Mediathek"
+
+#: src/Admin/App/media/media-override.php:182
+msgid "Upload Images"
+msgstr "Bilder hochladen"
+
+#: src/Admin/App/media/media-override.php:181
+msgid "Upload Files"
+msgstr "Dateien hochladen"
+
+#: src/Admin/App/media/media-override.php:178
+msgid "Drag and drop to reorder media files."
+msgstr "Ziehen Sie die Mediendateien per Drag & Drop, um sie neu anzuordnen."
+
+#. translators: This is a would-be plural string used in the media manager. If
+#. there is not a word you can use in your language to avoid issues with the
+#. lack of plural support here, turn it into "selected: %d" then translate it.
+#: src/Admin/App/media/media-override.php:177
+msgid "%d selected"
+msgstr "%d ausgewählt"
+
+#: src/Admin/App/media/media-override.php:171
+msgid "Back"
+msgstr "Zurück"
+
+#: src/Admin/App/media/media-override.php:170
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:1
+#: src/Admin/App/src/components/Fields/EmailReportsField.jsx:125
+#: src/Admin/App/src/components/Fields/EmailReportsField.jsx:131
+msgid "Remove"
+msgstr "Entfernen"
+
+#: src/Admin/App/media/media-override.php:169
+msgid "Replace"
+msgstr "Ersetzen"
+
+#: src/Admin/App/media/media-override.php:168
+msgid "Update"
+msgstr "Aktualisieren"
+
+#: src/Admin/App/media/media-override.php:166
+msgid "Select"
+msgstr "Auswählen"
+
+#: src/Admin/App/media/media-override.php:164
+msgid "Add Media"
+msgstr "Medien hinzufügen"
+
+#: src/Admin/App/media/media-override.php:163
+msgid "URL"
+msgstr "URL"
+
+#: src/Admin/App/config/fields.php:285 src/Admin/App/config/fields.php:286
+msgid "Reset statistics"
+msgstr "Statistiken zurücksetzen"
+
+#: src/Admin/App/config/fields.php:281
+msgid "This action can not be undone."
+msgstr "Diese Aktion kann nicht rückgängig gemacht werden."
+
+#: src/Admin/App/config/fields.php:281 src/Admin/App/config/fields.php:287
+msgid "This will permanently delete all statistics, goals, and goal statistics."
+msgstr "Dies wird alle Statistiken, Ziele und Zielstatistiken dauerhaft löschen."
+
+#: src/Admin/App/config/fields.php:280
+msgid "Are you sure?"
+msgstr "Sind Sie sicher?"
+
+#: src/Admin/App/config/fields.php:89
+msgid "Change logo in the email reports"
+msgstr "Logo in den E-Mail-Berichten ändern"
+
+#: src/Admin/App/config/fields.php:80 src/Admin/App/config/menu.php:55
+msgid "Email reports"
+msgstr "E-Mail-Berichte"
+
+#: src/Admin/Mailer/class-mailer.php:118
+msgid "Email address not valid"
+msgstr "E-Mail-Adresse nicht gültig"
+
+#: src/Admin/Mailer/class-mailer.php:114
+msgid "Email could not be sent. No message or subject set."
+msgstr "E-Mail konnte nicht gesendet werden. Keine Nachricht oder kein Betreff festgelegt."
+
+#: src/Admin/Mailer/class-mailer.php:73
+msgid "Explore your insights"
+msgstr "Entdecken Sie Ihre Einblicke"
+
+#. translators: %s is the website's domain name (e.g., example.com).
+#: src/Admin/Mailer/class-mailer.php:71
+msgid "Dive deeper into your analytics and uncover new opportunities for %s."
+msgstr "Tauchen Sie tiefer in Ihre Analysen ein und entdecken Sie neue Möglichkeiten für %s."
+
+#: src/Admin/Mailer/class-mailer.php:69
+msgid "Find out more"
+msgstr "Erfahren Sie mehr"
+
+#: src/Admin/Mailer/class-mailer.php:55
+msgid "Why did I receive this email?"
+msgstr "Warum habe ich diese E-Mail erhalten?"
+
+#: src/Admin/Mailer/class-mailer.php:54
+msgid "This email was sent to"
+msgstr "Diese E-Mail wurde gesendet an"
+
+#: src/Admin/Mailer/class-mailer.php:53
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:4
+#: src/Admin/App/src/components/Settings/SettingsNotices.jsx:74
+#: src/Admin/App/src/components/Sources/WorldMap/WorldMap.jsx:403
+msgid "Learn more"
+msgstr "Mehr erfahren"
+
+#: src/Admin/Mailer/class-mailer.php:50
+msgid "See full report"
+msgstr "Vollständigen Bericht anzeigen"
+
+#: src/Admin/Mailer/class-mailer.php:47
+msgid "If you don't want to receive these e-mails in your inbox, please go to the Burst settings page on your website and disable the email report setting or contact the administrator of your website."
+msgstr "Wenn Sie diese E-Mails nicht in Ihrem Posteingang erhalten möchten, gehen Sie bitte zur Burst-Einstellungsseite auf Ihrer Website und deaktivieren Sie die E-Mail-Berichtseinstellung oder kontaktieren Sie den Administrator Ihrer Website."
+
+#: src/Admin/Mailer/class-mailer.php:46
+msgid "This e-mail is sent from your own WordPress website, which is:"
+msgstr "Diese E-Mail wird von Ihrer eigenen WordPress-Website gesendet, die lautet:"
+
+#: src/Admin/Mailer/class-mail-reports.php:198
+msgid "vs. previous month"
+msgstr "im Vergleich zum Vormonat"
+
+#: src/Admin/Mailer/class-mail-reports.php:198
+msgid "vs. previous week"
+msgstr "im Vergleich zur Vorwoche"
+
+#. translators: %s is the domain name (e.g., example.com).
+#. translators: %s is the domain name (e.g., example.com), HTML tags included
+#. for styling.
+#. translators: %s is the website's domain name (e.g., example.com).
+#. translators: %s is the website's domain name (e.g., example.com), used in
+#. HTML context.
+#: src/Admin/Mailer/class-mail-reports.php:157
+#: src/Admin/Mailer/class-mail-reports.php:159
+#: src/Admin/Mailer/class-mailer.php:49 src/Admin/Mailer/class-mailer.php:52
+msgctxt "domain name"
+msgid "Your weekly insights for %s are here!"
+msgstr "Ihre wöchentlichen Einblicke für %s sind da!"
+
+#. translators: 1: start date, 2: end date.
+#: src/Admin/Mailer/class-mail-reports.php:154
+msgid "This report covers the period from %s to %s."
+msgstr "Dieser Bericht umfasst den Zeitraum vom %s bis %s."
+
+#. translators: %s is the domain name (e.g., example.com).
+#. translators: %s is the domain name (e.g., example.com), HTML tags included
+#. for styling.
+#: src/Admin/Mailer/class-mail-reports.php:129
+#: src/Admin/Mailer/class-mail-reports.php:131
+msgctxt "domain name"
+msgid "Your monthly insights for %s are here!"
+msgstr "Ihre monatlichen Einblicke für %s sind da!"
+
+#: src/Admin/class-admin.php:993
+msgid "Successfully cleared data."
+msgstr "Daten erfolgreich gelöscht."
+
+#: src/Admin/Mailer/class-mail-reports.php:257
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:1
+#: src/Admin/App/build/953.ad0a2497bc58d39f1f00.js:1
+#: src/Admin/App/src/components/Statistics/DataTableBlock.js:132
+#: src/Admin/App/src/store/useFiltersStore.js:107
+msgid "Campaign"
+msgstr "Kampagne"
+
+#: src/Traits/trait-sanitize.php:611
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:1
+#: src/Admin/App/build/953.ad0a2497bc58d39f1f00.js:1
+#: src/Admin/App/src/components/Statistics/DataTableBlock.js:66
+#: src/Admin/App/src/store/useFiltersStore.js:35
+msgid "Page URL"
+msgstr "Seiten-URL"
+
+#: src/Admin/App/config/goal-fields.php:96
+msgid "What hook do you want to track?"
+msgstr "Welchen Hook möchten Sie verfolgen?"
+
+#: src/Admin/App/Fields/class-fields.php:57
+msgid "Track all hits networkwide, and view them on the dashboard of your main site"
+msgstr "Verfolgen Sie alle Zugriffe im gesamten Netzwerk und sehen Sie sie im Dashboard Ihrer Hauptseite ein."
+
+#: src/Admin/App/config/fields.php:217
+msgid "Merge tracking settings and script"
+msgstr "Tracking-Einstellungen und Skript zusammenführen"
+
+#: src/Admin/App/config/menu.php:104
+msgid "Scripts"
+msgstr "Skripte"
+
+#. translators: %s is the number of visitors tracked by Burst Statistics.
+#: src/Admin/class-review.php:120
+msgid "Hi there! Your site is doing awesome! Burst Statistics has tracked %s visitors for you!"
+msgstr "Hallo! Ihre Website läuft großartig! Burst Statistics hat %s Besucher für Sie erfasst!"
+
+#: src/Admin/App/config/tasks.php:67
+msgid "New! Track your UTM Campaigns and URL Parameters! Click on the 'Pages' dropdown in the Statistics tab."
+msgstr "Neu! Verfolgen Sie Ihre UTM-Kampagnen und URL-Parameter! Klicken Sie auf das Dropdown-Menü 'Seiten' im Statistik-Tab."
+
+#: src/Frontend/class-shortcodes.php:521
+msgid "No posts found"
+msgstr "Keine Beiträge gefunden"
+
+#. translators: %d is the number of times the page has been viewed.
+#: src/Frontend/class-frontend.php:298
+msgid "This page has been viewed %d time."
+msgid_plural "This page has been viewed %d times."
+msgstr[0] "Diese Seite wurde %d Mal angesehen."
+msgstr[1] "Diese Seite wurde %d Mal angesehen."
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:433
+msgid "Recommended by Burst Statistics"
+msgstr "Empfohlen von Burst Statistics"
+
+#: src/Admin/Statistics/class-statistics.php:268
+msgctxt "Week 1, as in Week number 1"
+msgid "Week"
+msgstr "Woche"
+
+#. Description of the plugin
+#: burst.php
+msgid "Get detailed insights into visitors’ behavior with Burst Statistics, the privacy-friendly analytics dashboard."
+msgstr "Erhalten Sie detaillierte Einblicke in das Verhalten Ihrer Besucher mit Burst Statistics, dem datenschutzfreundlichen Analyse-Dashboard."
+
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:1
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:7
+#: src/Admin/App/src/components/Common/AdvancedFilter.js:86
+#: src/Admin/App/src/components/Common/PopoverFilter.js:112
+#: src/Admin/App/src/components/Sources/WorldMap/MapSettingsPopover.jsx:278
+msgid "Reset to defaults"
+msgstr "Auf Standardeinstellungen zurücksetzen"
+
+#: src/Admin/App/src/components/Common/ErrorBoundary.jsx:119
+msgid "Click %s to post your topic. Our team will look into the issue and provide assistance."
+msgstr "Klicken Sie auf %s, um Ihr Thema zu veröffentlichen. Unser Team wird das Problem untersuchen und Unterstützung bieten."
+
+#: src/Admin/App/src/components/Common/ErrorBoundary.jsx:112
+msgid "Description: Paste the copied error details and explain what you were doing when the error occurred."
+msgstr "Beschreibung: Fügen Sie die kopierten Fehlerdetails ein und erklären Sie, was Sie getan haben, als der Fehler auftrat."
+
+#: src/Admin/App/src/components/Common/ErrorBoundary.jsx:104
+msgid "Title: Mention %s along with a brief hint of the error."
+msgstr "Titel: Erwähnen Sie %s zusammen mit einem kurzen Hinweis auf den Fehler."
+
+#: src/Admin/App/src/components/Common/ErrorBoundary.jsx:95
+msgid "Once logged in, click on %s under the Burst Statistics forum."
+msgstr "Nach dem Einloggen klicken Sie auf %s im Burst Statistics Forum."
+
+#: src/Admin/App/src/components/Common/ErrorBoundary.jsx:88
+msgid "If you haven’t already, log in to your WordPress.org account or create a new account."
+msgstr "Falls Sie es noch nicht getan haben, melden Sie sich bei Ihrem WordPress.org-Konto an oder erstellen Sie ein neues Konto."
+
+#: src/Admin/App/src/components/Common/ErrorBoundary.jsx:84
+msgid "Navigate to the Support Forum."
+msgstr "Zum Support-Forum navigieren."
+
+#: src/Admin/App/src/components/Common/ErrorBoundary.jsx:64
+msgid "We're sorry for the trouble. Please take a moment to report this issue on the WordPress forums so we can work on fixing it. Here’s how you can report the issue:"
+msgstr "Es tut uns leid für die Unannehmlichkeiten. Bitte nehmen Sie sich einen Moment Zeit, um dieses Problem in den WordPress-Foren zu melden, damit wir an einer Lösung arbeiten können. So können Sie das Problem melden:"
+
+#: src/Admin/App/src/components/Common/ErrorBoundary.jsx:72
+msgid "Copy the error details by clicking the %s button above."
+msgstr "Kopieren Sie die Fehlerdetails, indem Sie oben auf die Schaltfläche %s klicken."
+
+#: src/Admin/App/src/components/Common/ErrorBoundary.jsx:60
+msgid "Copy Error"
+msgstr "Kopierfehler"
+
+#: src/Admin/App/src/components/Common/ErrorBoundary.jsx:44
+msgid "Uh-oh! We stumbled upon an error."
+msgstr "Oh je! Wir sind auf einen Fehler gestoßen."
+
+#: src/Admin/Mailer/class-mail-reports.php:372
+#: src/Frontend/class-frontend-statistics.php:640
+#: src/Traits/trait-sanitize.php:622
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:1
+#: src/Admin/App/src/components/Statistics/DataTableBlock.js:46
+msgid "Bounce rate"
+msgstr "Absprungrate"
+
+#: src/Frontend/class-frontend-statistics.php:642
+#: src/Traits/trait-sanitize.php:619
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:1
+#: src/Admin/App/src/hooks/useFilterDisplay.js:87
+msgid "New visitors"
+msgstr "Neue Besucher"
+
+#: src/Traits/trait-sanitize.php:616
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:1
+#: src/Admin/App/src/components/Statistics/DataTableBlock.js:52
+msgid "Time on page"
+msgstr "Verweildauer auf der Seite"
+
+#: src/Admin/Statistics/class-goal-statistics.php:127
+msgid "Top performing page"
+msgstr "Am besten abschneidende Seite"
+
+#: src/Admin/App/config/goal-fields.php:106
+msgid "What metric do you want to use to calculate the conversion rate?"
+msgstr "Welchen Messwert möchten Sie zur Berechnung der Konversionsrate verwenden?"
+
+#: src/Frontend/class-frontend-admin.php:82
+msgid "Go to dashboard"
+msgstr "Zum Dashboard gehen"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/RestoreArchivesField.jsx:373
+msgid "No archives"
+msgstr "Keine Archive"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/RestoreArchivesField.jsx:345
+msgid "Restore in progress, %s complete"
+msgstr "Wiederherstellung läuft, %s abgeschlossen"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/RestoreArchivesField.jsx:328
+msgid "Delete"
+msgstr "Löschen"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/RestoreArchivesField.jsx:320
+msgid "Restore"
+msgstr "Wiederherstellen"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/RestoreArchivesField.jsx:68
+msgid "Archiving disabled"
+msgstr "Archivierung deaktiviert"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/RestoreArchivesField.jsx:67
+msgid "Because restoring files can conflict with the archiving functionality, archiving has been disabled."
+msgstr "Da das Wiederherstellen von Dateien mit der Archivierungsfunktionalität in Konflikt geraten kann, wurde die Archivierung deaktiviert."
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/RestoreArchivesField.jsx:310
+msgid "Download"
+msgstr "Herunterladen"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/RestoreArchivesField.jsx:337
+msgid "1 item selected"
+msgstr "1 Element ausgewählt"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/RestoreArchivesField.jsx:332
+msgid "%s items selected"
+msgstr "%s Elemente ausgewählt"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/RestoreArchivesField.jsx:252
+msgid "Size"
+msgstr "Größe"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/RestoreArchivesField.jsx:246
+msgid "Archive"
+msgstr "Archiv"
+
+#: src/Admin/App/config/fields.php:268
+msgid "Please confirm the deletion, without the possibility to restore."
+msgstr "Bitte bestätigen Sie die Löschung, ohne die Möglichkeit der Wiederherstellung."
+
+#: src/Admin/App/config/fields.php:256
+msgid "Retain data for how many months?"
+msgstr "Daten für wie viele Monate aufbewahren?"
+
+#. translators: %s is the current size of the database used by Burst, e.g. "10
+#. MB".
+#: src/Admin/App/config/fields.php:247
+msgctxt "e.g. Burst currently uses 10 MB of your database."
+msgid "Burst currently uses %s of your database."
+msgstr "Burst verwendet derzeit %s Ihrer Datenbank."
+
+#: src/Admin/App/config/fields.php:245
+msgid "Choose how to manage old statistics"
+msgstr "Wählen Sie, wie Sie alte Statistiken verwalten möchten"
+
+#: src/Admin/App/config/fields.php:240
+msgid "Managing old data can optimize storage and improve site performance. Choose to archive or delete based on your needs."
+msgstr "Die Verwaltung alter Daten kann den Speicher optimieren und die Leistung der Website verbessern. Wählen Sie je nach Bedarf, ob Sie archivieren oder löschen möchten."
+
+#: src/Admin/App/config/fields.php:239
+msgid "Why should I manage old data?"
+msgstr "Warum sollte ich alte Daten verwalten?"
+
+#: src/Admin/App/config/fields.php:231
+msgid "Automatically Delete"
+msgstr "Automatisch löschen"
+
+#: src/Admin/App/config/fields.php:230
+msgid "Automatically Archive"
+msgstr "Automatisch archivieren"
+
+#: src/Admin/App/config/fields.php:229
+msgid "Don't manage"
+msgstr "Nicht verwalten"
+
+#: src/Admin/App/config/menu.php:81
+msgid "Archived Data"
+msgstr "Archivierte Daten"
+
+#: src/Admin/App/config/menu.php:77
+msgid "Archiving"
+msgstr "Archivierung"
+
+#: src/Admin/App/config/menu.php:73
+msgid "Data"
+msgstr "Daten"
+
+#: src/Admin/App/config/tasks.php:18
+msgid "Please check if your REST API is loading correctly. Your site currently is using the slower Ajax fallback method to load the settings."
+msgstr "Bitte überprüfen Sie, ob Ihre REST-API korrekt geladen wird. Ihre Website verwendet derzeit die langsamere Ajax-Fallback-Methode, um die Einstellungen zu laden."
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Fields/EditableTextField.jsx:63
+msgid "Click to edit"
+msgstr "Klicken Sie, um zu bearbeiten"
+
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:1
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:3
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:7
+#: src/Admin/App/build/953.ad0a2497bc58d39f1f00.js:1
+#: src/Admin/App/src/components/Dashboard/GoalStatus.js:23
+#: src/Admin/App/src/components/Sources/WorldMap/WorldMap.jsx:214
+#: src/Admin/App/src/components/Statistics/Flag.js:27
+#: src/Admin/App/src/utils/formatting.js:261
+#: src/Admin/App/src/utils/formatting.js:268
+msgid "Unknown"
+msgstr "Unbekannt"
+
+#: src/Traits/trait-sanitize.php:624 src/Traits/trait-sanitize.php:627
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:1
+#: src/Admin/App/build/953.ad0a2497bc58d39f1f00.js:1
+#: src/Admin/App/src/store/useFiltersStore.js:187
+msgid "Browser"
+msgstr "Browser"
+
+#: src/Traits/trait-sanitize.php:623 src/Traits/trait-sanitize.php:626
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:1
+#: src/Admin/App/build/953.ad0a2497bc58d39f1f00.js:1
+#: src/Admin/App/src/store/useFiltersStore.js:66
+msgid "Device"
+msgstr "Gerät"
+
+#: src/Admin/Statistics/class-goal-statistics.php:166
+msgid "Best performing device"
+msgstr "Am besten abschneidendes Gerät"
+
+#: src/Admin/Statistics/class-goal-statistics.php:164
+msgid "Not enough data"
+msgstr "Nicht genügend Daten"
+
+#: src/Admin/Mailer/class-mail-reports.php:257
+#: src/Admin/Statistics/class-goal-statistics.php:159
+msgid "Conversion rate"
+msgstr "Konversionsrate"
+
+#: src/Admin/App/config/goal-fields.php:86
+msgid "What element do you want to track?"
+msgstr "Welches Element möchten Sie verfolgen?"
+
+#: src/Admin/App/config/goal-fields.php:75
+msgid "Which specific page do you want to track?"
+msgstr "Welche spezifische Seite möchten Sie verfolgen?"
+
+#: src/Admin/App/config/goal-fields.php:61
+msgid "Track on whole site"
+msgstr "Auf der gesamten Website verfolgen"
+
+#: src/Admin/App/config/goal-fields.php:60
+msgid "Website"
+msgstr "Website"
+
+#: src/Admin/App/config/goal-fields.php:55
+msgid "Track page specific"
+msgstr "Verfolgen Sie seitenbezogen"
+
+#: src/Admin/App/config/goal-fields.php:51
+msgid "Do you want to track a specific page or the entire website?"
+msgstr "Möchten Sie eine bestimmte Seite oder die gesamte Website verfolgen?"
+
+#: src/Admin/App/config/goal-fields.php:34
+msgid "Track visits to page"
+msgstr "Besuche auf der Seite verfolgen"
+
+#: src/Admin/App/config/goal-fields.php:28
+msgid "Track views of element"
+msgstr "Ansichten des Elements verfolgen"
+
+#: src/Admin/App/config/goal-fields.php:22
+msgid "Track clicks on element"
+msgstr "Klicks auf Element nachverfolgen"
+
+#: src/Admin/App/config/goal-fields.php:18
+msgid "What type of goal do you want to set?"
+msgstr "Welche Art von Ziel möchten Sie festlegen?"
+
+#: src/Admin/App/config/fields.php:128
+msgid "To set goals for a website, you need to identify the purpose of the site and the key actions you want visitors to take. Set measurable and achievable goals for each action and track your progress."
+msgstr "Um Ziele für eine Website festzulegen, müssen Sie den Zweck der Seite und die wichtigsten Aktionen, die Besucher ausführen sollen, identifizieren. Setzen Sie messbare und erreichbare Ziele für jede Aktion und verfolgen Sie Ihren Fortschritt."
+
+#: src/Admin/App/config/fields.php:127
+msgid "How to set goals?"
+msgstr "Wie setzt man Ziele?"
+
+#: src/Frontend/Goals/class-goal.php:82 src/Frontend/Goals/class-goal.php:130
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Goals/GoalSetup.js:54
+msgid "New goal"
+msgstr "Neues Ziel"
+
+#: src/Admin/App/config/goal-fields.php:27
+msgid "Views"
+msgstr "Ansichten"
+
+#: src/Admin/App/config/goal-fields.php:21
+msgid "Clicks"
+msgstr "Klicks"
+
+#: src/Admin/class-tasks.php:225
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:1
+#: src/Admin/App/src/components/Common/Pro.js:20
+#: src/Admin/App/src/components/Common/ProPill.js:6
+msgid "Pro"
+msgstr "Pro"
+
+#: src/Admin/class-admin.php:524
+msgid "Default goal"
+msgstr "Standardziel"
+
+#: src/Admin/App/config/fields.php:61
+msgid "Honor 'Do Not Track' requests"
+msgstr "'Do Not Track' Anweisung erfüllen"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Settings/SettingsNotices.jsx:38
+msgid "Collapse all"
+msgstr "Alles einklappen"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Settings/SettingsNotices.jsx:39
+msgid "Expand all"
+msgstr "Alles aufklappen"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Settings/SettingsNotices.jsx:45
+msgid "Notifications"
+msgstr "Benachrichtigungen"
+
+#: src/Admin/Burst_Onboarding/steps.php:98
+#: src/Admin/Burst_Onboarding/steps.php:124
+#: src/TeamUpdraft/Onboarding/config/steps.php:98
+#: src/TeamUpdraft/Onboarding/config/steps.php:124
+msgid "Save and continue"
+msgstr "Speichern und fortfahren"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:1
+#: src/Admin/App/src/components/Fields/IpBlockField.jsx:105
+msgid "Add current IP address"
+msgstr "Aktuelle IP-Adresse hinzufügen"
+
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:1
+#: src/Admin/App/src/components/Fields/RestoreArchivesField.jsx:369
+#: src/Admin/App/src/components/Statistics/DataTableBlock.js:397
+msgid "All"
+msgstr "Alle"
+
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:1
+#: src/Admin/App/src/components/Fields/RestoreArchivesField.jsx:366
+#: src/Admin/App/src/components/Statistics/DataTableBlock.js:394
+msgid "of"
+msgstr "von"
+
+#: src/Admin/Burst_Onboarding/steps.php:52
+#: src/TeamUpdraft/Onboarding/config/steps.php:52
+#: src/Admin/App/build/953.ad0a2497bc58d39f1f00.js:1
+#: src/Admin/App/src/components/Dashboard/OtherPluginsBlock.js:16
+#: src/Admin/App/src/components/Dashboard/OtherPluginsBlock.js:190
+#: src/TeamUpdraft/Other_Plugins/build/index.js:1
+#: src/TeamUpdraft/Other_Plugins/src/components/OtherPluginElement.js:16
+msgid "Activate"
+msgstr "Aktivieren"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:1
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/build/953.ad0a2497bc58d39f1f00.js:1
+#: src/Admin/App/src/components/Dashboard/TaskElement.js:23
+#: src/Admin/App/src/components/Fields/LicenseField.jsx:182
+#: src/TeamUpdraft/Onboarding/build/index.js:1
+msgid "More info"
+msgstr "Weitere Informationen"
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:575
+msgid "Could not rename folder!"
+msgstr "Ordner konnte nicht umbenannt werden!"
+
+#: src/Traits/trait-sanitize.php:612
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:1
+#: src/Admin/App/build/953.ad0a2497bc58d39f1f00.js:1
+#: src/Admin/App/src/components/Statistics/DataTableBlock.js:81
+#: src/Admin/App/src/store/useFiltersStore.js:43
+msgid "Referrer"
+msgstr "Referrer"
+
+#: src/Admin/Statistics/class-statistics.php:200
+#: src/Frontend/class-frontend-statistics.php:641
+msgid "Average time on page"
+msgstr "Durchschnittliche Zeit auf der Seite"
+
+#: src/Admin/Statistics/class-statistics.php:195
+msgid "Total pageviews"
+msgstr "Seitenaufrufe gesamt"
+
+#: src/Admin/Statistics/class-statistics.php:192
+msgid "This website referred the most visitors."
+msgstr "Von dieser Website kamen die meisten Besucher."
+
+#: src/Admin/Statistics/class-statistics.php:187
+msgid "This is your most viewed page for today."
+msgstr "Dies ist die heute am häufigsten besuchte Seite."
+
+#: src/Admin/Statistics/class-statistics.php:182
+msgid "This is the total amount of unique visitors for today."
+msgstr "Dies ist die Gesamtzahl individueller Besucher für heute."
+
+#: src/Admin/Statistics/class-statistics.php:178
+msgid "The amount of people using your website right now. The data updates every 5 seconds."
+msgstr "Die Anzahl der Besucher, die im Moment auf der Seite sind. Diese Zahl wird alle fünf Sekunden aktualisiert."
+
+#: src/Admin/Mailer/class-mail-reports.php:261
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:1
+#: src/Admin/App/src/components/Statistics/DataTableBlock.js:76
+msgid "Referrers"
+msgstr "Referrer"
+
+#: src/Admin/App/config/fields.php:124 src/Admin/App/config/menu.php:62
+#: src/Admin/App/config/menu.php:66
+#: src/Admin/App/build/953.ad0a2497bc58d39f1f00.js:1
+#: src/Admin/App/src/components/Dashboard/GoalsBlock.js:245
+#: src/Admin/App/src/components/Dashboard/GoalsBlock.js:273
+msgid "Goals"
+msgstr "Ziele"
+
+#: src/Admin/App/config/fields.php:142
+msgid "You can exclude visitors by user role and IP address. This will affect new data only."
+msgstr "Besucher können über ihre Rolle oder ihre IP-Adresse ausgeschlossen werden. Das betrifft nur die Daten ab der Änderung."
+
+#: src/Admin/App/config/fields.php:141
+msgid "Excluding visitors"
+msgstr "Besucher ausschließen"
+
+#: src/Admin/App/config/fields.php:138
+msgid "Exclude user roles from being tracked"
+msgstr "Benutzerrollen vom Tracking ausschließen"
+
+#: src/Admin/App/config/menu.php:92
+msgid "Advanced"
+msgstr "Fortgeschritten"
+
+#: src/Admin/App/config/menu.php:47 src/Admin/App/config/menu.php:51
+msgid "General"
+msgstr "Allgemein"
+
+#: src/Admin/class-tasks.php:223
+msgid "Error"
+msgstr "Fehler"
+
+#: src/Admin/class-tasks.php:222
+msgid "Warning"
+msgstr "Warnung"
+
+#: src/Admin/class-tasks.php:221
+msgid "New!"
+msgstr "Neu!"
+
+#: src/Admin/App/config/fields.php:35
+msgid "Enable Turbo mode"
+msgstr "Turbo-Modus einschalten"
+
+#: src/Admin/App/config/tasks.php:31
+msgid "Due to your server or website configuration it is not possible to track statistics."
+msgstr "Aufgrund Ihrer Server- oder Website-Konfiguration ist es nicht möglich, Statistiken zu ermitteln."
+
+#: src/Admin/App/config/fields.php:48
+msgid "Enable Cookieless tracking"
+msgstr "Cookie-freies Tracking aktivieren"
+
+#: src/Admin/Statistics/class-statistics.php:1151
+#: src/Admin/Statistics/class-statistics.php:1164
+msgid "No pageviews"
+msgstr "Keine Seitenaufrufe"
+
+#: src/Admin/Statistics/class-statistics.php:1127
+#: src/Admin/Statistics/class-statistics.php:1162
+msgid "No referrers"
+msgstr "Keine Referrer"
+
+#. Plugin Name of the plugin
+#: burst.php
+msgid "Burst Statistics - Privacy-Friendly Analytics for WordPress"
+msgstr "Burst Statistics - Datenschutzfreundliche Analyse für WordPress"
+
+#. translators: 1: opening anchor tag to the privacy statement, 2: closing
+#. anchor tag.
+#: src/Admin/class-admin.php:482
+msgid "This website uses Burst Statistics, a Privacy-Friendly Statistics Tool to analyze visitor behavior. For this functionality we (this website) collect anonymized data, stored locally without sharing it with other parties. For more information, please read the %s Privacy Statement %s from Burst."
+msgstr "Diese Website benutzt Burst Statistics, ein datenschutzfreundliches Statistik-Tool, um das Besucherverhalten zu analysieren. Für diese Funktion sammeln wir (diese Website) anonymisierte Daten, die lokal gespeichert werden, ohne sie mit anderen Parteien zu teilen. Für weitere Informationen lesen Sie bitte die %s Privacy Statemen %s von Burst."
+
+#. Plugin URI of the plugin
+#: burst.php
+msgid "https://www.wordpress.org/plugins/burst-statistics"
+msgstr "https://www.wordpress.org/plugins/burst-statistics"
+
+#: src/Admin/App/media/media-override.php:165
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:1
+#: src/Admin/App/src/components/Common/SearchButton.js:18
+#: src/Admin/App/src/components/Fields/RestoreArchivesField.jsx:293
+msgid "Search"
+msgstr "Suche"
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:727
+msgid "Your license key has reached its activation limit."
+msgstr "Ihr Lizenzschlüssel hat sein Aktivierungslimit erreicht."
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:724
+msgid "This appears to be an invalid license key for this plugin."
+msgstr "Dies scheint ein ungültiger Lizenzschlüssel für dieses Plugin zu sein."
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:721
+msgid "Your license is not active for this URL."
+msgstr "Ihre Lizenz ist für diese Website nicht aktiviert."
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:718
+msgid "Invalid license."
+msgstr "Ungültige Lizenz."
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:715
+msgid "Missing license."
+msgstr "Fehlende Lizenz."
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:712
+msgid "Your license key has been disabled."
+msgstr "Ihr Lizenzschlüssel wurde deaktiviert."
+
+#. translators: %s is the license expiration date, e.g. "April 30, 2025".
+#: src/Admin/AutoInstaller/class-auto-installer.php:706
+msgid "Your license key expired on %s."
+msgstr "Ihr Lizenzschlüssel ist am %s abgelaufen."
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:697
+#: src/Admin/AutoInstaller/class-auto-installer.php:730
+msgid "An error occurred, please try again."
+msgstr "Es ist ein Fehler aufgetreten, bitte versuchen Sie es erneut."
+
+#. translators: 1: opening anchor tag to the license page, 2: closing anchor
+#. tag.
+#: src/Admin/AutoInstaller/class-auto-installer.php:501
+msgid "Check your %slicense%s."
+msgstr "Überprüfen Sie Ihre %slicense%s."
+
+#. translators: 1: opening anchor tag for manual install link, 2: closing
+#. anchor tag.
+#: src/Admin/AutoInstaller/class-auto-installer.php:491
+msgid "Install %sManually%s."
+msgstr "%sManually%s installieren."
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:486
+#: src/Admin/AutoInstaller/class-auto-installer.php:496
+msgid "An Error Occurred:"
+msgstr "Ein Fehler ist aufgetreten:"
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:478
+msgid "Visit Dashboard"
+msgstr "Dashboard anzeigen"
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:330
+msgid "Installation finished"
+msgstr "Installation abgeschlossen"
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:305
+msgid "Failed to activate plugin"
+msgstr "Plugin konnte nicht aktiviert werden"
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:304
+msgid "Plugin activated"
+msgstr "Plugin aktiviert"
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:303
+msgid "Activating plugin..."
+msgstr "Plugin wird aktiviert..."
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:298
+msgid "Failed to install plugin"
+msgstr "Plugin konnte nicht installiert werden"
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:297
+msgid "Plugin installed"
+msgstr "Plugin installiert"
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:296
+msgid "Installing plugin..."
+msgstr "Plugin wird installiert..."
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:291
+msgid "Failed to gather package information"
+msgstr "Paketinformationen konnten nicht erfasst werden"
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:290
+msgid "Package information retrieved"
+msgstr "Paketinformationen erhalten"
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:289
+msgid "Retrieving package information..."
+msgstr "Abrufen von Paketinformationen..."
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:284
+msgid "License invalid"
+msgstr "Lizenz ungültig"
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:283
+msgid "License valid"
+msgstr "Lizenz gültig"
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:282
+msgid "Validating license..."
+msgstr "Überprüfung der Lizenz..."
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:277
+msgid "Destination folder already exists"
+msgstr "Zielordner existiert bereits"
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:276
+msgid "Able to create destination folder"
+msgstr "Zielordner kann angelegt werden"
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:275
+msgid "Checking if plugin folder exists..."
+msgstr "Es wird geprüft, ob der Plugin-Ordner existiert..."
+
+#: src/Admin/App/class-app.php:1061
+#: src/Admin/Statistics/class-goal-statistics.php:261
+#: src/Frontend/class-shortcodes.php:383
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/src/api/getDevicesData.js:15
+#: src/Admin/App/src/components/Statistics/DevicesBlock.js:49
+msgid "Other"
+msgstr "Sonstiges"
+
+#: src/Admin/App/class-app.php:1055
+#: src/Admin/Statistics/class-goal-statistics.php:254
+#: src/Frontend/class-shortcodes.php:382
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/src/api/getDevicesData.js:14
+#: src/Admin/App/src/components/Statistics/DevicesBlock.js:48
+msgid "Mobile"
+msgstr "Mobilgerät"
+
+#: src/Admin/App/class-app.php:1058
+#: src/Admin/Statistics/class-goal-statistics.php:257
+#: src/Frontend/class-shortcodes.php:381
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/src/api/getDevicesData.js:13
+#: src/Admin/App/src/components/Statistics/DevicesBlock.js:47
+msgid "Tablet"
+msgstr "Tablet"
+
+#: src/Admin/App/class-app.php:1052
+#: src/Admin/Statistics/class-goal-statistics.php:251
+#: src/Frontend/class-shortcodes.php:380
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/src/api/getDevicesData.js:12
+#: src/Admin/App/src/components/Statistics/DevicesBlock.js:46
+msgid "Desktop"
+msgstr "Desktop-Geräte"
+
+#: src/Admin/Mailer/config/blocks.php:5
+msgid "Most visited pages"
+msgstr "Meistbesuchte Seiten"
+
+#: src/Admin/App/config/goal-fields.php:109
+#: src/Admin/Mailer/class-mail-reports.php:369
+#: src/Admin/Statistics/class-goal-statistics.php:150
+#: src/Frontend/class-frontend-statistics.php:638
+#: src/Traits/trait-sanitize.php:615
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:1
+#: src/Admin/App/src/api/getCompareData.js:14
+#: src/Admin/App/src/api/getCompareData.js:22
+#: src/Admin/App/src/api/getCompareData.js:46
+#: src/Admin/App/src/api/getCompareData.js:93
+#: src/Admin/App/src/components/Statistics/CompareBlock.js:21
+#: src/Admin/App/src/components/Statistics/DataTableBlock.js:30
+#: src/Admin/App/src/components/Statistics/InsightsHeader.js:14
+#: src/Admin/App/src/store/useGeoStore.js:21
+msgid "Visitors"
+msgstr "Besucher"
+
+#. translators: 1: opening anchor tag to support thread, 2: closing anchor tag.
+#: src/Admin/App/config/tasks.php:86
+msgid "If you have any suggestions to improve our plugin, feel free to %sopen a support thread%s."
+msgstr "Wenn Sie Vorschläge zur Verbesserung unseres Plugins haben, können Sie gerne einen %sopen a support thread%s."
+
+#: src/Admin/App/config/goal-fields.php:114
+#: src/Admin/Mailer/class-mail-reports.php:366
+#: src/Admin/Statistics/class-goal-statistics.php:140
+#: src/Frontend/class-frontend-statistics.php:639
+#: src/Traits/trait-sanitize.php:614
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:1
+#: src/Admin/App/src/api/getCompareData.js:13
+#: src/Admin/App/src/api/getCompareData.js:21
+#: src/Admin/App/src/api/getCompareData.js:37
+#: src/Admin/App/src/api/getCompareData.js:84
+#: src/Admin/App/src/components/Statistics/CompareBlock.js:20
+#: src/Admin/App/src/components/Statistics/DataTableBlock.js:25
+#: src/Admin/App/src/components/Statistics/InsightsHeader.js:18
+#: src/Admin/App/src/store/useGeoStore.js:31
+msgid "Sessions"
+msgstr "Sitzungen"
+
+#: src/Admin/Statistics/class-statistics.php:1149
+#: src/Frontend/class-shortcodes.php:355
+msgid "Homepage"
+msgstr "Homepage"
+
+#: src/Admin/Mailer/class-mail-reports.php:422
+#: src/Admin/Statistics/class-statistics.php:1125
+#: src/Admin/Statistics/class-statistics.php:1273
+#: src/Frontend/class-frontend-statistics.php:598
+#: src/Frontend/class-shortcodes.php:361
+msgid "Direct"
+msgstr "Direkt"
+
+#: src/Admin/class-tasks.php:224
+msgid "Open"
+msgstr "Offen"
+
+#: src/Admin/class-tasks.php:220
+#: src/Admin/App/build/953.ad0a2497bc58d39f1f00.js:1
+#: src/Admin/App/src/components/Dashboard/ProgressBlock.js:25
+msgid "Completed"
+msgstr "Abgeschlossen"
+
+#: src/Admin/class-review.php:181
+msgid "Don't show again"
+msgstr "Nicht mehr anzeigen"
+
+#: src/Admin/class-review.php:159
+msgid "Maybe later"
+msgstr "Vielleicht später"
+
+#: src/Admin/class-review.php:148
+msgid "Leave a review"
+msgstr "Schreiben Sie eine Bewertung"
+
+#: src/Admin/class-review.php:141
+msgid "If you have a moment, please consider leaving a review on WordPress.org to spread the word. We greatly appreciate it!"
+msgstr "Wenn Sie einen Moment Zeit haben, hinterlassen Sie bitte eine Bewertung auf WordPress.org, um das Thema zu verbreiten. Wir wissen das sehr zu schätzen!"
+
+#. translators: 1: opening anchor tag to the support message form, 2: closing
+#. anchor tag.
+#: src/Admin/class-review.php:129
+msgid "If you have any questions or feedback, leave us a %smessage%s."
+msgstr "Wenn Sie Fragen oder Feedback haben, hinterlassen Sie uns eine %smessage%s."
+
+#: src/Admin/class-review.php:122
+msgid "Hi, you have been using Burst for more than a month now, awesome!"
+msgstr "Hallo, Sie benutzen Burst jetzt seit mehr als einem Monat, das ist großartig!"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Settings/SettingsFooter.jsx:39
+msgid "Save"
+msgstr "Speichern"
+
+#: src/Admin/App/src/components/Common/ErrorBoundary.jsx:59
+msgid "Copied"
+msgstr "Kopiert"
+
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:1
+#: src/TeamUpdraft/Onboarding/build/index.js:1
+#: src/TeamUpdraft/Onboarding/src/components/Fields/Plugins.jsx:45
+msgid "No options found"
+msgstr "Keine Optionen gefunden"
+
+#: src/Admin/class-admin.php:922
+msgid "Deactivate and delete all data"
+msgstr "Deaktivieren und alle Daten löschen"
+
+#: src/Admin/class-admin.php:920
+msgid "Deactivate"
+msgstr "Deaktivieren"
+
+#: src/Admin/App/config/goal-fields.php:119 src/Admin/class-admin.php:676
+#: src/Admin/Mailer/class-mail-reports.php:253
+#: src/Admin/Mailer/class-mail-reports.php:261
+#: src/Admin/Mailer/class-mail-reports.php:363
+#: src/Admin/Statistics/class-goal-statistics.php:132
+#: src/Frontend/class-frontend-admin.php:74
+#: src/Frontend/class-frontend-statistics.php:637
+#: src/Traits/trait-sanitize.php:613
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:1
+#: src/Admin/App/src/api/getCompareData.js:12
+#: src/Admin/App/src/api/getCompareData.js:20
+#: src/Admin/App/src/api/getCompareData.js:28
+#: src/Admin/App/src/api/getCompareData.js:75
+#: src/Admin/App/src/components/Statistics/CompareBlock.js:19
+#: src/Admin/App/src/components/Statistics/DataTableBlock.js:20
+#: src/Admin/App/src/components/Statistics/InsightsHeader.js:10
+msgid "Pageviews"
+msgstr "Seitenaufrufe"
+
+#: src/Admin/App/config/goal-fields.php:54
+#: src/Admin/Mailer/class-mail-reports.php:253
+msgid "Page"
+msgstr "Seite"
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:92
+#: src/Admin/App/build/953.ad0a2497bc58d39f1f00.js:1
+#: src/Admin/App/src/components/Dashboard/OtherPluginsBlock.js:15
+#: src/TeamUpdraft/Other_Plugins/build/index.js:1
+#: src/TeamUpdraft/Other_Plugins/src/components/OtherPluginElement.js:15
+msgid "Install"
+msgstr "Installieren"
+
+#: src/Admin/App/class-app.php:259 src/Admin/class-admin.php:543
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:1
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:7
+#: src/Admin/App/src/components/Common/Header.jsx:106
+#: src/Admin/App/src/components/Common/ProPopover.js:66
+#: src/Admin/App/src/components/Goals/GoalsSettings.js:188
+#: src/Admin/App/src/components/Settings/SettingsGroupBlock.jsx:34
+msgid "Upgrade to Pro"
+msgstr "Auf Pro-Version upgraden"
+
+#: src/Admin/AutoInstaller/class-auto-installer.php:96
+#: src/Admin/App/build/953.ad0a2497bc58d39f1f00.js:1
+#: src/Admin/App/src/components/Dashboard/OtherPluginsBlock.js:163
+#: src/TeamUpdraft/Other_Plugins/build/index.js:1
+#: src/TeamUpdraft/Other_Plugins/src/components/OtherPluginElement.js:62
+msgid "Installed"
+msgstr "Installiert"
+
+#: src/Admin/App/class-app.php:689 src/Admin/App/config/menu.php:8
+msgid "Dashboard"
+msgstr "Dashboard"
+
+#: src/Admin/Mailer/config/blocks.php:12
+msgid "Top referrers"
+msgstr "Top-Verweiser"
+
+#: src/Admin/Mailer/class-mail-reports.php:197
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/src/components/Statistics/CompareBlock.js:56
+msgid "Compare"
+msgstr "Vergleiche"
+
+#: src/Admin/App/config/menu.php:18
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/src/components/Statistics/InsightsBlock.js:47
+msgid "Insights"
+msgstr "Einblicke"
+
+#: src/Admin/App/config/goal-fields.php:33
+msgid "Visits"
+msgstr "Besuche"
+
+#: src/Traits/trait-sanitize.php:620
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:1
+#: src/Admin/App/src/api/getCompareData.js:19
+#: src/Admin/App/src/api/getCompareData.js:66
+#: src/Admin/App/src/components/Statistics/DataTableBlock.js:35
+#: src/Admin/App/src/components/Statistics/InsightsHeader.js:24
+msgid "Conversions"
+msgstr "Konversionen"
+
+#: src/Admin/App/class-app.php:162 src/Admin/App/class-app.php:690
+#: src/Frontend/class-frontend-admin.php:44
+msgid "Statistics"
+msgstr "Statistiken"
+
+#: src/Admin/class-admin.php:564
+#: src/Admin/App/src/components/Common/Header.jsx:102
+msgid "Support"
+msgstr "Support"
+
+#: src/Admin/App/class-app.php:691 src/Admin/App/config/menu.php:37
+msgid "Settings"
+msgstr "Einstellungen"
+
+#: src/Admin/App/media/media-override.php:167
+#: src/Admin/AutoInstaller/class-auto-installer.php:481
+#: src/Admin/class-admin.php:918
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:1
+#: src/Admin/App/build/590.e15f405531f79d0d5524.js:10
+#: src/Admin/App/src/components/Goals/DeleteGoalModal.js:32
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: src/Admin/App/media/media-override.php:207
+#: src/Admin/App/build/447.d00eb4e0f74a2dcb1b5a.js:1
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:1
+#: src/Admin/App/build/744.80f741b3a77f86584bff.js:7
+#: src/Admin/App/src/components/Common/AdvancedFilter.js:78
+#: src/Admin/App/src/components/Common/PopoverFilter.js:104
+#: src/Admin/App/src/components/Sources/WorldMap/MapSettingsPopover.jsx:270
+msgid "Apply"
+msgstr "Übernehmen"
+
+#. Author URI of the plugin
+#: burst.php
+msgid "https://burst-statistics.com"
+msgstr "https://burst-statistics.com"

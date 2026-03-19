@@ -1,0 +1,52 @@
+uploads/
+upgrade/
+cache/
+wflogs/
+
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# Runtime / Server
+object-cache.php
+.htaccess
+
+# Backups / Logs
+ai1wm-backups/
+compressx/
+compressx-nextgen/
+*backup*~
+*backup*.po~
+
+# Generated
+bcf-fonts/
+
+# CI (altes Repo)
+.github/
+
+# Claude
+.claude/
+
+# Build-Artefakte
+node_modules/
+vendor/
+dist/
+build/
+
+# Theme/Plugin-Builds
+themes/*/node_modules/
+themes/*/vendor/
+themes/*/dist/
+plugins/*/node_modules/
+plugins/*/vendor/
+plugins/*/dist/
+
+# IDE/Env
+.vscode/
+.idea/
+*.code-workspace
+.env
+.env.*
+dokan-lite/
+dokan-pro/

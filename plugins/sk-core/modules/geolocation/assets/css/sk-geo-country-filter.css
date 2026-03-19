@@ -1,0 +1,141 @@
+/**
+ * SK Geolocation Country Filter Styles
+ */
+
+.sk-geo-country-filter-wrapper {
+    margin: 20px 0;
+}
+
+.sk-geo-country-filter-container {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 15px 20px;
+}
+
+.sk-geo-country-filter-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #333;
+    font-size: 14px;
+}
+
+.sk-geo-country-filter-options {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.sk-geo-country-filter-options[data-style="dropdown"] {
+    display: inline-block;
+}
+
+.sk-geo-country-filter-options[data-style="dropdown"] .sk-geo-country-filter-btn {
+    display: none;
+}
+
+.sk-geo-country-filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background-color: #fff;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: #555;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.sk-geo-country-filter-btn:hover {
+    border-color: #007bff;
+    color: #007bff;
+    background-color: #f0f7ff;
+}
+
+.sk-geo-country-filter-btn.active {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: #fff;
+}
+
+.sk-geo-country-filter-btn .flag {
+    font-size: 16px;
+    display: inline-block;
+}
+
+.sk-geo-country-filter-btn .label {
+    display: inline-block;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .sk-geo-country-filter-options {
+        gap: 8px;
+    }
+
+    .sk-geo-country-filter-btn {
+        padding: 7px 12px;
+        font-size: 12px;
+    }
+
+    .sk-geo-country-filter-btn .flag {
+        font-size: 14px;
+    }
+
+    .sk-geo-country-filter-btn .label {
+        display: none;
+    }
+
+    .sk-geo-country-filter-btn.sk-geo-country-filter-btn--all .label {
+        display: inline-block;
+    }
+}
+
+/* Status message */
+.sk-geo-country-filter-status {
+    font-size: 12px;
+    color: #666;
+    padding-top: 8px;
+    border-top: 1px solid #ddd;
+    min-height: 16px;
+}
+
+.sk-geo-country-filter-status.loading {
+    color: #007bff;
+    font-weight: 500;
+}
+
+.sk-geo-country-filter-status.success {
+    color: #28a745;
+    font-weight: 500;
+}
+
+.sk-geo-country-filter-status.error {
+    color: #dc3545;
+    font-weight: 500;
+}
+
+/* Animation for loading */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.sk-geo-country-filter-status.loading::after {
+    content: '';
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin-left: 5px;
+    border: 2px solid #007bff;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 0.6s linear infinite;
+}

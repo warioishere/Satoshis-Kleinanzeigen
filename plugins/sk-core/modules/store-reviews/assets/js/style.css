@@ -1,0 +1,44 @@
+.sk-seller-rating-add-wrapper {
+  padding: 30px;
+}
+.sk-seller-rating-add-wrapper.sk-alert-success {
+  margin: 0;
+}
+#sk-seller-rating {
+  padding: 10px 0px;
+}
+.sk-seller-rating-intro-text {
+  font-size: 16px;
+  margin-top: 10px;
+  font-style: italic;
+}
+#sk-store-listing-filter-form-wrap .store-lists-other-filter-wrap .store-ratings {
+  display: flex;
+}
+#sk-store-listing-filter-form-wrap .store-lists-other-filter-wrap .store-ratings .sk-stars {
+  margin: 0 0 0 8px;
+}
+#sk-store-listing-filter-form-wrap .store-lists-other-filter-wrap .store-ratings .sk-stars i.dashicons {
+  font-size: 17px;
+  width: 17px;
+  color: #fa9a00 !important;
+  cursor: pointer;
+}
+#sk-store-listing-filter-form-wrap .store-lists-other-filter-wrap .store-ratings .sk-stars i.dashicons.active::before {
+  content: "\f155" !important;
+}
+#sk-store-listing-filter-form-wrap .store-lists-other-filter-wrap .store-ratings .sk-stars.selected i.dashicons:not(.active)::before {
+  content: "\f155" !important;
+}
+#sk-store-listing-filter-form-wrap .store-lists-other-filter-wrap .store-ratings .sk-stars.selected i.dashicons.active ~ i::before {
+  content: "\f154" !important;
+}
+#sk-store-listing-filter-form-wrap .store-lists-other-filter-wrap .store-ratings .sk-stars .up {
+  position: relative;
+  top: -2px;
+  padding-left: 5px;
+  padding: 0;
+  margin: 0;
+  left: 0;
+}
+

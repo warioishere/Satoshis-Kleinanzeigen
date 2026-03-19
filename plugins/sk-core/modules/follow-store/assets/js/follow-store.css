@@ -1,0 +1,49 @@
+.sk-follow-store-button .sk-follow-store-button-label-unfollow {
+  display: none;
+}
+.sk-follow-store-button[data-status="following"]:hover .sk-follow-store-button-label-current {
+  display: none;
+}
+.sk-follow-store-button[data-status="following"]:hover .sk-follow-store-button-label-unfollow {
+  display: inline-block;
+}
+.sk-follow-store-button.sk-follow-store-button-working {
+  position: relative;
+  color: rgba(255, 255, 255, 0);
+}
+.sk-follow-store-button.sk-follow-store-button-working:hover,
+.sk-follow-store-button.sk-follow-store-button-working:active,
+.sk-follow-store-button.sk-follow-store-button-working:focus {
+  color: rgba(255, 255, 255, 0);
+}
+.sk-follow-store-button.sk-follow-store-button-working:after {
+  content: "\f110";
+  display: inline-block;
+  font-family: 'Font Awesome\ 5 Free';
+  font-weight: 900;
+  font: normal normal normal 14px/1 FontAwesome;
+  text-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  position: absolute;
+  top: calc(50% - 10px);
+  left: 50%;
+  color: #fff;
+  font-size: 20px;
+  margin-left: -17px;
+  margin-top: 0;
+  animation: fa-spin 1s infinite steps(8);
+  width: 30px;
+}
+.sk-follow-store-button.sk-follow-store-button-working.sk-btn-sm:after {
+  font-size: 16px;
+  margin-left: -15px;
+  margin-top: 5px;
+}
+.sk-follow-store-button.sk-follow-store-button-working > span {
+  opacity: 0;
+}
+.sk-single-store .sk-store-tabs ul li.sk-store-follow-store-button-container {
+  margin: 3px 5px 0 0;
+}
+

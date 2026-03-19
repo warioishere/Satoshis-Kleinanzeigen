@@ -1,0 +1,1531 @@
+/*!
+Theme Name: Kadence Child
+Theme URI: https://www.kadencewp.com/kadence-theme/
+Template: kadence
+Author: Kadence WP
+Author URI: https://www.kadencewp.com/
+Description: A child theme for the Kadence Theme.
+Version: 1.1.1
+License: GNU General Public License v3.0 (or later)
+License URI: https://www.gnu.org/licenses/gpl-3.0.html
+Text Domain: kadence-child
+*/
+
+/* Globale Anker-Offset-Lösung gegen Sticky-Header */
+:root { --sticky-offset: 120px !important; } /* ggf. auf deine Headerhöhe anpassen */
+[id] { scroll-margin-top: var(--sticky-offset) !important; }
+
+/* Optional nur für FAQ, falls gewünscht:
+.page-id-123 [id] { scroll-margin-top: var(--sticky-offset) !important; } 
+*/
+
+/*---- Karten Titel in Vendor Settings ----*/
+
+
+/* ---------- MOBILE/TABLET: fest oben rechts, NICHT im Menü ---------- */
+@media (max-width: 1024px){
+  /* Menü-Avatar ausblenden */
+  .mobile-navigation .menu > li.menu-item-profile,
+  #mobile-menu .menu > li.menu-item-profile{ display:none !important; }
+
+  /* Festes Icon oben rechts */
+  .header-profile-icon{
+    position: fixed;
+    top: 12px;
+    right: 14px;
+    z-index: 99999;
+    display: block !important;
+    pointer-events: auto;
+  }
+  .header-profile-icon img{
+    display:block !important;
+    width:60px; height:60px;
+    border-radius:50% !important;
+    border:3px solid #f7931a;
+    object-fit:cover;
+  }
+}
+
+/* ---------- DESKTOP: Avatar IM MENÜ, rund erzwingen ---------- */
+@media (min-width: 1025px){
+  /* das mobile/feste Icon auf Desktop sicher verstecken */
+  .header-profile-icon{ display:none !important; }
+
+  /* etwas Luft rechts vom letzten Menüpunkt (optional) */
+  .main-navigation .menu > li.menu-item-profile{ margin-left: 20px; }
+
+  /* Bild rund + exakt 48×48, hohe Spezifität + !important */
+  .main-navigation .menu > li.menu-item-profile > a > img,
+  .menu-item-profile img{
+    display:block !important;
+    width:58px !important;
+    height:58px !important;
+    border-radius:50% !important;
+    border:3px solid #f7931a !important;
+    object-fit:cover;
+    aspect-ratio:1/1;                 /* Sicherheitsnetz */
+    clip-path: circle(50% at 50% 50%); /* falls irgendwo radius 0 erzwungen wird */
+  }
+
+  /* Link kompakt, damit nichts streckt */
+  .main-navigation .menu > li.menu-item-profile > a{
+    padding:0 !important;
+    line-height:1 !important;
+  }
+}
+
+/* === Kategorie-Übersicht im Kasten- und Dropdown-Stil === */
+
+/* === Hauptkategorie-Grid === */
+.wc-block-product-categories-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  padding: 0;
+  list-style: none;
+  overflow: visible;
+  position: relative;
+}
+
+/* === Hauptkategorie-Karte === */
+.wc-block-product-categories-list > .wc-block-product-categories-list-item {
+  position: relative;
+  background: #252d38;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  overflow: visible;
+}
+
+/* === Hauptkategorie Hover (nur Desktop) === */
+.wc-block-product-categories-list > .wc-block-product-categories-list-item:hover {
+  background: grey;
+}
+
+/* === Kategorie-Name (Top-Level) === */
+.wc-block-product-categories-list-item__name {
+  font-weight: 500;
+  font-size: 0.8rem;
+  color: #fff;
+}
+
+/* === Zähler (Top-Level): absolut oben rechts === */
+.wc-block-product-categories-list > .wc-block-product-categories-list-item > .wc-block-product-categories-list-item-count {
+  background: #333;
+  color: #ccc;
+  border-radius: 6px;
+  font-size: 0.6rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute !important;
+  top: 1.1rem;
+  right: 0.6rem;
+  padding: 0;
+}
+
+/* === Unterkategorien-Dropdown (Panel) – Standard/Desktop === */
+.wc-block-product-categories-list--depth-1 {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #2c2c2f;
+  padding: 0.5rem 0.5rem 0.5rem 0.25rem;
+  border-radius: 12px;
+  min-width: 300px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+  z-index: 999;
+}
+
+/* === Unterkategorien anzeigen bei Hover (Desktop) === */
+.wc-block-product-categories-list-item:hover > .wc-block-product-categories-list--depth-1 {
+  display: block;
+}
+
+/* === Unterkategorie-Zeilen als Flex – Hover über ganze Breite === */
+.wc-block-product-categories-list--depth-1 .wc-block-product-categories-list-item {
+  display: flex !important;
+  align-items: center !important;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  margin: 0;
+  border: none;
+  box-shadow: none;
+}
+
+/* Hover-Hintergrund für ganze Zeile */
+.wc-block-product-categories-list--depth-1 .wc-block-product-categories-list-item:hover {
+  background: #F7931A;
+}
+
+/* Link nimmt die Breite, Farbe invertiert auf Hover */
+.wc-block-product-categories-list--depth-1 .wc-block-product-categories-list-item > a {
+  flex: 1 1 auto;
+  color: #ddd;
+  text-decoration: none;
+}
+.wc-block-product-categories-list--depth-1 .wc-block-product-categories-list-item:hover > a {
+  color: #fff;
+}
+
+/* === Zähler in Unterkategorie: Badge rechts === */
+.wc-block-product-categories-list--depth-1 .wc-block-product-categories-list-item > *:last-child {
+  position: static !important;
+  margin-left: .75rem !important;
+  background: #444;
+  color: #ccc;
+  border-radius: 4px;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  font-size: 0.6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 0.5rem;
+  line-height: 1;
+}
+
+
+@media (min-width: 769px) {
+  .wc-block-product-categories-list > .wc-block-product-categories-list-item {
+    position: relative;
+  }
+  .wc-block-product-categories-list > .wc-block-product-categories-list-item > .wc-block-product-categories-list--depth-1 {
+    left: 0;                  /* bündig an der Kartenkante */
+    margin-left: -1rem;       /* gleicht das Padding des LI aus */
+  }
+}
+
+/* =========================
+   MOBILE FIXES (≤ 768px)
+   ========================= */
+
+/* Mobile: linker Rand/Luft fixen */
+@media (max-width: 768px) {
+  .wc-block-product-categories-list {
+    grid-template-columns: 1fr;
+    justify-items: stretch;
+    width: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
+    padding-inline-start: 0 !important;
+    list-style: none !important;
+  }
+  .wc-block-product-categories-list > .wc-block-product-categories-list-item {
+    margin: 0 !important;
+    width: 100%;
+  }
+  .wp-block-woocommerce-product-categories {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+  }
+}
+
+/* === Hauptkategorie-Grid === */
+
+
+/* Preisfarbe (global) */
+.amount,
+.woocommerce-Price-currencySymbol {
+    color: #F7931A;
+}
+
+/* Entfernt bestimmte Kategorien aus den WooCommerce-Kategorie-Listen (Blocks) */
+.wc-block-product-categories-list li:has(> a[href*="/produkt-kategorie/unkategorisiert/"]),
+.wc-block-product-categories-list li:has(> a[href*="/produkt-kategorie/abos/"]) {
+  display: none !important;
+}
+
+/** Kategorie Badge
+
+/* 1) Der innere Content-Bereich der Produktkarte als Flex-Spalte */
+.woocommerce ul.products li.product .product-details.content-bg.entry-content-wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* 2) Titel/Excerpt dürfen wachsen, damit Preis nach unten rutscht */
+.woocommerce ul.products li.product .produkt-beschreibung-auszug {
+  flex: auto;
+}
+
+/* 3) Kategorie-Badges direkt über dem Preis, feste Reihenfolge */
+.woocommerce ul.products li.product .product-card-cats--above-price {
+  order: 98;
+  margin: 10px 0 60px;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+/* 4) Styling: schwarzer Badge mit weißer Schrift + Radius */
+.woocommerce ul.products li.product .product-card__cat {
+  display: inline-block;
+  font-size: 12px;
+  line-height: 1.5;
+  background: #000;
+  color: #fff;
+  border-radius: 6px;
+  margin-left: -5px;
+	padding: 4px;
+}
+
+/* 5) Mobile etwas kompakter */
+@media (max-width: 768px) {
+  .woocommerce ul.products li.product .product-card__cat {
+    font-size: 12px;
+    padding: 3px 8px;
+    border-radius: px;
+  }
+}
+
+/* Produkt-Grid: Button ausblenden */
+.woocommerce ul.products li.product .button {
+    display: none !important;
+}
+
+/* Linie Product Karten Woo
+
+/* Linie über die volle Kartenbreite, Inline-Margins killen */
+ul.products li.product .produkt-vendor-info{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:10px;
+
+  margin: 10px 0 10px 0 !important; /* links/rechts 0 erzwingen */
+  padding: 0 25px;                  /* Innenabstand behalten (optional) */
+
+  border-bottom:1px solid rgba(255,255,255,.12);
+  padding-bottom:6px;
+}
+
+/* Woo Single Product: Liste in der Beschreibung sauber einrücken */
+body.single-product #tab-description ul,
+body.single-product .woocommerce-Tabs-panel--description ul {
+  list-style: disc outside;
+  margin: 0.6rem 0 1rem 1.4rem;  /* oben/rechts/unten/links */
+  padding-left: 0.8rem;          /* extra Einzug für Bullets */
+}
+
+/*-- Einzelprodukt Layout-- */
+
+/* Tabs-Text in WooCommerce weiß färben */
+.woocommerce div.product .woocommerce-tabs ul.tabs li a {
+    color: #ffffff !important;
+}
+
+
+/* Produktseiten-Container breiter machen */
+.single-product .content-container.site-container {
+    max-width: 1000px !important;  /* gewünschten Wert einsetzen */
+}
+
+/* Produktbeschreibung Fließtext */
+.single-product .woocommerce-Tabs-panel {
+    color: #d0d0d0; /* sanftes Hellgrau */
+}
+
+/* Überschriften innerhalb Produktbeschreibung */
+.single-product .woocommerce-Tabs-panel h2,
+.single-product .woocommerce-Tabs-panel h3 {
+    color: #ffffff;
+}
+
+/* Meta Infos (Kategorie, Schlagwörter, Verkäufer) */
+.single-product .product_meta,
+.single-product .product_meta a {
+    color: #999999;
+}
+
+/* Preis bleibt Highlight */
+.single-product .summary .price {
+    color: #f7931a; /* Bitcoin-Orange */
+}
+
+/* Anbieter-Info Liste weiter rechts einrücken */
+#tab-seller ul.list-unstyled {
+    padding-left: 25px;
+	  padding-top: 15px;
+	/* hier den Wert anpassen, z. B. 15px, 20px oder mehr */
+}
+
+/* WooCommerce: Rezensionen-Tab komplett verstecken (nur Single-Product) */
+.single-product .woocommerce-tabs ul.tabs li.reviews_tab,
+.single-product .woocommerce-Tabs-panel#tab-reviews,
+.single-product #reviews { /* Fallback für Themes mit #reviews-Container */
+  display: none !important;
+}
+
+/** Login Verstecken **/
+/* Statt globalem fieldset-Hide: nur auf Account/Login/Registrierung */
+body.woocommerce-account form.login fieldset,
+body.woocommerce-account form.register fieldset,
+body.woocommerce-account form.lost_reset_password fieldset {
+  display: none !important;
+}
+
+
+/* Passwort anzeigen Button im Login/Register-Formular */
+.woocommerce form .show-password-input,
+.woocommerce-page form .show-password-input {
+    position: absolute;
+    right: 0.7em;
+    top: 0.2em;
+    cursor: pointer;
+}
+
+/* Login Regstrierung und pw ändern vorerst verstecken */
+
+.woocommerce .u-columns.col2-set {
+    display: none !important;
+}
+
+.woocommerce .col2-set,
+.woocommerce .woocommerce-billing-fields,
+.woocommerce .woocommerce-shipping-fields {
+  background: #1b2532;
+  border-radius: 12px;
+  padding: 10px;
+  margin-bottom: 20px;
+  color: #fff; /* Damit der Text nicht zu dunkel wirkt */
+}
+
+.woocommerce-cart #payment div.payment_box p:last-child,
+.woocommerce-checkout #payment div.payment_box p:last-child,
+#add_payment_method #payment div.payment_box p:last-child {
+  margin-bottom: 0;
+  color: #fff;
+}
+
+.woocommerce .woocommerce-checkout .shop_table {
+  background: #1b2532;
+  border-radius: 12px;
+  overflow: hidden; /* wichtig, damit Inhalte nicht über die runden Ecken hinausragen */
+}
+
+.woocommerce .woocommerce-additional-fields label {
+  color: #fff !important;
+	padding-left: 10px;
+}
+
+/* Hover-Effekte deaktivieren */
+.woocommerce div.product div.images img {
+    transform: none !important;
+    transition: none !important;
+}
+
+/* Falls WooCommerce Zoom-Container aktiv ist */
+.woocommerce-product-gallery__wrapper .zoomImg {
+    display: none !important;
+}
+
+
+.woocommerce div.product div.images img {
+    max-height: 400px;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto; /* optional: zentrieren */
+}
+
+/* ----------------------------------------------------------
+ * WooCommerce Produkt-Titel: Hover in Bitcoin-Orange
+ * ---------------------------------------------------------- */
+.woocommerce ul.products li.product h2.woocommerce-loop-product__title a:hover {
+  color: #f7931a !important;   /* Bitcoin Orange */
+  transition: color 0.2s ease; /* sanfter Übergang */
+}
+
+/* === WooCommerce Single Product: Bilder quadratisch + gecroppt === */
+
+/* 1) Hauptbild-Container quadratisch machen */
+.single-product div.product .woocommerce-product-gallery__image {
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #1f2631; /* fallback, falls noch kein Bild da ist */
+}
+
+/* Link im Container auf volle Höhe bringen */
+.single-product div.product .woocommerce-product-gallery__image a {
+  display: block;
+  height: 100%;
+}
+
+/* Bild selbst: füllt Container und wird mittig gecroppt */
+.single-product div.product .woocommerce-product-gallery__image img {
+  width: 100% !important;
+  height: 100% !important;          /* überschreibt height:auto */
+  object-fit: cover !important;      /* crop statt contain */
+  object-position: center center !important;
+  display: block;
+}
+
+/* Fix: verhindert den dunklen Balken unter dem Produktbild */
+.single-product div.product .woocommerce-product-gallery {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+  background: transparent !important;
+}
+
+.woocommerce div.product div.images img {
+  max-height: 500px;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+/*--------------------------------------------------------*/
+/* ========= Moderne Produkt-Tabs (WooCommerce) ========= */
+/*--------------------------------------------------------*/
+
+.single-product .woocommerce-tabs {
+  --tab-bg: #181e27 !important;       /* Hintergrund der Tab-Leiste */
+  --tab-pill: #232b36 !important;     /* Hintergrund der einzelnen Tabs (inaktiv) */
+  --tab-text: #cfd6df !important;     /* Textfarbe inaktiv */
+  --tab-text-active: #ffffff !important;  /* Textfarbe aktiv */
+  --tab-border: #2e3846 !important;   /* feiner Rand */
+  --accent: #F7931A !important;       /* Bitcoin-Orange (Aktiv/Highlight) */
+  --shadow: 0 14px 30px rgba(0,0,0,.28) !important;
+}
+
+/* Grundlayout der Leiste */
+.single-product .woocommerce-tabs .wc-tabs-wrapper {
+  background: var(--tab-bg) !important;
+  border: 1px solid var(--tab-border) !important;
+  border-radius: 20px !important;
+  box-shadow: var(--shadow) !important;
+  padding: 22px 18px 10px !important;
+  margin: 30px 0 22px !important;
+}
+
+/* Standardlinie entfernen */
+.single-product .woocommerce-tabs ul.tabs::before {
+  display: none !important;
+}
+
+/* UL als moderne Tab-Leiste (Desktop/Tablet) */
+.single-product .woocommerce-tabs ul.tabs {
+  display: flex !important;
+  gap: 10px !important;
+  list-style: none !important;
+  margin: 0 !important;
+  padding: 10px 6px !important;
+  overflow-x: auto !important;
+  scrollbar-width: none !important;
+}
+.single-product .woocommerce-tabs ul.tabs::-webkit-scrollbar { display: none !important; }
+
+/* Li-Reset */
+.single-product .woocommerce-tabs ul.tabs li {
+  position: relative !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+/* Pill-Buttons */
+.single-product .woocommerce-tabs ul.tabs li a {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 14px 22px !important; /* größerer Kreis */
+  border-radius: 999px !important;
+  background: var(--tab-pill) !important;
+  color: var(--tab-text) !important;
+  font-weight: 600 !important;
+  font-size: 16px !important;
+  line-height: 1 !important;
+  text-decoration: none !important;
+  border: 1px solid var(--tab-border) !important;
+  transition: transform .15s ease, background .2s ease, color .2s ease, border-color .2s ease !important;
+  white-space: nowrap !important;
+}
+
+/* Hover */
+.single-product .woocommerce-tabs ul.tabs li a:hover {
+  transform: translateY(-1px) !important;
+  border-color: rgba(247,147,26,.45) !important;
+}
+
+/* Active state */
+.single-product .woocommerce-tabs ul.tabs li.active a,
+.single-product .woocommerce-tabs ul.tabs li.active a:focus-visible {
+  background: linear-gradient(180deg, rgba(247,147,26,.18), rgba(247,147,26,.10)) !important;
+  color: var(--tab-text-active) !important;
+  border-color: rgba(247,147,26,.65) !important;
+}
+
+/* Underline-Indicator (Desktop/Tablet) */
+.single-product .woocommerce-tabs ul.tabs li.active a::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 10px !important;
+  right: 10px !important;
+  bottom: -10px !important;
+  height: 4px !important;
+  border-radius: 4px !important;
+  background: var(--accent) !important;
+  box-shadow: 0 0 0 2px rgba(247,147,26,.15) !important;
+}
+
+/* Fokus */
+.single-product .woocommerce-tabs ul.tabs li a:focus-visible {
+  outline: 0 !important;
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,.12) !important,
+    0 0 0 6px rgba(247,147,26,.25) !important;
+}
+
+/* Panels – Beschreibung */
+.single-product .woocommerce-tabs .panel {
+  margin-top: 15px !important;
+  background: #181e27 !important;
+  border: 1px solid var(--tab-border) !important;
+  border-radius: 14px !important;
+  padding: 24px 24px !important;
+  box-shadow: var(--shadow) !important;
+}
+
+/* Zentrierte Tabs auf Desktop */
+@media (min-width: 992px) {
+  .single-product .woocommerce-tabs ul.tabs {
+    justify-content: center !important;
+  }
+}
+
+/* ===== MOBILE PATCH: Tabs untereinander statt horizontalem Scroll ===== */
+@media (max-width: 640px) {
+  .single-product .woocommerce-tabs .wc-tabs-wrapper {
+    padding: 14px 12px 8px !important;
+  }
+
+  .single-product .woocommerce-tabs ul.tabs {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    padding: 8px !important;
+    overflow-x: visible !important;  /* kein horizontaler Scroll */
+    scrollbar-width: none !important;
+  }
+
+  .single-product .woocommerce-tabs ul.tabs li {
+    width: 100% !important;
+  }
+
+  .single-product .woocommerce-tabs ul.tabs li a {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 12px 14px !important;
+    border-radius: 14px !important;  /* weniger pillig, mehr Button */
+    font-size: 15px !important;
+    line-height: 1.1 !important;
+  }
+
+  /* Underline-Indicator in vertikale Akzentleiste links verwandeln */
+  .single-product .woocommerce-tabs ul.tabs li.active a::after {
+    left: 8px !important;
+    right: auto !important;
+    top: 50% !important;
+    bottom: auto !important;
+    width: 6px !important;
+    height: 60% !important;
+    transform: translateY(-50%) !important;
+    border-radius: 6px !important;
+    background: var(--accent) !important;
+    box-shadow: 0 0 0 2px rgba(247,147,26,.12) !important;
+  }
+}
+
+/* sehr kleine Geräte – kompakter */
+@media (max-width: 400px) {
+  .single-product .woocommerce-tabs ul.tabs li a {
+    padding: 10px 12px !important;
+    font-size: 14px !important;
+  }
+}
+
+/* Kill weißer Rahmen & Extra-Abstand auf Mobile vom Theme */
+@media (max-width: 719px) {
+  .woocommerce div.product .woocommerce-tabs {
+    border: 0 !important;
+    margin-bottom: 0 !important;   /* Abstand steuern wir selbst */
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+}
+
+/* Mobile: stacken statt quetschen */
+
+/* WooPagination Katalog */
+
+nav.woocommerce-pagination ul li span.current {
+  border-color: #f7931a !important;
+  background: #f7931a !important;
+  color: #ffffff;
+}
+
+/* Mobile Feinheiten */
+
+/* ----------------------------------------------------------
+ * Dokan: Produktfilter auf Smartphone verbreitern
+ * ---------------------------------------------------------- */
+@media (max-width: 767px) {
+  #product-filter.sk-form-inline {
+    width: 100% !important;      /* volle Breite */
+    min-width: 100% !important;  /* verhindert das Schrumpfen */
+    display: block !important;   /* löst enge Inline-Darstellung */
+  }
+
+  /* Optional: einzelne Filterfelder untereinander statt nebeneinander */
+  #product-filter .sk-form-group {
+    width: 100% !important;
+    margin-bottom: 10px;
+  }
+}
+
+/* Tablet: 2 Spalten */
+
+/* Mobile: 1 Spalte */
+
+/* Zusatzbilder (Galerie-Upload) */
+ul.product_images li.add-image.add-product-images {
+  border: 2px solid #3a3f48 !important;
+  background-color: #232a34 !important;
+  border-radius: 8px !important;
+  width: 64px !important;
+  height: 64px !important;
+  transition: all 0.2s ease-in-out;
+}
+
+ul.product_images li.add-image.add-product-images:hover {
+  border-color: #f6c343 !important;
+  background-color: #2b3240 !important;
+  transform: scale(1.05);
+}
+
+/* Plus-Symbol in der Box etwas hervorheben */
+ul.product_images li.add-image.add-product-images a.add-product-images::before {
+  color: #f6c343 !important;
+  font-size: 28px !important;
+  opacity: 0.9;
+  transition: opacity 0.2s;
+}
+
+ul.product_images li.add-image.add-product-images:hover a.add-product-images::before {
+  opacity: 1;
+}
+
+/* --- Banner-Grundgröße auch mobil beibehalten --- */
+
+/* --- Layering: Banner vor Profilbild setzen --- */
+
+/* --- Sicherheitsnetz: Klicks im Banner immer erlaubt --- */
+
+/* Mobile: geringere maximale Höhe */
+
+/* Chevron-Pfeil (Dropdown-Symbol) ausblenden */
+li.settings.has-submenu > a .menu-dropdown {
+  display: none !important;
+}
+
+
+@media (max-width: 767px) {
+  .sk-table tbody tr td {
+    background: transparent;
+  }
+}
+
+
+/* Mehr Abstand oberhalb des Bearbeiten-Buttons (Permalink bearbeiten) */
+#edit-slug-buttons {
+  display: inline-block;
+  margin-top: 10px !important;   /* Abstand nach oben, 10–14px sieht gut aus */
+}
+
+button.edit-slug.button.button-small.hide-if-no-js {
+  margin-top: 4px !important;    /* Sicherheitsabstand für den Button selbst */
+}
+
+/* 2) Sidebar fix 17% Breite (wie von dir gewünscht) */
+
+/* 3) Content-Spalte flexibel: nimmt restliche Breite ein */
+
+/* 5) Responsive: unter Tablet stapeln + oben Abstand zum Content */
+
+
+
+/* Tablet & kleiner: unter die Sidebar mit etwas Top-Abstand */
+
+/* Button im Store-Dashboard auf mobilen Geräten zentrieren */
+
+/* Button zentrieren im Abo-Paket */
+.px-6.min-w-full {
+  display: flex;
+  justify-content: center;
+}
+
+.px-6.min-w-full button {
+  margin: 0 auto;
+}
+
+
+/*----------------------------------------*/
+/* === Inhaltsverzeichnis FAQ Styling === */
+/*----------------------------------------*/
+
+.kb-table-of-content-wrap {
+  background: #1e2530;                /* dunkler Hintergrund */
+  border: 1px solid #2f3a48;          /* feine Umrandung */
+  border-radius: 10px;                /* weiche Ecken */
+  padding: 1.5rem 2rem;               /* Innenabstand */
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);  /* leichter Schatten */
+  margin: 2rem 0;                     /* Abstand nach außen */
+  color: #e6e9ee;                     /* Textfarbe */
+}
+
+/* Titelzeile ("Inhaltsverzeichnis") */
+.kb-table-of-contents-title-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(90deg, #2b3440, #1f262f);
+  padding: 0.75rem 1.2rem;
+  border-radius: 8px 8px 0 0;
+  border-bottom: 1px solid #364150;
+}
+
+.kb-table-of-contents-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+/* Pfeil-Icon oder Toggle */
+.kb-table-of-contents-icon-trigger::before {
+  color: #ffb300;   /* goldgelb, auffällig */
+}
+
+/* Liste im Inhaltsverzeichnis */
+.kb-table-of-content-nav ul {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding-left: 1rem;
+}
+
+.kb-table-of-content-nav ul li {
+  margin-bottom: 0.5rem;
+  padding-left: 0.5rem;
+  border-left: 2px solid #3a4655;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.kb-table-of-content-nav ul li:hover {
+  border-left-color: #ffb300;
+  transform: translateX(4px);
+}
+
+.kb-table-of-content-nav a {
+  color: #d5dae0;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.kb-table-of-content-nav a:hover {
+  color: #fff;
+}
+
+/*--- Buttons Hover --*/
+
+a.wp-block-button__link.has-theme-palette-4-background-color.has-background.wp-element-button {
+  transition: all 0.25s ease-in-out !important;
+}
+
+a.wp-block-button__link.has-theme-palette-4-background-color.has-background.wp-element-button:hover {
+  background-color: #f7931a !important;   /* Bitcoin-Orange :) */
+  color: #fff !important;
+  box-shadow: 0 0 15px rgba(247, 147, 26, 0.5) !important;
+  transform: translateY(-2px) !important;  /* leicht anheben */
+}
+
+/*  Price Reduction Woo **/
+
+/* Deutlich sichtbarer durchgestrichener Originalpreis bei Angeboten */
+.woocommerce del,
+.woocommerce del .woocommerce-Price-amount,
+.woocommerce del bdi {
+  color: #999 !important; /* alte Preisfarbe leicht ausgegraut */
+  opacity: 0.9 !important;
+  text-decoration: line-through !important;
+  text-decoration-thickness: 2px !important; /* dickere Linie */
+  text-decoration-color: #ff6600 !important; /* z. B. Orange für bessere Sichtbarkeit */
+  margin-right: 6px !important; /* kleiner Abstand zum neuen Preis */
+}
+
+/*-- WCPS Slider Tuning --*/
+
+/* Prevent Splide-powered sliders from flashing unstyled content */
+.splide:not(.is-initialized):not(.splide-initialized) {
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+.splide.is-initialized,
+.splide.splide-initialized {
+  visibility: visible !important;
+  opacity: 1 !important;
+  transition: opacity 0.25s ease-in;
+}
+
+.splide.is-initialized .splide__track,
+.splide.splide-initialized .splide__track {
+  visibility: visible !important;
+}
+
+body.no-js .splide {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/*neu*/
+
+.wcps-container .wcps-items-thumb.element-1 img {
+  width: 100%;
+  height: 250px !important;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+/* 1) Der Content-Block der Karte ist der Bezugspunkt */
+.splide__slide .elements-wrapper .layer-content.element-3 {
+  position: relative;        /* für das absolute Pricing */
+  padding-bottom: 58px;      /* Platz für den Preisblock (anpassen: 48–72px) */
+  min-height: 180px;         /* verhindert Überlappung bei langen Titeln */
+}
+
+/* 2) Preis unten festpinnen – Titel bleibt wo er ist */
+.splide__slide .elements-wrapper .wcps-items-price {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  margin: 0 !important;
+  text-align: center;
+}
+
+.wcps-container .wcps-items-thumb.element-1 img {
+  width: 100%;
+  height: 270px !important;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.wcps-container .wcps-items-cart {
+    display: none !important;
+}
+
+@media (max-width: 576px) {
+    /* Alle Slider-Items standardisieren (mobil) */
+    .wcps-container .wcps-items-thumb.element-1 img {
+        width: 100%;
+        height: 185px !important;  /* Höhe kannst du hier anpassen */
+        object-fit: cover;
+        object-position: center;
+        display: block;
+    }
+}
+
+.wcps-container-983 .item,
+.wcps-container-1247 .item {
+  background: #252d38;
+  border-radius: 8px;
+}
+
+.wcps-items-title,
+.wcps-items-price {
+    text-align: center !important;
+}
+
+/* Entfernt die Unterstreichung bei den Titellinks */
+.wcps-items-title a {
+  text-decoration: none;
+}
+
+.layout- img {
+	border-radius: 5px !important;
+}
+
+.layout- .element-5 a {
+	color: white !important;
+}
+
+/* Stärkerer Strikethrough für alte Preise im Slider */
+.wcps-items-price del,
+.wcps-items-price del span,
+.wcps-items-price del bdi {
+  color: #999 !important;
+  text-decoration: line-through !important;
+  text-decoration-color: #ff6600 !important;
+  text-decoration-thickness: 2px !important;
+  opacity: 0.9 !important;
+}
+
+/* Schriftgröße anpassen, falls zu klein */
+.wcps-items-price del {
+  font-size: 0.95em !important;
+}
+
+/* Neuer Preis klar hervorheben */
+.wcps-items-price ins,
+.wcps-items-price ins span,
+.wcps-items-price ins bdi {
+  color: #ffb347 !important; /* oder dein Akzent #db6316 */
+  font-weight: 700 !important;
+}
+
+/* Alternative rein visuelle Kürzung auf 3 Zeilen */
+@media (max-width: 768px) {
+  .wcps-items-title {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;     /* max. 3 Zeilen */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.wcps-items-title.element-5 a {
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis !important;
+}
+
+.wcps-items-title.element-5 {
+  padding: 0 10px;
+  box-sizing: border-box !important;
+}
+
+/*---- Kadence Fixes ----*/
+
+/* Nur die Kadence-Posts-Block-Liste links bündig machen (keine Bullets) */
+ul.kb-posts-list,
+ul.kadence-posts-list,
+.wp-block-kadence-posts ul.kb-posts-list,
+.wp-block-kadence-posts ul.kadence-posts-list {
+  padding-inline-start: 0 !important;
+  margin-left: 0 !important;
+  list-style: none !important;
+}
+
+/* Titel + Text NUR in den Kacheln zentrieren */
+.kb-post-list-item .entry.loop-entry .entry-header,
+.kb-post-list-item .entry.loop-entry .entry-summary,
+.kb-post-list-item .entry.loop-entry .entry-footer {
+  text-align: center;
+}
+
+.kb-posts .entry.loop-entry{
+	background: #252d38;
+}
+
+/* VendorInfo hinzufügen Kacheln */
+
+.produkt-vendor-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 12px 1px 12px; /* oben/rechts/unten/links */
+}
+
+.vendor-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 25%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.vendor-name {
+    color: #ddd;
+    font-size: 0.90rem;
+    font-weight: 600;
+    max-width: 225px;
+    display: inline-block;
+}
+
+.vendor-name:hover {
+    color: #F7931A !important;
+}
+
+/* LNURL-auth size */
+
+.lnurl-auth {
+  position: relative;
+  width: 60% !important;
+  margin: 0 auto;
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .lnurl-auth {
+    width: 74% !important;
+  }
+}
+
+.lnurl-auth-permalink a {
+  font-size: 1.3rem;
+  font-weight: bold;
+  display: block; /* wichtig für zentrierte Elemente */
+  margin: 0rem auto;
+  text-align: center;
+	padding-left: 10px;
+}
+
+#lnurl-copy-button-container {
+    text-align: center;
+}
+
+/* In den Warenkorb Button entfernen Option entfernen */
+
+input[name="catalog_mode[hide_add_to_cart_button]"] {
+    display: none !important;
+}
+
+label[for="catalog_mode_hide_add_to_cart_button"] {
+    display: none !important;
+}
+
+/* Auf Smartphones (max. 768px) – mehr Abstand */
+
+
+ul, ol {
+	margin: 0px;
+}
+
+.entry.loop-entry {
+	border: 0px solid #333;
+    box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
+	transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+.entry.loop-entry:hover {
+	transform: scale(1.03);
+    box-shadow: 5px 5px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Nur im Carousel, nur auf Smartphones */
+@media (max-width: 767px) {
+  .wppis-slider.horizontal .wppis-figure img {
+    max-width: 100px;  /* z. B. 150px breite Thumbs */
+    height: auto;
+  }
+}
+
+/* Nur im Carousel, nur auf Tablets */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .wppis-slider.horizontal .wppis-figure img {
+    max-width: 200px;  /* z. B. 200px breite Thumbs */
+    height: auto;
+  }
+}
+
+.wppis-slider.horizontal .wppis-track{
+	margin-bottom: 20px;
+}
+
+/* Mobile: bis 767px */
+@media (max-width: 767px) {
+  .wppis-slider.horizontal .wppis-figure img {
+    height: 100px !important;
+    width: auto;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+/* Tablet: 768px bis 1024px */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .wppis-slider.horizontal .wppis-figure img {
+    height: 160px !important;
+    width: auto;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.kt-accordion-panel-inner {
+  padding: 5px;
+}
+
+/* Basis-Styles (Mobile & Tablet) */
+.page-id-54 .wc-block-product-template {
+  padding-top: 1em;
+  padding-left: 2em;
+  padding-right: 2em;
+}
+
+/* Ab Desktop-Auflösung (Beispiel: ab 1024px) */
+@media (min-width: 1024px) {
+  .page-id-54 .wc-block-product-template {
+    padding-left: 6em;
+    padding-right: 6em;
+  }
+}
+
+.page-id-754 .entry-title {
+  word-wrap: break-word;
+	padding-top: 50px;
+	padding-bottom: 30px;
+}
+
+body.post-type-archive-gesuch .entry-hero-container,
+body.post-type-archive-gesuch .entry-hero-container-inner,
+body.post-type-archive-gesuch .hero-section-overlay {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.entry-hero-container-inner .entry-header {
+  min-height: 100px;
+	margin-top: 20px;
+	margin-bottom: 20px;
+}
+
+/* Breadcrumbs (oben auf der Seite) */
+#breadcrumbs {
+    padding-left: 8%;
+}
+
+@media (max-width: 768px) {
+    #breadcrumbs {
+        padding-left: 5%;
+    }
+}
+
+.kt-accordion-panel-inner {
+    background-color: transparent !important;
+}
+
+.wp-block-list {
+    background-color: transparent !important;
+}
+
+/* Dokan Vendorpage Pagination */
+
+.pagination .page-numbers:last-child {
+  margin-right: 0;
+	color: black;
+}
+
+#order_comments {
+  padding-left: 12px;  /* Innenabstand des Texts */
+  margin-left: 12px;   /* Äußerer Abstand zur linken Kante */
+}
+
+#payment ul.wc_payment_methods li.wc_payment_method input[type="radio"]:first-child:checked + label {
+  border-left: 5px solid var(--global-palette-highlight);
+  background: #f7931a;
+}
+#payment ul.wc_payment_methods li.wc_payment_method input[type="radio"]:first-child:checked + label {
+  border-left: 5px solid var(--global-palette-highlight);
+  background: #f7931a;
+}
+
+/* Shipping Costs below Price single product page */
+
+.p2p-shipping-note {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    color: #f7931a !important; /* Bitcoin-Orange */
+    font-size: 1.1em;
+}
+
+/* Kachelhöhe Produkte */
+ul.products li.product {
+    
+    min-height: 625px !important;
+    max-width: 350px;
+}
+
+/* Preishöhe relativ zur Seitenbreite */
+
+/* Produktkachel braucht feste Höhe + positioniert */
+ul.products li.product {
+    position: relative;
+    height: 100%; /* oder z. B. 100% von grid container */
+}
+
+/* Produktinhalt mit voller Höhe */
+ul.products li.product .product-details {
+    height: 100%;
+    position: relative;
+}
+
+/* Preisbox unten innerhalb der Kachel */
+ul.products li.product .price {
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    right: 1rem;
+    color: #f7931a !important;
+    font-weight: bold !important;
+    font-size: 1rem;
+}
+
+/* ───────────────🔹 DOKAN DASHBOARD STYLES ─────────────── */
+
+
+/* Ankündigungstitel in Schwarz */
+
+h2.text-lg.font-bold.mt-2 {
+  color: #000000;
+}
+
+/* Announcement in weiss */
+
+h3.text-2xl.font-semibold {
+  color: #ffffff;
+}
+
+/* Tooltip-Layout */
+.tooltip {
+    width: auto !important;
+    min-width: 100px;
+}
+.tooltip-inner {
+    display: inline-block;
+    width: auto;
+    max-width: 90%;
+    word-break: break-word;
+    white-space: normal;
+}
+
+/* Mobile Menü-Icon zentrieren */
+#mobile-menu-icon {
+    position: static !important;
+    margin: 0 auto;
+    display: block;
+}
+
+/* Zeilenaktionen übersichtlich */
+.row-actions {
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.row-actions span {
+    display: inline-block;
+    white-space: nowrap;
+    font-size: 12px;
+    color: #444;
+}
+
+/* Aktiver Tab weiß */
+.dokan_tabs li.active a {
+    color: #ffffff !important;
+}
+
+/* ───────────────🔹 SEITENSPEZIFISCHE ANPASSUNGEN ─────────────── */
+
+/* Store-Listing Seite (Page ID 14) */
+body.page-id-14 p.item.store-count,
+body.page-id-14 label[for="stores_orderby"],
+body.page-id-14 .sort-by-item label {
+    color: #ffffff !important;
+}
+body.page-id-14 select#stores_orderby {
+    color: #e8ecf0 !important;
+}
+
+/* Ansicht-Umschalter Icons */
+.toggle-view .dashicons {
+    color: #9aa4b2 !important;
+}
+.toggle-view .dashicons.active {
+    color: #f7931a !important;
+}
+
+/* Label im Sortierformular */
+form.sort-by.item label {
+    color: #ffffff !important;
+}
+
+/* Mediathek: Überschriften und Menü */
+.media-modal .media-frame-title h1,
+.media-modal .media-menu-item {
+    color: #111 !important;
+}
+
+/* Angebotsblöcke auf Page-ID 54 (z. B. Features) */
+.page-id-54 .wp-block-column {
+    border: 0px solid #333;
+    padding: 20px;
+}
+
+/* ───────────────🔹 PRODUKTKACHELN (GRID) ─────────────── */
+
+/* Produkte im Grid-View */
+ul.products li.product {
+    display: flex;
+    flex-direction: column;
+    min-height: 650px;
+}
+
+/* Produkt-Excerpt (Kurzbeschreibung) optisch abgestuft */
+ul.products li.product .produkt-beschreibung-auszug {
+    font-size: 0.8rem !important;
+    line-height: 1.3;
+    color: #ccc;
+    margin-top: 10px;
+}
+
+/* Textfarbe im ganzen Missbrauch melden Popup */
+
+.iziModal {
+	color: black;
+}
+
+.woocommerce-tree-select-control .components-base-control .components-base-control__field {
+	color: black;
+}
+
+.kt-accordion-panel {
+  display: block;
+  background-color: #252d38;
+	border-radius: 10px;
+}
+
+.woocommerce .woocommerce-checkout .shop_table {
+	background: transparent;
+	}
+
+/* Nur Desktop */
+@media (min-width: 1025px) {
+
+    .woocommerce .col2-set,
+    .woocommerce .woocommerce-billing-fields,
+    .woocommerce .woocommerce-shipping-fields {
+        padding-left: 35px;
+    }
+
+    .woocommerce-additional-fields h3 {
+        text-align: center;
+        width: 100%;
+    }
+
+    /* Rechte Payment-Box styling */
+    #order_review.woocommerce-checkout-review-order {
+        background: #212a36;
+        padding: 25px;
+        border-radius: 8px;
+        box-sizing: border-box;
+    }
+
+    /* Titel "Deine Bestellung" auch ins Styling ziehen */
+    #order_review_heading {
+        background: #212a36;
+        padding-top: 10px !important;
+        padding: 15px 25px;
+        border-radius: 8px;
+        margin-bottom: 0;
+        text-align: center;
+    }
+
+}
+
+ /* Rechte Payment-Box styling */
+#order_review.woocommerce-checkout-review-order {
+        background: #212a36;
+        padding: 25px;
+        border-radius: 8px;
+        box-sizing: border-box;
+    }
+
+
+.woocommerce .col2-set, .woocommerce .woocommerce-billing-fields, .woocommerce .woocommerce-shipping-fields {
+  background: #212a36;
+  margin-bottom: -20px;
+}
+
+
+/* ───────────────🔹 CHECKOUT LAYOUT FIX (50/50 Split) ─────────────── */
+
+/* Make form take full width */
+form.woocommerce-checkout {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 20px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Left column */
+#customer_details {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+/* Right column - heading and order box both in row 1, will stack naturally */
+#order_review_heading {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  margin-bottom: 15px !important; /* Small gap between heading and order box */
+  align-self: start !important; /* Align to top */
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+#order_review {
+  grid-column: 2 !important;
+  grid-row: 1 !important; /* SAME row as heading */
+  margin-top: 0 !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-height: fit-content;
+  min-width: 0 !important;
+}
+
+/* Stack on mobile */
+@media (max-width: 768px) {
+  form.woocommerce-checkout {
+    grid-template-columns: 1fr !important;
+  }
+  
+  #customer_details {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+  }
+  
+  #order_review_heading,
+  #order_review {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+  }
+}

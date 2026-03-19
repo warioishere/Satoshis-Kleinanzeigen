@@ -1,0 +1,19 @@
+{
+  "name": "btcpayserver/btcpay-greenfield-for-woocommerce",
+  "type": "project",
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "BTCPayServer\\WC\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Andreas Tasch",
+      "email": "andy.tasch@gmail.com"
+    }
+  ],
+  "require": {
+    "btcpayserver/btcpayserver-greenfield-php": "^2.0.0"
+  }
+}
