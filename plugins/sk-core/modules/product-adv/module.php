@@ -192,12 +192,6 @@ final class Module {
     public function register_scripts() {
         list( $suffix, $version ) = sk_get_script_suffix_and_version();
 
-        // Register all js
-        wp_register_script( 'sk-product-adv-admin', SK_PRODUCT_ADVERTISEMENT_ASSETS . '/js/admin' . $suffix . '.js', [ 'jquery', 'sk-sweetalert2' ], $version, true );
-
-        // register all css
-        wp_register_style( 'sk-product-adv-admin', SK_PRODUCT_ADVERTISEMENT_ASSETS . '/js/admin' . $suffix . '.css', [], $version );
-
         // register frontend scripts
         wp_register_script( 'sk-product-adv-purchase', SK_PRODUCT_ADVERTISEMENT_ASSETS . '/js/purchase_advertisement' . $suffix . '.js', [ 'jquery', 'sk-sweetalert2' ], $version, true );
     }

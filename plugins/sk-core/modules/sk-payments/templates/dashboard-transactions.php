@@ -82,10 +82,29 @@ do_action( 'sk_dashboard_wrap_start' );
                        class="sk-review-filter-tab <?php echo $tab === 'purchases' ? 'active' : ''; ?>">
                         <i class="fas fa-arrow-up"></i> Käufe
                     </a>
+                    <?php if ( class_exists( 'SK\Modules\Payments\Commission\Generator' ) && \SK\Modules\Payments\Commission\Generator::is_enabled() ) :
+                        $com_unpaid = 0;
+                        $com_tbl = $wpdb->prefix . 'sk_commissions';
+                        if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $com_tbl ) ) ) {
+                            $com_unpaid = (int) $wpdb->get_var( $wpdb->prepare(
+                                "SELECT COUNT(*) FROM {$com_tbl} WHERE vendor_id = %d AND status IN ('pending', 'invoiced')",
+                                $user_id
+                            ) );
+                        }
+                    ?>
+                    <a href="<?php echo esc_url( add_query_arg( [ 'tab' => 'commissions', 'filter' => 'all' ], $base_url ) ); ?>"
+                       class="sk-review-filter-tab <?php echo $tab === 'commissions' ? 'active' : ''; ?>">
+                        <i class="fas fa-file-invoice"></i> Kommissionen
+                        <?php if ( $com_unpaid > 0 ) : ?>
+                            <span style="display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;margin-left:4px;background:#dc2626;color:#fff;border-radius:9px;font-size:11px;font-weight:700;line-height:1;"><?php echo esc_html( $com_unpaid ); ?></span>
+                        <?php endif; ?>
+                    </a>
+                    <?php endif; ?>
                 </div>
                 <?php endif; ?>
 
-                <?php /* ── Status-Filter ── */ ?>
+                <?php /* ── Status-Filter (nicht bei Kommissionen) ── */ ?>
+                <?php if ( $tab !== 'commissions' ) : ?>
                 <div class="sk-review-status-filter">
                     <?php
                     $filters = [
@@ -105,6 +124,95 @@ do_action( 'sk_dashboard_wrap_start' );
                         </a>
                     <?php endforeach; ?>
                 </div>
+                <?php endif; ?>
+
+                <?php /* ── Kommissionen Tab ── */ ?>
+                <?php if ( $tab === 'commissions' ) :
+                    $com_table = $wpdb->prefix . 'sk_commissions';
+                    $com_table_exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $com_table ) );
+                    $vendor_commissions = [];
+                    if ( $com_table_exists ) {
+                        $vendor_commissions = $wpdb->get_results( $wpdb->prepare(
+                            "SELECT c.*, p.product_id, p.context
+                             FROM {$com_table} c
+                             LEFT JOIN {$table} p ON p.payment_hash = c.payment_hash
+                             WHERE c.vendor_id = %d
+                             ORDER BY c.created_at DESC LIMIT 50",
+                            $user_id
+                        ) );
+                    }
+                    $com_status_labels = [
+                        'pending'  => [ '🟡', 'Offen' ],
+                        'invoiced' => [ '🔵', 'Invoice erstellt' ],
+                        'paid'     => [ '🟢', 'Bezahlt' ],
+                        'waived'   => [ '⚪', 'Erlassen' ],
+                    ];
+                ?>
+                    <?php if ( empty( $vendor_commissions ) ) : ?>
+                        <div class="sk-reviews-empty">
+                            <i class="fas fa-file-invoice"></i>
+                            <p>Keine Kommissionen vorhanden.</p>
+                        </div>
+                    <?php else : ?>
+                        <ul class="sk-reviews-list">
+                        <?php foreach ( $vendor_commissions as $c ) :
+                            $product    = ! empty( $c->product_id ) ? get_the_title( $c->product_id ) : '—';
+                            $product_url = ! empty( $c->product_id ) ? get_permalink( $c->product_id ) : '';
+                            $com_status = $com_status_labels[ $c->status ] ?? [ '⚪', $c->status ];
+                            $com_sats   = number_format( $c->commission_sats, 0, ',', '.' );
+                            $orig_sats  = number_format( $c->original_amount_sats, 0, ',', '.' );
+                            $com_date   = wp_date( 'd.m.Y H:i', strtotime( $c->created_at ) );
+                        ?>
+                            <li class="sk-review-card">
+                                <div class="sk-review-card__body">
+                                    <div class="sk-review-card__header">
+                                        <div class="sk-review-card__author-info">
+                                            <span class="sk-review-card__name"><?php echo esc_html( $com_date ); ?></span>
+                                            <?php if ( $product_url ) : ?>
+                                                <a href="<?php echo esc_url( $product_url ); ?>" class="sk-review-card__email" target="_blank" rel="noopener">
+                                                    <?php echo esc_html( $product ); ?>
+                                                </a>
+                                            <?php else : ?>
+                                                <span class="sk-review-card__email"><?php echo esc_html( $product ); ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+
+                                    <div class="sk-review-card__content">
+                                        <span style="font-size:13px;color:#5a6a7e;">Verkauf: <?php echo esc_html( $orig_sats ); ?> Sats</span>
+                                        <span style="margin-left:8px;font-size:13px;color:#5a6a7e;"><?php echo esc_html( $c->commission_rate ); ?>%</span>
+                                        <span style="margin-left:12px;font-weight:700;color:#F7931A;font-size:17px;"><?php echo esc_html( $com_sats ); ?> Sats</span>
+                                        <span style="margin-left:10px;"><?php echo $com_status[0]; ?> <?php echo esc_html( $com_status[1] ); ?></span>
+                                    </div>
+
+                                    <?php if ( $c->status === 'invoiced' && ! empty( $c->invoice_payment_request ) ) : ?>
+                                    <div class="sk-review-card__footer">
+                                        <div style="margin-top:8px;background:#0f1923;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:10px;word-break:break-all;font-family:monospace;font-size:11px;color:#8a9bb0;max-height:60px;overflow:hidden;">
+                                            <?php echo esc_html( $c->invoice_payment_request ); ?>
+                                        </div>
+                                        <div style="margin-top:6px;display:flex;gap:8px;">
+                                            <button class="skl-copy-btn" data-copy="<?php echo esc_attr( $c->invoice_payment_request ); ?>" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);padding:6px 10px;border-radius:5px;cursor:pointer;font-size:12px;color:#e8ecf0;">
+                                                <i class="fas fa-copy"></i> Invoice kopieren
+                                            </button>
+                                            <a href="lightning:<?php echo esc_attr( $c->invoice_payment_request ); ?>" style="padding:6px 10px;background:#f7931a;border-radius:5px;color:#fff;font-size:12px;text-decoration:none;">
+                                                <i class="fas fa-bolt"></i> In Wallet öffnen
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <?php endif; ?>
+
+                                    <?php if ( $c->status === 'paid' && $c->paid_at ) : ?>
+                                    <div class="sk-review-card__footer">
+                                        <span style="font-size:12px;color:#5cb85c;">Bezahlt am <?php echo esc_html( wp_date( 'd.m.Y H:i', strtotime( $c->paid_at ) ) ); ?></span>
+                                    </div>
+                                    <?php endif; ?>
+                                </div>
+                            </li>
+                        <?php endforeach; ?>
+                        </ul>
+                    <?php endif; ?>
+
+                <?php else : ?>
 
                 <?php /* ── Transaktions-Liste ── */ ?>
                 <?php if ( empty( $payments ) ) : ?>
@@ -212,6 +320,8 @@ do_action( 'sk_dashboard_wrap_start' );
                     <?php endforeach; ?>
                     </ul>
                 <?php endif; ?>
+
+                <?php endif; /* end commissions/transactions tab switch */ ?>
 
             </div>
         </div>

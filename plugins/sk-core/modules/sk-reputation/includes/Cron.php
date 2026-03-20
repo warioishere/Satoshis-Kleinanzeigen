@@ -60,6 +60,11 @@ class Cron {
 
             $vendors_to_recalc[ $payment->vendor_id ] = true;
 
+            // Fire commission hook for 7-day timeout path.
+            if ( $valid ) {
+                do_action( 'sk_payment_reputation_credited', $payment );
+            }
+
             if ( in_array( 'burst_new_accounts', $flags, true ) ) {
                 $this->notify_admin_burst( $payment );
             }
@@ -69,18 +74,35 @@ class Cron {
             Calculator::recalculate_vendor( $vendor_id );
         }
 
+        // Check pending commission invoices + enforcement.
+        if ( class_exists( 'SK\Modules\Payments\Commission\Generator' ) ) {
+            \SK\Modules\Payments\Commission\Generator::check_pending_invoices();
+        }
+        if ( class_exists( 'SK\Modules\Payments\Commission\Enforcement' ) ) {
+            \SK\Modules\Payments\Commission\Enforcement::process();
+        }
+
         update_option( 'sk_reputation_cron_last_run', current_time( 'mysql' ) );
     }
 
     public function expire_old_invoices() {
         global $wpdb;
-        $table  = $wpdb->prefix . 'sk_lightning_payments';
-        $cutoff = wp_date( 'Y-m-d H:i:s', time() - 15 * MINUTE_IN_SECONDS );
+        $table = $wpdb->prefix . 'sk_lightning_payments';
 
+        // Lightning: expire after 15 minutes.
+        $ln_cutoff = wp_date( 'Y-m-d H:i:s', time() - 15 * MINUTE_IN_SECONDS );
         $wpdb->query( $wpdb->prepare(
             "UPDATE {$table} SET status = 'expired'
-             WHERE status = 'pending' AND created_at <= %s",
-            $cutoff
+             WHERE status = 'pending' AND context != 'onchain' AND created_at <= %s",
+            $ln_cutoff
+        ) );
+
+        // Onchain: expire after 48 hours (blocks can be slow, mempool congestion).
+        $oc_cutoff = wp_date( 'Y-m-d H:i:s', time() - 48 * HOUR_IN_SECONDS );
+        $wpdb->query( $wpdb->prepare(
+            "UPDATE {$table} SET status = 'expired'
+             WHERE status = 'pending' AND context = 'onchain' AND created_at <= %s",
+            $oc_cutoff
         ) );
     }
 

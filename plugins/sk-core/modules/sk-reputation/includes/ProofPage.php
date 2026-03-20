@@ -20,14 +20,15 @@ class ProofPage {
             return $tabs;
         }
 
-        $address = StoreSettings::get_lightning_address( $store_id );
+        // Show tab if vendor has any payment method configured (LN or Onchain).
+        $has_payments = StoreSettings::has_lightning( $store_id ) || StoreSettings::has_onchain( $store_id );
 
-        if ( empty( $address ) ) {
+        if ( ! $has_payments ) {
             return $tabs;
         }
 
         $tabs['lightning_proof'] = [
-            'title' => '⚡ LN Reputation',
+            'title' => 'Reputation',
             'url'   => sk_get_store_url( $store_id, 'lightning-proof' ),
         ];
 

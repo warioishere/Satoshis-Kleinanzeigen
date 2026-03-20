@@ -162,7 +162,7 @@ class ProductPage {
         // Store payment record.
         global $wpdb;
         $table = $wpdb->prefix . 'sk_lightning_payments';
-        $payment_hash = hash( 'sha256', $address . $buyer_id . $price_sats . time() );
+        $payment_hash = hash( 'sha256', $address . $buyer_id . $price_sats . microtime( true ) . random_bytes( 8 ) );
 
         $wpdb->insert( $table, [
             'vendor_id'       => $vendor_id,

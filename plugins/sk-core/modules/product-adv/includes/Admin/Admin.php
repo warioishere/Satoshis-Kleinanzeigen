@@ -39,8 +39,6 @@ class Admin {
             return;
         }
 
-        wp_enqueue_script( 'sk-product-adv-admin' );
-        wp_enqueue_style( 'sk-product-adv-admin' );
     }
 
     /**

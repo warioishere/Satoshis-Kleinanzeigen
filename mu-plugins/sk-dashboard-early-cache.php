@@ -43,11 +43,11 @@ add_action( 'muplugins_loaded', function () {
         return;
     }
 
-    // Auto-bust cache when mu-plugin JS/PHP files change
+    // Auto-bust cache when watched files change
     $watched = [
-        __DIR__ . '/sk-buynow.js',
-        __DIR__ . '/sk-buynow.php',
         __DIR__ . '/nostr-login-box.php',
+        dirname( __DIR__ ) . '/plugins/sk-core/includes/BuyNow.php',
+        dirname( __DIR__ ) . '/plugins/sk-core/assets/js/sk-buynow.js',
     ];
     $current_mtime = 0;
     foreach ( $watched as $f ) {

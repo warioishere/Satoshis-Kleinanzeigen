@@ -244,6 +244,16 @@ class ModuleManager {
                         'plan'         => [ 'professional', 'business', 'enterprise' ],
                         'categories'   => [ 'Store Management' ],
                     ],
+                    'sk_auth' => [
+                        'id'           => 'sk_auth',
+                        'name'         => __( 'SK Auth', 'sk' ),
+                        'description'  => __( 'Bitcoin, Lightning und Nostr Login.', 'sk' ),
+                        'thumbnail'    => $thumbnail_dir . '/follow-store.svg',
+                        'module_file'  => SK_CORE_DIR . '/modules' . '/sk-auth/module.php',
+                        'module_class' => 'SK\Modules\Auth\Module',
+                        'plan'         => [ 'professional', 'business', 'enterprise' ],
+                        'categories'   => [ 'Store Management' ],
+                    ],
                 ]
             );
         }

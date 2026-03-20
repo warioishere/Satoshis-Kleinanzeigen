@@ -323,15 +323,16 @@ class ChatIntegration {
             wp_send_json_error( [ 'message' => 'Die 7-Tage-Frist für Problemmeldungen ist abgelaufen.' ] );
         }
 
+        $existing_meta = json_decode( $payment->metadata ?? '{}', true ) ?: [];
+        $existing_meta['dispute_reason']  = $reason;
+        $existing_meta['dispute_at']      = current_time( 'mysql' );
+        $existing_meta['dispute_user_id'] = get_current_user_id();
+
         $wpdb->update(
             $table,
             [
                 'status'   => 'disputed',
-                'metadata' => wp_json_encode( [
-                    'dispute_reason'  => $reason,
-                    'dispute_at'      => current_time( 'mysql' ),
-                    'dispute_user_id' => get_current_user_id(),
-                ] ),
+                'metadata' => wp_json_encode( $existing_meta ),
             ],
             [ 'payment_hash' => $payment_hash ],
             [ '%s', '%s' ],

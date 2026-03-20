@@ -3,7 +3,7 @@
  * Plugin Name: SK Core
  * Plugin URI: https://satoshiskleinanzeigen.space/
  * Description: A private multivendor marketplace plugin for WordPress.
- * Version: 4.1.13
+ * Version: 4.1.14
  * Author: SK
  * Author URI: https://satoshiskleinanzeigen.space/
  * Text Domain: sk-core
@@ -19,6 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/lib/autoload.php';
 require_once __DIR__ . '/sk-core-class.php';
 
 defined( 'SK_CORE_FILE' ) || define( 'SK_CORE_FILE', __FILE__ );
@@ -54,3 +55,9 @@ function sk_ext() {
     return $instance;
 }
 sk_ext();
+
+// Auto-assign free vendor pack.
+\SK\Core\FreePack::init();
+
+// Buy Now — direct BTCPay checkout for subscriptions & boosts.
+\SK\Core\BuyNow::init();

@@ -41,7 +41,7 @@ Satoshis Kleinanzeigen läuft auf Open Source Software. Hier ist was wir verwend
 | Komponente | Was es tut |
 |-----------|-----------|
 | **WordPress + WooCommerce** | Basis-CMS und Shop-System |
-| **SK-Core** | Multi-Vendor Marketplace (Fork von Dokan) |
+| **SK-Core** | Multi-Vendor Marketplace Plugin |
 | **SK Payments** | Eigenes Modul — Non-custodial Lightning + Onchain Payments |
 | **SK Reputation** | Eigenes Modul — Sybil-resistentes Reputationssystem |
 | **BTCPay Greenfield** | WooCommerce Payment Gateway für BTCPay Server |

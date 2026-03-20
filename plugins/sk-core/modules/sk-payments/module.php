@@ -40,6 +40,8 @@ final class Module {
         require_once SK_PAYMENTS_INCLUDES . '/Onchain/XpubDerivation.php';
         require_once SK_PAYMENTS_INCLUDES . '/Onchain/BlockchainChecker.php';
         require_once SK_PAYMENTS_INCLUDES . '/ProductPage.php';
+        require_once SK_PAYMENTS_INCLUDES . '/Commission/Generator.php';
+        require_once SK_PAYMENTS_INCLUDES . '/Commission/Enforcement.php';
     }
 
     public function load_hooks() {
@@ -69,6 +71,9 @@ final class Module {
         if ( $chat_enabled && $vendor_chat_active ) {
             new Chat\ChatIntegration();
         }
+
+        // Commission system.
+        new Commission\Generator();
     }
 
     /**
@@ -80,6 +85,7 @@ final class Module {
 
     public function activate() {
         Activator::activate();
+        Commission\Generator::create_table();
         flush_rewrite_rules( true );
     }
 

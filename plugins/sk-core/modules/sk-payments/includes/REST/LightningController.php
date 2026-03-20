@@ -121,7 +121,18 @@ class LightningController extends WP_REST_Controller {
         $amount_sats = $request->get_param( 'amount_sats' );
         $product_id  = $request->get_param( 'product_id' );
         $chat_id     = $request->get_param( 'chat_id' );
-        $buyer_id    = $request->get_param( 'buyer_id' ) ?: get_current_user_id();
+        $current_user = get_current_user_id();
+
+        // buyer_id can only be set internally (from ChatIntegration AJAX).
+        // External REST calls always use the current user.
+        $buyer_id = $request->get_param( 'buyer_id' );
+        if ( $buyer_id && (int) $buyer_id !== $current_user ) {
+            // Only allow if current user is the vendor (vendor creates invoice for a buyer).
+            if ( (int) $vendor_id !== $current_user ) {
+                return new WP_Error( 'forbidden', 'buyer_id kann nur vom Vendor gesetzt werden.', [ 'status' => 403 ] );
+            }
+        }
+        $buyer_id = $buyer_id ?: $current_user;
 
         if ( $amount_sats < 1 ) {
             return new WP_Error( 'invalid_amount', 'Betrag muss mindestens 1 Sat sein.', [ 'status' => 400 ] );
@@ -425,11 +436,20 @@ class LightningController extends WP_REST_Controller {
             }
         }
 
-        $wpdb->update(
+        $updated = $wpdb->update(
             $table,
             $update_data,
             [ 'payment_hash' => $payment->payment_hash, 'status' => 'pending' ]
         );
+
+        // If 0 rows affected, another process already settled this payment.
+        if ( ! $updated ) {
+            return new WP_REST_Response( [
+                'status'       => 'confirmed',
+                'settled'      => true,
+                'confirmed_by' => 'previous',
+            ], 200 );
+        }
 
         return new WP_REST_Response( [
             'status'            => 'confirmed',
@@ -485,6 +505,14 @@ class LightningController extends WP_REST_Controller {
 
         if ( $valid && class_exists( 'SK\Modules\Reputation\Calculator' ) ) {
             \SK\Modules\Reputation\Calculator::recalculate_vendor( (int) $payment->vendor_id );
+        }
+
+        // Re-fetch payment for commission hook (status is now 'delivered').
+        $updated_payment = $wpdb->get_row(
+            $wpdb->prepare( "SELECT * FROM {$table} WHERE payment_hash = %s", $payment_hash )
+        );
+        if ( $updated_payment ) {
+            do_action( 'sk_payment_delivered', $updated_payment );
         }
 
         return new WP_REST_Response( [

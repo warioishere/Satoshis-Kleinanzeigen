@@ -71,7 +71,7 @@ class Calculator {
 
         $total = $wpdb->get_row( $wpdb->prepare(
             "SELECT COUNT(*) as cnt, COALESCE(SUM(amount_sats), 0) as vol
-             FROM {$table} WHERE vendor_id = %d AND status IN ('confirmed', 'disputed')",
+             FROM {$table} WHERE vendor_id = %d AND status IN ('confirmed', 'delivered', 'disputed')",
             $vendor_id
         ) );
 

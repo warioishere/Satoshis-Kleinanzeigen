@@ -9,7 +9,6 @@ class StoreSettings {
     public function __construct() {
         // Felder werden direkt im store-form.php Template gerendert (kein Hook nötig).
         add_action( 'sk_store_profile_saved', [ $this, 'save_field' ], 15, 3 );
-        add_filter( 'dkp_contact_icons_collection', [ $this, 'add_lightning_icon' ], 10, 4 );
 
         // AJAX test handlers.
         add_action( 'wp_ajax_skp_test_btcaddr', [ $this, 'ajax_test_btcaddr' ] );
@@ -381,11 +380,19 @@ class StoreSettings {
         if ( self::has_xpub( $vendor_id ) ) {
             $encrypted = get_user_meta( $vendor_id, 'sk_xpub', true );
             $xpub = NWC\Client::decrypt_connection_string( $encrypted );
-            $index = (int) get_user_meta( $vendor_id, 'sk_xpub_index', true );
+
+            // Atomic index increment to prevent race condition.
+            global $wpdb;
+            $wpdb->query( $wpdb->prepare(
+                "UPDATE {$wpdb->usermeta} SET meta_value = meta_value + 1
+                 WHERE user_id = %d AND meta_key = 'sk_xpub_index'",
+                $vendor_id
+            ) );
+            // Read the value AFTER increment — subtract 1 to get the index we just claimed.
+            $index = (int) get_user_meta( $vendor_id, 'sk_xpub_index', true ) - 1;
 
             $address = Onchain\XpubDerivation::derive_address( $xpub, $index );
             if ( ! is_wp_error( $address ) ) {
-                update_user_meta( $vendor_id, 'sk_xpub_index', $index + 1 );
                 return $address;
             }
         }
@@ -461,24 +468,4 @@ class StoreSettings {
         return $rep;
     }
 
-    public function add_lightning_icon( array $icons, int $vendor_id, int $product_id = 0, string $context = '' ): array {
-        $address = self::get_lightning_address( $vendor_id );
-
-        if ( empty( $address ) ) {
-            return $icons;
-        }
-
-        $icons[] = [
-            'href'  => '#',
-            'title' => '⚡ Lightning',
-            'class' => 'fa-solid fa-bolt sk-lightning-icon',
-            'key'   => 'lightning',
-            'data'  => [
-                'vendor-id'  => $vendor_id,
-                'product-id' => $product_id,
-            ],
-        ];
-
-        return $icons;
-    }
 }

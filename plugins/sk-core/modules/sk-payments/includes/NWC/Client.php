@@ -123,11 +123,10 @@ class Client {
     }
 
     private function send_request( string $method, array $params ) {
-        $autoload = WP_PLUGIN_DIR . '/nostr-auto-poster/vendor/autoload.php';
-        if ( ! file_exists( $autoload ) ) {
-            return new \WP_Error( 'nwc_no_library', 'Nostr PHP Library nicht gefunden.' );
+        // Nostr libs loaded via sk-core/lib/autoload.php (centralized).
+        if ( ! class_exists( '\swentel\nostr\Event\Event' ) ) {
+            return new \WP_Error( 'nwc_no_library', 'Nostr PHP Library nicht gefunden. sk-core/lib/ fehlt.' );
         }
-        require_once $autoload;
 
         try {
             $payload = wp_json_encode( [
