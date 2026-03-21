@@ -131,9 +131,104 @@ class ProductPublisher {
 
         if ( $event_id ) {
             update_post_meta( $post_id, self::META_KEY, $event_id );
+            delete_post_meta( $post_id, '_sk_nostr_market_pending_sign' );
         }
 
         return $event_id;
+    }
+
+    /**
+     * Build unsigned event data for a product (used by NIP-07 self-signing).
+     *
+     * @param int $post_id Product ID.
+     * @return array|null  { content: string, tags: array } or null.
+     */
+    public static function build_event_data( int $post_id ): ?array {
+        $post = get_post( $post_id );
+        if ( ! $post || $post->post_type !== 'product' || $post->post_status !== 'publish' ) {
+            return null;
+        }
+
+        $product = function_exists( 'wc_get_product' ) ? wc_get_product( $post_id ) : null;
+        if ( ! $product ) {
+            return null;
+        }
+
+        $vendor_id  = (int) $post->post_author;
+        $store_info = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( $vendor_id ) : [];
+        $store_name = $store_info['store_name'] ?? '';
+
+        $title       = $product->get_name();
+        $description = wp_strip_all_tags( $product->get_description() ?: $product->get_short_description() );
+        $description = mb_substr( $description, 0, 2000 );
+        $permalink   = get_permalink( $post_id );
+        $price       = (int) $product->get_price();
+        $currency    = sk_get_option( 'sk_nostr_market_currency', 'sk_nostr_market', 'sat' );
+
+        $city     = $store_info['address']['city'] ?? '';
+        $country  = $store_info['address']['country'] ?? '';
+        $location = implode( ', ', array_filter( [ $city, $country ] ) );
+        $summary  = mb_substr( wp_strip_all_tags( $product->get_short_description() ?: $description ), 0, 200 );
+
+        $content = $description;
+        if ( $store_name ) {
+            $content .= "\n\nVerkäufer: {$store_name}";
+        }
+        if ( $permalink ) {
+            $content .= "\n\nInserat: {$permalink}";
+        }
+
+        $tags = [
+            [ 'd', 'sk-' . $post_id ],
+            [ 'title', $title ],
+            [ 'published_at', (string) strtotime( $post->post_date_gmt ) ],
+            [ 'summary', $summary ],
+            [ 'price', (string) $price, $currency ],
+        ];
+
+        if ( $location ) {
+            $tags[] = [ 'location', $location ];
+        }
+        if ( $store_name ) {
+            $tags[] = [ 'e_vendor', $store_name ];
+        }
+
+        $stock = $product->get_stock_quantity();
+        $tags[] = [ 'status', ( $stock !== null && $stock <= 0 ) ? 'sold' : 'active' ];
+
+        $thumb_id = get_post_thumbnail_id( $post_id );
+        if ( $thumb_id ) {
+            $url = wp_get_attachment_url( $thumb_id );
+            if ( $url ) {
+                $tags[] = [ 'image', $url ];
+            }
+        }
+
+        $gallery = get_post_meta( $post_id, '_product_image_gallery', true );
+        if ( ! empty( $gallery ) ) {
+            foreach ( array_slice( array_filter( array_map( 'trim', explode( ',', $gallery ) ) ), 0, 5 ) as $gid ) {
+                $url = wp_get_attachment_url( $gid );
+                if ( $url ) {
+                    $tags[] = [ 'image', $url ];
+                }
+            }
+        }
+
+        $categories = get_the_terms( $post_id, 'product_cat' );
+        if ( $categories && ! is_wp_error( $categories ) ) {
+            foreach ( array_slice( $categories, 0, 5 ) as $cat ) {
+                $tags[] = [ 't', strtolower( $cat->name ) ];
+            }
+        }
+
+        if ( $permalink ) {
+            $tags[] = [ 'r', $permalink ];
+        }
+
+        return [
+            'content' => $content,
+            'tags'    => $tags,
+        ];
     }
 
     /**

@@ -55,5 +55,24 @@ $post_statuses = sk_get_available_post_status( $post->ID );
             );
             ?>
         </div>
+
+        <?php if ( class_exists( 'SK\Modules\NostrMarket\Module' ) && sk_get_option( 'sk_nostr_market_enabled', 'sk_nostr_market', 'off' ) === 'on' ) :
+            $vendor_id = get_current_user_id();
+            $vendor_settings = get_user_meta( $vendor_id, 'sk_profile_settings', true );
+            $vendor_nostr_enabled = is_array( $vendor_settings ) && ! empty( $vendor_settings['nostr_market_enabled'] ) && $vendor_settings['nostr_market_enabled'] === '1';
+
+            if ( $vendor_nostr_enabled ) :
+                $nostr_post = get_post_meta( $post_id, '_sk_nostr_market_post', true );
+                $nostr_checked = ( $nostr_post === '' ) ? true : ( $nostr_post === '1' ); // Default: on wenn Vendor es aktiviert hat.
+        ?>
+        <div class="sk-form-group">
+            <label>
+                <input type="hidden" name="_sk_nostr_market_post" value="0" />
+                <input type="checkbox" name="_sk_nostr_market_post" value="1" <?php checked( $nostr_checked ); ?>>
+                <?php esc_html_e( 'Auf Nostr Marketplace posten', 'sk-core' ); ?>
+            </label>
+        </div>
+        <?php endif; endif; ?>
+
     </div>
 </div><!-- .sk-other-options -->

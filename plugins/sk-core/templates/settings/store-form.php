@@ -459,6 +459,81 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
     <?php endif; ?>
 
     <!-- ======================================================
+         SECTION 3c: Nostr Marketplace (conditional: sk-nostr-market Modul aktiv)
+    ====================================================== -->
+    <?php if ( class_exists( 'SK\Modules\NostrMarket\Module' ) && sk_get_option( 'sk_nostr_market_enabled', 'sk_nostr_market', 'off' ) === 'on' ) :
+        $nm_nostr_pubkey = get_user_meta( $current_user, 'nostr_public_key', true );
+        $nm_has_pubkey   = ! empty( $nm_nostr_pubkey );
+        $nm_post_enabled = $profile_info['nostr_market_enabled'] ?? ( $nm_has_pubkey ? '1' : '0' );
+        $nm_self_sign    = $profile_info['nostr_market_self_sign'] ?? '0';
+
+        // Convert pubkey to npub for display.
+        $nm_npub = '';
+        if ( $nm_has_pubkey && class_exists( '\swentel\nostr\Key\Key' ) ) {
+            try {
+                $nm_key = new \swentel\nostr\Key\Key();
+                $nm_npub = $nm_key->convertPublicKeyToBech32( $nm_nostr_pubkey );
+            } catch ( \Throwable $e ) {}
+        }
+    ?>
+    <div class="sk-settings-section">
+        <div class="sk-settings-section-title">
+            <i class="sk-nostr-icon sk-nostr-icon--inline"></i> Nostr Marketplace
+        </div>
+
+        <div class="sk-form-group">
+            <label class="sk-w3 sk-control-label">Inserate auf Nostr posten</label>
+            <div class="sk-w5">
+                <label>
+                    <input type="hidden" name="nostr_market_enabled" value="0" />
+                    <input type="checkbox" name="nostr_market_enabled" value="1" <?php checked( $nm_post_enabled, '1' ); ?>>
+                    Deine Produkte werden als Inserate auf dem Nostr Netzwerk veröffentlicht
+                </label>
+                <p class="description" style="margin-top:6px;font-size:13px;color:#9ca3af;">
+                    Sichtbar auf Amethyst, Shopstr, Coracle und anderen Nostr Clients.
+                </p>
+            </div>
+        </div>
+
+        <?php if ( $nm_has_pubkey ) : ?>
+        <div class="sk-form-group" id="sk-nostr-self-sign-row">
+            <label class="sk-w3 sk-control-label">Mit eigenem Nostr Key signieren</label>
+            <div class="sk-w5">
+                <label>
+                    <input type="hidden" name="nostr_market_self_sign" value="0" />
+                    <input type="checkbox" name="nostr_market_self_sign" value="1" <?php checked( $nm_self_sign, '1' ); ?>>
+                    Inserate mit deinem Nostr Key signieren
+                </label>
+                <p class="description" style="margin-top:6px;font-size:13px;color:#9ca3af;">
+                    Inserate erscheinen unter deinem Nostr-Profil statt unter Satoshis Kleinanzeigen.
+                    Nachrichten von Käufern kommen direkt auf deinem Nostr Account an.
+                </p>
+                <?php if ( $nm_npub ) : ?>
+                <p style="margin-top:6px;font-size:13px;color:#5cb85c;">
+                    Dein Nostr Key: <code style="background:#0f1923;padding:2px 6px;border-radius:3px;font-size:11px;"><?php echo esc_html( substr( $nm_npub, 0, 20 ) . '...' ); ?></code>
+                </p>
+                <?php endif; ?>
+                <div style="margin-top:8px;padding:10px 14px;background:rgba(247,147,26,0.08);border:1px solid rgba(247,147,26,0.2);border-radius:6px;font-size:12px;color:#9ca3af;">
+                    Benötigt eine Nostr Browser-Erweiterung (z.B. Alby) zum Signieren.
+                    Dein Private Key verlässt nie die Erweiterung.
+                </div>
+            </div>
+        </div>
+        <?php else : ?>
+        <div class="sk-form-group">
+            <label class="sk-w3 sk-control-label">Nostr Key</label>
+            <div class="sk-w5">
+                <p class="description" style="font-size:13px;color:#5a6a7e;">
+                    Kein Nostr Key hinterlegt. Logge dich mit Nostr ein oder verknüpfe deinen Nostr Key im Auth Connector um Inserate selbst zu signieren.
+                    Ohne eigenen Key werden Inserate von Satoshis Kleinanzeigen signiert.
+                </p>
+            </div>
+        </div>
+        <?php endif; ?>
+    </div>
+    <?php endif; ?>
+
+    <!-- ======================================================
          SECTION 4: Biografie
     ====================================================== -->
     <?php if ( function_exists( 'sk_ext' ) ) : ?>
