@@ -32,21 +32,7 @@ add_action('wp_enqueue_scripts', function () {
 
 }, 20);
 
-add_action('wp_enqueue_scripts', function () {
-
-    // Nur auf Einzel-Produktseiten laden
-    if ( is_product() ) {
-        $path = get_stylesheet_directory() . '/js/vendor-card-stretched-link.js';
-        wp_enqueue_script(
-            'vendor-card-stretched-link',
-            get_stylesheet_directory_uri() . '/js/vendor-card-stretched-link.js',
-            [],                                   // keine Abhängigkeiten
-            file_exists($path) ? filemtime($path) : null,  // Cache-Bust über Dateidatum
-            true                                  // im Footer laden
-        );
-    }
-
-}, 20);
+// vendor-card-stretched-link.js moved to sk-core/assets/js/
 
 /**
  * Versionsparameter sicherstellen, falls andere Enqueues greifen.
@@ -90,42 +76,8 @@ function my_phpmailer_smtp( $phpmailer ) {
     $phpmailer->FromName = SMTP_NAME;
 }
 
-// DOKAN
-
-// In dein Child-Theme: functions.php
-add_action('wp_footer', function () {
-    ?>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      document.querySelectorAll(".sk-store-email").forEach(function (el) {
-        const link = el.querySelector("a[href^='mailto:']");
-        if (link) {
-          const email = link.getAttribute("href").replace("mailto:", "").toLowerCase();
-          if (email.startsWith("satoshi-")) {
-            el.remove();
-          }
-        }
-      });
-    });
-    </script>
-    <?php
-});
-
-// Add Change Displayname to Dokan Dashboard
-
-add_action( 'woocommerce_edit_account_form', 'add_display_name_to_account_form' );
-function add_display_name_to_account_form() {
-    $user = wp_get_current_user();
-    ?>
-    <p class="form-row form-row-wide">
-        <label for="account_display_name"><?php esc_html_e( 'Anzeigename', 'woocommerce' ); ?>&nbsp;<span class="required">*</span></label>
-        <input type="text" class="woocommerce-Input woocommerce-Input--text input-text"
-               name="account_display_name" id="account_display_name"
-               value="<?php echo esc_attr( $user->display_name ); ?>" />
-        <span><em><?php esc_html_e( 'Dies ist ist rein intern und wird nicht öffentlich angezeigt.', 'woocommerce' ); ?></em></span>
-    </p>
-    <?php
-}
+// Placeholder emails (satoshi-xxx@*.local) are filtered server-side
+// in ContactDetails::is_placeholder_email(). No JS hack needed.
 
 add_action( 'woocommerce_save_account_details', 'save_account_display_name', 12 );
 function save_account_display_name( $user_id ) {
@@ -208,33 +160,7 @@ add_action('wp_enqueue_scripts', function () {
 }, 20);
 
 
-// Category Switcher – robustes Enqueue + Debug
-add_action('wp_enqueue_scripts', function () {
-    // Pfade bauen
-    $file_rel = '/js/category-toggle.js';
-    $file_abs = get_stylesheet_directory() . $file_rel;        // /wp-content/themes/kadence-child/js/category-toggle.js
-    $file_uri = get_stylesheet_directory_uri() . $file_rel;    // https://.../wp-content/themes/kadence-child/js/category-toggle.js
-
-    // Existenz prüfen (loggt in error_log, falls nicht gefunden)
-    if ( ! file_exists($file_abs) ) {
-        error_log('category-toggle.js NICHT gefunden: ' . $file_abs);
-        return;
-    }
-
-    // Version = mtime -> Cache Buster
-    $ver = @filemtime($file_abs) ?: null;
-
-    // WICHTIG: erstmal im HEAD laden (letzter Parameter = false), damit wir es im Network sicher sehen
-    wp_enqueue_script(
-        'category-toggle',
-        $file_uri,
-        array(),      // keine Deps
-        $ver,
-        false         // jetzt HEAD (zum Debug), später wieder true für Footer
-    );
-
-    // Mini-Debug in die Konsole
-}, 99);
+// category-toggle.js moved to sk-core/assets/js/
 
 
 // SK Footer Shortcode

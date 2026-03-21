@@ -94,7 +94,7 @@ class ContactDetails {
     private function is_placeholder_email( string $email ): bool {
         $email = strtolower( sanitize_email( $email ) );
         if ( $email === '' ) return false;
-        foreach ( [ '@satoshiskleinanzeigen.space', '@satoshiskleinanzeigen', '@nostr.local', '@btc.local' ] as $suffix ) {
+        foreach ( [ '@satoshiskleinanzeigen.space', '@satoshiskleinanzeigen', '@nostr.local', '@btc.local', '@lightning.local' ] as $suffix ) {
             if ( substr( $email, -strlen( $suffix ) ) === $suffix ) return true;
         }
         return false;
@@ -142,7 +142,7 @@ class ContactDetails {
                 if ( $raw === '' || ! is_email( $raw ) ) continue;
                 $email_lower = strtolower( $raw );
                 $is_placeholder = false;
-                foreach ( [ '@satoshiskleinanzeigen.space', '@satoshiskleinanzeigen', '@nostr.local', '@btc.local' ] as $suffix ) {
+                foreach ( [ '@satoshiskleinanzeigen.space', '@satoshiskleinanzeigen', '@nostr.local', '@btc.local', '@lightning.local' ] as $suffix ) {
                     if ( substr( $email_lower, -strlen( $suffix ) ) === $suffix ) { $is_placeholder = true; break; }
                 }
                 if ( ! $is_placeholder ) { $has_email = true; break; }
@@ -277,7 +277,7 @@ class ContactDetails {
         if ( ! empty( $info['nostr'] ) && ! empty( $info['show_nostr'] ) ) {
             $clean = preg_replace( '/^nostr:/i', '', (string) $info['nostr'] );
             $short = esc_html( substr( $clean, 0, 10 ) ) . '…';
-            echo '<li><i class="fa-solid fa-bolt"></i> <strong>Nostr:</strong> <a href="https://primal.net/p/' . esc_attr( $clean ) . '" target="_blank" rel="noopener"><code>' . $short . '</code></a></li>';
+            echo '<li><i class="sk-nostr-icon sk-nostr-icon--inline"></i> <strong>Nostr:</strong> <a href="https://primal.net/p/' . esc_attr( $clean ) . '" target="_blank" rel="noopener"><code>' . $short . '</code></a></li>';
         }
         echo '</ul>';
     }
@@ -300,7 +300,7 @@ class ContactDetails {
         if ( ! empty( $info['phone_number'] ) && ! empty( $info['show_phone_number'] ) ) echo '<li><i class="fas fa-phone"></i> <strong>Telefon:</strong> ' . esc_html( $info['phone_number'] ) . '</li>';
         if ( ! empty( $info['nostr'] ) && ! empty( $info['show_nostr'] ) ) {
             $clean = preg_replace( '/^nostr:/i', '', (string) $info['nostr'] );
-            echo '<li><i class="fa-solid fa-bolt"></i> <strong>Nostr:</strong> <a href="https://primal.net/p/' . esc_attr( $clean ) . '" target="_blank" rel="noopener">' . esc_html( $clean ) . '</a></li>';
+            echo '<li><i class="sk-nostr-icon sk-nostr-icon--inline"></i> <strong>Nostr:</strong> <a href="https://primal.net/p/' . esc_attr( $clean ) . '" target="_blank" rel="noopener">' . esc_html( $clean ) . '</a></li>';
         }
         echo '</ul>';
     }
@@ -344,7 +344,7 @@ class ContactDetails {
         }
         if ( ! empty( $info['nostr'] ) && ! empty( $info['show_nostr'] ) ) {
             $clean = preg_replace( '/^nostr:/i', '', trim( (string) $info['nostr'] ) );
-            if ( $clean !== '' ) $icons[] = [ 'href' => 'https://primal.net/p/' . $clean, 'title' => 'Nostr', 'class' => 'fa-solid fa-bolt', 'key' => 'nostr' ];
+            if ( $clean !== '' ) $icons[] = [ 'href' => 'https://primal.net/p/' . $clean, 'title' => 'Nostr', 'class' => 'sk-nostr-icon', 'key' => 'nostr' ];
         }
         return apply_filters( 'dkp_contact_icons_collection', $icons, $vendor_id, $product_id, $context );
     }

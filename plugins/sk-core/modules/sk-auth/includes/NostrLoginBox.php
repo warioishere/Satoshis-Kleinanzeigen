@@ -20,6 +20,9 @@ class NostrLoginBox {
         // Shortcode.
         add_shortcode( 'nostr_login_box', [ __CLASS__, 'render_shortcode' ] );
 
+        // Use Nostr avatar when available.
+        add_filter( 'get_avatar_url', [ __CLASS__, 'nostr_avatar_url' ], 10, 3 );
+
         // Auth check endpoint (used by JS after NetworkError during login).
         add_action( 'wp_ajax_sk_auth_check', [ __CLASS__, 'ajax_auth_check' ] );
         add_action( 'wp_ajax_nopriv_sk_auth_check', [ __CLASS__, 'ajax_auth_check' ] );
@@ -78,6 +81,32 @@ class NostrLoginBox {
     }
 
     /**
+     * Filter avatar URL: use Nostr avatar if stored.
+     */
+    public static function nostr_avatar_url( $url, $id_or_email, $args ) {
+        $user_id = 0;
+        if ( is_numeric( $id_or_email ) ) {
+            $user_id = (int) $id_or_email;
+        } elseif ( is_object( $id_or_email ) && ! empty( $id_or_email->user_id ) ) {
+            $user_id = (int) $id_or_email->user_id;
+        } elseif ( is_string( $id_or_email ) ) {
+            $user = get_user_by( 'email', $id_or_email );
+            if ( $user ) {
+                $user_id = $user->ID;
+            }
+        }
+
+        if ( $user_id > 0 ) {
+            $nostr_avatar = get_user_meta( $user_id, 'nostr_avatar', true );
+            if ( ! empty( $nostr_avatar ) && filter_var( $nostr_avatar, FILTER_VALIDATE_URL ) ) {
+                return $nostr_avatar;
+            }
+        }
+
+        return $url;
+    }
+
+    /**
      * AJAX: Check if the user is logged in (used after NetworkError during login).
      */
     public static function ajax_auth_check(): void {
@@ -91,7 +120,8 @@ class NostrLoginBox {
             };
             wp_send_json_success( [ 'logged_in' => true, 'redirect' => $redirect_url ] );
         }
-        wp_send_json_success( [ 'logged_in' => false ] );
+        // Return fresh nonce for nopriv users (solves cached-page stale nonce).
+        wp_send_json_success( [ 'logged_in' => false, 'nonce' => wp_create_nonce( 'nostr-login-nonce' ) ] );
     }
 
     /**
@@ -104,9 +134,13 @@ class NostrLoginBox {
 
         ob_start();
         ?>
+        <?php
+        $dashboard_url = esc_url( function_exists( 'sk_get_navigation_url' ) ? sk_get_navigation_url( 'dashboard' ) : home_url( '/dashboard/' ) );
+        $ajax_url = esc_url( admin_url( 'admin-ajax.php' ) );
+        ?>
         <div class="nostr-login-box" style="text-align:center;padding:1rem 0;">
-          <button id="nostr-login-button" class="sk-btn" style="font-size:16px;padding:12px 24px;">Mit Nostr einloggen</button>
-          <p style="margin-top:1rem;color:#8b949e;font-size:13px;">Benötigt eine Nostr-Erweiterung (z.B. Alby)</p>
+          <button id="nostr-login-button" class="sk-btn" aria-label="<?php esc_attr_e( 'Mit Nostr einloggen', 'sk-core' ); ?>" style="font-size:16px;padding:12px 24px;"><?php esc_html_e( 'Mit Nostr einloggen', 'sk-core' ); ?></button>
+          <p style="margin-top:1rem;color:#8b949e;font-size:13px;"><?php esc_html_e( 'Benötigt eine Nostr-Erweiterung (z.B. Alby)', 'sk-core' ); ?></p>
         </div>
 
         <script>
@@ -114,9 +148,30 @@ class NostrLoginBox {
           const btn = document.getElementById('nostr-login-button');
           if (!btn) return;
 
+          const ajaxUrl = '<?php echo $ajax_url; ?>';
+          const dashboardUrl = '<?php echo $dashboard_url; ?>';
+          let redirecting = false;
+
+          // Fetch fresh nonce via AJAX (avoids cached-page stale nonce).
+          let freshNonce = '';
+          const nonceController = new AbortController();
+          fetch(ajaxUrl + '?action=sk_auth_check', { credentials: 'same-origin', signal: nonceController.signal })
+            .then(r => r.json())
+            .then(d => {
+              if (d.data && d.data.logged_in) {
+                // Already logged in — redirect immediately, no need for login form.
+                redirecting = true;
+                window.location.href = d.data.redirect || dashboardUrl;
+                return;
+              }
+              if (d.data && d.data.nonce) freshNonce = d.data.nonce;
+            })
+            .catch(() => {});
+
           btn.addEventListener('click', async () => {
+            if (redirecting) return;
             if (!window.nostr) {
-              alert("Nostr-kompatible Browsererweiterung nicht gefunden. Bitte z.B. Alby installieren.");
+              alert("<?php echo esc_js( __( 'Nostr-kompatible Browsererweiterung nicht gefunden. Bitte z.B. Alby installieren.', 'sk-core' ) ); ?>");
               return;
             }
 
@@ -133,7 +188,7 @@ class NostrLoginBox {
                 kind: 27235,
                 created_at: Math.floor(Date.now() / 1000),
                 tags: [
-                  ["u", "<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>"],
+                  ["u", ajaxUrl],
                   ["method", "post"]
                 ],
                 content: "Login via Nostr",
@@ -142,7 +197,7 @@ class NostrLoginBox {
 
               const formData = new URLSearchParams();
               formData.append("action", "nostr_login");
-              formData.append("nonce", "<?php echo wp_create_nonce( 'nostr-login-nonce' ); ?>");
+              formData.append("nonce", freshNonce || '<?php echo wp_create_nonce( 'nostr-login-nonce' ); ?>');
               formData.append("metadata", JSON.stringify(metadata));
               formData.append("authtoken", btoa(JSON.stringify(authEvent)));
 
@@ -159,14 +214,18 @@ class NostrLoginBox {
                 // JSON parse failed — likely PHP warnings before JSON output.
                 // If response was 200, login probably succeeded (cookie set server-side).
                 if (response.ok) {
-                  window.location.href = '<?php echo esc_url( function_exists("sk_get_navigation_url") ? sk_get_navigation_url("dashboard") : home_url("/dashboard/") ); ?>';
+                  redirecting = true;
+                  nonceController.abort();
+                  window.location.href = dashboardUrl;
                   return;
                 }
                 throw parseErr;
               }
 
               if (result.success) {
-                window.location.href = (result.data && result.data.redirect) || result.redirect || '<?php echo esc_url( function_exists("sk_get_navigation_url") ? sk_get_navigation_url("dashboard") : home_url("/dashboard/") ); ?>';
+                redirecting = true;
+                nonceController.abort();
+                window.location.href = (result.data && result.data.redirect) || result.redirect || dashboardUrl;
               } else {
                 alert("Login fehlgeschlagen: " + (result.data?.message || "Unbekannter Fehler"));
               }
@@ -179,7 +238,9 @@ class NostrLoginBox {
                 const check = await fetch("<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>?action=sk_auth_check", { credentials: "same-origin" });
                 const checkResult = await check.json();
                 if (checkResult.success && checkResult.data && checkResult.data.logged_in) {
-                  window.location.href = checkResult.data.redirect || '<?php echo esc_url( function_exists("sk_get_navigation_url") ? sk_get_navigation_url("dashboard") : home_url("/dashboard/") ); ?>';
+                  redirecting = true;
+                  nonceController.abort();
+                  window.location.href = checkResult.data.redirect || dashboardUrl;
                   return;
                 }
               } catch (e) { /* check failed too */ }

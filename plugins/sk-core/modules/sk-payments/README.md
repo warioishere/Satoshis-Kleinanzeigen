@@ -123,3 +123,21 @@ Nutzt die bestehende Tabelle `wp_sk_lightning_payments`:
 
 1. **Fulcrum** (ssl://private-fulcrum.yourdevice.ch:50002) — Eigener Electrum Server, kein Rate-Limit, Mempool-Zugang
 2. **mempool.space** REST API — Öffentlicher Fallback
+
+## Geplant: Bolt12 Offers
+
+Bolt12 (BLIP-12) ist seit September 2024 offiziell im Lightning Spec. Sobald die Wallet-Landschaft Bolt12 breit unterstützt, wird es als zusätzlicher Payment-Pfad neben NWC/LNDHub/LNURL eingebaut.
+
+**Was Bolt12 bringt:**
+- Statische Offers — wie Lightning Address, aber ohne LNURL-Server
+- Vendor braucht keine Domain — nur einen Offer-String
+- Preimage Proof automatisch
+- Empfänger-Privacy via Blinded Paths
+
+**Aktueller Support (Stand März 2026):**
+- Core Lightning (CLN): voll unterstützt
+- LDK (Alby Hub Backend): voll unterstützt
+- Eclair/Phoenix: unterstützt
+- LND: fehlt, kein Zeitplan
+
+**Implementierung:** Neuer `Bolt12\Client` neben `NWC\Client` und `LNDHub\Client`. REST API, Chat-Integration und Reputation bleiben identisch — nur die Invoice-Erstellung ist ein neuer Pfad.

@@ -54,12 +54,20 @@ class Helpers {
 				$rgba = str_replace( ')', '', $rgba );
 				$rgba = str_replace( ' ', '', $rgba );
 				$rgba = explode( ',', $rgba );
+				if ( 4 === count( $rgba ) ) {
+					return array(
+						'r' => (int) $rgba[0],
+						'g' => (int) $rgba[1],
+						'b' => (int) $rgba[2],
+						'a' => (int) round( (float) $rgba[3] * 255 ),
+					);
+				}
 				if ( 3 === count( $rgba ) ) {
 					return array(
-						'r' => $rgba[0],
-						'g' => $rgba[1],
-						'b' => $rgba[2],
-						'a' => $rgba[2],
+						'r' => (int) $rgba[0],
+						'g' => (int) $rgba[1],
+						'b' => (int) $rgba[2],
+						'a' => 0,
 					);
 				}
 			}
@@ -76,15 +84,16 @@ class Helpers {
 		$length = strlen( $hex );
 		$alpha  = hexdec( 0 );
 
-		if ( 6 < $length ) {
-			$alpha = substr( $hex, strlen( $hex ) - 6 );
+		if ( 8 === $length ) {
+			$alpha = hexdec( substr( $hex, 6, 2 ) );
 			$hex   = substr( $hex, 0, 6 );
+			$length = 6;
 		}
 
 		$rgba['r'] = hexdec( 6 === $length ? substr( $hex, 0, 2 ) : ( 3 === $length ? str_repeat( substr( $hex, 0, 1 ), 2 ) : 0 ) );
 		$rgba['g'] = hexdec( 6 === $length ? substr( $hex, 2, 2 ) : ( 3 === $length ? str_repeat( substr( $hex, 1, 1 ), 2 ) : 0 ) );
 		$rgba['b'] = hexdec( 6 === $length ? substr( $hex, 4, 2 ) : ( 3 === $length ? str_repeat( substr( $hex, 2, 1 ), 2 ) : 0 ) );
-		$rgba['a'] = empty( $alpha ) && preg_match( '/^[0-9,]+$/', substr( $alpha, 0, 2 ) ) ? substr( $alpha, 0, 2 ) : hexdec( 0 );
+		$rgba['a'] = $alpha;
 		return $rgba;
 	}
 

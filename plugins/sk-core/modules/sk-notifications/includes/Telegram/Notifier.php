@@ -1,10 +1,11 @@
 <?php
-/*
-Plugin Name: Telegram Notification
-Description: Sendet neue Produktveröffentlichungen automatisch an einen Telegram-Kanal, aktualisiert bestehende Telegram-Posts bei Änderungen (Titel, Beschreibung, Titelbild) und löscht Posts beim Unpublish/Trash/Delete oder markiert sie als nicht verfügbar.
-Version: 1.3.1
-Author: Wario
-*/
+/**
+ * Telegram Notification.
+ *
+ * Sends new product listings to Telegram, updates on changes,
+ * deletes/marks unavailable on unpublish.
+ * Originally a standalone plugin by Wario, now part of sk-notifications module.
+ */
 
 // =========================
 // == Grundeinstellungen  ==
@@ -404,23 +405,6 @@ function telegram_build_caption_and_media($post_id) {
     $image_url = $image_id ? wp_get_attachment_url($image_id) : null;
 
     error_log('[TG] telegram_build_caption_and_media: final caption_length=' . strlen($caption) . ' image_id=' . ($image_id ?: 'null') . ' image_url=' . ($image_url ?: 'null'));
-    if ($image_url) {
-        // Test if URL is accessible and check content-type
-        $test_resp = wp_remote_head($image_url, array('timeout' => 5));
-        if (is_wp_error($test_resp)) {
-            error_log('[TG] telegram_build_caption_and_media: image URL HEAD request failed: ' . $test_resp->get_error_message());
-        } else {
-            $img_code = wp_remote_retrieve_response_code($test_resp);
-            $img_headers = wp_remote_retrieve_headers($test_resp);
-            $content_type = $img_headers['content-type'] ?? 'unknown';
-            error_log('[TG] telegram_build_caption_and_media: image URL HEAD response code=' . $img_code . ' Content-Type=' . $content_type);
-
-            // Check if AVIF
-            if (strpos($image_url, '.avif') !== false) {
-                error_log('[TG] telegram_build_caption_and_media: WARNING - image is AVIF format, Telegram may not support this');
-            }
-        }
-    }
 
     return array(
         'caption'   => $caption,
@@ -495,16 +479,9 @@ function telegram_send_message($post_id) {
     $image_id  = $built['image_id'];
     $image_url = $built['image_url'];
 
-    error_log('[TG] telegram_send_message: image_id=' . ($image_id ?: 'null') . ' has_image_url=' . ($image_url ? 'yes' : 'no'));
     if ($image_url) {
-        error_log('[TG] telegram_send_message: image_url=' . $image_url);
-        error_log('[TG] telegram_send_message: image_url_length=' . strlen($image_url));
-
-        // Convert AVIF to JPG if needed for Telegram compatibility
         $image_url = tn_ensure_telegram_compatible_image($image_url);
-        error_log('[TG] telegram_send_message: after conversion image_url=' . $image_url);
     }
-    error_log('[TG] telegram_send_message: caption_length=' . strlen($caption));
 
     if ($image_url) {
         $payload  = array(
@@ -514,7 +491,6 @@ function telegram_send_message($post_id) {
             'parse_mode'   => 'Markdown',
         );
         $endpoint = "https://api.telegram.org/bot{$bot_token}/sendPhoto";
-        error_log('[TG] telegram_send_message: using sendPhoto endpoint');
     } else {
         $payload  = array(
             'chat_id'      => $chat_id,
@@ -522,10 +498,7 @@ function telegram_send_message($post_id) {
             'parse_mode'   => 'Markdown',
         );
         $endpoint = "https://api.telegram.org/bot{$bot_token}/sendMessage";
-        error_log('[TG] telegram_send_message: using sendMessage endpoint');
     }
-
-    error_log('[TG] telegram_send_message: payload=' . json_encode($payload));
 
     $resp = telegram_api_post($endpoint, $payload);
     if (is_wp_error($resp)) {
@@ -535,11 +508,8 @@ function telegram_send_message($post_id) {
     $code = wp_remote_retrieve_response_code($resp);
     $body = json_decode(wp_remote_retrieve_body($resp), true);
 
-    error_log('[TG] telegram_send_message: response code=' . $code . ' ok=' . (isset($body['ok']) ? ($body['ok'] ? 'true' : 'false') : 'null'));
-
     if ($code === 200 && isset($body['ok']) && $body['ok']) {
         $mid = $body['result']['message_id'] ?? null;
-        error_log('[TG] telegram_send_message: SUCCESS message_id=' . ($mid ?: 'null'));
         if ($mid) update_post_meta($post_id, '_telegram_message_id', $mid);
         update_post_meta($post_id, '_telegram_message_type', $image_url ? 'photo' : 'text');
         if (isset($body['result']['date'])) {

@@ -516,6 +516,26 @@ class Assets {
         // Ensure SkValidateMsg is available when vendor-registration loads (e.g. on login/register page).
         self::load_form_validate_script();
 
+        // Mobile category toggle for product category widget.
+        wp_enqueue_script(
+            'sk-category-toggle',
+            plugins_url( 'assets/js/category-toggle.js', SK_CORE_FILE ),
+            [],
+            self::asset_version( SK_CORE_DIR . '/assets/js/category-toggle.js' ),
+            true
+        );
+
+        // Vendor card clickable on single product pages.
+        if ( is_product() ) {
+            wp_enqueue_script(
+                'vendor-card-stretched-link',
+                plugins_url( 'assets/js/vendor-card-stretched-link.js', SK_CORE_FILE ),
+                [],
+                self::asset_version( SK_CORE_DIR . '/assets/js/vendor-card-stretched-link.js' ),
+                true
+            );
+        }
+
         // load only in sk dashboard and product edit page
         if ( ( sk_is_seller_dashboard() || ( get_query_var( 'edit' ) && is_singular( 'product' ) ) ) || apply_filters( 'sk_forced_load_scripts', false ) ) {
             $this->sk_dashboard_scripts();

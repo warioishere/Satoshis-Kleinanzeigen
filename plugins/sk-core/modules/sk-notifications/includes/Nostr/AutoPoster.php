@@ -1,23 +1,18 @@
 <?php
 /**
- * Plugin Name: Nostr Auto Poster for WooCommerce
- * Description: Postet neue WooCommerce-Produkte automatisch auf Nostr. Unterstützt mehrere Relays & konfigurierbaren Privkey. Läuft auf save_post_product – ohne Cron, ohne transition_post_status.
- * Version: 1.3.1
- * Author: Wario
- * License: GPL2
+ * Nostr Auto Poster for WooCommerce.
+ *
+ * Posts new WooCommerce products to Nostr relays automatically.
+ * Originally a standalone plugin by Wario, now part of sk-notifications module.
+ *
+ * Nostr libs loaded centrally via sk-core/lib/autoload.php.
  */
 
 if (!defined('ABSPATH')) exit;
 
-define('NAP_OPTION_GROUP', 'nap_nostr_settings');
-define('NAP_OPTION_NAME',  'nap_nostr_options');
-define('NAP_META_EVENT_ID','_nap_nostr_event_id');
-
-// --- Composer Autoload (swentel/nostr) ---
-$nap_autoload = __DIR__ . '/vendor/autoload.php';
-if (file_exists($nap_autoload)) {
-    require_once $nap_autoload;
-}
+if (!defined('NAP_OPTION_GROUP')) define('NAP_OPTION_GROUP', 'nap_nostr_settings');
+if (!defined('NAP_OPTION_NAME'))  define('NAP_OPTION_NAME',  'nap_nostr_options');
+if (!defined('NAP_META_EVENT_ID')) define('NAP_META_EVENT_ID','_nap_nostr_event_id');
 
 use swentel\nostr\Event\Event;
 use swentel\nostr\Sign\Sign;

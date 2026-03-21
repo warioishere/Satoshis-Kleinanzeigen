@@ -410,7 +410,7 @@ class Login {
 
 		$response->lnurl           = $lnurl;
 		$response->qrcode          = $result;
-		$response->html->qrcode    = '<img src="' . esc_attr( $result->getDataUri() ) . '" alt="QR Code" width="100%" height="100%">';
+		$response->html->qrcode    = '<img src="' . esc_attr( $result->getDataUri() ) . '" alt="Mit Bitcoin Lightning Wallet scannen zum Einloggen" width="100%" height="100%">';
 		$response->html->permalink = '<a href="lightning:' . esc_html( $lnurl ) . '">' . esc_html( _x( 'Open Wallet', 'QR Code permalink label', 'lnurl-auth' ) ) . '</a>';
 		$response->k1              = isset( $k1 ) ? sanitize_text_field( $k1 ) : '';
 		$response->status          = 'Success';
@@ -510,90 +510,50 @@ class Login {
 	 * @since 1.0.0
 	 */
 	public function js_initialize_lnurl_auth() {
-		// remove expired transients proactively
+		check_ajax_referer( 'lnurl-auth-nonce', 'security' );
 		delete_expired_transients();
-		echo wp_json_encode( $this->create_lnurl() );
-		die;
+		wp_send_json( $this->create_lnurl() );
 	}
 
 	/**
-	 * Ajax function awaiting lnurl auth
-	 *
-	 * @since 1.0.0
+	 * Ajax function awaiting lnurl auth.
+	 * The k1 value itself acts as a session token (random, 64 hex chars, 5-min expiry).
 	 */
 	public function js_await_lnurl_auth() {
+		check_ajax_referer( 'lnurl-auth-nonce', 'security' );
 		$k1 = isset( $_POST['k1'] ) ? sanitize_text_field( $_POST['k1'] ) : false;
 
-		// if no k1 is provided in request
 		if ( empty( $k1 ) ) {
-			echo wp_json_encode(
-				array(
-					'status' => 'Error',
-					'reason' => esc_html( _x( 'No k1 in request. Please reload and try again.', 'js_await_lnurl_auth error', 'lnurl-auth' ) ),
-				)
-			);
-			die;
+			wp_send_json( [ 'status' => 'Error', 'reason' => __( 'Kein k1 in der Anfrage. Bitte Seite neu laden.', 'sk-core' ) ] );
 		}
 
 		$transient = lnurl_auth()->Transients->get( $k1 );
 
 		if ( empty( $transient ) ) {
-			echo wp_json_encode(
-				array(
-					'status' => 'Timedout',
-					'reason' => esc_html( _x( 'Session has timed out. Please reload and try again.', 'js_await_lnurl_auth error', 'lnurl-auth' ) ),
-				)
-			);
-			die;
+			wp_send_json( [ 'status' => 'Timedout', 'reason' => __( 'Sitzung abgelaufen. Bitte Seite neu laden.', 'sk-core' ) ] );
 		}
 
 		if ( ! empty( $transient['message'] ) ) {
-			echo wp_json_encode(
-				array(
-					'status' => 'Error',
-					'reason' => esc_html( $transient['message'] ),
-				)
-			);
-			die;
+			wp_send_json( [ 'status' => 'Error', 'reason' => esc_html( $transient['message'] ) ] );
 		}
 
 		if ( empty( $transient['signed'] ) ) {
-			echo wp_json_encode(
-				array(
-					'status' => 'Waiting',
-					'reason' => esc_html( _x( 'Not yet signed.', 'js_await_lnurl_auth error', 'lnurl-auth' ) ),
-				)
-			);
-			die;
+			wp_send_json( [ 'status' => 'Waiting', 'reason' => __( 'Warte auf Signatur...', 'sk-core' ) ] );
 		}
 
 		$user_id = $transient['user_id'];
 		$user    = get_user_by( 'id', $user_id );
 
 		if ( empty( $user ) ) {
-			echo wp_json_encode(
-				array(
-					'status' => 'Error',
-					'reason' => esc_html( _x( 'We failed searching for your user account. Please try again later.', 'js_await_lnurl_auth error', 'lnurl-auth' ) ),
-				)
-			);
-			die;
+			wp_send_json( [ 'status' => 'Error', 'reason' => __( 'Benutzer nicht gefunden.', 'sk-core' ) ] );
 		}
 
-		// authenticate user
 		wp_set_current_user( $user_id );
 		wp_set_auth_cookie( $user_id, true );
-		do_action( 'wp_login', get_userdata( $user_id )->user_login, get_user_by( 'id', $user_id ) );
+		do_action( 'wp_login', $user->user_login, $user );
 
-		// delete transient
 		lnurl_auth()->Transients->delete( $k1 );
 
-		echo wp_json_encode(
-			array(
-				'status'   => 'Signed',
-				'redirect' => esc_html( $this->redirect_url ),
-			)
-		);
-		die;
+		wp_send_json( [ 'status' => 'Signed', 'redirect' => esc_url( $this->redirect_url ) ] );
 	}
 }

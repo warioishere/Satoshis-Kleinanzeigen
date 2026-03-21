@@ -193,39 +193,58 @@ class Nostr_Login_Handler {
     }
 
     public function ajax_nostr_login() {
-        // Verify nonce — check both logged-in and nopriv variants.
-        // On cached pages the nonce may be stale, but the NIP-98 signature
-        // provides its own authentication, so we log but don't block.
-        $nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
-        $nonce_valid = wp_verify_nonce($nonce, 'nostr-login-nonce');
-        if (!$nonce_valid) {
-            nostr_login_debug_log('Nonce verification failed — proceeding with NIP-98 validation.');
-        }
+        // Nonce verification: try WP nonce first, but NIP-98 signature is the
+        // real auth. Cached pages may serve stale nonces, so we don't hard-fail
+        // on nonce alone — but we DO require a valid NIP-98 signature + replay check.
+        $nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
+        $nonce_valid = wp_verify_nonce( $nonce, 'nostr-login-nonce' );
 
         // Sanitize input data
-        $metadata_json = sanitize_text_field(wp_unslash($_POST['metadata'] ?? ''));
-        $authtoken = sanitize_text_field(wp_unslash($_POST['authtoken'] ?? ''));
-        $authtoken = base64_decode($authtoken);
+        $metadata_json = sanitize_text_field( wp_unslash( $_POST['metadata'] ?? '' ) );
+        $authtoken = sanitize_text_field( wp_unslash( $_POST['authtoken'] ?? '' ) );
+        $authtoken = base64_decode( $authtoken );
 
         // Verify authtoken event signature and format
         $event = new Event();
-        if (!$event->verify($authtoken)) {
-            wp_send_json_error(['message' => __('Invalid authtoken.', 'nostr-login')]);
+        if ( ! $event->verify( $authtoken ) ) {
+            wp_send_json_error( [ 'message' => __( 'Ungültige Signatur.', 'sk-core' ) ] );
         }
 
-        // Do NIP98 specific authtoken validation checks
-        $nip98 = json_decode($authtoken);
-        if (JSON_ERROR_NONE !== json_last_error()) {
-            wp_send_json_error(['message' => __('Invalid authtoken: ', 'nostr-login').json_last_error_msg()]);
+        // NIP-98 validation
+        $nip98 = json_decode( $authtoken );
+        if ( JSON_ERROR_NONE !== json_last_error() ) {
+            wp_send_json_error( [ 'message' => __( 'Ungültiges Auth-Token.', 'sk-core' ) ] );
         }
 
-        $valid = ('27235' == $nip98->kind) ? true : false;
-        $valid = (time() - $nip98->created_at <= 60) ? $valid : false;
-        $tags = array_column($nip98->tags, 1, 0);
-        $valid = (admin_url('admin-ajax.php') == $tags['u']) ? $valid : false;
-        $valid = ('post' == $tags['method']) ? $valid : false;
-        if (!$valid) {
-            wp_send_json_error(['message' => __('Authorisation is invalid or expired.', 'nostr-login')]);
+        $tags = array_column( $nip98->tags ?? [], 1, 0 );
+
+        // Strict type checks + timestamp window (120s, reject future timestamps).
+        $valid = true;
+        if ( (int) ( $nip98->kind ?? 0 ) !== 27235 ) {
+            $valid = false;
+        }
+        if ( abs( time() - (int) ( $nip98->created_at ?? 0 ) ) > 120 ) {
+            $valid = false;
+        }
+        if ( strtolower( $tags['u'] ?? '' ) !== strtolower( admin_url( 'admin-ajax.php' ) ) ) {
+            $valid = false;
+        }
+        if ( strtolower( $tags['method'] ?? '' ) !== 'post' ) {
+            $valid = false;
+        }
+
+        // Replay protection: check if this event ID was already used.
+        $event_id = $nip98->id ?? '';
+        if ( ! empty( $event_id ) ) {
+            $replay_key = 'sk_nip98_' . substr( $event_id, 0, 32 );
+            if ( get_transient( $replay_key ) ) {
+                wp_send_json_error( [ 'message' => __( 'Auth-Token bereits verwendet.', 'sk-core' ) ] );
+            }
+            set_transient( $replay_key, 1, 300 ); // Block replay for 5 minutes.
+        }
+
+        if ( ! $valid ) {
+            wp_send_json_error( [ 'message' => __( 'Autorisierung ungültig oder abgelaufen.', 'sk-core' ) ] );
         }
 
         // Validate public key format
@@ -376,7 +395,7 @@ class Nostr_Login_Handler {
     public function enqueue_scripts($hook = '') {
         // Check if we're on the login page
         if (in_array($GLOBALS['pagenow'], array('wp-login.php')) || did_action('login_enqueue_scripts')) {
-            wp_enqueue_script('nostr-login', SK_AUTH_ASSETS . '/js/nostr-login.min.js', array('jquery'), '1.0', true);
+            wp_enqueue_script('nostr-login', SK_AUTH_ASSETS . '/js/nostr-login.min.js', array('jquery'), SK_AUTH_VERSION, true);
 
             // Sanitize relay URLs
             $relays_option = get_option('nostr_login_relays', implode("\n", $this->default_relays));
@@ -392,7 +411,7 @@ class Nostr_Login_Handler {
 
         // For profile page
         if (in_array($hook, array('profile.php', 'user-edit.php'))) {
-            wp_enqueue_script('nostr-login', SK_AUTH_ASSETS . '/js/nostr-login.min.js', array('jquery'), '1.0', true);
+            wp_enqueue_script('nostr-login', SK_AUTH_ASSETS . '/js/nostr-login.min.js', array('jquery'), SK_AUTH_VERSION, true);
 
             wp_localize_script('nostr-login', 'nostr_login_ajax', array(
                 'ajax_url' => admin_url('admin-ajax.php'),

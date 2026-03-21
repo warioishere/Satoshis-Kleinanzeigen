@@ -16,6 +16,8 @@ class Gesuche {
         add_filter( 'sk_query_var_filter',     [ $this, 'add_query_var' ] );
         add_action( 'sk_load_custom_template', [ $this, 'load_template' ] );
         add_action( 'template_redirect',       [ $this, 'redirect_shortcode_page' ] );
+        add_filter( 'template_include',        [ $this, 'override_templates' ] );
+        add_filter( 'theme_page_templates',    [ $this, 'register_page_template' ] );
 
         // Admin columns
         add_filter( 'manage_gesuch_posts_columns',       [ $this, 'admin_columns' ] );
@@ -85,6 +87,39 @@ class Gesuche {
         if ( isset( $query_vars['gesuche'] ) ) {
             sk_get_template_part( 'dashboard/gesuche/dashboard-gesuche' );
         }
+    }
+
+    /**
+     * Load single-gesuch template from sk-core instead of theme.
+     */
+    public function override_templates( $template ) {
+        if ( is_singular( 'gesuch' ) ) {
+            $plugin_template = SK_CORE_DIR . '/templates/gesuche/single-gesuch.php';
+            if ( file_exists( $plugin_template ) ) {
+                return $plugin_template;
+            }
+        }
+
+        // Page template: "Alle Gesuche".
+        if ( is_page() ) {
+            $page_template = get_page_template_slug();
+            if ( $page_template === 'template-alle-gesuche.php' ) {
+                $plugin_template = SK_CORE_DIR . '/templates/gesuche/template-alle-gesuche.php';
+                if ( file_exists( $plugin_template ) ) {
+                    return $plugin_template;
+                }
+            }
+        }
+
+        return $template;
+    }
+
+    /**
+     * Register "Alle Gesuche" page template so it appears in the page editor dropdown.
+     */
+    public function register_page_template( $templates ) {
+        $templates['template-alle-gesuche.php'] = __( 'Alle Gesuche', 'sk-core' );
+        return $templates;
     }
 
     public function redirect_shortcode_page(): void {

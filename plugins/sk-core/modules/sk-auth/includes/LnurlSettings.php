@@ -26,6 +26,7 @@ class Settings {
 	public $parent_slug      = '';
 	public $menu_slug        = '';
 	public $prefix           = '';
+	public $options_prefix   = '';
 	public $display_settings = array();
 	public $settings_group   = '';
 
