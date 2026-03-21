@@ -18,7 +18,7 @@ class MarketplaceSettings {
             'icon_url'             => '',
             'description'          => __( 'NIP-15 Nostr Marketplace', 'sk' ),
             'settings_title'       => __( 'Nostr Marketplace', 'sk' ),
-            'settings_description' => __( 'Produkte als strukturierte NIP-15 Events auf Nostr publishen. Sichtbar auf Plebeian Market, LNbits NostrMarket und jedem NIP-15 Client.', 'sk' ),
+            'settings_description' => __( 'Produkte als NIP-99 Classified Listings auf Nostr publishen. Sichtbar auf Amethyst, Shopstr, Coracle, Plebeian Market und jedem NIP-99 Client.', 'sk' ),
         ];
 
         return $sections;
@@ -30,10 +30,10 @@ class MarketplaceSettings {
         $settings_fields['sk_nostr_market'] = [
             'sk_nostr_market_enabled' => [
                 'name'    => 'sk_nostr_market_enabled',
-                'label'   => __( 'NIP-15 Marketplace aktivieren', 'sk-core' ),
+                'label'   => __( 'Nostr Marketplace aktivieren', 'sk-core' ),
                 'type'    => 'switcher',
                 'default' => 'off',
-                'desc'    => __( 'Produkte automatisch als NIP-15 Marketplace Events auf Nostr Relays publishen.', 'sk-core' ),
+                'desc'    => __( 'Produkte automatisch als NIP-99 Classified Listings auf Nostr Relays publishen. Sichtbar auf Amethyst, Shopstr, Coracle, Plebeian Market.', 'sk-core' ),
             ],
             'sk_nostr_market_pubkey_info' => [
                 'name'  => 'sk_nostr_market_pubkey_info',
@@ -67,6 +67,21 @@ class MarketplaceSettings {
                 'type'    => 'text',
                 'default' => '',
                 'desc'    => __( 'Eigene Relay URLs für Marketplace Events. Leer = gleiche Relays wie Nostr Auto Poster.', 'sk-core' ),
+            ],
+
+            // ── Nostr DM Bridge ──
+            'sk_nostr_market_bridge_header' => [
+                'name'  => 'sk_nostr_market_bridge_header',
+                'label' => __( 'Nostr DM Bridge', 'sk-core' ),
+                'type'  => 'sub_section',
+                'desc'  => __( 'Leitet Nostr-Nachrichten von Käufern an Vendors weiter und Vendor-Antworten zurück an den Nostr User.', 'sk-core' ),
+            ],
+            'sk_nostr_market_bridge_enabled' => [
+                'name'    => 'sk_nostr_market_bridge_enabled',
+                'label'   => __( 'DM Bridge aktivieren', 'sk-core' ),
+                'type'    => 'switcher',
+                'default' => 'off',
+                'desc'    => __( 'Pollt Nostr Relays alle 2 Minuten nach eingehenden DMs und leitet sie als VendorChat-Nachrichten weiter.', 'sk-core' ),
             ],
         ];
 

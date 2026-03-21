@@ -5,18 +5,21 @@ namespace SK\Modules\NostrMarket;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * SK Nostr Market — NIP-15 Marketplace Integration.
+ * SK Nostr Market — NIP-99 Classified Listings + DM Bridge.
  *
- * Publishes WooCommerce products as structured NIP-15 events on Nostr relays.
- * Products become visible on Plebeian Market, LNbits NostrMarket,
- * and any NIP-15-compatible Nostr client.
+ * Publishes WooCommerce products as NIP-99 classified listings (Kind 30402)
+ * on Nostr relays. Visible on Amethyst, Shopstr, Coracle, Plebeian Market,
+ * and any NIP-99-compatible Nostr client.
+ *
+ * DM Bridge: Nostr users can contact vendors via DM, messages are bridged
+ * to VendorChat. Vendor replies are sent back as Nostr DMs.
  *
  * Event types:
- *   Kind 30017 — Stall (one per vendor)
- *   Kind 30018 — Product listing
+ *   Kind 30402 — Classified listing (product)
  *   Kind 5     — Deletion
+ *   Kind 4     — NIP-04 DMs (bridge)
  *
- * NIP-15 spec: https://github.com/nostr-protocol/nips/blob/master/15.md
+ * NIP-99 spec: https://github.com/nostr-protocol/nips/blob/master/99.md
  */
 final class Module {
 
@@ -46,10 +49,11 @@ final class Module {
 
     private function includes() {
         require_once SK_NOSTR_MARKET_INCLUDES . '/EventSender.php';
-        require_once SK_NOSTR_MARKET_INCLUDES . '/StallManager.php';
         require_once SK_NOSTR_MARKET_INCLUDES . '/ProductPublisher.php';
         require_once SK_NOSTR_MARKET_INCLUDES . '/ProductDeleter.php';
         require_once SK_NOSTR_MARKET_INCLUDES . '/MarketplaceSettings.php';
+        require_once SK_NOSTR_MARKET_INCLUDES . '/Bridge/NostrDMListener.php';
+        require_once SK_NOSTR_MARKET_INCLUDES . '/Bridge/ChatBridge.php';
     }
 
     private function register_hooks() {
@@ -65,6 +69,10 @@ final class Module {
         // Delete on trash/delete.
         add_action( 'wp_trash_post', [ $this, 'on_product_deleted' ] );
         add_action( 'before_delete_post', [ $this, 'on_product_deleted' ] );
+
+        // Nostr DM Bridge: poll incoming DMs + forward vendor replies.
+        Bridge\NostrDMListener::init();
+        Bridge\ChatBridge::init();
 
         // Process queue after response is sent.
         register_shutdown_function( [ __CLASS__, 'process_queue' ] );
