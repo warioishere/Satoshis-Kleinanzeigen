@@ -209,7 +209,7 @@ class VendorChat {
 			return;
 		}
 
-		if ( ! ( is_product() || is_shop() || is_product_category() || is_product_tag() ) ) {
+		if ( ! ( is_product() || is_shop() || is_product_category() || is_product_tag() || sk_is_store_page() ) ) {
 			return;
 		}
 

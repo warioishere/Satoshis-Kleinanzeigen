@@ -5,7 +5,8 @@ namespace SK\Modules\NostrMarket;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Sends NIP-15 deletion events (Kind 5) when products are unpublished/trashed.
+ * Sends deletion events (Kind 5) when products are unpublished/trashed.
+ * For NIP-99 addressable events, includes both 'e' and 'a' tags.
  */
 class ProductDeleter {
 
@@ -21,12 +22,26 @@ class ProductDeleter {
             return false;
         }
 
-        $result = EventSender::delete( $event_id );
+        $pubkey = EventSender::get_pubkey();
+        $d_tag  = 'sk-' . $post_id;
 
-        if ( $result ) {
-            delete_post_meta( $post_id, ProductPublisher::META_KEY );
+        // For addressable events (Kind 30402), include both 'e' and 'a' tags.
+        $tags = [
+            [ 'e', $event_id ],
+        ];
+        if ( $pubkey ) {
+            $tags[] = [ 'a', '30402:' . $pubkey . ':' . $d_tag ];
         }
 
-        return $result;
+        $result = EventSender::send( 5, '', $tags );
+
+        if ( $result !== null ) {
+            delete_post_meta( $post_id, ProductPublisher::META_KEY );
+            delete_post_meta( $post_id, '_sk_nostr_market_self_signed' );
+            delete_post_meta( $post_id, '_sk_nostr_market_pending_sign' );
+            return true;
+        }
+
+        return false;
     }
 }

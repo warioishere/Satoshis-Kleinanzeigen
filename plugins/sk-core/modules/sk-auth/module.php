@@ -35,6 +35,7 @@ final class Module {
         $this->load_btc_login();
         $this->load_connector();
         $this->register_shortcodes();
+        $this->suppress_generated_email_change_notice();
     }
 
     private function define_constants() {
@@ -256,5 +257,23 @@ final class Module {
         </script>
         <?php
         return ob_get_clean();
+    }
+
+    /**
+     * Suppress the "your email was changed" notification when the old email
+     * is a generated placeholder from Nostr, LNURL-Auth or BTC Login.
+     */
+    private function suppress_generated_email_change_notice() {
+        add_filter( 'send_email_change_email', function ( $send, $user, $userdata ) {
+            $old_email = $user['email'] ?? '';
+            if (
+                str_ends_with( $old_email, '@nostr.local' )
+                || str_ends_with( $old_email, '@btc.local' )
+                || str_ends_with( $old_email, '@' . wp_parse_url( home_url(), PHP_URL_HOST ) )
+            ) {
+                return false;
+            }
+            return $send;
+        }, 10, 3 );
     }
 }

@@ -189,21 +189,6 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
         <?php do_action( 'sk_settings_after_store_name', $current_user, $profile_info ); ?>
 
         <?php /* Address */ ?>
-        <?php
-        $verified = false;
-        if ( function_exists( 'sk_ext' ) && sk_ext()->module->is_active( 'vendor_verification' ) && isset( $profile_info['sk_verification']['info']['store_address']['v_status'] ) ) {
-            $verified = $profile_info['sk_verification']['info']['store_address']['v_status'] === 'approved';
-        }
-        if ( ! function_exists( 'sk_ext' ) || ! sk_ext()->module->is_active( 'delivery_time' ) ) :
-        ?>
-        <div class="sk-settings-field sk-settings-field--address">
-            <div class="sk-settings-label"><?php esc_html_e( 'Standort', 'sk-core' ); ?></div>
-            <div class="sk-settings-input">
-                <?php sk_seller_address_fields( $verified ); ?>
-            </div>
-        </div>
-        <?php endif; ?>
-
         <?php do_action( 'sk_settings_before_store_map', $current_user, $profile_info ); ?>
 
         <?php if ( sk_has_map_api_key() ) : ?>
@@ -335,7 +320,7 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
                     <?php if ( $oc_xpub_ok ) : ?>
                         <p style="margin-top:6px;font-size:13px;color:#5cb85c;">
                             xpub gespeichert — Adress-Derivation aktiv.
-                            <a href="#" onclick="document.querySelector('[name=xpub_remove]').value='1';this.closest('form').submit();return false;" style="color:#e06c75;margin-left:8px;">Entfernen</a>
+                            <a href="#" onclick="document.querySelector('[name=xpub_remove]').value='1';jQuery(this.closest('form')).trigger('submit');return false;" style="color:#e06c75;margin-left:8px;">Entfernen</a>
                         </p>
                     <?php else : ?>
                         <p style="margin-top:6px;font-size:13px;color:#f7931a;">
@@ -377,7 +362,7 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
                     <?php if ( $ln_nwc_ok ) : ?>
                         <p style="margin-top:6px;font-size:13px;color:#5cb85c;">
                             NWC verbunden — automatische Verifizierung aktiv.
-                            <a href="#" onclick="document.querySelector('[name=nwc_remove]').value='1';this.closest('form').submit();return false;" style="color:#e06c75;margin-left:8px;">Entfernen</a>
+                            <a href="#" onclick="document.querySelector('[name=nwc_remove]').value='1';jQuery(this.closest('form')).trigger('submit');return false;" style="color:#e06c75;margin-left:8px;">Entfernen</a>
                         </p>
                     <?php else : ?>
                         <p style="margin-top:6px;font-size:13px;color:#f7931a;">
@@ -411,7 +396,7 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
                     <?php if ( $ln_lndhub_ok ) : ?>
                         <p style="margin-top:6px;font-size:13px;color:#5cb85c;">
                             LNDHub verbunden — automatische Verifizierung aktiv.
-                            <a href="#" onclick="document.querySelector('[name=lndhub_remove]').value='1';this.closest('form').submit();return false;" style="color:#e06c75;margin-left:8px;">Entfernen</a>
+                            <a href="#" onclick="document.querySelector('[name=lndhub_remove]').value='1';jQuery(this.closest('form')).trigger('submit');return false;" style="color:#e06c75;margin-left:8px;">Entfernen</a>
                         </p>
                     <?php else : ?>
                         <p style="margin-top:6px;font-size:13px;color:#f7931a;">
@@ -652,6 +637,36 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
 </style>
 
 <script type="text/javascript">
+function skStoreToast(message, type) {
+    type = type || 'info';
+    var existing = document.querySelector('.dcg-toast[data-toast-id="sk-store"]');
+    if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+
+    var toast = document.createElement('div');
+    toast.className = 'dcg-toast dcg-toast--' + type;
+    toast.dataset.toastId = 'sk-store';
+
+    var icon = type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+    toast.innerHTML =
+        '<i class="fas ' + icon + '"></i>' +
+        '<span>' + message + '</span>' +
+        '<button class="close-toast" type="button" aria-label="Schlie\u00dfen">&times;</button>';
+
+    document.body.appendChild(toast);
+
+    toast.querySelector('.close-toast').addEventListener('click', function() {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+    });
+
+    setTimeout(function() {
+        if (!toast.parentNode) return;
+        toast.style.transition = 'opacity 0.3s, transform 0.3s';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(420px)';
+        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 350);
+    }, 5000);
+}
+
 (function($) {
     $(function() {
         var savedState = '<?php echo esc_js( $address_state ); ?>';
@@ -670,18 +685,14 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
         $.post('<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', data)
             .done(function(res) {
                 $btn.prop('disabled', false).val(originalVal);
-                var $msg;
                 if (res && res.success) {
-                    $msg = $('<div class="sk-alert sk-alert-success sk-store-ajax-msg" style="margin-bottom:16px;"><?php echo esc_js( __( 'Einstellungen gespeichert.', 'sk-core' ) ); ?></div>');
                     window.onbeforeunload = null;
                     $form.data('submitted', true);
+                    skStoreToast('<?php echo esc_js( __( 'Einstellungen gespeichert.', 'sk-core' ) ); ?>', 'info');
                 } else {
-                    var errText = (res && res.data) ? (Array.isArray(res.data) ? res.data.join('<br>') : res.data) : 'Fehler beim Speichern.';
-                    $msg = $('<div class="sk-alert sk-store-ajax-msg" style="background:rgba(220,53,69,0.12);border:1px solid rgba(220,53,69,0.25);color:#e06c75;padding:10px 16px;border-radius:6px;margin-bottom:16px;">' + errText + '</div>');
+                    var errText = (res && res.data) ? (Array.isArray(res.data) ? res.data.join(', ') : res.data) : 'Fehler beim Speichern.';
+                    skStoreToast(errText, 'error');
                 }
-                $form.before($msg);
-                $('html, body').animate({ scrollTop: 0 }, 300);
-                setTimeout(function() { $msg.fadeOut(400, function() { $msg.remove(); }); }, 4000);
             })
             .fail(function() {
                 $btn.prop('disabled', false).val(originalVal);

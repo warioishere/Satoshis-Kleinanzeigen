@@ -1,0 +1,182 @@
+<?php
+
+namespace SK\Modules\Zaps;
+
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * Renders Zap buttons on store and product pages.
+ * Enqueues the JS that handles NIP-57 zapping via Nostr extension.
+ */
+class ZapButton {
+
+    public function __construct() {
+        // Store page — next to follow button in tab bar.
+        if ( sk_get_option( 'sk_zaps_on_store', 'sk_zaps', 'on' ) === 'on' ) {
+            add_action( 'sk_after_store_tabs', [ $this, 'render_store_button' ], 98, 1 );
+        }
+
+        // Product page.
+        if ( sk_get_option( 'sk_zaps_on_product', 'sk_zaps', 'on' ) === 'on' ) {
+            add_action( 'woocommerce_single_product_summary', [ $this, 'render_product_button' ], 35 );
+        }
+
+        add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_assets' ] );
+    }
+
+    /**
+     * Render zap button on vendor store page.
+     */
+    public function render_store_button( $store_id ): void {
+        $data = self::get_vendor_zap_data( (int) $store_id );
+        if ( ! $data ) {
+            return;
+        }
+
+        echo '<li>';
+        self::render_button( $data );
+        echo '</li>';
+    }
+
+    /**
+     * Render zap button on single product page.
+     */
+    public function render_product_button(): void {
+        global $product;
+        if ( ! $product || ! is_a( $product, 'WC_Product' ) ) {
+            return;
+        }
+
+        $vendor_id = (int) get_post_field( 'post_author', $product->get_id() );
+        $data = self::get_vendor_zap_data( $vendor_id );
+        if ( ! $data ) {
+            return;
+        }
+
+        self::render_button( $data );
+    }
+
+    /**
+     * Get zap data for a vendor (Lightning Address + Nostr pubkey).
+     * Returns null if vendor can't receive zaps.
+     */
+    public static function get_vendor_zap_data( int $vendor_id ): ?array {
+        $settings = get_user_meta( $vendor_id, 'sk_profile_settings', true );
+        if ( ! is_array( $settings ) ) {
+            return null;
+        }
+
+        $lightning_address = $settings['lightning_address'] ?? '';
+        if ( empty( $lightning_address ) ) {
+            return null;
+        }
+
+        $nostr_pubkey = get_user_meta( $vendor_id, 'nostr_public_key', true );
+        $store_info   = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( $vendor_id ) : [];
+        $store_name   = $store_info['store_name'] ?? '';
+
+        return [
+            'vendor_id'         => $vendor_id,
+            'store_name'        => $store_name,
+            'lightning_address' => $lightning_address,
+            'nostr_pubkey'      => $nostr_pubkey ?: '',
+            'has_nostr'         => ! empty( $nostr_pubkey ),
+        ];
+    }
+
+    /**
+     * Render the zap button HTML.
+     */
+    public static function render_button( array $data, int $post_id = 0 ): void {
+        $default_amount = (int) sk_get_option( 'sk_zaps_default_amount', 'sk_zaps', '21' );
+        $zap_total      = $post_id ? (int) get_post_meta( $post_id, '_sk_zap_total_sats', true ) : 0;
+        ?>
+        <button type="button"
+                class="sk-zap-btn"
+                data-vendor-id="<?php echo esc_attr( $data['vendor_id'] ); ?>"
+                data-lightning-address="<?php echo esc_attr( $data['lightning_address'] ); ?>"
+                data-nostr-pubkey="<?php echo esc_attr( $data['nostr_pubkey'] ); ?>"
+                data-store-name="<?php echo esc_attr( $data['store_name'] ); ?>"
+                data-default-amount="<?php echo esc_attr( $default_amount ); ?>"
+                <?php if ( $post_id ) : ?>data-post-id="<?php echo esc_attr( $post_id ); ?>"<?php endif; ?>
+                title="Zap <?php echo esc_attr( $data['store_name'] ); ?>">
+            &#9889; <?php if ( $zap_total ) : ?><span class="sk-zap-total"><?php echo esc_html( number_format( $zap_total, 0, '', '.' ) ); ?></span><?php else : ?>Zap<?php endif; ?>
+        </button>
+        <?php
+    }
+
+    /**
+     * Enqueue zap JS + CSS on relevant pages.
+     */
+    public function enqueue_assets(): void {
+        if ( ! is_product() && ! function_exists( 'sk_is_store_page' ) ) {
+            return;
+        }
+
+        wp_enqueue_script(
+            'sk-zaps',
+            SK_ZAPS_URL . '/assets/js/sk-zaps.js',
+            [ 'jquery' ],
+            SK_ZAPS_VERSION,
+            true
+        );
+
+        wp_localize_script( 'sk-zaps', 'skZaps', [
+            'defaultAmount' => (int) sk_get_option( 'sk_zaps_default_amount', 'sk_zaps', '21' ),
+        ] );
+
+        // Inline CSS.
+        wp_add_inline_style( 'sk-theme', '
+            .sk-zap-btn {
+                background: none;
+                border: 1px solid rgba(247,147,26,0.3);
+                color: #f7931a;
+                padding: 6px 14px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 600;
+                transition: all 0.2s;
+            }
+            .sk-zap-btn:hover {
+                background: rgba(247,147,26,0.1);
+                border-color: #f7931a;
+            }
+            .sk-zap-modal {
+                position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+                z-index: 99999; display: flex; align-items: center; justify-content: center;
+            }
+            .sk-zap-modal-inner {
+                background: #1a2332; border: 1px solid rgba(255,255,255,0.1);
+                border-radius: 12px; padding: 24px; max-width: 360px; width: 90%;
+            }
+            .sk-zap-amounts { display: flex; gap: 6px; margin: 12px 0; flex-wrap: wrap; }
+            .sk-zap-amount-btn {
+                background: rgba(247,147,26,0.1); border: 1px solid rgba(247,147,26,0.3);
+                color: #f7931a; padding: 8px 14px; border-radius: 6px; cursor: pointer;
+                font-size: 14px; font-weight: 600;
+            }
+            .sk-zap-amount-btn:hover, .sk-zap-amount-btn.active {
+                background: #f7931a; color: #fff;
+            }
+            .sk-zap-custom { width: 100%; margin: 8px 0; }
+            .sk-zap-custom input {
+                width: 100%; background: #0f1923; border: 1px solid rgba(255,255,255,0.08);
+                color: #e8ecf0; padding: 8px 12px; border-radius: 6px; font-size: 14px;
+            }
+            .sk-zap-send {
+                width: 100%; background: #f7931a; color: #fff; border: none;
+                padding: 10px; border-radius: 6px; font-size: 15px; font-weight: 600;
+                cursor: pointer; margin-top: 8px;
+            }
+            .sk-zap-send:hover { background: #e8850f; }
+            .sk-zap-send:disabled { opacity: 0.7; cursor: wait; }
+            .sk-zap-close {
+                width: 100%; background: none; border: 1px solid rgba(255,255,255,0.1);
+                color: #5a6a7e; padding: 8px; border-radius: 6px; cursor: pointer;
+                font-size: 13px; margin-top: 6px;
+            }
+            .sk-zap-status { text-align: center; padding: 8px; font-size: 13px; color: #5a6a7e; }
+        ' );
+    }
+}

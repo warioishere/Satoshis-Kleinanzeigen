@@ -57,9 +57,13 @@ class ProductPublisher {
         $currency = sk_get_option( 'sk_nostr_market_currency', 'sk_nostr_market', 'sat' );
 
         // Location from vendor profile.
+        // Location: try address fields first, fallback to find_address (map search).
         $city    = $store_info['address']['city'] ?? '';
         $country = $store_info['address']['country'] ?? '';
         $location = implode( ', ', array_filter( [ $city, $country ] ) );
+        if ( empty( $location ) && ! empty( $store_info['find_address'] ) ) {
+            $location = $store_info['find_address'];
+        }
 
         // Summary.
         $summary = mb_substr( wp_strip_all_tags( $product->get_short_description() ?: $description ), 0, 200 );
@@ -77,9 +81,6 @@ class ProductPublisher {
             $tags[] = [ 'location', $location ];
         }
 
-        if ( $store_name ) {
-            $tags[] = [ 'e_vendor', $store_name ];
-        }
 
         // Status.
         $stock = $product->get_stock_quantity();
@@ -118,7 +119,7 @@ class ProductPublisher {
         $categories = get_the_terms( $post_id, 'product_cat' );
         if ( $categories && ! is_wp_error( $categories ) ) {
             foreach ( array_slice( $categories, 0, 5 ) as $cat ) {
-                $tags[] = [ 't', strtolower( $cat->name ) ];
+                $tags[] = [ 't', strtolower( html_entity_decode( $cat->name, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) ) ];
             }
         }
 
@@ -168,6 +169,9 @@ class ProductPublisher {
         $city     = $store_info['address']['city'] ?? '';
         $country  = $store_info['address']['country'] ?? '';
         $location = implode( ', ', array_filter( [ $city, $country ] ) );
+        if ( empty( $location ) && ! empty( $store_info['find_address'] ) ) {
+            $location = $store_info['find_address'];
+        }
         $summary  = mb_substr( wp_strip_all_tags( $product->get_short_description() ?: $description ), 0, 200 );
 
         $content = $description;
@@ -188,9 +192,6 @@ class ProductPublisher {
 
         if ( $location ) {
             $tags[] = [ 'location', $location ];
-        }
-        if ( $store_name ) {
-            $tags[] = [ 'e_vendor', $store_name ];
         }
 
         $stock = $product->get_stock_quantity();
@@ -217,7 +218,7 @@ class ProductPublisher {
         $categories = get_the_terms( $post_id, 'product_cat' );
         if ( $categories && ! is_wp_error( $categories ) ) {
             foreach ( array_slice( $categories, 0, 5 ) as $cat ) {
-                $tags[] = [ 't', strtolower( $cat->name ) ];
+                $tags[] = [ 't', strtolower( html_entity_decode( $cat->name, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) ) ];
             }
         }
 

@@ -114,10 +114,16 @@ if ( 'layout3' === $profile_layout ) {
                 <?php do_action( 'sk_after_store_tabs', $store_user->get_id() ); ?>
             </ul>
             <ul class="sk-list-inline">
-                <?php foreach ( $store_tabs as $key => $tab ) { // phpcs:ignore ?>
-                    <?php if ( $tab['url'] ) : ?>
-                        <li><a href="<?php echo esc_url( $tab['url'] ); ?>"><?php echo esc_html( $tab['title'] ); ?></a></li>
-                    <?php endif; ?>
+                <?php
+                $current_url = trailingslashit( strtok( $_SERVER['REQUEST_URI'] ?? '', '?' ) );
+                foreach ( $store_tabs as $key => $tab ) {
+                    if ( ! $tab['url'] ) {
+                        continue;
+                    }
+                    $tab_path  = trailingslashit( wp_parse_url( $tab['url'], PHP_URL_PATH ) ?: '' );
+                    $is_active = ( $tab_path === $current_url );
+                    ?>
+                    <li<?php echo $is_active ? ' class="active"' : ''; ?>><a href="<?php echo esc_url( $tab['url'] ); ?>"><?php echo esc_html( $tab['title'] ); ?></a></li>
                 <?php } ?>
             </ul>
         </div>

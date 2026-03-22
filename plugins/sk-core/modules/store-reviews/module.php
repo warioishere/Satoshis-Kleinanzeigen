@@ -45,7 +45,8 @@ class Module {
         list( $suffix, $version ) = sk_get_script_suffix_and_version();
 
         wp_register_style( 'dsr-styles', plugins_url( 'assets/js/style' . $suffix . '.css', __FILE__ ), false, $version );
-        wp_register_script( 'dsr-scripts', plugins_url( 'assets/js/script' . $suffix . '.js', __FILE__ ), array( 'jquery' ), $version, true );
+        wp_register_script( 'dsr-rateyo', plugins_url( 'assets/vendor/rateyo/rateyo.min.js', __FILE__ ), array( 'jquery' ), '2.1.1', true );
+        wp_register_script( 'dsr-scripts', plugins_url( 'assets/js/script' . $suffix . '.js', __FILE__ ), array( 'jquery', 'dsr-rateyo' ), $version, true );
         wp_register_style( 'dsr-admin-styles', plugins_url( 'assets/js/admin' . $suffix . '.css', __FILE__ ), false, $version );
     }
 

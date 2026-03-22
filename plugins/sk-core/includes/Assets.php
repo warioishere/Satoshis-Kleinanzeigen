@@ -541,10 +541,22 @@ class Assets {
             $this->sk_dashboard_scripts();
         }
 
-        // Load category ui css in product add, edit and list page.
+        // Load category ui css and product-edit JS on product add/edit pages.
         global $wp;
         if ( ( sk_is_seller_dashboard() && isset( $wp->query_vars['products'] ) ) || ( isset( $wp->query_vars['products'], $_GET['product_id'] ) ) || ( sk_is_seller_dashboard() && isset( $wp->query_vars['new-product'] ) ) ) { // phpcs:ignore
             CategoryHelper::enqueue_and_localize_sk_multistep_category();
+            wp_enqueue_script( 'sk-product-edit' );
+        }
+
+        // AJAX store tab switching on vendor pages.
+        if ( sk_is_store_page() || sk_is_store_review_page() ) {
+            wp_enqueue_script(
+                'sk-store-tabs',
+                plugins_url( 'assets/js/sk-store-tabs.js', SK_CORE_FILE ),
+                [],
+                self::asset_version( SK_CORE_DIR . '/assets/js/sk-store-tabs.js' ),
+                true
+            );
         }
 
         // store and my account page

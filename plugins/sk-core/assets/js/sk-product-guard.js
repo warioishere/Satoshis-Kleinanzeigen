@@ -138,6 +138,7 @@
   function showImageHintToast() {
     var form = getForm();
     if (!form || !inSkProductForm(form)) return;
+    if (window.location.search.indexOf('message=success') !== -1) return;
     showToast(
       'guard-image-hint',
       '<strong>Tipp:</strong> Das Titelbild sollte im <strong>1:1&nbsp;Format</strong> (quadratisch) hochgeladen werden.',

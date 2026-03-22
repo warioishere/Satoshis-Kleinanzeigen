@@ -1162,7 +1162,7 @@ function sk_get_store_info( $seller_id ) {
 function sk_get_store_tabs( $store_id ) {
     $tabs = [
         'products'             => [
-            'title' => __( 'Products', 'sk-core' ),
+            'title' => __( 'Inserate', 'sk-core' ),
             'url'   => sk_get_store_url( $store_id ),
         ],
         'terms_and_conditions' => [
