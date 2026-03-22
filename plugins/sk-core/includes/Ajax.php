@@ -44,7 +44,6 @@ class Ajax {
         add_action( 'wp_ajax_sk_add_variation', [ $this, 'add_variation' ] );
         add_action( 'wp_ajax_sk_link_all_variations', [ $this, 'link_all_variations' ] );
         add_action( 'wp_ajax_sk_pre_define_attribute', [ $this, 'sk_pre_define_attribute' ] );
-        add_action( 'wp_ajax_sk_save_attributes', [ $this, 'save_attributes' ] );
         add_action( 'wp_ajax_sk_remove_variation', [ $this, 'remove_variations' ] );
         add_action( 'wp_ajax_sk_load_variations', [ $this, 'load_variations' ] );
         add_action( 'wp_ajax_sk_save_variations', [ $this, 'save_variations' ] );
@@ -276,11 +275,11 @@ class Ajax {
      * @return void
      */
     public function save_shipping_settings() {
-        if ( ! wp_verify_nonce( $_POST['nonce'], 'sk_reviews' ) ) {
+        if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'sk_reviews' ) ) {
             wp_send_json_error( __( 'Invalid nonce', 'sk' ) );
         }
 
-        $settings = $_POST['settings'];
+        $settings = isset( $_POST['settings'] ) ? $_POST['settings'] : [];
         $user_id  = sk_get_current_user_id();
 
         if ( isset( $settings['processing_time'] ) ) {
@@ -307,7 +306,7 @@ class Ajax {
      * @return void
      */
     public function get_shipping_settings() {
-        if ( ! wp_verify_nonce( $_POST['nonce'], 'sk_reviews' ) ) {
+        if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'sk_reviews' ) ) {
             wp_send_json_error( __( 'Invalid nonce', 'sk' ) );
         }
 
@@ -333,11 +332,11 @@ class Ajax {
      * @return void
      */
     public function save_zone_settings() {
-        if ( ! wp_verify_nonce( $_POST['nonce'], 'sk_reviews' ) ) {
+        if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'sk_reviews' ) ) {
             wp_send_json_error( __( 'Invalid nonce', 'sk' ) );
         }
 
-        $zone_id = isset( $_POST['zoneID'] ) ? $_POST['zoneID'] : '';
+        $zone_id = isset( $_POST['zoneID'] ) ? sanitize_text_field( wp_unslash( $_POST['zoneID'] ) ) : '';
 
         if ( $zone_id === '' ) {
             wp_send_json_error( __( 'Shipping zone not found', 'sk' ) );
@@ -1295,115 +1294,6 @@ class Ajax {
         $content = ob_get_clean();
 
         wp_send_json_success( $content );
-    }
-
-    /**
-     * Save attributes from edit product page
-     *
-     * @return void
-     */
-    public function save_attributes() {
-        // Get post data
-        parse_str( $_POST['data'], $data );
-        $post_id = absint( $_POST['post_id'] );
-
-        // Save Attributes
-        $attributes = [];
-
-        if ( isset( $data['attribute_names'] ) ) {
-            $attribute_names  = array_map( 'stripslashes', $data['attribute_names'] );
-            $attribute_values = isset( $data['attribute_values'] ) ? $data['attribute_values'] : [];
-
-            if ( isset( $data['attribute_visibility'] ) ) {
-                $attribute_visibility = $data['attribute_visibility'];
-            }
-
-            if ( isset( $data['attribute_variation'] ) ) {
-                $attribute_variation = $data['attribute_variation'];
-            }
-
-            $attribute_is_taxonomy   = $data['attribute_is_taxonomy'];
-            $attribute_position      = $data['attribute_position'];
-            $attribute_names_max_key = max( array_keys( $attribute_names ) );
-
-            for ( $i = 0; $i <= $attribute_names_max_key; $i++ ) {
-                if ( empty( $attribute_names[ $i ] ) ) {
-                    continue;
-                }
-
-                $is_visible   = isset( $attribute_visibility[ $i ] ) ? 1 : 0;
-                $is_variation = isset( $attribute_variation[ $i ] ) ? 1 : 0;
-                $is_taxonomy  = $attribute_is_taxonomy[ $i ] ? 1 : 0;
-
-                if ( $is_taxonomy ) {
-                    if ( isset( $attribute_values[ $i ] ) ) {
-
-                        // Select based attributes - Format values (posted values are slugs)
-                        if ( is_array( $attribute_values[ $i ] ) ) {
-                            $values = $attribute_values[ $i ]; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-                            // Text based attributes - Posted values are term names, wp_set_object_terms wants ids or slugs.
-                        } else {
-                            $values     = [];
-                            $raw_values = explode( WC_DELIMITER, $attribute_values[ $i ] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-                            foreach ( $raw_values as $value ) {
-                                $term = get_term_by( 'name', $value, $attribute_names[ $i ] );
-                                if ( ! $term ) {
-                                    $term = wp_insert_term( $value, $attribute_names[ $i ] );
-
-                                    if ( $term && ! is_wp_error( $term ) ) {
-                                        $values[] = $term['term_id'];
-                                    }
-                                } else {
-                                    $values[] = $term->term_id;
-                                }
-                            }
-                        }
-
-                        // Remove empty items in the array
-                        $values = array_filter( $values, 'strlen' );
-                    } else {
-                        $values = [];
-                    }
-
-                    $values = array_map( 'strval', $values );
-
-                    // Update post terms
-                    if ( taxonomy_exists( $attribute_names[ $i ] ) ) {
-                        wp_set_object_terms( $post_id, $values, $attribute_names[ $i ] );
-                    }
-
-                    if ( ! empty( $values ) ) {
-                        // Add attribute to array, but don't set values
-                        $attributes[ sanitize_title( $attribute_names[ $i ] ) ] = [
-                            'name'         => wc_clean( $attribute_names[ $i ] ),
-                            'value'        => '',
-                            'position'     => $attribute_position[ $i ],
-                            'is_visible'   => $is_visible,
-                            'is_variation' => $is_variation,
-                            'is_taxonomy'  => $is_taxonomy,
-                        ];
-                    }
-                } elseif ( isset( $attribute_values[ $i ] ) ) {
-
-                    // Text based, possibly separated by pipes (WC_DELIMITER). Preserve line breaks in non-variation attributes.
-                    $values = implode( ' ' . WC_DELIMITER . ' ', array_map( 'wc_clean', array_map( 'stripslashes', $attribute_values[ $i ] ) ) );
-
-                    // Custom attribute - Add attribute to array and set the values
-                    $attributes[ sanitize_title( $attribute_names[ $i ] ) ] = [
-                        'name'         => wc_clean( $attribute_names[ $i ] ),
-                        'value'        => $values,
-                        'position'     => $attribute_position[ $i ],
-                        'is_visible'   => $is_visible,
-                        'is_variation' => $is_variation,
-                        'is_taxonomy'  => $is_taxonomy,
-                    ];
-                }
-            }
-        }
-
-        uasort( $attributes, 'wc_product_attribute_uasort_comparison' );
-        update_post_meta( $post_id, '_product_attributes', $attributes );
-        die();
     }
 
     /**

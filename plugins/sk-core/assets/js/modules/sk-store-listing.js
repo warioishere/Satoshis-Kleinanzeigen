@@ -60,6 +60,7 @@
 
             $.post(ajaxurl, {
                 action: 'sk_store_product_search_action',
+                _wpnonce: window.sk && sk.store_product_search_nonce,
                 search_term: search,
                 store_id: storeId
             }, function (res) {

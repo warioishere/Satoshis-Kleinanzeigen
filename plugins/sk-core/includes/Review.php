@@ -212,7 +212,7 @@ class Review {
     public function ajax_comment_status() {
         $nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
 
-        if ( ! wp_verify_nonce( $nonce, 'sk_reviews' ) && ! is_user_logged_in() ) {
+        if ( ! wp_verify_nonce( $nonce, 'sk_reviews' ) || ! is_user_logged_in() ) {
             wp_send_json_error();
         }
 

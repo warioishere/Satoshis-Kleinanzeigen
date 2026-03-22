@@ -42,7 +42,10 @@ class Pointers {
      * @return void
      */
     public function dismiss_screen( $screen = false ) {
-        $screen = isset( $_POST['screen'] ) ? sanitize_text_field( wp_unslash( $_POST['screen'] ) ) : $screen; // phpcs:ignore.
+        if ( ! $screen ) {
+            check_ajax_referer( 'sk_dismiss_pointer', '_wpnonce' );
+            $screen = isset( $_POST['screen'] ) ? sanitize_text_field( wp_unslash( $_POST['screen'] ) ) : false;
+        }
 
         if ( ! $screen ) {
             return;
@@ -230,6 +233,7 @@ class Pointers {
         $data = array(
             'ajaxurl' => admin_url( 'admin-ajax.php' ),
             'screen'  => $this->screen_id,
+            'nonce'   => wp_create_nonce( 'sk_dismiss_pointer' ),
         );
 
         wp_localize_script( 'sk-pointers', 'SK_Pointers', $pointers );

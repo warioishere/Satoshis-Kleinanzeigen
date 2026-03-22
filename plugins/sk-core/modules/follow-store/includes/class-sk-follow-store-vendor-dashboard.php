@@ -10,7 +10,7 @@ class SK_Follow_Store_Vendor_Dashboard {
      */
     public function __construct() {
         add_action( 'init', array( $this, 'add_endpoint' ) );
-        add_action( 'sk_get_dashboard_nav', array( $this, 'add_dashboard_nav' ) );
+        add_filter( 'sk_get_dashboard_nav', array( $this, 'add_dashboard_nav' ) );
         add_action( 'sk_load_custom_template', array( $this, 'load_dashboard_template' ) );
     }
 

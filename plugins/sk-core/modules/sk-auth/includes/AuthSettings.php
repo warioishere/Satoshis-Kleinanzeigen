@@ -93,9 +93,10 @@ class AuthSettings {
             'sk_auth_nostr_relays' => [
                 'name'    => 'sk_auth_nostr_relays',
                 'label'   => __( 'Nostr Relays', 'sk-core' ),
-                'type'    => 'text',
+                'type'    => 'textarea',
                 'default' => get_option( 'nostr_login_relays', "wss://purplepag.es\nwss://relay.nostr.band\nwss://relay.primal.net\nwss://relay.damus.io" ),
-                'desc'    => __( 'Relay URLs (eine pro Zeile, kommasepariert oder Leerzeichen).', 'sk-core' ),
+                'desc'    => __( 'Relay URLs, eine pro Zeile.', 'sk-core' ),
+                'rows'    => 5,
             ],
             'sk_auth_nostr_redirect' => [
                 'name'    => 'sk_auth_nostr_redirect',

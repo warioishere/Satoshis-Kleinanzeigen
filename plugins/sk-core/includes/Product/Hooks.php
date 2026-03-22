@@ -126,7 +126,7 @@ class Hooks {
             $output .= '<img src="' . $get_product_image . '">';
             $output .= '</div>';
             $output .= '<div class="sk-ls-product-data">';
-            $output .= '<h3>' . $get_name . '</h3>';
+            $output .= '<h3>' . esc_html( $get_name ) . '</h3>';
 
             if ( ! empty( $price ) ) {
                 $output .= '<div class="product-price">';
@@ -142,15 +142,15 @@ class Hooks {
                 foreach ( $categories as $category ) {
                     if ( $category->parent ) {
                         $parent = get_term_by( 'id', $category->parent, 'product_cat' );
-                        $output .= '<span>' . $parent->name . '</span>';
+                        $output .= '<span>' . esc_html( $parent->name ) . '</span>';
                     }
-                    $output .= '<span>' . $category->name . '</span>';
+                    $output .= '<span>' . esc_html( $category->name ) . '</span>';
                 }
                 $output .= '</div>';
             }
 
             if ( ! empty( $sku ) ) {
-                $output .= '<div class="sk-ls-product-sku">' . esc_html__( 'SKU:', 'sk-core' ) . ' ' . $sku . '</div>';
+                $output .= '<div class="sk-ls-product-sku">' . esc_html__( 'SKU:', 'sk-core' ) . ' ' . esc_html( $sku ) . '</div>';
             }
 
             $output .= '</div>';

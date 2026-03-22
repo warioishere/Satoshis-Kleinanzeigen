@@ -21,6 +21,9 @@
 		'SK\\Modules\\Auth\\'                 => $base . '/modules/sk-auth/includes/',
 		'SK\\Modules\\Auth\\Lnurl\\'          => $base . '/modules/sk-auth/includes/',
 		'SK\\Modules\\Feed\\'                 => $base . '/modules/sk-feed/includes/',
+		'SK\\Modules\\FollowStore\\'          => $base . '/modules/follow-store/includes/',
+		'SK\\Modules\\ReportAbuse\\'          => $base . '/modules/report-abuse/includes/',
+		'SK\\Modules\\LiveSearch\\'           => $base . '/modules/live-search/classes/',
 	];
 
 	spl_autoload_register( function ( $class ) use ( $map ) {

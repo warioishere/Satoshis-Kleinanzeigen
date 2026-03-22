@@ -30,7 +30,7 @@ $active_tab         = ! empty( $_GET['tab'] ) ? sanitize_text_field( wp_unslash(
 
     <?php
     do_action( 'sk_dashboard_content_before' );
-    do_action( 'sk_subcription_content_before' );
+    do_action( 'sk_subscription_content_before' );
     ?>
 
     <div class="sk-dashboard-content">

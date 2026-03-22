@@ -13,13 +13,13 @@
 
     /**
      *  sk_dashboard_content_before hook
-     *  sk_subcription_content_before hook
+     *  sk_subscription_content_before hook
      *
      *  @hooked get_dashboard_side_navigation
      *
      */
     do_action( 'sk_dashboard_content_before' );
-    do_action( 'sk_subcription_content_before' );
+    do_action( 'sk_subscription_content_before' );
     ?>
 
     <div class="sk-dashboard-content">

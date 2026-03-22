@@ -8,7 +8,8 @@ jQuery(function ($) {
             close: function () {
                 $.post(sk_pointer_data.ajaxurl, {
                     screen: sk_pointer_data.screen,
-                    action: 'sk-dismiss-wp-pointer'
+                    action: 'sk-dismiss-wp-pointer',
+                    _wpnonce: sk_pointer_data.nonce
                 });
             }
         });

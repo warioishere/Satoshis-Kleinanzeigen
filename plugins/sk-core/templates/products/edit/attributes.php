@@ -144,5 +144,4 @@
         }?>
     </select>
     <button class="btn btn-success add-variant-category"><?php _e( '+ Add a category', 'sk' ); ?></button>
-    <button type="button" class="btn btn-default save_attributes" data-id="<?php echo $thepostid; ?>"><?php _e( 'Save attributes', 'sk' ); ?></button>
 </p>
