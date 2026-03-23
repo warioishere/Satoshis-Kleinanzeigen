@@ -12622,3 +12622,106 @@ body:has(.dvc-modal) .dkp-contact-icons {
   .sk-feed-dashboard-item-actions { align-self: flex-end; }
 }
 
+/* ================================================================
+ * SK Hide Rules — Dashboard & Product Form Cleanup
+ * Migrated from kadence-child/hide-content.css
+ * ================================================================ */
+
+/* Short descriptions in product editor */
+.product-edit-new-container .sk-product-short-description { display: none; }
+
+/* Featured & Open-Now filters in store listing */
+#sk-store-listing-filter-form-wrap .store-lists-other-filter-wrap .featured.item,
+#sk-store-listing-filter-form-wrap .store-lists-other-filter-wrap .open-now.item { display: none !important; }
+
+/* Product Type selector in product form */
+.sk-product-edit-form label[for="product_type"],
+.sk-product-edit-form select#product_type { display: none !important; }
+
+/* Address fields in vendor settings */
+.sk-settings-content #setting_address,
+.sk-settings-content label[for="setting_address"],
+.sk-settings-content #sk-address-fields-wrapper,
+.sk-settings-content .sk-address-fields { display: none !important; }
+
+/* Attribute/variation options in product editor */
+.sk-dashboard .sk-attribute-variation-options { display: none !important; }
+
+/* Store product search positioning */
+.sk-store-products-filter-area .orderby-search {
+  margin-left: 10px !important; margin-top: 0 !important;
+  border-radius: 3px; float: left !important;
+}
+@media (max-width: 767px) {
+  .sk-store-products-filter-area .orderby-search {
+    margin-left: 0 !important; margin-top: 10px !important; border-radius: 3px;
+  }
+}
+
+/* Password change fieldset in account edit */
+.sk-dashboard-content form.edit-account fieldset { display: none !important; }
+
+/* Permalink edit button */
+#edit-slug-buttons .edit-slug.button.button-small.hide-if-no-js { display: none !important; }
+
+/* CHF conversion in subscription */
+.sk-subscription-content .dps-amount > div { display: none !important; }
+
+/* Purchase note field */
+.sk-dashboard .sk-section-content label[for="_purchase_note"],
+.sk-dashboard .sk-section-content #_purchase_note { display: none !important; }
+
+/* Visibility field (with :has fallback) */
+@supports selector(:has(*)) {
+  #sk-product-edit-form .sk-section-content
+  .sk-form-group.content-half-part:has(> #_visibility) { display: none !important; }
+}
+.sk-dashboard .sk-section-content label[for="_visibility"],
+.sk-dashboard .sk-section-content label[for="visibility"],
+.sk-dashboard .sk-section-content #_visibility { display: none !important; }
+
+/* Help page last paragraph */
+.sk-page-help p:last-of-type { display: none !important; }
+
+/* Product advertisement badge (legacy typo preserved) */
+.sk-proudct-advertisement { display: none; }
+
+/* Product inventory section */
+.sk-product-inventory { display: none; }
+
+/* Catalog mode checkbox */
+.sk-edit-row.sk-catalog-mode { display: none !important; }
+
+/* Phone field in store form */
+.sk-dashboard-wrap form#store-form .sk-form-group label[for="setting_phone"],
+.sk-dashboard-wrap form#store-form .sk-form-group input#setting_phone { display: none !important; }
+
+/* Linked products (upsells/cross-sells) */
+.sk-linked-product-options { display: none !important; }
+
+/* Brand selector */
+#product_brand { display: none !important; }
+
+/* Shipping/tax for variable-subscription */
+.hide_if_variable-subscription.sk-product-shipping-tax { display: none !important; }
+
+/* Quick edit link */
+span.item-inline-edit.editline { display: none !important; }
+
+/* Mobile: hide sort-by on small screens */
+@media only screen and (max-width: 480px) {
+  #sk-store-listing-filter-wrap .right .item.sort-by { display: none !important; }
+}
+
+/* External review links in loop */
+.entry.loop-entry a[rel="noopener noreferrer"] { display: none; }
+
+/* First H2 in description tab */
+#tab-description > h2:first-of-type { display: none; }
+
+/* Announcement filter bar */
+.sk-dashboard .sk-layout-content-area .grid.grid-cols-2.gap-2.mb-4 { display: none !important; }
+
+/* Currency symbol in subscription */
+.sk-subscription-content .woocommerce-Price-currencySymbol { display: none !important; }
+

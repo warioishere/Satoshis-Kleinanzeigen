@@ -723,8 +723,12 @@ function sk_save_account_details() {
     $user->first_name = $account_first_name;
     $user->last_name  = $account_last_name;
 
-    // Prevent emails being displayed, or leave alone.
-    $user->display_name = is_email( $current_user->display_name ) ? $user->first_name : $current_user->display_name;
+    // Allow explicit display name from account form; otherwise prevent email as display name.
+    if ( ! empty( $_POST['account_display_name'] ) ) {
+        $user->display_name = sanitize_text_field( wp_unslash( $_POST['account_display_name'] ) );
+    } elseif ( is_email( $current_user->display_name ) ) {
+        $user->display_name = $user->first_name;
+    }
 
     // Handle required fields
     $required_fields = apply_filters(

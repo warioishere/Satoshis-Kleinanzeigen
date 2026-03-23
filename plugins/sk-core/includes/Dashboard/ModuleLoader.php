@@ -33,6 +33,7 @@ class ModuleLoader {
         new Modules\Feedback();
         new Modules\UserOnboarding();
         new Modules\LogoutModal();
+        new Modules\SmtpConfig();
     }
 
     /**

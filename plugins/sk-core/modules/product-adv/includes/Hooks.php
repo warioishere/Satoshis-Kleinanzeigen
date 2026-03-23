@@ -51,6 +51,40 @@ class Hooks {
         // Add a Product Advertisement filter option to order the type filter dropdown.
         add_filter( 'sk_order_type_filter_options', [ $this, 'add_product_advertisement_filter_option' ] );
         add_filter( 'sk_order_type_filter_query_args', [ $this, 'filter_product_advertisement_orders' ], 10, 3 );
+
+        // Boost icon styling on vendor dashboard.
+        add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_boost_icon_css' ], 20 );
+    }
+
+    /**
+     * Inject boost-icon CSS on the vendor dashboard.
+     */
+    public function enqueue_boost_icon_css() {
+        if ( ! function_exists( 'sk_is_seller_dashboard' ) || ! sk_is_seller_dashboard() ) {
+            return;
+        }
+
+        $handle       = wp_style_is( 'sk-style', 'registered' ) ? 'sk-style' : 'wp-block-library';
+        $icon_default = esc_url_raw( SK_PRODUCT_ADV_ASSETS . '/images/boost.svg' );
+        $icon_active  = esc_url_raw( SK_PRODUCT_ADV_ASSETS . '/images/boost-active.svg' );
+
+        $css = "
+            .sk-dashboard .adv_icon_2{
+                font-size:0 !important; line-height:1; position:relative;
+                width:28px; height:28px; display:inline-block; vertical-align:middle;
+                background:url('{$icon_default}') no-repeat center; background-size:contain;
+            }
+            .sk-dashboard .adv_icon_1{ display:none !important; }
+            .sk-dashboard span.sk-product-advertisement.advertised .adv_icon_2,
+            .sk-dashboard span.sk-product-advertisement[data-already-advertised=\"advertised\"] .adv_icon_2{
+                background:url('{$icon_active}') no-repeat center !important; background-size:contain !important;
+            }
+            .sk-dashboard td.product-advertisement-td{ text-align:center; }
+            .sk-dashboard td.product-advertisement-td .boost-label{
+                display:block; margin-top:6px; font-size:13px; font-weight:600; color:#f7931a;
+            }
+        ";
+        wp_add_inline_style( $handle, $css );
     }
 
     /**
