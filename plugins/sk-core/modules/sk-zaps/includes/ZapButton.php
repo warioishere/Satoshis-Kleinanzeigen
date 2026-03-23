@@ -79,7 +79,21 @@ class ZapButton {
             }
         }
 
-        if ( empty( $lightning_address ) && empty( $nostr_pubkey ) ) {
+        // If still no address but has Nostr pubkey, try fetching lud16 from relay (cached 24h).
+        if ( empty( $lightning_address ) && ! empty( $nostr_pubkey ) ) {
+            $lightning_address = self::get_cached_lud16( $vendor_id, $nostr_pubkey );
+            if ( ! empty( $lightning_address ) ) {
+                // Persist it so we don't need relay fetch next time.
+                if ( ! is_array( $settings ) ) {
+                    $settings = [];
+                }
+                $settings['lightning_address'] = $lightning_address;
+                update_user_meta( $vendor_id, 'sk_profile_settings', $settings );
+            }
+        }
+
+        // No way to receive payment → no zap button.
+        if ( empty( $lightning_address ) ) {
             return null;
         }
 
@@ -93,6 +107,49 @@ class ZapButton {
             'nostr_pubkey'      => $nostr_pubkey ?: '',
             'has_nostr'         => ! empty( $nostr_pubkey ),
         ];
+    }
+
+    /**
+     * Fetch lud16 from Nostr profile via relay HTTP API, cached 24h.
+     */
+    private static function get_cached_lud16( int $vendor_id, string $nostr_pubkey ): string {
+        $cache_key = 'sk_lud16_' . $vendor_id;
+        $cached    = get_transient( $cache_key );
+
+        if ( false !== $cached ) {
+            return $cached; // may be empty string (= checked, no lud16)
+        }
+
+        $lud16 = '';
+
+        // Try Primal Cache API (REST, no WebSocket needed).
+        $response = wp_remote_post( 'https://cache.primal.net/api', [
+            'timeout' => 5,
+            'body'    => wp_json_encode( [ 'user_profile', [ 'pubkey' => $nostr_pubkey ] ] ),
+            'headers' => [ 'Content-Type' => 'application/json' ],
+        ] );
+
+        if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
+            $body   = wp_remote_retrieve_body( $response );
+            $events = json_decode( $body, true );
+
+            if ( is_array( $events ) ) {
+                foreach ( $events as $event ) {
+                    if ( isset( $event['kind'] ) && 0 === (int) $event['kind'] && ! empty( $event['content'] ) ) {
+                        $profile = json_decode( $event['content'], true );
+                        if ( ! empty( $profile['lud16'] ) ) {
+                            $lud16 = sanitize_text_field( $profile['lud16'] );
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Cache result for 24 hours (even empty = "no lud16 found").
+        set_transient( $cache_key, $lud16, DAY_IN_SECONDS );
+
+        return $lud16;
     }
 
     /**
