@@ -104,6 +104,17 @@
         setStatus('<i class="fas fa-spinner fa-spin"></i> Lightning Address wird aufgelöst...', null);
 
         try {
+            // If no Lightning Address but has Nostr pubkey, fetch lud16 from Nostr profile.
+            if (!data.lnAddress && data.nostrPubkey) {
+                setStatus('<i class="fas fa-spinner fa-spin"></i> Lightning Address wird von Nostr geladen...', null);
+                data.lnAddress = await fetchLud16FromNostr(data.nostrPubkey);
+                if (!data.lnAddress) {
+                    setStatus('Kein Lightning-Zahlungsweg im Nostr-Profil gefunden.', false);
+                    $btn.prop('disabled', false).text('&#9889; Zap senden');
+                    return;
+                }
+            }
+
             // Step 1: Resolve Lightning Address → LNURL-pay metadata.
             var lnurlData = await resolveLnAddress(data.lnAddress);
             if (!lnurlData || !lnurlData.callback) {
@@ -200,6 +211,11 @@
             // Fallback: show invoice as QR + deeplink.
             showInvoiceFallback(invoice, amountSats);
 
+            // Poll Nostr relays for Kind 9735 Zap Receipt to verify payment.
+            if (data.nostrPubkey && lnurlData.allowsNostr) {
+                watchForZapReceipt(data, amountSats);
+            }
+
         } catch (err) {
             console.error('[SK Zaps] Error:', err);
             setStatus('Fehler: ' + err.message, false);
@@ -210,6 +226,46 @@
     /**
      * Resolve a Lightning Address to LNURL-pay metadata.
      */
+    /**
+     * Fetch lud16 (Lightning Address) from a Nostr profile via relay.
+     */
+    async function fetchLud16FromNostr(pubkeyHex) {
+        var relays = (window.skZaps && skZaps.relays) || ['wss://purplepag.es', 'wss://relay.nostr.band'];
+
+        for (var i = 0; i < relays.length; i++) {
+            try {
+                var lud16 = await new Promise(function (resolve, reject) {
+                    var ws = new WebSocket(relays[i]);
+                    var timeout = setTimeout(function () { ws.close(); reject('timeout'); }, 5000);
+
+                    ws.onopen = function () {
+                        ws.send(JSON.stringify(['REQ', 'lud16', { kinds: [0], authors: [pubkeyHex], limit: 1 }]));
+                    };
+                    ws.onmessage = function (msg) {
+                        try {
+                            var data = JSON.parse(msg.data);
+                            if (data[0] === 'EVENT' && data[2] && data[2].content) {
+                                var profile = JSON.parse(data[2].content);
+                                clearTimeout(timeout);
+                                ws.close();
+                                resolve(profile.lud16 || '');
+                            } else if (data[0] === 'EOSE') {
+                                clearTimeout(timeout);
+                                ws.close();
+                                resolve('');
+                            }
+                        } catch (e) { /* ignore parse errors */ }
+                    };
+                    ws.onerror = function () { clearTimeout(timeout); reject('ws error'); };
+                });
+
+                if (lud16) return lud16;
+            } catch (e) { /* try next relay */ }
+        }
+
+        return '';
+    }
+
     async function resolveLnAddress(address) {
         // Lightning Address: user@domain → https://domain/.well-known/lnurlp/user
         if (address.indexOf('@') !== -1) {
@@ -225,10 +281,10 @@
      * Show invoice as QR code + deeplink when WebLN not available.
      */
     function showInvoiceFallback(invoice, amountSats) {
-        var html = '<div style="text-align:center;margin-top:12px;">';
+        var html = '<div style="text-align:center;margin-top:12px;display:flex;flex-direction:column;align-items:center;">';
         html += '<p style="color:#e8ecf0;font-size:14px;margin-bottom:8px;">' + amountSats + ' Sats</p>';
-        html += '<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(invoice.toUpperCase()) + '" style="border-radius:8px;background:#fff;padding:6px;" />';
-        html += '<div style="margin-top:10px;display:flex;gap:6px;">';
+        html += '<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(invoice.toUpperCase()) + '" style="border-radius:8px;background:#fff;padding:6px;display:block;" />';
+        html += '<div style="margin-top:10px;display:flex;gap:6px;justify-content:center;">';
         html += '<button class="sk-zap-close" onclick="navigator.clipboard.writeText(\'' + escAttr(invoice) + '\');this.textContent=\'Kopiert!\'">Invoice kopieren</button>';
         html += '<a href="lightning:' + escAttr(invoice) + '" class="sk-zap-send" style="text-align:center;text-decoration:none;display:block;">In Wallet öffnen</a>';
         html += '</div></div>';
@@ -256,6 +312,82 @@
     /**
      * Track zap amount on feed posts after successful payment.
      */
+    /**
+     * Watch Nostr relays for a Kind 9735 Zap Receipt confirming payment.
+     */
+    function watchForZapReceipt(data, amountSats) {
+        var relays = (window.skZaps && skZaps.relays) || ['wss://purplepag.es', 'wss://relay.nostr.band'];
+        var since = Math.floor(Date.now() / 1000) - 5; // small buffer
+        var confirmed = false;
+        var sockets = [];
+        var timeout;
+
+        function cleanup() {
+            clearTimeout(timeout);
+            sockets.forEach(function (ws) { try { ws.close(); } catch (e) {} });
+            sockets = [];
+        }
+
+        function onReceipt(receiptEvent) {
+            if (confirmed) return;
+            confirmed = true;
+
+            // Extract amount from bolt11 in zap receipt description tag
+            var amountFromReceipt = amountSats; // fallback
+            try {
+                var descTag = (receiptEvent.tags || []).find(function (t) { return t[0] === 'description'; });
+                if (descTag && descTag[1]) {
+                    var zapReq = JSON.parse(descTag[1]);
+                    var amountTag = (zapReq.tags || []).find(function (t) { return t[0] === 'amount'; });
+                    if (amountTag) amountFromReceipt = Math.floor(parseInt(amountTag[1]) / 1000);
+                }
+            } catch (e) {}
+
+            trackZap(data, amountFromReceipt);
+
+            // Update UI
+            setStatus('&#9889; Zap bestätigt! ' + amountFromReceipt + ' Sats', true);
+            setTimeout(function () { $('#sk-zap-modal').remove(); }, 2500);
+
+            cleanup();
+        }
+
+        // Subscribe to each relay
+        relays.forEach(function (relayUrl) {
+            try {
+                var ws = new WebSocket(relayUrl);
+                sockets.push(ws);
+
+                ws.onopen = function () {
+                    // Subscribe for Kind 9735 (Zap Receipt) tagging vendor pubkey
+                    ws.send(JSON.stringify([
+                        'REQ', 'zap-receipt',
+                        { kinds: [9735], '#p': [data.nostrPubkey], since: since, limit: 5 }
+                    ]));
+                };
+
+                ws.onmessage = function (msg) {
+                    try {
+                        var ev = JSON.parse(msg.data);
+                        if (ev[0] === 'EVENT' && ev[2] && ev[2].kind === 9735) {
+                            onReceipt(ev[2]);
+                        }
+                    } catch (e) {}
+                };
+
+                ws.onerror = function () { /* ignore, other relays may work */ };
+            } catch (e) {}
+        });
+
+        // Give up after 90 seconds
+        timeout = setTimeout(function () {
+            if (!confirmed) {
+                console.log('[SK Zaps] No zap receipt received within 90s');
+            }
+            cleanup();
+        }, 90000);
+    }
+
     function trackZap(data, amountSats) {
         if (!data.postId || typeof skFeed === 'undefined') return;
 

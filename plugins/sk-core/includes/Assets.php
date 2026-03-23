@@ -682,6 +682,7 @@ class Assets {
             wp_enqueue_script( 'post' );
             wp_enqueue_script( 'sk-date-range-picker' );
             wp_enqueue_script( 'sk-select2-js' );
+            wp_enqueue_media();
         }
     }
 

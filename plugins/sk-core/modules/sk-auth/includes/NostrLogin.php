@@ -284,9 +284,11 @@ class Nostr_Login_Handler {
         if ( isset( $metadata['email'] ) ) {
             $sanitized_metadata['email'] = sanitize_email( $metadata['email'] );
             if ( ! is_email( $sanitized_metadata['email'] ) ) {
-                // Handle invalid email
                 $sanitized_metadata['email'] = '';
             }
+        }
+        if ( isset( $metadata['lud16'] ) ) {
+            $sanitized_metadata['lud16'] = sanitize_text_field( $metadata['lud16'] );
         }
 
         // Check if a user with this public key already exists
@@ -338,9 +340,19 @@ class Nostr_Login_Handler {
     }
 
     private function create_new_user( $public_key, $sanitized_metadata ) {
-        $username = ! empty( $sanitized_metadata['name'] ) ? sanitize_user( $sanitized_metadata['name'], true ) : 'nostr_' . substr( sanitize_text_field( $public_key ), 0, 8 );
-        if ( username_exists( $username ) ) {
-            $username .= '_' . wp_generate_password( 4, false );
+        if ( ! empty( $sanitized_metadata['name'] ) ) {
+            $username = sanitize_user( $sanitized_metadata['name'], true );
+            if ( username_exists( $username ) ) {
+                $username .= '_' . wp_generate_password( 4, false );
+            }
+        } else {
+            // Same pattern as LNURL: prefix + incrementing number.
+            $prefix = 'nostr-';
+            $number = 1;
+            while ( username_exists( $prefix . $number ) ) {
+                $number++;
+            }
+            $username = $prefix . $number;
         }
 
         $email = ! empty( $sanitized_metadata['email'] ) ? sanitize_email( $sanitized_metadata['email'] ) : sanitize_text_field( $public_key ) . '@nostr.local';
@@ -389,7 +401,18 @@ class Nostr_Login_Handler {
                 'user_url' => esc_url_raw( $sanitized_metadata['website'] ),
             ) );
         }
-        // Add more metadata fields as needed
+        // Save Lightning Address (lud16) from Nostr profile for zap support.
+        if ( ! empty( $sanitized_metadata['lud16'] ) ) {
+            $lud16 = sanitize_text_field( $sanitized_metadata['lud16'] );
+            $settings = get_user_meta( $user_id, 'sk_profile_settings', true );
+            if ( ! is_array( $settings ) ) {
+                $settings = [];
+            }
+            if ( empty( $settings['lightning_address'] ) ) {
+                $settings['lightning_address'] = $lud16;
+                update_user_meta( $user_id, 'sk_profile_settings', $settings );
+            }
+        }
     }
 
     public function enqueue_scripts($hook = '') {

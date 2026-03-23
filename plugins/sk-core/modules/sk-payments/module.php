@@ -42,6 +42,7 @@ final class Module {
         require_once SK_PAYMENTS_INCLUDES . '/ProductPage.php';
         require_once SK_PAYMENTS_INCLUDES . '/Commission/Generator.php';
         require_once SK_PAYMENTS_INCLUDES . '/Commission/Enforcement.php';
+        require_once SK_PAYMENTS_INCLUDES . '/REST/LnurlPayEndpoint.php';
     }
 
     public function load_hooks() {
@@ -63,6 +64,7 @@ final class Module {
         new ProductPage();
         new Admin\AdminPage();
         new Dashboard\TransactionsPage();
+        new REST\LnurlPayEndpoint();
 
         // Chat integration: only if VendorChat is active AND chat integration enabled.
         $chat_enabled = sk_get_option( 'sk_lightning_chat_integration', 'sk_lightning', 'on' ) === 'on';

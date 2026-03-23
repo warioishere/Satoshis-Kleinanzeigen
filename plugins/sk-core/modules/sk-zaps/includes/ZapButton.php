@@ -67,12 +67,23 @@ class ZapButton {
         }
 
         $lightning_address = $settings['lightning_address'] ?? '';
-        if ( empty( $lightning_address ) ) {
+        $nostr_pubkey     = get_user_meta( $vendor_id, 'nostr_public_key', true );
+
+        // Fallback: generate Lightning Address from our LNURL-Pay endpoint
+        // if vendor has LNDHub/NWC but no explicit Lightning Address.
+        if ( empty( $lightning_address ) && class_exists( 'SK\Modules\Payments\StoreSettings' ) ) {
+            if ( \SK\Modules\Payments\StoreSettings::has_lightning( $vendor_id ) ) {
+                $user = get_user_by( 'ID', $vendor_id );
+                $domain = wp_parse_url( home_url(), PHP_URL_HOST );
+                $lightning_address = 'v/' . $vendor_id . '@' . $domain;
+            }
+        }
+
+        if ( empty( $lightning_address ) && empty( $nostr_pubkey ) ) {
             return null;
         }
 
-        $nostr_pubkey = get_user_meta( $vendor_id, 'nostr_public_key', true );
-        $store_info   = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( $vendor_id ) : [];
+        $store_info = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( $vendor_id ) : [];
         $store_name   = $store_info['store_name'] ?? '';
 
         return [
@@ -109,7 +120,9 @@ class ZapButton {
      * Enqueue zap JS + CSS on relevant pages.
      */
     public function enqueue_assets(): void {
-        if ( ! is_product() && ! function_exists( 'sk_is_store_page' ) ) {
+        // Load on product pages, store pages, and feed/community pages.
+        $is_feed = is_singular() && get_post_type() === 'page' && has_shortcode( get_post()->post_content ?? '', 'sk_feed' );
+        if ( ! is_product() && ! function_exists( 'sk_is_store_page' ) && ! $is_feed ) {
             return;
         }
 
@@ -121,8 +134,12 @@ class ZapButton {
             true
         );
 
+        $relays_option = get_option( 'nostr_login_relays', "wss://purplepag.es\nwss://relay.nostr.band" );
+        $relays        = array_filter( array_map( 'trim', explode( "\n", $relays_option ) ) );
+
         wp_localize_script( 'sk-zaps', 'skZaps', [
             'defaultAmount' => (int) sk_get_option( 'sk_zaps_default_amount', 'sk_zaps', '21' ),
+            'relays'        => array_values( $relays ),
         ] );
 
         // Inline CSS.
