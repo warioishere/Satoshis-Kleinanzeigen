@@ -22,6 +22,8 @@ class ZapButton {
         }
 
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_assets' ] );
+        add_action( 'wp_ajax_sk_zap_check_payment', [ __CLASS__, 'ajax_check_payment' ] );
+        add_action( 'wp_ajax_nopriv_sk_zap_check_payment', [ __CLASS__, 'ajax_check_payment' ] );
     }
 
     /**
@@ -107,6 +109,40 @@ class ZapButton {
             'nostr_pubkey'      => $nostr_pubkey ?: '',
             'has_nostr'         => ! empty( $nostr_pubkey ),
         ];
+    }
+
+    /**
+     * AJAX: Check if a zap invoice was paid via vendor's LNDHub/NWC.
+     */
+    public static function ajax_check_payment() {
+        $vendor_id    = (int) ( $_POST['vendor_id'] ?? 0 );
+        $payment_hash = sanitize_text_field( $_POST['payment_hash'] ?? '' );
+
+        if ( ! $vendor_id || ! $payment_hash ) {
+            wp_send_json_error( [ 'settled' => false ] );
+        }
+
+        if ( ! class_exists( 'SK\Modules\Payments\StoreSettings' ) ) {
+            wp_send_json_error( [ 'settled' => false ] );
+        }
+
+        // Try NWC first, then LNDHub.
+        $client = \SK\Modules\Payments\StoreSettings::get_nwc_client( $vendor_id );
+        if ( ! $client ) {
+            $client = \SK\Modules\Payments\StoreSettings::get_lndhub_client( $vendor_id );
+        }
+
+        if ( ! $client ) {
+            wp_send_json_error( [ 'settled' => false ] );
+        }
+
+        $result = $client->lookup_invoice( $payment_hash );
+
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( [ 'settled' => false ] );
+        }
+
+        wp_send_json_success( [ 'settled' => ! empty( $result['settled'] ) ] );
     }
 
     /**

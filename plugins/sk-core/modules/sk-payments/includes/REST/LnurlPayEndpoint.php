@@ -142,13 +142,17 @@ class LnurlPayEndpoint {
         $nostr_zap_request = isset( $_GET['nostr'] ) ? sanitize_text_field( wp_unslash( $_GET['nostr'] ) ) : '';
 
         // Create invoice via vendor's payment method (NWC → LNDHub → Lightning Address).
-        $invoice = null;
+        $invoice      = null;
+        $payment_hash = '';
+        $verifiable   = false;
 
         $nwc_client = StoreSettings::get_nwc_client( $vendor_id );
         if ( $nwc_client ) {
             $result = $nwc_client->make_invoice( $amount_sats, $memo );
             if ( ! is_wp_error( $result ) && ! empty( $result['pr'] ) ) {
-                $invoice = $result['pr'];
+                $invoice      = $result['pr'];
+                $payment_hash = $result['payment_hash'] ?? '';
+                $verifiable   = true;
             }
         }
 
@@ -157,7 +161,9 @@ class LnurlPayEndpoint {
             if ( $lndhub_client ) {
                 $result = $lndhub_client->make_invoice( $amount_sats, $memo );
                 if ( ! is_wp_error( $result ) && ! empty( $result['pr'] ) ) {
-                    $invoice = $result['pr'];
+                    $invoice      = $result['pr'];
+                    $payment_hash = $result['payment_hash'] ?? '';
+                    $verifiable   = true;
                 }
             }
         }
@@ -170,6 +176,12 @@ class LnurlPayEndpoint {
             'pr'     => $invoice,
             'routes' => [],
         ];
+
+        // Include payment_hash + vendor_id so clients can poll for settlement.
+        if ( $verifiable && $payment_hash ) {
+            $response['payment_hash'] = $payment_hash;
+            $response['verify']       = home_url( '/wp-admin/admin-ajax.php?action=sk_zap_check_payment' );
+        }
 
         $this->send_json( $response );
     }

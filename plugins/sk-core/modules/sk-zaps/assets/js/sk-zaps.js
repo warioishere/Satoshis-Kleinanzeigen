@@ -137,6 +137,7 @@
             }
 
             var invoice = null;
+            var invoiceResp = null;
 
             // Step 2: Try NIP-57 Zap (if Nostr extension available + vendor has pubkey + LNURL supports nostr).
             if (window.nostr && data.nostrPubkey && lnurlData.nostrPubkey) {
@@ -165,7 +166,7 @@
                         var zapUrl = lnurlData.callback + sep + 'amount=' + amountMsats + '&nostr=' + encodeURIComponent(JSON.stringify(signedZap));
 
                         setStatus('<i class="fas fa-spinner fa-spin"></i> Invoice wird angefordert...', null);
-                        var invoiceResp = await fetch(zapUrl).then(function (r) { return r.json(); });
+                        invoiceResp = await fetch(zapUrl).then(function (r) { return r.json(); });
 
                         if (invoiceResp.pr) {
                             invoice = invoiceResp.pr;
@@ -180,7 +181,7 @@
             if (!invoice) {
                 setStatus('<i class="fas fa-spinner fa-spin"></i> Invoice wird angefordert...', null);
                 var sep = lnurlData.callback.indexOf('?') !== -1 ? '&' : '?';
-                var invoiceResp = await fetch(lnurlData.callback + sep + 'amount=' + amountMsats).then(function (r) { return r.json(); });
+                invoiceResp = await fetch(lnurlData.callback + sep + 'amount=' + amountMsats).then(function (r) { return r.json(); });
                 if (invoiceResp.pr) {
                     invoice = invoiceResp.pr;
                 }
@@ -211,8 +212,12 @@
             // Fallback: show invoice as QR + deeplink.
             showInvoiceFallback(invoice, amountSats);
 
-            // Poll Nostr relays for Kind 9735 Zap Receipt to verify payment.
-            if (data.nostrPubkey && lnurlData.allowsNostr) {
+            // Poll for payment confirmation.
+            if (invoiceResp && invoiceResp.payment_hash) {
+                // Our LNURL-Pay endpoint — poll via lookup_invoice on vendor's wallet.
+                pollPaymentStatus(data, amountSats, invoiceResp.payment_hash);
+            } else if (data.nostrPubkey && lnurlData.allowsNostr) {
+                // External LN address — watch for Nostr Zap Receipt.
                 watchForZapReceipt(data, amountSats);
             }
 
@@ -312,6 +317,37 @@
     /**
      * Track zap amount on feed posts after successful payment.
      */
+    /**
+     * Poll server to check if invoice was paid (for vendors with LNDHub/NWC).
+     */
+    function pollPaymentStatus(data, amountSats, paymentHash) {
+        var attempts = 0;
+        var maxAttempts = 30; // 30 × 3s = 90s
+        var confirmed = false;
+
+        var interval = setInterval(function () {
+            if (confirmed || attempts >= maxAttempts || !$('#sk-zap-modal').length) {
+                clearInterval(interval);
+                return;
+            }
+            attempts++;
+
+            $.post(skFeed.ajaxurl || defaults.ajaxurl, {
+                action: 'sk_zap_check_payment',
+                vendor_id: data.vendorId,
+                payment_hash: paymentHash
+            }, function (res) {
+                if (res.success && res.data && res.data.settled) {
+                    confirmed = true;
+                    clearInterval(interval);
+                    trackZap(data, amountSats);
+                    setStatus('&#9889; Zap bestätigt! ' + amountSats + ' Sats', true);
+                    setTimeout(function () { $('#sk-zap-modal').remove(); }, 2500);
+                }
+            });
+        }, 3000);
+    }
+
     /**
      * Watch Nostr relays for a Kind 9735 Zap Receipt confirming payment.
      */
