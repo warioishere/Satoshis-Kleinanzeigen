@@ -193,11 +193,8 @@ class Nostr_Login_Handler {
     }
 
     public function ajax_nostr_login() {
-        // Nonce verification: try WP nonce first, but NIP-98 signature is the
-        // real auth. Cached pages may serve stale nonces, so we don't hard-fail
-        // on nonce alone — but we DO require a valid NIP-98 signature + replay check.
-        $nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
-        $nonce_valid = wp_verify_nonce( $nonce, 'nostr-login-nonce' );
+        // No WP nonce check — login page may serve cached nonces for nopriv users.
+        // Security is provided by the NIP-98 signature + timestamp window.
 
         // Sanitize input data
         $metadata_json = sanitize_text_field( wp_unslash( $_POST['metadata'] ?? '' ) );
@@ -218,7 +215,7 @@ class Nostr_Login_Handler {
 
         $tags = array_column( $nip98->tags ?? [], 1, 0 );
 
-        // Strict type checks + timestamp window (120s, reject future timestamps).
+        // Strict type checks + timestamp window (120s).
         $valid = true;
         if ( (int) ( $nip98->kind ?? 0 ) !== 27235 ) {
             $valid = false;
@@ -226,25 +223,28 @@ class Nostr_Login_Handler {
         if ( abs( time() - (int) ( $nip98->created_at ?? 0 ) ) > 120 ) {
             $valid = false;
         }
-        if ( strtolower( $tags['u'] ?? '' ) !== strtolower( admin_url( 'admin-ajax.php' ) ) ) {
+        // URL check: normalize both sides to https to avoid http/https mismatch from caching.
+        $expected_url = strtolower( preg_replace( '#^http://#', 'https://', admin_url( 'admin-ajax.php' ) ) );
+        $provided_url = strtolower( preg_replace( '#^http://#', 'https://', $tags['u'] ?? '' ) );
+        if ( $provided_url !== $expected_url ) {
             $valid = false;
         }
         if ( strtolower( $tags['method'] ?? '' ) !== 'post' ) {
             $valid = false;
         }
 
-        // Replay protection: check if this event ID was already used.
-        $event_id = $nip98->id ?? '';
-        if ( ! empty( $event_id ) ) {
-            $replay_key = 'sk_nip98_' . substr( $event_id, 0, 32 );
-            if ( get_transient( $replay_key ) ) {
-                wp_send_json_error( [ 'message' => __( 'Auth-Token bereits verwendet.', 'sk-core' ) ] );
-            }
-            set_transient( $replay_key, 1, 300 ); // Block replay for 5 minutes.
-        }
-
         if ( ! $valid ) {
             wp_send_json_error( [ 'message' => __( 'Autorisierung ungültig oder abgelaufen.', 'sk-core' ) ] );
+        }
+
+        // Replay protection: check AFTER validation so invalid events don't pollute the cache.
+        $event_id = $nip98->id ?? '';
+        if ( ! empty( $event_id ) ) {
+            $replay_key = 'sk_nip98_' . md5( $event_id );
+            if ( get_transient( $replay_key ) ) {
+                wp_send_json_error( [ 'message' => __( 'Auth-Token bereits verwendet. Bitte Seite neu laden.', 'sk-core' ) ] );
+            }
+            set_transient( $replay_key, 1, 120 ); // 2 min — matches timestamp window.
         }
 
         // Validate public key format

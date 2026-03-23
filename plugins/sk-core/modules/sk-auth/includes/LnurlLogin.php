@@ -115,9 +115,15 @@ class Login {
 		isset( $_GET['sig'] ) &&
 		isset( $_GET['key'] )
 		) {
-			// set error reporting to false so we do not have any php warings/errors in our json response
+			// Suppress display but ensure errors are logged (not silently swallowed).
 			if (function_exists('ini_set')) {
 				ini_set( 'display_errors', 0 );
+				ini_set( 'log_errors', 1 );
+			}
+
+			// Clean any buffered output from earlier hooks/notices.
+			while ( ob_get_level() > 0 ) {
+				ob_end_clean();
 			}
 
 			$k1               = sanitize_text_field( $_GET['k1'] );
@@ -128,7 +134,9 @@ class Login {
 			delete_expired_transients();
 
 			// set response headers
-			header( 'Content-Type: application/json; charset=utf-8' );
+			if ( ! headers_sent() ) {
+				header( 'Content-Type: application/json; charset=utf-8' );
+			}
 
 			// success & error response according to
 			// https://github.com/lnurl/luds/blob/luds/04.md#wallet-to-service-interaction-flow
@@ -510,7 +518,8 @@ class Login {
 	 * @since 1.0.0
 	 */
 	public function js_initialize_lnurl_auth() {
-		check_ajax_referer( 'lnurl-auth-nonce', 'security' );
+		// No nonce check — login page may serve cached nonces for nopriv users.
+		// Security is provided by the LNURL-Auth k1 challenge + secp256k1 signature.
 		delete_expired_transients();
 		wp_send_json( $this->create_lnurl() );
 	}
@@ -520,7 +529,7 @@ class Login {
 	 * The k1 value itself acts as a session token (random, 64 hex chars, 5-min expiry).
 	 */
 	public function js_await_lnurl_auth() {
-		check_ajax_referer( 'lnurl-auth-nonce', 'security' );
+		// No nonce check — same reason as js_initialize_lnurl_auth().
 		$k1 = isset( $_POST['k1'] ) ? sanitize_text_field( $_POST['k1'] ) : false;
 
 		if ( empty( $k1 ) ) {

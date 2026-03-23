@@ -11,11 +11,63 @@ class Manager {
     /**
      * Load autometically when class initiate
      */
+    /**
+     * Placeholder email suffixes — generated addresses that cannot receive mail.
+     */
+    private static $placeholder_suffixes = [
+        '@satoshiskleinanzeigen.space',
+        '@satoshiskleinanzeigen',
+        '@nostr.local',
+        '@btc.local',
+        '@lightning.local',
+    ];
+
     public function __construct() {
         //SK Email filters for WC Email
         add_filter( 'woocommerce_email_classes', array( $this, 'load_sk_emails' ), 35 );
         add_filter( 'woocommerce_template_directory', array( $this, 'set_email_template_directory' ), 15, 2 );
         add_filter( 'woocommerce_email_actions', array( $this, 'register_email_actions' ) );
+
+        // Block emails to placeholder addresses (generated for LNURL/Nostr/BTC users).
+        add_filter( 'wp_mail', [ $this, 'block_placeholder_emails' ] );
+    }
+
+    /**
+     * Prevent sending emails to auto-generated placeholder addresses.
+     *
+     * @param array $args wp_mail() arguments.
+     * @return array Modified arguments (empty 'to' if placeholder).
+     */
+    public function block_placeholder_emails( $args ) {
+        $to = is_array( $args['to'] ) ? $args['to'] : [ $args['to'] ];
+
+        $filtered = array_filter( $to, function ( $email ) {
+            return ! self::is_placeholder_email( $email );
+        } );
+
+        if ( empty( $filtered ) ) {
+            // All recipients are placeholders — cancel the email.
+            $args['to']      = '';
+            $args['subject'] = '';
+            $args['message'] = '';
+        } else {
+            $args['to'] = $filtered;
+        }
+
+        return $args;
+    }
+
+    /**
+     * Check if an email address is a generated placeholder.
+     */
+    public static function is_placeholder_email( string $email ): bool {
+        $email = strtolower( trim( $email ) );
+        foreach ( self::$placeholder_suffixes as $suffix ) {
+            if ( substr( $email, -strlen( $suffix ) ) === $suffix ) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

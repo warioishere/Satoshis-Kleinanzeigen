@@ -46,15 +46,20 @@ class Hooks {
             return $purchasable;
         }
 
+        // Admin enabled "Remove Add to Cart" globally → hide for all products.
+        if ( Helper::hide_add_to_cart_button_option_is_enabled_by_admin() ) {
+            return false;
+        }
+
         // check if enabled by product
         if ( Helper::is_enabled_for_product( $product ) ) {
-            return false; // per product settings to hide add to cart button is enabled
+            return false;
         }
 
         // check if enabled by vendor global settings
         $vendor_id = sk_get_vendor_by_product( $product, true );
         if ( Helper::is_enabled_by_vendor( $vendor_id ) ) {
-            return false; // vendor global settings to hide add to cart button is enabled
+            return false;
         }
 
         // return provided value

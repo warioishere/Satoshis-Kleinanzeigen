@@ -3876,3 +3876,78 @@ add_filter( 'sk_seller_listing_args', function ( $args, $requested_data ) {
     ];
     return $args;
 }, 10, 2 );
+
+/**
+ * Get seller/vendor ID from an order.
+ *
+ * Checks order meta (_sk_vendor_id / _dokan_vendor_id) first,
+ * then falls back to the product author of the first line item.
+ *
+ * @param int|\WC_Order $order Order ID or WC_Order instance.
+ *
+ * @return int Seller user ID, or 0 if not found.
+ */
+function sk_get_seller_id_by_order( $order ) {
+    if ( is_numeric( $order ) ) {
+        $order_id = (int) $order;
+        $order    = wc_get_order( $order_id );
+    }
+
+    if ( ! $order instanceof \WC_Order ) {
+        return 0;
+    }
+
+    // Parent orders with sub-orders don't belong to a single vendor.
+    if ( $order->get_meta( 'has_sub_order' ) ) {
+        return 0;
+    }
+
+    // Try vendor meta (sk-core key first, then legacy dokan key).
+    $seller_id = absint( $order->get_meta( '_sk_vendor_id' ) );
+    if ( ! $seller_id ) {
+        $seller_id = absint( $order->get_meta( '_dokan_vendor_id' ) );
+    }
+
+    if ( $seller_id ) {
+        return $seller_id;
+    }
+
+    // Fallback: product author from first line item.
+    $items = $order->get_items( 'line_item' );
+    foreach ( $items as $item ) {
+        $product_id = $item->get_product_id();
+        $seller_id  = absint( get_post_field( 'post_author', $product_id ) );
+        if ( $seller_id ) {
+            return $seller_id;
+        }
+    }
+
+    return 0;
+}
+
+/**
+ * Get order line-item details for vendor email templates.
+ *
+ * @param int      $order_id  WC Order ID.
+ * @param int|null $vendor_id Vendor user ID (unused, kept for compat).
+ *
+ * @return array
+ */
+function sk_get_vendor_order_details( $order_id, $vendor_id = null ) {
+    $order      = wc_get_order( $order_id );
+    $order_info = [];
+
+    if ( ! $order || $order->get_meta( 'has_sub_order' ) ) {
+        return $order_info;
+    }
+
+    foreach ( $order->get_items( 'line_item' ) as $item ) {
+        $order_info[] = [
+            'product'  => $item['name'],
+            'quantity' => $item['quantity'],
+            'total'    => $item['total'],
+        ];
+    }
+
+    return $order_info;
+}

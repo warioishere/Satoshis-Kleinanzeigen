@@ -133,6 +133,9 @@ class Client {
 
         foreach ( $body as $invoice ) {
             $hash = $invoice['r_hash'] ?? $invoice['payment_hash'] ?? '';
+            if ( ! is_string( $hash ) ) {
+                $hash = '';
+            }
             $match = ( $hash === $payment_hash );
             if ( ! $match && ! empty( $hash ) && ! ctype_xdigit( $hash ) ) {
                 $decoded = base64_decode( $hash, true );

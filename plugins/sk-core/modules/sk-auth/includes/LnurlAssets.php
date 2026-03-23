@@ -152,7 +152,7 @@ class Assets {
 
 			const data = new FormData();
 			data.append( "action", "js_initialize_lnurl_auth" );
-			data.append( "security", "' . wp_create_nonce( 'lnurl-auth-nonce' ) . '" );
+
 			data.append( "qrcode_width", Math.round(element.querySelector("." + lnurlAuthElementClass + "-qrcode").getBoundingClientRect().width ) ? Math.round(element.querySelector("." + lnurlAuthElementClass + "-qrcode").getBoundingClientRect().width ) : element.getBoundingClientRect().width );
 			data.append( "foreground", element.dataset.foreground ? element.dataset.foreground : element.lnurlGetRealColor() );
 			if (element.dataset.background) { data.append( "background", element.dataset.background ); }
@@ -192,7 +192,7 @@ class Assets {
 						// check if authenticated
 						const data = new FormData();
 						data.append( "action", "js_await_lnurl_auth" );
-						data.append( "security", "' . wp_create_nonce( 'lnurl-auth-nonce' ) . '" );
+			
 						data.append( "k1", response.k1 );
 
 						fetch("' . admin_url( 'admin-ajax.php' ) . '", {
@@ -277,7 +277,7 @@ class Assets {
 			.catch( error => console.log(error) );
 		};
 
-		window.addEventListener("load", function() {
+		window.onload = function() {
 			const lnurlAuthInstances = document.getElementsByClassName(lnurlAuthElementClass);
 			for (let lnurlAuthInstance of lnurlAuthInstances) {
 				intersectionObserver.observe(lnurlAuthInstance);
@@ -286,7 +286,7 @@ class Assets {
 					lnurlAuthInstance.lnurlAuthReset();
 				});
 			}
-		});
+		};
 		';
 	}
 
