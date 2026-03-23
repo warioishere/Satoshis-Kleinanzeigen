@@ -21,6 +21,12 @@ $show_filters = ! $vendor_id;
 			<button type="button" class="sk-feed-filter-btn<?php echo 'all' === $filter ? ' active' : ''; ?>" data-filter="all">
 				<?php esc_html_e( 'Alle', 'sk-core' ); ?>
 			</button>
+			<button type="button" class="sk-feed-filter-btn<?php echo 'posts' === $filter ? ' active' : ''; ?>" data-filter="posts">
+				<i class="fas fa-comment-dots"></i> <?php esc_html_e( 'Posts', 'sk-core' ); ?>
+			</button>
+			<button type="button" class="sk-feed-filter-btn<?php echo 'inserate' === $filter ? ' active' : ''; ?>" data-filter="inserate">
+				<i class="fas fa-tag"></i> <?php esc_html_e( 'Inserate', 'sk-core' ); ?>
+			</button>
 			<button type="button" class="sk-feed-filter-btn<?php echo 'trending' === $filter ? ' active' : ''; ?>" data-filter="trending">
 				<i class="fas fa-fire"></i> <?php esc_html_e( 'Trending', 'sk-core' ); ?>
 			</button>

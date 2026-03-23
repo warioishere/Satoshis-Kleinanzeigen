@@ -33,7 +33,7 @@ $product_id = (int) get_post_meta( $post_id, '_sk_feed_product_id', true );
 			<a href="<?php echo esc_url( $store_url ); ?>" class="sk-feed-card-name"><?php echo esc_html( $store_name ); ?></a>
 			<span class="sk-feed-card-time">
 				<?php if ( 'product_announce' === $feed_type ) : ?>
-					<span class="sk-feed-type-badge"><i class="fas fa-tag"></i> <?php esc_html_e( 'Neues Inserat', 'sk-core' ); ?></span> ·
+					<span class="sk-feed-type-badge"><i class="fas fa-tag"></i> <?php esc_html_e( 'Inserat', 'sk-core' ); ?></span> ·
 				<?php endif; ?>
 				<?php printf( esc_html__( 'vor %s', 'sk-core' ), $time_ago ); ?>
 			</span>

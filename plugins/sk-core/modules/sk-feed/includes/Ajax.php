@@ -229,6 +229,20 @@ class Ajax {
 			$args['author__in'] = $following_ids;
 		}
 
+		// "Posts" — only manual posts.
+		if ( 'posts' === $filter ) {
+			$args['meta_query'] = [
+				[ 'key' => '_sk_feed_type', 'value' => 'posting' ],
+			];
+		}
+
+		// "Inserate" — product announcements from vendor dashboard.
+		if ( 'inserate' === $filter ) {
+			$args['meta_query'] = [
+				[ 'key' => '_sk_feed_type', 'value' => 'product_announce' ],
+			];
+		}
+
 		// "Trending" — last 24h sorted by likes.
 		if ( 'trending' === $filter ) {
 			$args['date_query'] = [ [ 'after' => '24 hours ago' ] ];

@@ -180,6 +180,13 @@
         });
     });
 
+    // ── Feed Type Toggle ──────────────────────────────────────────────────
+
+    $(document).on('change', '.sk-feed-type-option input[type="radio"]', function () {
+        $(this).closest('.sk-feed-type-toggle').find('.sk-feed-type-option').removeClass('active');
+        $(this).closest('.sk-feed-type-option').addClass('active');
+    });
+
     // ── Compose (Dashboard) ──────────────────────────────────────────────
 
     $('#sk-feed-compose-form').on('submit', function (e) {

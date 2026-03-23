@@ -76,6 +76,18 @@ class FeedPage {
 			'order'          => 'DESC',
 		];
 
+		if ( 'posts' === $filter ) {
+			$args['meta_query'] = [
+				[ 'key' => '_sk_feed_type', 'value' => 'posting' ],
+			];
+		}
+
+		if ( 'inserate' === $filter ) {
+			$args['meta_query'] = [
+				[ 'key' => '_sk_feed_type', 'value' => 'product_announce' ],
+			];
+		}
+
 		if ( 'following' === $filter && is_user_logged_in() ) {
 			$following_ids = self::get_following_vendor_ids( get_current_user_id() );
 			if ( empty( $following_ids ) ) {
