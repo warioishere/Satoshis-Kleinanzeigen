@@ -45,8 +45,9 @@
         $applyBtn.hide();
 
         // ── Event listeners ───────────────────────────────────────────────────
-        $titleInput.on('input', debounceRequest);
-        $descInput.on('input', debounceRequest);
+        // Only trigger when user leaves the title field (blur), not on every keystroke.
+        $titleInput.on('blur', maybeRequest);
+        $descInput.on('blur', maybeRequest);
 
         $applyBtn.on('click', applyCategory);
         $dismissBtn.on('click', dismissBox);
