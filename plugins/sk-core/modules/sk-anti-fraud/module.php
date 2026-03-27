@@ -48,6 +48,12 @@ final class Module {
         }
 
         add_action( 'sk_activated_module_sk_anti_fraud', [ $this, 'activate' ] );
+
+        // Ensure tables exist (safe to call repeatedly — uses IF NOT EXISTS).
+        if ( false === get_option( 'sk_antifraud_db_version' ) ) {
+            $this->activate();
+            update_option( 'sk_antifraud_db_version', '1.0' );
+        }
     }
 
     /**
