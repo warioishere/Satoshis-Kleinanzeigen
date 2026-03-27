@@ -221,6 +221,46 @@ class NostrRelaySync {
             }
         }
 
+        // Sync banner → store banner.
+        if ( ! empty( $profile['banner'] ) ) {
+            $banner_url = esc_url_raw( $profile['banner'] );
+            $store_info = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( $user_id ) : [];
+            if ( is_array( $store_info ) ) {
+                $current_banner = $store_info['banner'] ?? '';
+                if ( $banner_url !== $current_banner ) {
+                    $store_info['banner'] = $banner_url;
+                    update_user_meta( $user_id, 'skdar_profile_settings', $store_info );
+                    $updated = true;
+                }
+            }
+        }
+
+        // Sync about → store description + user bio.
+        if ( ! empty( $profile['about'] ) ) {
+            $about = sanitize_textarea_field( $profile['about'] );
+
+            // User bio (WordPress description).
+            if ( $about !== get_user_meta( $user_id, 'description', true ) ) {
+                update_user_meta( $user_id, 'description', $about );
+                $updated = true;
+            }
+        }
+
+        // Sync name → store_name (if store name is still default/empty).
+        if ( ! empty( $profile['name'] ) ) {
+            $store_info = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( $user_id ) : [];
+            if ( is_array( $store_info ) ) {
+                $store_name = $store_info['store_name'] ?? '';
+                $user = get_userdata( $user_id );
+                // Only update if store name is empty or matches the generated username.
+                if ( empty( $store_name ) || ( $user && $store_name === $user->user_login ) ) {
+                    $store_info['store_name'] = sanitize_text_field( $profile['name'] );
+                    update_user_meta( $user_id, 'skdar_profile_settings', $store_info );
+                    $updated = true;
+                }
+            }
+        }
+
         // Sync NIP-05.
         if ( ! empty( $profile['nip05'] ) ) {
             $nip05 = sanitize_text_field( $profile['nip05'] );
