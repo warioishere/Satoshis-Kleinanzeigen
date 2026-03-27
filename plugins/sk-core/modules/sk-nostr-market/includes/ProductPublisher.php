@@ -128,7 +128,13 @@ class ProductPublisher {
             $tags[] = [ 'r', $permalink ];
         }
 
-        $event_id = EventSender::send( 30402, $content, $tags );
+        // Prefer vendor's own Nostr key; fall back to marketplace key.
+        $event_id = null;
+        if ( class_exists( 'SK\Modules\Auth\NostrIdentity' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $vendor_id ) ) {
+            $event_id = \SK\Modules\Auth\NostrIdentity::publish( $vendor_id, 30402, $content, $tags );
+        } else {
+            $event_id = EventSender::send( 30402, $content, $tags );
+        }
 
         if ( $event_id ) {
             update_post_meta( $post_id, self::META_KEY, $event_id );

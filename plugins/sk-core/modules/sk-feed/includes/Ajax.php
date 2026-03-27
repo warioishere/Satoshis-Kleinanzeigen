@@ -69,6 +69,41 @@ class Ajax {
 		wp_reset_postdata();
 		$html = ob_get_clean();
 
+		// Publish as Kind 1 Nostr event (deferred to shutdown so response isn't delayed).
+		$nostr_post_id = $post_id;
+		$nostr_user_id = get_current_user_id();
+		register_shutdown_function( function () use ( $nostr_post_id, $nostr_user_id ) {
+			if ( ! class_exists( 'SK\Modules\Auth\NostrIdentity' ) ) {
+				return;
+			}
+			if ( ! \SK\Modules\Auth\NostrIdentity::has_identity( $nostr_user_id ) ) {
+				return;
+			}
+
+			$post = get_post( $nostr_post_id );
+			if ( ! $post ) {
+				return;
+			}
+
+			$content = wp_strip_all_tags( $post->post_content );
+			$permalink = home_url( '/community/post/' . $nostr_post_id . '/' );
+
+			$tags = [ [ 'r', $permalink ] ];
+
+			// Extract hashtags from content.
+			if ( preg_match_all( '/#([A-Za-z0-9À-ÿ_]{2,30})/', $content, $matches ) ) {
+				foreach ( $matches[1] as $tag ) {
+					$tags[] = [ 't', strtolower( $tag ) ];
+				}
+			}
+
+			$event_id = \SK\Modules\Auth\NostrIdentity::publish( $nostr_user_id, 1, $content, $tags );
+
+			if ( $event_id ) {
+				update_post_meta( $nostr_post_id, '_sk_nostr_event_id', $event_id );
+			}
+		} );
+
 		wp_send_json_success( [ 'post_id' => $post_id, 'html' => $html ] );
 	}
 
