@@ -142,7 +142,86 @@ class ZapButton {
             wp_send_json_error( [ 'settled' => false ] );
         }
 
-        wp_send_json_success( [ 'settled' => ! empty( $result['settled'] ) ] );
+        $settled = ! empty( $result['settled'] );
+
+        // On first settlement detection, publish Kind 9735 Zap Receipt.
+        if ( $settled ) {
+            $receipt_key = 'sk_zap_receipt_' . $payment_hash;
+            if ( ! get_transient( $receipt_key ) ) {
+                set_transient( $receipt_key, 1, DAY_IN_SECONDS );
+                self::publish_zap_receipt( $vendor_id, $payment_hash, $result );
+            }
+        }
+
+        wp_send_json_success( [ 'settled' => $settled ] );
+    }
+
+    /**
+     * Publish Kind 9735 Zap Receipt on Nostr relays.
+     */
+    private static function publish_zap_receipt( int $vendor_id, string $payment_hash, array $invoice_result ) {
+        if ( ! class_exists( 'SK\Modules\Auth\NostrIdentity' ) ) {
+            return;
+        }
+
+        $vendor_pubkey = \SK\Modules\Auth\NostrIdentity::get_public_key( $vendor_id );
+        if ( empty( $vendor_pubkey ) ) {
+            return;
+        }
+
+        $bolt11   = $invoice_result['payment_request'] ?? $invoice_result['pr'] ?? '';
+        $preimage = $invoice_result['preimage'] ?? '';
+
+        $tags = [
+            [ 'p', $vendor_pubkey ],
+            [ 'P', $vendor_pubkey ],
+        ];
+
+        if ( $bolt11 ) {
+            $tags[] = [ 'bolt11', $bolt11 ];
+        }
+        if ( $preimage ) {
+            $tags[] = [ 'preimage', $preimage ];
+        }
+
+        // Use marketplace key to sign the receipt (receipts come from the LNURL provider, not the zapper).
+        $privkey = null;
+        if ( defined( 'NAP_NOSTR_PRIVKEY' ) ) {
+            $privkey = NAP_NOSTR_PRIVKEY;
+        } elseif ( function_exists( 'nap_resolve_private_key' ) ) {
+            $privkey = nap_resolve_private_key();
+        }
+
+        if ( ! $privkey ) {
+            return;
+        }
+
+        try {
+            $event  = new \swentel\nostr\Event\Event();
+            $event->setKind( 9735 );
+            $event->setContent( '' );
+            foreach ( $tags as $tag ) {
+                $event->addTag( $tag );
+            }
+
+            $signer = new \swentel\nostr\Sign\Sign();
+            $signer->signEvent( $event, $privkey );
+
+            $relays = \SK\Modules\Auth\NostrIdentity::get_relays();
+            foreach ( $relays as $relay_url ) {
+                try {
+                    $msg   = new \swentel\nostr\Message\EventMessage( $event );
+                    $relay = new \swentel\nostr\Relay\Relay( $relay_url );
+                    if ( method_exists( $relay, 'setTimeout' ) ) {
+                        $relay->setTimeout( 3 );
+                    }
+                    $relay->setMessage( $msg );
+                    $relay->send();
+                } catch ( \Throwable $e ) {}
+            }
+        } catch ( \Throwable $e ) {
+            error_log( '[SK Zaps] Failed to publish zap receipt: ' . $e->getMessage() );
+        }
     }
 
     /**
