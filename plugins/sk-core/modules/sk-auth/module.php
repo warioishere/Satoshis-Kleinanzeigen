@@ -28,6 +28,7 @@ final class Module {
 
         // Settings always load (visible in admin even when methods are disabled).
         require_once SK_AUTH_INCLUDES . '/AuthSettings.php';
+        require_once SK_AUTH_INCLUDES . '/NostrIdentity.php';
         new AuthSettings();
 
         $this->load_lnurl_auth();
@@ -36,6 +37,12 @@ final class Module {
         $this->load_connector();
         $this->register_shortcodes();
         $this->suppress_generated_email_change_notice();
+
+        // NIP-05 verification endpoint.
+        add_action( 'init', [ $this, 'nip05_rewrite' ] );
+        add_action( 'template_redirect', [ $this, 'nip05_handler' ] );
+        add_filter( 'query_vars', function ( $vars ) { $vars[] = 'sk_nostr_json'; return $vars; } );
+        add_filter( 'redirect_canonical', function ( $url ) { return get_query_var( 'sk_nostr_json' ) ? false : $url; }, 10 );
     }
 
     private function define_constants() {
@@ -275,5 +282,57 @@ final class Module {
             }
             return $send;
         }, 10, 3 );
+    }
+
+    // ── NIP-05 Verification ────────────────────────────────────────────────
+
+    public function nip05_rewrite() {
+        add_rewrite_rule( '^\.well-known/nostr\.json$', 'index.php?sk_nostr_json=1', 'top' );
+    }
+
+    public function nip05_handler() {
+        if ( ! get_query_var( 'sk_nostr_json' ) ) {
+            return;
+        }
+
+        $name = sanitize_text_field( $_GET['name'] ?? '' );
+        if ( empty( $name ) ) {
+            header( 'Content-Type: application/json; charset=utf-8' );
+            header( 'Access-Control-Allow-Origin: *' );
+            echo wp_json_encode( [ 'names' => (object) [] ] );
+            exit;
+        }
+
+        // Lookup user by nicename (slug).
+        $user = get_user_by( 'slug', $name );
+
+        if ( ! $user ) {
+            // Try by store name (case-insensitive).
+            $users = get_users( [ 'role__in' => [ 'seller', 'administrator' ], 'number' => 200 ] );
+            foreach ( $users as $u ) {
+                $info = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( $u->ID ) : [];
+                $store_name = $info['store_name'] ?? '';
+                if ( $store_name && strtolower( $store_name ) === strtolower( $name ) ) {
+                    $user = $u;
+                    break;
+                }
+            }
+        }
+
+        $names  = [];
+        $relays = [];
+
+        if ( $user ) {
+            $pubkey = get_user_meta( $user->ID, 'nostr_public_key', true );
+            if ( $pubkey ) {
+                $names[ strtolower( $name ) ] = $pubkey;
+                $relays[ $pubkey ]            = NostrIdentity::get_relays();
+            }
+        }
+
+        header( 'Content-Type: application/json; charset=utf-8' );
+        header( 'Access-Control-Allow-Origin: *' );
+        echo wp_json_encode( [ 'names' => (object) $names, 'relays' => (object) $relays ] );
+        exit;
     }
 }

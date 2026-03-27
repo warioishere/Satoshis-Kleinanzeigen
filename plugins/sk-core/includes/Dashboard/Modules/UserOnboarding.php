@@ -16,9 +16,13 @@ class UserOnboarding {
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_assets' ] );
 		add_action( 'wp_footer', [ $this, 'render_modal' ] );
 		add_action( 'wp_ajax_uob_complete_onboarding', [ $this, 'ajax_complete' ] );
+		add_action( 'wp_ajax_sk_create_nostr_identity', [ $this, 'ajax_create_nostr_identity' ] );
 		add_action( 'deleted_user', [ $this, 'cleanup' ] );
 		add_action( 'admin_menu', [ $this, 'add_admin_page' ] );
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
+
+		// Dashboard banner for existing users who missed onboarding.
+		add_action( 'sk_dashboard_content_before', [ $this, 'nostr_identity_banner' ] );
 	}
 
 	// ── Helpers ────────────────────────────────────────────────────────────
@@ -84,6 +88,7 @@ class UserOnboarding {
 					<span class="uob-dot" data-slide="2"></span>
 					<span class="uob-dot" data-slide="3"></span>
 					<span class="uob-dot" data-slide="4"></span>
+					<span class="uob-dot" data-slide="5"></span>
 				</div>
 
 				<button type="button" class="uob-close" aria-label="<?php esc_attr_e( 'Schließen', 'sk-core' ); ?>">
@@ -192,8 +197,49 @@ class UserOnboarding {
 					<p class="uob-tip"><i class="fas fa-lightbulb"></i> <?php printf( __( 'Tipp: Folge uns auf <a href="%s" target="_blank" rel="noopener">Nostr</a> oder tritt dem offiziellen <a href="%s" target="_blank" rel="noopener">Telegram Kanal</a> bei', 'sk-core' ), 'https://primal.net/p/nprofile1qqsg3fglunsprjgg0z2efc0qpcshrjkvyksfk9lracjawpuzs0quy8cqxrg92', 'https://t.me/satoshiskleinanzeige' ); ?></p>
 				</div>
 
-				<!-- Slide 5: Get Started -->
-				<div class="uob-slide" data-slide="4">
+				<!-- Slide 5: Nostr Identity -->
+				<?php $has_nostr = ! empty( get_user_meta( get_current_user_id(), 'nostr_public_key', true ) ); ?>
+				<div class="uob-slide" data-slide="4" <?php if ( $has_nostr ) echo 'data-skip="true"'; ?>>
+					<div class="uob-slide-icon"><i class="fas fa-key"></i></div>
+					<h2><?php _e( 'Nostr-Identität erstellen', 'sk-core' ); ?></h2>
+					<p><?php _e( 'Wir empfehlen dir, eine Nostr-Identität zu erstellen. Damit werden deine Inserate kryptographisch signiert und deine Reputation nachweisbar.', 'sk-core' ); ?></p>
+					<ul class="uob-feature-list">
+						<li>
+							<i class="fas fa-shield-alt"></i>
+							<div>
+								<strong><?php _e( 'Scam-Schutz', 'sk-core' ); ?></strong>
+								<span><?php _e( 'Deine Reputation ist an deine Identität gebunden', 'sk-core' ); ?></span>
+							</div>
+						</li>
+						<li>
+							<i class="fas fa-bolt"></i>
+							<div>
+								<strong><?php _e( 'Lightning Zaps', 'sk-core' ); ?></strong>
+								<span><?php _e( 'Erhalte Lightning-Zahlungen direkt auf dein Profil', 'sk-core' ); ?></span>
+							</div>
+						</li>
+						<li>
+							<i class="fas fa-check-double"></i>
+							<div>
+								<strong><?php _e( 'Verifizierbar', 'sk-core' ); ?></strong>
+								<span><?php _e( 'Deine Inserate sind kryptographisch beweisbar deine', 'sk-core' ); ?></span>
+							</div>
+						</li>
+					</ul>
+					<?php if ( ! $has_nostr ) : ?>
+						<div class="uob-nostr-actions" style="margin-top:16px;text-align:center;">
+							<button type="button" class="uob-btn uob-btn-primary" id="uob-create-nostr">
+								<i class="fas fa-key"></i> <?php _e( 'Ja, Nostr-Identität erstellen', 'sk-core' ); ?>
+							</button>
+							<div id="uob-nostr-status" style="margin-top:8px;font-size:13px;color:#5a6a7e;"></div>
+						</div>
+					<?php else : ?>
+						<p style="text-align:center;color:#5cb85c;font-weight:600;"><i class="fas fa-check-circle"></i> <?php _e( 'Nostr-Identität bereits vorhanden!', 'sk-core' ); ?></p>
+					<?php endif; ?>
+				</div>
+
+				<!-- Slide 6: Get Started -->
+				<div class="uob-slide" data-slide="5">
 					<div class="uob-slide-icon"><i class="fas fa-rocket"></i></div>
 					<h2><?php _e( 'Los geht\'s!', 'sk-core' ); ?></h2>
 					<p><?php _e( 'Du bist startklar! Hier sind deine nächsten Schritte:', 'sk-core' ); ?></p>
@@ -246,6 +292,103 @@ class UserOnboarding {
 		update_user_meta( $user_id, 'uob_onboarding_completed', 'yes' );
 
 		wp_send_json_success( [ 'message' => 'Onboarding completed.' ] );
+	}
+
+	/**
+	 * AJAX: Create Nostr identity for current user.
+	 */
+	public function ajax_create_nostr_identity(): void {
+		check_ajax_referer( 'uob_ajax_nonce', 'nonce' );
+
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error( [ 'message' => 'Not logged in.' ] );
+		}
+
+		$user_id = get_current_user_id();
+
+		// Already has identity?
+		if ( \SK\Modules\Auth\NostrIdentity::has_identity( $user_id ) ) {
+			wp_send_json_success( [
+				'message' => __( 'Nostr-Identität existiert bereits.', 'sk-core' ),
+				'npub'    => \SK\Modules\Auth\NostrIdentity::get_npub( $user_id ),
+			] );
+		}
+
+		try {
+			$pubkey = \SK\Modules\Auth\NostrIdentity::create_for_user( $user_id );
+			$npub   = \SK\Modules\Auth\NostrIdentity::get_npub( $user_id );
+
+			wp_send_json_success( [
+				'message' => __( 'Nostr-Identität erstellt!', 'sk-core' ),
+				'npub'    => $npub,
+				'pubkey'  => $pubkey,
+			] );
+		} catch ( \Throwable $e ) {
+			wp_send_json_error( [ 'message' => $e->getMessage() ] );
+		}
+	}
+
+	/**
+	 * Dashboard banner for existing users without Nostr identity.
+	 */
+	public function nostr_identity_banner(): void {
+		if ( ! is_user_logged_in() ) {
+			return;
+		}
+
+		$user_id = get_current_user_id();
+
+		// Only show if onboarding completed but no Nostr identity.
+		if ( get_user_meta( $user_id, 'uob_onboarding_completed', true ) !== 'yes' ) {
+			return;
+		}
+		if ( \SK\Modules\Auth\NostrIdentity::has_pubkey( $user_id ) ) {
+			return;
+		}
+		if ( get_user_meta( $user_id, 'sk_nostr_banner_dismissed', true ) ) {
+			return;
+		}
+		?>
+		<div class="sk-alert sk-alert-info sk-nostr-banner" id="sk-nostr-banner" style="margin-bottom:16px;display:flex;align-items:center;gap:12px;">
+			<div style="flex:1;">
+				<strong><i class="fas fa-key"></i> <?php _e( 'Nostr-Identität empfohlen', 'sk-core' ); ?></strong>
+				<p style="margin:4px 0 0;font-size:13px;"><?php _e( 'Erstelle eine Nostr-Identität für verifizierbare Inserate und Scam-Schutz.', 'sk-core' ); ?></p>
+			</div>
+			<button type="button" class="sk-btn sk-btn-btc sk-btn-sm" id="sk-nostr-banner-create">
+				<i class="fas fa-key"></i> <?php _e( 'Erstellen', 'sk-core' ); ?>
+			</button>
+			<button type="button" class="sk-btn sk-btn-sm" id="sk-nostr-banner-dismiss" style="background:none;border:none;color:#8b949e;font-size:18px;" title="<?php esc_attr_e( 'Später', 'sk-core' ); ?>">
+				<i class="fas fa-times"></i>
+			</button>
+		</div>
+		<script>
+		jQuery(function($){
+			$('#sk-nostr-banner-create').on('click', function(){
+				var $btn = $(this);
+				$btn.prop('disabled', true).text('Wird erstellt...');
+				$.post(uobAjax ? uobAjax.ajaxurl : '<?php echo admin_url("admin-ajax.php"); ?>', {
+					action: 'sk_create_nostr_identity',
+					nonce: '<?php echo wp_create_nonce("uob_ajax_nonce"); ?>'
+				}, function(res){
+					if (res.success) {
+						$('#sk-nostr-banner').html('<div style="color:#5cb85c;"><i class="fas fa-check-circle"></i> ' + res.data.message + ' — ' + res.data.npub + '</div>');
+					} else {
+						$btn.prop('disabled', false).html('<i class="fas fa-key"></i> Erstellen');
+						alert(res.data.message || 'Fehler');
+					}
+				});
+			});
+			$('#sk-nostr-banner-dismiss').on('click', function(){
+				$('#sk-nostr-banner').fadeOut();
+				$.post('<?php echo admin_url("admin-ajax.php"); ?>', {
+					action: 'uob_complete_onboarding',
+					nonce: '<?php echo wp_create_nonce("uob_ajax_nonce"); ?>',
+					dismiss_nostr: 1
+				});
+			});
+		});
+		</script>
+		<?php
 	}
 
 	// ── Cleanup ────────────────────────────────────────────────────────────

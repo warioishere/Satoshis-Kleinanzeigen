@@ -6,7 +6,7 @@
 
 	var UOB = {
 		currentSlide: 0,
-		totalSlides: 5,
+		totalSlides: 6,
 
 		init: function () {
 			this.showModal();
@@ -35,7 +35,34 @@
 				UOB.goToSlide(slideIndex);
 			});
 
-			// Close on backdrop click
+			// Nostr Identity creation
+		$('#uob-create-nostr').on('click', function () {
+			var $btn = $(this);
+			$btn.prop('disabled', true).text('Wird erstellt...');
+			$.ajax({
+				url: uobAjax.ajaxurl,
+				type: 'POST',
+				data: {
+					action: 'sk_create_nostr_identity',
+					nonce: uobAjax.nonce
+				},
+				success: function (res) {
+					if (res.success) {
+						$('#uob-nostr-status').html('<span style="color:#5cb85c;"><i class="fas fa-check-circle"></i> ' + res.data.message + '</span>');
+						$btn.hide();
+					} else {
+						$('#uob-nostr-status').html('<span style="color:#e06c75;">' + (res.data.message || 'Fehler') + '</span>');
+						$btn.prop('disabled', false).html('<i class="fas fa-key"></i> Erneut versuchen');
+					}
+				},
+				error: function () {
+					$('#uob-nostr-status').html('<span style="color:#e06c75;">Netzwerkfehler</span>');
+					$btn.prop('disabled', false).html('<i class="fas fa-key"></i> Erneut versuchen');
+				}
+			});
+		});
+
+		// Close on backdrop click
 			$('.uob-modal').on('click', function (e) {
 				if ($(e.target).hasClass('uob-modal')) {
 					UOB.skipOnboarding();
