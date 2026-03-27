@@ -12707,6 +12707,12 @@ body:has(.dvc-modal) .dkp-contact-icons {
 /* Catalog mode checkbox */
 .sk-edit-row.sk-catalog-mode { display: none !important; }
 
+/* Catalog mode checkbox in product editor */
+.sk-edit-row.sk-catalog-mode { display: none !important; }
+
+/* Catalog mode section in store settings (managed globally by admin) */
+.sk-settings-section:has(#catalog_mode_hide_add_to_cart_button) { display: none !important; }
+
 /* Phone field in store form */
 .sk-dashboard-wrap form#store-form .sk-form-group label[for="setting_phone"],
 .sk-dashboard-wrap form#store-form .sk-form-group input#setting_phone { display: none !important; }
