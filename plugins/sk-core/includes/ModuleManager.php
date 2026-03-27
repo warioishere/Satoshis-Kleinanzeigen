@@ -284,6 +284,16 @@ class ModuleManager {
                         'plan'         => [ 'professional', 'business', 'enterprise' ],
                         'categories'   => [ 'Store Management' ],
                     ],
+                    'sk_anti_fraud' => [
+                        'id'           => 'sk_anti_fraud',
+                        'name'         => __( 'Anti-Fraud', 'sk' ),
+                        'description'  => __( 'Fingerprinting, Käufer-Warnungen, Verkaufslimits, Report Auto-Suspend.', 'sk' ),
+                        'thumbnail'    => $thumbnail_dir . '/follow-store.svg',
+                        'module_file'  => SK_CORE_DIR . '/modules' . '/sk-anti-fraud/module.php',
+                        'module_class' => 'SK\Modules\AntiFraud\Module',
+                        'plan'         => [ 'professional', 'business', 'enterprise' ],
+                        'categories'   => [ 'Store Management' ],
+                    ],
                     'sk_feed' => [
                         'id'           => 'sk_feed',
                         'name'         => __( 'Vendor Feed', 'sk' ),
