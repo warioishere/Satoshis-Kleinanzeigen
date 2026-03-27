@@ -15,6 +15,9 @@ $store_url  = function_exists( 'sk_get_store_url' ) ? sk_get_store_url( $vendor_
 $avatar     = get_avatar( $vendor_id, 48 );
 $content    = wp_kses_post( get_the_content() );
 $thumb_url  = get_the_post_thumbnail_url( $post_id, 'large' );
+if ( ! $thumb_url ) {
+	$thumb_url = get_post_meta( $post_id, '_sk_feed_external_image', true );
+}
 $time_ago   = human_time_diff( get_the_time( 'U' ), current_time( 'timestamp' ) );
 $like_count = \SK\Modules\Feed\Likes::get_count( $post_id );
 $comments   = (int) get_comments_number( $post_id );
@@ -34,6 +37,8 @@ $product_id = (int) get_post_meta( $post_id, '_sk_feed_product_id', true );
 			<span class="sk-feed-card-time">
 				<?php if ( 'product_announce' === $feed_type ) : ?>
 					<span class="sk-feed-type-badge"><i class="fas fa-tag"></i> <?php esc_html_e( 'Inserat', 'sk-core' ); ?></span> ·
+				<?php elseif ( 'nostr_import' === $feed_type ) : ?>
+					<span class="sk-feed-type-badge" style="color:#8b5cf6;"><i class="fas fa-bolt"></i> <?php esc_html_e( 'via Nostr', 'sk-core' ); ?></span> ·
 				<?php endif; ?>
 				<?php printf( esc_html__( 'vor %s', 'sk-core' ), $time_ago ); ?>
 			</span>
