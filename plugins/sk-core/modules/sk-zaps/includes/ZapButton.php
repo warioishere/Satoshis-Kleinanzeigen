@@ -157,7 +157,7 @@ class ZapButton {
     }
 
     /**
-     * Publish Kind 9735 Zap Receipt on Nostr relays.
+     * Publish Kind 9735 Zap Receipt on Nostr relays (NIP-57 compliant).
      */
     private static function publish_zap_receipt( int $vendor_id, string $payment_hash, array $invoice_result ) {
         if ( ! class_exists( 'SK\Modules\Auth\NostrIdentity' ) ) {
@@ -172,10 +172,35 @@ class ZapButton {
         $bolt11   = $invoice_result['payment_request'] ?? $invoice_result['pr'] ?? '';
         $preimage = $invoice_result['preimage'] ?? '';
 
+        // Retrieve the original Zap Request (Kind 9734) stored at invoice creation.
+        $zap_request_json = get_transient( 'sk_zap_req_' . $payment_hash );
+        delete_transient( 'sk_zap_req_' . $payment_hash );
+
         $tags = [
             [ 'p', $vendor_pubkey ],
-            [ 'P', $vendor_pubkey ],
         ];
+
+        // NIP-57: include the original zap request as description tag.
+        if ( $zap_request_json ) {
+            $tags[] = [ 'description', $zap_request_json ];
+
+            // Extract 'e' and 'P' tags from zap request for the receipt.
+            $zap_req = json_decode( $zap_request_json, true );
+            if ( is_array( $zap_req ) ) {
+                foreach ( $zap_req['tags'] ?? [] as $ztag ) {
+                    if ( 'e' === ( $ztag[0] ?? '' ) && ! empty( $ztag[1] ) ) {
+                        $tags[] = [ 'e', $ztag[1] ];
+                    }
+                    if ( 'a' === ( $ztag[0] ?? '' ) && ! empty( $ztag[1] ) ) {
+                        $tags[] = [ 'a', $ztag[1] ];
+                    }
+                }
+                // Zapper's pubkey as 'P' tag.
+                if ( ! empty( $zap_req['pubkey'] ) ) {
+                    $tags[] = [ 'P', $zap_req['pubkey'] ];
+                }
+            }
+        }
 
         if ( $bolt11 ) {
             $tags[] = [ 'bolt11', $bolt11 ];
@@ -184,7 +209,7 @@ class ZapButton {
             $tags[] = [ 'preimage', $preimage ];
         }
 
-        // Use marketplace key to sign the receipt (receipts come from the LNURL provider, not the zapper).
+        // Use marketplace key to sign (LNURL provider role per NIP-57).
         $privkey = null;
         if ( defined( 'NAP_NOSTR_PRIVKEY' ) ) {
             $privkey = NAP_NOSTR_PRIVKEY;
@@ -197,7 +222,7 @@ class ZapButton {
         }
 
         try {
-            $event  = new \swentel\nostr\Event\Event();
+            $event = new \swentel\nostr\Event\Event();
             $event->setKind( 9735 );
             $event->setContent( '' );
             foreach ( $tags as $tag ) {

@@ -181,6 +181,11 @@ class LnurlPayEndpoint {
         if ( $verifiable && $payment_hash ) {
             $response['payment_hash'] = $payment_hash;
             $response['verify']       = home_url( '/wp-admin/admin-ajax.php?action=sk_zap_check_payment' );
+
+            // Store zap request for Kind 9735 receipt publishing on settlement.
+            if ( ! empty( $nostr_zap_request ) ) {
+                set_transient( 'sk_zap_req_' . $payment_hash, $nostr_zap_request, 600 );
+            }
         }
 
         $this->send_json( $response );
