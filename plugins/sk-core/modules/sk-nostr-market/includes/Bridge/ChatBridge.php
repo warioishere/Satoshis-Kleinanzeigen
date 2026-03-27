@@ -212,31 +212,97 @@ class ChatBridge {
     }
 
     /**
-     * Send a NIP-04 encrypted DM to a Nostr pubkey.
+     * Send a NIP-17 encrypted DM (Gift Wrap) to a Nostr pubkey.
+     * Falls back to NIP-04 if GiftWrapService is unavailable.
+     *
+     * @param string $recipient_pubkey Recipient's hex pubkey.
+     * @param string $text             Plaintext message.
+     * @param int    $sender_user_id   Optional: SK user ID of sender (uses their Nostr key).
      */
-    public static function send_dm( string $recipient_pubkey, string $text ): bool {
-        $privkey = EventSender::get_privkey();
-        if ( ! $privkey ) {
+    public static function send_dm( string $recipient_pubkey, string $text, int $sender_user_id = 0 ): bool {
+        // Determine sender's private key.
+        $sender_privkey = null;
+
+        if ( $sender_user_id && class_exists( 'SK\Modules\Auth\NostrIdentity' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $sender_user_id ) ) {
+            $sender_privkey = \SK\Modules\Auth\NostrIdentity::get_private_key( $sender_user_id );
+        }
+
+        if ( ! $sender_privkey ) {
+            $sender_privkey = EventSender::get_privkey();
+        }
+
+        if ( ! $sender_privkey ) {
             return false;
         }
 
-        if ( ! class_exists( '\swentel\nostr\Encryption\Nip04' ) ) {
-            return false;
+        // Try NIP-17 Gift Wrap (NIP-59 + NIP-44).
+        if ( class_exists( '\swentel\nostr\Nip59\GiftWrapService' ) ) {
+            try {
+                return self::send_gift_wrap_dm( $sender_privkey, $recipient_pubkey, $text );
+            } catch ( \Throwable $e ) {
+                error_log( '[SK Nostr Bridge] NIP-17 DM failed, falling back to NIP-04: ' . $e->getMessage() );
+            }
         }
 
-        try {
-            $encrypted = \swentel\nostr\Encryption\Nip04::encrypt( $text, $privkey, $recipient_pubkey );
-
-            $event_id = EventSender::send( 4, $encrypted, [
-                [ 'p', $recipient_pubkey ],
-            ] );
-
-            return $event_id !== null;
-
-        } catch ( \Exception $e ) {
-            error_log( '[SK Nostr Market Bridge] DM send failed: ' . $e->getMessage() );
-            return false;
+        // Fallback: NIP-04.
+        if ( class_exists( '\swentel\nostr\Encryption\Nip04' ) ) {
+            try {
+                $encrypted = \swentel\nostr\Encryption\Nip04::encrypt( $text, $sender_privkey, $recipient_pubkey );
+                $event_id = EventSender::send( 4, $encrypted, [
+                    [ 'p', $recipient_pubkey ],
+                ] );
+                return $event_id !== null;
+            } catch ( \Throwable $e ) {
+                error_log( '[SK Nostr Bridge] NIP-04 DM failed: ' . $e->getMessage() );
+            }
         }
+
+        return false;
+    }
+
+    /**
+     * Send a NIP-17 private DM using NIP-59 Gift Wrap.
+     */
+    private static function send_gift_wrap_dm( string $sender_privkey, string $recipient_pubkey, string $text ): bool {
+        $keyService  = new \swentel\nostr\Key\Key();
+        $signService = new \swentel\nostr\Sign\Sign();
+        $giftWrapSvc = new \swentel\nostr\Nip59\GiftWrapService( $keyService, $signService );
+
+        // Build Kind 14 rumor (NIP-17 DM).
+        $rumor = new \swentel\nostr\Event\Event();
+        $rumor->setKind( 14 );
+        $rumor->setContent( $text );
+        $rumor->addTag( [ 'p', $recipient_pubkey ] );
+        $rumor->setCreatedAt( time() );
+
+        // Create seal (Kind 13) — encrypted with sender's key.
+        $seal = $giftWrapSvc->createSeal( $rumor, $sender_privkey, $recipient_pubkey );
+
+        // Create gift wrap (Kind 1059) — encrypted with random one-time key.
+        $giftWrap = $giftWrapSvc->createGiftWrap( $seal, $recipient_pubkey );
+
+        // Send to relays.
+        $relays = class_exists( 'SK\Modules\Auth\NostrIdentity' )
+            ? \SK\Modules\Auth\NostrIdentity::get_relays()
+            : [ 'wss://relay.nostr.band', 'wss://nos.lol' ];
+
+        $sent = false;
+        foreach ( $relays as $relay_url ) {
+            try {
+                $msg   = new \swentel\nostr\Message\EventMessage( $giftWrap );
+                $relay = new \swentel\nostr\Relay\Relay( $relay_url );
+                if ( method_exists( $relay, 'setTimeout' ) ) {
+                    $relay->setTimeout( 3 );
+                }
+                $relay->setMessage( $msg );
+                $result = $relay->send();
+                if ( false !== $result ) {
+                    $sent = true;
+                }
+            } catch ( \Throwable $e ) {}
+        }
+
+        return $sent;
     }
 
     /**

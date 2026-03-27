@@ -540,6 +540,16 @@ class VendorChat {
 		$other_user_id = $this->get_other_participant( $chat_id, $current_user_id );
 		if ( $other_user_id ) {
 			$this->add_notification( $other_user_id, $chat_id );
+
+			// Mirror to Nostr DM if both users have Nostr identities.
+			if ( class_exists( 'SK\Modules\Auth\NostrIdentity' ) && class_exists( 'SK\Modules\NostrMarket\Bridge\ChatBridge' ) ) {
+				$recipient_pubkey = \SK\Modules\Auth\NostrIdentity::get_public_key( $other_user_id );
+				if ( $recipient_pubkey && \SK\Modules\Auth\NostrIdentity::has_identity( $current_user_id ) ) {
+					register_shutdown_function( function () use ( $recipient_pubkey, $message, $current_user_id ) {
+						\SK\Modules\NostrMarket\Bridge\ChatBridge::send_dm( $recipient_pubkey, $message, $current_user_id );
+					} );
+				}
+			}
 		}
 
 		wp_send_json_success( [ 'message' => __( 'Nachricht gesendet!', 'sk' ) ] );
