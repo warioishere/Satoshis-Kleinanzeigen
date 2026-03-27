@@ -373,10 +373,11 @@ class NostrRelaySync {
      * Handle Kind 9735 Zap Receipt.
      */
     private static function handle_zap_receipt( int $user_id, array $event ) {
-        // Extract amount from the embedded zap request (description tag).
-        $amount_sats = 0;
+        $amount_sats   = 0;
         $zapper_pubkey = '';
+        $zapped_event_id = '';
 
+        // Extract zap request from description tag.
         foreach ( $event['tags'] ?? [] as $tag ) {
             if ( 'description' === ( $tag[0] ?? '' ) && ! empty( $tag[1] ) ) {
                 $zap_request = json_decode( $tag[1], true );
@@ -386,19 +387,43 @@ class NostrRelaySync {
                         if ( 'amount' === ( $ztag[0] ?? '' ) ) {
                             $amount_sats = (int) floor( (int) $ztag[1] / 1000 );
                         }
+                        // 'e' tag references the zapped event.
+                        if ( 'e' === ( $ztag[0] ?? '' ) && ! empty( $ztag[1] ) ) {
+                            $zapped_event_id = $ztag[1];
+                        }
                     }
                 }
             }
-            if ( 'bolt11' === ( $tag[0] ?? '' ) ) {
-                // Could parse bolt11 for amount verification.
+            // Also check top-level 'e' tag.
+            if ( 'e' === ( $tag[0] ?? '' ) && ! empty( $tag[1] ) && empty( $zapped_event_id ) ) {
+                $zapped_event_id = $tag[1];
             }
         }
 
-        if ( $amount_sats > 0 ) {
-            // Fire hook for zap tracking integration.
-            do_action( 'sk_nostr_zap_received', $user_id, $amount_sats, $zapper_pubkey, $event );
-            error_log( sprintf( '[NostrRelaySync] Zap receipt: %d sats to user %d from %s', $amount_sats, $user_id, substr( $zapper_pubkey, 0, 12 ) ) );
+        if ( $amount_sats <= 0 ) {
+            return;
         }
+
+        // Find the SK feed post linked to this Nostr event.
+        if ( ! empty( $zapped_event_id ) ) {
+            global $wpdb;
+            $post_id = (int) $wpdb->get_var( $wpdb->prepare(
+                "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_sk_nostr_event_id' AND meta_value = %s LIMIT 1",
+                $zapped_event_id
+            ) );
+
+            if ( $post_id ) {
+                $current = (int) get_post_meta( $post_id, '_sk_zap_total_sats', true );
+                update_post_meta( $post_id, '_sk_zap_total_sats', $current + $amount_sats );
+            }
+        }
+
+        do_action( 'sk_nostr_zap_received', $user_id, $amount_sats, $zapper_pubkey, $event );
+        error_log( sprintf(
+            '[NostrRelaySync] Zap receipt: %d sats to user %d from %s%s',
+            $amount_sats, $user_id, substr( $zapper_pubkey, 0, 12 ),
+            $zapped_event_id ? ' on event ' . substr( $zapped_event_id, 0, 12 ) : ''
+        ) );
     }
 
     /**
