@@ -297,6 +297,56 @@ class UAC_Dokan_Dashboard {
                                 </div>
                             </div>
                             <?php endif; ?>
+                            <!-- Nostr Identity / Key Export -->
+                            <?php if ( class_exists( 'SK\Modules\Auth\NostrIdentity' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $user_id ) ) : ?>
+                            <div class="uac-auth-method-card">
+                                <div class="uac-auth-method-header">
+                                    <h3>
+                                        <span class="uac-icon">🔑</span>
+                                        Nostr-Schlüssel
+                                    </h3>
+                                    <span class="uac-badge uac-badge-success">Aktiv</span>
+                                </div>
+                                <div class="uac-auth-method-body">
+                                    <div class="uac-linked-info" style="margin-bottom:12px;">
+                                        <strong>npub:</strong>
+                                        <code class="uac-key-display"><?php echo esc_html( \SK\Modules\Auth\NostrIdentity::get_npub( $user_id ) ); ?></code>
+                                    </div>
+                                    <div class="uac-linked-info" id="uac-nsec-container" style="margin-bottom:12px;">
+                                        <strong>nsec:</strong>
+                                        <code class="uac-key-display" id="uac-nsec-value" style="filter:blur(5px);user-select:none;">••••••••••••••••••••••••</code>
+                                        <button type="button" class="button button-small" id="uac-reveal-nsec" style="margin-left:8px;">
+                                            Anzeigen
+                                        </button>
+                                        <button type="button" class="button button-small" id="uac-copy-nsec" style="margin-left:4px;display:none;">
+                                            Kopieren
+                                        </button>
+                                    </div>
+                                    <p class="uac-method-description" style="color:#dc3545;font-size:12px;">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        Teile deinen Private Key (nsec) <strong>niemals</strong> mit anderen! Wer deinen nsec hat, kontrolliert deine Nostr-Identität.
+                                    </p>
+                                </div>
+                            </div>
+                            <script>
+                            jQuery(function($){
+                                var nsecRevealed = false;
+                                $('#uac-reveal-nsec').on('click', function(){
+                                    if (!nsecRevealed && !confirm('Bist du sicher? Zeige deinen Private Key nur, wenn du ihn exportieren möchtest.')) return;
+                                    nsecRevealed = true;
+                                    $('#uac-nsec-value').css({filter:'none',userSelect:'text'}).text(<?php echo wp_json_encode( \SK\Modules\Auth\NostrIdentity::get_nsec( $user_id ) ); ?>);
+                                    $(this).hide();
+                                    $('#uac-copy-nsec').show();
+                                });
+                                $('#uac-copy-nsec').on('click', function(){
+                                    navigator.clipboard.writeText($('#uac-nsec-value').text());
+                                    $(this).text('Kopiert!');
+                                    setTimeout(function(){ $('#uac-copy-nsec').text('Kopieren'); }, 2000);
+                                });
+                            });
+                            </script>
+                            <?php endif; ?>
+
                         </div>
                     </div>
         </div>

@@ -22,6 +22,24 @@ class NostrIdentity {
     private static $encryption_method = 'aes-256-cbc';
 
     /**
+     * Register hooks for profile sync.
+     */
+    public static function init_hooks() {
+        add_action( 'sk_store_profile_saved', [ __CLASS__, 'on_store_profile_saved' ], 30, 1 );
+    }
+
+    /**
+     * Re-publish Kind 0 when vendor updates store settings.
+     */
+    public static function on_store_profile_saved( int $store_id ) {
+        if ( ! self::has_identity( $store_id ) ) {
+            return;
+        }
+        // Defer to shutdown to not slow down the settings save.
+        register_shutdown_function( [ __CLASS__, 'publish_profile' ], $store_id );
+    }
+
+    /**
      * Create a new Nostr identity for a user.
      * Generates keypair, stores encrypted privkey + pubkey, publishes Kind 0 profile.
      *

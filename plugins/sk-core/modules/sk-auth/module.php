@@ -30,6 +30,7 @@ final class Module {
         require_once SK_AUTH_INCLUDES . '/AuthSettings.php';
         require_once SK_AUTH_INCLUDES . '/NostrIdentity.php';
         new AuthSettings();
+        NostrIdentity::init_hooks();
 
         $this->load_lnurl_auth();
         $this->load_nostr_login();
