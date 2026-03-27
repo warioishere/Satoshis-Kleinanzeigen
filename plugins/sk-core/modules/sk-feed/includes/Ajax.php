@@ -203,7 +203,25 @@ class Ajax {
 			wp_send_json_error( [ 'message' => __( 'Beitrag nicht gefunden.', 'sk-core' ) ] );
 		}
 
-		$liked = Likes::toggle( $post_id, get_current_user_id() );
+		$user_id = get_current_user_id();
+		$liked   = Likes::toggle( $post_id, $user_id );
+
+		// NIP-25: Publish Kind 7 Reaction on Nostr if liked.
+		if ( $liked ) {
+			$nostr_event_id = get_post_meta( $post_id, '_sk_nostr_event_id', true );
+			if ( $nostr_event_id && class_exists( 'SK\Modules\Auth\NostrIdentity' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $user_id ) ) {
+				$author_pubkey = \SK\Modules\Auth\NostrIdentity::get_public_key( (int) $post->post_author );
+				$tags = [
+					[ 'e', $nostr_event_id ],
+				];
+				if ( $author_pubkey ) {
+					$tags[] = [ 'p', $author_pubkey ];
+				}
+				register_shutdown_function( function () use ( $user_id, $tags ) {
+					\SK\Modules\Auth\NostrIdentity::publish( $user_id, 7, '+', $tags );
+				} );
+			}
+		}
 
 		wp_send_json_success( [
 			'liked' => $liked,
@@ -226,10 +244,32 @@ class Ajax {
 			wp_send_json_error( [ 'message' => __( 'Beitrag nicht gefunden.', 'sk-core' ) ] );
 		}
 
-		$added = Reports::add( $post_id, get_current_user_id(), $reason );
+		$user_id = get_current_user_id();
+		$added   = Reports::add( $post_id, $user_id, $reason );
 
 		if ( ! $added ) {
 			wp_send_json_error( [ 'message' => __( 'Bereits gemeldet.', 'sk-core' ) ] );
+		}
+
+		// NIP-56: Publish Kind 1984 Report on Nostr.
+		$nostr_event_id = get_post_meta( $post_id, '_sk_nostr_event_id', true );
+		if ( $nostr_event_id && class_exists( 'SK\Modules\Auth\NostrIdentity' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $user_id ) ) {
+			$author_pubkey = \SK\Modules\Auth\NostrIdentity::get_public_key( (int) $post->post_author );
+			$report_type = 'other';
+			if ( stripos( $reason, 'spam' ) !== false ) {
+				$report_type = 'spam';
+			} elseif ( stripos( $reason, 'scam' ) !== false || stripos( $reason, 'betrug' ) !== false ) {
+				$report_type = 'illegal';
+			}
+			$tags = [
+				[ 'e', $nostr_event_id, $report_type ],
+			];
+			if ( $author_pubkey ) {
+				$tags[] = [ 'p', $author_pubkey, $report_type ];
+			}
+			register_shutdown_function( function () use ( $user_id, $reason, $tags ) {
+				\SK\Modules\Auth\NostrIdentity::publish( $user_id, 1984, $reason, $tags );
+			} );
 		}
 
 		wp_send_json_success( [ 'message' => __( 'Danke für die Meldung.', 'sk-core' ) ] );

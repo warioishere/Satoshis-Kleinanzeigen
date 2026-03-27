@@ -22,8 +22,16 @@ class ProductDeleter {
             return false;
         }
 
-        $pubkey = EventSender::get_pubkey();
-        $d_tag  = 'sk-' . $post_id;
+        $vendor_id = (int) get_post_field( 'post_author', $post_id );
+        $d_tag     = 'sk-' . $post_id;
+
+        // Determine pubkey (vendor's own or marketplace).
+        $pubkey = '';
+        if ( $vendor_id && class_exists( 'SK\Modules\Auth\NostrIdentity' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $vendor_id ) ) {
+            $pubkey = \SK\Modules\Auth\NostrIdentity::get_public_key( $vendor_id );
+        } else {
+            $pubkey = EventSender::get_pubkey();
+        }
 
         // For addressable events (Kind 30402), include both 'e' and 'a' tags.
         $tags = [
@@ -33,7 +41,12 @@ class ProductDeleter {
             $tags[] = [ 'a', '30402:' . $pubkey . ':' . $d_tag ];
         }
 
-        $result = EventSender::send( 5, '', $tags );
+        // Sign with vendor's key if available.
+        if ( $vendor_id && class_exists( 'SK\Modules\Auth\NostrIdentity' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $vendor_id ) ) {
+            $result = \SK\Modules\Auth\NostrIdentity::publish( $vendor_id, 5, '', $tags );
+        } else {
+            $result = EventSender::send( 5, '', $tags );
+        }
 
         if ( $result !== null ) {
             delete_post_meta( $post_id, ProductPublisher::META_KEY );

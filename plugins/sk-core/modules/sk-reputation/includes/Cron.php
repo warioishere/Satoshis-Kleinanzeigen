@@ -72,6 +72,7 @@ class Cron {
 
         foreach ( array_keys( $vendors_to_recalc ) as $vendor_id ) {
             Calculator::recalculate_vendor( $vendor_id );
+            self::maybe_publish_reputation_label( $vendor_id );
         }
 
         // Check pending commission invoices + enforcement.
@@ -83,6 +84,94 @@ class Cron {
         }
 
         update_option( 'sk_reputation_cron_last_run', current_time( 'mysql' ) );
+    }
+
+    /**
+     * NIP-32: Publish reputation label on Nostr when vendor reaches a new tier.
+     */
+    private static function maybe_publish_reputation_label( int $vendor_id ): void {
+        if ( ! class_exists( 'SK\Modules\Auth\NostrIdentity' ) ) {
+            return;
+        }
+
+        $vendor_pubkey = \SK\Modules\Auth\NostrIdentity::get_public_key( $vendor_id );
+        if ( empty( $vendor_pubkey ) ) {
+            return;
+        }
+
+        global $wpdb;
+        $valid_tx = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT valid_transactions FROM {$wpdb->prefix}sk_reputation_scores WHERE vendor_id = %d",
+            $vendor_id
+        ) );
+
+        // Determine tier.
+        $tier = '';
+        if ( $valid_tx >= 100 ) {
+            $tier = 'lightning-veteran';
+        } elseif ( $valid_tx >= 25 ) {
+            $tier = 'lightning-haendler';
+        } elseif ( $valid_tx >= 5 ) {
+            $tier = 'lightning-starter';
+        }
+
+        if ( empty( $tier ) ) {
+            return;
+        }
+
+        // Check if we already published this tier.
+        $last_tier = get_user_meta( $vendor_id, 'sk_nostr_reputation_tier', true );
+        if ( $last_tier === $tier ) {
+            return;
+        }
+
+        // NIP-32 Label Event (Kind 1985).
+        // Labels the vendor's pubkey with a reputation tier.
+        $marketplace_privkey = null;
+        if ( defined( 'NAP_NOSTR_PRIVKEY' ) ) {
+            $marketplace_privkey = NAP_NOSTR_PRIVKEY;
+        } elseif ( function_exists( 'nap_resolve_private_key' ) ) {
+            $marketplace_privkey = nap_resolve_private_key();
+        }
+
+        if ( ! $marketplace_privkey ) {
+            return;
+        }
+
+        $tags = [
+            [ 'p', $vendor_pubkey ],
+            [ 'L', 'sk.reputation' ],
+            [ 'l', $tier, 'sk.reputation' ],
+        ];
+
+        try {
+            $event = new \swentel\nostr\Event\Event();
+            $event->setKind( 1985 );
+            $event->setContent( $tier . ' (' . $valid_tx . ' verified transactions)' );
+            foreach ( $tags as $tag ) {
+                $event->addTag( $tag );
+            }
+
+            $signer = new \swentel\nostr\Sign\Sign();
+            $signer->signEvent( $event, $marketplace_privkey );
+
+            $relays = \SK\Modules\Auth\NostrIdentity::get_relays();
+            foreach ( $relays as $relay_url ) {
+                try {
+                    $msg   = new \swentel\nostr\Message\EventMessage( $event );
+                    $relay = new \swentel\nostr\Relay\Relay( $relay_url );
+                    if ( method_exists( $relay, 'setTimeout' ) ) {
+                        $relay->setTimeout( 3 );
+                    }
+                    $relay->setMessage( $msg );
+                    $relay->send();
+                } catch ( \Throwable $e ) {}
+            }
+
+            update_user_meta( $vendor_id, 'sk_nostr_reputation_tier', $tier );
+        } catch ( \Throwable $e ) {
+            error_log( '[SK Reputation] NIP-32 label publish failed: ' . $e->getMessage() );
+        }
     }
 
     public function expire_old_invoices() {
