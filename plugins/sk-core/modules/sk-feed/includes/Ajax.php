@@ -256,10 +256,19 @@ class Ajax {
 		if ( $nostr_event_id && class_exists( 'SK\Modules\Auth\NostrIdentity' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $user_id ) ) {
 			$author_pubkey = \SK\Modules\Auth\NostrIdentity::get_public_key( (int) $post->post_author );
 			$report_type = 'other';
-			if ( stripos( $reason, 'spam' ) !== false ) {
+			$reason_lower = strtolower( $reason );
+			if ( preg_match( '/spam|werbung|junk/', $reason_lower ) ) {
 				$report_type = 'spam';
-			} elseif ( stripos( $reason, 'scam' ) !== false || stripos( $reason, 'betrug' ) !== false ) {
+			} elseif ( preg_match( '/scam|betrug|illegal|abzocke|diebstahl|stolen/', $reason_lower ) ) {
 				$report_type = 'illegal';
+			} elseif ( preg_match( '/nackt|nude|nudity|porn|nsfw|sexu/', $reason_lower ) ) {
+				$report_type = 'nudity';
+			} elseif ( preg_match( '/malware|virus|trojan|phishing|hack/', $reason_lower ) ) {
+				$report_type = 'malware';
+			} elseif ( preg_match( '/beleidigung|profanity|hate|hass|rassist|beschimpf/', $reason_lower ) ) {
+				$report_type = 'profanity';
+			} elseif ( preg_match( '/fake|impersonat|identität|ausgeben|fälsch/', $reason_lower ) ) {
+				$report_type = 'impersonation';
 			}
 			$tags = [
 				[ 'e', $nostr_event_id, $report_type ],
