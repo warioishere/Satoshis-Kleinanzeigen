@@ -44,8 +44,7 @@ final class Module {
         add_action( 'sk_product_updated', [ $this, 'save_product_nostr_meta' ], 5 );
         add_action( 'sk_new_product_added', [ $this, 'save_product_nostr_meta' ], 5 );
 
-        // Enqueue NIP-07 signing JS on vendor dashboard.
-        add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_signing_js' ], 30 );
+        // NIP-07 self-signing removed — server-side signing via NostrIdentity handles this now.
     }
 
     /**
@@ -161,8 +160,7 @@ final class Module {
             $settings = [];
         }
 
-        $settings['nostr_market_enabled']   = isset( $_POST['nostr_market_enabled'] ) ? sanitize_text_field( $_POST['nostr_market_enabled'] ) : '0';
-        $settings['nostr_market_self_sign'] = isset( $_POST['nostr_market_self_sign'] ) ? sanitize_text_field( $_POST['nostr_market_self_sign'] ) : '0';
+        $settings['nostr_market_enabled'] = isset( $_POST['nostr_market_enabled'] ) ? sanitize_text_field( $_POST['nostr_market_enabled'] ) : '0';
 
         update_user_meta( $store_id, 'sk_profile_settings', $settings );
     }
@@ -284,14 +282,6 @@ final class Module {
 
         // Skip if this specific product has Nostr unchecked.
         if ( ! self::product_wants_nostr( $post_id ) ) {
-            return;
-        }
-
-        // If vendor wants self-signing, skip server-side publishing.
-        // The JS on the product page will handle it via NIP-07.
-        if ( self::vendor_wants_self_sign( $vendor_id ) ) {
-            // Mark as pending self-sign — JS will pick it up.
-            update_post_meta( $post_id, '_sk_nostr_market_pending_sign', '1' );
             return;
         }
 

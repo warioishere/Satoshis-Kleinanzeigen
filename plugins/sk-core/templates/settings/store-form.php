@@ -481,27 +481,17 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
         </div>
 
         <?php if ( $nm_has_pubkey ) : ?>
-        <div class="sk-form-group" id="sk-nostr-self-sign-row">
-            <label class="sk-w3 sk-control-label">Mit eigenem Nostr Key signieren</label>
+        <div class="sk-form-group">
+            <label class="sk-w3 sk-control-label">Nostr Key</label>
             <div class="sk-w5">
-                <label>
-                    <input type="hidden" name="nostr_market_self_sign" value="0" />
-                    <input type="checkbox" name="nostr_market_self_sign" value="1" <?php checked( $nm_self_sign, '1' ); ?>>
-                    Inserate mit deinem Nostr Key signieren
-                </label>
-                <p class="description" style="margin-top:6px;font-size:13px;color:#9ca3af;">
-                    Inserate erscheinen unter deinem Nostr-Profil statt unter Satoshis Kleinanzeigen.
-                    Nachrichten von Käufern kommen direkt auf deinem Nostr Account an.
+                <p style="font-size:13px;color:#5cb85c;">
+                    <i class="fas fa-check-circle"></i> Deine Inserate werden automatisch mit deinem Nostr Key signiert.
                 </p>
                 <?php if ( $nm_npub ) : ?>
-                <p style="margin-top:6px;font-size:13px;color:#5cb85c;">
-                    Dein Nostr Key: <code style="background:#0f1923;padding:2px 6px;border-radius:3px;font-size:11px;"><?php echo esc_html( substr( $nm_npub, 0, 20 ) . '...' ); ?></code>
+                <p style="margin-top:6px;font-size:13px;">
+                    <code style="background:#0f1923;padding:2px 6px;border-radius:3px;font-size:11px;color:#e8ecf0;"><?php echo esc_html( substr( $nm_npub, 0, 20 ) . '...' ); ?></code>
                 </p>
                 <?php endif; ?>
-                <div style="margin-top:8px;padding:10px 14px;background:rgba(247,147,26,0.08);border:1px solid rgba(247,147,26,0.2);border-radius:6px;font-size:12px;color:#9ca3af;">
-                    Benötigt eine Nostr Browser-Erweiterung (z.B. Alby) zum Signieren.
-                    Dein Private Key verlässt nie die Erweiterung.
-                </div>
             </div>
         </div>
         <?php else : ?>
@@ -509,8 +499,7 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
             <label class="sk-w3 sk-control-label">Nostr Key</label>
             <div class="sk-w5">
                 <p class="description" style="font-size:13px;color:#5a6a7e;">
-                    Kein Nostr Key hinterlegt. Logge dich mit Nostr ein oder verknüpfe deinen Nostr Key im Auth Connector um Inserate selbst zu signieren.
-                    Ohne eigenen Key werden Inserate von Satoshis Kleinanzeigen signiert.
+                    Kein Nostr Key vorhanden. Erstelle eine Nostr-Identität im <a href="<?php echo esc_url( function_exists( 'sk_get_navigation_url' ) ? sk_get_navigation_url( 'auth-connector' ) : '#' ); ?>">Auth Connector</a> um Inserate unter deinem eigenen Profil zu signieren.
                 </p>
             </div>
         </div>
