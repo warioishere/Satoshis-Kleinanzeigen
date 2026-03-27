@@ -165,6 +165,30 @@ class Ajax {
 
 		$thumb_url = get_the_post_thumbnail_url( $post_id, 'thumbnail' );
 
+		// Nostr: republish Kind 1 with updated content.
+		$nostr_user_id = get_current_user_id();
+		$nostr_edit_id = $post_id;
+		register_shutdown_function( function () use ( $nostr_edit_id, $nostr_user_id ) {
+			if ( ! class_exists( 'SK\Modules\Auth\NostrIdentity' ) || ! \SK\Modules\Auth\NostrIdentity::has_identity( $nostr_user_id ) ) {
+				return;
+			}
+			$post = get_post( $nostr_edit_id );
+			if ( ! $post ) return;
+
+			$content   = wp_strip_all_tags( $post->post_content );
+			$permalink = home_url( '/community/post/' . $nostr_edit_id . '/' );
+			$tags      = [ [ 'r', $permalink ] ];
+
+			if ( preg_match_all( '/#([A-Za-z0-9À-ÿ_]{2,30})/', $content, $m ) ) {
+				foreach ( $m[1] as $t ) $tags[] = [ 't', strtolower( $t ) ];
+			}
+
+			$event_id = \SK\Modules\Auth\NostrIdentity::publish( $nostr_user_id, 1, $content, $tags );
+			if ( $event_id ) {
+				update_post_meta( $nostr_edit_id, '_sk_nostr_event_id', $event_id );
+			}
+		} );
+
 		wp_send_json_success( [
 			'content'   => wp_kses_post( $content ),
 			'thumb_url' => $thumb_url ?: '',
@@ -185,7 +209,18 @@ class Ajax {
 			wp_send_json_error( [ 'message' => __( 'Keine Berechtigung.', 'sk-core' ) ] );
 		}
 
+		// NIP-09: Delete the Nostr event before deleting the WP post.
+		$nostr_event_id = get_post_meta( $post_id, '_sk_nostr_event_id', true );
+		$nostr_user_id  = get_current_user_id();
+
 		wp_delete_post( $post_id, true );
+
+		if ( $nostr_event_id && class_exists( 'SK\Modules\Auth\NostrIdentity' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $nostr_user_id ) ) {
+			register_shutdown_function( function () use ( $nostr_event_id, $nostr_user_id ) {
+				\SK\Modules\Auth\NostrIdentity::publish( $nostr_user_id, 5, '', [ [ 'e', $nostr_event_id ] ] );
+			} );
+		}
+
 		wp_send_json_success();
 	}
 
@@ -206,20 +241,30 @@ class Ajax {
 		$user_id = get_current_user_id();
 		$liked   = Likes::toggle( $post_id, $user_id );
 
-		// NIP-25: Publish Kind 7 Reaction on Nostr if liked.
-		if ( $liked ) {
-			$nostr_event_id = get_post_meta( $post_id, '_sk_nostr_event_id', true );
-			if ( $nostr_event_id && class_exists( 'SK\Modules\Auth\NostrIdentity' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $user_id ) ) {
+		// NIP-25 + NIP-09: Publish/delete Kind 7 Reaction on Nostr.
+		$nostr_event_id = get_post_meta( $post_id, '_sk_nostr_event_id', true );
+		if ( $nostr_event_id && class_exists( 'SK\Modules\Auth\NostrIdentity' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $user_id ) ) {
+			if ( $liked ) {
 				$author_pubkey = \SK\Modules\Auth\NostrIdentity::get_public_key( (int) $post->post_author );
-				$tags = [
-					[ 'e', $nostr_event_id ],
-				];
+				$tags = [ [ 'e', $nostr_event_id ] ];
 				if ( $author_pubkey ) {
 					$tags[] = [ 'p', $author_pubkey ];
 				}
-				register_shutdown_function( function () use ( $user_id, $tags ) {
-					\SK\Modules\Auth\NostrIdentity::publish( $user_id, 7, '+', $tags );
+				register_shutdown_function( function () use ( $user_id, $post_id, $tags ) {
+					$reaction_id = \SK\Modules\Auth\NostrIdentity::publish( $user_id, 7, '+', $tags );
+					if ( $reaction_id ) {
+						update_user_meta( $user_id, '_sk_nostr_reaction_' . $post_id, $reaction_id );
+					}
 				} );
+			} else {
+				// Unlike: delete the reaction event.
+				$reaction_id = get_user_meta( $user_id, '_sk_nostr_reaction_' . $post_id, true );
+				if ( $reaction_id ) {
+					register_shutdown_function( function () use ( $user_id, $reaction_id, $post_id ) {
+						\SK\Modules\Auth\NostrIdentity::publish( $user_id, 5, '', [ [ 'e', $reaction_id ] ] );
+						delete_user_meta( $user_id, '_sk_nostr_reaction_' . $post_id );
+					} );
+				}
 			}
 		}
 
@@ -415,6 +460,23 @@ class Ajax {
 
 		if ( ! $comment_id ) {
 			wp_send_json_error( [ 'message' => __( 'Kommentar konnte nicht gespeichert werden.', 'sk-core' ) ] );
+		}
+
+		// Nostr: Publish comment as Kind 1 reply.
+		$nostr_event_id = get_post_meta( $post_id, '_sk_nostr_event_id', true );
+		if ( $nostr_event_id && class_exists( 'SK\Modules\Auth\NostrIdentity' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $user->ID ) ) {
+			$author_pubkey = \SK\Modules\Auth\NostrIdentity::get_public_key( (int) $post->post_author );
+			$reply_tags = [
+				[ 'e', $nostr_event_id, '', 'root' ],
+			];
+			if ( $author_pubkey ) {
+				$reply_tags[] = [ 'p', $author_pubkey ];
+			}
+			$nostr_comment_user = $user->ID;
+			$nostr_comment_text = $text;
+			register_shutdown_function( function () use ( $nostr_comment_user, $nostr_comment_text, $reply_tags ) {
+				\SK\Modules\Auth\NostrIdentity::publish( $nostr_comment_user, 1, $nostr_comment_text, $reply_tags );
+			} );
 		}
 
 		$comment   = get_comment( $comment_id );
