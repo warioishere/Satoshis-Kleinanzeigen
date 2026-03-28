@@ -87,63 +87,68 @@ get_header( 'shop' );
                 <?php
                 // ── Einundzwanzig Meetup Reputation ──
                 $meetup = \SK\Modules\Reputation\MeetupReputation::get( $vendor_id );
-                if ( $meetup && $meetup->meetup_level !== 'NEU' ) :
-                    $level_colors = [
-                        'VETERAN'   => '#f7931a',
-                        'ETABLIERT' => '#48bb78',
-                        'AKTIV'     => '#4299e1',
-                        'STARTER'   => '#9f7aea',
-                    ];
-                    $level_color = $level_colors[ $meetup->meetup_level ] ?? '#5a6a7e';
+                $meetup_has_data = $meetup && $meetup->meetup_level !== 'NEU';
+                $level_colors = [
+                    'VETERAN'   => '#f7931a',
+                    'ETABLIERT' => '#48bb78',
+                    'AKTIV'     => '#4299e1',
+                    'STARTER'   => '#9f7aea',
+                ];
+                $level_color = $meetup_has_data ? ( $level_colors[ $meetup->meetup_level ] ?? '#5a6a7e' ) : '#5a6a7e';
                 ?>
                 <div style="background:#1e2b3c;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:24px;margin-bottom:24px;">
                     <h2 style="margin:0 0 16px;font-size:20px;color:#e8ecf0;">
                         Meetup Reputation
-                        <span style="margin-left:10px;padding:3px 10px;background:<?php echo esc_attr( $level_color ); ?>22;border:1px solid <?php echo esc_attr( $level_color ); ?>44;border-radius:5px;font-size:14px;color:<?php echo esc_attr( $level_color ); ?>;">
-                            <?php echo esc_html( $meetup->meetup_level ); ?>
-                        </span>
-                        <?php if ( $meetup->platform_proof ) : ?>
-                            <span style="margin-left:6px;padding:3px 8px;background:rgba(72,187,120,0.1);border-radius:5px;font-size:12px;color:#48bb78;" title="npub ist kryptographisch an diesen SK-Account gebunden">
-                                Verifiziert
+                        <?php if ( $meetup_has_data ) : ?>
+                            <span style="margin-left:10px;padding:3px 10px;background:<?php echo esc_attr( $level_color ); ?>22;border:1px solid <?php echo esc_attr( $level_color ); ?>44;border-radius:5px;font-size:14px;color:<?php echo esc_attr( $level_color ); ?>;">
+                                <?php echo esc_html( $meetup->meetup_level ); ?>
                             </span>
+                            <?php if ( $meetup->platform_proof ) : ?>
+                                <span style="margin-left:6px;padding:3px 8px;background:rgba(72,187,120,0.1);border-radius:5px;font-size:12px;color:#48bb78;" title="npub ist kryptographisch an diesen SK-Account gebunden">
+                                    Verifiziert
+                                </span>
+                            <?php endif; ?>
                         <?php endif; ?>
                     </h2>
 
-                    <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:16px;">
-                        <div>
-                            <div style="font-size:28px;font-weight:700;color:<?php echo esc_attr( $level_color ); ?>;">
-                                <?php echo esc_html( number_format( $meetup->meetup_score, 1 ) ); ?>
+                    <?php if ( $meetup_has_data ) : ?>
+                        <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:16px;">
+                            <div>
+                                <div style="font-size:28px;font-weight:700;color:<?php echo esc_attr( $level_color ); ?>;">
+                                    <?php echo esc_html( number_format( $meetup->meetup_score, 1 ) ); ?>
+                                </div>
+                                <div style="font-size:13px;color:#5a6a7e;">Trust Score</div>
                             </div>
-                            <div style="font-size:13px;color:#5a6a7e;">Trust Score</div>
+                            <div>
+                                <div style="font-size:28px;font-weight:700;color:#e8ecf0;"><?php echo esc_html( $meetup->verified_badges ); ?></div>
+                                <div style="font-size:13px;color:#5a6a7e;">Verifizierte Badges</div>
+                            </div>
+                            <div>
+                                <div style="font-size:28px;font-weight:700;color:#e8ecf0;"><?php echo esc_html( $meetup->unique_meetups ); ?></div>
+                                <div style="font-size:13px;color:#5a6a7e;">Verschiedene Meetups</div>
+                            </div>
+                            <div>
+                                <div style="font-size:28px;font-weight:700;color:#e8ecf0;"><?php echo esc_html( $meetup->unique_signers ); ?></div>
+                                <div style="font-size:13px;color:#5a6a7e;">Verschiedene Organisatoren</div>
+                            </div>
+                            <div>
+                                <div style="font-size:28px;font-weight:700;color:#e8ecf0;"><?php echo esc_html( $meetup->account_age_days ); ?>d</div>
+                                <div style="font-size:13px;color:#5a6a7e;">Account-Alter</div>
+                            </div>
                         </div>
-                        <div>
-                            <div style="font-size:28px;font-weight:700;color:#e8ecf0;"><?php echo esc_html( $meetup->verified_badges ); ?></div>
-                            <div style="font-size:13px;color:#5a6a7e;">Verifizierte Badges</div>
-                        </div>
-                        <div>
-                            <div style="font-size:28px;font-weight:700;color:#e8ecf0;"><?php echo esc_html( $meetup->unique_meetups ); ?></div>
-                            <div style="font-size:13px;color:#5a6a7e;">Verschiedene Meetups</div>
-                        </div>
-                        <div>
-                            <div style="font-size:28px;font-weight:700;color:#e8ecf0;"><?php echo esc_html( $meetup->unique_signers ); ?></div>
-                            <div style="font-size:13px;color:#5a6a7e;">Verschiedene Organisatoren</div>
-                        </div>
-                        <div>
-                            <div style="font-size:28px;font-weight:700;color:#e8ecf0;"><?php echo esc_html( $meetup->account_age_days ); ?>d</div>
-                            <div style="font-size:13px;color:#5a6a7e;">Account-Alter</div>
-                        </div>
-                    </div>
 
-                    <div style="padding:12px 16px;background:rgba(247,147,26,0.08);border:1px solid rgba(247,147,26,0.2);border-radius:8px;font-size:13px;color:#9ca3af;">
-                        <strong style="color:#f7931a;">Einundzwanzig Meetup Badges</strong> —
-                        Kryptographisch signierte Nachweise physischer Meetup-Teilnahme.
-                        Jedes Badge ist Schnorr-signiert (BIP-340) und kann nicht gefaelscht werden.
-                        <?php if ( ! empty( $meetup->badge_proof_hash ) ) : ?>
-                            <br><span style="color:#5a6a7e;">Proof-Hash: <code style="font-size:11px;"><?php echo esc_html( substr( $meetup->badge_proof_hash, 0, 16 ) . '...' ); ?></code></span>
-                        <?php endif; ?>
-                    </div>
+                        <div style="padding:12px 16px;background:rgba(247,147,26,0.08);border:1px solid rgba(247,147,26,0.2);border-radius:8px;font-size:13px;color:#9ca3af;">
+                            <strong style="color:#f7931a;">Einundzwanzig Meetup Badges</strong> —
+                            Kryptographisch signierte Nachweise physischer Meetup-Teilnahme.
+                            Jedes Badge ist Schnorr-signiert (BIP-340) und kann nicht gefaelscht werden.
+                            <?php if ( ! empty( $meetup->badge_proof_hash ) ) : ?>
+                                <br><span style="color:#5a6a7e;">Proof-Hash: <code style="font-size:11px;"><?php echo esc_html( substr( $meetup->badge_proof_hash, 0, 16 ) . '...' ); ?></code></span>
+                            <?php endif; ?>
+                        </div>
+                    <?php else : ?>
+                        <p style="color:#5a6a7e;">Keine Meetup Reputation vorhanden.</p>
+                    <?php endif; ?>
                 </div>
-                <?php endif; ?>
 
                 <!-- Transaktions-Liste -->
                 <?php if ( ! empty( $proofs ) ) : ?>
