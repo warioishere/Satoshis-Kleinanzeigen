@@ -29,59 +29,11 @@ class MeetupReputation {
     // ──────────────────────────────────────────────
 
     public function __construct() {
-        // Render verify-string field in store settings (contact section).
-        add_action( 'sk_settings_contact_fields', [ $this, 'render_settings_field' ], 10, 2 );
-
         // Process the verify string when store settings are saved.
         add_filter( 'sk_store_profile_settings_args', [ $this, 'save_settings_field' ], 10, 2 );
 
         // After profile save: if verify string changed, fetch reputation immediately.
         add_action( 'sk_store_profile_saved', [ $this, 'on_profile_saved' ], 20, 3 );
-    }
-
-    // ──────────────────────────────────────────────
-    //  Settings UI
-    // ──────────────────────────────────────────────
-
-    /**
-     * Render the Meetup Verify String input in store settings.
-     * Hooks into sk_settings_contact_fields (after Nostr/Telegram/etc).
-     */
-    public function render_settings_field( int $user_id, array $profile_info ): void {
-        $verify_string  = esc_attr( $profile_info['meetup_verify_string'] ?? '' );
-        $meetup_npub    = get_user_meta( $user_id, 'sk_meetup_npub', true );
-        $meetup_status  = get_user_meta( $user_id, 'sk_meetup_verify_status', true );
-        $is_verified    = $meetup_status === 'verified' && ! empty( $meetup_npub );
-        ?>
-        <div class="sk-form-group">
-            <label class="sk-w3 sk-control-label">
-                Meetup Reputation
-                <?php if ( $is_verified ) : ?>
-                    <span style="display:inline-block;margin-left:6px;padding:1px 6px;font-size:11px;border-radius:3px;background:rgba(72,187,120,0.15);color:#48bb78;">verifiziert</span>
-                <?php endif; ?>
-            </label>
-            <div class="sk-w5">
-                <input type="text" class="sk-form-control" name="meetup_verify_string"
-                       value="<?php echo $verify_string; ?>"
-                       placeholder="21rep::npub1...::satoshikleinanzeigen::username::sig=..."
-                       style="font-family:monospace;font-size:12px;" />
-                <p class="description" style="margin-top:6px;font-size:13px;color:#9ca3af;">
-                    Generiere einen Platform Proof in der
-                    <strong>Einundzwanzig Meetup App</strong> und kopiere den Verify-String hierhin.
-                    Deine Meetup-Reputation wird dann auf deiner Proof-Seite angezeigt.
-                </p>
-                <?php if ( $is_verified ) : ?>
-                    <p class="description" style="margin-top:4px;font-size:12px;color:#48bb78;">
-                        Verknuepft mit: <code style="font-size:11px;"><?php echo esc_html( substr( $meetup_npub, 0, 16 ) . '...' ); ?></code>
-                    </p>
-                <?php elseif ( ! empty( $verify_string ) && $meetup_status === 'invalid' ) : ?>
-                    <p class="description" style="margin-top:4px;font-size:12px;color:#e53e3e;">
-                        Signatur ungueltig oder Format fehlerhaft. Bitte erneut aus der App kopieren.
-                    </p>
-                <?php endif; ?>
-            </div>
-        </div>
-        <?php
     }
 
     /**

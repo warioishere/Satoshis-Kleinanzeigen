@@ -444,7 +444,51 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
     <?php endif; ?>
 
     <!-- ======================================================
-         SECTION 3c: Nostr Settings
+         SECTION 3c: Meetup Reputation
+    ====================================================== -->
+    <?php
+        $mr_verify_string = esc_attr( $profile_info['meetup_verify_string'] ?? '' );
+        $mr_meetup_npub   = get_user_meta( $current_user, 'sk_meetup_npub', true );
+        $mr_verify_status = get_user_meta( $current_user, 'sk_meetup_verify_status', true );
+        $mr_is_verified   = $mr_verify_status === 'verified' && ! empty( $mr_meetup_npub );
+    ?>
+    <div class="sk-settings-section">
+        <div class="sk-settings-section-title">
+            <i class="fas fa-shield-alt"></i> Meetup Reputation
+        </div>
+
+        <div class="sk-form-group">
+            <label class="sk-w3 sk-control-label">
+                Einundzwanzig Verify-String
+                <?php if ( $mr_is_verified ) : ?>
+                    <span style="display:inline-block;margin-left:6px;padding:1px 6px;font-size:11px;border-radius:3px;background:rgba(72,187,120,0.15);color:#48bb78;">verifiziert</span>
+                <?php endif; ?>
+            </label>
+            <div class="sk-w5">
+                <input type="text" class="sk-form-control" name="meetup_verify_string"
+                       value="<?php echo $mr_verify_string; ?>"
+                       placeholder="21rep::npub1...::satoshikleinanzeigen::username::sig=..."
+                       style="font-family:monospace;font-size:12px;" />
+                <p class="description" style="margin-top:6px;font-size:13px;color:#9ca3af;">
+                    Generiere einen Platform Proof in der
+                    <strong>Einundzwanzig Meetup App</strong> und kopiere den Verify-String hierhin.
+                    Deine Meetup-Reputation wird dann auf deiner Proof-Seite angezeigt.
+                </p>
+                <?php if ( $mr_is_verified ) : ?>
+                    <p class="description" style="margin-top:4px;font-size:12px;color:#48bb78;">
+                        Verknuepft mit: <code style="font-size:11px;"><?php echo esc_html( substr( $mr_meetup_npub, 0, 16 ) . '...' ); ?></code>
+                    </p>
+                <?php elseif ( ! empty( $mr_verify_string ) && $mr_verify_status === 'invalid' ) : ?>
+                    <p class="description" style="margin-top:4px;font-size:12px;color:#e53e3e;">
+                        Signatur ungueltig oder Format fehlerhaft. Bitte erneut aus der App kopieren.
+                    </p>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================
+         SECTION 3d: Nostr Settings
     ====================================================== -->
     <?php
         $ns_nostr_pubkey = get_user_meta( $current_user, 'nostr_public_key', true );
