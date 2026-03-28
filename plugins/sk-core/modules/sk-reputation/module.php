@@ -28,6 +28,7 @@ final class Module {
         require_once SK_REPUTATION_INCLUDES . '/Calculator.php';
         require_once SK_REPUTATION_INCLUDES . '/Cron.php';
         require_once SK_REPUTATION_INCLUDES . '/ProofPage.php';
+        require_once SK_REPUTATION_INCLUDES . '/MeetupReputation.php';
     }
 
     public function load_hooks() {
@@ -42,6 +43,13 @@ final class Module {
 
         new Cron();
         new ProofPage();
+        new MeetupReputation();
+
+        // Ensure meetup table exists (safe to call repeatedly — uses CREATE IF NOT EXISTS).
+        if ( get_option( 'sk_meetup_rep_db_version' ) !== $this->version ) {
+            MeetupReputation::create_table();
+            update_option( 'sk_meetup_rep_db_version', $this->version );
+        }
     }
 
     /**
@@ -53,6 +61,7 @@ final class Module {
 
     public function activate() {
         Cron::schedule();
+        MeetupReputation::create_table();
         flush_rewrite_rules( true );
     }
 

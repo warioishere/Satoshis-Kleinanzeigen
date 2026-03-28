@@ -444,68 +444,134 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
     <?php endif; ?>
 
     <!-- ======================================================
-         SECTION 3c: Nostr Marketplace (conditional: sk-nostr-market Modul aktiv)
+         SECTION 3c: Nostr Settings
     ====================================================== -->
-    <?php if ( class_exists( 'SK\Modules\NostrMarket\Module' ) && sk_get_option( 'sk_nostr_market_enabled', 'sk_nostr_market', 'off' ) === 'on' ) :
-        $nm_nostr_pubkey = get_user_meta( $current_user, 'nostr_public_key', true );
-        $nm_has_pubkey   = ! empty( $nm_nostr_pubkey );
-        $nm_post_enabled = $profile_info['nostr_market_enabled'] ?? ( $nm_has_pubkey ? '1' : '0' );
-        $nm_self_sign    = $profile_info['nostr_market_self_sign'] ?? '0';
+    <?php
+        $ns_nostr_pubkey = get_user_meta( $current_user, 'nostr_public_key', true );
+        $ns_has_pubkey   = ! empty( $ns_nostr_pubkey );
+        $ns_identity_src = get_user_meta( $current_user, 'sk_nostr_identity_source', true );
+        $ns_has_market   = class_exists( 'SK\Modules\NostrMarket\Module' ) && sk_get_option( 'sk_nostr_market_enabled', 'sk_nostr_market', 'off' ) === 'on';
+        $ns_post_enabled = $profile_info['nostr_market_enabled'] ?? ( $ns_has_pubkey ? '1' : '0' );
 
         // Convert pubkey to npub for display.
-        $nm_npub = '';
-        if ( $nm_has_pubkey && class_exists( '\swentel\nostr\Key\Key' ) ) {
+        $ns_npub = '';
+        if ( $ns_has_pubkey && class_exists( '\swentel\nostr\Key\Key' ) ) {
             try {
-                $nm_key = new \swentel\nostr\Key\Key();
-                $nm_npub = $nm_key->convertPublicKeyToBech32( $nm_nostr_pubkey );
+                $ns_key  = new \swentel\nostr\Key\Key();
+                $ns_npub = $ns_key->convertPublicKeyToBech32( $ns_nostr_pubkey );
             } catch ( \Throwable $e ) {}
+        }
+
+        // Import result feedback (set via sk_store_profile_saved handler).
+        $ns_import_result = get_transient( 'sk_nsec_import_result_' . $current_user );
+        if ( $ns_import_result ) {
+            delete_transient( 'sk_nsec_import_result_' . $current_user );
         }
     ?>
     <div class="sk-settings-section">
         <div class="sk-settings-section-title">
-            <i class="sk-nostr-icon sk-nostr-icon--inline"></i> Nostr Marketplace
+            <i class="sk-nostr-icon sk-nostr-icon--inline"></i> Nostr Settings
         </div>
 
+        <?php /* ── Current Nostr Identity ── */ ?>
+        <div class="sk-form-group">
+            <label class="sk-w3 sk-control-label">Nostr Identitaet</label>
+            <div class="sk-w5">
+                <?php if ( $ns_has_pubkey ) : ?>
+                    <p style="font-size:13px;color:#5cb85c;margin-bottom:6px;">
+                        <i class="fas fa-check-circle"></i>
+                        <?php if ( $ns_identity_src === 'imported' ) : ?>
+                            Importierter Nostr Key aktiv
+                        <?php else : ?>
+                            Generierter Nostr Key aktiv
+                        <?php endif; ?>
+                    </p>
+                    <?php if ( $ns_npub ) : ?>
+                    <p style="margin-bottom:0;font-size:13px;">
+                        <code style="background:#0f1923;padding:2px 6px;border-radius:3px;font-size:11px;color:#e8ecf0;"><?php echo esc_html( $ns_npub ); ?></code>
+                    </p>
+                    <?php endif; ?>
+                <?php else : ?>
+                    <p class="description" style="font-size:13px;color:#5a6a7e;">
+                        Kein Nostr Key vorhanden. Erstelle eine Nostr-Identitaet im <a href="<?php echo esc_url( function_exists( 'sk_get_navigation_url' ) ? sk_get_navigation_url( 'auth-connector' ) : '#' ); ?>">Auth Connector</a> oder importiere unten einen bestehenden Key.
+                    </p>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <?php /* ── nsec Import ── */ ?>
+        <div class="sk-form-group">
+            <label class="sk-w3 sk-control-label">Nostr Key importieren</label>
+            <div class="sk-w5">
+                <div id="sk-nsec-import-toggle">
+                    <button type="button" class="button button-small" id="sk-nsec-show-import" style="font-size:13px;">
+                        <i class="fas fa-key"></i> nsec importieren
+                    </button>
+                    <p class="description" style="margin-top:6px;font-size:13px;color:#9ca3af;">
+                        Verwende einen bestehenden Nostr Key (z.B. aus der Einundzwanzig Meetup App, Amethyst oder einer anderen Nostr-Wallet).
+                        <?php if ( $ns_has_pubkey ) : ?>
+                            <br><strong style="color:#f7931a;">Achtung:</strong> Dein aktueller SK-Key wird dabei ersetzt.
+                        <?php endif; ?>
+                    </p>
+                </div>
+                <div id="sk-nsec-import-field" style="display:none;">
+                    <input type="password" class="sk-form-control" name="nostr_import_nsec" id="sk-nsec-input"
+                           value="" autocomplete="off"
+                           placeholder="nsec1..."
+                           style="font-family:monospace;font-size:12px;margin-bottom:6px;" />
+                    <p class="description" style="font-size:12px;color:#dc3545;margin-bottom:8px;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Dein nsec verlässt niemals diesen Server. Er wird verschluesselt gespeichert (AES-256).
+                    </p>
+                    <label style="display:block;margin-bottom:6px;">
+                        <input type="checkbox" name="nostr_import_confirm" id="sk-nsec-confirm" value="1" />
+                        Ich verstehe, dass mein aktueller Nostr Key ersetzt wird und die Aenderung nicht rueckgaengig gemacht werden kann.
+                    </label>
+                </div>
+
+                <?php if ( $ns_import_result === 'success' ) : ?>
+                    <p style="margin-top:8px;font-size:13px;color:#5cb85c;">
+                        <i class="fas fa-check-circle"></i> Nostr Key erfolgreich importiert!
+                    </p>
+                <?php elseif ( $ns_import_result === 'invalid' ) : ?>
+                    <p style="margin-top:8px;font-size:13px;color:#dc3545;">
+                        <i class="fas fa-times-circle"></i> Ungueltiger nsec oder Key bereits vergeben.
+                    </p>
+                <?php elseif ( $ns_import_result === 'not_confirmed' ) : ?>
+                    <p style="margin-top:8px;font-size:13px;color:#f7931a;">
+                        <i class="fas fa-exclamation-circle"></i> Bitte die Bestaetigung ankreuzen.
+                    </p>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <?php /* ── Nostr Marketplace (if module active) ── */ ?>
+        <?php if ( $ns_has_market ) : ?>
         <div class="sk-form-group">
             <label class="sk-w3 sk-control-label">Inserate auf Nostr posten</label>
             <div class="sk-w5">
                 <label>
                     <input type="hidden" name="nostr_market_enabled" value="0" />
-                    <input type="checkbox" name="nostr_market_enabled" value="1" <?php checked( $nm_post_enabled, '1' ); ?>>
-                    Deine Produkte werden als Inserate auf dem Nostr Netzwerk veröffentlicht
+                    <input type="checkbox" name="nostr_market_enabled" value="1" <?php checked( $ns_post_enabled, '1' ); ?>>
+                    Deine Produkte werden als Inserate auf dem Nostr Netzwerk veroeffentlicht
                 </label>
                 <p class="description" style="margin-top:6px;font-size:13px;color:#9ca3af;">
                     Sichtbar auf Amethyst, Shopstr, Coracle und anderen Nostr Clients.
                 </p>
             </div>
         </div>
-
-        <?php if ( $nm_has_pubkey ) : ?>
-        <div class="sk-form-group">
-            <label class="sk-w3 sk-control-label">Nostr Key</label>
-            <div class="sk-w5">
-                <p style="font-size:13px;color:#5cb85c;">
-                    <i class="fas fa-check-circle"></i> Deine Inserate werden automatisch mit deinem Nostr Key signiert.
-                </p>
-                <?php if ( $nm_npub ) : ?>
-                <p style="margin-top:6px;font-size:13px;">
-                    <code style="background:#0f1923;padding:2px 6px;border-radius:3px;font-size:11px;color:#e8ecf0;"><?php echo esc_html( substr( $nm_npub, 0, 20 ) . '...' ); ?></code>
-                </p>
-                <?php endif; ?>
-            </div>
-        </div>
-        <?php else : ?>
-        <div class="sk-form-group">
-            <label class="sk-w3 sk-control-label">Nostr Key</label>
-            <div class="sk-w5">
-                <p class="description" style="font-size:13px;color:#5a6a7e;">
-                    Kein Nostr Key vorhanden. Erstelle eine Nostr-Identität im <a href="<?php echo esc_url( function_exists( 'sk_get_navigation_url' ) ? sk_get_navigation_url( 'auth-connector' ) : '#' ); ?>">Auth Connector</a> um Inserate unter deinem eigenen Profil zu signieren.
-                </p>
-            </div>
-        </div>
         <?php endif; ?>
     </div>
-    <?php endif; ?>
+
+    <script>
+    jQuery(function($){
+        $('#sk-nsec-show-import').on('click', function(){
+            $('#sk-nsec-import-toggle').hide();
+            $('#sk-nsec-import-field').show();
+            $('#sk-nsec-input').focus();
+        });
+    });
+    </script>
 
     <!-- ======================================================
          SECTION 4: Biografie

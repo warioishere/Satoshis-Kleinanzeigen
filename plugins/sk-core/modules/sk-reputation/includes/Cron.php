@@ -75,6 +75,9 @@ class Cron {
             self::maybe_publish_reputation_label( $vendor_id );
         }
 
+        // Refresh Einundzwanzig Meetup reputation for all linked vendors.
+        MeetupReputation::refresh_all();
+
         // Check pending commission invoices + enforcement.
         if ( class_exists( 'SK\Modules\Payments\Commission\Generator' ) ) {
             \SK\Modules\Payments\Commission\Generator::check_pending_invoices();
@@ -143,6 +146,13 @@ class Cron {
             [ 'L', 'sk.reputation' ],
             [ 'l', $tier, 'sk.reputation' ],
         ];
+
+        // Include Einundzwanzig meetup level if available.
+        $meetup = MeetupReputation::get( $vendor_id );
+        if ( $meetup && $meetup->meetup_level !== 'NEU' ) {
+            $tags[] = [ 'L', 'einundzwanzig.reputation' ];
+            $tags[] = [ 'l', 'meetup-' . strtolower( $meetup->meetup_level ), 'einundzwanzig.reputation' ];
+        }
 
         try {
             $event = new \swentel\nostr\Event\Event();

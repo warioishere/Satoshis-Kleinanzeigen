@@ -90,7 +90,8 @@ class Calculator {
         $score = self::compute_score(
             (int) $valid->cnt,
             $unique_buyers,
-            (int) $valid->vol
+            (int) $valid->vol,
+            $vendor_id
         );
 
         $wpdb->replace( $rep_table, [
@@ -105,11 +106,17 @@ class Calculator {
         ], [ '%d', '%d', '%d', '%d', '%d', '%d', '%d', '%s' ] );
     }
 
-    private static function compute_score( int $valid_tx, int $unique_buyers, int $volume_sats ): int {
+    private static function compute_score( int $valid_tx, int $unique_buyers, int $volume_sats, int $vendor_id = 0 ): int {
         $score = 0;
         $score += min( $unique_buyers * 10, 500 );
         $score += min( $valid_tx * 5, 250 );
         $score += min( (int) ( $volume_sats / 10000 ), 250 );
+
+        // Einundzwanzig Meetup Bonus (max 200 pts).
+        if ( $vendor_id > 0 ) {
+            $score += MeetupReputation::compute_bonus( $vendor_id );
+        }
+
         return $score;
     }
 

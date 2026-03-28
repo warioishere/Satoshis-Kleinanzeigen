@@ -26,6 +26,7 @@ class NostrIdentity {
      */
     public static function init_hooks() {
         add_action( 'sk_store_profile_saved', [ __CLASS__, 'on_store_profile_saved' ], 30, 1 );
+        add_action( 'sk_store_profile_saved', [ __CLASS__, 'handle_nsec_import' ], 25, 1 );
     }
 
     /**
@@ -37,6 +38,32 @@ class NostrIdentity {
         }
         // Defer to shutdown to not slow down the settings save.
         register_shutdown_function( [ __CLASS__, 'publish_profile' ], $store_id );
+    }
+
+    /**
+     * Process nsec import from store settings form.
+     * Runs at priority 25, before the Kind 0 re-publish at priority 30.
+     */
+    public static function handle_nsec_import( int $store_id ): void {
+        $nsec_raw = isset( $_POST['nostr_import_nsec'] ) ? sanitize_text_field( wp_unslash( $_POST['nostr_import_nsec'] ) ) : '';
+
+        if ( empty( $nsec_raw ) || strpos( $nsec_raw, 'nsec1' ) !== 0 ) {
+            return; // No import requested.
+        }
+
+        // Require explicit confirmation checkbox.
+        if ( empty( $_POST['nostr_import_confirm'] ) ) {
+            set_transient( 'sk_nsec_import_result_' . $store_id, 'not_confirmed', 60 );
+            return;
+        }
+
+        $new_pubkey = self::import_for_user( $store_id, $nsec_raw );
+
+        if ( ! empty( $new_pubkey ) ) {
+            set_transient( 'sk_nsec_import_result_' . $store_id, 'success', 60 );
+        } else {
+            set_transient( 'sk_nsec_import_result_' . $store_id, 'invalid', 60 );
+        }
     }
 
     /**
@@ -59,6 +86,73 @@ class NostrIdentity {
 
         // Publish Kind 0 profile.
         self::publish_profile( $user_id );
+
+        return $pubkey;
+    }
+
+    /**
+     * Import an existing nsec (e.g. from the Einundzwanzig Meetup App) and replace
+     * the current Nostr identity. Updates NostrIdentity keys, UAC auth mappings,
+     * and re-publishes the Kind 0 profile.
+     *
+     * @return string New public key (hex), or empty string on failure.
+     */
+    public static function import_for_user( int $user_id, string $nsec ): string {
+        $nsec = trim( $nsec );
+
+        if ( ! class_exists( '\swentel\nostr\Key\Key' ) ) {
+            return '';
+        }
+
+        $key = new Key();
+
+        // Validate and convert nsec → hex privkey → hex pubkey.
+        try {
+            $privkey = $key->convertToHex( $nsec );
+            $pubkey  = $key->getPublicKey( $privkey );
+        } catch ( \Throwable $e ) {
+            return '';
+        }
+
+        if ( empty( $privkey ) || empty( $pubkey ) || strlen( $pubkey ) !== 64 ) {
+            return '';
+        }
+
+        // Check if this pubkey is already used by a DIFFERENT user.
+        $existing = get_users( [
+            'meta_key'   => 'nostr_public_key',
+            'meta_value' => $pubkey,
+            'number'     => 1,
+            'fields'     => 'ID',
+        ] );
+        if ( ! empty( $existing ) && (int) $existing[0] !== $user_id ) {
+            return ''; // Conflict — this key belongs to another account.
+        }
+
+        // ── Update NostrIdentity keys ──
+        $old_pubkey = get_user_meta( $user_id, 'nostr_public_key', true );
+
+        update_user_meta( $user_id, 'sk_nostr_private_key', self::encrypt( $privkey ) );
+        update_user_meta( $user_id, 'nostr_public_key', $pubkey );
+        update_user_meta( $user_id, 'sk_nostr_identity_source', 'imported' );
+
+        // ── Update Unified Auth mappings ──
+        if ( class_exists( 'UAC_Account_Linker' ) ) {
+            $linker = new \UAC_Account_Linker();
+
+            // Remove old nostr mapping.
+            if ( $old_pubkey && $old_pubkey !== $pubkey ) {
+                $linker->unlink_nostr( $user_id );
+            }
+
+            // Link new pubkey.
+            $linker->link_nostr( $user_id, $pubkey );
+        }
+
+        // ── Re-publish Kind 0 profile with the new key ──
+        self::publish_profile( $user_id );
+
+        do_action( 'sk_nostr_identity_imported', $user_id, $pubkey, $old_pubkey );
 
         return $pubkey;
     }
