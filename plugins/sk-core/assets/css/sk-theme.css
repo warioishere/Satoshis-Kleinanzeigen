@@ -12746,3 +12746,75 @@ span.item-inline-edit.editline { display: none !important; }
 /* Currency symbol in subscription */
 .sk-subscription-content .woocommerce-Price-currencySymbol { display: none !important; }
 
+/* Notice boxes (p/div.sk-info) — override the badge-style .sk-info rule with SK-theme look */
+p.sk-info,
+div.sk-info,
+p.sk-message,
+div.sk-message,
+p.sk-error,
+div.sk-error {
+  display: block;
+  padding: 14px 18px 14px 48px;
+  margin: 1rem 0;
+  background: #1e2b3c;
+  color: #c5ccd6;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-left: 3px solid #f7931a;
+  border-radius: 8px;
+  font-size: 15px;
+  line-height: 1.5;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  position: relative;
+}
+
+p.sk-info::before,
+div.sk-info::before,
+p.sk-message::before,
+div.sk-message::before,
+p.sk-error::before,
+div.sk-error::before {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-style: normal;
+  background: #f7931a;
+}
+
+p.sk-info::before,
+div.sk-info::before {
+  content: "i";
+  font-family: Georgia, serif;
+  font-style: italic;
+  background: #f7931a;
+}
+
+p.sk-message::before,
+div.sk-message::before {
+  content: "\2713";
+  background: #22c55e;
+}
+
+p.sk-error::before,
+div.sk-error::before {
+  content: "!";
+  background: #ef4444;
+}
+
+p.sk-message,
+div.sk-message { border-left-color: #22c55e; }
+
+p.sk-error,
+div.sk-error { border-left-color: #ef4444; }
+
