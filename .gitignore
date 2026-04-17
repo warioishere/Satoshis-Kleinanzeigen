@@ -12,10 +12,10 @@ Thumbs.db
 object-cache.php
 .htaccess
 
-# Backups / Logs
-ai1wm-backups/
-compressx/
-compressx-nextgen/
+# Backups / Logs (top-level only — don't match plugin folders)
+/ai1wm-backups/
+/compressx/
+/compressx-nextgen/
 *backup*~
 *backup*.po~
 
