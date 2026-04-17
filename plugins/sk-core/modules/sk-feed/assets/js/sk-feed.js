@@ -40,11 +40,19 @@
     function flashCopied($btn) {
         var $icon = $btn.find('i');
         var origClass = $icon.attr('class');
-        $btn.addClass('copied').attr('title', 'Link kopiert!');
+        $btn.addClass('copied');
         $icon.attr('class', 'fas fa-check');
+
+        $btn.find('.sk-feed-copied-toast').remove();
+        var $toast = $('<span class="sk-feed-copied-toast">Link kopiert!</span>');
+        $btn.append($toast);
+        requestAnimationFrame(function () { $toast.addClass('show'); });
+
         setTimeout(function () {
-            $btn.removeClass('copied').attr('title', 'Teilen');
+            $btn.removeClass('copied');
             $icon.attr('class', origClass);
+            $toast.removeClass('show');
+            setTimeout(function () { $toast.remove(); }, 200);
         }, 1600);
     }
 
