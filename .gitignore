@@ -28,18 +28,15 @@ bcf-fonts/
 # Claude
 .claude/
 
-# Build-Artefakte
-node_modules/
-vendor/
-dist/
-build/
+# Build-Artefakte (top-level only)
+/node_modules/
+/dist/
+/build/
 
-# Theme/Plugin-Builds
+# Theme/Plugin-Builds (dev artifacts, not production vendor/)
 themes/*/node_modules/
-themes/*/vendor/
 themes/*/dist/
 plugins/*/node_modules/
-plugins/*/vendor/
 plugins/*/dist/
 
 # IDE/Env
