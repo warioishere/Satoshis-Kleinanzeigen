@@ -21,9 +21,10 @@ require_once __DIR__ . '/includes/global-functions.php';
  */
 final class Module {
 
-    public $version = '1.0.0';
+    public $version;
 
     public function __construct() {
+        $this->version = sk_assets_version( __DIR__ . '/assets' );
         $this->define_constants();
 
         // Settings always load (visible in admin even when methods are disabled).

@@ -16,9 +16,10 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Module {
 
-    public $version = '1.0.0';
+    public $version;
 
     public function __construct() {
+        $this->version = sk_assets_version( __DIR__ . '/assets' );
         define( 'SK_ZAPS_VERSION', $this->version );
         define( 'SK_ZAPS_PATH', dirname( __FILE__ ) );
         define( 'SK_ZAPS_URL', plugins_url( '', __FILE__ ) );

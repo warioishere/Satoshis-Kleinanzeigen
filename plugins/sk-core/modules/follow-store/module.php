@@ -12,7 +12,7 @@ final class Module {
      *
      * @var string
      */
-    public $version = '1.0.0';
+    public $version;
 
     /**
      * Class constructor
@@ -21,6 +21,7 @@ final class Module {
      * @return void
      */
     public function __construct() {
+        $this->version = sk_assets_version( __DIR__ . '/assets' );
         $this->define_constants();
         $this->includes();
         $this->load_hooks();

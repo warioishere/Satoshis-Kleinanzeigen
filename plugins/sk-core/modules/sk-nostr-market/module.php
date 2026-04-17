@@ -23,11 +23,12 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Module {
 
-    public $version = '1.0.0';
+    public $version;
 
     private static $shutdown_queue = [];
 
     public function __construct() {
+        $this->version = sk_assets_version( __DIR__ . '/assets' );
         $this->define_constants();
         $this->includes();
 

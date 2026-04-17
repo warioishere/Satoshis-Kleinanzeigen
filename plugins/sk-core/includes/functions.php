@@ -3951,3 +3951,40 @@ function sk_get_vendor_order_details( $order_id, $vendor_id = null ) {
 
     return $order_info;
 }
+
+/**
+ * Cache-busting asset version derived from the newest file in a given directory.
+ *
+ * Recursively scans $dir (usually a module's assets/ folder) and returns the
+ * highest filemtime found. Result is cached per request.
+ *
+ * @param string $dir Absolute directory path to scan.
+ * @return string mtime as string (or current time if dir missing).
+ */
+function sk_assets_version( string $dir ): string {
+    static $cache = [];
+    if ( isset( $cache[ $dir ] ) ) {
+        return $cache[ $dir ];
+    }
+
+    $max = 0;
+    if ( is_dir( $dir ) ) {
+        try {
+            $iter = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator( $dir, FilesystemIterator::SKIP_DOTS )
+            );
+            foreach ( $iter as $file ) {
+                if ( $file->isFile() ) {
+                    $m = $file->getMTime();
+                    if ( $m > $max ) {
+                        $max = $m;
+                    }
+                }
+            }
+        } catch ( Exception $e ) {
+            $max = 0;
+        }
+    }
+
+    return $cache[ $dir ] = (string) ( $max ?: time() );
+}
