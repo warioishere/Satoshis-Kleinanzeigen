@@ -2717,8 +2717,8 @@ function sk_get_translations_for_plugin_domain( $domain, $language_dir = null ) 
  * @return array
  */
 function sk_get_jed_locale_data( $domain, $language_dir = null ) {
-    // get transient key
-    $transient_key = sprintf( 'sk_i18n-%s-%d-%s', $domain, filectime( $language_dir ), get_user_locale() );
+    $dir_ctime     = ( $language_dir && is_dir( $language_dir ) ) ? filectime( $language_dir ) : 0;
+    $transient_key = sprintf( 'sk_i18n-%s-%d-%s', $domain, $dir_ctime, get_user_locale() );
 
     // check if data exists on cache or not
     $locale = Cache::get_transient( $transient_key );
