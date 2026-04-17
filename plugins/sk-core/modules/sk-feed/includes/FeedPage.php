@@ -88,6 +88,12 @@ class FeedPage {
 			];
 		}
 
+		if ( 'gesuche' === $filter ) {
+			$args['meta_query'] = [
+				[ 'key' => '_sk_feed_type', 'value' => 'gesuch_announce' ],
+			];
+		}
+
 		if ( 'following' === $filter && is_user_logged_in() ) {
 			$following_ids = self::get_following_vendor_ids( get_current_user_id() );
 			if ( empty( $following_ids ) ) {

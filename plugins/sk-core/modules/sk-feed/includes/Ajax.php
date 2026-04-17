@@ -372,6 +372,13 @@ class Ajax {
 			];
 		}
 
+		// "Gesuche" — search request announcements.
+		if ( 'gesuche' === $filter ) {
+			$args['meta_query'] = [
+				[ 'key' => '_sk_feed_type', 'value' => 'gesuch_announce' ],
+			];
+		}
+
 		// "Trending" — last 24h sorted by likes.
 		if ( 'trending' === $filter ) {
 			$args['date_query'] = [ [ 'after' => '24 hours ago' ] ];

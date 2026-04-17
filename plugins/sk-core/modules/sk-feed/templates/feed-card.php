@@ -24,6 +24,7 @@ $comments   = (int) get_comments_number( $post_id );
 $user_liked = is_user_logged_in() ? \SK\Modules\Feed\Likes::has_liked( $post_id, get_current_user_id() ) : false;
 $feed_type  = get_post_meta( $post_id, '_sk_feed_type', true );
 $product_id = (int) get_post_meta( $post_id, '_sk_feed_product_id', true );
+$gesuch_id  = (int) get_post_meta( $post_id, '_sk_feed_gesuch_id', true );
 ?>
 
 <div class="sk-feed-card" data-post-id="<?php echo esc_attr( $post_id ); ?>">
@@ -37,6 +38,8 @@ $product_id = (int) get_post_meta( $post_id, '_sk_feed_product_id', true );
 			<span class="sk-feed-card-time">
 				<?php if ( 'product_announce' === $feed_type ) : ?>
 					<span class="sk-feed-type-badge"><i class="fas fa-tag"></i> <?php esc_html_e( 'Inserat', 'sk-core' ); ?></span> ·
+				<?php elseif ( 'gesuch_announce' === $feed_type ) : ?>
+					<span class="sk-feed-type-badge" style="color:#f59e0b;"><i class="fas fa-search"></i> <?php esc_html_e( 'Gesuch', 'sk-core' ); ?></span> ·
 				<?php elseif ( 'nostr_import' === $feed_type ) : ?>
 					<span class="sk-feed-type-badge" style="color:#8b5cf6;"><i class="fas fa-bolt"></i> <?php esc_html_e( 'via Nostr', 'sk-core' ); ?></span> ·
 				<?php endif; ?>
@@ -67,6 +70,24 @@ $product_id = (int) get_post_meta( $post_id, '_sk_feed_product_id', true );
 		<div class="sk-feed-card-image">
 			<img src="<?php echo esc_url( $thumb_url ); ?>" alt="" loading="lazy" />
 		</div>
+	<?php endif; ?>
+
+	<?php if ( 'gesuch_announce' === $feed_type && $gesuch_id && get_post_status( $gesuch_id ) === 'publish' ) : ?>
+		<?php
+		$gesuch_thumb   = get_the_post_thumbnail_url( $gesuch_id, 'thumbnail' );
+		$gesuch_excerpt = wp_trim_words( wp_strip_all_tags( get_post_field( 'post_content', $gesuch_id ) ), 20, '…' );
+		?>
+		<a href="<?php echo esc_url( get_permalink( $gesuch_id ) ); ?>" class="sk-feed-product-embed">
+			<?php if ( $gesuch_thumb ) : ?>
+				<img src="<?php echo esc_url( $gesuch_thumb ); ?>" alt="" class="sk-feed-product-embed-img" />
+			<?php endif; ?>
+			<div class="sk-feed-product-embed-info">
+				<strong><?php echo esc_html( get_the_title( $gesuch_id ) ); ?></strong>
+				<?php if ( $gesuch_excerpt ) : ?>
+					<span class="sk-feed-product-embed-price"><?php echo esc_html( $gesuch_excerpt ); ?></span>
+				<?php endif; ?>
+			</div>
+		</a>
 	<?php endif; ?>
 
 	<?php if ( 'product_announce' === $feed_type && $product_id && get_post_status( $product_id ) === 'publish' ) : ?>
