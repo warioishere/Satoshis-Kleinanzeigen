@@ -1,7 +1,151 @@
-.wpsf-box{
-  max-width:900px;margin:1.5rem auto 2rem;border:1px solid #e5e5e5;padding:1rem;border-radius:.5rem
+/* SK Feedback — integrated into sk-theme look & feel */
+
+.wpsf-box {
+  max-width: 720px;
+  margin: 2rem auto;
+  background: #1e2b3c;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 28px 28px 24px;
+  color: #e8ecf0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
-.wpsf-title{margin-top:0;margin-bottom:.25rem}
-.wpsf-description{margin-bottom:.75rem;line-height:1.5}
-.wpsf-form textarea{width:100%;box-sizing:border-box;min-height:180px;margin-top:.5rem;margin-bottom:1rem}
-.wpsf-form .wpsf-honeypot{display:none!important;position:absolute;left:-9999px;height:0;width:0;opacity:0;pointer-events:none}
+
+.wpsf-box .wpsf-title {
+  margin: 0 0 6px;
+  font-size: 22px;
+  font-weight: 600;
+  color: #e8ecf0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wpsf-box .wpsf-title::before {
+  content: "\f075"; /* fa-comment */
+  font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", sans-serif;
+  font-weight: 900;
+  color: #f7931a;
+  font-size: 20px;
+}
+
+.wpsf-box .wpsf-description {
+  margin: 0 0 18px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: #c5ccd6;
+}
+
+.wpsf-box .wpsf-description p:last-child { margin-bottom: 0; }
+
+.wpsf-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 160px;
+  padding: 12px 14px;
+  margin: 0 0 12px;
+  background: #0f1923;
+  border: 1px solid #2e3846;
+  border-radius: 8px;
+  color: #e8ecf0;
+  font-size: 15px;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.wpsf-form textarea::placeholder { color: #5a6a7e; }
+
+.wpsf-form textarea:focus {
+  outline: none;
+  border-color: rgba(247, 147, 26, 0.5);
+  box-shadow: 0 0 0 3px rgba(247, 147, 26, 0.1);
+}
+
+.wpsf-form .wpsf-honeypot {
+  display: none !important;
+  position: absolute;
+  left: -9999px;
+  height: 0;
+  width: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.wpsf-form button[type="submit"],
+.wpsf-form .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f7931a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 22px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.05s;
+  text-shadow: none;
+  box-shadow: none;
+}
+
+.wpsf-form button[type="submit"]::before {
+  content: "\f1d8"; /* fa-paper-plane */
+  font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", sans-serif;
+  font-weight: 900;
+}
+
+.wpsf-form button[type="submit"]:hover,
+.wpsf-form .button:hover {
+  background: #e08515;
+  color: #fff;
+}
+
+.wpsf-form button[type="submit"]:active {
+  transform: translateY(1px);
+}
+
+.wpsf-form button[type="submit"][disabled],
+.wpsf-form .button[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.wpsf-msg {
+  display: block;
+  margin-top: 12px;
+  font-size: 14px;
+  min-height: 20px;
+  color: #c5ccd6;
+}
+
+.wpsf-msg:not(:empty) {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(247, 147, 26, 0.08);
+  border: 1px solid rgba(247, 147, 26, 0.25);
+  color: #f7931a;
+}
+
+.wpsf-notice {
+  max-width: 720px;
+  margin: 2rem auto;
+  padding: 14px 18px;
+  background: #1e2b3c;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-left: 3px solid #f7931a;
+  border-radius: 8px;
+  color: #c5ccd6;
+  font-size: 15px;
+}
+
+@media (max-width: 600px) {
+  .wpsf-box {
+    margin: 1rem;
+    padding: 20px;
+    border-radius: 10px;
+  }
+  .wpsf-box .wpsf-title { font-size: 19px; }
+}
