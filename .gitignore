@@ -33,11 +33,9 @@ bcf-fonts/
 /dist/
 /build/
 
-# Theme/Plugin-Builds (dev artifacts, not production vendor/)
+# Theme/Plugin-Builds (dev artifacts, not production builds)
 themes/*/node_modules/
-themes/*/dist/
 plugins/*/node_modules/
-plugins/*/dist/
 
 # IDE/Env
 .vscode/
