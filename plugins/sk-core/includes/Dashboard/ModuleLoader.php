@@ -34,6 +34,7 @@ class ModuleLoader {
         new Modules\UserOnboarding();
         new Modules\LogoutModal();
         new Modules\SmtpConfig();
+        new Modules\AccountDeletion();
     }
 
     /**

@@ -612,6 +612,45 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
 
 </form>
 
+<!-- Account löschen -->
+<div class="sk-settings-section" style="margin-top:40px;border:1px solid rgba(220,53,69,0.3);border-radius:12px;">
+    <div class="sk-settings-section-title" style="color:#dc3545;">
+        <i class="fas fa-exclamation-triangle"></i> <?php esc_html_e( 'Gefahrenzone', 'sk-core' ); ?>
+    </div>
+    <div class="sk-form-group">
+        <p style="color:#8b949e;font-size:14px;margin-bottom:16px;">
+            <?php esc_html_e( 'Dein Account, alle Produkte und alle Daten werden unwiderruflich gelöscht. Dieser Vorgang kann nicht rückgängig gemacht werden.', 'sk-core' ); ?>
+        </p>
+        <button type="button" id="sk-delete-account-btn" class="sk-btn" style="background:#dc3545;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;">
+            <i class="fas fa-trash-alt"></i> <?php esc_html_e( 'Account endgültig löschen', 'sk-core' ); ?>
+        </button>
+    </div>
+</div>
+<script>
+jQuery(function($){
+    $('#sk-delete-account-btn').on('click', function(){
+        if (!confirm('<?php echo esc_js( __( 'Bist du sicher? Alle deine Daten, Produkte und dein Shop werden unwiderruflich gelöscht!', 'sk-core' ) ); ?>')) return;
+        if (!confirm('<?php echo esc_js( __( 'Letzte Warnung: Diese Aktion kann NICHT rückgängig gemacht werden. Wirklich löschen?', 'sk-core' ) ); ?>')) return;
+        var $btn = $(this);
+        $btn.prop('disabled', true).text('Wird gelöscht...');
+        $.post('<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', {
+            action: 'sk_delete_own_account',
+            _nonce: '<?php echo wp_create_nonce( 'sk_delete_account' ); ?>'
+        }, function(res) {
+            if (res.success) {
+                window.location.href = '<?php echo esc_url( home_url( '/' ) ); ?>';
+            } else {
+                alert(res.data && res.data.message ? res.data.message : 'Fehler beim Löschen.');
+                $btn.prop('disabled', false).html('<i class="fas fa-trash-alt"></i> Account endgültig löschen');
+            }
+        }).fail(function(){
+            alert('Netzwerkfehler.');
+            $btn.prop('disabled', false).html('<i class="fas fa-trash-alt"></i> Account endgültig löschen');
+        });
+    });
+});
+</script>
+
 <?php do_action( 'sk_settings_after_form', $current_user, $profile_info ); ?>
 
 <style>
