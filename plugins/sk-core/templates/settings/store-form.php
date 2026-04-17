@@ -613,11 +613,11 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
 </form>
 
 <!-- Account löschen -->
-<div class="sk-settings-section" style="margin-top:40px;border:1px solid rgba(220,53,69,0.3);border-radius:12px;">
+<div class="sk-settings-section" style="margin-top:40px;border:1px solid rgba(220,53,69,0.3);border-radius:12px;padding:20px;">
     <div class="sk-settings-section-title" style="color:#dc3545;">
         <i class="fas fa-exclamation-triangle"></i> <?php esc_html_e( 'Gefahrenzone', 'sk-core' ); ?>
     </div>
-    <div class="sk-form-group">
+    <div class="sk-form-group" style="padding:0;">
         <p style="color:#8b949e;font-size:14px;margin-bottom:16px;">
             <?php esc_html_e( 'Dein Account, alle Produkte und alle Daten werden unwiderruflich gelöscht. Dieser Vorgang kann nicht rückgängig gemacht werden.', 'sk-core' ); ?>
         </p>

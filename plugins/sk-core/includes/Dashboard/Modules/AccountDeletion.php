@@ -55,6 +55,17 @@ class AccountDeletion {
             wp_delete_post( $post_id, true );
         }
 
+        // Clean up Nostr identity data.
+        delete_user_meta( $user_id, 'nostr_public_key' );
+        delete_user_meta( $user_id, 'sk_nostr_private_key' );
+        delete_user_meta( $user_id, 'sk_nostr_identity_source' );
+        delete_user_meta( $user_id, '_sk_nostr_profile_event_id' );
+        delete_user_meta( $user_id, 'nostr_avatar' );
+        delete_user_meta( $user_id, 'nip05' );
+        delete_user_meta( $user_id, 'uac_linked_nostr_pubkey' );
+        delete_user_meta( $user_id, 'uac_nostr_sync_preference' );
+        delete_user_meta( $user_id, 'lnurl-auth-bjm-id' );
+
         // Log out the user before deleting.
         wp_logout();
 
