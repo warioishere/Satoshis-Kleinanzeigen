@@ -330,7 +330,38 @@ class Feedback {
 			wp_die();
 		}
 
+		$this->send_admin_notification( $post_id, $title, $message, $user_id, $ip );
+
 		echo wp_json_encode( [ 'ok' => true, 'msg' => 'Danke für dein Feedback!' ] );
 		wp_die();
+	}
+
+	private function send_admin_notification( int $post_id, string $title, string $message, int $user_id, string $ip ): void {
+		$to = get_option( 'admin_email' );
+		if ( ! $to ) {
+			return;
+		}
+
+		$site_name = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
+		$user      = $user_id ? get_userdata( $user_id ) : null;
+		$user_line = $user ? sprintf( '%s (#%d, %s)', $user->user_login, $user_id, $user->user_email ) : __( 'Gast (nicht eingeloggt)', 'sk-core' );
+		$edit_link = admin_url( 'admin.php?page=' . self::PAGE_SLUG . '&tab=entries' );
+
+		$subject = sprintf( '[%s] %s', $site_name, $title );
+		$body    = sprintf(
+			"%s\n\n%s\n\n---\n%s %s\n%s %s\n%s %s\n%s %s",
+			$title,
+			wp_strip_all_tags( $message ),
+			__( 'Benutzer:', 'sk-core' ),
+			$user_line,
+			__( 'IP:', 'sk-core' ),
+			$ip,
+			__( 'Zeit:', 'sk-core' ),
+			current_time( 'Y-m-d H:i:s' ),
+			__( 'Im Admin öffnen:', 'sk-core' ),
+			$edit_link
+		);
+
+		wp_mail( $to, $subject, $body );
 	}
 }
