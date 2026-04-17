@@ -12224,6 +12224,7 @@ body:has(.dvc-modal) .dkp-contact-icons {
 .sk-feed-like-btn.active { color: #f7931a; }
 .sk-feed-like-btn.active:hover { color: #ff9d2e; }
 .sk-feed-share-btn:hover { color: #56b6c2; }
+.sk-feed-share-btn.copied { color: #22c55e; background: rgba(34,197,94,0.1); }
 .sk-feed-report-btn:hover { color: #e06c75; }
 .sk-feed-report-btn.reported { color: #e06c75; cursor: default; }
 .sk-feed-card-actions .sk-zap-btn { font-size: 13px; padding: 4px 10px; }

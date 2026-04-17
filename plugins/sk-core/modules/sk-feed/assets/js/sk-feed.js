@@ -37,22 +37,40 @@
 
     // ── Share ────────────────────────────────────────────────────────────
 
+    function flashCopied($btn) {
+        var $icon = $btn.find('i');
+        var origClass = $icon.attr('class');
+        $btn.addClass('copied').attr('title', 'Link kopiert!');
+        $icon.attr('class', 'fas fa-check');
+        setTimeout(function () {
+            $btn.removeClass('copied').attr('title', 'Teilen');
+            $icon.attr('class', origClass);
+        }, 1600);
+    }
+
     $(document).on('click', '.sk-feed-share-btn', function (e) {
         e.preventDefault();
-        var url = $(this).data('url');
+        var $btn = $(this);
+        var url  = $btn.data('url');
+
         if (navigator.share) {
             navigator.share({ url: url }).catch(function () {});
-        } else if (navigator.clipboard) {
-            navigator.clipboard.writeText(url).then(function () {
-                skStoreToast ? skStoreToast('Link kopiert!', 'info') : alert('Link kopiert!');
-            });
-        } else {
-            // Fallback.
-            var $tmp = $('<input>').val(url).appendTo('body').select();
-            document.execCommand('copy');
-            $tmp.remove();
-            alert('Link kopiert!');
+            return;
         }
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(function () {
+                flashCopied($btn);
+            }).catch(function () {
+                window.prompt('Link kopieren:', url);
+            });
+            return;
+        }
+
+        // Fallback for older browsers.
+        var $tmp = $('<input>').val(url).appendTo('body').select();
+        try { document.execCommand('copy'); flashCopied($btn); } catch (_) { window.prompt('Link kopieren:', url); }
+        $tmp.remove();
     });
 
     // ── Report ───────────────────────────────────────────────────────────
