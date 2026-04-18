@@ -32,19 +32,15 @@ class Core {
     public function block_admin_access() {
         global $pagenow, $current_user;
 
-        // bail out if we are from WP Cli
         if ( defined( 'WP_CLI' ) ) {
             return;
         }
 
-        $no_access = sk_get_option( 'admin_access', 'sk_general', 'on' );
-        if ( OrderUtil::is_hpos_enabled() ) {
-            $no_access = 'on';
-        }
         $valid_pages = [ 'admin-ajax.php', 'admin-post.php', 'async-upload.php', 'media-upload.php' ];
         $user_role   = reset( $current_user->roles );
 
-        if ( ( 'on' === $no_access ) && ( ! in_array( $pagenow, $valid_pages, true ) ) && in_array( $user_role, [ 'seller', 'customer', 'vendor_staff' ], true ) ) {
+        if ( ! in_array( $pagenow, $valid_pages, true )
+             && in_array( $user_role, [ 'seller', 'customer', 'vendor_staff' ], true ) ) {
             wp_safe_redirect( home_url() );
             exit;
         }

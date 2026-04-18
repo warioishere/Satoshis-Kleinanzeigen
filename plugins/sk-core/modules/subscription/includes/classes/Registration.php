@@ -37,8 +37,6 @@ class Registration {
         add_filter( 'woocommerce_registration_redirect', array( $this, 'redirect_to_checkout' ), 99, 1 );
         add_filter( 'sk_customer_migration_required_fields', array( $this, 'add_subscription_to_sk_customer_migration_required_fields' ) );
         add_filter( 'sk_customer_migration_redirect', array( $this, 'redirect_after_migration' ) );
-        add_action( 'woocommerce_thankyou', array( $this, 'redirect_to_seller_setup_wizard_after_checkout' ) );
-        add_action( 'sk_seller_wizard_introduction', array( $this, 'make_vendor_has_seen_setup_wizard' ) );
     }
 
     /**
@@ -183,44 +181,6 @@ class Registration {
         return $url;
     }
 
-    /**
-     * Legacy setup-wizard redirect — Setup-Wizard wurde entfernt, no-op.
-     */
-    public function redirect_to_seller_setup_wizard_after_checkout( $order_id ) {
-        // Setup wizard was removed; SK uses its own onboarding flow.
-    }
-
-    /**
-     * Vendor has seen setup wizard
-     *
-     *
-     * @return void
-     */
-    public function make_vendor_has_seen_setup_wizard( $store ) {
-        $vendor_id = $store->store_id;
-
-        if ( ! $vendor_id ) {
-            return;
-        }
-
-        update_user_meta( $vendor_id, 'sk_vendor_seen_setup_wizard', true );
-    }
-
-    /**
-     * Check whether vendor has seen setup wizard or not
-     *
-     *
-     * @param int $vendor_id
-     *
-     * @return boolean
-     */
-    public function vendor_has_seen_setup_wizard( $vendor_id = null ) {
-        if ( empty( $vendor_id ) ) {
-            $vendor_id = sk_get_current_user_id();
-        }
-
-        return wc_string_to_bool( get_user_meta( $vendor_id, 'sk_vendor_seen_setup_wizard', true ) );
-    }
 }
 
 $dps_enable                 = Helper::is_subscription_module_enabled();

@@ -387,50 +387,6 @@ class Store extends Page {
         $product_display_card   = apply_filters( 'sk_vendor_settings_api_product_display_card', $product_display_card );
         array_push( $advanced_tab, ...$product_display_card );
 
-        $terms_and_conditions_card   = [];
-        $terms_and_conditions_card[] = [
-            'id'        => 'terms_and_conditions',
-            'title'     => __( 'Terms and Conditions', 'sk-core' ),
-            'desc'      => __( 'Define the rules of your store page by providing a detailed break down of the Terms and Conditions ', 'sk-core' ),
-            'info'      => [],
-            'icon'      => 'sk-icon-policy',
-            'type'      => 'card',
-            'parent_id' => 'store',
-            'tab'       => 'advanced',
-            'editable'  => false,
-        ];
-        $terms_and_conditions_card[] = [
-            'id'        => 'enable_tnc',
-            'title'     => __( 'Display Terms & Condition', 'sk-core' ),
-            'desc'      => __( 'Enable Store Terms & Condition', 'sk-core' ),
-            'icon'      => '',
-            'type'      => 'checkbox',
-            'default'   => 'yes',
-            'options'   => [
-                'on'  => __( 'On', 'sk-core' ),
-                'off' => __( 'Off', 'sk-core' ),
-            ],
-            'parent_id' => 'store',
-            'tab'       => 'advanced',
-            'card'      => 'terms_and_conditions',
-        ];
-        $terms_and_conditions_card[] = [
-            'id'          => 'sk_tnc_text',
-            'title'       => __( 'Terms & Condition', 'sk-core' ),
-            'desc'        => __( 'Store Terms & Condition', 'sk-core' ),
-            'placeholder' => __( 'Insert your store Terms & Conditions', 'sk-core' ),
-            'icon'        => '',
-            'type'        => 'textarea',
-            'default'     => '',
-            'parent_id'   => 'store',
-            'tab'         => 'advanced',
-            'card'        => 'terms_and_conditions',
-            'editing'     => true,
-        ];
-
-        $terms_and_conditions_card = apply_filters( 'sk_vendor_settings_api_terms_and_conditions_card', $terms_and_conditions_card );
-        array_push( $advanced_tab, ...$terms_and_conditions_card );
-
         $advanced_tab = apply_filters( 'sk_vendor_settings_api_advanced_tab', $advanced_tab );
         array_push( $settings, ...$advanced_tab );
 

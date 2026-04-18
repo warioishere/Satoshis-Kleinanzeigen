@@ -342,18 +342,6 @@ class Manager {
             $vendor->set_banner_id( $data['banner_id'] );
         }
 
-        // for backward compatibility we'll allow both `enable_tnc` and `toc_enabled` to set store trams and condition settings
-        if ( ( isset( $data['enable_tnc'] ) && sk_validate_boolean( $data['enable_tnc'] ) )
-             || ( isset( $data['toc_enabled'] ) && sk_validate_boolean( $data['toc_enabled'] ) ) ) {
-            $vendor->set_enable_tnc( 'on' );
-        } else {
-            $vendor->set_enable_tnc( 'off' );
-        }
-
-        if ( ! empty( $data['store_tnc'] ) ) {
-            $vendor->set_store_tnc( $data['store_tnc'] );
-        }
-
         if ( ! empty( $data['icon'] ) ) {
             $vendor->set_icon( $data['icon'] );
         }

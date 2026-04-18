@@ -145,8 +145,6 @@ class Vendor {
             'gravatar'              => $this->get_avatar(),
             'gravatar_id'           => $this->get_avatar_id(),
             'shop_url'              => $this->get_shop_url(),
-            'toc_enabled'           => $this->toc_enabled(),
-            'store_toc'             => $this->get_toc(),
             'featured'              => $this->is_featured(),
             'rating'                => $this->get_rating(),
             'enabled'               => $this->is_enabled(),
@@ -519,26 +517,6 @@ class Vendor {
     }
 
     /**
-     * Check if terms and conditions enabled
-     *
-     *
-     * @return boolean
-     */
-    public function toc_enabled() {
-        return 'on' === $this->get_info_part( 'enable_tnc' );
-    }
-
-    /**
-     * Get terms and conditions
-     *
-     *
-     * @return string
-     */
-    public function get_toc() {
-        return $this->get_info_part( 'store_tnc' );
-    }
-
-    /**
      * Get a vendor products
      *
      * @return object
@@ -868,27 +846,6 @@ class Vendor {
     | Setters
     |--------------------------------------------------------------------------
     */
-
-    /**
-     * Set enable tnc
-     *
-     * @param int value
-     */
-    public function set_enable_tnc( $value ) {
-        $this->set_prop( 'enable_tnc', wc_clean( $value ) );
-    }
-
-    /**
-     * Set store tnc
-     *
-     *
-     * @param string
-     *
-     * @return void
-     */
-    public function set_store_tnc( $value ) {
-        $this->set_prop( 'store_tnc', wc_clean( $value ) );
-    }
 
     /**
      * Set gravatar

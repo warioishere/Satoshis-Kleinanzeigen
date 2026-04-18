@@ -1159,14 +1159,6 @@ class StoreController extends WP_REST_Controller {
                 'description' => esc_html__( 'Banner ID.', 'sk-core' ),
                 'type'        => 'integer',
             ],
-            'enable_tnc'                => [
-                'description' => esc_html__( 'Enable terms and conditions.', 'sk-core' ),
-                'type'        => 'boolean',
-            ],
-            'store_tnc'                 => [
-                'description' => esc_html__( 'Store terms and conditions.', 'sk-core' ),
-                'type'        => 'string',
-            ],
             'icon'                      => [
                 'description' => esc_html__( 'Store icon.', 'sk-core' ),
                 'type'        => 'string',

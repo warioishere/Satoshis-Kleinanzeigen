@@ -23,7 +23,6 @@ class Rewrites {
         add_filter( 'woocommerce_get_query_vars', [ $this, 'resolve_wc_query_conflict' ] );
         add_filter( 'template_include', [ $this, 'store_template' ], 99 );
         add_filter( 'template_include', [ $this, 'product_edit_template' ], 99 );
-        add_filter( 'template_include', [ $this, 'store_toc_template' ], 99 );
         add_filter( 'query_vars', [ $this, 'register_query_var' ] );
         add_filter( 'woocommerce_get_breadcrumb', [ $this, 'store_page_breadcrumb' ] );
         add_filter( 'tiny_mce_before_init', [ $this, 'remove_h1_from_heading_in_edit_product_page' ] );
@@ -161,7 +160,6 @@ class Rewrites {
         $vars[] = $this->custom_store_url;
         $vars[] = 'edit';
         $vars[] = 'term_section';
-        $vars[] = 'toc';
 
         foreach ( $this->query_vars as $var ) {
             $vars[] = $var;
@@ -208,37 +206,6 @@ class Rewrites {
             }
 
             return sk_locate_template( 'store.php' );
-        }
-
-        return $template;
-    }
-
-    /**
-     * Returns the terms_and_conditions template
-     *
-     * @param string $template
-     *
-     *
-     * @return string
-     */
-    public function store_toc_template( $template ) {
-        if ( ! $this->is_woo_installed() ) {
-            return $template;
-        }
-
-        if ( get_query_var( 'toc' ) ) {
-            $store_name = get_query_var( $this->custom_store_url );
-
-            if ( ! empty( $store_name ) ) {
-                $seller = get_user_by( 'slug', $store_name );
-
-                //redirect to 404 if no seller found
-                if ( ! $seller ) {
-                    return get_404_template();
-                }
-
-                return sk_locate_template( 'store-toc.php' );
-            }
         }
 
         return $template;

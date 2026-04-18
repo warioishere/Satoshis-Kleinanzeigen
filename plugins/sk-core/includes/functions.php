@@ -1183,13 +1183,9 @@ function sk_get_store_info( $seller_id ) {
  */
 function sk_get_store_tabs( $store_id ) {
     $tabs = [
-        'products'             => [
+        'products' => [
             'title' => __( 'Inserate', 'sk-core' ),
             'url'   => sk_get_store_url( $store_id ),
-        ],
-        'terms_and_conditions' => [
-            'title' => __( 'Terms and Conditions', 'sk-core' ),
-            'url'   => sk_get_toc_url( $store_id ),
         ],
     ];
 
@@ -1759,15 +1755,8 @@ function sk_disable_admin_bar( $show_admin_bar ) {
 
     if ( $current_user->ID !== 0 ) {
         $role = reset( $current_user->roles );
-        $block_admin_access = sk_get_option( 'admin_access', 'sk_general', 'on' );
-        if ( OrderUtil::is_hpos_enabled() ) {
-            $block_admin_access = 'on';
-        }
-
-        if ( $block_admin_access === 'on' ) {
-            if ( in_array( $role, [ 'seller', 'customer', 'vendor_staff' ], true ) ) {
-                return false;
-            }
+        if ( in_array( $role, [ 'seller', 'customer', 'vendor_staff' ], true ) ) {
+            return false;
         }
     }
 
@@ -2339,29 +2328,6 @@ function sk_get_seller_short_address( $store_id, $line_break = true ) {
     }
 
     return apply_filters( 'sk_store_header_adress', $formatted_address, $store_address, $short_address );
-}
-
-/**
- * Get terms and conditions page
- *
- *
- * @param int $store_id
- *
- * @return string
- */
-function sk_get_toc_url( $store_id ) {
-    if ( ! $store_id ) {
-        return '';
-    }
-
-    $store_info = sk_get_store_info( $store_id );
-    $tnc_enable = sk_get_option( 'seller_enable_terms_and_conditions', 'sk_general', 'off' );
-
-    if ( ! ( isset( $store_info['enable_tnc'] ) && $store_info['enable_tnc'] === 'on' && $tnc_enable === 'on' ) ) {
-        return '';
-    }
-
-    return apply_filters( 'sk_get_toc_url', sk_get_store_url( $store_id, 'toc' ) );
 }
 
 /**
