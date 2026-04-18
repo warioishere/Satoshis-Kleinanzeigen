@@ -219,6 +219,10 @@ class Assets {
                 'src'     => SK_CORE_ASSETS . '/css/sk-admin-product-style.css',
                 'version' => self::asset_version( $dir . 'css/sk-admin-product-style.css' ),
             ],
+            'sk-notices'                 => [
+                'src'     => SK_CORE_ASSETS . '/css/notices.css',
+                'version' => self::asset_version( $dir . 'css/notices.css' ),
+            ],
         ];
 
         return $styles;
@@ -311,6 +315,24 @@ class Assets {
                 'src'     => $asset_url . '/js/vendor-address.js',
                 'deps'    => [ 'jquery', 'wc-address-i18n' ],
                 'version' => self::asset_version( $asset_path . 'js/vendor-address.js' ),
+            ],
+            'sk-notices-welcome'     => [
+                'src'     => $asset_url . '/js/notices/welcome-box.js',
+                'deps'    => [],
+                'version' => self::asset_version( $asset_path . 'js/notices/welcome-box.js' ),
+                'in_footer' => true,
+            ],
+            'sk-notices-subscription' => [
+                'src'     => $asset_url . '/js/notices/subscription-banner.js',
+                'deps'    => [],
+                'version' => self::asset_version( $asset_path . 'js/notices/subscription-banner.js' ),
+                'in_footer' => true,
+            ],
+            'sk-notices-verification' => [
+                'src'     => $asset_url . '/js/notices/verification-banner.js',
+                'deps'    => [],
+                'version' => self::asset_version( $asset_path . 'js/notices/verification-banner.js' ),
+                'in_footer' => true,
             ],
         ];
 
