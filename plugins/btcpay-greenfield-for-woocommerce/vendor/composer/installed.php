@@ -20,9 +20,9 @@
             'dev_requirement' => false,
         ),
         'btcpayserver/btcpayserver-greenfield-php' => array(
-            'pretty_version' => 'v2.8.1',
-            'version' => '2.8.1.0',
-            'reference' => '3118f9e4e04590f53b2560866238af463153b2cf',
+            'pretty_version' => 'v2.9.0',
+            'version' => '2.9.0.0',
+            'reference' => '60e6be57f9cd08dbe8f851d056358d1df9f07968',
             'type' => 'library',
             'install_path' => __DIR__ . '/../btcpayserver/btcpayserver-greenfield-php',
             'aliases' => array(),

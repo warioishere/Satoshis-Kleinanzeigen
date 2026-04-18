@@ -4,8 +4,8 @@ Donate link: https://yoa.st/1up
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
 Tags: SEO, XML sitemap, Content analysis, Readability, Schema
-Tested up to: 6.9
-Stable tag: 27.1.1
+Tested up to: 7.0
+Stable tag: 27.4
 Requires PHP: 7.4
 
 Improve your SEO with real-time feedback, schema, and clear guidance. Upgrade for AI tools, Google Docs integration, and 24/7 support, no hidden fees.
@@ -303,56 +303,46 @@ Your question has most likely been answered on our help center: [yoast.com/help/
 
 == Changelog ==
 
-= 27.1.1 =
+= 27.4 =
 
-Release date: 2026-03-03
+Release date: 2026-04-14
 
-#### Bugfixes
-
-* Fixes a bug where Schema aggregator endpoints were returning a fatal error when trying to access response pages other than the first one by using slash syntax.
-
-= 27.1 =
-
-Release date: 2026-03-03
-
-New: Introducing the Schema Aggregation feature. Futureproof your website for an agentic future. [Read the full release post here](https://yoa.st/55i).
+Yoast SEO 27.4 adds new tasks to the Task List, improves navigation within the editor, and fixes a bug where tasks were displaying in the wrong language. [Read the full release post here.](https://yoa.st/task-list)  
 
 #### Enhancements
 
-* Introduces the Schema aggregation feature. Thanks to Syde for helping us with testing it!
-* Introduces a more robust HTML processing and highlighting approach for the *transition words* assessment.
+* Adds a "Yoast" tab to the WordPress Plugins screen that groups all installed Yoast plugins when two or more are present. Requires WordPress 7.0+.
+* Enhances the task list with a task about customizing meta descriptions in recent content.
+* Enhances the task list with a task about deleting the "Sample Page".
+* Improves the UX of completing tasks that require users to go to specific part of the post editor, by redirecting them to the exact spot they need to be.
 
 #### Bugfixes
 
-* Fixes a bug where sentences containing transition words failed to be highlighted in _transition words_ assessment when they contained elements excluded from the analysis such as `<code>`.
-* Fixes a bug where Slovak two-part transition words weren't recognized when running the readability analysis.
+* Fixes a bug where alt text changes made via the inline image editor in How-to and FAQ blocks were not being reflected on the frontend. Props to [@param-chandarana](https://github.com/param-chandarana).
+* Fixes a bug where the task list copies were displayed in the site language instead of the user language.
 
-= 27.0 =
+= 27.3 =
 
-Release date: 2026-02-17
+Release date: 2026-03-31
 
-Yoast SEO 27.0 brings more enhancements and bugfixes. [Find more information about our software releases and updates here](https://yoa.st/releases).
+Yoast SEO 27.3 brings more enhancements and bugfixes. [Find more information about our software releases and updates here](https://yoa.st/releases).
 
 #### Enhancements
 
-* Introduces an `images` array attribute to FAQ and How-to blocks to allow for explicit image handling.
-* Integrates `html-react-parser` to improve HTML string handling within React components.
-* Migrates FAQ block question and answer fields from arrays to HTML strings to improve compatibility with WordPress components.
-* Migrates How-to block step name and text fields from arrays to HTML strings to improve compatibility with WordPress components.
-* Refines the design of the search appearance mode switcher.
+* Adds the highlighting feature to _keyphrase in subheadings_ assessment. Now users can highlight the headings that include the keyphrase or synonyms.
+* Introduces a more robust HTML processing approach for the _keyphrase in subheadings_ assessment.
 
 #### Bugfixes
 
-* Fixes a bug where the inline link icon was missing when editing a synced pattern in the Block Editor on WordPress 6.9.
-* Fixes a bug where the AI Optimize buttons remained active even when another button had been pressed.
-* Fixes a bug where the subheading distribution assessment threw an error when the content contained text without subheadings followed by a block that included a subheading (such as a Table of Contents block).
+* Fixes a bug where `Deprecated: strip_tags(): Passing null to parameter #1 ($string) of type string is deprecated` notices appeared on certain actions, like when activating the plugin, or saving a Yoast setting. Props to @sabernhardt.
+* Fixes a bug where the installation success redirect was incorrectly fired during AJAX, cron, REST API, or JSON requests, breaking integrations such as the Bluehost SSO.
+* Fixes a console error in the editor related to AI Generate feature that occurred when the “Enable SEO controls and assessments” option was disabled for a content type.
 
 #### Other
 
-* Updates the design of the `Generate 5 more` button and the preview background within the AI generator.
-* Modernizes plugin translation handling by removing obsolete `load_plugin_textdomain()` calls.
-* Restores the visibility of the suggestions title and the `Generate 5 more` button while suggestions are in the loading state.
-* Renames the Yoast SEO AI+ card on the plans page for better clarity.
+* Sets the _WordPress tested up to_ version to 7.0.
+* Improves security of format_json_encode() by removing JSON_UNESCAPED_SLASHES, which could allow a user to control tags in the schema JSON-LD output. Props to @rob006.
+* Updates the completion message and changes the call-to-action button text of the First-time configuration.
 
 = Earlier versions =
 For the changelog of earlier versions, please refer to [the changelog on yoast.com](https://yoa.st/yoast-seo-changelog).

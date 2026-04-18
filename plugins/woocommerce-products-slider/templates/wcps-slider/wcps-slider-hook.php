@@ -262,8 +262,10 @@ function wcps_slider_main_items($args)
 
 
     if ($on_sale == 'no') {
+if(function_exists('wc_get_product_ids_on_sale')){
         $wc_get_product_ids_on_sale = wc_get_product_ids_on_sale();
         $query_args['post__not_in'] = $wc_get_product_ids_on_sale;
+    }
     }
 
     if (!empty($catalog_visibility)) {

@@ -52,7 +52,6 @@ function wcps_layout_element_title_text($post_title, $args)
     $elementData = isset($args['elementData']) ? $args['elementData'] : array();
     $link_to = isset($elementData['link_to']) ? $elementData['link_to'] : '';
 
-    $product = wc_get_product($product_id);
 
 
     if ($link_to == 'product_link') {
@@ -61,9 +60,14 @@ function wcps_layout_element_title_text($post_title, $args)
         $post_title = "<a href='" . $permalink . "'>" . $post_title . "</a>";
     } elseif ($link_to == 'external_product_url') {
 
-        if ($product->is_type('external')) {
+if(function_exists('wc_get_product')){
+    $product = wc_get_product($product_id);
+ if ($product->is_type('external')) {
             $permalink = get_post_meta($product_id, '_product_url', true);
-        } else {
+        }
+}
+
+        else {
             $permalink = get_permalink($product_id);
         }
 
@@ -425,7 +429,6 @@ function wcps_layout_element_add_to_cart($args)
     $elementData = isset($args['elementData']) ? $args['elementData'] : array();
     //$wrapper_html = isset($elementData['cart_text']) ? $elementData['cart_text'] : '';
 
-    $product = wc_get_product($product_id);
 
     $cart_html = do_shortcode('[add_to_cart show_price="false" quantity="1" id="' . $product_id . '"]');
 

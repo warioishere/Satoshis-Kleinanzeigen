@@ -7,7 +7,7 @@ namespace Composer\Autoload;
 class ComposerStaticInitd67c0e7885d2ec83dba095402bff580b
 {
     public static $prefixLengthsPsr4 = array (
-        'B' => 
+        'B' =>
         array (
             'BTCPayServer\\WC\\' => 16,
             'BTCPayServer\\' => 13,
@@ -15,11 +15,11 @@ class ComposerStaticInitd67c0e7885d2ec83dba095402bff580b
     );
 
     public static $prefixDirsPsr4 = array (
-        'BTCPayServer\\WC\\' => 
+        'BTCPayServer\\WC\\' =>
         array (
             0 => __DIR__ . '/../..' . '/src',
         ),
-        'BTCPayServer\\' => 
+        'BTCPayServer\\' =>
         array (
             0 => __DIR__ . '/..' . '/btcpayserver/btcpayserver-greenfield-php/src',
         ),

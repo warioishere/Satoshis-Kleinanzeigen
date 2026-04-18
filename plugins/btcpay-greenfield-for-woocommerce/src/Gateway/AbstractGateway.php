@@ -188,6 +188,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway {
 		$refundAmount = PreciseNumber::parseString($amount);
 		$currency = $order->get_currency();
 		$originalCurrency = $order->get_currency();
+		$orignalPaymentMethod = $order->get_payment_method();
 
 		// Check if order has invoice id.
 		if (!$invoiceId = $order->get_meta('BTCPay_id')) {
@@ -195,16 +196,6 @@ abstract class AbstractGateway extends \WC_Payment_Gateway {
 			Logger::debug($errNoBtcpayId);
 			return new \WP_Error('1', $errNoBtcpayId);
 		}
-
-		// Make sure the refund amount is not greater than the invoice amount.
-		// This is done by WC and no need to do it here, refund is already saved at this stage so below won't work.
-		// Leaving it here for future reference.
-		/*if ($amount > $order->get_remaining_refund_amount()) {
-			$errAmount = __METHOD__ . ': the refund amount can not exceed the order amount, aborting. Remaining amount ' . $order->get_remaining_refund_amount();
-			Logger::debug($errAmount);
-			return new \WP_Error('1', $errAmount);
-		}
-		*/
 
 		// Create the payout on BTCPay Server.
 		// Handle Sats-mode.
@@ -216,14 +207,17 @@ abstract class AbstractGateway extends \WC_Payment_Gateway {
 
 		// Get payment methods.
 		$paymentMethods = $this->getPaymentMethods();
-		// Remove LNURL
-		if (in_array('BTC_LNURLPAY', $paymentMethods) || in_array('BTC_LNURL', $paymentMethods)) {
-			$paymentMethods = array_diff($paymentMethods, ['BTC_LNURLPAY', 'BTC_LNURL']);
-		}
+		// Remove unsupported payment methods for refunds.
+		$unsupportedPaymentMethods = ['BTC_LNURLPAY', 'BTC_LNURL', 'XMR_CHAIN'];
+		$paymentMethods = array_diff($paymentMethods, $unsupportedPaymentMethods);
 
 		// Refund name is limited for 50 chars, but we do not have description field available until php lib v3 is out.
 		$refundName = __('Refund of order ', 'btcpay-greenfield-for-woocommerce') . $order->get_order_number() . '; ' . $reason;
 		$refundName = substr($refundName, 0, 50);
+
+		// Log for debugging.
+		Logger::debug( 'Refund: Order payment method: ' . $orignalPaymentMethod );
+		Logger::debug( 'Refund: Available payment methods: ' . print_r($paymentMethods, true) );
 
 		// Create the payout.
 		try {
@@ -387,10 +381,28 @@ abstract class AbstractGateway extends \WC_Payment_Gateway {
 		// Load BTCPay modal JS.
 		wp_enqueue_script( 'btcpay_gf_modal_js', $this->apiHelper->url . '/modal/btcpay.js', [], BTCPAYSERVER_VERSION );
 
-		// Get page id of checkout page.
-		$checkoutPageId = wc_get_page_id('checkout');
 		// Check if the checkout page uses the new woocommerce blocks.
-		$isBlockCheckout = has_block( 'woocommerce/checkout' , $checkoutPageId);
+		$isBlockCheckout = false;
+
+		// 1. Try WooCommerce utility (handles block themes with DB-customized templates + page content).
+		if ( class_exists( '\Automattic\WooCommerce\Blocks\Utils\CartCheckoutUtils' )
+			&& method_exists( '\Automattic\WooCommerce\Blocks\Utils\CartCheckoutUtils', 'is_checkout_block_default' ) ) {
+			$isBlockCheckout = \Automattic\WooCommerce\Blocks\Utils\CartCheckoutUtils::is_checkout_block_default();
+		}
+
+		// 2. Fallback: directly check the checkout page content for the block.
+		if ( ! $isBlockCheckout ) {
+			$checkoutPageId = wc_get_page_id( 'checkout' );
+			$isBlockCheckout = $checkoutPageId && has_block( 'woocommerce/checkout', $checkoutPageId );
+		}
+
+		// 3. Block themes with WooCommerce Blocks always use block-based checkout via templates,
+		//    even if the checkout page content doesn't contain the block directly and the
+		//    template hasn't been customized (saved to DB). The WC utility misses this case.
+		if ( ! $isBlockCheckout && function_exists( 'wp_is_block_theme' ) && wp_is_block_theme()
+			&& class_exists( '\Automattic\WooCommerce\Blocks\Package' ) ) {
+			$isBlockCheckout = true;
+		}
 		if ($isBlockCheckout) {
 			$scriptName = 'btcpay_gf_modal_blocks_checkout';
 			$scriptFile = BTCPAYSERVER_PLUGIN_URL . 'assets/js/frontend/blocksModalCheckout.js';
@@ -400,10 +412,14 @@ abstract class AbstractGateway extends \WC_Payment_Gateway {
 		}
 
 		// Register modal script.
+		$scriptDeps = [ 'jquery', 'wp-data' ];
+		if ($isBlockCheckout) {
+			$scriptDeps[] = 'wc-blocks-data-store';
+		}
 		wp_register_script(
 			$scriptName,
 			$scriptFile,
-			[ 'jquery', 'wp-data' ],
+			$scriptDeps,
 			BTCPAYSERVER_VERSION,
 			true
 		);
@@ -422,6 +438,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway {
 			'textInvoiceInvalid' => _x( 'The invoice is invalid. Please try again, choose a different payment method or contact us if you paid but the payment did not confirm in time.', 'js', 'btcpay-greenfield-for-woocommerce' ),
 			'textModalClosed' => _x( 'Payment aborted by you. Please try again or choose a different payment method.', 'js', 'btcpay-greenfield-for-woocommerce' ),
 			'textProcessingError' => _x( 'Error processing checkout. Please try again or choose another payment option.', 'js', 'btcpay-greenfield-for-woocommerce' ),
+			'textProcessingButton' => _x( 'Processing…', 'js', 'btcpay-greenfield-for-woocommerce' ),
 		] );
 		// Add the registered modal blocks script to frontend.
 		wp_enqueue_script( $scriptName );
@@ -628,6 +645,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway {
 						sort($pmInvoice);
 						$pm = $this->getPaymentMethods();
 						sort($pm);
+						Logger::debug( 'validInvoiceExists: pmInvoice: ' . print_r($pmInvoice, true) . ' pm: ' . print_r($pm, true) . ' match: ' . ($pm === $pmInvoice ? 'yes' : 'no') );
 						if ($pm === $pmInvoice) {
 							return true;
 						}

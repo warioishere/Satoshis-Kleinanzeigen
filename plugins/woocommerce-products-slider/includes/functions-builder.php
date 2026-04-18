@@ -1,6 +1,8 @@
 <?php
 if (! defined('ABSPATH')) exit;  // if direct access
-add_action('wp_footer', 'wcps_builder_global_scripts', 999);
+
+
+add_action('wp_footer', 'wcps_builder_global_scripts');
 
 function wcps_builder_global_scripts()
 {
@@ -15,8 +17,12 @@ function wcps_builder_global_scripts()
     wp_register_style('WCPSBuilderCss', false);
     wp_enqueue_style('WCPSBuilderCss');
 
+    $sanitized_css = wp_strip_all_tags($WCPSBuilderCss);
 
-    wp_add_inline_style('WCPSBuilderCss', $WCPSBuilderCss);
+//var_dump($sanitized_css);
+
+
+    wp_add_inline_style('WCPSBuilderCss', $sanitized_css);
 }
 
 function generateLayoutsHTML_wcps($elements, $itemData)

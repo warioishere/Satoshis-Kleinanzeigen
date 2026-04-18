@@ -124,8 +124,9 @@ class WoocommerceProductsSliderRest
 			array(
 				'methods' => 'POST',
 				'callback' => array($this, 'get_posts'),
-				'permission_callback' => '__return_true',
-
+				'permission_callback' => function () {
+					return current_user_can('manage_options');
+				},
 			)
 		);
 
