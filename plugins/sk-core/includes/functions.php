@@ -2612,8 +2612,6 @@ function sk_get_all_caps() {
             'sk_view_overview_menu'       => __( 'View overview menu', 'sk-core' ),
             'sk_view_product_menu'        => __( 'View product menu', 'sk-core' ),
             'sk_view_order_menu'          => __( 'View order menu', 'sk-core' ),
-            'sk_view_coupon_menu'         => __( 'View coupon menu', 'sk-core' ),
-            'sk_view_report_menu'         => __( 'View report menu', 'sk-core' ),
             'sk_view_review_menu'         => __( 'View review menu', 'sk-core' ),
             'sk_view_store_settings_menu' => __( 'View store settings menu', 'sk-core' ),
             'sk_view_store_payment_menu'  => __( 'View payment settings menu', 'sk-core' ),

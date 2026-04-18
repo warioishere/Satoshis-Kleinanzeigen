@@ -1,10 +1,10 @@
 <?php
 /**
- * Dokan Dashboard Integration
+ * SK Auth Dashboard Integration
  *
- * Adds authentication linking functionality to the Dokan vendor dashboard.
+ * Adds authentication linking functionality to the SK vendor dashboard.
  */
-class UAC_Dokan_Dashboard extends \SK\Core\Dashboard\DashboardModule {
+class SK_Auth_Dashboard extends \SK\Core\Dashboard\DashboardModule {
 
     /**
      * @var UAC_Account_Linker

@@ -38,7 +38,7 @@ do_action('sk_dashboard_wrap_start');
         <?php
         // Get the Dokan Dashboard instance and render the page
         $account_linker = new UAC_Account_Linker();
-        $sk_dashboard = new UAC_Dokan_Dashboard($account_linker);
+        $sk_dashboard = new SK_Auth_Dashboard($account_linker);
         $sk_dashboard->render_auth_page();
         ?>
 

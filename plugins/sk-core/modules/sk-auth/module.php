@@ -130,9 +130,9 @@ final class Module {
         $nostr_integration = new \UAC_Nostr_Login_Integration( $account_linker );
 
         if ( class_exists( 'SK_Core' ) ) {
-            // UAC_Dokan_Dashboard extends DashboardModule — nav/template hooks
+            // SK_Auth_Dashboard extends DashboardModule — nav/template hooks
             // are registered by the Registry via its config() method.
-            $sk_dashboard = new \UAC_Dokan_Dashboard( $account_linker );
+            $sk_dashboard = new \SK_Auth_Dashboard( $account_linker );
 
             add_action( 'wp_ajax_uac_link_nostr', [ $sk_dashboard, 'ajax_link_nostr' ] );
             add_action( 'wp_ajax_uac_link_lnurl', [ $sk_dashboard, 'ajax_link_lnurl' ] );
