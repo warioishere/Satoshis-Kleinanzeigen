@@ -122,8 +122,9 @@ $gesuch_id  = (int) get_post_meta( $post_id, '_sk_feed_gesuch_id', true );
 		</a>
 
 		<?php
-		// Zap button (reuse sk-zaps if available).
-		if ( class_exists( 'SK\Modules\Zaps\ZapButton' ) ) {
+		// Zap button — only when sk_zaps module is actually active (class_exists
+		// alone lies: the PSR-4 autoloader finds the file on-disk regardless).
+		if ( sk_ext()->module->is_active( 'sk_zaps' ) && class_exists( 'SK\Modules\Zaps\ZapButton' ) ) {
 			$zap_data = \SK\Modules\Zaps\ZapButton::get_vendor_zap_data( $vendor_id );
 			if ( $zap_data ) {
 				\SK\Modules\Zaps\ZapButton::render_button( $zap_data, $post_id );

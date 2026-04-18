@@ -101,7 +101,8 @@ get_header();
 				</button>
 
 				<?php
-				if ( class_exists( 'SK\Modules\Zaps\ZapButton' ) ) {
+				// Only show Zap button when sk_zaps module is active.
+				if ( sk_ext()->module->is_active( 'sk_zaps' ) && class_exists( 'SK\Modules\Zaps\ZapButton' ) ) {
 					$zap_data = \SK\Modules\Zaps\ZapButton::get_vendor_zap_data( $vendor_id );
 					if ( $zap_data ) {
 						\SK\Modules\Zaps\ZapButton::render_button( $zap_data, $post_id );
