@@ -181,7 +181,6 @@ class Manager {
             'enable_tnc'              => ! empty( $data['enable_tnc'] ) ? $data['enable_tnc'] : 'off',
             'store_tnc'               => ! empty( $data['store_tnc'] ) ? $data['store_tnc'] : '',
             'show_min_order_discount' => ! empty( $data['show_min_order_discount'] ) ? $data['show_min_order_discount'] : 'no',
-            'store_seo'               => ! empty( $data['store_seo'] ) ? $data['store_seo'] : [],
         ], $data );
 
         $vendor = sk()->vendor->get( $vendor_id );

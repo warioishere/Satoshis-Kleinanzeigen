@@ -2617,7 +2617,6 @@ function sk_get_all_caps() {
             'sk_view_store_payment_menu'  => __( 'View payment settings menu', 'sk-core' ),
             'sk_view_store_shipping_menu' => __( 'View shipping settings menu', 'sk-core' ),
             'sk_view_store_social_menu'   => __( 'View social settings menu', 'sk-core' ),
-            'sk_view_store_seo_menu'      => __( 'View seo settings menu', 'sk-core' ),
         ],
     ];
 

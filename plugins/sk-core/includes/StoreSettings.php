@@ -113,20 +113,6 @@ class StoreSettings extends SkSettings {
             'template'   => [ $this, 'load_social_content' ],
         ] );
 
-        if ( sk_get_option( 'store_seo', 'sk_general', 'on' ) === 'on' ) {
-            DashboardRegistry::register_config( [
-                'slug'       => 'settings-seo',
-                'parent'     => 'settings',
-                'url_key'    => 'seo',
-                'title'      => __( 'Store SEO', 'sk' ),
-                'icon'       => '<i class="fas fa-globe"></i>',
-                'pos'        => 110,
-                'permission' => 'sk_view_store_seo_menu',
-                'heading'    => __( 'Store SEO', 'sk' ),
-                'template'   => [ $this, 'load_seo_content' ],
-            ] );
-        }
-
         // Regular (legacy) shipping — no sidebar entry, but the tab renders
         // when ?settings=regular-shipping. Registered as a hidden tab.
         if ( 'yes' === $enable_shipping && $disable_woo_shipping !== 'disabled' ) {
@@ -246,13 +232,6 @@ class StoreSettings extends SkSettings {
                 )
             );
         }
-    }
-
-    /**
-     * Load SEO Content — callable template for settings-seo tab.
-     */
-    public function load_seo_content( $query_vars = [] ) {
-        sk_get_template_part( 'settings/seo', '', array( 'pro' => true ) );
     }
 
     /**

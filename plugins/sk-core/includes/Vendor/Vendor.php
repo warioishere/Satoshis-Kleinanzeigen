@@ -235,7 +235,6 @@ class Vendor {
             'enable_tnc'              => 'off',
             'store_tnc'               => '',
             'show_min_order_discount' => 'no',
-            'store_seo'               => array(),
         );
 
         if ( ! $this->id ) {
