@@ -23,14 +23,20 @@ final class CatalogMode {
     }
 
     /**
-     * Typen die immer kaufbar bleiben: Abo-Pakete + Werbe-Boosts laufen direkt
+     * Platform-Produkte (Abo-Pakete + Werbe-Boosts-Basisproduct) laufen direkt
      * an Satoshis Kleinanzeigen via BTCPay — nicht Teil vom Katalog-Modus.
      */
     private static function is_platform_product( $product ): bool {
         if ( ! $product ) {
             return false;
         }
-        return in_array( $product->get_type(), [ 'product_pack', 'product_boost', 'product_advertising' ], true );
+
+        if ( 'product_pack' === $product->get_type() ) {
+            return true;
+        }
+
+        $adv_base_id = (int) get_option( 'sk_advertisement_product_id', 0 );
+        return $adv_base_id && (int) $product->get_id() === $adv_base_id;
     }
 
     public static function filter_purchasable( $purchasable, $product ) {
