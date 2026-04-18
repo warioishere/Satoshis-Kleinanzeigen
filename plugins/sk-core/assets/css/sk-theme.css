@@ -4485,74 +4485,9 @@ div.media-sidebar a.edit-attachment {
   margin: 0px;
   padding: 0px;
 }
-.sk-settings-content .sk-settings-area .sk-banner {
-  border: 4px dashed #d8d8d8;
-  margin: 0 auto 35px;
-  max-width: 850px;
-  text-align: center;
-  overflow: hidden;
-  position: relative;
-  min-height: 300px;
-}
-.sk-settings-content .sk-settings-area .sk-banner img {
-  max-width: 100%;
-}
-.sk-settings-content .sk-settings-area .sk-banner .sk-remove-banner-image {
-  position: absolute;
-  width: 100%;
-  height: 300px;
-  background: #000;
-  top: 0;
-  left: 0;
-  opacity: 0.7;
-  font-size: 100px;
-  color: red;
-  padding-top: 70px;
-  display: none;
-}
-.sk-settings-content .sk-settings-area .sk-banner:hover {
-  cursor: pointer;
-}
-.sk-settings-content .sk-settings-area .sk-banner:hover .sk-remove-banner-image {
-  display: block;
-}
-.sk-settings-content .sk-settings-area .sk-gravatar {
-  position: relative;
-}
-.sk-settings-content .sk-settings-area .sk-gravatar .sk-remove-gravatar-image {
-  position: absolute;
-  width: 80px;
-  height: 80px;
-  background: #000;
-  top: 0;
-  left: 0;
-  opacity: 0.7;
-  font-size: 70px;
-  text-align: center;
-  color: #f00;
-  padding-top: 5px;
-  display: none;
-  border-radius: 50%;
-}
-.sk-settings-content .sk-settings-area .sk-gravatar .gravatar-wrap .sk-gravatar-img {
-  border-radius: 50%;
-  width: 80px;
-}
-.sk-settings-content .sk-settings-area .sk-gravatar:hover .sk-remove-gravatar-image {
-  display: block;
-}
-.sk-settings-content .sk-settings-area .button-area {
-  margin-top: 35px;
-}
-.sk-settings-content .sk-settings-area .button-area i.fa-cloud-upload {
-  display: block;
-  font-size: 80px;
-  color: #dfdfdf;
-}
-.sk-settings-content .sk-settings-area .button-area .help-block {
-  font-size: 12px;
-  color: #b1b1b1;
-}
+/* Banner/Gravatar Dokan-era CSS removed — styling now lives centrally
+ * in .sk-settings-field--media rules (line ~8570+) which work with the
+ * sk_form_media_upload() helper output. */
 .sk-settings-content .sk-settings-area ul.sk-categories {
   list-style: none;
   padding: 0;
