@@ -239,6 +239,18 @@
                 tokenSeparators: [','],
                 placeholder: 'Tags auswählen',
                 width: '100%',
+                language: {
+                    inputTooShort: function (args) {
+                        var n = args.minimum - args.input.length;
+                        return 'Bitte ' + n + ' weitere ' + (n === 1 ? 'Zeichen' : 'Zeichen') + ' eingeben';
+                    },
+                    noResults:      function () { return 'Keine Ergebnisse gefunden'; },
+                    searching:      function () { return 'Suche…'; },
+                    loadingMore:    function () { return 'Lade mehr Ergebnisse…'; },
+                    errorLoading:   function () { return 'Ergebnisse konnten nicht geladen werden'; },
+                    removeAllItems: function () { return 'Alle Einträge entfernen'; },
+                    removeItem:     function () { return 'Eintrag entfernen'; }
+                },
                 ajax: {
                     url: ajaxurl,
                     dataType: 'json',
