@@ -707,17 +707,6 @@ class StoreController extends WP_REST_Controller {
 
         $is_authorized = $this->can_access_vendor_store( $store->get_id() );
 
-        if ( $is_authorized ) {
-            $dashboard    = sk_get_container()->get( 'dashboard' );
-            $methods_data = $dashboard->templates->settings->get_seller_payment_methods( $store->get_id() ) ?? [];
-
-            $data['bank_payment_required_fields'] = sk_bank_payment_required_fields();
-            $data['active_payment_methods']       = $methods_data['active_methods'] ?? [];
-            $data['connected_methods']            = $methods_data['connected_methods'] ?? [];
-            $data['disconnected_methods']         = $methods_data['disconnected_methods'] ?? [];
-            $data['fields_placeholders']          = sk_bank_payment_fields_placeholders();
-        }
-
         $restricted_fields = $this->get_restricted_fields_for_view( $store, $request );
 
         foreach ( $restricted_fields as $field ) {

@@ -26,7 +26,6 @@ class Settings {
         add_action( 'sk_settings_content_area_header', [ $this, 'render_settings_header' ], 10 );
         add_action( 'sk_settings_content_area_header', [ $this, 'render_settings_help' ], 15 );
         add_action( 'sk_settings_content', [ $this, 'render_settings_content' ], 10 );
-        add_filter( 'sk_payment_method_title', [ $this, 'get_method_frontend_title' ], 10, 2 );
     }
 
     /**
@@ -56,10 +55,6 @@ class Settings {
         if ( isset( $wp->query_vars['settings'] ) && $wp->query_vars['settings'] === 'store' ) {
             $heading          = __( 'Settings', 'sk-core' );
             $is_store_setting = true;
-        } elseif ( isset( $wp->query_vars['settings'] ) && 'payment' === substr( $wp->query_vars['settings'], 0, 7 ) ) {
-            $heading = __( 'Payment Method', 'sk-core' );
-            $slug    = str_replace( 'payment-manage-', '', $wp->query_vars['settings'] );
-            $heading = $this->get_payment_heading( $slug, $heading );
         } else {
             $heading = apply_filters( 'sk_dashboard_settings_heading_title', __( 'Settings', 'sk-core' ), $wp->query_vars['settings'] );
         }
@@ -82,10 +77,6 @@ class Settings {
         global $wp;
 
         $help_text = '';
-
-        if ( isset( $wp->query_vars['settings'] ) && $wp->query_vars['settings'] === 'payment' ) {
-            $help_text = __( 'These are the payment methods available for you. Please update your payment information below to receive your store payments seamlessly.', 'sk-core' );
-        }
 
         if ( $help_text = apply_filters( 'sk_dashboard_settings_helper_text', $help_text, $wp->query_vars['settings'] ) ) { // phpcs:ignore
             sk_get_template_part(
@@ -125,9 +116,6 @@ class Settings {
         // load store settings page content
         if ( 'store' === $wp->query_vars['settings'] ) {
             $this->load_store_content();
-            // load payment settings page content
-        } elseif ( 'payment' === substr( $wp->query_vars['settings'], 0, 7 ) ) {
-            $this->load_payment_content( substr( $wp->query_vars['settings'], 7 ) );
         }
 
         do_action( 'sk_render_settings_content', $wp->query_vars );
@@ -153,190 +141,6 @@ class Settings {
                 'default_avatar_url' => $default_avatar,
             ]
         );
-    }
-
-    /**
-     * Get sellers connected and not connected payment methods.
-     *
-     * @param $seller_id
-     *
-     * @param $active_payment_methods
-     *
-     * @return array
-     */
-    public function get_seller_payment_methods( $seller_id = '', $active_payment_methods = [] ): array {
-        if ( empty( $active_payment_methods ) ) {
-            $active_payment_methods = [];
-        }
-
-        // methods which are inactive in SK > Settings > Payment Options have an empty value so filter them out
-        $active_payment_methods = array_filter(
-            $active_payment_methods, function ( $value ) {
-				return ! empty( $value );
-			}
-        );
-
-        $payment_method_ids = array_keys( $active_payment_methods );
-
-        if ( empty( $seller_id ) ) {
-            $seller_id = sk_get_current_user_id();
-        }
-
-        $seller_connected_payment_method_ids = array_filter(
-            $payment_method_ids,
-            function ( $payment_method_id ) use ( $seller_id ) {
-                return $this->is_seller_connected( $payment_method_id, $seller_id );
-            }
-        );
-
-        $seller_disconnected_payment_method_ids = array_diff( $payment_method_ids, $seller_connected_payment_method_ids );
-        $seller_disconnected_payment_methods    = $this->get_payment_methods( $seller_disconnected_payment_method_ids );
-        $seller_connected_payment_methods       = $this->get_payment_methods( $seller_connected_payment_method_ids );
-
-        return [
-            'connected_methods'    => $seller_connected_payment_methods,
-            'disconnected_methods' => $seller_disconnected_payment_methods,
-            'active_methods'       => $active_payment_methods,
-        ];
-    }
-
-    /**
-     * Validate payment access and check active methods
-     *
-     *
-     * @param array $active_methods
-     *
-     * @return bool Returns true if validation passes, false otherwise
-     */
-    protected function validate_payment_access( $active_methods ) {
-        // Check staff permissions
-        if ( ! current_user_can( 'sk_view_store_payment_menu' ) ) {
-            sk_get_template_part(
-                'global/sk-error',
-                '',
-                [
-                    'deleted' => false,
-                    'message' => esc_html__( 'You have no permission to view this page', 'sk-core' ),
-                ]
-            );
-
-            return false;
-        }
-
-        // Check if payment methods are available
-        if ( empty( $active_methods ) ) {
-            sk_get_template_part(
-                'global/sk-error',
-                '',
-                [
-                    'deleted' => false,
-                    'message' => esc_html__( 'No payment method is available. Please contact site admin.', 'sk-core' ),
-                ]
-            );
-
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Load Payment Content
-     *
-     *
-     * @param string $slug_suffix
-     *
-     * @return void
-     */
-    public function load_payment_content( $slug_suffix ) {
-        $seller_id            = sk_get_current_user_id();
-        $data                 = $this->get_seller_payment_methods( $seller_id );
-        $connected_methods    = $data['connected_methods'];
-        $disconnected_methods = $data['disconnected_methods'];
-        $active_methods       = $data['active_methods'];
-
-        // Check permissions and validate payment methods
-        if ( ! $this->validate_payment_access( $active_methods ) ) {
-            return;
-        }
-
-        /*
-         * If we are requesting a single payment method page (to edit or for first time setup)
-         * then we have the corresponding payment method key in the url.
-         */
-        $method_key   = str_replace( '-manage-', '', $slug_suffix );
-        $is_edit_mode = false;
-
-        /*
-         * If payment method key has /edit suffix then we are trying to edit the method,
-         * otherwise we are doing a initial setup for that payment method.
-         */
-        if ( false !== stripos( $method_key, '-edit' ) ) {
-            $is_edit_mode = true;
-            $method_key   = str_replace( '-edit', '', $method_key ); // removing '/edit' suffix to get payment method key
-        }
-
-        $profile_info = get_user_meta( $seller_id, 'sk_profile_settings', true );
-
-        if ( $is_edit_mode && 'bank' === $method_key ) {
-            $profile_info['is_edit_mode'] = $is_edit_mode;
-        }
-
-        // Template arguments
-        $args = [
-            'current_user' => $seller_id,
-            'profile_info' => $profile_info,
-        ];
-
-        if ( empty( $method_key ) ) { // payment method list page arguments
-            $args = array_merge(
-                $args,
-                [
-                    'methods'        => $connected_methods,
-                    'unused_methods' => $disconnected_methods,
-                ]
-            );
-
-            // Show the payment method list template
-            sk_get_template_part( 'settings/payment', '', $args );
-
-            return;
-        }
-
-        // Get the single payment method for the $method_key
-        $method = [];
-        $args   = array_merge(
-            $args,
-            [
-                'method'     => $method,
-                'method_key' => $method_key,
-            ]
-        );
-
-        if ( ! in_array( $method_key, array_keys( $active_methods ), true ) || empty( $method ) || ! isset( $method['callback'] ) || ! is_callable( $method['callback'] ) ) {
-            sk_get_template_part(
-                'global/sk-error',
-                '',
-                [
-                    'deleted' => false,
-                    'message' => __( 'Invalid payment method. Please contact site admin', 'sk-core' ),
-                ]
-            );
-
-            return;
-        }
-
-        // todo: this connect message is coming from sk pro, need to move this to sk pro
-        if ( isset( $_GET['status'] ) && isset( $_GET['message'] ) ) { // phpcs:ignore
-            $connect_status = sanitize_text_field( wp_unslash( $_GET['status'] ) ); // phpcs:ignore
-            $status_message = wp_kses_post( wp_unslash( $_GET['message'] ) ); // phpcs:ignore
-
-            $args['connect_status'] = $connect_status;
-            $args['status_message'] = $status_message;
-        }
-
-        // Show the single payment method page
-        sk_get_template_part( 'settings/payment', 'manage', $args );
     }
 
     /**
@@ -383,17 +187,6 @@ class Settings {
                 $ajax_validate = $this->store_validate();
                 break;
 
-            case 'payment-form':
-                if ( ! current_user_can( 'sk_view_store_payment_menu' ) ) {
-                    wp_send_json_error( __( 'Pemission denied', 'sk-core' ) );
-                }
-
-                if ( ! wp_verify_nonce( sanitize_key( $_POST['_wpnonce'] ), 'sk_payment_settings_nonce' ) ) {
-                    wp_send_json_error( __( 'Are you cheating?', 'sk-core' ) );
-                }
-
-                $ajax_validate = apply_filters( 'sk_bank_payment_validation_error', $this->payment_validate() );
-                break;
             default:
                 $ajax_validate = new WP_Error( 'form_id_not_matched', __( 'Failed to process data, invalid submission', 'sk-core' ) );
         }
@@ -438,14 +231,6 @@ class Settings {
             }
         }
 
-        if ( ! empty( $_POST['setting_paypal_email'] ) ) {
-            $email = sanitize_email( wp_unslash( $_POST['setting_paypal_email'] ) );
-
-            if ( empty( $email ) ) {
-                $error->add( 'sk_email', __( 'Invalid email', 'sk-core' ) );
-            }
-        }
-
         if ( $error->get_error_codes() ) {
             return $error;
         }
@@ -483,79 +268,6 @@ class Settings {
         if ( isset( $_POST['setting_category'] ) ) {
             if ( ! is_array( $_POST['setting_category'] ) || ! count( $_POST['setting_category'] ) ) {
                 $error->add( 'sk_type', __( 'Store type required', 'sk-core' ) );
-            }
-        }
-
-        if ( ! empty( $_POST['setting_paypal_email'] ) ) {
-            $email = sanitize_email( wp_unslash( $_POST['setting_paypal_email'] ) );
-
-            if ( empty( $email ) ) {
-                $error->add( 'sk_email', __( 'Invalid email', 'sk-core' ) );
-            }
-        }
-
-        if ( $error->get_error_codes() ) {
-            return $error;
-        }
-
-        return true;
-    }
-
-    /**
-     * Validate payment settings
-     *
-     *
-     * @return bool|WP_Error
-     */
-    private function payment_validate() {
-        if ( ! isset( $_POST['sk_update_payment_settings'] ) ) {
-            return false;
-        }
-
-        if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['_wpnonce'] ), 'sk_payment_settings_nonce' ) ) {
-            wp_die( esc_attr__( 'Are you cheating?', 'sk-core' ) );
-        }
-
-        $error = new WP_Error();
-
-        if ( ! empty( $_POST['settings']['paypal'] ) && isset( $_POST['settings']['paypal']['email'] ) ) {
-            $email = sanitize_email( wp_unslash( $_POST['settings']['paypal']['email'] ) );
-
-            if ( isset( $_POST['settings']['paypal']['disconnect'] ) ) {
-                $_POST['settings']['paypal']['email'] = '';
-            } elseif ( empty( $email ) ) {
-                $error->add( 'sk_email', __( 'Invalid email', 'sk-core' ) );
-            }
-        }
-
-        if ( ! empty( $_POST['settings']['skrill'] ) && isset( $_POST['settings']['skrill']['email'] ) ) {
-            $email = sanitize_email( wp_unslash( $_POST['settings']['skrill']['email'] ) );
-
-            if ( isset( $_POST['settings']['skrill']['disconnect'] ) ) {
-                $_POST['settings']['skrill']['email'] = '';
-            } elseif ( empty( $email ) ) {
-                $error->add( 'sk_email', __( 'Invalid email', 'sk-core' ) );
-            }
-        }
-
-        $is_disconnect = isset( $_POST['settings']['bank']['disconnect'] );
-        if ( ! empty( $_POST['settings']['bank'] ) && ! $is_disconnect ) {
-            $payment_fields = sk_bank_payment_required_fields();
-            /**
-             * Here we are validating the bank payment required fields,
-             * if the payment field is required and the payment field from post data is given.
-             * And if the filed in account type and the given value is personal or business.
-             */
-            foreach ( $payment_fields as $key => $payment_field ) {
-                if ( ! empty( $payment_field ) && empty( $_POST['settings']['bank'][ $key ] ) ) {
-                    $error->add( 'sk_bank_' . $key, $payment_field );
-                } elseif ( ! empty( $payment_field ) && $key === 'ac_type' && ! in_array( $_POST['settings']['bank'][ $key ], [ 'personal', 'business' ], true ) ) {
-                    $error->add( 'sk_bank_ac_type', __( 'Invalid Account Type', 'sk-core' ) );
-                }
-            }
-
-            if ( empty( $_POST['settings']['bank']['declaration'] ) ) {
-                $error->add( 'sk_bank_declaration', __( 'You must attest that the bank account is yours.', 'sk-core' ) );
             }
         }
 
@@ -671,34 +383,6 @@ class Settings {
             if ( ! empty( $find_address ) ) {
                 update_user_meta( $store_id, 'sk_geo_address', $find_address );
             }
-        } elseif ( wp_verify_nonce( sanitize_key( $_POST['_wpnonce'] ), 'sk_payment_settings_nonce' ) ) {
-
-            //update payment settings info
-            $sk_settings = [
-                'payment' => $prev_sk_settings['payment'],
-            ];
-
-            if ( isset( $_POST['settings']['bank'] ) ) {
-                $bank = wc_clean( wp_unslash( $_POST['settings']['bank'] ) );
-
-                $sk_settings['payment']['bank'] = [
-                    'ac_name'        => $bank['ac_name'],
-                    'ac_number'      => $bank['ac_number'],
-                    'bank_name'      => $bank['bank_name'],
-                    'bank_addr'      => $bank['bank_addr'],
-                    'routing_number' => $bank['routing_number'],
-                    'iban'           => $bank['iban'],
-                    'swift'          => $bank['swift'],
-                    'ac_type'        => $bank['ac_type'],
-                    'declaration'    => isset( $bank['declaration'] ) ? $bank['declaration'] : '',
-                ];
-            }
-
-            if ( isset( $_POST['settings']['paypal']['email'] ) ) {
-                $sk_settings['payment']['paypal'] = [
-                    'email' => sanitize_email( wp_unslash( $_POST['settings']['paypal']['email'] ) ),
-                ];
-            }
         }
 
         $sk_settings = array_merge( $prev_sk_settings, $sk_settings );
@@ -742,150 +426,4 @@ class Settings {
         return apply_filters( 'sk_category', $sk_category );
     }
 
-    /**
-     * Get proper heading for payments of vendor dashboard payment settings
-     *
-     *
-     * @param string $slug
-     * @param string $heading
-     *
-     * @return string
-     */
-    private function get_payment_heading( $slug, $heading ) {
-        switch ( $slug ) {
-            case 'bank':
-            case 'bank-edit':
-                $heading = __( 'Bank Account Settings', 'sk-core' );
-                break;
-
-            case 'paypal':
-            case 'paypal-edit':
-                $heading = __( 'Paypal Settings', 'sk-core' );
-                break;
-        }
-
-        /**
-         * To allow new payment extension give their own heading
-         *
-         *
-         * @param string $heading previous heading
-         */
-        $heading = apply_filters( 'sk_payment_method_settings_title', $heading, $slug );
-
-        return $heading;
-    }
-
-    /**
-     * Check if a seller is connected to a payment method
-     *
-     *
-     * @param $payment_method_id
-     * @param $seller_id
-     *
-     * @return bool
-     */
-    public function is_seller_connected( $payment_method_id, $seller_id ) {
-        $is_connected     = false;
-        $store_settings   = get_user_meta( $seller_id, 'sk_profile_settings', true );
-        $payment_settings = ! isset( $store_settings['payment'] ) || ! isset( $store_settings['payment'][ $payment_method_id ] ) ? [] : $store_settings['payment'][ $payment_method_id ];
-        $required_fields  = []; // Holds the required fields that should be empty for connection
-
-        switch ( $payment_method_id ) {
-            case 'bank':
-                $required_fields = array_keys( sk_bank_payment_required_fields() );
-                break;
-
-            case 'paypal':
-                $required_fields = [ 'email' ];
-                break;
-        }
-
-        /**
-         * To allow modifying the required fields for a payment method.
-         *
-         *
-         * @param array  $required_fields
-         * @param string $payment_method_id
-         * @param int    $seller_id
-         */
-        $required_fields = apply_filters( 'sk_payment_settings_required_fields', $required_fields, $payment_method_id, $seller_id );
-
-        // Check all the required fields have values
-        if ( ! empty( $payment_settings ) && is_array( $payment_settings ) && ! empty( $required_fields ) ) {
-            $is_connected = true;
-
-            foreach ( $required_fields as $required_field ) {
-                if ( empty( $payment_settings[ $required_field ] ) ) {
-                    $is_connected = false;
-                    break;
-                } elseif ( 'email' === $required_field && ! is_email( $payment_settings[ $required_field ] ) ) {
-                    $is_connected = false;
-                    break;
-                }
-            }
-        }
-
-        /**
-         * Get if user with id $seller_id is connected to the payment method having $payment_method_id
-         *
-         *
-         * @param bool   $is_connected
-         * @param string $payment_method_id
-         * @param int    $seller_id
-         */
-        return apply_filters( 'sk_is_seller_connected_to_payment_method', $is_connected, $payment_method_id, $seller_id );
-    }
-
-    /**
-     * Get payment method details from the method keys
-     *
-     *
-     * @param $method_keys
-     *
-     * @return array
-     */
-    private function get_payment_methods( $method_keys ) {
-        $methods  = [];
-        $gateways = WC()->payment_gateways->payment_gateways();
-
-        foreach ( $method_keys as $method_key ) {
-            $cur_method = [];
-
-            if ( ! empty( $cur_method ) ) {
-                //remove the 'SK' prefix from method title
-                $method_title = $cur_method['title'];
-                if ( 0 === stripos( $method_title, 'SK ' ) ) {
-                    $method_title        = substr( $method_title, 6 );
-                    $cur_method['title'] = $method_title;
-                }
-
-                $cur_method['description'] = '';
-                if ( isset( $gateways[ $method_key ] ) ) {
-                    $cur_method['description'] = $gateways[ $method_key ]->get_description();
-                } elseif ( $method_key === 'bank' ) {
-                    $cur_method['description'] = $gateways['bacs']->get_description();
-                } elseif ( $method_key === 'paypal' ) {
-                    $cur_method['description'] = $gateways['bacs']->get_description();
-                }
-
-                $methods[ $method_key ] = $cur_method;
-            }
-        }
-
-        return apply_filters( 'sk_vendor_payment_methods', $methods, $gateways );
-    }
-
-    /**
-     * Get Method title to show in frontend
-     *
-     *
-     * @return string
-     */
-    public function get_method_frontend_title( $title, $method ) {
-        if ( 0 === stripos( $title, 'SK ' ) ) {
-            return substr( $title, 6 );
-        }
-
-        return $title;
-    }
 }
