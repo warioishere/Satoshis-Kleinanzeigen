@@ -1318,9 +1318,7 @@ class Vendor {
      * @return string
      */
     public function get_profile_url(): string {
-        $is_pro   = sk()->is_pro_exists();
-        $url_path = $is_pro ? 'admin.php?page=sk#/vendors/' : 'user-edit.php?user_id=';
-
-        return apply_filters( 'sk_vendor_profile_url', admin_url( $url_path . $this->get_id() ), $is_pro );
+        $url = admin_url( 'user-edit.php?user_id=' . $this->get_id() );
+        return apply_filters( 'sk_vendor_profile_url', $url, sk()->is_pro_exists() );
     }
 }

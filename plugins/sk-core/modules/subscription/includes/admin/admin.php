@@ -19,8 +19,6 @@ class DPS_Admin {
         add_action( 'woocommerce_product_options_general_product_data', [ __CLASS__, 'general_fields' ] );
         add_action( 'woocommerce_process_product_meta', [ __CLASS__, 'general_fields_save' ], 99 );
 
-        add_action( 'sk_admin_menu', [ __CLASS__, 'add_submenu_in_sk_dashboard' ], 15 );
-
         // settings section
         add_filter( 'sk_settings_sections', [ __CLASS__, 'add_new_section_admin_panael' ] );
         add_filter( 'sk_settings_fields', [ __CLASS__, 'add_new_setting_field_admin_panael' ], 12, 1 );
@@ -871,23 +869,6 @@ class DPS_Admin {
         }
 
         return $settings_fields;
-    }
-
-    /**
-     * Add submenu page in sk Dashboard
-     */
-    public static function add_submenu_in_sk_dashboard( $capability ) {
-        if ( ! Helper::is_subscription_module_enabled() ) {
-            return;
-        }
-
-        global $submenu;
-
-        $slug = 'sk';
-
-        if ( current_user_can( 'manage_options' ) ) {
-            $submenu[ $slug ][] = array( __( 'Subscriptions', 'sk' ), $capability, 'admin.php?page=' . $slug . '#/subscriptions' );
-        }
     }
 
     /**

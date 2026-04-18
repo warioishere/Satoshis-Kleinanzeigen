@@ -20,7 +20,6 @@ class ModuleLoader {
 
         new Modules\Performance();
         new Modules\Notices();
-        new Modules\TranslationFix();
         new Modules\AboPicture();
         new Modules\Merkliste();
         new Modules\Gesuche();

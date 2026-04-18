@@ -12,3 +12,17 @@
 #welcome-box h2 { margin-top: 0; }
 #welcome-box a { color: #F7931A; }
 #welcome-box a.feedback-link { text-decoration: underline; }
+
+/* Subscription pack thumbnails (AboPicture module). */
+.dst-sub-thumb {
+    margin: 8px 0 12px;
+    text-align: center;
+    width: 100%;
+}
+.dst-sub-thumb img {
+    display: inline-block;
+    margin: 0 auto;
+    max-height: 140px;
+    width: auto;
+    border-radius: 8px;
+}
