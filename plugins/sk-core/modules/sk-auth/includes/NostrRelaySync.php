@@ -74,10 +74,10 @@ class NostrRelaySync {
 
                     $kind = (int) ( $event['kind'] ?? 0 );
 
+                    // Kind 1 notes sind absichtlich NICHT hier: Nostr → SK ist
+                    // Einbahnstraße. Nur SK → Nostr (via Feed-Post-Publish).
                     if ( 0 === $kind ) {
                         self::handle_profile_update( $user_id, $event );
-                    } elseif ( 1 === $kind ) {
-                        self::handle_note( $user_id, $event );
                     } elseif ( 9735 === $kind ) {
                         self::handle_zap_receipt( $user_id, $event );
                     }
@@ -91,7 +91,9 @@ class NostrRelaySync {
     }
 
     /**
-     * Fetch Kind 0 + Kind 9735 events from a relay via WebSocket.
+     * Fetch Kind 0 profile + Kind 9735 zap-receipt events from a relay.
+     * Kind 1 notes werden absichtlich nicht abgefragt — wir syncen nur
+     * Profil-Updates und Zap-Empfänge, keine Timeline-Inhalte.
      */
     private static function fetch_events( string $relay_url, array $pubkeys, int $since ): array {
         $context = stream_context_create( [
@@ -109,7 +111,7 @@ class NostrRelaySync {
                 $sub_id,
                 [
                     'authors' => $pubkeys,
-                    'kinds'   => [ 0, 1 ],
+                    'kinds'   => [ 0 ],
                     'since'   => $since,
                 ],
             ] ) );
@@ -283,90 +285,6 @@ class NostrRelaySync {
         if ( $updated ) {
             error_log( sprintf( '[NostrRelaySync] Profile updated for user %d from Kind 0 event', $user_id ) );
         }
-    }
-
-    /**
-     * Handle Kind 1 Note — import as community feed post.
-     *
-     * Only imports notes that weren't originally published from SK
-     * (to avoid duplicates from our own SK → Nostr publishing).
-     */
-    private static function handle_note( int $user_id, array $event ) {
-        $event_id = $event['id'] ?? '';
-        $content  = $event['content'] ?? '';
-
-        if ( empty( $content ) || empty( $event_id ) ) {
-            return;
-        }
-
-        // Skip if this event was published by SK (we store event_id in post meta).
-        if ( ! empty( $event_id ) ) {
-            global $wpdb;
-            $exists = $wpdb->get_var( $wpdb->prepare(
-                "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = '_sk_nostr_event_id' AND meta_value = %s",
-                $event_id
-            ) );
-            if ( $exists ) {
-                return;
-            }
-        }
-
-        // Skip replies (have 'e' tag referencing another event).
-        foreach ( $event['tags'] ?? [] as $tag ) {
-            if ( 'e' === ( $tag[0] ?? '' ) ) {
-                return;
-            }
-        }
-
-        // Check if user is a seller.
-        if ( ! function_exists( 'sk_is_user_seller' ) || ! sk_is_user_seller( $user_id ) ) {
-            return;
-        }
-
-        // Check post type exists.
-        if ( ! post_type_exists( 'sk_vendor_post' ) ) {
-            return;
-        }
-
-        // Sanitize content — strip any Nostr-specific formatting but keep text.
-        $content = sanitize_textarea_field( $content );
-        if ( mb_strlen( $content ) > 2000 ) {
-            $content = mb_substr( $content, 0, 2000 );
-        }
-
-        $post_id = wp_insert_post( [
-            'post_type'    => 'sk_vendor_post',
-            'post_status'  => 'publish',
-            'post_content' => wp_kses_post( $content ),
-            'post_author'  => $user_id,
-            'post_date'    => gmdate( 'Y-m-d H:i:s', $event['created_at'] ?? time() ),
-        ], true );
-
-        if ( is_wp_error( $post_id ) ) {
-            return;
-        }
-
-        update_post_meta( $post_id, '_sk_feed_type', 'nostr_import' );
-        update_post_meta( $post_id, '_sk_nostr_event_id', $event_id );
-
-        // Handle image URLs in content (Nostr clients often append image URLs).
-        $image_url = '';
-        foreach ( $event['tags'] ?? [] as $tag ) {
-            if ( 'image' === ( $tag[0] ?? '' ) || 'url' === ( $tag[0] ?? '' ) ) {
-                $image_url = esc_url_raw( $tag[1] ?? '' );
-                break;
-            }
-        }
-        // Also check for image URL at end of content.
-        if ( empty( $image_url ) && preg_match( '/https?:\/\/\S+\.(jpg|jpeg|png|gif|webp)/i', $content, $m ) ) {
-            $image_url = esc_url_raw( $m[0] );
-        }
-
-        if ( $image_url ) {
-            update_post_meta( $post_id, '_sk_feed_external_image', $image_url );
-        }
-
-        error_log( sprintf( '[NostrRelaySync] Imported Kind 1 note from user %d as feed post %d', $user_id, $post_id ) );
     }
 
     /**
