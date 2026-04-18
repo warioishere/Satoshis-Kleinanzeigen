@@ -331,13 +331,6 @@ class Settings {
                     'description'   => __( 'Configure your vendor store settings and setup your store policy for vendor.', 'sk-core' ),
                     'content_class' => 'sub-section-styles',
                 ],
-                'seller_enable_terms_and_conditions' => [
-                    'name'    => 'seller_enable_terms_and_conditions',
-                    'label'   => __( 'Store Terms and Conditions', 'sk-core' ),
-                    'desc'    => __( 'Enable terms and conditions for vendor stores', 'sk-core' ),
-                    'type'    => 'switcher',
-                    'default' => 'off',
-                ],
                 'store_products_per_page'            => [
                     'name'    => 'store_products_per_page',
                     'label'   => __( 'Store Products Per Page', 'sk-core' ),

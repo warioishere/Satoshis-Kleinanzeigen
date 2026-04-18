@@ -232,8 +232,6 @@ class Vendor {
             'banner'                  => 0,
             'icon'                    => 0,
             'gravatar'                => 0,
-            'enable_tnc'              => 'off',
-            'store_tnc'               => '',
             'show_min_order_discount' => 'no',
         );
 

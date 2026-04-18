@@ -220,10 +220,9 @@ class StoreListsFilter {
      * @return void
      */
     public function get_filtered_stores( $query ) {
-        $is_open = ! empty( $query->query_vars['open_now'] ) && 'yes' === $query->query_vars['open_now'] ? true : false;
-        $rating  = ! empty( $query->query_vars['rating'] ) ? $query->query_vars['rating'] : 0;
+        $rating = ! empty( $query->query_vars['rating'] ) ? $query->query_vars['rating'] : 0;
 
-        if ( ! $is_open && empty( $rating ) ) {
+        if ( empty( $rating ) ) {
             return $query;
         }
 
@@ -251,11 +250,6 @@ class StoreListsFilter {
         $store_to_exclude = [];
 
         foreach ( $all_stores as $store ) {
-            if ( $is_open && ! sk_is_store_open( $store ) ) {
-                array_push( $store_to_exclude, $store );
-                continue;
-            }
-
             if ( $rating ) {
                 $vendor         = sk()->vendor->get( $store );
                 $vendor_ratings = $vendor->get_rating();

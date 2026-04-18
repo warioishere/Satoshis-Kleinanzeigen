@@ -340,8 +340,6 @@ class Settings {
                 'phone'                    => isset( $_POST['setting_phone'] ) ? sk_sanitize_phone_number( wp_unslash( $_POST['setting_phone'] ) ) : 'no',
                 'show_email'               => isset( $_POST['setting_show_email'] ) ? sanitize_text_field( wp_unslash( $_POST['setting_show_email'] ) ) : 'no',
                 'gravatar'                 => isset( $_POST['sk_gravatar'] ) ? absint( $_POST['sk_gravatar'] ) : 0,
-                'enable_tnc'               => isset( $_POST['sk_store_tnc_enable'] ) && 'on' === sanitize_text_field( wp_unslash( $_POST['sk_store_tnc_enable'] ) ) ? 'on' : 'off',
-                'store_tnc'                => isset( $_POST['sk_store_tnc'] ) ? wp_kses_post( wp_unslash( $_POST['sk_store_tnc'] ) ) : '',
                 'vendor_biography'     => isset( $_POST['vendor_biography'] ) ? wp_kses_post( wp_unslash( $_POST['vendor_biography'] ) ) : ( $prev_sk_settings['vendor_biography'] ?? '' ),
                 'telegram'             => isset( $_POST['telegram'] ) ? sanitize_text_field( wp_unslash( $_POST['telegram'] ) ) : ( $prev_sk_settings['telegram'] ?? '' ),
                 'show_telegram'        => isset( $_POST['show_telegram'] ) ? '1' : '',

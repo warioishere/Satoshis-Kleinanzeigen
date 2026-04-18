@@ -12,8 +12,6 @@
  *   4. Biografie
  *   5. Katalog-Modus (conditional)
  *   6. Store-Link (slug)
- *   7. Öffnungszeiten (conditional)
- *   8. AGB (conditional)
  */
 
 $current_user_obj = get_userdata( $current_user );
@@ -32,13 +30,9 @@ $address_state   = $profile_info['address']['state']    ?? '';
 
 $map_location = $profile_info['location']     ?? '';
 $map_address  = $profile_info['find_address'] ?? '';
-$enable_tnc   = $profile_info['enable_tnc']   ?? '';
-$store_tnc    = $profile_info['store_tnc']    ?? '';
 
 $banner_width  = sk_get_vendor_store_banner_width();
 $banner_height = sk_get_vendor_store_banner_height();
-
-$tnc_enable = sk_get_option( 'seller_enable_terms_and_conditions', 'sk_general', 'off' );
 
 /* --- Contact details variables --- */
 if ( isset( $_POST['setting_email'] ) ) {
@@ -582,27 +576,6 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
     <?php /* Extension points for additional sections */ ?>
     <?php do_action( 'sk_settings_after_store_more_products', $current_user, $profile_info ); ?>
     <?php do_action( 'sk_settings_form_bottom', $current_user, $profile_info ); ?>
-
-    <?php if ( $tnc_enable === 'on' ) : ?>
-    <div class="sk-settings-section">
-        <div class="sk-settings-section-title">
-            <i class="fas fa-file-contract"></i> <?php esc_html_e( 'AGB', 'sk-core' ); ?>
-        </div>
-        <div class="sk-settings-field">
-            <div class="sk-settings-label"><?php esc_html_e( 'AGB anzeigen', 'sk-core' ); ?></div>
-            <div class="sk-settings-input">
-                <label class="sk-settings-check-row">
-                    <input type="checkbox" id="sk_store_tnc_enable" value="on" name="sk_store_tnc_enable"
-                           <?php echo $enable_tnc === 'on' ? 'checked' : ''; ?>>
-                    <?php esc_html_e( 'AGB auf Shop-Seite anzeigen', 'sk-core' ); ?>
-                </label>
-                <div id="sk_tnc_text" style="margin-top:12px;">
-                    <textarea name="sk_store_tnc" id="sk_store_tnc" rows="6" class="sk-form-control" style="width:100%;background:#1f2732;border:1px solid #384355;color:#e8ecf0;border-radius:6px;padding:8px 12px;font-size:15px;resize:vertical;"><?php echo esc_textarea( $store_tnc ); ?></textarea>
-                </div>
-            </div>
-        </div>
-    </div>
-    <?php endif; ?>
 
     <!-- Submit -->
     <div class="sk-settings-actions">
