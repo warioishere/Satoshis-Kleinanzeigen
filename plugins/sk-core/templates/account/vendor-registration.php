@@ -71,15 +71,6 @@ $custom_store_url = sk_get_option( 'custom_store_url', 'sk_general', 'store' );
 
     <?php
 
-    /**
-     * Store Address Fields
-     */
-
-    if ( 'on' === sk_get_option( 'enabled_address_on_reg', 'sk_general', 'off' ) ) {
-        sk_seller_address_fields( false, true );
-    }
-    /**
-     */
     do_action( 'sk_seller_registration_after_shopurl_field', [] );
     ?>
 

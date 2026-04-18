@@ -2244,58 +2244,6 @@ function sk_get_social_profile_fields() {
 }
 
 /**
- * Generate Address fields form for seller
- *
- *
- * @param bool $verified verified
- * @param bool $required required
- *
- * @return void
- */
-function sk_seller_address_fields( $verified = false, $required = false ) {
-    $disabled = $verified ? 'disabled' : '';
-
-    /**
-     * Filter the seller Address fields
-     *
-     *
-     * @param array $sk_seller_address
-     */
-    $seller_address_fields = apply_filters(
-        'sk_seller_address_fields', [
-            'street_1' => [
-                'required' => $required ? 1 : 0,
-            ],
-            'street_2' => [
-                'required' => 0,
-            ],
-            'city'     => [
-                'required' => $required ? 1 : 0,
-            ],
-            'zip'      => [
-                'required' => $required ? 1 : 0,
-            ],
-            'country'  => [
-                'required' => 1,
-            ],
-            'state'    => [
-                'required' => 0,
-            ],
-        ]
-    );
-
-    $profile_info = sk_get_store_info( sk_get_current_user_id() );
-
-    sk_get_template_part(
-        'settings/address-form', '', [
-            'disabled'              => $disabled,
-            'seller_address_fields' => $seller_address_fields,
-            'profile_info'          => $profile_info,
-        ]
-    );
-}
-
-/**
  * Generate Address string | array for given seller id or current user
  *
  *

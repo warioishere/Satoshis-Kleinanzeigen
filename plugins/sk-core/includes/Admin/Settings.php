@@ -345,13 +345,6 @@ class Settings {
                     'type'    => 'number',
                     'default' => '12',
                 ],
-                'enabled_address_on_reg'             => [
-                    'name'    => 'enabled_address_on_reg',
-                    'label'   => __( 'Enable Address Fields', 'sk-core' ),
-                    'desc'    => __( 'Add Address Fields on the Vendor Registration form', 'sk-core' ),
-                    'type'    => 'switcher',
-                    'default' => 'off',
-                ],
             ]
         );
 
