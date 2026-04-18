@@ -155,6 +155,9 @@ use SK\Modules\Subscription\Helper;
 
                     <div class="pack_content">
                         <h2><?php echo $sub_pack->get_package_title(); ?></h2>
+                        <?php if ( has_post_thumbnail() ) : ?>
+                            <div class="dst-sub-thumb"><?php the_post_thumbnail( 'medium', [ 'loading' => 'lazy' ] ); ?></div>
+                        <?php endif; ?>
                         <?php the_content(); ?>
 
                         <div class="pack_data_option">

@@ -248,6 +248,9 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
 
                             <div class="pack_content">
                                 <h2><?php echo esc_html( $sub_pack->get_package_title() ); ?></h2>
+                                <?php if ( has_post_thumbnail() ) : ?>
+                                    <div class="dst-sub-thumb"><?php the_post_thumbnail( 'medium', [ 'loading' => 'lazy' ] ); ?></div>
+                                <?php endif; ?>
 
                                 <?php
                                 $short_desc = wp_strip_all_tags( get_the_excerpt() );
