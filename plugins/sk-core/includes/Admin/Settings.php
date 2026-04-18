@@ -412,6 +412,30 @@ class Settings {
                     'type'    => 'switcher',
                     'default' => 'off',
                 ],
+                'catalog_mode_settings' => [
+                    'name'          => 'catalog_mode_settings',
+                    'label'         => __( 'Produkt Katalog-Modus', 'sk-core' ),
+                    'type'          => 'sub_section',
+                    'description'   => __( 'Versteckt "In den Warenkorb" und optional den Preis auf allen Produkten plattformweit.', 'sk-core' ),
+                    'content_class' => 'sub-section-styles',
+                ],
+                'catalog_mode_hide_add_to_cart_button' => [
+                    'name'    => 'catalog_mode_hide_add_to_cart_button',
+                    'label'   => __( '"In den Warenkorb" ausblenden', 'sk-core' ),
+                    'desc'    => __( 'Entfernt den In-den-Warenkorb-Button auf allen Shop/Produktseiten.', 'sk-core' ),
+                    'type'    => 'switcher',
+                    'default' => 'off',
+                ],
+                'catalog_mode_hide_product_price'      => [
+                    'name'    => 'catalog_mode_hide_product_price',
+                    'label'   => __( 'Preis ausblenden', 'sk-core' ),
+                    'desc'    => __( 'Versteckt zusätzlich den Preis auf allen Produkten.', 'sk-core' ),
+                    'type'    => 'switcher',
+                    'default' => 'off',
+                    'show_if' => [
+                        'sk_selling.catalog_mode_hide_add_to_cart_button' => [ 'equal' => 'on' ],
+                    ],
+                ],
             ]
         );
 
