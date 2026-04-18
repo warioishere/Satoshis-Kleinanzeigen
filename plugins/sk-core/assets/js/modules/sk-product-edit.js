@@ -22,6 +22,10 @@
         },
 
         /* ── Featured Image ── */
+        // PHP renders the cover image via get_the_post_thumbnail() so the <img>
+        // has WC's own classes — we target any <img> inside .image-wrap rather
+        // than a specific class, which keeps the JS working across initial-load
+        // and after-upload states without blowing away the close button.
         featuredImage: function () {
             var frame;
 
@@ -37,18 +41,25 @@
 
                 frame.on('select', function () {
                     var attachment = frame.state().get('selection').first().toJSON();
-                    var img = $wrap.find('img.sk-feat-image');
+                    var $imageWrap = $wrap.find('.image-wrap');
+                    var $img = $imageWrap.find('img').first();
 
-                    if (img.length) {
-                        img.attr('src', attachment.url);
-                    } else {
-                        $wrap.find('.image-wrap').html(
-                            '<img class="sk-feat-image" src="' + attachment.url + '" alt="">'
-                        );
+                    if ( ! $img.length ) {
+                        $img = $('<img alt="">');
+                        $imageWrap.append( $img );
                     }
+                    // Reset attrs so CSS (max-width:100%) can center the new image
+                    // — otherwise explicit width/height from placeholder or
+                    // a previous upload force an off-size render.
+                    $img.attr('src', attachment.url)
+                        .removeAttr('srcset')
+                        .removeAttr('sizes')
+                        .removeAttr('width')
+                        .removeAttr('height');
+
                     $wrap.find('input.sk-feat-image-id').val(attachment.id);
-                    $wrap.find('.sk-feat-image-btn').addClass('sk-hide');
-                    $wrap.find('.image-wrap, .sk-remove-feat-image').removeClass('sk-hide');
+                    $wrap.find('.instruction-inside').addClass('sk-hide');
+                    $imageWrap.removeClass('sk-hide');
                 });
 
                 frame.open();
@@ -57,11 +68,10 @@
             $(document).on('click', '.sk-remove-feat-image', function (e) {
                 e.preventDefault();
                 var $wrap = $(this).closest('.sk-feat-image-upload');
-                $wrap.find('img.sk-feat-image').attr('src', '').removeAttr('srcset');
+                $wrap.find('.image-wrap img').attr('src', '').removeAttr('srcset');
                 $wrap.find('input.sk-feat-image-id').val('0');
-                $wrap.find('.sk-feat-image-btn').removeClass('sk-hide');
                 $wrap.find('.image-wrap').addClass('sk-hide');
-                $(this).addClass('sk-hide');
+                $wrap.find('.instruction-inside').removeClass('sk-hide');
             });
         },
 
@@ -97,7 +107,8 @@
                         var thumb = attachment.sizes && attachment.sizes.thumbnail
                             ? attachment.sizes.thumbnail.url : attachment.url;
 
-                        $container.find('ul.product-images').append(
+                        // Insert before the "add-image" button so new images appear in gallery order.
+                        $container.find('ul.product_images li.add-image').before(
                             '<li class="image" data-attachment_id="' + attachment.id + '">' +
                             '<img src="' + thumb + '" alt="">' +
                             '<a href="#" class="action-delete" title="Delete">&times;</a>' +
@@ -123,7 +134,7 @@
 
             sortable: function () {
                 if (!$.fn.sortable) return;
-                $('#sk-product-images ul.product-images').sortable({
+                $('#sk-product-images ul.product_images').sortable({
                     items: 'li.image',
                     cursor: 'move',
                     placeholder: 'sortable-placeholder',
