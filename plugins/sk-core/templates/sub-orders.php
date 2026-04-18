@@ -9,8 +9,6 @@
  * @var array $statuses
  */
 
-$allow_shipment      = sk_get_option( 'enabled', 'sk_shipping_status_setting', 'off' );
-$wc_shipping_enabled = get_option( 'woocommerce_calc_shipping' ) === 'yes' ? true : false;
 ?>
 
 <header>
@@ -42,9 +40,6 @@ $wc_shipping_enabled = get_option( 'woocommerce_calc_shipping' ) === 'yes' ? tru
             <th class="order-number"><span class="nobr"><?php esc_html_e( 'Order', 'sk-core' ); ?></span></th>
             <th class="order-date"><span class="nobr"><?php esc_html_e( 'Date', 'sk-core' ); ?></span></th>
             <th class="order-status"><span class="nobr"><?php esc_html_e( 'Status', 'sk-core' ); ?></span></th>
-            <?php if ( function_exists( 'sk_get_order_shipment_current_status' ) && 'on' === $allow_shipment && $wc_shipping_enabled ) : ?>
-                <th class="order-shipment-status"><?php esc_html_e( 'Shipment', 'sk-core' ); ?></th>
-            <?php endif; ?>
             <th class="order-total"><span class="nobr"><?php esc_html_e( 'Total', 'sk-core' ); ?></span></th>
             <th class="order-actions">&nbsp;</th>
         </tr>
@@ -72,11 +67,6 @@ $wc_shipping_enabled = get_option( 'woocommerce_calc_shipping' ) === 'yes' ? tru
                 <td class="order-status" style="text-align:left; white-space:nowrap;">
                     <?php echo isset( $statuses[ 'wc-' . sk_get_prop( $order, 'status' ) ] ) ? esc_html( $statuses[ 'wc-' . sk_get_prop( $order, 'status' ) ] ) : esc_html( sk_get_prop( $order, 'status' ) ); ?>
                 </td>
-                <?php if ( function_exists( 'sk_get_order_shipment_current_status' ) && 'on' === $allow_shipment && $wc_shipping_enabled ) : ?>
-                    <td class="sk-order-shipping-status" data-title="<?php esc_attr_e( 'Shipping Status', 'sk-core' ); ?>" >
-                        <?php echo wp_kses_post( sk_get_order_shipment_current_status( $order->get_id() ) ); ?>
-                    </td>
-                <?php endif; ?>
                 <td class="order-total">
                     <?php
                     echo wp_kses_post(

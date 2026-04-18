@@ -2,10 +2,6 @@
 
 namespace SK\Core;
 
-use Automattic\WooCommerce\StoreApi\Schemas\ExtendSchema;
-use Automattic\WooCommerce\StoreApi\StoreApi;
-use SK\Core\Shipping\Blocks\ExtendEndpoint;
-
 /**
  * Pro Feature Bootstrap
  *
@@ -23,15 +19,6 @@ class Bootstrap {
 
         add_action( 'sk_loaded', [ $this, 'init_updater' ], 1 );
         add_action( 'sk_loaded', [ $this, 'init_plugin' ] );
-
-        add_action(
-            'woocommerce_blocks_loaded', function () {
-                if ( class_exists( StoreApi::class ) && class_exists( ExtendSchema::class ) ) {
-                    $extend = StoreApi::container()->get( ExtendSchema::class );
-                    ExtendEndpoint::init( $extend );
-                }
-            }
-        );
     }
 
     public function __get( $prop ) {
@@ -62,7 +49,6 @@ class Bootstrap {
 
     public function load_actions() {
         add_action( 'init', [ $this, 'init_classes' ], 10 );
-        add_action( 'init', [ $this, 'init_shipping_class' ], 1 );
         add_action( 'init', [ $this, 'register_scripts' ], 10 );
 
         add_action( 'sk_enqueue_scripts', [ $this, 'enqueue_scripts' ], 11 );
@@ -102,8 +88,6 @@ class Bootstrap {
         $this->container['product']              = new Product\ExtendedManager();
         $this->container['products']             = new Products();
         $this->container['review']               = sk_get_container()->get( Review::class );
-        $this->container['shipment']             = new Shipping\ShippingStatus();
-        $this->container['bg_process']           = new BackgroundProcess\ExtendedManager();
         $this->container['store_category']       = sk_get_container()->get( StoreCategory::class );
         $this->container['digital_product']      = sk_get_container()->get( DigitalProduct::class );
 
@@ -119,10 +103,6 @@ class Bootstrap {
         if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
             new Ajax();
         }
-    }
-
-    public function init_shipping_class() {
-        $this->container['shipping_hooks'] = new Shipping\ExtendedHooks();
     }
 
     public function init_updater() {
@@ -215,8 +195,6 @@ class Bootstrap {
         $wc_emails['SK_Email_Updated_Product']        = new Emails\UpdatedProduct();
         $wc_emails['SK_Email_Vendor_Enable']          = new Emails\VendorEnable();
         $wc_emails['SK_Email_Vendor_Disable']         = new Emails\VendorDisable();
-        $wc_emails['SK_Email_Shipping_Status']        = new Emails\ShippingStatus();
-        $wc_emails['SK_Email_Marked_Order_Received']  = new Emails\MarkedOrderReceive();
         return $wc_emails;
     }
 
@@ -226,8 +204,6 @@ class Bootstrap {
             'product-updated-pending.php',
             'vendor-disabled.php',
             'vendor-enabled.php',
-            'shipping-status.php',
-            'marked-order-receive.php',
         ];
         return array_merge( $sk_pro_emails, $sk_emails );
     }
@@ -236,10 +212,7 @@ class Bootstrap {
         $actions[] = 'sk_vendor_enabled';
         $actions[] = 'sk_vendor_disabled';
         $actions[] = 'sk_after_announcement_saved';
-        $actions[] = 'sk_rma_requested';
-        $actions[] = 'sk_marked_order_as_receive';
         $actions[] = 'sk_edited_product_pending_notification';
-        $actions[] = 'sk_order_shipping_status_tracking_notify';
         $actions[] = 'sk_pro_process_announcement_background_process';
         return $actions;
     }

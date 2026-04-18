@@ -23,7 +23,6 @@ class ExtendedManager {
         $class_map[ $inc . '/REST/AnnouncementController.php' ]           = AnnouncementController::class;
         $class_map[ $inc . '/REST/DashboardController.php' ]              = DashboardController::class;
         $class_map[ $inc . '/REST/ExtendedProductController.php' ]             = ProProductController::class;
-        $class_map[ $inc . '/REST/ShippingStatusController.php' ]         = ShippingStatusController::class;
 
         if ( class_exists( ProductBlockController::class ) ) {
             $class_map[ $inc . '/REST/ProductVariationBlockController.php' ] = ProductVariationBlockController::class;
