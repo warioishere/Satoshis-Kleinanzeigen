@@ -22,6 +22,8 @@ $chat_id = isset( $_GET['chat_id'] ) ? intval( $_GET['chat_id'] ) : 0;
 if ( $chat_id && dvc_is_chat_participant( $chat_id, $current_user_id ) ) {
 	dvc_mark_chat_as_read( $chat_id, $current_user_id );
 }
+
+do_action( 'sk_dashboard_wrap_start' );
 ?>
 
 <div class="sk-dashboard-wrap">
@@ -306,3 +308,5 @@ if ( $chat_id && dvc_is_chat_participant( $chat_id, $current_user_id ) ) {
 	</div>
 </div>
 
+
+<?php do_action( 'sk_dashboard_wrap_end' ); ?>
