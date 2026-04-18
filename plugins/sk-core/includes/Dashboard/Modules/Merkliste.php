@@ -2,18 +2,27 @@
 
 namespace SK\Core\Dashboard\Modules;
 
+use SK\Core\Dashboard\DashboardModule;
+
 /**
  * Merkliste (wishlist/bookmarks) for vendor dashboard.
  * Ported from plugin: sk-merkliste
  */
-class Merkliste {
+class Merkliste extends DashboardModule {
 
-    public function __construct() {
-        add_action( 'wp_enqueue_scripts',   [ $this, 'enqueue' ] );
-        add_filter( 'sk_get_dashboard_nav', [ $this, 'register_nav' ] );
-        add_filter( 'sk_dashboard_nav_active', [ $this, 'set_active' ], 10, 3 );
-        add_filter( 'sk_query_var_filter',  [ $this, 'add_query_var' ] );
-        add_action( 'sk_load_custom_template', [ $this, 'load_template' ] );
+    public function config(): ?array {
+        return [
+            'slug'       => 'merkliste',
+            'title'      => __( 'Merkliste', 'sk' ),
+            'icon'       => '<i class="fas fa-thumbtack"></i>',
+            'pos'        => 56,
+            'permission' => 'sk_view_overview_menu',
+            'template'   => 'dashboard/merkliste/dashboard-merkliste',
+        ];
+    }
+
+    protected function register_extras(): void {
+        add_action( 'wp_enqueue_scripts', [ $this, 'enqueue' ] );
 
         add_action( 'wp_ajax_dm_add_to_merkliste',    [ $this, 'ajax_add' ] );
         add_action( 'wp_ajax_dm_remove_from_merkliste', [ $this, 'ajax_remove' ] );
@@ -21,7 +30,7 @@ class Merkliste {
         add_action( 'wp_ajax_dm_get_product_id_from_url',       [ $this, 'ajax_get_product_id' ] );
         add_action( 'wp_ajax_nopriv_dm_get_product_id_from_url', [ $this, 'ajax_get_product_id' ] );
 
-        add_action( 'woocommerce_after_shop_loop_item',  [ $this, 'output_pin_icon' ], 98 );
+        add_action( 'woocommerce_after_shop_loop_item',   [ $this, 'output_pin_icon' ], 98 );
         add_action( 'woocommerce_single_product_summary', [ $this, 'output_single_button' ], 26 );
     }
 
@@ -48,41 +57,6 @@ class Merkliste {
             'loginUrl'     => wp_login_url( get_permalink() ),
             'isLoggedIn'   => is_user_logged_in(),
         ] );
-    }
-
-    public function register_nav( array $nav ): array {
-        $nav['merkliste'] = [
-            'title'      => __( 'Merkliste', 'sk' ),
-            'icon'       => '<i class="fas fa-thumbtack"></i>',
-            'url'        => sk_get_navigation_url( 'merkliste' ),
-            'pos'        => 56,
-            'permission' => 'sk_view_overview_menu',
-        ];
-        return $nav;
-    }
-
-    public function set_active( $active_menu, $request, $active ) {
-        if ( isset( $request ) && false !== strpos( $request, 'merkliste' ) ) {
-            return 'merkliste';
-        }
-        if ( ! empty( $active ) && in_array( 'merkliste', $active, true ) ) {
-            return 'merkliste';
-        }
-        if ( get_query_var( 'merkliste' ) ) {
-            return 'merkliste';
-        }
-        return $active_menu;
-    }
-
-    public function add_query_var( array $vars ): array {
-        $vars[] = 'merkliste';
-        return $vars;
-    }
-
-    public function load_template( array $query_vars ): void {
-        if ( isset( $query_vars['merkliste'] ) ) {
-            sk_get_template_part( 'dashboard/merkliste/dashboard-merkliste' );
-        }
     }
 
     /* ---- AJAX ---- */
