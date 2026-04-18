@@ -391,7 +391,7 @@ class Manager {
         $product       = wc_get_product( $product_id );
         $seller_id     = get_post_field( 'post_author', $product_id );
         $seller        = get_user_by( 'id', $seller_id );
-        $category      = wp_get_post_terms( sk_get_prop( $product, 'id' ), 'product_cat', array( 'fields' => 'names' ) );
+        $category      = wp_get_post_terms( $product->get_id(), 'product_cat', array( 'fields' => 'names' ) );
         $category_name = $category ? reset( $category ) : 'N/A';
 
         $find = array(

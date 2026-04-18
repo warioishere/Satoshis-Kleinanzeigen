@@ -153,7 +153,6 @@ final class SK_Core {
         }
 
         require_once __DIR__ . '/includes/functions.php';
-        require_once __DIR__ . '/includes/functions-compatibility.php';
 
         \SK\Core\Dashboard\ModuleLoader::maybe_create_tables();
 
@@ -271,7 +270,6 @@ final class SK_Core {
     public function includes() {
         require_once SK_CORE_INC_DIR . '/functions.php';
         require_once SK_CORE_INC_DIR . '/Product/functions.php';
-        require_once SK_CORE_INC_DIR . '/functions-compatibility.php';
         require_once SK_CORE_INC_DIR . '/wc-functions.php';
         require_once SK_CORE_INC_DIR . '/Forms/render.php';
 

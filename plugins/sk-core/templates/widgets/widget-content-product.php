@@ -30,7 +30,7 @@ $img_kses = apply_filters(
             global $product;
             ?>
             <li>
-                <a href="<?php echo esc_url( get_permalink( sk_get_prop( $product, 'id' ) ) ); ?>" title="<?php echo esc_attr( $product->get_title() ); ?>">
+                <a href="<?php echo esc_url( get_permalink( $product->get_id() ) ); ?>" title="<?php echo esc_attr( $product->get_title() ); ?>">
                     <?php echo wp_kses( $product->get_image(), $img_kses ); ?>
                     <span class="product-title"><?php echo esc_html( $product->get_title() ); ?></span>
                 </a>

@@ -65,7 +65,7 @@
                     </time>
                 </td>
                 <td class="order-status" style="text-align:left; white-space:nowrap;">
-                    <?php echo isset( $statuses[ 'wc-' . sk_get_prop( $order, 'status' ) ] ) ? esc_html( $statuses[ 'wc-' . sk_get_prop( $order, 'status' ) ] ) : esc_html( sk_get_prop( $order, 'status' ) ); ?>
+                    <?php echo isset( $statuses[ 'wc-' . $order->get_status() ] ) ? esc_html( $statuses[ 'wc-' . $order->get_status() ] ) : esc_html( $order->get_status() ); ?>
                 </td>
                 <td class="order-total">
                     <?php

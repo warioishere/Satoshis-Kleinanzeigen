@@ -20,7 +20,6 @@ class ServiceProvider extends BootableServiceProvider {
 		'registration'        => \SK\Core\Registration::class,
 		'api'                 => \SK\Core\REST\Manager::class,
 		'dashboard'           => \SK\Core\Dashboard\Manager::class,
-		'customizer'          => \SK\Core\Customizer::class,
 		'product_sections'    => \SK\Core\ProductSections\Manager::class,
 		'bg_process'          => \SK\Core\BackgroundProcess\Manager::class,
 		'frontend_manager'    => \SK\Core\Frontend\Frontend::class,
