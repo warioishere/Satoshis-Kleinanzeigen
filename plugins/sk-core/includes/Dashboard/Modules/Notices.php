@@ -26,7 +26,7 @@ class Notices {
             <p>Hier kannst du deine Inserate verwalten, neue Gesuche einstellen und deine Angebote organisieren.</p>
             <p>Standardmäßig kannst du bis zu <strong>6 Inserate kostenlos</strong> einstellen und bearbeiten.
                Wenn du mehr Inserate gleichzeitig online haben möchtest, kannst du uns mit einem
-               <a href="https://satoshiskleinanzeigen.space/inserate-abos/" style="color:#F7931A;">Abo</a> unterstützen.</p>
+               <a href="<?php echo esc_url( home_url( '/dashboard/subscription/' ) ); ?>" style="color:#F7931A;">Abo</a> unterstützen.</p>
             <p>Wir möchten bewusst <strong>keine Verkaufsgebühren</strong> erheben – denn damit würden in vielen Ländern rechtliche KYC-Pflichten greifen.
                Um weiterhin <strong>KYC-frei</strong> zu bleiben und deine <strong>Privatsphäre</strong> zu schützen, finanzieren wir die Plattform über Abos statt über Gebühren.</p>
             <p>So stellen wir sicher, dass SatoshisKleinanzeigen langfristig bestehen bleibt – unabhängig, nutzerfreundlich und mit maximalem Fokus auf Privatsphäre.</p>
