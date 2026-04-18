@@ -129,92 +129,20 @@ class Registration {
         }
 
         $sk_settings = [
-            'store_name'     => isset( $_POST['shopname'] ) ? sanitize_text_field( wp_unslash( $_POST['shopname'] ) ) : '',
-            'social'         => $social_profiles,
-            'payment'        => [],
-            'address'        => isset( $_POST['sk_address'] ) ? wc_clean( wp_unslash( $_POST['sk_address'] ) ) : '',
-            'phone'          => isset( $_POST['phone'] ) ? sk_sanitize_phone_number( wp_unslash( $_POST['phone'] ) ) : '',
-            'show_email'     => 'no',
-            'location'       => '',
-            'find_address'   => '',
-            'sk_category' => '',
-            'banner'         => 0,
+            'store_name'   => isset( $_POST['shopname'] ) ? sanitize_text_field( wp_unslash( $_POST['shopname'] ) ) : '',
+            'social'       => $social_profiles,
+            'phone'        => isset( $_POST['phone'] ) ? sk_sanitize_phone_number( wp_unslash( $_POST['phone'] ) ) : '',
+            'show_email'   => 'no',
+            'location'     => '',
+            'find_address' => '',
+            'sk_category'  => '',
+            'banner'       => 0,
         ];
-
-        // Intially add values on profile completion progress bar
-        $sk_settings['profile_completion']['store_name']    = 10;
-        $sk_settings['profile_completion']['phone']         = 10;
-        $sk_settings['profile_completion']['next_todo']     = 'banner_val';
-        $sk_settings['profile_completion']['progress']      = 20;
-        $sk_settings['profile_completion']['progress_vals'] = [
-            'banner_val'          => 15,
-            'profile_picture_val' => 15,
-            'store_name_val'      => 10,
-            'address_val'         => 10,
-            'phone_val'           => 10,
-            'map_val'             => 15,
-            'payment_method_val'  => 15,
-            'social_val'          => [
-                'fb'       => 4,
-                'twitter'  => 2,
-                'youtube'  => 2,
-                'linkedin' => 2,
-            ],
-        ];
-
-        $sk_settings = $this->check_and_set_address_profile_completion( $user_id, $sk_settings, $sk_settings );
 
         update_user_meta( $user_id, 'sk_profile_settings', $sk_settings );
         update_user_meta( $user_id, 'sk_store_name', $sk_settings['store_name'] );
 
         do_action( 'sk_new_seller_created', $user_id, $sk_settings );
-    }
-
-    /**
-     * Adds address profile completion value in sk settings.
-     *
-     * @3.10.2
-     *
-     * @param int   $vendor_id
-     * @param array $new_sk_settings
-     * @param array $old_profile_settings
-     *
-     * @return array
-     */
-    public function check_and_set_address_profile_completion( $vendor_id, $new_sk_settings, $old_profile_settings ) {
-        // Check address and add manually values on Profile Completion also increase progress value
-        if ( ! empty( $new_sk_settings['profile_completion']['progress_vals']['address_val'] ) ) {
-            $new_sk_settings['profile_completion']['address'] = $new_sk_settings['profile_completion']['progress_vals']['address_val'];
-        }
-
-        if ( empty( $new_sk_settings['address']['street_1'] ) ) {
-            unset( $new_sk_settings['profile_completion']['address'] );
-        }
-
-        if ( empty( $new_sk_settings['address']['city'] ) && ! empty( $new_sk_settings['profile_completion']['address'] ) ) {
-            unset( $new_sk_settings['profile_completion']['address'] );
-        }
-
-        if ( empty( $new_sk_settings['address']['zip'] ) && ! empty( $new_sk_settings['profile_completion']['address'] ) ) {
-            unset( $new_sk_settings['profile_completion']['address'] );
-        }
-
-        if ( empty( $new_sk_settings['address']['country'] ) && ! empty( $new_sk_settings['profile_completion']['address'] ) ) {
-            unset( $new_sk_settings['profile_completion']['address'] );
-        } else {
-            $country = isset( $new_sk_settings['address']['country'] ) ? $new_sk_settings['address']['country'] : '';
-
-            if ( isset( $states[ $country ] ) && is_array( $states[ $country ] ) && empty( $new_sk_settings['address']['state'] ) && ! empty( $new_sk_settings['profile_completion']['address'] ) ) {
-                unset( $new_sk_settings['profile_completion']['address'] );
-            }
-        }
-
-        if ( ! empty( $new_sk_settings['profile_completion']['address'] ) ) {
-            $progress = empty( $old_profile_settings['profile_completion']['progress'] ) ? 0 : $old_profile_settings['profile_completion']['progress'];
-            $new_sk_settings['profile_completion']['progress'] = $progress + $new_sk_settings['profile_completion']['progress_vals']['address_val'];
-        }
-
-        return $new_sk_settings;
     }
 
     /**

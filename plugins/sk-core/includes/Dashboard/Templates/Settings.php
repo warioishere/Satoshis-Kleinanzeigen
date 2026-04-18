@@ -333,7 +333,6 @@ class Settings {
             // Update store settings info.
             $sk_settings = [
                 'store_name'               => isset( $_POST['sk_store_name'] ) ? sanitize_text_field( wp_unslash( $_POST['sk_store_name'] ) ) : '',
-                'address'                  => isset( $_POST['sk_address'] ) ? wc_clean( wp_unslash( $_POST['sk_address'] ) ) : $prev_sk_settings['address'],
                 'location'                 => $location,
                 'find_address'             => $find_address,
                 'banner'                   => isset( $_POST['sk_banner'] ) ? absint( $_POST['sk_banner'] ) : 0,

@@ -3,14 +3,13 @@
 namespace SK\Core\Dashboard\Modules;
 
 /**
- * Nav text fix (Store count wording) and settings/shipping redirect.
+ * Nav text fix (Store count wording).
  * Ported from kadence-child/functions.php.
  */
 class NavFix {
 
     public function __construct() {
-        add_action( 'wp_footer',        [ $this, 'output_nav_text_fix' ] );
-        add_action( 'template_redirect', [ $this, 'redirect_shipping' ] );
+        add_action( 'wp_footer', [ $this, 'output_nav_text_fix' ] );
     }
 
     public function output_nav_text_fix(): void {
@@ -24,12 +23,5 @@ class NavFix {
         });
         </script>
         <?php
-    }
-
-    public function redirect_shipping(): void {
-        if ( trailingslashit( $_SERVER['REQUEST_URI'] ) === '/dashboard/settings/shipping/' ) {
-            wp_redirect( home_url( '/dashboard/settings/regular-shipping/' ), 301 );
-            exit;
-        }
     }
 }

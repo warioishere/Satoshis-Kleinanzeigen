@@ -84,11 +84,8 @@ $porduct_shipping_pt     = ( $_processing_time ) ? $_processing_time : $dps_pt;
                 <div class="sk-w4 sk-text-left">
                     <?php
                     // Shipping Class
-                    $classes                = get_the_terms( $post->ID, 'product_shipping_class' );
-                    $shipping_settings_link = sprintf( "<a href='%s'>", sk_get_navigation_url( 'settings/shipping', true ) );
-
-                    /* translators: %1$s is replaced with "HTML open entities", %2$s is replaced with "HTML close entities"*/
-                    $product_shipping_help_block = sprintf( esc_html__( 'Shipping classes are used by certain shipping methods to group similar products. Before adding a product, please configure the %1$s shipping settings %2$s', 'sk' ), $shipping_settings_link, '</a>' );
+                    $classes                     = get_the_terms( $post->ID, 'product_shipping_class' );
+                    $product_shipping_help_block = esc_html__( 'Shipping classes are used by certain shipping methods to group similar products.', 'sk' );
 
                     if ( $classes && ! is_wp_error( $classes ) ) {
                         $current_shipping_class = current( $classes )->term_id;

@@ -801,29 +801,6 @@ function sk_save_account_details() {
 add_action( 'template_redirect', 'sk_save_account_details' );
 
 /**
- * Remove banner when without banner layout selected for profile
- *
- * @param array $progress_values
- *
- * @return array
- */
-function sk_split_profile_completion_value( $progress_values ) {
-    $store_banner = sk_get_option( 'store_header_template', 'sk_appearance' );
-
-    if ( 'layout3' === $store_banner ) {
-        unset( $progress_values['banner_val'] );
-
-        $progress_values['store_name_val'] = 15;
-        $progress_values['phone_val']      = 15;
-        $progress_values['address_val']    = 15;
-    }
-
-    return $progress_values;
-}
-
-add_filter( 'sk_profile_completion_values', 'sk_split_profile_completion_value', 10 );
-
-/**
  * Set More products from seller tab on Single Product Page
  *
  *
