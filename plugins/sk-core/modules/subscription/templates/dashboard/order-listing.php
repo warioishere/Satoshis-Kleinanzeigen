@@ -24,13 +24,21 @@ $status_colors = [
             <?php foreach ( $subscription_orders['orders'] as $order ) :
                 $status     = $order->get_status();
                 $sc         = $status_colors[ $status ] ?? ['bg' => 'rgba(255,255,255,0.06)', 'border' => 'rgba(255,255,255,0.1)', 'color' => '#8a9bb0'];
-                $actions    = wc_get_account_orders_actions( $order );
+
+                // Gather the purchased pack name(s) from the order's line items —
+                // subscription orders usually have a single product_pack item.
+                $pack_names = [];
+                foreach ( $order->get_items() as $item ) {
+                    $pack_names[] = $item->get_name();
+                }
+                $pack_label = implode( ', ', array_filter( $pack_names ) );
             ?>
                 <div class="sk-sub-order-card">
                     <div class="sk-sub-order-card__left">
-                        <span class="sk-sub-order-card__number">
-                            <a href="<?php echo esc_url( $order->get_view_order_url() ); ?>">#<?php echo esc_html( $order->get_order_number() ); ?></a>
-                        </span>
+                        <span class="sk-sub-order-card__number">#<?php echo esc_html( $order->get_order_number() ); ?></span>
+                        <?php if ( $pack_label ) : ?>
+                            <span class="sk-sub-order-card__pack"><i class="fas fa-box-open"></i> <?php echo esc_html( $pack_label ); ?></span>
+                        <?php endif; ?>
                         <span class="sk-sub-order-card__date">
                             <i class="fas fa-calendar-alt"></i>
                             <?php echo esc_html( wc_format_datetime( $order->get_date_created() ) ); ?>
@@ -43,15 +51,6 @@ $status_colors = [
                         <span class="sk-sub-order-card__total">
                             <?php echo wp_kses_post( $order->get_formatted_order_total() ); ?>
                         </span>
-                        <?php if ( ! empty( $actions ) ) : ?>
-                            <div class="sk-sub-order-card__actions">
-                                <?php foreach ( $actions as $key => $action ) : ?>
-                                    <a href="<?php echo esc_url( $action['url'] ); ?>" class="sk-sub-order-action <?php echo esc_attr( $key ); ?>" target="_blank">
-                                        <?php echo esc_html( $action['name'] ); ?>
-                                    </a>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
                     </div>
                 </div>
             <?php endforeach; ?>
