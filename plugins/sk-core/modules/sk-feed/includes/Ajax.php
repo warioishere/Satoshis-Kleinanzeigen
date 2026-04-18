@@ -11,6 +11,8 @@ class Ajax {
 		add_action( 'wp_ajax_sk_feed_edit_post', [ $this, 'edit_post' ] );
 		add_action( 'wp_ajax_sk_feed_delete_post', [ $this, 'delete_post' ] );
 		add_action( 'wp_ajax_sk_feed_toggle_like', [ $this, 'toggle_like' ] );
+		add_action( 'wp_ajax_sk_feed_get_likers', [ $this, 'get_likers' ] );
+		add_action( 'wp_ajax_nopriv_sk_feed_get_likers', [ $this, 'get_likers' ] );
 		add_action( 'wp_ajax_sk_feed_report_post', [ $this, 'report_post' ] );
 		add_action( 'wp_ajax_sk_feed_load_more', [ $this, 'load_more' ] );
 		add_action( 'wp_ajax_nopriv_sk_feed_load_more', [ $this, 'load_more' ] );
@@ -272,6 +274,42 @@ class Ajax {
 			'liked' => $liked,
 			'count' => Likes::get_count( $post_id ),
 		] );
+	}
+
+	public function get_likers() {
+		check_ajax_referer( 'sk_feed', '_nonce' );
+
+		global $wpdb;
+		$post_id = (int) ( $_POST['post_id'] ?? 0 );
+		if ( ! $post_id ) {
+			wp_send_json_error();
+		}
+
+		$table = $wpdb->prefix . 'sk_feed_likes';
+		// Most-recent likers first, cap at 100 for UI. If more, we just show the most recent.
+		$user_ids = $wpdb->get_col( $wpdb->prepare(
+			"SELECT user_id FROM {$table} WHERE post_id = %d ORDER BY created_at DESC LIMIT 100",
+			$post_id
+		) );
+
+		$users = [];
+		foreach ( $user_ids as $uid ) {
+			$uid = (int) $uid;
+			$store_info = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( $uid ) : [];
+			$store_name = ! empty( $store_info['store_name'] )
+				? $store_info['store_name']
+				: ( get_user_by( 'ID', $uid )->display_name ?? '' );
+			$store_url  = function_exists( 'sk_get_store_url' ) ? sk_get_store_url( $uid ) : '';
+			$avatar     = get_avatar_url( $uid, [ 'size' => 48 ] );
+			$users[]    = [
+				'id'     => $uid,
+				'name'   => $store_name,
+				'url'    => $store_url,
+				'avatar' => $avatar,
+			];
+		}
+
+		wp_send_json_success( [ 'users' => $users ] );
 	}
 
 	public function report_post() {

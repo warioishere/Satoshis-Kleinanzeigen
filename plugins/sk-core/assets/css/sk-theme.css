@@ -12235,6 +12235,49 @@ body:has(.dvc-modal) .dkp-contact-icons {
 .sk-feed-report-btn.reported { color: #e06c75; cursor: default; }
 .sk-feed-card-actions .sk-zap-btn { font-size: 13px; padding: 4px 10px; }
 
+/* Like count is clickable when > 0 — subtle hover to suggest that. */
+.sk-feed-like-count { cursor: pointer; }
+.sk-feed-like-count:empty { cursor: default; }
+.sk-feed-like-btn:not(.active) .sk-feed-like-count:hover,
+.sk-feed-like-btn.active .sk-feed-like-count:hover { text-decoration: underline; }
+
+/* ── Likers List Modal ── */
+.sk-feed-likers-modal {
+  position: fixed; inset: 0; z-index: 100000;
+  background: rgba(0,0,0,0.6);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+}
+.sk-feed-likers-inner {
+  background: #1e2b3c; border: 1px solid rgba(255,255,255,0.07); border-radius: 10px;
+  width: 100%; max-width: 420px; max-height: 80vh; display: flex; flex-direction: column;
+  overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.sk-feed-likers-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.sk-feed-likers-title { font-weight: 600; color: #e8ecf0; }
+.sk-feed-likers-close {
+  background: none; border: none; color: #8a9bb0; font-size: 24px; line-height: 1;
+  cursor: pointer; padding: 0 4px;
+}
+.sk-feed-likers-close:hover { color: #e8ecf0; }
+.sk-feed-likers-body { overflow-y: auto; padding: 8px 0; }
+.sk-feed-likers-loading,
+.sk-feed-likers-empty { text-align: center; color: #8a9bb0; padding: 24px 16px; }
+.sk-feed-likers-list { list-style: none; margin: 0; padding: 0; }
+.sk-feed-likers-item { margin: 0; }
+.sk-feed-likers-link {
+  display: flex; align-items: center; gap: 12px; padding: 10px 16px;
+  color: #e8ecf0; text-decoration: none;
+}
+.sk-feed-likers-link:hover { background: rgba(255,255,255,0.04); color: #F7931A; }
+.sk-feed-likers-avatar {
+  width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex: 0 0 36px;
+}
+.sk-feed-likers-name { font-size: 14px; font-weight: 500; }
+
 /* ── Filter Bar (Community Page) ── */
 .sk-feed-filter-bar {
   display: flex; gap: 8px; margin-bottom: 16px;

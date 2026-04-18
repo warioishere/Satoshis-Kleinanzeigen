@@ -48,8 +48,14 @@
         window.location.href = skFeed.loginUrl || '/mein-konto/';
     }
 
+    // Clicking the heart itself toggles the like. Clicking the count
+    // (number next to the heart) opens the likers list — we stopPropagation
+    // on the count handler so it doesn't also fire the like toggle.
     $(document).on('click', '.sk-feed-like-btn', function (e) {
         e.preventDefault();
+        // Click on the count number opens the likers list (separate handler
+        // below). Bail here so we don't also toggle the like in that case.
+        if ( $(e.target).closest('.sk-feed-like-count').length && parseInt($(e.target).text(), 10) > 0 ) return;
         if (!skFeed.isLoggedIn) { requireLogin(); return; }
         var $btn = $(this);
         if ($btn.hasClass('loading')) return;
@@ -69,6 +75,76 @@
         }).fail(function () {
             $btn.removeClass('loading');
         });
+    });
+
+    // ── Likers List Modal ────────────────────────────────────────────────
+
+    function showLikersModal(postId, countLabel) {
+        // Remove any existing modal first (user clicked another post's count).
+        $('.sk-feed-likers-modal').remove();
+        var $modal = $(
+            '<div class="sk-feed-likers-modal" role="dialog" aria-modal="true">' +
+              '<div class="sk-feed-likers-inner">' +
+                '<div class="sk-feed-likers-head">' +
+                  '<span class="sk-feed-likers-title">' + countLabel + '</span>' +
+                  '<button type="button" class="sk-feed-likers-close" aria-label="Schließen">&times;</button>' +
+                '</div>' +
+                '<div class="sk-feed-likers-body"><div class="sk-feed-likers-loading">Lade …</div></div>' +
+              '</div>' +
+            '</div>'
+        );
+        $('body').append($modal);
+
+        $.post(skFeed.ajaxurl, {
+            action: 'sk_feed_get_likers',
+            _nonce: skFeed.nonce,
+            post_id: postId
+        }, function (res) {
+            if (!res.success || !res.data.users) {
+                $modal.find('.sk-feed-likers-body').html('<div class="sk-feed-likers-empty">Keine Likes.</div>');
+                return;
+            }
+            if (!res.data.users.length) {
+                $modal.find('.sk-feed-likers-body').html('<div class="sk-feed-likers-empty">Noch keine Likes.</div>');
+                return;
+            }
+            var html = '<ul class="sk-feed-likers-list">';
+            res.data.users.forEach(function (u) {
+                var name = $('<div>').text(u.name || '').html();
+                var href = u.url || '#';
+                var av   = u.avatar || '';
+                html += '<li class="sk-feed-likers-item">' +
+                          '<a href="' + href + '" class="sk-feed-likers-link">' +
+                            '<img class="sk-feed-likers-avatar" src="' + av + '" alt="" loading="lazy">' +
+                            '<span class="sk-feed-likers-name">' + name + '</span>' +
+                          '</a>' +
+                        '</li>';
+            });
+            html += '</ul>';
+            $modal.find('.sk-feed-likers-body').html(html);
+        }).fail(function () {
+            $modal.find('.sk-feed-likers-body').html('<div class="sk-feed-likers-empty">Fehler beim Laden.</div>');
+        });
+    }
+
+    // Close on backdrop click, close button, or Escape.
+    $(document).on('click', '.sk-feed-likers-modal', function (e) {
+        if ($(e.target).is('.sk-feed-likers-modal, .sk-feed-likers-close')) {
+            $(this).remove();
+        }
+    });
+    $(document).on('keydown', function (e) {
+        if (e.key === 'Escape') $('.sk-feed-likers-modal').remove();
+    });
+
+    // Click on the count opens the modal. Empty count = nothing to show.
+    $(document).on('click', '.sk-feed-like-count', function (e) {
+        var count = parseInt($(this).text(), 10);
+        if (!count || count < 1) return; // No likes → nothing to show
+        e.preventDefault();
+        e.stopPropagation(); // Don't also trigger the toggle on the parent button
+        var postId = $(this).closest('.sk-feed-like-btn').data('post-id');
+        showLikersModal(postId, count + (count === 1 ? ' Like' : ' Likes'));
     });
 
     // ── Share ────────────────────────────────────────────────────────────
