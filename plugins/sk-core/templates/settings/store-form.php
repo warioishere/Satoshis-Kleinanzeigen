@@ -79,7 +79,6 @@ if ( $store_categories_on ) {
 /* --- Store slug --- */
 $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
 ?>
-<?php do_action( 'sk_settings_before_form', $current_user, $profile_info ); ?>
 
 <form method="post" id="sk-store-form" action="" class="sk-settings-form" novalidate>
     <?php wp_nonce_field( 'sk_store_settings_nonce' ); ?>
@@ -114,7 +113,6 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
             </div>
         </div>
 
-        <?php do_action( 'sk_settings_after_banner', $current_user, $profile_info ); ?>
 
         <?php /* Profile photo */ ?>
         <div class="sk-settings-field">
@@ -169,10 +167,8 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
         </div>
         <?php endif; ?>
 
-        <?php do_action( 'sk_settings_after_store_name', $current_user, $profile_info ); ?>
 
         <?php /* Address */ ?>
-        <?php do_action( 'sk_settings_before_store_map', $current_user, $profile_info ); ?>
 
         <?php if ( sk_has_map_api_key() ) : ?>
         <div class="sk-settings-field">
@@ -243,10 +239,8 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
         <?php endif; ?>
 
         <?php /* Extension point for additional contact fields */ ?>
-        <?php do_action( 'sk_settings_contact_fields', $current_user, $profile_info ); ?>
     </div>
 
-    <?php do_action( 'sk_settings_after_contact', $current_user, $profile_info ); ?>
 
     <!-- ======================================================
          SECTION 3b: Onchain + Lightning (conditional: sk-payments Modul aktiv)
@@ -526,8 +520,6 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
     </div>
 
     <?php /* Extension points for additional sections */ ?>
-    <?php do_action( 'sk_settings_after_store_more_products', $current_user, $profile_info ); ?>
-    <?php do_action( 'sk_settings_form_bottom', $current_user, $profile_info ); ?>
 
     <!-- Submit -->
     <div class="sk-settings-actions">
@@ -576,7 +568,6 @@ jQuery(function($){
 });
 </script>
 
-<?php do_action( 'sk_settings_after_form', $current_user, $profile_info ); ?>
 
 <style>
 .sk-settings-content .sk-settings-area .sk-banner {
