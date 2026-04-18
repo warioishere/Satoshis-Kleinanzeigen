@@ -8563,14 +8563,14 @@ ul.sk-store-custom-fields ul {
   margin-bottom: 10px;
 }
 
-/* Center gravatar in its input column */
-#sk-profile-picture-wrapper {
+/* Center gravatar / image upload (rendered by sk_form_media_upload variant='gravatar') */
+.sk-settings-input.sk-gravatar {
   display: flex !important;
   flex-direction: column;
   align-items: center !important;
 }
-#sk-profile-picture-wrapper .gravatar-wrap,
-#sk-profile-picture-wrapper .gravatar-button-area {
+.sk-settings-input.sk-gravatar .gravatar-wrap,
+.sk-settings-input.sk-gravatar .gravatar-button-area {
   display: flex !important;
   flex-direction: column;
   align-items: center !important;
@@ -8578,19 +8578,16 @@ ul.sk-store-custom-fields ul {
 }
 
 /* Gravatar wrap: stacking context for the remove button */
-#sk-profile-picture-wrapper .gravatar-wrap {
+.sk-settings-input.sk-gravatar .gravatar-wrap {
   position: relative !important;
   display: inline-flex !important;
 }
-/* Allow sk-hide to hide the wrapper */
-#sk-profile-picture-wrapper .gravatar-wrap.sk-hide {
+.sk-settings-input.sk-gravatar .gravatar-wrap.sk-hide {
   display: none !important;
 }
 
 /* Override core black full-circle overlay on gravatar */
-.sk-settings-content .sk-settings-area .sk-gravatar .sk-remove-gravatar-image,
-.sk-settings-content .sk-settings-area .sk-gravatar:hover .sk-remove-gravatar-image,
-#sk-profile-picture-wrapper .sk-remove-gravatar-image {
+.sk-settings-input.sk-gravatar .sk-remove-gravatar-image {
   position: absolute !important;
   top: 0 !important;
   right: 0 !important;
