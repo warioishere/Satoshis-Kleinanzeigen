@@ -12719,6 +12719,104 @@ body:has(.dvc-modal) .dkp-contact-icons {
 }
 .sk-settings-input--pair > * { flex: 1; min-width: 180px; }
 
+/* Settings inline notices — used inside sk-settings-input for description +
+ * warning/success boxes + status lines. Replaces previous inline styles. */
+.sk-settings-input .description,
+.sk-settings-hint-sm {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #9ca3af;
+}
+.sk-settings-notice {
+  margin-top: 8px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  border: 1px solid transparent;
+}
+.sk-settings-notice--warn {
+  background: rgba(247, 147, 26, 0.08);
+  border-color: rgba(247, 147, 26, 0.2);
+  color: #9ca3af;
+}
+.sk-settings-notice--ok {
+  background: rgba(92, 184, 92, 0.08);
+  border-color: rgba(92, 184, 92, 0.2);
+  color: #5cb85c;
+}
+.sk-settings-notice strong.ok   { color: #5cb85c; }
+.sk-settings-notice strong.warn { color: #e06c75; }
+
+.sk-settings-status {
+  margin-top: 6px;
+  font-size: 13px;
+}
+.sk-settings-status--ok   { color: #5cb85c; }
+.sk-settings-status--warn { color: #f7931a; }
+.sk-settings-status .remove-link {
+  color: #e06c75;
+  margin-left: 8px;
+}
+
+.skp-test-btn {
+  margin-top: 8px;
+  font-size: 13px;
+}
+.skp-test-result {
+  margin-left: 8px;
+  font-size: 13px;
+}
+.skp-test-spinner { color: #9ca3af; }
+.skp-test-ok      { color: #5cb85c; }
+.skp-test-err     { color: #e06c75; }
+
+/* Nostr Marketplace npub code badge */
+.sk-settings-npub-line {
+  margin-top: 6px;
+  font-size: 13px;
+}
+.sk-settings-npub {
+  background: #0f1923;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  color: #e8ecf0;
+}
+
+/* Biography TinyMCE textarea (dark) */
+.sk-biography-textarea {
+  width: 100%;
+  background: #1f2732;
+  border: 1px solid #384355;
+  color: #e8ecf0;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 15px;
+  resize: vertical;
+}
+
+/* Danger-zone section (account deletion etc.) */
+.sk-settings-section--danger {
+  margin-top: 40px;
+  border: 1px solid rgba(220, 53, 69, 0.3);
+  border-radius: 12px;
+  padding: 20px;
+}
+.sk-settings-section--danger .sk-settings-section-title {
+  color: #dc3545;
+}
+.sk-settings-danger-text {
+  color: #8b949e;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+/* Flat field variant — no border-bottom separator / no padding override */
+.sk-settings-field--flat {
+  border-bottom: none !important;
+  padding: 0 !important;
+}
+
 /* sk-input-group used by sk_form_input prefix param (social URL icons etc.) */
 .sk-settings-input > .sk-input-group {
   display: flex;

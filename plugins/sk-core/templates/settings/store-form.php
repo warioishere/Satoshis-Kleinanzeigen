@@ -270,13 +270,13 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
                 <input type="text" class="sk-form-control" name="btc_address"
                        value="<?php echo esc_attr( $oc_btc_address ); ?>"
                        placeholder="bc1q... oder 1... oder 3..." />
-                <p class="description" style="margin-top:6px;font-size:13px;color:#9ca3af;">
+                <p class="description">
                     Statische Bitcoin-Adresse. Achtung: Alle Käufer sehen dieselbe Adresse (kein Privacy-Vorteil).
                 </p>
-                <button type="button" class="sk-btn sk-btn-default skp-test-btn" id="skp-test-btcaddr" style="margin-top:8px;font-size:13px;" disabled>
+                <button type="button" class="sk-btn sk-btn-default skp-test-btn" id="skp-test-btcaddr" disabled>
                     <i class="fas fa-check-circle"></i> Adresse prüfen
                 </button>
-                <span id="skp-test-btcaddr-result" style="margin-left:8px;font-size:13px;"></span>
+                <span id="skp-test-btcaddr-result" class="skp-test-result"></span>
             </div>
         </div>
 
@@ -286,31 +286,31 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
                 <input type="text" class="sk-form-control<?php echo $oc_xpub ? ' skp-saved' : ''; ?>" name="btc_xpub"
                        value="" autocomplete="off"
                        placeholder="<?php echo $oc_xpub ? 'xpub/ypub/zpub******** (gespeichert — leer lassen um beizubehalten)' : 'xpub6... / ypub6... / zpub6...'; ?>" />
-                <p class="description" style="margin-top:6px;font-size:13px;color:#9ca3af;">
+                <p class="description">
                     Für jeden Kauf wird automatisch eine neue Adresse abgeleitet (BIP32). Empfohlen für bessere Privacy.
                     Exportiere den xpub aus deiner Wallet (z.B. Sparrow, Electrum, BlueWallet).
                 </p>
-                <div style="margin-top:8px;padding:10px 14px;background:rgba(247,147,26,0.08);border:1px solid rgba(247,147,26,0.2);border-radius:6px;font-size:12px;color:#9ca3af;">
-                    Der xpub erlaubt <strong style="color:#5cb85c;">nur das Generieren von Empfangsadressen</strong>.<br>
-                    <strong style="color:#5cb85c;">Keine Ausgaben möglich</strong> — dein Guthaben ist sicher.
+                <div class="sk-settings-notice sk-settings-notice--warn">
+                    Der xpub erlaubt <strong class="ok">nur das Generieren von Empfangsadressen</strong>.<br>
+                    <strong class="ok">Keine Ausgaben möglich</strong> — dein Guthaben ist sicher.
                 </div>
                 <?php if ( $oc_xpub ) : ?>
                     <?php if ( $oc_xpub_ok ) : ?>
-                        <p style="margin-top:6px;font-size:13px;color:#5cb85c;">
+                        <p class="sk-settings-status sk-settings-status--ok">
                             xpub gespeichert — Adress-Derivation aktiv.
-                            <a href="#" onclick="document.querySelector('[name=xpub_remove]').value='1';jQuery(this.closest('form')).trigger('submit');return false;" style="color:#e06c75;margin-left:8px;">Entfernen</a>
+                            <a href="#" onclick="document.querySelector('[name=xpub_remove]').value='1';jQuery(this.closest('form')).trigger('submit');return false;" class="remove-link">Entfernen</a>
                         </p>
                     <?php else : ?>
-                        <p style="margin-top:6px;font-size:13px;color:#f7931a;">
+                        <p class="sk-settings-status sk-settings-status--warn">
                             xpub gespeichert, aber Validierung fehlgeschlagen.
                         </p>
                     <?php endif; ?>
                 <?php endif; ?>
                 <input type="hidden" name="xpub_remove" value="0" />
-                <button type="button" class="sk-btn sk-btn-default skp-test-btn" id="skp-test-xpub" style="margin-top:8px;font-size:13px;" disabled>
+                <button type="button" class="sk-btn sk-btn-default skp-test-btn" id="skp-test-xpub" disabled>
                     <i class="fas fa-plug"></i> xpub testen
                 </button>
-                <span id="skp-test-xpub-result" style="margin-left:8px;font-size:13px;"></span>
+                <span id="skp-test-xpub-result" class="skp-test-result"></span>
             </div>
         </div>
     </div>
@@ -328,31 +328,31 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
                 <input type="text" class="sk-form-control<?php echo $ln_has_nwc ? ' skp-saved' : ''; ?>" name="nwc_connection"
                        value="" autocomplete="off"
                        placeholder="<?php echo $ln_has_nwc ? 'nostr+walletconnect://******** (gespeichert — leer lassen um beizubehalten)' : 'nostr+walletconnect://...'; ?>" />
-                <p class="description" style="margin-top:6px;font-size:13px;color:#9ca3af;">
+                <p class="description">
                     NWC Connection-String aus deiner Wallet (Alby Hub, LNbits, etc.).
                     Ermöglicht automatische Invoice-Erstellung und Zahlungsverifizierung. Verschlüsselt gespeichert.
                 </p>
-                <div style="margin-top:8px;padding:10px 14px;background:rgba(247,147,26,0.08);border:1px solid rgba(247,147,26,0.2);border-radius:6px;font-size:12px;color:#9ca3af;">
-                    Benötigte Berechtigungen: <strong style="color:#5cb85c;">make_invoice</strong> + <strong style="color:#5cb85c;">lookup_invoice</strong>.<br>
-                    <strong style="color:#e06c75;">pay_invoice nicht aktivieren</strong> — wird nicht benötigt und wäre ein Sicherheitsrisiko.
+                <div class="sk-settings-notice sk-settings-notice--warn">
+                    Benötigte Berechtigungen: <strong class="ok">make_invoice</strong> + <strong class="ok">lookup_invoice</strong>.<br>
+                    <strong class="warn">pay_invoice nicht aktivieren</strong> — wird nicht benötigt und wäre ein Sicherheitsrisiko.
                 </div>
                 <?php if ( $ln_has_nwc ) : ?>
                     <?php if ( $ln_nwc_ok ) : ?>
-                        <p style="margin-top:6px;font-size:13px;color:#5cb85c;">
+                        <p class="sk-settings-status sk-settings-status--ok">
                             NWC verbunden — automatische Verifizierung aktiv.
-                            <a href="#" onclick="document.querySelector('[name=nwc_remove]').value='1';jQuery(this.closest('form')).trigger('submit');return false;" style="color:#e06c75;margin-left:8px;">Entfernen</a>
+                            <a href="#" onclick="document.querySelector('[name=nwc_remove]').value='1';jQuery(this.closest('form')).trigger('submit');return false;" class="remove-link">Entfernen</a>
                         </p>
                     <?php else : ?>
-                        <p style="margin-top:6px;font-size:13px;color:#f7931a;">
+                        <p class="sk-settings-status sk-settings-status--warn">
                             NWC gespeichert, aber Verbindungstest fehlgeschlagen.
                         </p>
                     <?php endif; ?>
                 <?php endif; ?>
                 <input type="hidden" name="nwc_remove" value="0" />
-                <button type="button" class="sk-btn sk-btn-default skp-test-btn" id="skp-test-nwc" style="margin-top:8px;font-size:13px;" disabled>
+                <button type="button" class="sk-btn sk-btn-default skp-test-btn" id="skp-test-nwc" disabled>
                     <i class="fas fa-plug"></i> Verbindung testen
                 </button>
-                <span id="skp-test-nwc-result" style="margin-left:8px;font-size:13px;"></span>
+                <span id="skp-test-nwc-result" class="skp-test-result"></span>
             </div>
         </div>
 
@@ -363,30 +363,30 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
                 <input type="text" class="sk-form-control<?php echo $ln_has_lndhub ? ' skp-saved' : ''; ?>" name="lndhub_connection"
                        value="" autocomplete="off"
                        placeholder="<?php echo $ln_has_lndhub ? 'lndhub://******** (gespeichert — leer lassen um beizubehalten)' : 'lndhub://login:password@https://...'; ?>" />
-                <p class="description" style="margin-top:6px;font-size:13px;color:#9ca3af;">
+                <p class="description">
                     LNDHub-URL aus BlueWallet, LNbits, Alby oder BTCPay Server. Verschlüsselt gespeichert.
                 </p>
-                <div style="margin-top:8px;padding:10px 14px;background:rgba(247,147,26,0.08);border:1px solid rgba(247,147,26,0.2);border-radius:6px;font-size:12px;color:#9ca3af;">
-                    Verwende die <strong style="color:#5cb85c;">Invoice-URL</strong> (lndhub://invoice:...).<br>
-                    <strong style="color:#e06c75;">Nicht die Admin-URL verwenden</strong> — diese erlaubt auch Zahlungen zu senden und wäre ein Sicherheitsrisiko.
+                <div class="sk-settings-notice sk-settings-notice--warn">
+                    Verwende die <strong class="ok">Invoice-URL</strong> (lndhub://invoice:...).<br>
+                    <strong class="warn">Nicht die Admin-URL verwenden</strong> — diese erlaubt auch Zahlungen zu senden und wäre ein Sicherheitsrisiko.
                 </div>
                 <?php if ( $ln_has_lndhub ) : ?>
                     <?php if ( $ln_lndhub_ok ) : ?>
-                        <p style="margin-top:6px;font-size:13px;color:#5cb85c;">
+                        <p class="sk-settings-status sk-settings-status--ok">
                             LNDHub verbunden — automatische Verifizierung aktiv.
-                            <a href="#" onclick="document.querySelector('[name=lndhub_remove]').value='1';jQuery(this.closest('form')).trigger('submit');return false;" style="color:#e06c75;margin-left:8px;">Entfernen</a>
+                            <a href="#" onclick="document.querySelector('[name=lndhub_remove]').value='1';jQuery(this.closest('form')).trigger('submit');return false;" class="remove-link">Entfernen</a>
                         </p>
                     <?php else : ?>
-                        <p style="margin-top:6px;font-size:13px;color:#f7931a;">
+                        <p class="sk-settings-status sk-settings-status--warn">
                             LNDHub gespeichert, aber Verbindungstest fehlgeschlagen.
                         </p>
                     <?php endif; ?>
                 <?php endif; ?>
                 <input type="hidden" name="lndhub_remove" value="0" />
-                <button type="button" class="sk-btn sk-btn-default skp-test-btn" id="skp-test-lndhub" style="margin-top:8px;font-size:13px;" disabled>
+                <button type="button" class="sk-btn sk-btn-default skp-test-btn" id="skp-test-lndhub" disabled>
                     <i class="fas fa-plug"></i> Verbindung testen
                 </button>
-                <span id="skp-test-lndhub-result" style="margin-left:8px;font-size:13px;"></span>
+                <span id="skp-test-lndhub-result" class="skp-test-result"></span>
             </div>
         </div>
 
@@ -397,25 +397,25 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
                 <input type="text" class="sk-form-control" name="lightning_address"
                        value="<?php echo esc_attr( $ln_address ); ?>"
                        placeholder="user@getalby.com oder lnurl1..." />
-                <p class="description" style="margin-top:6px;font-size:13px;color:#9ca3af;">
+                <p class="description">
                     Wird als Fallback verwendet wenn weder NWC noch LNDHub verbunden ist.
                 </p>
                 <?php if ( ! empty( $ln_address ) ) : ?>
                     <?php if ( $ln_lud21 ) : ?>
-                        <div style="margin-top:8px;padding:10px 14px;background:rgba(92,184,92,0.08);border:1px solid rgba(92,184,92,0.2);border-radius:6px;font-size:12px;color:#5cb85c;">
+                        <div class="sk-settings-notice sk-settings-notice--ok">
                             Automatische Zahlungsverifizierung unterstützt (LUD-21)
                         </div>
                     <?php else : ?>
-                        <div style="margin-top:8px;padding:10px 14px;background:rgba(247,147,26,0.08);border:1px solid rgba(247,147,26,0.2);border-radius:6px;font-size:12px;color:#9ca3af;">
+                        <div class="sk-settings-notice sk-settings-notice--warn">
                             Keine automatische Verifizierung — Zahlungen müssen manuell bestätigt werden.
                             Für automatische Verifizierung verwende NWC oder LNDHub (oben) oder einen Service der LUD-21 unterstützt (z.B. Alby, LNbits, Coinos).
                         </div>
                     <?php endif; ?>
                 <?php endif; ?>
-                <button type="button" class="sk-btn sk-btn-default skp-test-btn" id="skp-test-lnaddr" style="margin-top:8px;font-size:13px;" disabled>
+                <button type="button" class="sk-btn sk-btn-default skp-test-btn" id="skp-test-lnaddr" disabled>
                     <i class="fas fa-plug"></i> Adresse testen
                 </button>
-                <span id="skp-test-lnaddr-result" style="margin-left:8px;font-size:13px;"></span>
+                <span id="skp-test-lnaddr-result" class="skp-test-result"></span>
             </div>
         </div>
     </div>
@@ -452,7 +452,7 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
                     <input type="checkbox" name="nostr_market_enabled" value="1" <?php checked( $nm_post_enabled, '1' ); ?>>
                     Deine Produkte werden als Inserate auf dem Nostr Netzwerk veröffentlicht
                 </label>
-                <p class="description" style="margin-top:6px;font-size:13px;color:#9ca3af;">
+                <p class="description">
                     Sichtbar auf Amethyst, Shopstr, Coracle und anderen Nostr Clients.
                 </p>
             </div>
@@ -462,12 +462,12 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
         <div class="sk-settings-field">
             <label class="sk-settings-label">Nostr Key</label>
             <div class="sk-settings-input">
-                <p style="font-size:13px;color:#5cb85c;">
+                <p class="sk-settings-status sk-settings-status--ok">
                     <i class="fas fa-check-circle"></i> Deine Inserate werden automatisch mit deinem Nostr Key signiert.
                 </p>
                 <?php if ( $nm_npub ) : ?>
-                <p style="margin-top:6px;font-size:13px;">
-                    <code style="background:#0f1923;padding:2px 6px;border-radius:3px;font-size:11px;color:#e8ecf0;"><?php echo esc_html( substr( $nm_npub, 0, 20 ) . '...' ); ?></code>
+                <p class="sk-settings-npub-line">
+                    <code class="sk-settings-npub"><?php echo esc_html( substr( $nm_npub, 0, 20 ) . '...' ); ?></code>
                 </p>
                 <?php endif; ?>
             </div>
@@ -476,7 +476,7 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
         <div class="sk-settings-field">
             <label class="sk-settings-label">Nostr Key</label>
             <div class="sk-settings-input">
-                <p class="description" style="font-size:13px;color:#5a6a7e;">
+                <p class="description">
                     Kein Nostr Key vorhanden. Erstelle eine Nostr-Identität im <a href="<?php echo esc_url( function_exists( 'sk_get_navigation_url' ) ? sk_get_navigation_url( 'auth-connector' ) : '#' ); ?>">Auth Connector</a> um Inserate unter deinem eigenen Profil zu signieren.
                 </p>
             </div>
@@ -495,7 +495,7 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
         </div>
         <div class="sk-settings-field sk-settings-field--bio">
             <div class="sk-settings-input">
-                <textarea name="vendor_biography" id="vendor_biography" rows="8" class="sk-form-control" style="width:100%;background:#1f2732;border:1px solid #384355;color:#e8ecf0;border-radius:6px;padding:8px 12px;font-size:15px;resize:vertical;"><?php echo esc_textarea( $vendor_biography ); ?></textarea>
+                <textarea name="vendor_biography" id="vendor_biography" rows="8" class="sk-form-control sk-biography-textarea"><?php echo esc_textarea( $vendor_biography ); ?></textarea>
             </div>
         </div>
     </div>
@@ -536,15 +536,15 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
 </form>
 
 <!-- Account löschen -->
-<div class="sk-settings-section" style="margin-top:40px;border:1px solid rgba(220,53,69,0.3);border-radius:12px;padding:20px;">
-    <div class="sk-settings-section-title" style="color:#dc3545;">
+<div class="sk-settings-section sk-settings-section--danger">
+    <div class="sk-settings-section-title">
         <i class="fas fa-exclamation-triangle"></i> <?php esc_html_e( 'Gefahrenzone', 'sk-core' ); ?>
     </div>
-    <div class="sk-settings-field" style="padding:0;">
-        <p style="color:#8b949e;font-size:14px;margin-bottom:16px;">
+    <div class="sk-settings-field sk-settings-field--flat">
+        <p class="sk-settings-danger-text">
             <?php esc_html_e( 'Dein Account, alle Produkte und alle Daten werden unwiderruflich gelöscht. Dieser Vorgang kann nicht rückgängig gemacht werden.', 'sk-core' ); ?>
         </p>
-        <button type="button" id="sk-delete-account-btn" class="sk-btn" style="background:#dc3545;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;">
+        <button type="button" id="sk-delete-account-btn" class="sk-btn sk-btn-danger">
             <i class="fas fa-trash-alt"></i> <?php esc_html_e( 'Account endgültig löschen', 'sk-core' ); ?>
         </button>
     </div>
@@ -760,17 +760,17 @@ function skStoreToast(message, type) {
         btn.on('click', function() {
             var $b = $(this), $r = $(resultEl);
             $b.prop('disabled', true);
-            $r.html('<i class="fas fa-spinner fa-spin" style="color:#9ca3af;"></i> Teste...');
+            $r.html('<i class="fas fa-spinner fa-spin skp-test-spinner"></i> Teste...');
             $.post(skpAjax, $.extend({ action: action, nonce: skpNonce }, dataFn()), function(res) {
                 $b.prop('disabled', false);
                 if (res.success) {
-                    $r.html('<span style="color:#5cb85c;">' + (res.data.message || 'OK') + '</span>');
+                    $r.html('<span class="skp-test-ok">' + (res.data.message || 'OK') + '</span>');
                 } else {
-                    $r.html('<span style="color:#e06c75;">' + (res.data && res.data.message ? res.data.message : 'Fehler') + '</span>');
+                    $r.html('<span class="skp-test-err">' + (res.data && res.data.message ? res.data.message : 'Fehler') + '</span>');
                 }
             }).fail(function() {
                 $b.prop('disabled', false);
-                $r.html('<span style="color:#e06c75;">Netzwerkfehler</span>');
+                $r.html('<span class="skp-test-err">Netzwerkfehler</span>');
             });
         });
     }
