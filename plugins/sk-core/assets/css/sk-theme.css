@@ -8794,6 +8794,10 @@ ul.sk-store-custom-fields ul {
   background: rgba(255,255,255,0.08);
   color: #6b7a8d;
 }
+/* Hide status badges (pending/spam/trash) at count 0 — approved badge stays visible. */
+.sk-review-count.pending.is-zero,
+.sk-review-count.spam.is-zero,
+.sk-review-count.trash.is-zero { display: none; }
 
 /* Bulk action bar */
 .sk-reviews-bulk-bar {

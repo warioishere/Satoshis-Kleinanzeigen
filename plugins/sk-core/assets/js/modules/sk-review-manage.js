@@ -25,20 +25,21 @@
 
         $.post(ajaxurl, data, function (res) {
             if (res.success) {
-                // Update status counts in filter tabs
+                // Update status counts in filter tabs. Template uses multi-class
+                // selectors (.sk-review-count.pending etc.), not dashed variants.
+                // Toggle is-zero so CSS can hide the badge at 0 without removing it.
                 if (res.data) {
-                    if (res.data.approved !== undefined) {
-                        $('.sk-review-count-approved').text(res.data.approved);
-                    }
-                    if (res.data.pending !== undefined) {
-                        $('.sk-review-count-pending').text(res.data.pending);
-                    }
-                    if (res.data.spam !== undefined) {
-                        $('.sk-review-count-spam').text(res.data.spam);
-                    }
-                    if (res.data.trash !== undefined) {
-                        $('.sk-review-count-trash').text(res.data.trash);
-                    }
+                    var updateCount = function (sel, val) {
+                        if (val === undefined) return;
+                        var $el = $(sel);
+                        if (!$el.length) return;
+                        $el.text(val).toggleClass('is-zero', parseInt(val, 10) === 0);
+                    };
+                    // 'approved' badge is the generic .sk-review-count (no status class).
+                    updateCount('.sk-review-filter-tab:first-child .sk-review-count', res.data.approved);
+                    updateCount('.sk-review-count.pending', res.data.pending);
+                    updateCount('.sk-review-count.spam',    res.data.spam);
+                    updateCount('.sk-review-count.trash',   res.data.trash);
                 }
 
                 // If deleted or moved to different status view, remove card
