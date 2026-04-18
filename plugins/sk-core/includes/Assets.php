@@ -685,6 +685,10 @@ class Assets {
             // Provides sk_show_delete_prompt / sk_bulk_delete_prompt used by delete/trash links
             // on products list, orders, coupons etc. — depends on sk-util-helper (sk_sweetalert).
             wp_enqueue_script( 'sk-global-utils' );
+            // Handles Approve/Spam/Trash action-link clicks on the reviews page.
+            if ( isset( $wp->query_vars['reviews'] ) ) {
+                wp_enqueue_script( 'sk-review-manage' );
+            }
             wp_enqueue_media();
         }
     }
