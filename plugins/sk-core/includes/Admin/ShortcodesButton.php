@@ -30,10 +30,6 @@ class ShortcodesButton {
                 'title'   => __( 'Vendor Dasboard', 'sk' ),
                 'content' => '[sk-dashboard]',
             ),
-            'vendor-registration' => array(
-                'title'   => __( 'Vendor Registration Form', 'sk' ),
-                'content' => '[sk-vendor-registration]',
-            ),
             'sk-stores'               => array(
                 'title'   => __( 'Stores List', 'sk' ),
                 'content' => '[sk-stores]',
@@ -49,10 +45,6 @@ class ShortcodesButton {
             'sk-my-orders' => array(
                 'title'   => __( 'SK My Orders', 'sk' ),
                 'content' => '[sk-my-orders]',
-            ),
-            'sk-customer-migration' => array(
-                'title'   => __( 'Customer Migration Form', 'sk' ),
-                'content' => '[sk-customer-migration]',
             ),
         );
 

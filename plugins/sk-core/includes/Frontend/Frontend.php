@@ -2,40 +2,21 @@
 
 namespace SK\Core\Frontend;
 
-use SK\Core\Frontend\MyAccount\BecomeAVendor;
 use SK\Core\Traits\ChainableContainer;
 
 if ( ! defined( 'ABSPATH' ) ) {
-    exit; // Exit if accessed directly
+    exit;
 }
 
-/**
- * Frontend Manager
- *
- *
- * @property BecomeAVendor $become_a_vendor Instance of BecomeAVendor class
- */
 class Frontend {
 
     use ChainableContainer;
 
-    /**
-     * Shortcodes container
-     *
-     */
     public function __construct() {
         $this->set_controllers();
     }
 
-    /**
-     * Set controllers
-     *
-     *
-     * @return void
-     */
     private function set_controllers() {
-        $this->container['become_a_vendor'] = new BecomeAVendor();
-
         add_action( 'woocommerce_after_shop_loop_item_title', [ $this, 'product_category_badges' ], 9 );
         add_shortcode( 'sk_footer', [ $this, 'render_sk_footer' ] );
     }

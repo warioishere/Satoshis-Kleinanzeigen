@@ -326,7 +326,6 @@ class Module {
         require_once DPS_PATH . '/includes/classes/Helper.php';
         require_once DPS_PATH . '/includes/classes/class-dps-paypal-standard-subscriptions.php';
         require_once DPS_PATH . '/includes/classes/Shortcode.php';
-        require_once DPS_PATH . '/includes/classes/Registration.php';
         require_once DPS_PATH . '/includes/Abstracts/VendorSubscription.php';
         require_once DPS_PATH . '/includes/classes/SubscriptionPack.php';
         require_once DPS_PATH . '/includes/classes/ProductStatusChanger.php';
@@ -364,10 +363,6 @@ class Module {
         $is_new_product_page  = is_admin() && isset( $_GET['post_type'] ) && 'product' === sanitize_text_field( wp_unslash( $_GET['post_type'] ) ); //phpcs:ignore WordPress.CSRF.NonceVerification.NoNonceVerification
 
         if ( ! $is_subscription_page && is_a( $post, 'WP_Post' ) && has_shortcode( $post->post_content, 'dps_product_pack' ) ) {
-            $is_subscription_page = true;
-        }
-
-        if ( ! $is_subscription_page && is_a( $post, 'WP_Post' ) && has_shortcode( $post->post_content, 'sk-vendor-registration' ) ) {
             $is_subscription_page = true;
         }
 

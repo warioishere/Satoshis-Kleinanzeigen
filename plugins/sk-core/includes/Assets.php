@@ -274,11 +274,6 @@ class Assets {
                 'src'  => $asset_url . '/vendors/speakingurl/speakingurl.min.js',
                 'deps' => [ 'jquery' ],
             ],
-            'sk-vendor-registration' => [
-                'src'     => $asset_url . '/js/vendor-registration.js',
-                'deps'    => [ 'sk-form-validate', 'jquery', 'speaking-url', 'wp-i18n' ],
-                'version' => self::asset_version( $asset_path . 'js/vendor-registration.js' ),
-            ],
             'product-category-ui'    => [
                 'src'      => $asset_url . '/js/product-category-ui.js',
                 'deps'     => [ 'jquery' ],
@@ -310,11 +305,6 @@ class Assets {
                 'deps'      => [ 'jquery', 'sk-sweetalert2', 'moment' ],
                 'version'   => self::asset_version( $asset_path . 'js/helper.js' ),
                 'in_footer' => false,
-            ],
-            'sk-vendor-address'      => [
-                'src'     => $asset_url . '/js/vendor-address.js',
-                'deps'    => [ 'jquery', 'wc-address-i18n' ],
-                'version' => self::asset_version( $asset_path . 'js/vendor-address.js' ),
             ],
         ];
 
@@ -448,15 +438,6 @@ class Assets {
 
         wp_localize_script( 'sk-util-helper', 'sk', $localize_data );
 
-        wp_localize_script(
-            'sk-vendor-registration',
-            'skRegistrationI18n',
-            [
-                'defaultRole' => sk_get_seller_registration_default_role(),
-            ]
-        );
-
-        // Ensure SkValidateMsg is available when vendor-registration loads (e.g. on login/register page).
         self::load_form_validate_script();
 
         // Mobile category toggle for product category widget.

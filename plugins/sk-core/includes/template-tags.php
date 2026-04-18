@@ -434,25 +434,6 @@ function sk_get_chosen_taxonomy_attributes() {
     return $attributes;
 }
 
-function sk_seller_reg_form_fields() {
-    $data       = sk_get_seller_registration_form_data();
-    $role       = $data['role'];
-    $role_style = ( $role === 'customer' ) ? 'display:none' : '';
-
-    // Load vendor registration scripts in the registration form.
-    wp_enqueue_script( 'sk-vendor-registration' );
-
-    sk_get_template_part(
-        'global/seller-registration-form', '', [
-            'data'       => $data,
-            'role'       => $role,
-            'role_style' => $role_style,
-        ]
-    );
-}
-
-add_action( 'woocommerce_register_form', 'sk_seller_reg_form_fields' );
-
 if ( ! function_exists( 'sk_seller_not_enabled_notice' ) ) :
 
     function sk_seller_not_enabled_notice() {
@@ -566,62 +547,3 @@ function sk_store_contact_widget() {
     }
 }
 
-/**
- * Get seller registration form default role
- *
- *
- * @return string values can be 'customer' or 'seller'
- */
-function sk_get_seller_registration_default_role(): string {
-    $default_role = apply_filters( 'sk_seller_registration_default_role', 'customer' );
-    if ( ! in_array( $default_role, [ 'customer', 'seller' ], true ) ) {
-        $default_role = 'customer';
-    }
-    return $default_role;
-}
-
-/**
- * Get SK seller registration form data
- *
- *
- * @return string[]
- */
-function sk_get_seller_registration_form_data() {
-    $set_password = get_option( 'woocommerce_registration_generate_password', 'no' ) !== 'yes';
-    $default_role = sk_get_seller_registration_default_role();
-
-    // prepare form data
-    $data = [
-        'fname'    => '',
-        'lname'    => '',
-        'username' => '',
-        'email'    => '',
-        'phone'    => '',
-        'shopname' => '',
-        'shopurl'  => '',
-        'role'     => $default_role,
-    ];
-
-    if ( $set_password ) {
-        $data['password'] = '';
-    }
-    // check if user submitted data
-    if ( isset( $_POST['woocommerce-register-nonce'] ) && wp_verify_nonce( sanitize_key( wp_unslash( $_POST['woocommerce-register-nonce'] ) ), 'woocommerce-register' ) ) {
-        $data = [
-            'fname'    => isset( $_POST['fname'] ) ? sanitize_text_field( wp_unslash( $_POST['fname'] ) ) : '',
-            'lname'    => isset( $_POST['lname'] ) ? sanitize_text_field( wp_unslash( $_POST['lname'] ) ) : '',
-            'username' => isset( $_POST['username'] ) ? sanitize_user( wp_unslash( $_POST['username'] ) ) : '',
-            'email'    => isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '',
-            'phone'    => isset( $_POST['phone'] ) ? sk_sanitize_phone_number( wp_unslash( $_POST['phone'] ) ) : '', // phpcs:ignore
-            'password' => isset( $_POST['password'] ) ? wp_unslash( $_POST['password'] ) : '', // phpcs:ignore
-            'shopname' => isset( $_POST['shopname'] ) ? sanitize_text_field( wp_unslash( $_POST['shopname'] ) ) : '',
-            'shopurl'  => isset( $_POST['shopurl'] ) ? sanitize_title( wp_unslash( $_POST['shopurl'] ) ) : '',
-            'role'     => isset( $_POST['role'] ) && in_array( $_POST['role'], [ 'customer', 'seller' ], true ) ? sanitize_text_field( wp_unslash( $_POST['role'] ) ) : $default_role,
-        ];
-        if ( $set_password ) {
-            $data['password'] = isset( $_POST['password'] ) ? wp_unslash( $_POST['password'] ) : ''; // phpcs:ignore;
-        }
-    }
-
-    return $data;
-}

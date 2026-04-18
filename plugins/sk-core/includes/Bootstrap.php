@@ -141,11 +141,6 @@ class Bootstrap {
             wp_enqueue_script( $jquery_blockui );
             // wp_enqueue_script( 'sk-pro-script' ); // DISABLED — replaced by modular sk-*.js
         }
-
-
-        if ( get_query_var( 'account-migration' ) ) {
-            wp_enqueue_script( 'sk-vendor-registration' );
-        }
     }
 
     public function admin_enqueue_scripts( $hook ) {
@@ -177,7 +172,6 @@ class Bootstrap {
         $query_vars[] = 'reviews';
         $query_vars[] = 'announcement';
         $query_vars[] = 'single-announcement';
-        $query_vars[] = 'sk-registration';
         return $query_vars;
     }
 
