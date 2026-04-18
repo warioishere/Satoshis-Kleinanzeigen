@@ -14,6 +14,10 @@ class ModuleLoader {
         // Load standalone function shims unconditionally (bypasses autoloader/opcode cache)
         require_once __DIR__ . '/dashboard-functions.php';
 
+        // Bootstrap the dashboard registry before instantiating any module so
+        // modules extending DashboardModule can self-register.
+        DashboardRegistry::bootstrap();
+
         new Modules\Performance();
         new Modules\Notices();
         new Modules\TranslationFix();
