@@ -8580,6 +8580,19 @@ ul.sk-store-custom-fields ul {
   width: 100%;
 }
 
+/* Banner variant: stack label on top so the banner image fills the full card
+ * width (otherwise the 150px label column offsets the banner right of center). */
+.sk-settings-field--banner {
+  flex-direction: column !important;
+}
+.sk-settings-field--banner .sk-settings-label {
+  flex: none !important;
+  padding-top: 0 !important;
+}
+.sk-settings-field--banner .sk-settings-input {
+  width: 100%;
+}
+
 /* Center gravatar / image upload (rendered by sk_form_media_upload variant='gravatar') */
 .sk-settings-input.sk-gravatar {
   display: flex !important;
