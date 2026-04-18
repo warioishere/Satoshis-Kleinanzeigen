@@ -8591,7 +8591,6 @@ ul.sk-store-custom-fields ul {
 .sk-settings-field--banner .sk-settings-label {
   flex: none !important;
   padding-top: 0 !important;
-  margin-bottom: 12px;
   text-align: center;
 }
 .sk-settings-field--banner .sk-settings-input {
@@ -8599,6 +8598,7 @@ ul.sk-store-custom-fields ul {
 }
 .sk-settings-field--banner .button-area {
   align-items: center !important;
+  margin-top: 12px;
 }
 
 /* Center gravatar / image upload (rendered by sk_form_media_upload variant='gravatar') */
