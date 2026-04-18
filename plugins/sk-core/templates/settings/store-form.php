@@ -264,9 +264,9 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
             <i class="fab fa-bitcoin"></i> Onchain-Zahlungen empfangen
         </div>
 
-        <div class="sk-form-group">
-            <label class="sk-w3 sk-control-label">BTC-Adresse</label>
-            <div class="sk-w5">
+        <div class="sk-settings-field">
+            <label class="sk-settings-label">BTC-Adresse</label>
+            <div class="sk-settings-input">
                 <input type="text" class="sk-form-control" name="btc_address"
                        value="<?php echo esc_attr( $oc_btc_address ); ?>"
                        placeholder="bc1q... oder 1... oder 3..." />
@@ -280,9 +280,9 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
             </div>
         </div>
 
-        <div class="sk-form-group">
-            <label class="sk-w3 sk-control-label">Extended Public Key (xpub)</label>
-            <div class="sk-w5">
+        <div class="sk-settings-field">
+            <label class="sk-settings-label">Extended Public Key (xpub)</label>
+            <div class="sk-settings-input">
                 <input type="text" class="sk-form-control<?php echo $oc_xpub ? ' skp-saved' : ''; ?>" name="btc_xpub"
                        value="" autocomplete="off"
                        placeholder="<?php echo $oc_xpub ? 'xpub/ypub/zpub******** (gespeichert — leer lassen um beizubehalten)' : 'xpub6... / ypub6... / zpub6...'; ?>" />
@@ -322,9 +322,9 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
         </div>
 
         <!-- NWC -->
-        <div class="sk-form-group">
-            <label class="sk-w3 sk-control-label">Nostr Wallet Connect</label>
-            <div class="sk-w5">
+        <div class="sk-settings-field">
+            <label class="sk-settings-label">Nostr Wallet Connect</label>
+            <div class="sk-settings-input">
                 <input type="text" class="sk-form-control<?php echo $ln_has_nwc ? ' skp-saved' : ''; ?>" name="nwc_connection"
                        value="" autocomplete="off"
                        placeholder="<?php echo $ln_has_nwc ? 'nostr+walletconnect://******** (gespeichert — leer lassen um beizubehalten)' : 'nostr+walletconnect://...'; ?>" />
@@ -357,9 +357,9 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
         </div>
 
         <!-- LNDHub -->
-        <div class="sk-form-group">
-            <label class="sk-w3 sk-control-label">LNDHub</label>
-            <div class="sk-w5">
+        <div class="sk-settings-field">
+            <label class="sk-settings-label">LNDHub</label>
+            <div class="sk-settings-input">
                 <input type="text" class="sk-form-control<?php echo $ln_has_lndhub ? ' skp-saved' : ''; ?>" name="lndhub_connection"
                        value="" autocomplete="off"
                        placeholder="<?php echo $ln_has_lndhub ? 'lndhub://******** (gespeichert — leer lassen um beizubehalten)' : 'lndhub://login:password@https://...'; ?>" />
@@ -391,9 +391,9 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
         </div>
 
         <!-- Lightning-Adresse -->
-        <div class="sk-form-group">
-            <label class="sk-w3 sk-control-label">Lightning-Adresse</label>
-            <div class="sk-w5">
+        <div class="sk-settings-field">
+            <label class="sk-settings-label">Lightning-Adresse</label>
+            <div class="sk-settings-input">
                 <input type="text" class="sk-form-control" name="lightning_address"
                        value="<?php echo esc_attr( $ln_address ); ?>"
                        placeholder="user@getalby.com oder lnurl1..." />
@@ -444,9 +444,9 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
             <i class="sk-nostr-icon sk-nostr-icon--inline"></i> Nostr Marketplace
         </div>
 
-        <div class="sk-form-group">
-            <label class="sk-w3 sk-control-label">Inserate auf Nostr posten</label>
-            <div class="sk-w5">
+        <div class="sk-settings-field">
+            <label class="sk-settings-label">Inserate auf Nostr posten</label>
+            <div class="sk-settings-input">
                 <label>
                     <input type="hidden" name="nostr_market_enabled" value="0" />
                     <input type="checkbox" name="nostr_market_enabled" value="1" <?php checked( $nm_post_enabled, '1' ); ?>>
@@ -459,9 +459,9 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
         </div>
 
         <?php if ( $nm_has_pubkey ) : ?>
-        <div class="sk-form-group">
-            <label class="sk-w3 sk-control-label">Nostr Key</label>
-            <div class="sk-w5">
+        <div class="sk-settings-field">
+            <label class="sk-settings-label">Nostr Key</label>
+            <div class="sk-settings-input">
                 <p style="font-size:13px;color:#5cb85c;">
                     <i class="fas fa-check-circle"></i> Deine Inserate werden automatisch mit deinem Nostr Key signiert.
                 </p>
@@ -473,9 +473,9 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
             </div>
         </div>
         <?php else : ?>
-        <div class="sk-form-group">
-            <label class="sk-w3 sk-control-label">Nostr Key</label>
-            <div class="sk-w5">
+        <div class="sk-settings-field">
+            <label class="sk-settings-label">Nostr Key</label>
+            <div class="sk-settings-input">
                 <p class="description" style="font-size:13px;color:#5a6a7e;">
                     Kein Nostr Key vorhanden. Erstelle eine Nostr-Identität im <a href="<?php echo esc_url( function_exists( 'sk_get_navigation_url' ) ? sk_get_navigation_url( 'auth-connector' ) : '#' ); ?>">Auth Connector</a> um Inserate unter deinem eigenen Profil zu signieren.
                 </p>
@@ -540,7 +540,7 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
     <div class="sk-settings-section-title" style="color:#dc3545;">
         <i class="fas fa-exclamation-triangle"></i> <?php esc_html_e( 'Gefahrenzone', 'sk-core' ); ?>
     </div>
-    <div class="sk-form-group" style="padding:0;">
+    <div class="sk-settings-field" style="padding:0;">
         <p style="color:#8b949e;font-size:14px;margin-bottom:16px;">
             <?php esc_html_e( 'Dein Account, alle Produkte und alle Daten werden unwiderruflich gelöscht. Dieser Vorgang kann nicht rückgängig gemacht werden.', 'sk-core' ); ?>
         </p>
