@@ -198,6 +198,28 @@ function sk_is_seller_dashboard() {
 }
 
 /**
+ * Check if an sk-core pro module is currently active.
+ *
+ * Wrapper around sk_ext()->module->is_active() that's safe to call from
+ * anywhere (returns false if the container isn't ready yet). Prefer this
+ * over raw `class_exists('SK\Modules\X\Y')` which triggers the PSR-4
+ * autoloader for deactivated modules and lets static calls leak through.
+ *
+ * @param string $module_id Module slug, e.g. 'sk_zaps', 'sk_payments'.
+ * @return bool
+ */
+function sk_module_active( string $module_id ): bool {
+    if ( ! function_exists( 'sk_ext' ) ) {
+        return false;
+    }
+    $ext = sk_ext();
+    if ( ! $ext || ! isset( $ext->module ) || ! is_object( $ext->module ) ) {
+        return false;
+    }
+    return (bool) $ext->module->is_active( $module_id );
+}
+
+/**
  * Redirect to login page if not already logged in
  *
  * @return void

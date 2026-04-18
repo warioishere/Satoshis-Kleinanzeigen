@@ -18,8 +18,10 @@ defined( 'ABSPATH' ) || exit;
  */
 class NostrRelaySync {
 
-    const CRON_HOOK     = 'sk_nostr_relay_sync';
-    const LAST_SYNC_KEY = 'sk_nostr_relay_last_sync';
+    const CRON_HOOK         = 'sk_nostr_relay_sync';
+    const LAST_SYNC_KEY     = 'sk_nostr_relay_last_sync';
+    const RELAY_FAIL_TTL    = 3600;  // Skip a failing relay for 1h after a bad run.
+    const RELAY_TIMEOUT_SEC = 5;     // Socket/read timeout per relay (was 10).
 
     public static function init() {
         add_action( self::CRON_HOOK, [ __CLASS__, 'run' ] );
@@ -61,8 +63,16 @@ class NostrRelaySync {
             $pubkey_to_user[ $u['pubkey'] ] = $u['user_id'];
         }
 
-        // Fetch events from each relay.
+        // Fetch events from each relay. Skip relays that failed recently so a
+        // single bad relay can't drag the whole cron run past the 40s mark
+        // (relay.nostr.band is flaky for us — this keeps it from blocking the
+        // others for the next hour after a failure).
         foreach ( $relays as $relay_url ) {
+            $fail_key = self::relay_fail_key( $relay_url );
+            if ( get_transient( $fail_key ) ) {
+                continue;
+            }
+
             try {
                 $events = self::fetch_events( $relay_url, $pubkeys, $since );
                 foreach ( $events as $event ) {
@@ -84,10 +94,15 @@ class NostrRelaySync {
                 }
             } catch ( \Throwable $e ) {
                 error_log( '[NostrRelaySync] Error from ' . $relay_url . ': ' . $e->getMessage() );
+                set_transient( $fail_key, 1, self::RELAY_FAIL_TTL );
             }
         }
 
         update_option( self::LAST_SYNC_KEY, time() );
+    }
+
+    private static function relay_fail_key( string $relay_url ): string {
+        return 'sk_nostr_relay_fail_' . md5( $relay_url );
     }
 
     /**
@@ -100,7 +115,7 @@ class NostrRelaySync {
             'ssl' => [ 'verify_peer' => true, 'verify_peer_name' => true ],
         ] );
 
-        $client = new \WebSocket\Client( $relay_url, [ 'context' => $context, 'timeout' => 10 ] );
+        $client = new \WebSocket\Client( $relay_url, [ 'context' => $context, 'timeout' => self::RELAY_TIMEOUT_SEC ] );
         $sub_id = bin2hex( random_bytes( 8 ) );
 
         $events = [];
@@ -131,7 +146,7 @@ class NostrRelaySync {
             $start = time();
             $eose_count = 0;
 
-            while ( time() - $start < 10 ) {
+            while ( time() - $start < self::RELAY_TIMEOUT_SEC ) {
                 $msg = $client->receive();
                 if ( ! $msg ) {
                     break;

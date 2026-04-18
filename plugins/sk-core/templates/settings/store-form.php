@@ -246,7 +246,7 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
     <!-- ======================================================
          SECTION 3b: Onchain + Lightning (conditional: sk-payments Modul aktiv)
     ====================================================== -->
-    <?php if ( class_exists( 'SK\Modules\Payments\Module' ) && \SK\Modules\Payments\Module::is_enabled() ) :
+    <?php if ( sk_module_active( 'sk_payments' ) ) :
         $oc_btc_address = $profile_info['btc_address'] ?? '';
         $oc_xpub        = ! empty( get_user_meta( $current_user, 'sk_xpub', true ) );
         $oc_xpub_ok     = $profile_info['btc_xpub_verified'] ?? false;
@@ -427,7 +427,7 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
     <!-- ======================================================
          SECTION 3c: Nostr Marketplace (conditional: sk-nostr-market Modul aktiv)
     ====================================================== -->
-    <?php if ( class_exists( 'SK\Modules\NostrMarket\Module' ) && sk_get_option( 'sk_nostr_market_enabled', 'sk_nostr_market', 'off' ) === 'on' ) :
+    <?php if ( sk_module_active( 'sk_nostr_market' ) && sk_get_option( 'sk_nostr_market_enabled', 'sk_nostr_market', 'off' ) === 'on' ) :
         $nm_nostr_pubkey = get_user_meta( $current_user, 'nostr_public_key', true );
         $nm_has_pubkey   = ! empty( $nm_nostr_pubkey );
         $nm_post_enabled = $profile_info['nostr_market_enabled'] ?? ( $nm_has_pubkey ? '1' : '0' );

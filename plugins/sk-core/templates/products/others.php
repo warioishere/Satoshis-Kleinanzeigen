@@ -56,7 +56,7 @@ $post_statuses = sk_get_available_post_status( $post->ID );
             ?>
         </div>
 
-        <?php if ( class_exists( 'SK\Modules\NostrMarket\Module' ) && sk_get_option( 'sk_nostr_market_enabled', 'sk_nostr_market', 'off' ) === 'on' ) :
+        <?php if ( sk_module_active( 'sk_nostr_market' ) && sk_get_option( 'sk_nostr_market_enabled', 'sk_nostr_market', 'off' ) === 'on' ) :
             $vendor_id = get_current_user_id();
             $vendor_settings = get_user_meta( $vendor_id, 'sk_profile_settings', true );
             $vendor_nostr_enabled = is_array( $vendor_settings ) && ! empty( $vendor_settings['nostr_market_enabled'] ) && $vendor_settings['nostr_market_enabled'] === '1';

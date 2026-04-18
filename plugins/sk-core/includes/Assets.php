@@ -201,9 +201,6 @@ class Assets {
                 'src'     => SK_CORE_ASSETS . '/vendors/izimodal/iziModal.min.css',
                 'version' => self::asset_version( $dir . 'vendors/izimodal/iziModal.min.css' ),
             ],
-            'sk-minitoggle'              => [
-                'src' => SK_CORE_ASSETS . '/vendors/minitoggle/minitoggle.css',
-            ],
             'sk-select2-css'             => [
                 'src' => SK_CORE_ASSETS . '/vendors/select2/select2.css',
             ],
@@ -234,8 +231,7 @@ class Assets {
      */
     public function get_scripts() {
         global $wp_version;
-        $jquery_tiptip  = self::get_wc_handler( 'jquery-tiptip' );
-        $jquery_blockui = self::get_wc_handler( 'jquery-blockui' );
+        $jquery_tiptip = self::get_wc_handler( 'jquery-tiptip' );
 
         $frontend_asset_file     = SK_CORE_DIR . '/assets/js/frontend.asset.php';
         $frontend_shipping_asset = file_exists( $frontend_asset_file ) ? require $frontend_asset_file : [ 'dependencies' => [], 'version' => SK_CORE_VERSION ];
@@ -250,34 +246,12 @@ class Assets {
                 'src'  => $asset_url . '/js/sk-store-filter-toggle.js',
                 'deps' => [ 'jquery' ],
             ],
-            // Remove `sk-i18n-jed` in next release.
-            'sk-i18n-jed' => [
-                'src'  => $asset_url . '/vendors/i18n/jed.js',
-                'deps' => [ 'jquery', 'wp-i18n' ],
-            ],
-            'sk-accounting'          => [
-                'src'  => WC()->plugin_url() . '/assets/js/accounting/accounting.min.js',
-                'deps' => [ 'jquery' ],
-            ],
             'sk-tinymce'             => [
                 'src'  => site_url( '/wp-includes/js/tinymce/tinymce.min.js' ),
                 'deps' => [],
             ],
-            'sk-tinymce-plugin'      => [
-                'src'     => SK_CORE_ASSETS . '/vendors/tinymce/code/plugin.min.js',
-                'deps'    => [ 'sk-tinymce' ],
-                'version' => time(),
-            ],
-            'sk-tabs'                => [
-                'src'  => $asset_url . '/vendors/easytab/jquery.easytabs.min.js',
-                'deps' => [ 'jquery' ],
-            ],
             'sk-modal'               => [
                 'src'  => $asset_url . '/vendors/izimodal/iziModal.min.js',
-                'deps' => [ 'jquery' ],
-            ],
-            'sk-minitoggle'          => [
-                'src'  => $asset_url . '/vendors/minitoggle/minitoggle.js',
                 'deps' => [ 'jquery' ],
             ],
             'sk-form-validate'       => [
@@ -292,24 +266,9 @@ class Assets {
                 'src'  => $asset_url . '/vendors/date-range-picker/daterangepicker.min.js',
                 'deps' => [ 'jquery', 'moment', 'sk-util-helper' ],
             ],
-            // customize scripts
-            'customize-base'            => [
-                'src'  => site_url( 'wp-includes/js/customize-base.js' ),
-                'deps' => [ 'jquery', 'json2', 'underscore' ],
-            ],
-            'customize-model'           => [
-                'src'  => site_url( 'wp-includes/js/customize-models.js' ),
-                'deps' => [ 'underscore', 'backbone' ],
-            ],
-
             'speaking-url'              => [
                 'src'  => $asset_url . '/vendors/speakingurl/speakingurl.min.js',
                 'deps' => [ 'jquery' ],
-            ],
-            'sk-admin'               => [
-                'src'     => $asset_url . '/js/sk-admin.js',
-                'deps'    => [ 'jquery', 'wp-i18n' ],
-                'version' => self::asset_version( $asset_path . 'js/sk-admin.js' ),
             ],
             'sk-vendor-registration' => [
                 'src'     => $asset_url . '/js/vendor-registration.js',
@@ -327,11 +286,6 @@ class Assets {
                 'deps'    => [ 'jquery', 'sk-util-helper' ],
                 'version' => self::asset_version( $asset_path . 'js/modules/sk-global-utils.js' ),
             ],
-            'sk-daterangepicker-init' => [
-                'src'     => $asset_url . '/js/modules/sk-daterangepicker.js',
-                'deps'    => [ 'jquery', 'sk-date-range-picker', 'moment' ],
-                'version' => self::asset_version( $asset_path . 'js/modules/sk-daterangepicker.js' ),
-            ],
             'sk-product-edit'        => [
                 'src'     => $asset_url . '/js/modules/sk-product-edit.js',
                 'deps'    => [ 'jquery', 'jquery-ui-sortable', 'sk-util-helper', 'sk-select2-js', 'wp-hooks' ],
@@ -341,11 +295,6 @@ class Assets {
                 'src'     => $asset_url . '/js/modules/sk-review-manage.js',
                 'deps'    => [ 'jquery' ],
                 'version' => self::asset_version( $asset_path . 'js/modules/sk-review-manage.js' ),
-            ],
-            'sk-store-listing'       => [
-                'src'     => $asset_url . '/js/modules/sk-store-listing.js',
-                'deps'    => [ 'jquery' ],
-                'version' => self::asset_version( $asset_path . 'js/modules/sk-store-listing.js' ),
             ],
             'sk-sweetalert2'         => [
                 'src'     => $asset_url . '/vendors/sweetalert2/sweetalert2.all.min.js',
@@ -362,16 +311,6 @@ class Assets {
                 'src'     => $asset_url . '/js/vendor-address.js',
                 'deps'    => [ 'jquery', 'wc-address-i18n' ],
                 'version' => self::asset_version( $asset_path . 'js/vendor-address.js' ),
-            ],
-            'sk-jquery-tiptip'       => [
-                'src'     => false,
-                'deps'    => [ $jquery_tiptip ],
-                'version' => SK_CORE_VERSION,
-            ],
-            'sk-jquery-blockui'      => [
-                'src'     => false,
-                'deps'    => [ $jquery_blockui ],
-                'version' => SK_CORE_VERSION,
             ],
         ];
 

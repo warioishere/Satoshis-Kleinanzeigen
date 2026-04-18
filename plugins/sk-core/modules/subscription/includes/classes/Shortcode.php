@@ -29,7 +29,6 @@ class Shortcode {
      */
     private function init_hooks() {
         add_shortcode( 'dps_product_pack', [ __CLASS__, 'create_subscription_package_shortcode' ] );
-        add_action( 'sk_after_saving_settings', [ __CLASS__, 'insert_shortcode_into_page' ], 10, 2 );
 
         add_filter( 'sk_button_shortcodes', array( $this, 'add_to_sk_shortcode_menu' ) );
     }
@@ -68,37 +67,6 @@ class Shortcode {
         $contents = ob_get_clean();
 
         return apply_filters( 'sk_sub_shortcode', $contents, $subscription_packs );
-    }
-
-    /**
-     * Insert subscription shortcode into specefied page
-     *
-     * @param  string $option
-     * @param  array $value
-     *
-     * @return void
-     */
-    public static function insert_shortcode_into_page( $option, $value ) {
-        if ( ! $option || 'sk_product_subscription' !== $option ) {
-            return;
-        }
-
-        $page_id = isset( $value['subscription_pack'] ) ? $value['subscription_pack'] : null;
-
-        if ( ! $page_id ) {
-            return;
-        }
-
-        $content = [
-            'ID'           => $page_id,
-            'post_content' => '[dps_product_pack]',
-        ];
-
-        $insert = wp_update_post( $content );
-
-        if ( is_wp_error( $insert ) ) {
-            return wp_send_json_error( $insert->get_error_message() );
-        }
     }
 
     /**

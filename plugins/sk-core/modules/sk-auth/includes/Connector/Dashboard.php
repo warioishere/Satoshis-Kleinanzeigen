@@ -43,9 +43,10 @@ class SK_Auth_Dashboard extends \SK\Core\Dashboard\DashboardModule {
         $user_id = get_current_user_id();
         $linked_methods = $this->account_linker->get_linked_methods($user_id);
 
-        // Check if LNURL-Auth and Nostr Login plugins are active
-        $lnurl_active = function_exists('lnurl_auth') || class_exists('SK\Modules\Auth\Lnurl\Plugin');
-        $nostr_active = class_exists('Nostr_Login_Handler') || class_exists('SK\Modules\Auth\Nostr_Login_Handler');
+        // Both LNURL + Nostr login are bundled in the sk_auth module — if this
+        // Connector page renders, sk_auth is active, so both flows are available.
+        $lnurl_active = sk_module_active( 'sk_auth' );
+        $nostr_active = sk_module_active( 'sk_auth' );
 
         // Get original auth methods (if this account was created by one of the plugins)
         $original_lnurl = get_user_meta($user_id, 'lnurl-auth-bjm-id', true);
@@ -251,7 +252,7 @@ class SK_Auth_Dashboard extends \SK\Core\Dashboard\DashboardModule {
                             </div>
                             <?php endif; ?>
                             <!-- Nostr Identity / Key Export -->
-                            <?php if ( class_exists( 'SK\Modules\Auth\NostrIdentity' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $user_id ) ) : ?>
+                            <?php if ( sk_module_active( 'sk_auth' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $user_id ) ) : ?>
                             <div class="uac-auth-method-card">
                                 <div class="uac-auth-method-header">
                                     <h3>
