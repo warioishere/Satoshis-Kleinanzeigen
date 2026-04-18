@@ -24,7 +24,7 @@ do_action( 'sk_profile_settings_before_form', $current_user, $profile_info );
 			'id'      => "settings[social][{$key}]",
 			'value'   => $profile_info['social'][ $key ] ?? '',
 			'label'   => $field['title'] ?? '',
-			'placeholder' => 'http://',
+			'placeholder' => 'https://',
 			'prefix'  => '<span class="sk-input-group-addon"><i class="fab fa-' . esc_attr( $icon ) . '"></i></span>',
 		] );
 	endforeach; ?>
