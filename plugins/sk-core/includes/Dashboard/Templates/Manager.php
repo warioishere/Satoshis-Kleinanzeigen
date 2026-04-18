@@ -14,6 +14,5 @@ class Manager {
         $this->container['products']         = new Products();
         $this->container['settings']         = new Settings();
         $this->container['product_category'] = new MultiStepCategories();
-        $this->container['new_dashboard']    = new NewDashboard();
     }
 }

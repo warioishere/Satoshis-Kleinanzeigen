@@ -16,7 +16,6 @@ class CommonServiceProvider extends BaseServiceProvider {
 		\SK\Core\CacheInvalidate::class,
 		\SK\Core\Shipping\ExtendedHooks::class,
 		\SK\Core\Privacy::class,
-		\SK\Core\VendorNavMenuChecker::class,
 		\SK\Core\Exceptions\Handler::class,
 		\SK\Core\Shortcodes\FullWidthVendorLayout::class,
 		\SK\Core\Vendor\ApiMeta::class,
