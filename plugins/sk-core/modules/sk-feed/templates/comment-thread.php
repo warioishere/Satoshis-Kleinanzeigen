@@ -22,7 +22,7 @@ if ( ! function_exists( 'sk_feed_render_comments' ) ) {
 
 			$avatar      = get_avatar( $author_id ?: $comment->comment_author_email, 36 );
 			$comment_ts  = (int) strtotime( $comment->comment_date );
-			$time_ago    = human_time_diff( $comment_ts, current_time( 'timestamp' ) );
+			$time_ago    = human_time_diff( $comment_ts, time() );
 			?>
 			<div class="sk-feed-comment<?php echo $depth > 0 ? ' sk-feed-comment--reply' : ''; ?>" data-comment-id="<?php echo esc_attr( $comment->comment_ID ); ?>">
 				<div class="sk-feed-comment-avatar"><?php echo $avatar; ?></div>

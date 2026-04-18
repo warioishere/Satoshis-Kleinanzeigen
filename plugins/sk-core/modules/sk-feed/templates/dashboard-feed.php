@@ -78,7 +78,7 @@ do_action( 'sk_dashboard_wrap_start' );
 				<?php foreach ( $posts as $feed_post ) :
 					$thumb_url  = get_the_post_thumbnail_url( $feed_post->ID, 'thumbnail' );
 					$feed_ts    = (int) get_post_time( 'U', false, $feed_post );
-					$time_ago   = human_time_diff( $feed_ts, current_time( 'timestamp' ) );
+					$time_ago   = human_time_diff( $feed_ts, time() );
 					$like_count = \SK\Modules\Feed\Likes::get_count( $feed_post->ID );
 					$comments   = (int) get_comments_number( $feed_post->ID );
 					$is_hidden  = $feed_post->post_status === 'pending';

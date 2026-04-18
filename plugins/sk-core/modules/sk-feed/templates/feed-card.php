@@ -19,7 +19,7 @@ if ( ! $thumb_url ) {
 	$thumb_url = get_post_meta( $post_id, '_sk_feed_external_image', true );
 }
 $post_ts    = (int) get_the_time( 'U' );
-$time_ago   = human_time_diff( $post_ts, current_time( 'timestamp' ) );
+$time_ago   = human_time_diff( $post_ts, time() );
 $like_count = \SK\Modules\Feed\Likes::get_count( $post_id );
 $comments   = (int) get_comments_number( $post_id );
 $user_liked = is_user_logged_in() ? \SK\Modules\Feed\Likes::has_liked( $post_id, get_current_user_id() ) : false;

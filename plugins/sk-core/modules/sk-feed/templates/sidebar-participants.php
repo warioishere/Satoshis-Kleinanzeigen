@@ -97,7 +97,7 @@ if ( ! empty( $more_posts ) ) :
 		<?php foreach ( $more_posts as $mp ) :
 			$m_excerpt = wp_trim_words( wp_strip_all_tags( $mp->post_content ), 10 );
 			$m_ts      = (int) get_post_time( 'U', false, $mp );
-			$m_time    = human_time_diff( $m_ts, current_time( 'timestamp' ) );
+			$m_time    = human_time_diff( $m_ts, time() );
 			$m_url     = home_url( '/community/post/' . $mp->ID . '/' );
 		?>
 			<a href="<?php echo esc_url( $m_url ); ?>" class="sk-feed-trending-item">

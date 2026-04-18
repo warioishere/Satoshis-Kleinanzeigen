@@ -489,7 +489,7 @@ class Ajax {
 		$comment    = get_comment( $comment_id );
 		$is_vendor  = function_exists( 'sk_is_user_seller' ) && sk_is_user_seller( $user->ID );
 		$comment_ts = (int) strtotime( $comment->comment_date );
-		$time_ago   = human_time_diff( $comment_ts, current_time( 'timestamp' ) );
+		$time_ago   = human_time_diff( $comment_ts, time() );
 
 		ob_start();
 		?>
