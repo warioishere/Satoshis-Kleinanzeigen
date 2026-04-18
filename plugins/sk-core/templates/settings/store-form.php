@@ -91,45 +91,24 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
             <i class="fas fa-image"></i> <?php esc_html_e( 'Profil', 'sk' ); ?>
         </div>
 
-        <?php /* Banner */ ?>
-        <div class="sk-settings-field sk-settings-field--media">
-            <div class="sk-settings-label"><?php esc_html_e( 'Banner', 'sk-core' ); ?></div>
-            <div class="sk-settings-input">
-                <div id="sk-banner-wrapper" class="sk-banner">
-                    <div class="image-wrap<?php echo $banner_url ? '' : ' sk-hide'; ?>">
-                        <input type="hidden" class="sk-file-field" value="<?php echo esc_attr( $banner_id ); ?>" name="sk_banner">
-                        <img alt="banner" class="sk-banner-img" src="<?php echo esc_url( $banner_url ); ?>">
-                        <a class="sk-remove-banner-image">&times;</a>
-                    </div>
-                    <div class="button-area<?php echo $banner_url ? ' sk-hide' : ''; ?>">
-                        <a href="#" class="sk-banner-drag sk-btn sk-btn-default">
-                            <i class="fas fa-cloud-upload-alt"></i> <?php esc_html_e( 'Banner hochladen', 'sk-core' ); ?>
-                        </a>
-                        <p class="sk-settings-hint">
-                            <?php printf( esc_html__( 'Empfohlen: %1$s × %2$s Pixel', 'sk-core' ), $banner_width, $banner_height ); ?>
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <?php
+        sk_form_media_upload( [
+            'name'          => 'sk_banner',
+            'attachment_id' => (int) $banner_id,
+            'label'         => __( 'Banner', 'sk-core' ),
+            'variant'       => 'banner',
+            'upload_label'  => __( 'Banner hochladen', 'sk-core' ),
+            'hint'          => sprintf( esc_html__( 'Empfohlen: %1$s × %2$s Pixel', 'sk-core' ), $banner_width, $banner_height ),
+        ] );
 
-
-        <?php /* Profile photo */ ?>
-        <div class="sk-settings-field">
-            <div class="sk-settings-label"><?php esc_html_e( 'Profilbild', 'sk-core' ); ?></div>
-            <div id="sk-profile-picture-wrapper" class="sk-settings-input sk-gravatar">
-                <div class="sk-left gravatar-wrap<?php echo $gravatar_url ? '' : ' sk-hide'; ?>">
-                    <input type="hidden" class="sk-file-field" value="<?php echo esc_attr( $gravatar_id ); ?>" name="sk_gravatar">
-                    <img alt="gravatar" class="sk-gravatar-img" src="<?php echo esc_url( $gravatar_url ); ?>">
-                    <a class="sk-remove-gravatar-image">&times;</a>
-                </div>
-                <div class="gravatar-button-area<?php echo $gravatar_url ? ' sk-hide' : ''; ?>">
-                    <a href="#" class="sk-pro-gravatar-drag sk-btn sk-btn-default">
-                        <i class="fas fa-cloud-upload-alt"></i> <?php esc_html_e( 'Foto hochladen', 'sk-core' ); ?>
-                    </a>
-                </div>
-            </div>
-        </div>
+        sk_form_media_upload( [
+            'name'          => 'sk_gravatar',
+            'attachment_id' => (int) $gravatar_id,
+            'label'         => __( 'Profilbild', 'sk-core' ),
+            'variant'       => 'gravatar',
+            'upload_label'  => __( 'Foto hochladen', 'sk-core' ),
+        ] );
+        ?>
     </div>
 
     <!-- ======================================================
@@ -140,14 +119,15 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
             <i class="fas fa-store"></i> <?php esc_html_e( 'Shop-Informationen', 'sk' ); ?>
         </div>
 
-        <div class="sk-settings-field">
-            <label class="sk-settings-label" for="sk_store_name"><?php esc_html_e( 'Anzeigename', 'sk-core' ); ?></label>
-            <div class="sk-settings-input">
-                <input id="sk_store_name" type="text" class="sk-form-control" name="sk_store_name"
-                       value="<?php echo esc_attr( $storename ); ?>"
-                       placeholder="<?php esc_attr_e( 'Dein Anzeigename', 'sk-core' ); ?>" required>
-            </div>
-        </div>
+        <?php
+        sk_form_input( [
+            'name'        => 'sk_store_name',
+            'value'       => $storename,
+            'label'       => __( 'Anzeigename', 'sk-core' ),
+            'placeholder' => __( 'Dein Anzeigename', 'sk-core' ),
+            'required'    => true,
+        ] );
+        ?>
 
         <?php /* Store Category (sk-pro, conditional) */ ?>
         <?php if ( $store_categories_on && ! empty( $sc_categories ) && ! is_wp_error( $sc_categories ) ) : ?>
@@ -189,56 +169,75 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
             <i class="fas fa-address-card"></i> <?php esc_html_e( 'Kontaktdaten', 'sk' ); ?>
         </div>
 
-        <div class="sk-form-group sk-contact-email">
-            <label class="sk-w3 sk-control-label">E-Mail-Adresse</label>
-            <div class="sk-w5">
-                <input type="email" class="sk-form-control" name="setting_email" value="<?php echo $cd_email; ?>" />
-                <input type="hidden" name="setting_show_email" value="no" />
-                <label><input type="checkbox" name="setting_show_email" value="yes" <?php echo $cd_show_email; ?>> Öffentlich anzeigen</label>
-            </div>
-        </div>
-        <div class="sk-form-group">
-            <label class="sk-w3 sk-control-label">Telegram Handle</label>
-            <div class="sk-w5">
-                <input type="text" class="sk-form-control" name="telegram" value="<?php echo $cd_telegram; ?>" />
-                <label><input type="checkbox" name="show_telegram" value="1" <?php echo $cd_show_tele; ?>> Öffentlich anzeigen</label>
-            </div>
-        </div>
-        <div class="sk-form-group">
-            <label class="sk-w3 sk-control-label">Twitter / X Handle</label>
-            <div class="sk-w5">
-                <input type="text" class="sk-form-control" name="twitter" value="<?php echo $cd_twitter; ?>" />
-                <label><input type="checkbox" name="show_twitter" value="1" <?php echo $cd_show_tw; ?>> Öffentlich anzeigen</label>
-            </div>
-        </div>
-        <div class="sk-form-group">
-            <label class="sk-w3 sk-control-label">Handynummer</label>
-            <div class="sk-w5">
-                <input type="text" class="sk-form-control" name="phone_number" value="<?php echo $cd_phone; ?>" />
-                <label><input type="checkbox" name="show_phone_number" value="1" <?php echo $cd_show_phone; ?>> Öffentlich anzeigen</label>
-            </div>
-        </div>
-        <div class="sk-form-group">
-            <label class="sk-w3 sk-control-label">Nostr Public Key (npub...)</label>
-            <div class="sk-w5">
-                <input type="text" class="sk-form-control" name="nostr" value="<?php echo $cd_nostr; ?>" />
-                <label><input type="checkbox" name="show_nostr" value="1" <?php echo $cd_show_nostr; ?>> Öffentlich anzeigen</label>
-            </div>
-        </div>
+        <?php
+        $toggle_label_public = __( 'Öffentlich anzeigen', 'sk-core' );
+
+        /** Build the "public visibility" toggle checkbox appended after each contact field. */
+        $public_toggle = function ( string $name, string $value, bool $checked ): string {
+            $esc_name    = esc_attr( $name );
+            $esc_value   = esc_attr( $value );
+            $checked_str = $checked ? ' checked' : '';
+            return sprintf(
+                ' <label class="sk-settings-checkbox"><input type="checkbox" name="%1$s" value="%2$s"%3$s> %4$s</label>',
+                $esc_name,
+                $esc_value,
+                $checked_str,
+                esc_html( __( 'Öffentlich anzeigen', 'sk-core' ) )
+            );
+        };
+
+        sk_form_input( [
+            'type'   => 'email',
+            'name'   => 'setting_email',
+            'id'     => 'setting_email',
+            'value'  => $cd_email,
+            'label'  => __( 'E-Mail-Adresse', 'sk-core' ),
+            'wrapper_class' => 'sk-contact-email',
+            'extras' => '<input type="hidden" name="setting_show_email" value="no" />'
+                      . $public_toggle( 'setting_show_email', 'yes', $cd_show_email === 'checked' ),
+        ] );
+
+        sk_form_input( [
+            'name'   => 'telegram',
+            'value'  => $cd_telegram,
+            'label'  => __( 'Telegram Handle', 'sk-core' ),
+            'extras' => $public_toggle( 'show_telegram', '1', $cd_show_tele === 'checked' ),
+        ] );
+
+        sk_form_input( [
+            'name'   => 'twitter',
+            'value'  => $cd_twitter,
+            'label'  => __( 'Twitter / X Handle', 'sk-core' ),
+            'extras' => $public_toggle( 'show_twitter', '1', $cd_show_tw === 'checked' ),
+        ] );
+
+        sk_form_input( [
+            'name'   => 'phone_number',
+            'value'  => $cd_phone,
+            'label'  => __( 'Handynummer', 'sk-core' ),
+            'extras' => $public_toggle( 'show_phone_number', '1', $cd_show_phone === 'checked' ),
+        ] );
+
+        sk_form_input( [
+            'name'   => 'nostr',
+            'value'  => $cd_nostr,
+            'label'  => __( 'Nostr Public Key (npub...)', 'sk-core' ),
+            'extras' => $public_toggle( 'show_nostr', '1', $cd_show_nostr === 'checked' ),
+        ] );
+        ?>
+
         <?php if ( $cd_feewall_available ) : ?>
-        <div class="sk-form-group">
-            <label class="sk-w3 sk-control-label"><strong>⚡ Kontaktdetails Paywall</strong></label>
-            <div class="sk-w5">
-                <label style="display:block;margin-bottom:10px;">
+        <div class="sk-settings-field">
+            <label class="sk-settings-label"><strong>⚡ <?php esc_html_e( 'Kontaktdetails Paywall', 'sk-core' ); ?></strong></label>
+            <div class="sk-settings-input">
+                <label class="sk-settings-checkbox">
                     <input type="checkbox" name="cdf_enabled" value="1" <?php checked( $cd_feewall_enabled, true ); ?>>
-                    <strong>Paywall aktivieren (21 Sats)</strong>
+                    <strong><?php esc_html_e( 'Paywall aktivieren (21 Sats)', 'sk-core' ); ?></strong>
                 </label>
-                <p class="description" style="margin-top:10px;font-size:14px;color:#ccc;">Interessenten zahlen 21 Sats via BTCPay, um deine Kontaktdaten zu sehen.</p>
+                <p class="sk-settings-hint"><?php esc_html_e( 'Interessenten zahlen 21 Sats via BTCPay, um deine Kontaktdaten zu sehen.', 'sk-core' ); ?></p>
             </div>
         </div>
         <?php endif; ?>
-
-        <?php /* Extension point for additional contact fields */ ?>
     </div>
 
 
@@ -505,18 +504,23 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
     ====================================================== -->
     <div class="sk-settings-section">
         <div class="sk-settings-section-title">
-            <i class="fas fa-link"></i> Store-Link
+            <i class="fas fa-link"></i> <?php esc_html_e( 'Store-Link', 'sk-core' ); ?>
         </div>
-        <div class="sk-settings-field">
-            <label class="sk-settings-label" for="store_slug">URL-Slug</label>
-            <div class="sk-settings-input">
-                <input type="text" class="sk-form-control" name="store_slug" id="store_slug" value="<?php echo esc_attr( $store_slug ); ?>" />
-                <p class="description" style="margin-top:6px">
-                    Dein Shop ist erreichbar unter:
-                    <strong><?php echo esc_url( site_url( '/store/' ) ); ?><span id="store_slug_preview"><?php echo esc_attr( $store_slug ); ?></span></strong>
-                </p>
-            </div>
-        </div>
+        <?php
+        $slug_hint = sprintf(
+            '%s <strong>%s<span id="store_slug_preview">%s</span></strong>',
+            esc_html__( 'Dein Shop ist erreichbar unter:', 'sk-core' ),
+            esc_url( site_url( '/store/' ) ),
+            esc_html( $store_slug )
+        );
+
+        sk_form_input( [
+            'name'  => 'store_slug',
+            'value' => $store_slug,
+            'label' => __( 'URL-Slug', 'sk-core' ),
+            'hint'  => $slug_hint,
+        ] );
+        ?>
     </div>
 
     <?php /* Extension points for additional sections */ ?>
@@ -643,48 +647,54 @@ function skStoreToast(message, type) {
             });
     });
 
-    // Banner upload
+    // Banner upload — component rendered by sk_form_media_upload(variant='banner').
     var skBannerFrame;
-    $('.sk-banner-drag').on('click', function(e) {
+    $(document).on('click', '.sk-banner-drag', function(e) {
         e.preventDefault();
+        var $component = $(this).closest('.sk-banner');
         if (skBannerFrame) { skBannerFrame.open(); return; }
         skBannerFrame = wp.media({ title: '<?php echo esc_js( __( 'Banner auswählen', 'sk-core' ) ); ?>', button: { text: '<?php echo esc_js( __( 'Auswählen', 'sk-core' ) ); ?>' }, multiple: false });
         skBannerFrame.on('select', function() {
             var att = skBannerFrame.state().get('selection').first().toJSON();
-            $('#sk-banner-wrapper .sk-file-field').val(att.id);
-            $('#sk-banner-wrapper .sk-banner-img').attr('src', att.url);
-            $('#sk-banner-wrapper .image-wrap').removeClass('sk-hide');
-            $('#sk-banner-wrapper .button-area').addClass('sk-hide');
+            $component.find('.sk-file-field').val(att.id);
+            $component.find('.sk-banner-img').attr('src', att.url);
+            $component.find('.image-wrap').removeClass('sk-hide');
+            $component.find('.button-area').addClass('sk-hide');
         });
         skBannerFrame.open();
     });
-    $('.sk-remove-banner-image').on('click', function(e) {
+    $(document).on('click', '.sk-remove-banner-image', function(e) {
         e.preventDefault();
-        $('#sk-banner-wrapper .sk-file-field').val('');
-        $('#sk-banner-wrapper .image-wrap').addClass('sk-hide');
-        $('#sk-banner-wrapper .button-area').removeClass('sk-hide');
+        var $component = $(this).closest('.sk-banner');
+        $component.find('.sk-file-field').val('');
+        $component.find('.image-wrap').addClass('sk-hide');
+        $component.find('.button-area').removeClass('sk-hide');
     });
 
-    // Gravatar upload
-    var skGravatarFrame;
-    $('.sk-pro-gravatar-drag').on('click', function(e) {
+    // Gravatar / image upload — component rendered by sk_form_media_upload(variant='gravatar').
+    // Same pattern works for store profile + SEO OG images.
+    var skGravatarFrames = {};
+    $(document).on('click', '.sk-gravatar-drag', function(e) {
         e.preventDefault();
-        if (skGravatarFrame) { skGravatarFrame.open(); return; }
-        skGravatarFrame = wp.media({ title: '<?php echo esc_js( __( 'Profilbild auswählen', 'sk-core' ) ); ?>', button: { text: '<?php echo esc_js( __( 'Auswählen', 'sk-core' ) ); ?>' }, multiple: false });
-        skGravatarFrame.on('select', function() {
-            var att = skGravatarFrame.state().get('selection').first().toJSON();
-            $('#sk-profile-picture-wrapper .sk-file-field').val(att.id);
-            $('#sk-profile-picture-wrapper .sk-gravatar-img').attr('src', att.url);
-            $('#sk-profile-picture-wrapper .gravatar-wrap').removeClass('sk-hide');
-            $('#sk-profile-picture-wrapper .gravatar-button-area').addClass('sk-hide');
+        var $component = $(this).closest('.sk-gravatar');
+        var key = $component.find('.sk-file-field').attr('name') || 'default';
+        if (skGravatarFrames[key]) { skGravatarFrames[key].open(); return; }
+        skGravatarFrames[key] = wp.media({ title: '<?php echo esc_js( __( 'Bild auswählen', 'sk-core' ) ); ?>', button: { text: '<?php echo esc_js( __( 'Auswählen', 'sk-core' ) ); ?>' }, multiple: false });
+        skGravatarFrames[key].on('select', function() {
+            var att = skGravatarFrames[key].state().get('selection').first().toJSON();
+            $component.find('.sk-file-field').val(att.id);
+            $component.find('.sk-gravatar-img').attr('src', att.url);
+            $component.find('.gravatar-wrap').removeClass('sk-hide');
+            $component.find('.gravatar-button-area').addClass('sk-hide');
         });
-        skGravatarFrame.open();
+        skGravatarFrames[key].open();
     });
-    $('.sk-remove-gravatar-image').on('click', function(e) {
+    $(document).on('click', '.sk-remove-gravatar-image', function(e) {
         e.preventDefault();
-        $('#sk-profile-picture-wrapper .sk-file-field').val('');
-        $('#sk-profile-picture-wrapper .gravatar-wrap').addClass('sk-hide');
-        $('#sk-profile-picture-wrapper .gravatar-button-area').removeClass('sk-hide');
+        var $component = $(this).closest('.sk-gravatar');
+        $component.find('.sk-file-field').val('');
+        $component.find('.gravatar-wrap').addClass('sk-hide');
+        $component.find('.gravatar-button-area').removeClass('sk-hide');
     });
 
     // Store slug preview
