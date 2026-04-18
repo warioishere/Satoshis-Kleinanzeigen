@@ -77,7 +77,8 @@ do_action( 'sk_dashboard_wrap_start' );
 			<div class="sk-feed-dashboard-list" id="sk-feed-dashboard-list">
 				<?php foreach ( $posts as $feed_post ) :
 					$thumb_url  = get_the_post_thumbnail_url( $feed_post->ID, 'thumbnail' );
-					$time_ago   = human_time_diff( get_post_time( 'U', false, $feed_post ), current_time( 'timestamp' ) );
+					$feed_ts    = (int) get_post_time( 'U', false, $feed_post );
+					$time_ago   = human_time_diff( $feed_ts, current_time( 'timestamp' ) );
 					$like_count = \SK\Modules\Feed\Likes::get_count( $feed_post->ID );
 					$comments   = (int) get_comments_number( $feed_post->ID );
 					$is_hidden  = $feed_post->post_status === 'pending';
@@ -112,7 +113,7 @@ do_action( 'sk_dashboard_wrap_start' );
 								</div>
 							</div>
 							<div class="sk-feed-dashboard-item-meta">
-								<span><i class="far fa-clock"></i> <?php printf( esc_html__( 'vor %s', 'sk-core' ), $time_ago ); ?></span>
+								<span><i class="far fa-clock"></i> <span class="sk-timeago" data-ts="<?php echo esc_attr( $feed_ts ); ?>"><?php printf( esc_html__( 'vor %s', 'sk-core' ), $time_ago ); ?></span></span>
 								<?php if ( $like_count ) : ?>
 									<span><i class="far fa-heart"></i> <?php echo esc_html( $like_count ); ?></span>
 								<?php endif; ?>

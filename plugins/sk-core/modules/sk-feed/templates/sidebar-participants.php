@@ -96,13 +96,14 @@ if ( ! empty( $more_posts ) ) :
 	<div class="sk-feed-trending-list">
 		<?php foreach ( $more_posts as $mp ) :
 			$m_excerpt = wp_trim_words( wp_strip_all_tags( $mp->post_content ), 10 );
-			$m_time    = human_time_diff( get_post_time( 'U', false, $mp ), current_time( 'timestamp' ) );
+			$m_ts      = (int) get_post_time( 'U', false, $mp );
+			$m_time    = human_time_diff( $m_ts, current_time( 'timestamp' ) );
 			$m_url     = home_url( '/community/post/' . $mp->ID . '/' );
 		?>
 			<a href="<?php echo esc_url( $m_url ); ?>" class="sk-feed-trending-item">
 				<div class="sk-feed-trending-body">
 					<span class="sk-feed-trending-text"><?php echo esc_html( $m_excerpt ); ?></span>
-					<span class="sk-feed-trending-stats"><i class="far fa-clock"></i> <?php printf( esc_html__( 'vor %s', 'sk-core' ), $m_time ); ?></span>
+					<span class="sk-feed-trending-stats"><i class="far fa-clock"></i> <span class="sk-timeago" data-ts="<?php echo esc_attr( $m_ts ); ?>"><?php printf( esc_html__( 'vor %s', 'sk-core' ), $m_time ); ?></span></span>
 				</div>
 			</a>
 		<?php endforeach; ?>

@@ -20,8 +20,9 @@ if ( ! function_exists( 'sk_feed_render_comments' ) ) {
 				}
 			}
 
-			$avatar   = get_avatar( $author_id ?: $comment->comment_author_email, 36 );
-			$time_ago = human_time_diff( strtotime( $comment->comment_date ), current_time( 'timestamp' ) );
+			$avatar      = get_avatar( $author_id ?: $comment->comment_author_email, 36 );
+			$comment_ts  = (int) strtotime( $comment->comment_date );
+			$time_ago    = human_time_diff( $comment_ts, current_time( 'timestamp' ) );
 			?>
 			<div class="sk-feed-comment<?php echo $depth > 0 ? ' sk-feed-comment--reply' : ''; ?>" data-comment-id="<?php echo esc_attr( $comment->comment_ID ); ?>">
 				<div class="sk-feed-comment-avatar"><?php echo $avatar; ?></div>
@@ -33,7 +34,7 @@ if ( ! function_exists( 'sk_feed_render_comments' ) ) {
 								<span class="sk-feed-comment-badge"><?php esc_html_e( 'Verkäufer', 'sk-core' ); ?></span>
 							<?php endif; ?>
 						</strong>
-						<span class="sk-feed-comment-time"><?php printf( esc_html__( 'vor %s', 'sk-core' ), $time_ago ); ?></span>
+						<span class="sk-feed-comment-time sk-timeago" data-ts="<?php echo esc_attr( $comment_ts ); ?>"><?php printf( esc_html__( 'vor %s', 'sk-core' ), $time_ago ); ?></span>
 					</div>
 					<div class="sk-feed-comment-text">
 						<?php echo wp_kses_post( wpautop( $comment->comment_content ) ); ?>

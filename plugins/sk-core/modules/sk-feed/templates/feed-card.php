@@ -18,7 +18,8 @@ $thumb_url  = get_the_post_thumbnail_url( $post_id, 'large' );
 if ( ! $thumb_url ) {
 	$thumb_url = get_post_meta( $post_id, '_sk_feed_external_image', true );
 }
-$time_ago   = human_time_diff( get_the_time( 'U' ), current_time( 'timestamp' ) );
+$post_ts    = (int) get_the_time( 'U' );
+$time_ago   = human_time_diff( $post_ts, current_time( 'timestamp' ) );
 $like_count = \SK\Modules\Feed\Likes::get_count( $post_id );
 $comments   = (int) get_comments_number( $post_id );
 $user_liked = is_user_logged_in() ? \SK\Modules\Feed\Likes::has_liked( $post_id, get_current_user_id() ) : false;
@@ -43,7 +44,7 @@ $gesuch_id  = (int) get_post_meta( $post_id, '_sk_feed_gesuch_id', true );
 				<?php elseif ( 'nostr_import' === $feed_type ) : ?>
 					<span class="sk-feed-type-badge" style="color:#8b5cf6;"><i class="fas fa-bolt"></i> <?php esc_html_e( 'via Nostr', 'sk-core' ); ?></span> ·
 				<?php endif; ?>
-				<?php printf( esc_html__( 'vor %s', 'sk-core' ), $time_ago ); ?>
+				<span class="sk-timeago" data-ts="<?php echo esc_attr( $post_ts ); ?>"><?php printf( esc_html__( 'vor %s', 'sk-core' ), $time_ago ); ?></span>
 			</span>
 		</div>
 		<?php

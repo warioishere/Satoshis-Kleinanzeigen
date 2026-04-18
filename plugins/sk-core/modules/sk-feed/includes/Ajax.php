@@ -486,9 +486,10 @@ class Ajax {
 			} );
 		}
 
-		$comment   = get_comment( $comment_id );
-		$is_vendor = function_exists( 'sk_is_user_seller' ) && sk_is_user_seller( $user->ID );
-		$time_ago  = human_time_diff( strtotime( $comment->comment_date ), current_time( 'timestamp' ) );
+		$comment    = get_comment( $comment_id );
+		$is_vendor  = function_exists( 'sk_is_user_seller' ) && sk_is_user_seller( $user->ID );
+		$comment_ts = (int) strtotime( $comment->comment_date );
+		$time_ago   = human_time_diff( $comment_ts, current_time( 'timestamp' ) );
 
 		ob_start();
 		?>
@@ -502,7 +503,7 @@ class Ajax {
 							<span class="sk-feed-comment-badge"><?php esc_html_e( 'Verkäufer', 'sk-core' ); ?></span>
 						<?php endif; ?>
 					</strong>
-					<span class="sk-feed-comment-time"><?php printf( esc_html__( 'vor %s', 'sk-core' ), $time_ago ); ?></span>
+					<span class="sk-feed-comment-time sk-timeago" data-ts="<?php echo esc_attr( $comment_ts ); ?>"><?php printf( esc_html__( 'vor %s', 'sk-core' ), $time_ago ); ?></span>
 				</div>
 				<div class="sk-feed-comment-text">
 					<?php echo wp_kses_post( wpautop( $comment->comment_content ) ); ?>

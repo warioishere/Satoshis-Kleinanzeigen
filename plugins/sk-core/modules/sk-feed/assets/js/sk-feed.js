@@ -6,6 +6,42 @@
 
     if (typeof skFeed === 'undefined') return;
 
+    // ── Relative Timestamps (auto-update every 60s) ──────────────────────
+
+    function formatTimeAgoDE(ts) {
+        var diff = Math.max(0, Math.floor(Date.now() / 1000 - ts));
+        if (diff < 45)       return 'gerade eben';
+        if (diff < 90)       return 'vor 1 Minute';
+        var mins = Math.round(diff / 60);
+        if (mins < 60)       return 'vor ' + mins + ' Minuten';
+        var hours = Math.round(diff / 3600);
+        if (hours === 1)     return 'vor 1 Stunde';
+        if (hours < 24)      return 'vor ' + hours + ' Stunden';
+        var days = Math.round(diff / 86400);
+        if (days === 1)      return 'vor 1 Tag';
+        if (days < 7)        return 'vor ' + days + ' Tagen';
+        var weeks = Math.round(diff / 604800);
+        if (weeks === 1)     return 'vor 1 Woche';
+        if (weeks < 5)       return 'vor ' + weeks + ' Wochen';
+        var months = Math.round(diff / 2629800);
+        if (months === 1)    return 'vor 1 Monat';
+        if (months < 12)     return 'vor ' + months + ' Monaten';
+        var years = Math.round(diff / 31557600);
+        if (years === 1)     return 'vor 1 Jahr';
+        return 'vor ' + years + ' Jahren';
+    }
+
+    function refreshTimeagos(root) {
+        var $scope = root ? $(root) : $(document);
+        $scope.find('.sk-timeago[data-ts]').addBack('.sk-timeago[data-ts]').each(function () {
+            var ts = parseInt($(this).attr('data-ts'), 10);
+            if (ts > 0) $(this).text(formatTimeAgoDE(ts));
+        });
+    }
+
+    $(function () { refreshTimeagos(); });
+    setInterval(function () { refreshTimeagos(); }, 60000);
+
     // ── Like Toggle ──────────────────────────────────────────────────────
 
     function requireLogin() {
@@ -148,6 +184,7 @@
             feedLoading = false;
             if (res.success) {
                 $('#sk-feed-list').append(res.data.html);
+                refreshTimeagos('#sk-feed-list');
                 if (res.data.has_more) {
                     $sentinel.data('page', page + 1).html('');
                 } else {
@@ -188,6 +225,7 @@
         }, function (res) {
             if (res.success) {
                 $list.html(res.data.html).css('opacity', '1');
+                refreshTimeagos($list);
                 // Reset infinite scroll sentinel.
                 var $sentinel = $wrapper.find('.sk-feed-scroll-sentinel');
                 var obs = $sentinel.data('observer');
@@ -246,9 +284,11 @@
                     var $feedList = $('#sk-feed-list');
                     if ($list.length) {
                         $list.prepend(res.data.html);
+                        refreshTimeagos($list);
                     } else if ($feedList.length) {
                         $('.sk-feed-empty').remove();
                         $feedList.prepend(res.data.html);
+                        refreshTimeagos($feedList);
                     }
                     // Update count.
                     var $total = $('.sk-feed-total');
@@ -475,6 +515,7 @@
                 $text.val('');
                 $('.sk-feed-no-comments').remove();
                 $('#sk-feed-comment-list').append(res.data.html);
+                refreshTimeagos('#sk-feed-comment-list');
                 // Update comment count in stats.
                 updateCommentCount(res.data.count);
             } else if (res.data && res.data.message) {
@@ -522,6 +563,7 @@
                 $form.hide();
                 // Append reply after the parent comment's body.
                 $form.closest('.sk-feed-comment-body').append(res.data.html);
+                refreshTimeagos($form.closest('.sk-feed-comment-body'));
                 updateCommentCount(res.data.count);
             } else if (res.data && res.data.message) {
                 alert(res.data.message);
