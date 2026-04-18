@@ -64,6 +64,17 @@ class NostrIdentity {
     }
 
     /**
+     * Delete a generated Nostr identity — removes private key, public key,
+     * and identity source. User can later re-link via browser extension
+     * (NIP-07) through the auth-connector dashboard.
+     */
+    public static function delete_for_user( int $user_id ): void {
+        delete_user_meta( $user_id, 'sk_nostr_private_key' );
+        delete_user_meta( $user_id, 'nostr_public_key' );
+        delete_user_meta( $user_id, 'sk_nostr_identity_source' );
+    }
+
+    /**
      * Check if user has a Nostr identity (with private key we control).
      */
     public static function has_identity( int $user_id ): bool {

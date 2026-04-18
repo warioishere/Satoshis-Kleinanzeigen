@@ -280,6 +280,15 @@ class SK_Auth_Dashboard extends \SK\Core\Dashboard\DashboardModule {
                                         <i class="fas fa-exclamation-triangle"></i>
                                         Teile deinen Private Key (nsec) <strong>niemals</strong> mit anderen! Wer deinen nsec hat, kontrolliert deine Nostr-Identität.
                                     </p>
+                                    <div class="uac-method-actions" style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);">
+                                        <button type="button" class="button" id="uac-delete-nostr-identity" style="color:#dc3545;border-color:#dc3545;">
+                                            Identität löschen
+                                        </button>
+                                        <p class="uac-method-description" style="font-size:12px;margin-top:6px;">
+                                            Löscht die auf SK gespeicherte Nostr-Identität. Danach kannst du deinen eigenen Nostr-Account über die Browser-Extension verknüpfen.
+                                            <strong>Exportiere vorher den nsec</strong>, falls du weiter darauf zugreifen willst.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                             <script>
@@ -296,6 +305,17 @@ class SK_Auth_Dashboard extends \SK\Core\Dashboard\DashboardModule {
                                     navigator.clipboard.writeText($('#uac-nsec-value').text());
                                     $(this).text('Kopiert!');
                                     setTimeout(function(){ $('#uac-copy-nsec').text('Kopieren'); }, 2000);
+                                });
+                                $('#uac-delete-nostr-identity').on('click', function(){
+                                    if (!confirm('Wirklich löschen? Du verlierst den Zugriff auf deinen aktuellen nsec — stelle sicher, dass du ihn vorher exportiert hast, falls du den Account weiter nutzen möchtest.')) return;
+                                    var $btn = $(this).prop('disabled', true).text('Lösche...');
+                                    $.post(<?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>, {
+                                        action: 'sk_delete_nostr_identity',
+                                        nonce:  <?php echo wp_json_encode( wp_create_nonce( 'uob_ajax_nonce' ) ); ?>
+                                    }, function(res){
+                                        if (res.success) { location.reload(); }
+                                        else { $btn.prop('disabled', false).text('Identität löschen'); alert((res.data && res.data.message) || 'Fehler'); }
+                                    });
                                 });
                             });
                             </script>

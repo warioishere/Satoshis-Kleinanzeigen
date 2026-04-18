@@ -17,6 +17,7 @@ class UserOnboarding {
 		add_action( 'wp_footer', [ $this, 'render_modal' ] );
 		add_action( 'wp_ajax_uob_complete_onboarding', [ $this, 'ajax_complete' ] );
 		add_action( 'wp_ajax_sk_create_nostr_identity', [ $this, 'ajax_create_nostr_identity' ] );
+		add_action( 'wp_ajax_sk_delete_nostr_identity', [ $this, 'ajax_delete_nostr_identity' ] );
 		add_action( 'deleted_user', [ $this, 'cleanup' ] );
 		add_action( 'admin_menu', [ $this, 'add_admin_page' ] );
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
@@ -326,6 +327,25 @@ class UserOnboarding {
 		} catch ( \Throwable $e ) {
 			wp_send_json_error( [ 'message' => $e->getMessage() ] );
 		}
+	}
+
+	/**
+	 * AJAX: Delete the generated Nostr identity for current user, so they
+	 * can re-link with their own browser-extension key via the auth-connector.
+	 */
+	public function ajax_delete_nostr_identity(): void {
+		check_ajax_referer( 'uob_ajax_nonce', 'nonce' );
+
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error( [ 'message' => 'Not logged in.' ] );
+		}
+
+		$user_id = get_current_user_id();
+		\SK\Modules\Auth\NostrIdentity::delete_for_user( $user_id );
+
+		wp_send_json_success( [
+			'message' => __( 'Nostr-Identität gelöscht. Du kannst jetzt einen eigenen Nostr-Account über deine Browser-Extension verknüpfen.', 'sk-core' ),
+		] );
 	}
 
 	/**
