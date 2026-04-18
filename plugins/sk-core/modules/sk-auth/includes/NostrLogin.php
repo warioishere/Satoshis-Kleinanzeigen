@@ -340,19 +340,13 @@ class Nostr_Login_Handler {
     }
 
     private function create_new_user( $public_key, $sanitized_metadata ) {
-        if ( ! empty( $sanitized_metadata['name'] ) ) {
-            $username = sanitize_user( $sanitized_metadata['name'], true );
-            if ( username_exists( $username ) ) {
-                $username .= '_' . wp_generate_password( 4, false );
-            }
-        } else {
-            // Same pattern as LNURL: prefix + incrementing number.
-            $prefix = 'nostr-';
-            $number = 1;
-            while ( username_exists( $prefix . $number ) ) {
-                $number++;
-            }
-            $username = $prefix . $number;
+        // Always generate anonymous `satoshi-XXXXX` login — matches BtcLogin
+        // pattern. The Nostr profile's `name` is applied separately as
+        // display_name via update_user_metadata(), so the user-facing label
+        // stays as-is; only the slug/login is anonymized.
+        $username = 'satoshi-' . wp_generate_password( 5, false, false );
+        while ( username_exists( $username ) ) {
+            $username = 'satoshi-' . wp_generate_password( 5, false, false );
         }
 
         $email = ! empty( $sanitized_metadata['email'] ) ? sanitize_email( $sanitized_metadata['email'] ) : sanitize_text_field( $public_key ) . '@nostr.local';
