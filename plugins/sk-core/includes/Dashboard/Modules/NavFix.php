@@ -2,26 +2,20 @@
 
 namespace SK\Core\Dashboard\Modules;
 
-/**
- * Nav text fix (Store count wording).
- * Ported from kadence-child/functions.php.
- */
 class NavFix {
 
     public function __construct() {
-        add_action( 'wp_footer', [ $this, 'output_nav_text_fix' ] );
+        add_action( 'wp_enqueue_scripts', [ $this, 'enqueue' ] );
     }
 
-    public function output_nav_text_fix(): void {
-        ?>
-        <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var el = document.querySelector('p.store-count');
-            if (el && el.textContent.includes('Shop Insgesamt Anzeigen')) {
-                el.textContent = el.textContent.replace('Shop Insgesamt Anzeigen', 'Anbieter insgesamt');
-            }
-        });
-        </script>
-        <?php
+    public function enqueue(): void {
+        $path = SK_CORE_DIR . '/assets/js/dashboard/nav-text-fix.js';
+        wp_enqueue_script(
+            'sk-nav-text-fix',
+            SK_CORE_ASSETS . '/js/dashboard/nav-text-fix.js',
+            [],
+            file_exists( $path ) ? (string) filemtime( $path ) : SK_CORE_VERSION,
+            true
+        );
     }
 }

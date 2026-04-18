@@ -361,34 +361,19 @@ class UserOnboarding {
 				<i class="fas fa-times"></i>
 			</button>
 		</div>
-		<script>
-		jQuery(function($){
-			$('#sk-nostr-banner-create').on('click', function(){
-				var $btn = $(this);
-				$btn.prop('disabled', true).text('Wird erstellt...');
-				$.post(uobAjax ? uobAjax.ajaxurl : '<?php echo admin_url("admin-ajax.php"); ?>', {
-					action: 'sk_create_nostr_identity',
-					nonce: '<?php echo wp_create_nonce("uob_ajax_nonce"); ?>'
-				}, function(res){
-					if (res.success) {
-						$('#sk-nostr-banner').html('<div style="color:#5cb85c;"><i class="fas fa-check-circle"></i> ' + res.data.message + ' — ' + res.data.npub + '</div>');
-					} else {
-						$btn.prop('disabled', false).html('<i class="fas fa-key"></i> Erstellen');
-						alert(res.data.message || 'Fehler');
-					}
-				});
-			});
-			$('#sk-nostr-banner-dismiss').on('click', function(){
-				$('#sk-nostr-banner').fadeOut();
-				$.post('<?php echo admin_url("admin-ajax.php"); ?>', {
-					action: 'uob_complete_onboarding',
-					nonce: '<?php echo wp_create_nonce("uob_ajax_nonce"); ?>',
-					dismiss_nostr: 1
-				});
-			});
-		});
-		</script>
 		<?php
+		$js_path = SK_CORE_DIR . '/assets/js/dashboard/nostr-banner.js';
+		wp_enqueue_script(
+			'sk-nostr-banner',
+			SK_CORE_ASSETS . '/js/dashboard/nostr-banner.js',
+			[ 'jquery' ],
+			file_exists( $js_path ) ? (string) filemtime( $js_path ) : SK_CORE_VERSION,
+			true
+		);
+		wp_localize_script( 'sk-nostr-banner', 'uobAjax', [
+			'ajaxurl' => admin_url( 'admin-ajax.php' ),
+			'nonce'   => wp_create_nonce( 'uob_ajax_nonce' ),
+		] );
 	}
 
 	// ── Cleanup ────────────────────────────────────────────────────────────

@@ -64,6 +64,15 @@ class BtcLogin {
 
 		wp_enqueue_style( 'sk-btc-login', plugins_url( 'assets/css/sk-btc-login.css', SK_CORE_FILE ), [], SK_CORE_VERSION );
 
+		$js_path = SK_CORE_DIR . '/assets/js/dashboard/btclogin-tabs.js';
+		wp_enqueue_script(
+			'sk-btclogin-tabs',
+			SK_CORE_ASSETS . '/js/dashboard/btclogin-tabs.js',
+			[],
+			file_exists( $js_path ) ? (string) filemtime( $js_path ) : SK_CORE_VERSION,
+			true
+		);
+
 		ob_start();
 		?>
 		<div class="btclogin-form-wrap">
@@ -123,20 +132,6 @@ class BtcLogin {
 				<button type="submit" class="btclogin-submit">Registrieren</button>
 			</form>
 		</div>
-
-		<script>
-		(function() {
-			document.querySelectorAll('.btclogin-tab').forEach(function(tab) {
-				tab.addEventListener('click', function() {
-					document.querySelectorAll('.btclogin-tab').forEach(function(t) { t.classList.remove('active'); });
-					this.classList.add('active');
-					var target = this.getAttribute('data-tab');
-					document.getElementById('btclogin-login').style.display = target === 'login' ? '' : 'none';
-					document.getElementById('btclogin-register').style.display = target === 'register' ? '' : 'none';
-				});
-			});
-		})();
-		</script>
 		<?php
 		return ob_get_clean();
 	}

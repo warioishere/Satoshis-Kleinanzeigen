@@ -45,6 +45,22 @@ class Feedback {
 
 	public function enqueue_assets(): void {
 		wp_enqueue_style( 'sk-feedback', plugins_url( 'assets/css/sk-feedback.css', SK_CORE_FILE ), [], SK_CORE_VERSION );
+
+		$js_path = SK_CORE_DIR . '/assets/js/dashboard/feedback-box.js';
+		wp_register_script(
+			'sk-feedback-box',
+			SK_CORE_ASSETS . '/js/dashboard/feedback-box.js',
+			[],
+			file_exists( $js_path ) ? (string) filemtime( $js_path ) : SK_CORE_VERSION,
+			true
+		);
+		wp_localize_script( 'sk-feedback-box', 'wpsfFeedback', [
+			'ajaxurl' => admin_url( 'admin-ajax.php' ),
+			'i18n'    => [
+				'sending' => __( 'Senden...', 'sk-core' ),
+				'error'   => __( 'Es ist ein Fehler aufgetreten.', 'sk-core' ),
+			],
+		] );
 	}
 
 	// ── Admin ──────────────────────────────────────────────────────────────────
@@ -229,6 +245,8 @@ class Feedback {
 		if ( $opts['require_login'] && ! is_user_logged_in() ) {
 			return '<div class="wpsf-notice">' . esc_html__( 'Bitte einloggen, um Feedback zu senden.', 'sk-core' ) . '</div>';
 		}
+		wp_enqueue_script( 'sk-feedback-box' );
+
 		ob_start();
 		?>
 		<div class="wpsf-box">
@@ -243,30 +261,6 @@ class Feedback {
 				<div class="wpsf-msg" aria-live="polite"></div>
 			</form>
 		</div>
-		<script>
-		(function(){
-			document.addEventListener('submit', function(e){
-				var form = e.target.closest('.wpsf-form');
-				if (!form) return;
-				e.preventDefault();
-				var msgEl = form.querySelector('.wpsf-msg');
-				var data = new FormData(form);
-				msgEl.textContent = '<?php echo esc_js( __( 'Senden...', 'sk-core' ) ); ?>';
-				fetch('<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', {
-					method: 'POST',
-					credentials: 'same-origin',
-					body: data
-				}).then(function(res){ return res.json(); })
-				  .then(function(json){
-					msgEl.textContent = json.msg || '';
-					if (json.ok) { form.reset(); }
-				  })
-				  .catch(function(){
-					msgEl.textContent = '<?php echo esc_js( __( 'Es ist ein Fehler aufgetreten.', 'sk-core' ) ); ?>';
-				  });
-			});
-		})();
-		</script>
 		<?php
 		return ob_get_clean();
 	}

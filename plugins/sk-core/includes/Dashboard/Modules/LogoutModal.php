@@ -19,8 +19,16 @@ class LogoutModal {
 		if ( ! is_user_logged_in() ) {
 			return;
 		}
-
 		wp_enqueue_style( 'sk-logout-modal', plugins_url( 'assets/css/sk-logout-modal.css', SK_CORE_FILE ), [], SK_CORE_VERSION );
+
+		$js_path = SK_CORE_DIR . '/assets/js/dashboard/logout-modal.js';
+		wp_enqueue_script(
+			'sk-logout-modal',
+			SK_CORE_ASSETS . '/js/dashboard/logout-modal.js',
+			[],
+			file_exists( $js_path ) ? (string) filemtime( $js_path ) : SK_CORE_VERSION,
+			true
+		);
 	}
 
 	public function render_modal(): void {
@@ -42,38 +50,6 @@ class LogoutModal {
 				</div>
 			</div>
 		</div>
-		<script>
-		(function(){
-			var modal = document.getElementById('sk-logout-modal');
-			if (!modal) return;
-
-			// Open modal on logout trigger click
-			document.addEventListener('click', function(e) {
-				var trigger = e.target.closest('.sk-logout-trigger');
-				if (trigger) {
-					e.preventDefault();
-					modal.style.display = 'flex';
-				}
-			});
-
-			// Close on cancel
-			modal.querySelector('.sk-logout-cancel').addEventListener('click', function() {
-				modal.style.display = 'none';
-			});
-
-			// Close on backdrop click
-			modal.querySelector('.sk-logout-modal-backdrop').addEventListener('click', function() {
-				modal.style.display = 'none';
-			});
-
-			// Close on Escape
-			document.addEventListener('keydown', function(e) {
-				if (e.key === 'Escape' && modal.style.display === 'flex') {
-					modal.style.display = 'none';
-				}
-			});
-		})();
-		</script>
 		<?php
 	}
 }
