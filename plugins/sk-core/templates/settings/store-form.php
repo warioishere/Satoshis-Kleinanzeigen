@@ -95,6 +95,7 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
         sk_form_media_upload( [
             'name'          => 'sk_banner',
             'attachment_id' => (int) $banner_id,
+            'default_url'   => $default_banner_url ?? '',
             'label'         => __( 'Banner', 'sk-core' ),
             'variant'       => 'banner',
             'upload_label'  => __( 'Banner hochladen', 'sk-core' ),
@@ -104,6 +105,7 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
         sk_form_media_upload( [
             'name'          => 'sk_gravatar',
             'attachment_id' => (int) $gravatar_id,
+            'default_url'   => $default_avatar_url ?? '',
             'label'         => __( 'Profilbild', 'sk-core' ),
             'variant'       => 'gravatar',
             'upload_label'  => __( 'Foto hochladen', 'sk-core' ),

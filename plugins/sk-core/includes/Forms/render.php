@@ -374,6 +374,7 @@ if ( ! function_exists( 'sk_form_media_upload' ) ) {
 	 * @param array $args {
 	 *     @type string $name           (required) Form field name receiving attachment ID.
 	 *     @type int    $attachment_id  Current WP attachment ID (0 = none).
+	 *     @type string $default_url    Fallback image URL when attachment_id is 0 (shown as preview instead of the upload button).
 	 *     @type string $label
 	 *     @type string $variant        'banner' | 'gravatar' (required).
 	 *     @type string $upload_label   Default 'Upload Photo'.
@@ -384,15 +385,19 @@ if ( ! function_exists( 'sk_form_media_upload' ) ) {
 	function sk_form_media_upload( array $args ): void {
 		$name          = $args['name'] ?? '';
 		$attachment_id = (int) ( $args['attachment_id'] ?? 0 );
+		$default_url   = (string) ( $args['default_url'] ?? '' );
 		$label         = $args['label'] ?? '';
 		$variant       = $args['variant'] ?? 'gravatar';
 		$upload_label  = $args['upload_label'] ?? __( 'Upload Photo', 'sk-core' );
 		$hint          = $args['hint'] ?? '';
 		$wrapper_class = trim( 'sk-settings-field sk-settings-field--media ' . ( $args['wrapper_class'] ?? '' ) );
 
-		$image_url = $attachment_id ? wp_get_attachment_url( $attachment_id ) : '';
+		// When the user hasn't uploaded an image yet, fall back to the
+		// default URL so admins see a preview instead of just the upload
+		// button. The button still shows (rendered below) so they can swap.
+		$image_url = $attachment_id ? wp_get_attachment_url( $attachment_id ) : $default_url;
 
-		// Map variant → CSS classes (exact legacy names, preserved for JS compatibility).
+		// Map variant → CSS classes (class names preserved for JS compat).
 		if ( 'banner' === $variant ) {
 			$component_class = 'sk-banner';
 			$wrap_class      = 'image-wrap';
@@ -402,12 +407,20 @@ if ( ! function_exists( 'sk_form_media_upload' ) ) {
 			$remove_class    = 'sk-remove-banner-image';
 		} else {
 			$component_class = 'sk-gravatar';
-			$wrap_class      = 'sk-left gravatar-wrap';
+			$wrap_class      = 'gravatar-wrap';        // 'sk-left' removed — legacy float conflicted with flex centering.
 			$img_class       = 'sk-gravatar-img';
 			$btn_area_class  = 'gravatar-button-area';
-			$drag_class      = 'sk-gravatar-drag sk-left';
+			$drag_class      = 'sk-gravatar-drag';
 			$remove_class    = 'sk-close sk-remove-gravatar-image';
 		}
+		?>
+		<?php
+		// Visibility:
+		//   image-wrap: shown when we have ANY image to display (uploaded or default).
+		//   button-area: HIDDEN only when user has uploaded their own (attachment_id > 0).
+		//     With a default shown, the upload button stays visible so the user
+		//     can replace it without first having to remove anything.
+		$user_uploaded = $attachment_id > 0;
 		?>
 		<div class="<?php echo esc_attr( $wrapper_class ); ?>">
 			<?php if ( $label !== '' ) : ?>
@@ -417,9 +430,11 @@ if ( ! function_exists( 'sk_form_media_upload' ) ) {
 				<div class="<?php echo esc_attr( $wrap_class ); ?><?php echo $image_url ? '' : ' sk-hide'; ?>">
 					<input type="hidden" class="sk-file-field" value="<?php echo esc_attr( $attachment_id ); ?>" name="<?php echo esc_attr( $name ); ?>">
 					<img alt="<?php echo esc_attr( $label ); ?>" class="<?php echo esc_attr( $img_class ); ?>" src="<?php echo esc_url( $image_url ); ?>">
-					<a class="<?php echo esc_attr( $remove_class ); ?>">&times;</a>
+					<?php if ( $user_uploaded ) : ?>
+						<a class="<?php echo esc_attr( $remove_class ); ?>">&times;</a>
+					<?php endif; ?>
 				</div>
-				<div class="<?php echo esc_attr( $btn_area_class ); ?><?php echo $image_url ? ' sk-hide' : ''; ?>">
+				<div class="<?php echo esc_attr( $btn_area_class ); ?><?php echo $user_uploaded ? ' sk-hide' : ''; ?>">
 					<a href="#" class="<?php echo esc_attr( $drag_class ); ?> sk-btn sk-btn-default">
 						<i class="fas fa-cloud-upload-alt"></i> <?php echo esc_html( $upload_label ); ?>
 					</a>
