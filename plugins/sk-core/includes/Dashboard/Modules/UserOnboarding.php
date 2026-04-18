@@ -289,6 +289,13 @@ class UserOnboarding {
 		}
 
 		$user_id = get_current_user_id();
+
+		// "Später" auf dem Nostr-Banner — nur Banner dismissen, Onboarding-State nicht verändern.
+		if ( ! empty( $_POST['dismiss_nostr'] ) ) {
+			update_user_meta( $user_id, 'sk_nostr_banner_dismissed', 1 );
+			wp_send_json_success( [ 'message' => 'Banner dismissed.' ] );
+		}
+
 		delete_user_meta( $user_id, 'uob_show_onboarding' );
 		update_user_meta( $user_id, 'uob_onboarding_completed', 'yes' );
 
