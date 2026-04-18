@@ -372,6 +372,12 @@ class UserOnboarding {
 		if ( \SK\Modules\Auth\NostrIdentity::has_pubkey( $user_id ) ) {
 			return;
 		}
+		// User hat manuell einen npub in den Store-Settings eingetragen — auch ohne
+		// verknüpften Account eine bewusste Nostr-Präsenz, nicht mehr nerven.
+		$profile_settings = get_user_meta( $user_id, 'sk_profile_settings', true );
+		if ( is_array( $profile_settings ) && ! empty( $profile_settings['nostr'] ) ) {
+			return;
+		}
 		if ( get_user_meta( $user_id, 'sk_nostr_banner_dismissed', true ) ) {
 			return;
 		}
