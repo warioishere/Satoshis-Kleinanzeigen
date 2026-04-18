@@ -168,6 +168,44 @@ class NostrLoginBox {
             })
             .catch(() => {});
 
+          // Fetch the user's real kind:0 profile via Primal cache API, with
+          // a short timeout so login UX doesn't stall when the relay is slow.
+          // Returns a metadata object ready for our backend (fields already
+          // mapped: Nostr's `picture` → our backend's `image`). Returns {} if
+          // nothing is found or the call fails — login still proceeds, just
+          // without rich profile data.
+          const fetchNostrProfile = async (pubkey) => {
+            try {
+              const ctrl = new AbortController();
+              const timer = setTimeout(() => ctrl.abort(), 4000);
+              const resp = await fetch('https://cache.primal.net/api', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(['user_profile', { pubkey: pubkey }]),
+                signal: ctrl.signal,
+              });
+              clearTimeout(timer);
+              if (!resp.ok) return {};
+              const events = await resp.json();
+              if (!Array.isArray(events)) return {};
+              const kind0 = events.find(e => e && e.kind === 0 && e.content);
+              if (!kind0) return {};
+              const profile = JSON.parse(kind0.content);
+              const out = {};
+              // Prefer Nostr display_name (full name) over handle `name`.
+              if (profile.display_name) out.name = String(profile.display_name);
+              else if (profile.name)     out.name = String(profile.name);
+              if (profile.about)   out.about   = String(profile.about);
+              if (profile.nip05)   out.nip05   = String(profile.nip05);
+              if (profile.picture) out.image   = String(profile.picture); // NIP-01 picture → backend 'image'
+              if (profile.website) out.website = String(profile.website);
+              if (profile.lud16)   out.lud16   = String(profile.lud16);
+              return out;
+            } catch (e) {
+              return {};
+            }
+          };
+
           btn.addEventListener('click', async () => {
             if (redirecting) return;
             if (!window.nostr) {
@@ -178,11 +216,13 @@ class NostrLoginBox {
             try {
               const pubkey = await window.nostr.getPublicKey();
 
-              const metadata = {
-                name: "Nostr User",
-                about: "Login via Nostr",
-                pubkey: pubkey
-              };
+              // Fetch profile + sign auth event in parallel for snappier login.
+              const profilePromise = fetchNostrProfile(pubkey);
+
+              const metadata = Object.assign(
+                { pubkey: pubkey },
+                await profilePromise
+              );
 
               const authEvent = await window.nostr.signEvent({
                 kind: 27235,
