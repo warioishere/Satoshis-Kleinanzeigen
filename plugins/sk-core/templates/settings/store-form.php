@@ -345,6 +345,7 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
                     <?php else : ?>
                         <p class="sk-settings-status sk-settings-status--warn">
                             NWC gespeichert, aber Verbindungstest fehlgeschlagen.
+                            <a href="#" onclick="document.querySelector('[name=nwc_remove]').value='1';jQuery(this.closest('form')).trigger('submit');return false;" class="remove-link">Entfernen</a>
                         </p>
                     <?php endif; ?>
                 <?php endif; ?>
@@ -379,6 +380,7 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
                     <?php else : ?>
                         <p class="sk-settings-status sk-settings-status--warn">
                             LNDHub gespeichert, aber Verbindungstest fehlgeschlagen.
+                            <a href="#" onclick="document.querySelector('[name=lndhub_remove]').value='1';jQuery(this.closest('form')).trigger('submit');return false;" class="remove-link">Entfernen</a>
                         </p>
                     <?php endif; ?>
                 <?php endif; ?>
