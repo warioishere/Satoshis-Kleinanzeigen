@@ -5,6 +5,7 @@ wflogs/
 
 *.log
 *.tmp
+*.md
 .DS_Store
 Thumbs.db
 
