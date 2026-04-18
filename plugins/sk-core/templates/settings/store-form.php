@@ -298,11 +298,12 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
                     <?php if ( $oc_xpub_ok ) : ?>
                         <p class="sk-settings-status sk-settings-status--ok">
                             xpub gespeichert — Adress-Derivation aktiv.
-                            <a href="#" onclick="document.querySelector('[name=xpub_remove]').value='1';jQuery(this.closest('form')).trigger('submit');return false;" class="remove-link">Entfernen</a>
+                            <a href="#" class="sk-payment-remove-link" data-remove-field="xpub_remove" data-input-field="btc_xpub" data-default-placeholder="xpub6... / ypub6... / zpub6...">Entfernen</a>
                         </p>
                     <?php else : ?>
                         <p class="sk-settings-status sk-settings-status--warn">
                             xpub gespeichert, aber Validierung fehlgeschlagen.
+                            <a href="#" class="sk-payment-remove-link" data-remove-field="xpub_remove" data-input-field="btc_xpub" data-default-placeholder="xpub6... / ypub6... / zpub6...">Entfernen</a>
                         </p>
                     <?php endif; ?>
                 <?php endif; ?>
@@ -340,12 +341,12 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
                     <?php if ( $ln_nwc_ok ) : ?>
                         <p class="sk-settings-status sk-settings-status--ok">
                             NWC verbunden — automatische Verifizierung aktiv.
-                            <a href="#" onclick="document.querySelector('[name=nwc_remove]').value='1';jQuery(this.closest('form')).trigger('submit');return false;" class="remove-link">Entfernen</a>
+                            <a href="#" class="sk-payment-remove-link" data-remove-field="nwc_remove" data-input-field="nwc_connection" data-default-placeholder="nostr+walletconnect://...">Entfernen</a>
                         </p>
                     <?php else : ?>
                         <p class="sk-settings-status sk-settings-status--warn">
                             NWC gespeichert, aber Verbindungstest fehlgeschlagen.
-                            <a href="#" onclick="document.querySelector('[name=nwc_remove]').value='1';jQuery(this.closest('form')).trigger('submit');return false;" class="remove-link">Entfernen</a>
+                            <a href="#" class="sk-payment-remove-link" data-remove-field="nwc_remove" data-input-field="nwc_connection" data-default-placeholder="nostr+walletconnect://...">Entfernen</a>
                         </p>
                     <?php endif; ?>
                 <?php endif; ?>
@@ -375,12 +376,12 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
                     <?php if ( $ln_lndhub_ok ) : ?>
                         <p class="sk-settings-status sk-settings-status--ok">
                             LNDHub verbunden — automatische Verifizierung aktiv.
-                            <a href="#" onclick="document.querySelector('[name=lndhub_remove]').value='1';jQuery(this.closest('form')).trigger('submit');return false;" class="remove-link">Entfernen</a>
+                            <a href="#" class="sk-payment-remove-link" data-remove-field="lndhub_remove" data-input-field="lndhub_connection" data-default-placeholder="lndhub://login:password@https://...">Entfernen</a>
                         </p>
                     <?php else : ?>
                         <p class="sk-settings-status sk-settings-status--warn">
                             LNDHub gespeichert, aber Verbindungstest fehlgeschlagen.
-                            <a href="#" onclick="document.querySelector('[name=lndhub_remove]').value='1';jQuery(this.closest('form')).trigger('submit');return false;" class="remove-link">Entfernen</a>
+                            <a href="#" class="sk-payment-remove-link" data-remove-field="lndhub_remove" data-input-field="lndhub_connection" data-default-placeholder="lndhub://login:password@https://...">Entfernen</a>
                         </p>
                     <?php endif; ?>
                 <?php endif; ?>
@@ -711,6 +712,30 @@ function skStoreToast(message, type) {
             });
         }
     })();
+
+    /* ── Payment-Entfernen: sofortige UI-Bereinigung vor Form-Submit ── */
+    // Bei Klick auf "Entfernen" den gespeicherten State visuell sofort zurücksetzen,
+    // damit der User nicht weiter "gespeichert — leer lassen um beizubehalten" sieht
+    // während der AJAX-Save im Hintergrund läuft.
+    $(document).on('click', '.sk-payment-remove-link', function(e) {
+        e.preventDefault();
+        var $link  = $(this);
+        var $field = $link.closest('.sk-settings-field');
+        var $form  = $link.closest('form');
+        var removeField      = $link.data('remove-field');
+        var inputField       = $link.data('input-field');
+        var defaultHolder    = $link.data('default-placeholder') || '';
+
+        // 1. Remove-Flag setzen
+        $form.find('[name="' + removeField + '"]').val('1');
+        // 2. Input-Feld zurücksetzen (Placeholder + skp-saved Klasse)
+        var $input = $form.find('[name="' + inputField + '"]');
+        $input.val('').attr('placeholder', defaultHolder).removeClass('skp-saved');
+        // 3. Status-Pill(s) + Entfernen-Link im Feld ausblenden
+        $field.find('.sk-settings-status').remove();
+        // 4. Form abschicken — AJAX-Save löscht das User-Meta serverseitig.
+        $form.trigger('submit');
+    });
 
     /* ── Onchain + Lightning Connection Test Buttons ── */
     var skpAjax = '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>';

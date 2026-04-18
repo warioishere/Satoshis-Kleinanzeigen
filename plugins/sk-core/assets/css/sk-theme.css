@@ -8580,17 +8580,24 @@ ul.sk-store-custom-fields ul {
   width: 100%;
 }
 
-/* Banner variant: stack label on top so the banner image fills the full card
- * width (otherwise the 150px label column offsets the banner right of center). */
+/* Banner variant: stack label on top + center across the full card width,
+ * mirroring the gravatar variant so the upload button (empty state) and the
+ * banner image (uploaded state) both sit centered in the card. */
 .sk-settings-field--banner {
   flex-direction: column !important;
+  align-items: center !important;
+  text-align: center;
 }
 .sk-settings-field--banner .sk-settings-label {
   flex: none !important;
   padding-top: 0 !important;
+  text-align: center;
 }
 .sk-settings-field--banner .sk-settings-input {
   width: 100%;
+}
+.sk-settings-field--banner .button-area {
+  align-items: center !important;
 }
 
 /* Center gravatar / image upload (rendered by sk_form_media_upload variant='gravatar') */
