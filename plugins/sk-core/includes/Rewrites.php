@@ -85,7 +85,6 @@ class Rewrites {
                 'orders',
                 'settings',
                 'edit-account',
-                'account-migration',
             ]
         );
 
