@@ -117,10 +117,6 @@ class BecomeAVendor {
 
         $url = sk_get_navigation_url();
 
-        if ( 'off' === sk_get_option( 'disable_welcome_wizard', 'sk_selling', 'off' ) ) {
-            $url = apply_filters( 'sk_seller_setup_wizard_url', site_url( '?page=sk-seller-setup' ) );
-        }
-
         wp_safe_redirect( apply_filters( 'sk_customer_migration_redirect', $url ) );
         exit();
     }

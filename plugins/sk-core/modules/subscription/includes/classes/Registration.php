@@ -184,60 +184,10 @@ class Registration {
     }
 
     /**
-     * Get subscription pack id
-     *
-     * @return string
+     * Legacy setup-wizard redirect — Setup-Wizard wurde entfernt, no-op.
      */
     public function redirect_to_seller_setup_wizard_after_checkout( $order_id ) {
-        $order = wc_get_order( $order_id );
-        $items = $order->get_items( 'line_item' );
-
-        if ( empty( $items ) || ! is_array( $items ) ) {
-            return;
-        }
-
-        foreach ( $items as $item ) {
-            $product_id = $item->get_product_id();
-            break;
-        }
-
-        if ( ! $product_id ) {
-            return;
-        }
-
-        if ( ! Helper::is_subscription_product( $product_id ) ) {
-            return;
-        }
-
-        $redirect_url             = get_site_url() . '/?page=sk-seller-setup';
-        $is_setup_wizard_disabled = 'on' === sk_get_option( 'disable_welcome_wizard', 'sk_selling', 'off' );
-
-        if ( $is_setup_wizard_disabled ) {
-            return;
-        }
-
-        $user_id = sk_get_current_user_id();
-        if ( empty( $user_id ) ) {
-            return;
-        }
-
-        if ( ! sk_is_user_seller( $user_id ) ) {
-            return;
-        }
-
-        if ( $this->vendor_has_seen_setup_wizard( $user_id ) ) {
-            return;
-        }
-
-        ?>
-        <script>
-            jQuery(document).ready(function() {
-                setTimeout(function(){
-                    window.location.replace("<?php echo $redirect_url; ?>");
-                }, 3000);
-            });
-        </script>
-        <?php
+        // Setup wizard was removed; SK uses its own onboarding flow.
     }
 
     /**

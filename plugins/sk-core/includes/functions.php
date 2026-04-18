@@ -3054,14 +3054,10 @@ function sk_admin_settings_rearrange_map( $option, $section ) {
 
     $map = apply_filters(
         'sk_admin_settings_rearrange_map', [
-            'shipping_fee_recipient_sk_general'     => [ 'shipping_fee_recipient', 'sk_selling' ],
-            'tax_fee_recipient_sk_general'          => [ 'tax_fee_recipient', 'sk_selling' ],
             'store_map_sk_general'                  => [ 'store_map', 'sk_appearance' ],
             'gmap_api_key_sk_general'               => [ 'gmap_api_key', 'sk_appearance' ],
             'contact_seller_sk_general'             => [ 'contact_seller', 'sk_appearance' ],
             'enable_theme_store_sidebar_sk_general' => [ 'enable_theme_store_sidebar', 'sk_appearance' ],
-            'setup_wizard_logo_url_sk_appearance'   => [ 'setup_wizard_logo_url', 'sk_general' ],
-            'disable_welcome_wizard_sk_selling'     => [ 'disable_welcome_wizard', 'sk_general' ],
         ]
     );
 

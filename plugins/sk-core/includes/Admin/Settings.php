@@ -310,13 +310,6 @@ class Settings {
                     'label'       => __( 'Site Settings', 'sk-core' ),
                     'description' => __( 'Configure your site settings and control access to your site.', 'sk-core' ),
                 ],
-                'admin_access'           => [
-                    'name'    => 'admin_access',
-                    'label'   => __( 'Admin Area Access', 'sk-core' ),
-                    'desc'    => __( 'Prevent vendors from accessing the wp-admin dashboard area. If HPOS feature is enabled, admin access will be blocked regardless of this setting.', 'sk-core' ),
-                    'type'    => 'switcher',
-                    'default' => 'on',
-                ],
                 'custom_store_url'       => [
                     'name'              => 'custom_store_url',
                     'label'             => __( 'Vendor Store URL', 'sk-core' ),
@@ -325,26 +318,6 @@ class Settings {
                     'default'           => 'store',
                     'type'              => 'text',
                     'sanitize_callback' => [ $this, 'sanitize_custom_store_url' ],
-                ],
-                'setup_wizard_logo_url'  => [
-                    'name'  => 'setup_wizard_logo_url',
-                    'label' => __( 'Vendor Setup Wizard Logo', 'sk-core' ),
-                    'type'  => 'file',
-                    'desc'  => __( 'Recommended logo size ( 270px X 90px ). If no logo is uploaded, site title is shown by default.', 'sk-core' ),
-                ],
-                'setup_wizard_message'   => [
-                    'name'    => 'setup_wizard_message',
-                    'label'   => __( 'Vendor Setup Wizard Message', 'sk-core' ),
-                    'type'    => 'wpeditor',
-                    'default' => __( 'Thank you for choosing The Marketplace to power your online store! This quick setup wizard will help you configure the basic settings. <strong>It’s completely optional and shouldn’t take longer than two minutes.</strong>', 'sk-core' ),
-                ],
-                'disable_welcome_wizard' => [
-                    'name'    => 'disable_welcome_wizard',
-                    'label'   => __( 'Disable Welcome Wizard', 'sk-core' ),
-                    'desc'    => __( 'Disable welcome wizard for newly registered vendors', 'sk-core' ),
-                    'type'    => 'switcher',
-                    'default' => 'off',
-                    'tooltip' => __( 'If checked, vendors will not be prompted through a guided setup process but redirected straight to the vendor dashboard.', 'sk-core' ),
                 ],
             ]
         );
@@ -397,51 +370,6 @@ class Settings {
                     'desc'    => __( 'Enable "More Products" tab on the single product page.', 'sk-core' ),
                     'type'    => 'switcher',
                     'default' => 'on',
-                ],
-            ]
-        );
-
-        $selling_option_fees = apply_filters(
-            'sk_settings_selling_option_fees', [
-                'fee-recipients' => [
-                    'name'        => 'fee-recipients',
-                    'label'       => __( 'Fee Recipients', 'sk-core' ),
-                    'type'        => 'sub_section',
-                    'description' => __( 'Define the fees that admin or vendor will recive', 'sk-core' ),
-                    'content_class' => 'sub-section-styles',
-                ],
-                'shipping_fee_recipient' => [
-                    'name'    => 'shipping_fee_recipient',
-                    'label'   => __( 'Shipping Fee', 'sk-core' ),
-                    'desc'    => __( 'Who will be receiving the shipping fees? Note that, tax fees for corresponding shipping method will not be included with shipping fees.', 'sk-core' ),
-                    'type'    => 'radio',
-                    'options' => [
-                        'seller' => __( 'Vendor', 'sk-core' ),
-                        'admin'  => __( 'Admin', 'sk-core' ),
-                    ],
-                    'default' => 'seller',
-                ],
-                'tax_fee_recipient'      => [
-                    'name'    => 'tax_fee_recipient',
-                    'label'   => __( 'Product Tax Fee', 'sk-core' ),
-                    'desc'    => __( 'Who will be receiving the tax fees for products? Note that, shipping tax fees will not be included with product tax.', 'sk-core' ),
-                    'type'    => 'radio',
-                    'options' => [
-                        'seller' => __( 'Vendor', 'sk-core' ),
-                        'admin'  => __( 'Admin', 'sk-core' ),
-                    ],
-                    'default' => 'seller',
-                ],
-                'shipping_tax_fee_recipient'      => [
-                    'name'    => 'shipping_tax_fee_recipient',
-                    'label'   => __( 'Shipping Tax Fee', 'sk-core' ),
-                    'desc'    => __( 'Who will be receiving the tax fees for shipping?', 'sk-core' ),
-                    'type'    => 'radio',
-                    'options' => [
-                        'seller' => __( 'Vendor', 'sk-core' ),
-                        'admin'  => __( 'Admin', 'sk-core' ),
-                    ],
-                    'default' => 'seller',
                 ],
             ]
         );
@@ -513,10 +441,7 @@ class Settings {
             ),
             'sk_selling'    => apply_filters(
                 'sk_settings_selling_options',
-                array_merge(
-                    $selling_option_fees,
-                    $selling_option_vendor_capability
-                )
+                $selling_option_vendor_capability
             ),
             'sk_pages'      => [
                 'dashboard'     => [
