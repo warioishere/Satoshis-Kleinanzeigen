@@ -390,7 +390,11 @@ if ( ! function_exists( 'sk_form_media_upload' ) ) {
 		$variant       = $args['variant'] ?? 'gravatar';
 		$upload_label  = $args['upload_label'] ?? __( 'Upload Photo', 'sk-core' );
 		$hint          = $args['hint'] ?? '';
-		$wrapper_class = trim( 'sk-settings-field sk-settings-field--media ' . ( $args['wrapper_class'] ?? '' ) );
+		// Variant-specific modifier class so CSS can adjust the field layout
+		// (gravatar stacks label above image + centers horizontally; banner
+		// keeps the default label-left / input-right side-by-side layout).
+		$variant_mod   = 'sk-settings-field--' . ( $args['variant'] ?? 'gravatar' );
+		$wrapper_class = trim( 'sk-settings-field sk-settings-field--media ' . $variant_mod . ' ' . ( $args['wrapper_class'] ?? '' ) );
 
 		// When the user hasn't uploaded an image yet, fall back to the
 		// default URL so admins see a preview instead of just the upload

@@ -8563,6 +8563,23 @@ ul.sk-store-custom-fields ul {
   margin-bottom: 10px;
 }
 
+/* Gravatar-variant media field: stack label on top + center across the full
+ * card width (default .sk-settings-field is label-left / input-right, which
+ * would make a small centered avatar sit visually right-of-center). */
+.sk-settings-field--gravatar {
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center;
+}
+.sk-settings-field--gravatar .sk-settings-label {
+  flex: none !important;
+  padding-top: 0 !important;
+  text-align: center;
+}
+.sk-settings-field--gravatar .sk-settings-input {
+  width: 100%;
+}
+
 /* Center gravatar / image upload (rendered by sk_form_media_upload variant='gravatar') */
 .sk-settings-input.sk-gravatar {
   display: flex !important;
