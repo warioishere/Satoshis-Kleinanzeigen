@@ -175,6 +175,11 @@ class DashboardRegistry {
     }
 
     public static function inject_active( $active_menu, $request, $active ) {
+        // Wrap request with slashes so we can match whole path segments.
+        $request_str = '/' . trim( (string) $request, '/' ) . '/';
+
+        $fallback = '';
+
         foreach ( self::top_level_menus() as $config ) {
             $slug = $config['slug'] ?? '';
             if ( ! $slug ) {
@@ -182,17 +187,27 @@ class DashboardRegistry {
             }
             $url_slug = $config['url_slug'] ?? $slug;
 
-            if ( isset( $request ) && false !== strpos( (string) $request, $url_slug ) ) {
+            // The root 'dashboard' slug appears in EVERY vendor-dashboard URL
+            // (since all child pages live under /mein-konto/dashboard/...).
+            // Treat it as the fallback when no other menu claims active.
+            if ( $slug === 'dashboard' ) {
+                $fallback = $slug;
+                continue;
+            }
+
+            // Precise path-segment match: /$url_slug/ must appear in the URL.
+            if ( $url_slug && strpos( $request_str, '/' . $url_slug . '/' ) !== false ) {
                 return $slug;
             }
             if ( ! empty( $active ) && in_array( $slug, (array) $active, true ) ) {
                 return $slug;
             }
-            if ( get_query_var( $url_slug ) ) {
+            if ( $url_slug && get_query_var( $url_slug ) ) {
                 return $slug;
             }
         }
-        return $active_menu;
+
+        return $fallback ?: $active_menu;
     }
 
     public static function inject_query_vars( array $vars ): array {
