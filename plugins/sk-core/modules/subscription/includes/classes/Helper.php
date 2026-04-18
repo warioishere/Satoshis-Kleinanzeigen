@@ -1295,13 +1295,18 @@ class Helper {
         // Get orders.
         $orders = wc_get_orders( $args );
 
-        $args['return'] = 'count';
-
-        // Get order count.
-        $count = wc_get_orders( $args );
+        // Get total count via a separate ids-query — 'return=count' broke in WC
+        // 10.x (returns a stdClass/array depending on backend), causing "array / int"
+        // TypeError on the division below.
+        $count_args            = $args;
+        $count_args['return']  = 'ids';
+        $count_args['limit']   = -1;
+        $count_args['paged']   = 1;
+        $count_args['offset']  = 0;
+        $count                 = count( (array) wc_get_orders( $count_args ) );
 
         // Calculate total pages.
-        $total_pages = ceil( $count / $per_page );
+        $total_pages = $per_page > 0 ? (int) ceil( $count / $per_page ) : 1;
 
         // Return the orders along with pagination data
         return [
