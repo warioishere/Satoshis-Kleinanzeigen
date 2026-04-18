@@ -4,6 +4,7 @@ namespace SK\Core\Announcement\Frontend;
 
 use SK\Core\Announcement\Manager;
 use SK\Core\Announcement\Single;
+use SK\Core\Dashboard\DashboardModule;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit; // Exit if accessed directly
@@ -14,19 +15,36 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  *
  */
-class Template {
-    /**
-     * Constructor method
-     *
-     */
-    public function __construct() {
-        add_action( 'sk_load_custom_template', [ $this, 'load_announcement_template' ], 10 );
+class Template extends DashboardModule {
+
+    public function config(): ?array {
+        if ( ! current_user_can( 'skdar' ) ) {
+            return null;
+        }
+        return [
+            'slug'       => 'announcement',
+            'title'      => __( 'Announcements', 'sk' ),
+            'icon'       => '<i class="fas fa-bell"></i>',
+            'icon_name'  => 'Megaphone',
+            'pos'        => 181,
+            'permission' => 'sk_view_announcement',
+            'template'   => [ $this, 'render_dashboard' ],
+        ];
+    }
+
+    protected function register_extras(): void {
+        // 'single-announcement' uses a different query var than 'announcement';
+        // Registry dispatches only on the main slug so handle single directly.
+        add_action( 'sk_load_custom_template', [ $this, 'load_single_template' ], 10 );
+
         add_action( 'sk_announcement_content_area_header', [ $this, 'load_header_template' ] );
         add_action( 'sk_announcement_content', [ $this, 'load_announcement_content' ], 10 );
         add_action( 'sk_single_announcement_content', [ $this, 'load_single_announcement_content' ], 10 );
-        add_filter( 'sk_get_dashboard_nav', [ $this, 'add_announcement_page' ], 15 );
-        add_filter( 'sk_get_dashboard_nav', [ $this, 'add_notification_badge' ], 20 );
-        add_filter( 'sk_dashboard_nav_active', [ $this, 'active_announcement_nav_menu' ], 11, 3 );
+
+        // Badge runs AFTER Registry's inject_menus (priority 50).
+        add_filter( 'sk_get_dashboard_nav', [ $this, 'add_notification_badge' ], 60 );
+        // Mark 'announcement' menu active when viewing a single announcement.
+        add_filter( 'sk_dashboard_nav_active', [ $this, 'active_announcement_nav_menu' ], 60, 3 );
 
         // Announcement ajax handling
         add_action( 'wp_ajax_sk_announcement_remove_row', [ $this, 'remove_announcement' ] );
@@ -35,17 +53,18 @@ class Template {
     }
 
     /**
-     * Render announcement template
-     *
-     *
-     * @param array $query_vars
-     *
-     * @return void
+     * Render the announcement listing — called by DashboardRegistry dispatch.
      */
-    public function load_announcement_template( $query_vars ) {
-        if ( isset( $query_vars['announcement'] ) || isset( $query_vars['single-announcement'] ) ) {
+    public function render_dashboard( $query_vars ): void {
+        sk_get_template_part( 'announcement/announcement' );
+    }
+
+    /**
+     * Handle single announcement query var — not handled by Registry.
+     */
+    public function load_single_template( $query_vars ): void {
+        if ( isset( $query_vars['single-announcement'] ) ) {
             sk_get_template_part( 'announcement/announcement' );
-            return;
         }
     }
 
@@ -130,21 +149,6 @@ class Template {
      *
      * @return array $urls
      */
-    public function add_announcement_page( $urls ) {
-        if ( current_user_can( 'skdar' ) ) {
-            $urls['announcement'] = [
-                'title'         => __( 'Announcements', 'sk' ),
-                'icon'          => '<i class="fas fa-bell"></i>',
-                'url'           => sk_get_navigation_url( 'announcement' ),
-                'pos'           => 181,
-                'icon_name'     => 'Megaphone',
-                'permission'    => 'sk_view_announcement',
-            ];
-        }
-
-        return $urls;
-    }
-
     /**
      * Append unread notification badge to the announcement nav title.
      *

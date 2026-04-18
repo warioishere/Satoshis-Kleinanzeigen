@@ -3,8 +3,9 @@
 namespace SK\Core;
 
 use SK\Core\Cache;
+use SK\Core\Dashboard\DashboardModule;
 
-class Review {
+class Review extends DashboardModule {
 
     private $limit = 15;
     private $pending;
@@ -13,16 +14,23 @@ class Review {
     private $approved;
     private $post_type;
 
-    /**
-     * Load automatically when class inistantiate
-     *
-     *
-     * @uses actions|filter hooks
-     */
-    public function __construct() {
-        add_filter( 'sk_get_dashboard_nav', array( $this, 'add_review_menu' ) );
+    public function config(): ?array {
+        if ( 'no' === get_option( 'woocommerce_enable_reviews' ) ) {
+            return null;
+        }
+        return [
+            'slug'       => 'reviews',
+            'title'      => __( 'Reviews', 'sk' ),
+            'icon'       => '<i class="far fa-comments"></i>',
+            'icon_name'  => 'Star',
+            'pos'        => 65,
+            'permission' => 'sk_view_review_menu',
+            'template'   => [ $this, 'render_dashboard' ],
+        ];
+    }
+
+    protected function register_extras(): void {
 	    add_filter( 'sk_rest_admin_dashboard_monthly_overview_data', [ $this, 'load_monthly_review_count' ], 10, 2 );
-        add_action( 'sk_load_custom_template', array( $this, 'load_review_template' ) );
 
         add_action( 'sk_review_content_inside_before', array( $this, 'show_seller_enable_message' ) );
         add_action( 'sk_review_content_area_header', array( $this, 'sk_review_header_render' ), 10 );
@@ -54,31 +62,6 @@ class Review {
         if ( ! sk_is_seller_enabled( $user_id ) ) {
             echo sk_seller_not_enabled_notice();
         }
-    }
-
-    /**
-     * Add Review menu
-     *
-     * @param array $urls
-     *
-     *
-     * @return array $urls
-     */
-    public function add_review_menu( $urls ) {
-        if ( 'no' === get_option( 'woocommerce_enable_reviews' ) ) {
-            return $urls;
-        }
-
-        $urls['reviews'] = array(
-            'title'      => __( 'Reviews', 'sk' ),
-            'icon'       => '<i class="far fa-comments"></i>',
-            'url'        => sk_get_navigation_url( 'reviews' ),
-            'pos'        => 65,
-            'icon_name'  => 'Star',
-            'permission' => 'sk_view_review_menu',
-        );
-
-        return $urls;
     }
 
 	/**
@@ -136,7 +119,7 @@ class Review {
      *
      * @return void [require once template]
      */
-    public function load_review_template( $query_vars ) {
+    public function render_dashboard( $query_vars ) {
         if ( isset( $query_vars['reviews'] ) ) {
             if ( ! current_user_can( 'sk_view_review_menu' ) ) {
                 sk_get_template_part(
