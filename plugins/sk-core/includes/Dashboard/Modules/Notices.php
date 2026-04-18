@@ -17,7 +17,9 @@ class Notices {
     }
 
     public function enqueue_styles(): void {
-        if ( ! function_exists( 'sk_is_seller_dashboard' ) || ! sk_is_seller_dashboard() ) {
+        $is_dashboard         = function_exists( 'sk_is_seller_dashboard' ) && sk_is_seller_dashboard();
+        $is_subscription_page = function_exists( 'is_page' ) && is_page( 'inserate-abos' );
+        if ( ! $is_dashboard && ! $is_subscription_page ) {
             return;
         }
         wp_enqueue_style( 'sk-notices' );
