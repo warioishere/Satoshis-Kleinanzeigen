@@ -22,6 +22,12 @@ $subscription       = sk()->vendor->get( $vendor_id )->subscription;
 $subscription_packs = sk()->subscription->all();
 $link               = sk_get_navigation_url( 'subscription' );
 $active_tab         = ! empty( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : 'subscription_packs';
+
+// Tab counts.
+$pack_count   = $subscription_packs instanceof WP_Query ? $subscription_packs->found_posts : 0;
+$orders_page  = ! empty( $_GET['pagenum'] ) ? absint( wp_unslash( $_GET['pagenum'] ) ) : 1;
+$orders_data  = Helper::get_paginated_subscription_orders_by_vendor_id( $vendor_id, $orders_page );
+$order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['total_orders'] : 0;
 ?>
 
 <?php do_action( 'sk_dashboard_wrap_start' ); ?>
@@ -40,6 +46,48 @@ $active_tab         = ! empty( $_GET['tab'] ) ? sanitize_text_field( wp_unslash(
         <div class="sk-sub-page-header">
             <h2><i class="fas fa-layer-group"></i> <?php esc_html_e( 'Abonnements', 'sk' ); ?></h2>
         </div>
+
+        <div class="sk-sub-tab-filter">
+            <a href="<?php echo esc_url( add_query_arg( [ 'tab' => 'subscription_packs' ], $link ) ); ?>"
+               class="sk-sub-tab<?php echo 'subscription_orders' !== $active_tab ? ' active' : ''; ?>">
+                <i class="fas fa-box"></i>
+                <?php esc_html_e( 'Pakete', 'sk' ); ?>
+                <?php if ( $pack_count > 0 ) : ?>
+                    <span class="sk-sub-tab-count"><?php echo (int) $pack_count; ?></span>
+                <?php endif; ?>
+            </a>
+            <a href="<?php echo esc_url( add_query_arg( [ 'tab' => 'subscription_orders' ], $link ) ); ?>"
+               class="sk-sub-tab<?php echo 'subscription_orders' === $active_tab ? ' active' : ''; ?>">
+                <i class="fas fa-receipt"></i>
+                <?php esc_html_e( 'Bestellungen', 'sk' ); ?>
+                <?php if ( $order_count > 0 ) : ?>
+                    <span class="sk-sub-tab-count"><?php echo (int) $order_count; ?></span>
+                <?php endif; ?>
+            </a>
+        </div>
+
+        <?php if ( 'subscription_orders' === $active_tab ) : ?>
+            <div class="sk-subscription-orders-content">
+                <?php
+                sk_get_template_part(
+                    'dashboard/order-listing', '',
+                    [
+                        'is_subscription'     => true,
+                        'subscription_orders' => $orders_data,
+                    ]
+                );
+                ?>
+            </div>
+            <?php do_action( 'sk_subscription_content_inside_after' ); ?>
+            </div><!-- .sk-dashboard-content -->
+            <?php
+            do_action( 'sk_dashboard_content_after' );
+            do_action( 'sk_subscription_content_after' );
+            ?>
+            </div><!-- .sk-dashboard-wrap -->
+            <?php do_action( 'sk_dashboard_wrap_end' ); ?>
+            <?php return; ?>
+        <?php endif; ?>
 
         <div class="sk-subscription-content">
 
