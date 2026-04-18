@@ -3,28 +3,24 @@
 namespace SK\Core\Dashboard\Modules;
 
 /**
- * Dashboard notice boxes: welcome message + subscription/verification info banners.
+ * Dashboard Welcome Box — rendered once on the dashboard landing page via the
+ * `sk_dashboard_before_widgets` action (which only fires in the main
+ * dashboard.php template, not on subpages like /dashboard/subscription/).
  *
- * The welcome-box HTML is rendered inside the dashboard wrap via action hook.
- * All JS + CSS are shipped as real asset files (assets/js/notices/*.js,
- * assets/css/notices.css) and enqueued only on the seller dashboard.
+ * No JS needed — the HTML only appears where we want it.
  */
 class Notices {
 
     public function __construct() {
         add_action( 'sk_dashboard_before_widgets', [ $this, 'output_welcome_box' ] );
-        add_action( 'wp_enqueue_scripts',         [ $this, 'enqueue_notice_assets' ] );
+        add_action( 'wp_enqueue_scripts',          [ $this, 'enqueue_styles' ] );
     }
 
-    public function enqueue_notice_assets(): void {
+    public function enqueue_styles(): void {
         if ( ! function_exists( 'sk_is_seller_dashboard' ) || ! sk_is_seller_dashboard() ) {
             return;
         }
-
-        wp_enqueue_style(  'sk-notices' );
-        wp_enqueue_script( 'sk-notices-welcome' );
-        wp_enqueue_script( 'sk-notices-subscription' );
-        wp_enqueue_script( 'sk-notices-verification' );
+        wp_enqueue_style( 'sk-notices' );
     }
 
     public function output_welcome_box(): void {

@@ -1,12 +1,8 @@
 /**
- * Dashboard Notices
- * - Welcome box (main dashboard landing)
- * - Subscription info banner (subscription packs page)
- * - Verification info banner (settings/verification page)
+ * Dashboard Welcome Box (rendered on the main dashboard landing page only).
  */
 
 #welcome-box {
-    display: none;
     background: #252d38;
     color: #fff;
     padding: 20px;
@@ -16,36 +12,3 @@
 #welcome-box h2 { margin-top: 0; }
 #welcome-box a { color: #F7931A; }
 #welcome-box a.feedback-link { text-decoration: underline; }
-
-#subscription-infobox,
-#verify-infobox {
-    display: block;
-    width: 100%;
-    box-sizing: border-box;
-    margin: 12px 0 18px;
-    padding: 16px 18px;
-    border-radius: 6px;
-    border: 1px solid #334155;
-    background-color: #181e27;
-    color: #e2e8f0;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, .25);
-    line-height: 1.5;
-}
-#subscription-infobox .row,
-#verify-infobox .row {
-    display: flex;
-    gap: .75rem;
-    align-items: flex-start;
-}
-#subscription-infobox .icon,
-#verify-infobox .icon {
-    font-size: 18px;
-    line-height: 1;
-    margin-top: 2px;
-}
-#subscription-infobox strong,
-#verify-infobox strong { color: #fff; }
-#subscription-infobox strong.ok,
-#verify-infobox strong.ok { color: #5cb85c; }
-#subscription-infobox strong.warn,
-#verify-infobox strong.warn { color: #e06c75; }

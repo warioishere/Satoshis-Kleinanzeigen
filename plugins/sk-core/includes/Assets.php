@@ -316,24 +316,6 @@ class Assets {
                 'deps'    => [ 'jquery', 'wc-address-i18n' ],
                 'version' => self::asset_version( $asset_path . 'js/vendor-address.js' ),
             ],
-            'sk-notices-welcome'     => [
-                'src'     => $asset_url . '/js/notices/welcome-box.js',
-                'deps'    => [],
-                'version' => self::asset_version( $asset_path . 'js/notices/welcome-box.js' ),
-                'in_footer' => true,
-            ],
-            'sk-notices-subscription' => [
-                'src'     => $asset_url . '/js/notices/subscription-banner.js',
-                'deps'    => [],
-                'version' => self::asset_version( $asset_path . 'js/notices/subscription-banner.js' ),
-                'in_footer' => true,
-            ],
-            'sk-notices-verification' => [
-                'src'     => $asset_url . '/js/notices/verification-banner.js',
-                'deps'    => [],
-                'version' => self::asset_version( $asset_path . 'js/notices/verification-banner.js' ),
-                'in_footer' => true,
-            ],
         ];
 
         $require_dompurify = version_compare( WC()->version, '10.0.2', '>' );
