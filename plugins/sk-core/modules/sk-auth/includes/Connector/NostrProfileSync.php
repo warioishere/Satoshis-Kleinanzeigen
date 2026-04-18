@@ -1,8 +1,7 @@
 <?php
 /**
- * Nostr Profile Sync
- *
- * Automatically syncs Nostr profile data to Dokan store settings.
+ * Nostr Profile Sync — copy Nostr kind:0 metadata into the vendor's
+ * sk_profile_settings (store name, biography, avatar, banner, npub).
  */
 class UAC_Nostr_Profile_Sync {
 
@@ -15,20 +14,17 @@ class UAC_Nostr_Profile_Sync {
     }
 
     /**
-     * Sync Nostr profile data to Dokan on login.
+     * Flag a new Nostr user as needing the sync choice on their first login.
      *
-     * @param string $user_login Username
-     * @param WP_User $user The user object
+     * @param string  $user_login
+     * @param WP_User $user
      */
     public function sync_on_login($user_login, $user) {
-        // Check if user has Nostr public key (meaning they use Nostr Login)
         $nostr_pubkey = get_user_meta($user->ID, 'nostr_public_key', true);
-
         if (empty($nostr_pubkey)) {
-            return; // Not a Nostr user
+            return;
         }
 
-        // Check if Dokan is active
         if (!class_exists('SK_Core')) {
             return;
         }
@@ -50,13 +46,12 @@ class UAC_Nostr_Profile_Sync {
     }
 
     /**
-     * Sync Nostr profile data to Dokan store settings.
+     * Copy Nostr profile data into sk_profile_settings.
      *
      * @param int $user_id WordPress user ID
      * @return bool True on success, false on failure
      */
     public function sync_nostr_to_sk($user_id) {
-        // Get existing Dokan profile settings
         $profile_settings = get_user_meta($user_id, 'sk_profile_settings', true);
 
         if (!is_array($profile_settings)) {
@@ -134,12 +129,8 @@ class UAC_Nostr_Profile_Sync {
             }
         }
 
-        // Update Dokan profile settings if anything changed
         if ($updated) {
             update_user_meta($user_id, 'sk_profile_settings', $profile_settings);
-
-            do_action('uac_nostr_profile_synced', $user_id, $profile_settings);
-
             return true;
         }
 

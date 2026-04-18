@@ -3804,8 +3804,8 @@ add_filter( 'sk_seller_listing_args', function ( $args, $requested_data ) {
 /**
  * Get seller/vendor ID from an order.
  *
- * Checks order meta (_sk_vendor_id / _dokan_vendor_id) first,
- * then falls back to the product author of the first line item.
+ * Checks the _sk_vendor_id order meta, then falls back to the product author
+ * of the first line item.
  *
  * @param int|\WC_Order $order Order ID or WC_Order instance.
  *
@@ -3826,12 +3826,7 @@ function sk_get_seller_id_by_order( $order ) {
         return 0;
     }
 
-    // Try vendor meta (sk-core key first, then legacy dokan key).
     $seller_id = absint( $order->get_meta( '_sk_vendor_id' ) );
-    if ( ! $seller_id ) {
-        $seller_id = absint( $order->get_meta( '_dokan_vendor_id' ) );
-    }
-
     if ( $seller_id ) {
         return $seller_id;
     }
