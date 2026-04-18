@@ -2,6 +2,7 @@
 
 namespace SK\Core;
 
+use SK\Core\Dashboard\DashboardRegistry;
 use SK\Core\Dashboard\Templates\Settings as SkSettings;
 use SK\Core\Vendor\Vendor;
 
@@ -26,22 +27,16 @@ class StoreSettings extends SkSettings {
 
         // Settings hooks.
         $this->hooks();
+        $this->register_tabs();
     }
 
     /**
-     * Settings related hooks.
-     *
-     *
-     * @return void
+     * Settings related hooks (non-tab ones).
      */
     public function hooks() {
-        add_filter( 'sk_get_dashboard_settings_nav', array( $this, 'load_settings_menu' ), 10 );
         add_filter( 'sk_dashboard_nav_active', array( $this, 'filter_nav_active' ), 10, 3 );
-        add_filter( 'sk_dashboard_settings_heading_title', array( $this, 'load_settings_header' ), 10, 2 );
-        add_filter( 'sk_dashboard_settings_helper_text', array( $this, 'load_settings_helper_text' ), 10, 2 );
 
         add_action( 'sk_settings_content_area_header', array( $this, 'render_shipping_status_message' ), 25 );
-        add_action( 'sk_render_settings_content', array( $this, 'load_settings_content' ), 10 );
 
         add_filter( 'tiny_mce_before_init', array( $this, 'biography_editor_dark_style' ), 10, 2 );
 
@@ -51,13 +46,145 @@ class StoreSettings extends SkSettings {
         add_filter( 'sk_rest_store_additional_fields', [ $this, 'add_store_biography_response' ], 10, 2 );
         add_filter( 'sk_vendor_create_data', [ $this, 'add_rest_biography_data' ], 10, 2 );
 
-
         // Calculate store progress after vendor creation by admin
         add_action( 'sk_new_vendor', array( $this, 'save_store_data' ) );
 
         //Calculate store progress after customer migrated to vendor
         add_action( 'sk_new_seller_created', array( $this, 'save_store_data' ), 10, 2 );
         add_filter( 'sk_get_dashboard_nav_template_dependency', [ $this, 'nav_template_dependency' ] );
+    }
+
+    /**
+     * Register all built-in Settings tabs with the DashboardRegistry.
+     * Each entry has `parent => 'settings'` which the Registry uses to
+     * wire the sidebar sub-menu and heading/helper/content renderers.
+     */
+    public function register_tabs(): void {
+        $sk_shipping_option   = get_option( 'woocommerce_sk_product_shipping_settings' );
+        $enable_shipping      = $sk_shipping_option['enabled'] ?? 'yes';
+        $disable_woo_shipping = get_option( 'woocommerce_ship_to_countries' );
+
+        if ( $disable_woo_shipping !== 'disabled' ) {
+            DashboardRegistry::register_config( [
+                'slug'       => 'settings-shipping',
+                'parent'     => 'settings',
+                'url_key'    => 'shipping',
+                'title'      => __( 'Shipping', 'sk' ),
+                'icon'       => '<i class="fas fa-truck"></i>',
+                'pos'        => 70,
+                'permission' => 'sk_view_store_shipping_menu',
+                'heading'    => function ( $_h, $_q ) {
+                    $settings_url = sk_get_navigation_url( 'settings/shipping' ) . '/settings';
+                    return sprintf(
+                        '%s <span style="position:absolute; right:0px;"><a href="%s" class="sk-btn sk-btn-default"><i class="fas fa-cog"></i> %s</a></span>',
+                        __( 'Shipping Settings', 'sk' ),
+                        $settings_url,
+                        __( 'Click here to add Shipping Policies', 'sk' )
+                    );
+                },
+                'helper'     => function ( $_h, $_q ) use ( $enable_shipping ) {
+                    $help_text = sprintf(
+                        '<p>%s</p>',
+                        esc_html__( 'A shipping zone is a geographic region where a certain set of shipping methods are offered. We will match a customer to a single zone using their shipping address and present the shipping methods within that zone to them.', 'sk' )
+                    );
+                    if ( 'yes' === $enable_shipping ) {
+                        $help_text .= sprintf(
+                            '<p>%s <a href="%s">%s</a></p>',
+                            __( 'If you want to use the previous shipping system then', 'sk' ),
+                            esc_url( sk_get_navigation_url( 'settings/regular-shipping' ) ),
+                            __( 'Click Here', 'sk' )
+                        );
+                    }
+                    return $help_text;
+                },
+                'template'   => [ $this, 'render_shipping_tab' ],
+            ] );
+        }
+
+        DashboardRegistry::register_config( [
+            'slug'       => 'settings-social',
+            'parent'     => 'settings',
+            'url_key'    => 'social',
+            'title'      => __( 'Social Profile', 'sk' ),
+            'icon'       => '<i class="fas fa-share-alt-square"></i>',
+            'pos'        => 90,
+            'permission' => 'sk_view_store_social_menu',
+            'heading'    => __( 'Social Profiles', 'sk' ),
+            'helper'     => __( 'Social profiles help you to gain more trust. Consider adding your social profile links for better user interaction.', 'sk' ),
+            'template'   => [ $this, 'load_social_content' ],
+        ] );
+
+        if ( sk_get_option( 'store_seo', 'sk_general', 'on' ) === 'on' ) {
+            DashboardRegistry::register_config( [
+                'slug'       => 'settings-seo',
+                'parent'     => 'settings',
+                'url_key'    => 'seo',
+                'title'      => __( 'Store SEO', 'sk' ),
+                'icon'       => '<i class="fas fa-globe"></i>',
+                'pos'        => 110,
+                'permission' => 'sk_view_store_seo_menu',
+                'heading'    => __( 'Store SEO', 'sk' ),
+                'template'   => [ $this, 'load_seo_content' ],
+            ] );
+        }
+
+        // Regular (legacy) shipping — no sidebar entry, but the tab renders
+        // when ?settings=regular-shipping. Registered as a hidden tab.
+        if ( 'yes' === $enable_shipping && $disable_woo_shipping !== 'disabled' ) {
+            DashboardRegistry::register_config( [
+                'slug'       => 'settings-regular-shipping',
+                'parent'     => 'settings',
+                'url_key'    => 'regular-shipping',
+                'title'      => '',  // hidden from sidebar
+                'pos'        => 9999,
+                'permission' => 'sk_view_store_shipping_menu',
+                'helper'     => function ( $_h, $_q ) {
+                    return sprintf(
+                        '<p>%s</p><p>%s</p><p>%s <a href="%s">%s</a></p>',
+                        __( 'This page contains your store-wide shipping settings, costs, shipping and refund policy.', 'sk' ),
+                        __( 'You can enable/disable shipping for your products. Also you can override these shipping costs while creating or editing a product.', 'sk' ),
+                        __( 'If you want to configure zone wise shipping then', 'sk' ),
+                        esc_url( sk_get_navigation_url( 'settings/shipping' ) ),
+                        __( 'Click Here', 'sk' )
+                    );
+                },
+                'template'   => [ $this, 'render_regular_shipping_tab' ],
+            ] );
+        }
+    }
+
+    /**
+     * Shipping tab — requires WooCommerce shipping not be disabled.
+     */
+    public function render_shipping_tab( $query_vars ): void {
+        $disable_woo_shipping = get_option( 'woocommerce_ship_to_countries' );
+        if ( 'disabled' === $disable_woo_shipping ) {
+            sk_get_template_part( 'global/sk-error', '', [
+                'deleted' => false,
+                'message' => __( 'Shipping functionality is currentlly disabled by site owner', 'sk' ),
+            ] );
+            return;
+        }
+        echo apply_filters( 'sk_load_settings_content_shipping', $this->load_shipping_content() );
+    }
+
+    /**
+     * Legacy regular-shipping tab.
+     */
+    public function render_regular_shipping_tab( $query_vars ): void {
+        $disable_woo_shipping = get_option( 'woocommerce_ship_to_countries' );
+        $sk_shipping_option   = get_option( 'woocommerce_sk_product_shipping_settings' );
+        $enable_shipping      = $sk_shipping_option['enabled'] ?? 'yes';
+
+        if ( 'disabled' === $disable_woo_shipping || 'no' === $enable_shipping ) {
+            sk_get_template_part( 'global/sk-error', '', [
+                'deleted' => false,
+                'message' => __( 'Shipping functionality is currentlly disabled by site owner', 'sk' ),
+            ] );
+            return;
+        }
+
+        sk_get_template_part( 'settings/shipping', '', [ 'pro' => true ] );
     }
 
     /**
@@ -75,50 +202,6 @@ class StoreSettings extends SkSettings {
     }
 
 
-    /**
-     * Load Settings Menu
-     *
-     *
-     * @param  array $sub_settins
-     *
-     * @return array
-     */
-    public function load_settings_menu( $sub_settins ) {
-        $sk_shipping_option = get_option( 'woocommerce_sk_product_shipping_settings' );
-        $enable_shipping       = ( isset( $sk_shipping_option['enabled'] ) ) ? $sk_shipping_option['enabled'] : 'yes';
-        $disable_woo_shipping  = get_option( 'woocommerce_ship_to_countries' );
-
-        if ( $disable_woo_shipping !== 'disabled' ) {
-            $sub_settins['shipping'] = array(
-                'title'       => __( 'Shipping', 'sk' ),
-                'icon'        => '<i class="fas fa-truck"></i>',
-                'url'         => sk_get_navigation_url( 'settings/shipping' ),
-                'pos'         => 70,
-                'permission'  => 'sk_view_store_shipping_menu',
-            );
-        }
-
-        $sub_settins['social'] = array(
-            'title'       => __( 'Social Profile', 'sk' ),
-            'icon'        => '<i class="fas fa-share-alt-square"></i>',
-            'url'         => sk_get_navigation_url( 'settings/social' ),
-            'pos'         => 90,
-            'permission'  => 'sk_view_store_social_menu',
-        );
-
-        if ( sk_get_option( 'store_seo', 'sk_general', 'on' ) === 'on' ) {
-            $sub_settins['seo'] = array(
-                'title'         => __( 'Store SEO', 'sk' ),
-                'icon'          => '<i class="fas fa-globe"></i>',
-                'url'           => sk_get_navigation_url( 'settings/seo' ),
-                'pos'           => 110,
-                'permission'    => 'sk_view_store_seo_menu',
-            );
-        }
-
-        return $sub_settins;
-    }
-
     public function nav_template_dependency( array $dependencies ): array {
 
         $dependencies['settings/seo'] = [
@@ -132,220 +215,9 @@ class StoreSettings extends SkSettings {
     }
 
     /**
-     * Load Settings Template
-     *
-     *
-     * @param  string $template
-     * @param  string $query_vars
-     *
-     * @return void
+     * Load Social Page Content — callable template for settings-social tab.
      */
-    public function load_settings_template( $template, $query_vars ) {
-        if ( $query_vars === 'social' ) {
-            sk_get_template_part( 'settings/store' );
-            return;
-        }
-
-        if ( $query_vars === 'shipping' ) {
-            sk_get_template_part( 'settings/store' );
-            return;
-        }
-
-        if ( $query_vars === 'seo' ) {
-            sk_get_template_part( 'settings/store' );
-            return;
-        }
-    }
-
-    /**
-     * Load Settings Header
-     *
-     *
-     * @param  string $header
-     * @param  string $query_vars
-     *
-     * @return string
-     */
-    public function load_settings_header( $header, $query_vars ) {
-        if ( $query_vars === 'social' ) {
-            $header = __( 'Social Profiles', 'sk' );
-        }
-
-        if ( $query_vars === 'shipping' ) {
-            $settings_url = sk_get_navigation_url( 'settings/shipping' ) . '/settings';
-            $header = sprintf( '%s <span style="position:absolute; right:0px;"><a href="%s" class="sk-btn sk-btn-default"><i class="fas fa-cog"></i> %s</a></span>', __( 'Shipping Settings', 'sk' ), $settings_url, __( 'Click here to add Shipping Policies', 'sk' ) );
-        }
-
-        if ( $query_vars === 'seo' ) {
-            $header = __( 'Store SEO', 'sk' );
-        }
-
-        return $header;
-    }
-
-    /**
-     * Load Settings page helper
-     *
-     *
-     * @param  string $help_text
-     * @param  string $query_vars
-     *
-     * @return string
-     */
-    public function load_settings_helper_text( $help_text, $query_vars ) {
-        $sk_shipping_option = get_option( 'woocommerce_sk_product_shipping_settings' );
-        $enable_shipping       = ( isset( $sk_shipping_option['enabled'] ) ) ? $sk_shipping_option['enabled'] : 'yes';
-
-        if ( $query_vars === 'social' ) {
-            $help_text = __( 'Social profiles help you to gain more trust. Consider adding your social profile links for better user interaction.', 'sk' );
-        }
-
-        if ( $query_vars === 'shipping' ) {
-            $help_text = sprintf(
-                '<p>%s</p>',
-                esc_html__( 'A shipping zone is a geographic region where a certain set of shipping methods are offered. We will match a customer to a single zone using their shipping address and present the shipping methods within that zone to them.', 'sk' ),
-            );
-
-            if ( 'yes' === $enable_shipping ) {
-                $help_text .= sprintf(
-                    '<p>%s <a href="%s">%s</a></p>',
-                    __( 'If you want to use the previous shipping system then', 'sk' ),
-                    esc_url( sk_get_navigation_url( 'settings/regular-shipping' ) ),
-                    __( 'Click Here', 'sk' )
-                );
-            }
-        }
-
-        if ( $query_vars === 'regular-shipping' && $enable_shipping === 'yes' ) {
-            $help_text = sprintf(
-                '<p>%s</p><p>%s</p><p>%s <a href="%s">%s</a></p>',
-                __( 'This page contains your store-wide shipping settings, costs, shipping and refund policy.', 'sk' ),
-                __( 'You can enable/disable shipping for your products. Also you can override these shipping costs while creating or editing a product.', 'sk' ),
-                __( 'If you want to configure zone wise shipping then', 'sk' ),
-                esc_url( sk_get_navigation_url( 'settings/shipping' ) ),
-                __( 'Click Here', 'sk' )
-            );
-        }
-
-        return $help_text;
-    }
-
-    /**
-     * Load Settings Content
-     *
-     *
-     * @param  array $query_vars
-     *
-     * @return void
-     */
-    public function load_settings_content( $query_vars ) {
-        if ( isset( $query_vars['settings'] ) && $query_vars['settings'] === 'social' ) {
-            if ( ! current_user_can( 'sk_view_store_social_menu' ) ) {
-                sk_get_template_part(
-                    'global/sk-error',
-                    '',
-                    array(
-                        'deleted' => false,
-                        'message' => __( 'You have no permission to view this page', 'sk' ),
-                    )
-                );
-            } else {
-                $this->load_social_content();
-            }
-        }
-
-        if ( isset( $query_vars['settings'] ) && $query_vars['settings'] === 'shipping' ) {
-            if ( ! current_user_can( 'sk_view_store_shipping_menu' ) ) {
-                sk_get_template_part(
-                    'global/sk-error',
-                    '',
-                    array(
-                        'deleted' => false,
-                        'message' => __( 'You have no permission to view this page', 'sk' ),
-                    )
-                );
-            } else {
-                $disable_woo_shipping = get_option( 'woocommerce_ship_to_countries' );
-
-                if ( 'disabled' === $disable_woo_shipping ) {
-                    sk_get_template_part(
-                        'global/sk-error',
-                        '',
-                        array(
-                            'deleted' => false,
-                            'message' => __( 'Shipping functionality is currentlly disabled by site owner', 'sk' ),
-                        )
-                    );
-                } else {
-
-                    /**
-                     * To allow overriding dashboard/settings/shipping add these filter
-                     *
-                     *
-                     * @param string Load Shipping Page Content
-                     */
-                    echo apply_filters( 'sk_load_settings_content_shipping', $this->load_shipping_content() );
-                }
-            }
-        }
-
-        if ( isset( $query_vars['settings'] ) && $query_vars['settings'] === 'regular-shipping' ) {
-            if ( ! current_user_can( 'sk_view_store_shipping_menu' ) ) {
-                sk_get_template_part(
-                    'global/sk-error',
-                    '',
-                    array(
-                        'deleted' => false,
-                        'message' => __( 'You have no permission to view this page', 'sk' ),
-                    )
-                );
-            } else {
-                $disable_woo_shipping  = get_option( 'woocommerce_ship_to_countries' );
-                $sk_shipping_option = get_option( 'woocommerce_sk_product_shipping_settings' );
-                $enable_shipping       = ( isset( $sk_shipping_option['enabled'] ) ) ? $sk_shipping_option['enabled'] : 'yes';
-
-                if ( 'disabled' === $disable_woo_shipping || 'no' === $enable_shipping ) {
-                    sk_get_template_part(
-                        'global/sk-error',
-                        '',
-                        array(
-                            'deleted' => false,
-                            'message' => __( 'Shipping functionality is currentlly disabled by site owner', 'sk' ),
-                        )
-                    );
-                } else {
-                    sk_get_template_part(
-                        'settings/shipping',
-                        '',
-                        array( 'pro' => true )
-                    );
-                }
-            }
-        }
-
-        if ( isset( $query_vars['settings'] ) && $query_vars['settings'] === 'seo' ) {
-            if ( ! current_user_can( 'sk_view_store_seo_menu' ) ) {
-                sk_get_template_part(
-                    'global/sk-error',
-                    '',
-                    array(
-                        'deleted' => false,
-                        'message' => __( 'You have no permission to view this page', 'sk' ),
-                    )
-                );
-            } else {
-                $this->load_seo_content();
-            }
-        }
-    }
-
-    /**
-     * Load Social Page Content
-     *
-     *
-     * @return void
-     */
-    public function load_social_content() {
+    public function load_social_content( $query_vars = [] ) {
         $social_fields = sk_get_social_profile_fields();
 
         sk_get_template_part(
@@ -390,12 +262,9 @@ class StoreSettings extends SkSettings {
     }
 
     /**
-     * Load SEO Content
-     *
-     *
-     * @return void
+     * Load SEO Content — callable template for settings-seo tab.
      */
-    public function load_seo_content() {
+    public function load_seo_content( $query_vars = [] ) {
         sk_get_template_part( 'settings/seo', '', array( 'pro' => true ) );
     }
 

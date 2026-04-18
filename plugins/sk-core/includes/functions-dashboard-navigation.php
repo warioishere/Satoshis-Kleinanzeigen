@@ -27,44 +27,22 @@ function sk_nav_sort_by_pos( $a, $b ) {
  * @return array
  */
 function sk_get_dashboard_nav(): array {
-    $menus = [
-        'dashboard' => [
-            'title'      => __( 'Dashboard', 'sk-core' ),
-            'icon'       => '<i class="fas fa-tachometer-alt"></i>',
-            'url'        => sk_get_navigation_url() . ( ReportUtil::is_analytics_enabled() ? '?path=%2Fanalytics%2FOverview' : '' ),
-            'pos'        => 10,
-            'icon_name'  => 'House',
-            'permission' => 'sk_view_overview_menu',
-        ],
-        'products'  => [
-            'title'      => __( 'Products', 'sk-core' ),
-            'icon'       => '<i class="fas fa-briefcase"></i>',
-            'url'        => sk_get_navigation_url( 'products' ),
-            'pos'        => 30,
-            'icon_name'  => 'Box',
-            'permission' => 'sk_view_product_menu',
-        ],
-        'settings'  => [
-            'title'      => __( 'Einstellungen', 'sk-core' ),
-            'icon'       => '<i class="fas fa-cog"></i>',
-            'icon_name'  => 'Settings',
-            'url'        => sk_get_navigation_url( 'settings/store' ),
-            'pos'        => 200,
-            'permission' => 'sk_view_store_settings_menu',
-        ],
-    ];
+    // All menus — base defaults (Dashboard/Products/Settings) AND module
+    // entries — are registered via DashboardRegistry. Modules extending
+    // \SK\Core\Dashboard\DashboardModule auto-register; base menus are added
+    // in DashboardRegistry::register_base_menus() during bootstrap.
 
     // Preserve the sk_get_dashboard_settings_nav filter so sk-pro modules
-    // can still register their settings pages (payment, shipping, SEO, etc.)
-    // but we no longer attach them as a submenu in the sidebar nav.
+    // can still register their settings pages (payment, shipping, SEO, etc.).
     apply_filters( 'sk_get_dashboard_settings_nav', [] );
 
     /**
-     * Filters nav menu items.
+     * Filters nav menu items. Registry injects all registered configs at
+     * priority 50; third-party hooks can still add/modify via this filter.
      *
      * @param array<string,array> $menus
      */
-    $nav_menus = apply_filters( 'sk_get_dashboard_nav', $menus );
+    $nav_menus = apply_filters( 'sk_get_dashboard_nav', [] );
 
     foreach ( $nav_menus as $nav_key => $menu ) {
         if ( ! isset( $menu['pos'] ) ) {

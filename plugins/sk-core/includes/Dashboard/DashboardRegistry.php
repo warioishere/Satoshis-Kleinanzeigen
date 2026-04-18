@@ -20,10 +20,27 @@ class DashboardRegistry {
     /** @var DashboardModule[] */
     private static array $modules = [];
 
+    /**
+     * Static configs registered without a DashboardModule instance.
+     * Used for built-in base menus (Dashboard, Products, Settings) that have
+     * no per-module class of their own.
+     *
+     * @var array<array>
+     */
+    private static array $configs = [];
+
     private static bool $bootstrapped = false;
 
     public static function register_module( DashboardModule $module ): void {
         self::$modules[] = $module;
+    }
+
+    /**
+     * Register a config array directly (no DashboardModule instance).
+     * Supports the same keys as DashboardModule::config().
+     */
+    public static function register_config( array $config ): void {
+        self::$configs[] = $config;
     }
 
     /**
@@ -36,27 +53,84 @@ class DashboardRegistry {
         }
         self::$bootstrapped = true;
 
+        self::register_base_menus();
+
         add_filter( 'sk_get_dashboard_nav',    [ self::class, 'inject_menus' ], 50 );
         add_filter( 'sk_dashboard_nav_active', [ self::class, 'inject_active' ], 50, 3 );
         add_filter( 'sk_query_var_filter',     [ self::class, 'inject_query_vars' ], 50 );
         add_action( 'sk_load_custom_template', [ self::class, 'dispatch_template' ], 50 );
 
-        // Settings tabs — wired in Phase 4, empty pass-through for now.
-        add_filter( 'sk_get_dashboard_settings_nav', [ self::class, 'inject_tabs' ], 50 );
-        add_action( 'sk_render_settings_content',    [ self::class, 'dispatch_tab' ], 50 );
+        add_filter( 'sk_get_dashboard_settings_nav',    [ self::class, 'inject_tabs' ], 50 );
+        add_filter( 'sk_dashboard_settings_heading_title', [ self::class, 'inject_tab_heading' ], 50, 2 );
+        add_filter( 'sk_dashboard_settings_helper_text',   [ self::class, 'inject_tab_helper' ], 50, 2 );
+        add_action( 'sk_render_settings_content',          [ self::class, 'dispatch_tab' ], 50 );
     }
 
     /**
-     * Iterate modules and yield only top-level menus (no parent) with valid config.
+     * Register the 3 always-present base navigation entries.
+     * Previously hardcoded in functions-dashboard-navigation.php.
+     */
+    private static function register_base_menus(): void {
+        $analytics_suffix = class_exists( '\SK\Core\Utilities\ReportUtil' )
+            && \SK\Core\Utilities\ReportUtil::is_analytics_enabled()
+            ? '?path=%2Fanalytics%2FOverview'
+            : '';
+
+        self::register_config( [
+            'slug'       => 'dashboard',
+            'title'      => __( 'Dashboard', 'sk-core' ),
+            'icon'       => '<i class="fas fa-tachometer-alt"></i>',
+            'icon_name'  => 'House',
+            'url'        => sk_get_navigation_url() . $analytics_suffix,
+            'pos'        => 10,
+            'permission' => 'sk_view_overview_menu',
+        ] );
+
+        self::register_config( [
+            'slug'       => 'products',
+            'title'      => __( 'Products', 'sk-core' ),
+            'icon'       => '<i class="fas fa-briefcase"></i>',
+            'icon_name'  => 'Box',
+            'url'        => sk_get_navigation_url( 'products' ),
+            'pos'        => 30,
+            'permission' => 'sk_view_product_menu',
+        ] );
+
+        self::register_config( [
+            'slug'       => 'settings',
+            'title'      => __( 'Einstellungen', 'sk-core' ),
+            'icon'       => '<i class="fas fa-cog"></i>',
+            'icon_name'  => 'Settings',
+            'url'        => sk_get_navigation_url( 'settings/store' ),
+            'pos'        => 200,
+            'permission' => 'sk_view_store_settings_menu',
+        ] );
+    }
+
+    /**
+     * Iterate ALL registered configs (from modules + static register_config calls).
+     *
+     * @return \Generator<array>
+     */
+    private static function all_configs(): \Generator {
+        foreach ( self::$modules as $module ) {
+            $config = $module->config();
+            if ( is_array( $config ) && ! empty( $config ) ) {
+                yield $config;
+            }
+        }
+        foreach ( self::$configs as $config ) {
+            yield $config;
+        }
+    }
+
+    /**
+     * Iterate only top-level menus (no parent) with valid config.
      *
      * @return \Generator<array>
      */
     private static function top_level_menus(): \Generator {
-        foreach ( self::$modules as $module ) {
-            $config = $module->config();
-            if ( ! is_array( $config ) || empty( $config ) ) {
-                continue;
-            }
+        foreach ( self::all_configs() as $config ) {
             if ( ! empty( $config['parent'] ) ) {
                 continue;
             }
@@ -65,16 +139,12 @@ class DashboardRegistry {
     }
 
     /**
-     * Iterate modules and yield only settings tabs (parent set) with valid config.
+     * Iterate only settings tabs (parent set) with valid config.
      *
      * @return \Generator<array>
      */
     private static function tabs(): \Generator {
-        foreach ( self::$modules as $module ) {
-            $config = $module->config();
-            if ( ! is_array( $config ) || empty( $config ) ) {
-                continue;
-            }
+        foreach ( self::all_configs() as $config ) {
             if ( empty( $config['parent'] ) ) {
                 continue;
             }
@@ -169,23 +239,100 @@ class DashboardRegistry {
     }
 
     /**
-     * Settings-Tabs injection (Phase 4 — currently a no-op pass-through).
+     * Settings-tabs: add each registered tab (parent=settings) to the
+     * sub-settings nav array.
      */
     public static function inject_tabs( array $tabs ): array {
-        // TODO Phase 4: implement tab rendering from registry.
-        // For Phase 1, tabs still flow through sk_get_dashboard_settings_nav
-        // as before (tabs() generator is empty until modules migrate).
-        foreach ( self::tabs() as $_config ) {
-            // Placeholder — no tabs registered yet.
+        foreach ( self::tabs() as $config ) {
+            $url_key = $config['url_key'] ?? $config['slug'];
+            if ( ! $url_key ) {
+                continue;
+            }
+            $tabs[ $url_key ] = [
+                'title'      => $config['title'] ?? '',
+                'icon'       => $config['icon'] ?? '',
+                'url'        => $config['url'] ?? sk_get_navigation_url( 'settings/' . $url_key ),
+                'pos'        => $config['pos'] ?? 50,
+                'permission' => $config['permission'] ?? 'read',
+            ];
         }
         return $tabs;
     }
 
     /**
-     * Settings tab template dispatch (Phase 4 — currently a no-op).
+     * Settings-tab heading — Registry returns config['heading'] if the tab
+     * matches; otherwise passes through.
+     */
+    public static function inject_tab_heading( $heading, $query_var ) {
+        foreach ( self::tabs() as $config ) {
+            $url_key = $config['url_key'] ?? $config['slug'];
+            if ( $url_key === $query_var && ! empty( $config['heading'] ) ) {
+                return is_callable( $config['heading'] )
+                    ? call_user_func( $config['heading'], $heading, $query_var )
+                    : $config['heading'];
+            }
+        }
+        return $heading;
+    }
+
+    /**
+     * Settings-tab helper text.
+     */
+    public static function inject_tab_helper( $helper, $query_var ) {
+        foreach ( self::tabs() as $config ) {
+            $url_key = $config['url_key'] ?? $config['slug'];
+            if ( $url_key === $query_var && ! empty( $config['helper'] ) ) {
+                return is_callable( $config['helper'] )
+                    ? call_user_func( $config['helper'], $helper, $query_var )
+                    : $config['helper'];
+            }
+        }
+        return $helper;
+    }
+
+    /**
+     * Settings-tab template dispatch — renders the tab matching
+     * $wp->query_vars['settings'].
      */
     public static function dispatch_tab(): void {
-        // TODO Phase 4.
+        global $wp;
+        if ( empty( $wp->query_vars['settings'] ) ) {
+            return;
+        }
+        $current = $wp->query_vars['settings'];
+
+        foreach ( self::tabs() as $config ) {
+            $url_key  = $config['url_key'] ?? $config['slug'];
+            $template = $config['template'] ?? null;
+
+            if ( $url_key !== $current || ! $template ) {
+                continue;
+            }
+
+            // Permission gate.
+            $permission = $config['permission'] ?? '';
+            if ( $permission && ! current_user_can( $permission ) ) {
+                sk_get_template_part(
+                    'global/sk-error', '', [
+                        'deleted' => false,
+                        'message' => __( 'You have no permission to view this page', 'sk-core' ),
+                    ]
+                );
+                return;
+            }
+
+            if ( is_callable( $template ) ) {
+                call_user_func( $template, $wp->query_vars );
+                return;
+            }
+
+            $template_args = $config['template_args'] ?? [];
+            if ( is_callable( $template_args ) ) {
+                $template_args = call_user_func( $template_args, $wp->query_vars );
+            }
+            sk_get_template_part( $template, '', (array) $template_args );
+            return;
+        }
     }
 
     /**
