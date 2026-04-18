@@ -2,37 +2,32 @@
 
 namespace SK\Modules\Feed;
 
+use SK\Core\Dashboard\DashboardModule;
+
 defined( 'ABSPATH' ) || exit;
 
-class Dashboard {
+class Dashboard extends DashboardModule {
 
-	public function __construct() {
+	public function config(): ?array {
+		return [
+			'slug'       => 'feed-posts',
+			'title'      => __( 'Beiträge', 'sk-core' ),
+			'icon'       => '<i class="fas fa-rss"></i>',
+			'pos'        => 56,
+			'permission' => 'sk_view_overview_menu',
+			'template'   => [ $this, 'render_dashboard' ],
+		];
+	}
+
+	protected function register_extras(): void {
 		add_action( 'init', [ $this, 'add_endpoint' ] );
-		add_filter( 'sk_get_dashboard_nav', [ $this, 'add_dashboard_nav' ] );
-		add_action( 'sk_load_custom_template', [ $this, 'load_template' ] );
 	}
 
 	public function add_endpoint() {
 		add_rewrite_endpoint( 'feed-posts', EP_PAGES );
 	}
 
-	public function add_dashboard_nav( $settings ) {
-		$settings['feed-posts'] = [
-			'title'      => __( 'Beiträge', 'sk-core' ),
-			'icon'       => '<i class="fas fa-rss"></i>',
-			'url'        => function_exists( 'sk_get_navigation_url' ) ? sk_get_navigation_url( 'feed-posts' ) : '',
-			'pos'        => 56,
-			'permission' => 'sk_view_overview_menu',
-		];
-
-		return $settings;
-	}
-
-	public function load_template( $query_vars ) {
-		if ( empty( $query_vars ) || ! array_key_exists( 'feed-posts', $query_vars ) ) {
-			return;
-		}
-
+	public function render_dashboard( $query_vars ): void {
 		$vendor_id = function_exists( 'sk_get_current_user_id' ) ? sk_get_current_user_id() : get_current_user_id();
 
 		$posts = get_posts( [

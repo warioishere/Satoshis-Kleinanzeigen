@@ -130,11 +130,10 @@ final class Module {
         $nostr_integration = new \UAC_Nostr_Login_Integration( $account_linker );
 
         if ( class_exists( 'SK_Core' ) ) {
+            // UAC_Dokan_Dashboard extends DashboardModule — nav/template hooks
+            // are registered by the Registry via its config() method.
             $sk_dashboard = new \UAC_Dokan_Dashboard( $account_linker );
-            add_filter( 'sk_get_dashboard_nav', [ $sk_dashboard, 'add_dashboard_menu' ], 20 );
-            add_filter( 'sk_query_var_filter', [ $sk_dashboard, 'add_query_var' ] );
-            add_filter( 'sk_dashboard_nav_active', [ $sk_dashboard, 'set_active_menu' ], 10, 3 );
-            add_action( 'sk_load_custom_template', [ $sk_dashboard, 'load_template' ] );
+
             add_action( 'wp_ajax_uac_link_nostr', [ $sk_dashboard, 'ajax_link_nostr' ] );
             add_action( 'wp_ajax_uac_link_lnurl', [ $sk_dashboard, 'ajax_link_lnurl' ] );
             add_action( 'wp_ajax_uac_unlink_auth', [ $sk_dashboard, 'ajax_unlink_auth' ] );

@@ -2,22 +2,31 @@
 
 namespace SK\Core\Dashboard\Modules;
 
+use SK\Core\Dashboard\DashboardModule;
+
 /**
  * Gesuche (search requests) CPT and dashboard management.
  * Ported from plugin: sk-gesuche
  */
-class Gesuche {
+class Gesuche extends DashboardModule {
 
-    public function __construct() {
-        add_action( 'init',             [ $this, 'register_cpt' ] );
-        add_action( 'wp_enqueue_scripts', [ $this, 'enqueue' ] );
-        add_filter( 'sk_get_dashboard_nav',    [ $this, 'register_nav' ] );
-        add_filter( 'sk_dashboard_nav_active', [ $this, 'set_active' ], 10, 3 );
-        add_filter( 'sk_query_var_filter',     [ $this, 'add_query_var' ] );
-        add_action( 'sk_load_custom_template', [ $this, 'load_template' ] );
-        add_action( 'template_redirect',       [ $this, 'redirect_shortcode_page' ] );
-        add_filter( 'template_include',        [ $this, 'override_templates' ] );
-        add_filter( 'theme_page_templates',    [ $this, 'register_page_template' ] );
+    public function config(): ?array {
+        return [
+            'slug'       => 'gesuche',
+            'title'      => __( 'Gesuche', 'sk' ),
+            'icon'       => '<i class="fas fa-search"></i>',
+            'pos'        => 55,
+            'permission' => 'sk_view_overview_menu',
+            'template'   => 'dashboard/gesuche/dashboard-gesuche',
+        ];
+    }
+
+    protected function register_extras(): void {
+        add_action( 'init',                [ $this, 'register_cpt' ] );
+        add_action( 'wp_enqueue_scripts',  [ $this, 'enqueue' ] );
+        add_action( 'template_redirect',   [ $this, 'redirect_shortcode_page' ] );
+        add_filter( 'template_include',    [ $this, 'override_templates' ] );
+        add_filter( 'theme_page_templates', [ $this, 'register_page_template' ] );
 
         // Admin columns
         add_filter( 'manage_gesuch_posts_columns',       [ $this, 'admin_columns' ] );
@@ -52,41 +61,6 @@ class Gesuche {
 
     public function enqueue(): void {
         // CSS merged into sk-theme.css (CSS consolidation)
-    }
-
-    public function register_nav( array $nav ): array {
-        $nav['gesuche'] = [
-            'title'      => __( 'Gesuche', 'sk' ),
-            'icon'       => '<i class="fas fa-search"></i>',
-            'url'        => sk_get_navigation_url( 'gesuche' ),
-            'pos'        => 55,
-            'permission' => 'sk_view_overview_menu',
-        ];
-        return $nav;
-    }
-
-    public function set_active( $active_menu, $request, $active ) {
-        if ( isset( $request ) && false !== strpos( $request, 'gesuche' ) ) {
-            return 'gesuche';
-        }
-        if ( ! empty( $active ) && in_array( 'gesuche', $active, true ) ) {
-            return 'gesuche';
-        }
-        if ( get_query_var( 'gesuche' ) ) {
-            return 'gesuche';
-        }
-        return $active_menu;
-    }
-
-    public function add_query_var( array $vars ): array {
-        $vars[] = 'gesuche';
-        return $vars;
-    }
-
-    public function load_template( array $query_vars ): void {
-        if ( isset( $query_vars['gesuche'] ) ) {
-            sk_get_template_part( 'dashboard/gesuche/dashboard-gesuche' );
-        }
     }
 
     /**

@@ -4,7 +4,7 @@
  *
  * Adds authentication linking functionality to the Dokan vendor dashboard.
  */
-class UAC_Dokan_Dashboard {
+class UAC_Dokan_Dashboard extends \SK\Core\Dashboard\DashboardModule {
 
     /**
      * @var UAC_Account_Linker
@@ -18,69 +18,22 @@ class UAC_Dokan_Dashboard {
      */
     public function __construct($account_linker) {
         $this->account_linker = $account_linker;
+        parent::__construct();
     }
 
-    /**
-     * Add authentication menu item to Dokan dashboard.
-     *
-     * @param array $urls Dokan dashboard menu URLs
-     * @return array Modified menu URLs
-     */
-    public function add_dashboard_menu($urls) {
-        $urls['auth-connector'] = array(
-            'title' => 'Nostr/LN Link',
-            'icon'  => '<i class="fas fa-key"></i>',
-            'url'   => sk_get_navigation_url('auth-connector'),
-            'pos'   => 190,
-        );
-
-        return $urls;
+    public function config(): ?array {
+        return [
+            'slug'       => 'auth-connector',
+            'title'      => 'Nostr/LN Link',
+            'icon'       => '<i class="fas fa-key"></i>',
+            'pos'        => 190,
+            'permission' => 'read',
+            'template'   => [ $this, 'render_dashboard' ],
+        ];
     }
 
-    /**
-     * Add query var for authentication page.
-     *
-     * @param array $vars Query variables
-     * @return array Modified query variables
-     */
-    public function add_query_var($vars) {
-        $vars[] = 'auth-connector';
-        return $vars;
-    }
-
-    /**
-     * Set active menu item.
-     *
-     * @param string $active_menu Current active menu
-     * @param string $request Request string
-     * @param array $active Active menu items
-     * @return string Active menu item
-     */
-    public function set_active_menu($active_menu, $request, $active) {
-        if (isset($request) && false !== strpos($request, 'auth-connector')) {
-            return 'auth-connector';
-        }
-
-        if (!empty($active) && in_array('auth-connector', $active, true)) {
-            return 'auth-connector';
-        }
-
-        if (get_query_var('auth-connector')) {
-            return 'auth-connector';
-        }
-
-        return $active_menu;
-    }
-
-    /**
-     * Load custom template for authentication page.
-     *
-     * @param array $query_vars Query variables
-     */
-    public function load_template($query_vars) {
-        if (isset($query_vars['auth-connector'])) {
-            require_once SK_AUTH_TEMPLATES . '/dashboard-auth-connector.php';
-        }
+    public function render_dashboard( $query_vars ): void {
+        require_once SK_AUTH_TEMPLATES . '/dashboard-auth-connector.php';
     }
 
     /**

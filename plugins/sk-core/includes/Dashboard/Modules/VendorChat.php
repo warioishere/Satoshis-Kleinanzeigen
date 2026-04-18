@@ -2,6 +2,8 @@
 
 namespace SK\Core\Dashboard\Modules;
 
+use SK\Core\Dashboard\DashboardModule;
+
 /**
  * Vendor Chat module — ported from sk-vendor-chat plugin.
  *
@@ -11,31 +13,38 @@ namespace SK\Core\Dashboard\Modules;
  * contact-icons collection.
  *
  */
-class VendorChat {
+class VendorChat extends DashboardModule {
 
-	/**
-	 * Class constructor — register all hooks.
-	 *
-	 */
-	public function __construct() {
-		add_action( 'init',                     [ $this, 'register_cpt' ] );
-		add_filter( 'sk_query_var_filter',       [ $this, 'add_query_var' ] );
-		add_filter( 'sk_get_dashboard_nav',      [ $this, 'add_nav_item' ] );
-		add_filter( 'sk_get_dashboard_nav',      [ $this, 'add_notification_badge' ], 20 );
-		add_filter( 'sk_dashboard_nav_active',   [ $this, 'set_active_nav' ], 10, 3 );
-		add_action( 'sk_load_custom_template',   [ $this, 'load_template' ] );
-		add_action( 'wp_enqueue_scripts',        [ $this, 'enqueue_assets' ] );
-		add_action( 'wp_footer',                 [ $this, 'output_modal' ] );
-		add_action( 'admin_menu',                [ $this, 'add_admin_menu' ] );
-		add_action( 'admin_init',                [ $this, 'register_settings' ] );
+	public function config(): ?array {
+		if ( ! $this->is_enabled() ) {
+			return null;
+		}
+		return [
+			'slug'       => 'vendor-chat',
+			'title'      => __( 'Nachrichten', 'sk' ),
+			'icon'       => '<i class="fas fa-comment-dots"></i>',
+			'pos'        => 56,
+			'permission' => 'sk_view_overview_menu',
+			'template'   => 'dashboard/vendor-chat/dashboard-vendor-chat',
+		];
+	}
+
+	protected function register_extras(): void {
+		add_action( 'init',                         [ $this, 'register_cpt' ] );
+		// Badge runs AFTER Registry injects at 50 so it can modify the entry.
+		add_filter( 'sk_get_dashboard_nav',         [ $this, 'add_notification_badge' ], 60 );
+		add_action( 'wp_enqueue_scripts',           [ $this, 'enqueue_assets' ] );
+		add_action( 'wp_footer',                    [ $this, 'output_modal' ] );
+		add_action( 'admin_menu',                   [ $this, 'add_admin_menu' ] );
+		add_action( 'admin_init',                   [ $this, 'register_settings' ] );
 		add_filter( 'dkp_contact_icons_collection', [ $this, 'add_chat_icon' ], 10, 4 );
 
 		// AJAX handlers — logged-in users only
-		add_action( 'wp_ajax_dvc_start_chat',    [ $this, 'ajax_start_chat' ] );
-		add_action( 'wp_ajax_dvc_send_message',  [ $this, 'ajax_send_message' ] );
-		add_action( 'wp_ajax_dvc_get_messages',  [ $this, 'ajax_get_messages' ] );
-		add_action( 'wp_ajax_dvc_delete_chat',   [ $this, 'ajax_delete_chat' ] );
-		add_action( 'wp_ajax_dvc_archive_chat',  [ $this, 'ajax_archive_chat' ] );
+		add_action( 'wp_ajax_dvc_start_chat',     [ $this, 'ajax_start_chat' ] );
+		add_action( 'wp_ajax_dvc_send_message',   [ $this, 'ajax_send_message' ] );
+		add_action( 'wp_ajax_dvc_get_messages',   [ $this, 'ajax_get_messages' ] );
+		add_action( 'wp_ajax_dvc_delete_chat',    [ $this, 'ajax_delete_chat' ] );
+		add_action( 'wp_ajax_dvc_archive_chat',   [ $this, 'ajax_archive_chat' ] );
 		add_action( 'wp_ajax_dvc_unarchive_chat', [ $this, 'ajax_unarchive_chat' ] );
 	}
 
@@ -82,41 +91,6 @@ class VendorChat {
 	// =========================================================================
 
 	/**
-	 * Register vendor-chat query variable.
-	 *
-	 *
-	 * @param array $vars
-	 * @return array
-	 */
-	public function add_query_var( $vars ) {
-		$vars[] = 'vendor-chat';
-		return $vars;
-	}
-
-	/**
-	 * Add Nachrichten nav item (only when chat is enabled).
-	 *
-	 *
-	 * @param array $nav
-	 * @return array
-	 */
-	public function add_nav_item( $nav ) {
-		if ( ! $this->is_enabled() ) {
-			return $nav;
-		}
-
-		$nav['vendor-chat'] = [
-			'title'      => __( 'Nachrichten', 'sk' ),
-			'icon'       => '<i class="fas fa-comment-dots"></i>',
-			'url'        => sk_get_navigation_url( 'vendor-chat' ),
-			'pos'        => 56,
-			'permission' => 'sk_view_overview_menu',
-		];
-
-		return $nav;
-	}
-
-	/**
 	 * Append unread notification badge to the nav title.
 	 *
 	 *
@@ -136,39 +110,7 @@ class VendorChat {
 		return $nav;
 	}
 
-	/**
-	 * Mark vendor-chat as the active nav item when on that page.
-	 *
-	 *
-	 * @param string $active_menu
-	 * @param string $request
-	 * @param array  $active
-	 * @return string
-	 */
-	public function set_active_nav( $active_menu, $request, $active ) {
-		if ( isset( $request ) && false !== strpos( $request, 'vendor-chat' ) ) {
-			return 'vendor-chat';
-		}
-		if ( ! empty( $active ) && in_array( 'vendor-chat', $active, true ) ) {
-			return 'vendor-chat';
-		}
-		if ( get_query_var( 'vendor-chat' ) ) {
-			return 'vendor-chat';
-		}
-		return $active_menu;
-	}
-
-	/**
-	 * Load the vendor-chat dashboard template.
-	 *
-	 *
-	 * @param array $query_vars
-	 */
-	public function load_template( $query_vars ) {
-		if ( isset( $query_vars['vendor-chat'] ) ) {
-			sk_get_template_part( 'dashboard/vendor-chat/dashboard-vendor-chat' );
-		}
-	}
+	// (Nav activation + template dispatch handled by DashboardRegistry via config()).
 
 	// =========================================================================
 	// Assets

@@ -141,15 +141,30 @@ class DashboardRegistry {
         }
         foreach ( self::top_level_menus() as $config ) {
             $url_slug = $config['url_slug'] ?? ( $config['slug'] ?? '' );
-            $template = $config['template'] ?? '';
+            $template = $config['template'] ?? null;
 
             if ( ! $url_slug || ! $template ) {
                 continue;
             }
-            if ( isset( $query_vars[ $url_slug ] ) ) {
-                sk_get_template_part( $template );
+            if ( ! isset( $query_vars[ $url_slug ] ) ) {
+                continue;
+            }
+
+            // Callable template: module renders it itself (needed for modules
+            // with their own template paths outside sk-core/templates/, or
+            // that need to prep variables).
+            if ( is_callable( $template ) ) {
+                call_user_func( $template, $query_vars );
                 return;
             }
+
+            // String template slug: resolve via sk_get_template_part.
+            $template_args = $config['template_args'] ?? [];
+            if ( is_callable( $template_args ) ) {
+                $template_args = call_user_func( $template_args, $query_vars );
+            }
+            sk_get_template_part( $template, '', (array) $template_args );
+            return;
         }
     }
 

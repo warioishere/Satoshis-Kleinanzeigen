@@ -91,9 +91,9 @@ class Module {
         add_action( 'sk_before_listing_product', array( $this, 'show_custom_subscription_info' ) );
         add_filter( 'woocommerce_register_post_type_product', [ __CLASS__, 'disable_creating_new_product' ] );
 
-        add_filter( 'sk_get_dashboard_nav', [ __CLASS__, 'add_new_page' ], 11 );
+        // Dashboard menu entry — handled via DashboardModule / DashboardRegistry.
+        new DashboardMenu();
         add_filter( 'sk_set_template_path', array( $this, 'load_subscription_templates' ), 11, 3 );
-        add_action( 'sk_load_custom_template', array( $this, 'load_template_from_plugin' ) );
 
         add_filter( 'woocommerce_order_item_needs_processing', array( $this, 'order_needs_processing' ), 10, 2 );
         add_filter( 'woocommerce_add_to_cart_redirect', [ __CLASS__, 'add_to_cart_redirect' ] );
@@ -109,8 +109,6 @@ class Module {
         add_action( 'template_redirect', array( $this, 'maybe_cancel_or_activate_subscription' ) );
         add_action( 'dps_cancel_recurring_subscription', array( $this, 'cancel_recurring_subscription' ), 10, 2 );
         add_action( 'dps_cancel_non_recurring_subscription', array( $this, 'cancel_non_recurring_subscription' ), 10, 3 );
-
-        add_filter( 'sk_query_var_filter', [ $this, 'add_subscription_endpoint' ] );
 
         // Handle popup error if subscription outdated
         add_action( 'sk_new_product_popup_args', [ __CLASS__, 'can_create_product' ], 20, 2 );
@@ -335,6 +333,7 @@ class Module {
         require_once DPS_PATH . '/includes/classes/ProductStatusChanger.php';
         require_once DPS_PATH . '/includes/classes/SubscriptionOrderMetaBuilder.php';
         require_once DPS_PATH . '/includes/classes/SubscriptionInvoice.php';
+        require_once DPS_PATH . '/includes/classes/DashboardMenu.php';
     }
 
     /**

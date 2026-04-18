@@ -1,22 +1,12 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-class WEO_SK {
-  public function __construct() {
-    add_action('init', [$this,'handle_treuhand_settings_post'], 10);
-    add_filter('sk_get_dashboard_nav', [$this,'dashboard_nav']);
-    add_filter('sk_query_var_filter', [$this,'register_query_var']);
-    add_filter('sk_dashboard_nav_active', [$this,'highlight_nav'], 10, 3);
-    add_action('sk_load_custom_template', [$this,'maybe_render_treuhand_template']);
-    add_action('sk_product_edit_after_pricing', [$this,'product_field'], 10, 2);
-    add_action('sk_process_product_meta', [$this,'save_product_meta'], 10, 1);
-    add_filter('woocommerce_is_purchasable', [$this,'is_purchasable'], 10, 2);
-    add_filter('woocommerce_loop_add_to_cart_link', [$this,'maybe_hide_add_to_cart'], 10, 3);
-  }
-
-  public function dashboard_nav($navs) {
+class WEO_SK extends \SK\Core\Dashboard\DashboardModule {
+  public function config(): ?array {
     $context = $this->current_user_treuhand_context();
-    if (!$context) return $navs;
+    if (!$context) return null;
+
+    if (!$this->treuhand_globally_enabled()) return null;
 
     if ($context === 'admin') {
       $permission = current_user_can('manage_woocommerce') ? 'manage_woocommerce' : 'manage_options';
@@ -24,45 +14,27 @@ class WEO_SK {
       $permission = 'sk_view_overview_menu';
     }
 
-    $navs['treuhand'] = [
-      'title' => __('Treuhand Service','weo'),
-      'icon'  => '<i class="fas fa-handshake"></i>',
-      'url'   => function_exists('sk_get_navigation_url') ? sk_get_navigation_url('treuhand') : home_url('/sk-dashboard/treuhand/'),
-      'pos'   => 55,
+    return [
+      'slug'       => 'treuhand',
+      'title'      => __('Treuhand Service','weo'),
+      'icon'       => '<i class="fas fa-handshake"></i>',
+      'pos'        => 55,
       'permission' => $permission,
+      'template'   => [$this, 'render_dashboard'],
     ];
-    return $navs;
   }
 
-  public function register_query_var($vars) {
-    if (!$this->treuhand_globally_enabled()) return $vars;
-    if (!in_array('treuhand', $vars, true)) {
-      $vars[] = 'treuhand';
-    }
-    return $vars;
+  protected function register_extras(): void {
+    add_action('init', [$this,'handle_treuhand_settings_post'], 10);
+    add_action('sk_product_edit_after_pricing', [$this,'product_field'], 10, 2);
+    add_action('sk_process_product_meta', [$this,'save_product_meta'], 10, 1);
+    add_filter('woocommerce_is_purchasable', [$this,'is_purchasable'], 10, 2);
+    add_filter('woocommerce_loop_add_to_cart_link', [$this,'maybe_hide_add_to_cart'], 10, 3);
   }
 
-  public function highlight_nav($active_menu, $request, $active) {
-    if (!$this->current_user_treuhand_context()) return $active_menu;
-    if (isset($request) && strpos((string)$request, 'treuhand') !== false) {
-      return 'treuhand';
-    }
-
-    if (!empty($active) && in_array('treuhand', (array)$active, true)) {
-      return 'treuhand';
-    }
-
-    if (get_query_var('treuhand')) {
-      return 'treuhand';
-    }
-
-    return $active_menu;
-  }
-
-  public function maybe_render_treuhand_template($query_vars) {
+  public function render_dashboard($query_vars): void {
     $context = $this->current_user_treuhand_context();
     if (!$context) return;
-    if (!isset($query_vars['treuhand'])) return;
 
     $treuhand_content = $this->render_treuhand_content();
     $template = WEO_DIR.'templates/dashboard-treuhand.php';
@@ -82,8 +54,6 @@ class WEO_SK {
         echo $treuhand_content;
       }
     }
-
-    return;
   }
 
   public function handle_treuhand_settings_post() {
