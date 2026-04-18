@@ -273,6 +273,7 @@ final class SK_Core {
         require_once SK_CORE_INC_DIR . '/Product/functions.php';
         require_once SK_CORE_INC_DIR . '/functions-compatibility.php';
         require_once SK_CORE_INC_DIR . '/wc-functions.php';
+        require_once SK_CORE_INC_DIR . '/Forms/render.php';
 
         require_once SK_CORE_INC_DIR . '/wc-template.php';
 

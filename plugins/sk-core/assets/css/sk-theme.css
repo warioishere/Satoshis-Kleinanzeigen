@@ -12747,6 +12747,57 @@ body:has(.dvc-modal) .dkp-contact-icons {
 /* Catalog mode section in store settings (managed globally by admin) */
 .sk-settings-section:has(#catalog_mode_hide_add_to_cart_button) { display: none !important; }
 
+/* ==================================================================
+ * Settings form helpers (sk_form_* render helpers, includes/Forms/render.php)
+ * ==================================================================*/
+
+/* Required field indicator */
+.sk-settings-label .required,
+.sk-settings-form span.required {
+  color: #e06c75;
+  font-weight: 600;
+  margin-left: 2px;
+}
+
+/* Checkbox label rendered by sk_form_checkbox */
+.sk-settings-input .sk-settings-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 15px;
+  color: #c5ccd6;
+  cursor: pointer;
+  margin-top: 6px;
+}
+
+/* Two form inputs side by side (city + zip etc.) */
+.sk-settings-input--pair {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.sk-settings-input--pair > * { flex: 1; min-width: 180px; }
+
+/* sk-input-group used by sk_form_input prefix param (social URL icons etc.) */
+.sk-settings-input > .sk-input-group {
+  display: flex;
+  align-items: stretch;
+}
+.sk-settings-input > .sk-input-group > .sk-input-group-addon {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  background: #1e2b3c;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-right: none;
+  border-radius: 4px 0 0 4px;
+  color: #8a9bb0;
+}
+.sk-settings-input > .sk-input-group > input[type="url"],
+.sk-settings-input > .sk-input-group > input[type="text"] {
+  border-radius: 0 4px 4px 0 !important;
+}
+
 /* Phone field in store form */
 .sk-dashboard-wrap form#store-form .sk-form-group label[for="setting_phone"],
 .sk-dashboard-wrap form#store-form .sk-form-group input#setting_phone { display: none !important; }
