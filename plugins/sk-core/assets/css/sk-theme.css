@@ -9955,6 +9955,35 @@ a.sk-sub-order-action:hover {
   color: #e8ecf0 !important;
 }
 
+/* ── Category picker (custom UI) matched to Select2 styling above ── */
+.sk-dashboard .sk-select-product-category-container .sk-select-product-category {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 6px !important;
+  padding: 8px 12px !important;
+  color: #e8ecf0 !important;
+  min-height: 40px;
+  align-items: center;
+}
+.sk-dashboard .sk-select-product-category-container .sk-select-product-category:hover {
+  border-color: rgba(247,147,26,0.4) !important;
+}
+.sk-dashboard .sk-select-product-category-container .sk-select-product-category .sk-select-product-category-title {
+  color: #e8ecf0;
+}
+.sk-dashboard .sk-select-product-category-container .sk-select-product-category .sk-select-product-category-icon {
+  color: #8a9bb0;
+}
+.sk-dashboard .sk-select-product-category-container .sk-select-product-category-remove-container .sk-select-product-category-remove {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 6px;
+  color: #8a9bb0;
+}
+.sk-dashboard .sk-add-more-single-cat-container .sk-single-cat-add-btn {
+  color: #F7931A !important;
+}
+
 /* ── Featured image: fixed square 275×275 ── */
 .product-edit-new-container .sk-new-product-featured-img,
 .product-edit-new-container .sk-product-edit-form .sk-new-product-featured-img {
