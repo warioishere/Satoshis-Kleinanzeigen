@@ -51,7 +51,6 @@ class StoreSettings extends SkSettings {
 
         //Calculate store progress after customer migrated to vendor
         add_action( 'sk_new_seller_created', array( $this, 'save_store_data' ), 10, 2 );
-        add_filter( 'sk_get_dashboard_nav_template_dependency', [ $this, 'nav_template_dependency' ] );
     }
 
     /**
@@ -201,18 +200,6 @@ class StoreSettings extends SkSettings {
         return $active_menu;
     }
 
-
-    public function nav_template_dependency( array $dependencies ): array {
-
-        $dependencies['settings/seo'] = [
-            [
-                'slug' => 'settings/seo',
-                'name' => '',
-            ],
-        ];
-
-        return $dependencies;
-    }
 
     /**
      * Load Social Page Content — callable template for settings-social tab.

@@ -49,7 +49,6 @@ class Template extends DashboardModule {
         // Announcement ajax handling
         add_action( 'wp_ajax_sk_announcement_remove_row', [ $this, 'remove_announcement' ] );
         add_action( 'wp_ajax_sk_announcement_get_notice', [ $this, 'ajax_get_notice' ] );
-        add_filter( 'sk_get_dashboard_nav_template_dependency', [ $this, 'announcement_template_dependency' ] );
     }
 
     /**
@@ -175,50 +174,6 @@ class Template extends DashboardModule {
 
         return $nav;
     }
-
-    /**
-     * Set announcement template dependency
-     *
-     * @param array $dependencies
-     *
-     * @return array
-     */
-    public function announcement_template_dependency( array $dependencies ): array {
-		$dependencies['announcement'] = [
-            [
-                'slug' => 'announcement/announcement',
-                'name' => '',
-                'args' => [],
-            ],
-			[
-				'slug' => 'announcement/listing-announcement',
-				'name' => '',
-                'args' => [],
-			],
-            [
-                'slug' => 'announcement/single-announcement',
-                'name' => '',
-                'args' => [],
-            ],
-            [
-                'slug' => 'announcement/no-announcement',
-                'name' => '',
-                'args' => [],
-            ],
-            [
-                'slug' => 'announcement/header',
-                'name' => '',
-                'args' => [],
-            ],
-            [
-                'slug' => 'announcement/single-notice',
-                'name' => '',
-                'args' => [],
-            ],
-		];
-
-		return $dependencies;
-	}
 
     /**
      * Set announcement menu as active.

@@ -29,7 +29,6 @@ class DigitalProduct {
         add_filter( 'sk_settings_general_site_options', [ $this, 'add_admin_setting_digital_mode' ], 9 );
         add_action( 'sk_admin_setup_wizard_step_store_after', [ $this, 'admin_wizard_store_setup_field' ] );
         add_action( 'sk_admin_setup_wizard_save_step_store', [ $this, 'after_admin_wizard_store_field_save' ] );
-        add_filter( 'sk_get_dashboard_settings_nav', [ $this, 'remove_shipping_settings_menu' ], 99 );
     }
 
     /**
@@ -115,19 +114,4 @@ class DigitalProduct {
         update_option( 'sk_general', $sk_general );
     }
 
-    /**
-     * Remove shipping menu when digital mode only
-     *
-     *
-     * @param  array $sub_settins
-     *
-     * @return array
-     */
-    public function remove_shipping_settings_menu( $sub_settins ) {
-        if ( 'sell_digital' === $this->get_selling_product_type() ) {
-            unset( $sub_settins['shipping'] );
-        }
-
-        return $sub_settins;
-    }
 }

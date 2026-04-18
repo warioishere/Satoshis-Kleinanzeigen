@@ -60,7 +60,10 @@ class DashboardRegistry {
         add_filter( 'sk_query_var_filter',     [ self::class, 'inject_query_vars' ], 50 );
         add_action( 'sk_load_custom_template', [ self::class, 'dispatch_template' ], 50 );
 
-        add_filter( 'sk_get_dashboard_settings_nav',    [ self::class, 'inject_tabs' ], 50 );
+        // Settings-Tabs: heading + helper + content dispatcher.
+        // Note: sk_get_dashboard_settings_nav filter is NOT wired — settings
+        // sub-tabs are not rendered as a visible tab strip; each tab is a
+        // plain URL endpoint.
         add_filter( 'sk_dashboard_settings_heading_title', [ self::class, 'inject_tab_heading' ], 50, 2 );
         add_filter( 'sk_dashboard_settings_helper_text',   [ self::class, 'inject_tab_helper' ], 50, 2 );
         add_action( 'sk_render_settings_content',          [ self::class, 'dispatch_tab' ], 50 );
@@ -251,27 +254,6 @@ class DashboardRegistry {
             sk_get_template_part( $template, '', (array) $template_args );
             return;
         }
-    }
-
-    /**
-     * Settings-tabs: add each registered tab (parent=settings) to the
-     * sub-settings nav array.
-     */
-    public static function inject_tabs( array $tabs ): array {
-        foreach ( self::tabs() as $config ) {
-            $url_key = $config['url_key'] ?? $config['slug'];
-            if ( ! $url_key ) {
-                continue;
-            }
-            $tabs[ $url_key ] = [
-                'title'      => $config['title'] ?? '',
-                'icon'       => $config['icon'] ?? '',
-                'url'        => $config['url'] ?? sk_get_navigation_url( 'settings/' . $url_key ),
-                'pos'        => $config['pos'] ?? 50,
-                'permission' => $config['permission'] ?? 'read',
-            ];
-        }
-        return $tabs;
     }
 
     /**

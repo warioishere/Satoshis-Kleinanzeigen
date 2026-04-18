@@ -1,6 +1,5 @@
 <?php
 
-use SK\Core\Utilities\ReportUtil;
 use SK\Core\Dashboard\Templates\Dashboard;
 
 /**
@@ -31,17 +30,6 @@ function sk_get_dashboard_nav(): array {
     // entries — are registered via DashboardRegistry. Modules extending
     // \SK\Core\Dashboard\DashboardModule auto-register; base menus are added
     // in DashboardRegistry::register_base_menus() during bootstrap.
-
-    // Preserve the sk_get_dashboard_settings_nav filter so sk-pro modules
-    // can still register their settings pages (payment, shipping, SEO, etc.).
-    apply_filters( 'sk_get_dashboard_settings_nav', [] );
-
-    /**
-     * Filters nav menu items. Registry injects all registered configs at
-     * priority 50; third-party hooks can still add/modify via this filter.
-     *
-     * @param array<string,array> $menus
-     */
     $nav_menus = apply_filters( 'sk_get_dashboard_nav', [] );
 
     foreach ( $nav_menus as $nav_key => $menu ) {

@@ -42,7 +42,6 @@ class Module {
         // Add localize script.
         add_filter( 'sk_admin_localize_script', array( $this, 'add_subscription_packs_to_localize_script' ) );
         add_filter( 'sk_admin_dashboard_localize_scripts', array( $this, 'add_subscription_packs_to_localize_script' ) );
-        add_filter( 'sk_get_dashboard_nav_template_dependency', [ $this, 'get_subscription_nav_template_dependency' ] );
 
         // Loads frontend scripts and styles
         add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
@@ -272,7 +271,8 @@ class Module {
      * @return void
      */
     public function flush_rewrite_rules() {
-        add_filter( 'sk_query_var_filter', [ $this, 'add_subscription_endpoint' ] );
+        // The 'subscription' endpoint is added via DashboardMenu's config()
+        // through the DashboardRegistry::inject_query_vars filter.
         sk()->rewrite->register_rule();
         flush_rewrite_rules( true );
     }
@@ -417,17 +417,6 @@ class Module {
     }
 
     /**
-     * Add Subscription endpoint to the end of Dashboard
-     * @param array $query_var
-     * @return array
-     */
-    public function add_subscription_endpoint( $query_var ) {
-        $query_var[] = 'subscription';
-
-        return $query_var;
-    }
-
-    /**
      * Get plugin path
      *
      *
@@ -449,92 +438,6 @@ class Module {
         }
 
         return $template_path;
-    }
-
-    /**
-     * Load template for the dashboard
-     *
-     * @param  array $query_vars
-     *
-     * @return void
-     */
-    function load_template_from_plugin( $query_vars ) {
-        if ( ! isset( $query_vars['subscription'] ) ) {
-            return;
-        }
-
-        if ( current_user_can( 'vendor_staff' ) ) {
-            sk_get_template_part( 'global/no-permission' );
-            return;
-        }
-
-        sk_get_template_part( 'vendor-subscription-php', '', array( 'is_subscription' => true ) );
-    }
-
-    /**
-     * Get Vendor Subscription Nav Template Dependency.
-     *
-     *
-     * @param array $dependencies
-     *
-     * @return array
-     */
-    public function get_subscription_nav_template_dependency( array $dependencies ): array {
-        $dependencies['subscription'] = [
-            [
-                'slug' => 'dashboard/index',
-                'name' => '',
-                'args' => [
-                    'is_subscription' => true,
-                ],
-            ],
-            [
-                'slug' => 'dashboard/order-listing',
-                'name' => '',
-                'args' => [
-                    'is_subscription' => true,
-                ],
-            ],
-            [
-                'slug' => 'dashboard/pack-listing',
-                'name' => '',
-                'args' => [
-                    'is_subscription' => true,
-                ],
-            ],
-
-        ];
-
-        return $dependencies;
-    }
-
-    /**
-     * Add new menu in seller dashboard
-     *
-     * @param array   $urls
-     * @return array
-     */
-    public static function add_new_page( $urls ) {
-        if ( self::is_sk_plugin() ) {
-            $permalink = sk_get_navigation_url( 'subscription' );
-        } else {
-            $page_id = sk_get_option( 'subscription_pack', 'sk_product_subscription' );
-            $permalink = get_permalink( $page_id );
-        }
-
-        if ( current_user_can( 'vendor_staff' ) ) {
-            return $urls;
-        }
-
-        $urls['subscription'] = array(
-            'title'       => __( 'Subscription', 'sk' ),
-            'icon'        => '<i class="fas fa-book"></i>',
-            'url'         => $permalink,
-            'pos'         => 180,
-            'icon_name'   => 'Crown',
-        );
-
-        return $urls;
     }
 
     /**
