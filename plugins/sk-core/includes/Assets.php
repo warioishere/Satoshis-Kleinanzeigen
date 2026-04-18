@@ -682,6 +682,9 @@ class Assets {
             wp_enqueue_script( 'post' );
             wp_enqueue_script( 'sk-date-range-picker' );
             wp_enqueue_script( 'sk-select2-js' );
+            // Provides sk_show_delete_prompt / sk_bulk_delete_prompt used by delete/trash links
+            // on products list, orders, coupons etc. — depends on sk-util-helper (sk_sweetalert).
+            wp_enqueue_script( 'sk-global-utils' );
             wp_enqueue_media();
         }
     }
