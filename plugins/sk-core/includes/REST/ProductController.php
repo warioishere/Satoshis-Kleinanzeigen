@@ -662,15 +662,13 @@ class ProductController extends SkRESTController {
         // Set post_status.
         $args['post_status'] = ! empty( $request['status'] ) ? $request['status'] : $this->post_status;
 
-        // Taxonomy query to filter products by type, category,
-        // tag, shipping class, and attribute.
+        // Taxonomy query to filter products by type, category, tag, and attribute.
         $tax_query = [];
 
         // Map between taxonomy name and arg's key.
         $taxonomies = [
-            'product_cat'            => 'category',
-            'product_tag'            => 'tag',
-            'product_shipping_class' => 'shipping_class',
+            'product_cat' => 'category',
+            'product_tag' => 'tag',
         ];
 
         // Set tax_query for each passed arg.

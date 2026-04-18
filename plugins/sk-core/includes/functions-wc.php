@@ -16,7 +16,6 @@ function sk_save_variations( $post_id ) {
         $upload_image_id                = $_post_data['upload_image_id'];
         $variable_download_limit        = $_post_data['variable_download_limit'];
         $variable_download_expiry       = $_post_data['variable_download_expiry'];
-        $variable_shipping_class        = isset( $_post_data['variable_shipping_class'] ) ? $_post_data['variable_shipping_class'] : [];
         $variable_tax_class             = isset( $_post_data['variable_tax_class'] ) ? $_post_data['variable_tax_class'] : [];
         $variable_menu_order            = $_post_data['variation_menu_order'];
         $variable_sale_price_dates_from = $_post_data['variable_sale_price_dates_from'];
@@ -207,10 +206,6 @@ function sk_save_variations( $post_id ) {
 
             // Update variation description
             update_post_meta( $variation_id, '_variation_description', wp_kses_post( $variable_description[ $i ] ) );
-
-            // Save shipping class
-            $variable_shipping_class[ $i ] = ! empty( $variable_shipping_class[ $i ] ) ? (int) $variable_shipping_class[ $i ] : '';
-            wp_set_object_terms( $variation_id, $variable_shipping_class[ $i ], 'product_shipping_class' );
 
             // Update Attributes
             $updated_attribute_keys = [];

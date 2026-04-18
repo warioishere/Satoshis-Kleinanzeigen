@@ -235,26 +235,6 @@ $now = sk_current_datetime();
             <?php endif; ?>
 
             <div>
-                <?php if ( 'sell_digital' !== sk_ext()->digital_product->get_selling_product_type() ) : ?>
-                    <div class="sk-form-group hide_if_variation_virtual">
-                        <label><?php esc_html_e( 'Shipping class', 'sk' ); ?></label>
-                        <?php
-                        $args = array(
-                            'taxonomy'          => 'product_shipping_class',
-                            'hide_empty'        => 0,
-                            'show_option_none'  => __( 'Same as parent', 'sk' ),
-                            'name'              => 'variable_shipping_class[' . esc_attr( $loop ) . ']',
-                            'id'                => '',
-                            'class'             => 'sk-form-control',
-                            'selected'          => isset( $shipping_class ) ? esc_attr( $shipping_class ) : '',
-                            'echo'              => 0,
-                        );
-
-                        echo wp_dropdown_categories( $args );
-                        ?>
-                    </div>
-                <?php endif; ?>
-
                 <?php if ( wc_tax_enabled() ) : ?>
 
 

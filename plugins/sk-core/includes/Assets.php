@@ -664,7 +664,7 @@ class Assets {
                 isset( $wp->query_vars['orders'] ) ||
                 isset( $wp->query_vars['coupons'] ) ||
                 isset( $wp->query_vars['reports'] ) ||
-                ( isset( $wp->query_vars['settings'] ) && in_array( $wp->query_vars['settings'], [ 'store', 'shipping' ], true ) )
+                ( isset( $wp->query_vars['settings'] ) && $wp->query_vars['settings'] === 'store' )
             ) {
                 wp_enqueue_style( 'sk-date-range-picker' );
             }

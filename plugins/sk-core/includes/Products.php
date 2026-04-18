@@ -27,7 +27,6 @@ class Products {
      * @uses filters
      */
     public function __construct() {
-        add_action( 'sk_product_edit_after_inventory_variants', array( $this, 'load_shipping_tax_content' ), 10, 2 );
         add_action( 'sk_product_edit_after_inventory_variants', array( $this, 'load_linked_product_content' ), 15, 2 );
         add_action( 'sk_product_edit_after_inventory_variants', array( $this, 'load_variations_content' ), 20, 2 );
         add_action( 'sk_dashboard_wrap_after', array( $this, 'load_variations_js_template' ), 10, 2 );
@@ -130,58 +129,6 @@ class Products {
     }
 
     /**
-     * Load Shipping and tax content
-     *
-     *
-     * @param  object $post
-     * @param  integer $post_id
-     *
-     * @return void
-     */
-    public function load_shipping_tax_content( $post, $post_id ) {
-        $user_id                 = sk_get_current_user_id();
-        $processing_time         = sk_get_shipping_processing_times();
-        $_required_tax           = get_post_meta( $post_id, '_required_tax', true );
-        $_disable_shipping       = ( get_post_meta( $post_id, '_disable_shipping', true ) ) ? get_post_meta( $post_id, '_disable_shipping', true ) : 'no';
-        $_additional_price       = get_post_meta( $post_id, '_additional_price', true );
-        $_additional_qty         = get_post_meta( $post_id, '_additional_qty', true );
-        $_processing_time        = get_post_meta( $post_id, '_dps_processing_time', true );
-        $dps_shipping_type_price = get_user_meta( $user_id, '_dps_shipping_type_price', true );
-        $dps_additional_qty      = get_user_meta( $user_id, '_dps_additional_qty', true );
-        $dps_pt                  = get_user_meta( $user_id, '_dps_pt', true );
-        $classes_options         = $this->get_tax_class_option();
-        $porduct_shipping_pt     = ( $_processing_time ) ? $_processing_time : $dps_pt;
-        $is_shipping_disabled    = false;
-
-        if ( 'sell_digital' === sk_ext()->digital_product->get_selling_product_type() ) {
-            $is_shipping_disabled = true;
-        }
-
-        sk_get_template_part(
-            'products/product-shipping-content',
-            '',
-            array(
-                'pro'                     => true,
-                'post'                    => $post,
-                'post_id'                 => $post_id,
-                'user_id'                 => $user_id,
-                'processing_time'         => $processing_time,
-                '_required_tax'           => $_required_tax,
-                '_disable_shipping'       => $_disable_shipping,
-                '_additional_price'       => $_additional_price,
-                '_additional_qty'         => $_additional_qty,
-                '_processing_time'        => $_processing_time,
-                'dps_shipping_type_price' => $dps_shipping_type_price,
-                'dps_additional_qty'      => $dps_additional_qty,
-                'dps_pt'                  => $dps_pt,
-                'classes_options'         => $classes_options,
-                'porduct_shipping_pt'     => $porduct_shipping_pt,
-                'is_shipping_disabled'    => $is_shipping_disabled,
-            )
-        );
-    }
-
-    /**
      * Render linked product content
      *
      *
@@ -270,23 +217,6 @@ class Products {
             update_post_meta( $post_id, '_width', '' );
             update_post_meta( $post_id, '_height', '' );
         }
-
-        //Save shipping meta data
-        update_post_meta( $post_id, '_disable_shipping', isset( $post_data['_disable_shipping'] ) ? $post_data['_disable_shipping'] : 'no' );
-
-        if ( isset( $post_data['_overwrite_shipping'] ) && $post_data['_overwrite_shipping'] === 'yes' ) {
-            update_post_meta( $post_id, '_overwrite_shipping', $post_data['_overwrite_shipping'] );
-        } else {
-            update_post_meta( $post_id, '_overwrite_shipping', 'no' );
-        }
-
-        update_post_meta( $post_id, '_additional_price', isset( $post_data['_additional_price'] ) ? $post_data['_additional_price'] : '' );
-        update_post_meta( $post_id, '_additional_qty', isset( $post_data['_additional_qty'] ) ? $post_data['_additional_qty'] : '' );
-        update_post_meta( $post_id, '_dps_processing_time', isset( $post_data['_dps_processing_time'] ) ? $post_data['_dps_processing_time'] : '' );
-
-        // Save shipping class
-        $product_shipping_class = ( isset( $post_data['product_shipping_class'] ) && $post_data['product_shipping_class'] > 0 && 'external' !== $product_type ) ? absint( $post_data['product_shipping_class'] ) : '';
-        wp_set_object_terms( $post_id, $product_shipping_class, 'product_shipping_class' );
 
         // Cross sells and upsells
         $upsells    = isset( $post_data['upsell_ids'] ) ? array_map( 'intval', $post_data['upsell_ids'] ) : array();
@@ -728,7 +658,6 @@ class Products {
             'length'            => $product->get_length(),
             'width'             => $product->get_width(),
             'height'            => $product->get_height(),
-            'shipping_class_id' => $product->get_shipping_class_id(),
             '_visibility'       => $product->get_catalog_visibility(),
             'manage_stock'      => $product->get_manage_stock(),
             'stock_quantity'    => $product->get_stock_quantity(),
@@ -784,7 +713,6 @@ class Products {
             'is_sku_enabled' => wc_product_sku_enabled(),
             'is_weight_enabled' => wc_product_weight_enabled(),
             'is_dimensions_enabled' => wc_product_dimensions_enabled(),
-            'shipping_classes' => WC()->shipping->get_shipping_classes(),
             'visibilities' => sk_get_product_visibility_options(),
             'can_manage_stock' => get_option( 'woocommerce_manage_stock' ),
             'stock_statuses' => array(
@@ -863,7 +791,6 @@ class Products {
                     'height' => $product_data['height'] ?? '',
                 ),
                 'weight'             => $product_data['weight'] ?? '',
-                'shipping_class'     => $product_data['shipping_class_id'] ?? '',
                 'catalog_visibility' => $product_data['_visibility'] ?? '',
                 'manage_stock'       => $product_data['manage_stock'] ?? '',
                 'stock_quantity'     => $product_data['stock_quantity'] ?? '',

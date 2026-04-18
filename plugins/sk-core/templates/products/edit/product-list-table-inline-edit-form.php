@@ -138,25 +138,6 @@
                         </div>
                     <?php } ?>
 
-                    <?php if ( ( ( 'simple' === $product_type && ! $is_virtual ) || 'variable' === $product_type ) && 'sell_digital' !== $selling_type ) { ?>
-                        <div class="sk-inline-edit-field-row sk-clearfix">
-                            <label class="sk-w3">
-                                <?php esc_html_e( 'Shipping class', 'sk' ); ?>
-                            </label>
-                            <div class="sk-w9">
-                                <select data-field-name="shipping_class_id" class="sk-form-control">
-                                    <option value="_no_shipping_class"><?php esc_html_e( 'No shipping class', 'sk' ); ?></option>
-
-                                    <?php foreach ( $options['shipping_classes'] as $shipping_class_obj ) { ?>
-                                        <option value="<?php echo esc_attr( $shipping_class_obj->slug ); ?>"<?php selected( $shipping_class_id, $shipping_class_obj->term_id ); ?>>
-                                            <?php echo esc_html( $shipping_class_obj->name ); ?>
-                                        </option>
-                                    <?php } ?>
-                                </select>
-                            </div>
-                        </div>
-                    <?php } ?>
-
                     <div class="sk-inline-edit-field-row sk-clearfix">
                         <label class="sk-w3">
                             <?php esc_html_e( 'Visibility', 'sk' ); ?>

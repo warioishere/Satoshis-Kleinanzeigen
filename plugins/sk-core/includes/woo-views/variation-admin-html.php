@@ -161,21 +161,6 @@ if ( ! defined( 'ABSPATH' ) ) {
                         </tr>
                     <?php endif; ?>
                     <tr>
-                        <td><label><?php esc_html_e( 'Shipping class:', 'sk' ); ?></label>
-                            <?php
-                            $args = array(
-                                'taxonomy'         => 'product_shipping_class',
-                                'hide_empty'       => 0,
-                                'show_option_none' => __( 'Same as parent', 'sk' ),
-                                'name'             => 'variable_shipping_class[' . $loop . ']',
-                                'id'               => '',
-                                'selected'         => isset( $shipping_class ) ? esc_attr( $shipping_class ) : '',
-                                'echo'             => 0,
-                            );
-
-                            echo wp_dropdown_categories( $args );
-                            ?>
-                        </td>
                         <td>
                             <?php if ( get_option( 'woocommerce_calc_taxes' ) === 'yes' ) : ?>
                                 <label><?php esc_html_e( 'Tax class:', 'sk' ); ?></label>

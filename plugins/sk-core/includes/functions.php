@@ -1980,43 +1980,6 @@ function sk_state_dropdown( $options, $selected = '', $everywhere = false ) {
 }
 
 /**
- * Shupping Processing time dropdown options
- *
- * @return array
- */
-function sk_get_shipping_processing_times() {
-    $times = [
-        ''  => __( 'Ready to ship in...', 'sk-core' ),
-        '1' => __( '1 business day', 'sk-core' ),
-        '2' => __( '1-2 business days', 'sk-core' ),
-        '3' => __( '1-3 business days', 'sk-core' ),
-        '4' => __( '3-5 business days', 'sk-core' ),
-        '5' => __( '1-2 weeks', 'sk-core' ),
-        '6' => __( '2-3 weeks', 'sk-core' ),
-        '7' => __( '3-4 weeks', 'sk-core' ),
-        '8' => __( '4-6 weeks', 'sk-core' ),
-        '9' => __( '6-8 weeks', 'sk-core' ),
-    ];
-
-    return apply_filters( 'sk_shipping_processing_times', $times );
-}
-
-/**
- * Get a single processing time string
- *
- * @param string $index
- *
- * @return string
- */
-function sk_get_processing_time_value( $index ) {
-    $times = sk_get_shipping_processing_times();
-
-    if ( isset( $times[ $index ] ) ) {
-        return $times[ $index ];
-    }
-}
-
-/**
  * Send email to seller and admin when there is no product in stock or low stock
  *
  *
