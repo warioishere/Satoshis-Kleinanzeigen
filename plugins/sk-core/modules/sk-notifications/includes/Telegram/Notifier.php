@@ -368,7 +368,7 @@ function telegram_build_caption_and_media($post_id) {
         // --- X/Twitter: nur wenn Feld vorhanden UND öffentlich ---
         if (!empty($store_info['twitter']) && !empty($store_info['show_twitter'])) {
             $tw_handle = trim((string)$store_info['twitter']);
-            $tw_handle = ltrim($tw_handle, '@'); // kompatibel zu deinem Dokan-Plugin
+            $tw_handle = ltrim($tw_handle, '@');
             if ($tw_handle !== '') {
                 // Label escapen (Markdown basic), URL unverändert – wie bei deinen anderen Links
                 $label_escaped = telegram_md_escape_basic('@' . $tw_handle);

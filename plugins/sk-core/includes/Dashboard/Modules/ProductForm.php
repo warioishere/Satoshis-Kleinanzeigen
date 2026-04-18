@@ -83,13 +83,8 @@ class ProductForm {
         if ( ! function_exists( 'sk_is_seller_dashboard' ) || ! sk_is_seller_dashboard() ) {
             return;
         }
-
-        $optimizations_active = function_exists( 'sk_dashboard_optimizations_enabled' )
-            ? sk_dashboard_optimizations_enabled()
-            : true;
         ?>
         <script>
-        <?php if ( $optimizations_active ) : ?>
         (function () {
           var observers = [];
 
@@ -165,34 +160,7 @@ class ProductForm {
           }
 
           document.addEventListener('DOMContentLoaded', init);
-          window.addEventListener('hashchange', function(){ requestAnimationFrame(init); });
         })();
-        <?php else : ?>
-        (function () {
-          function removeBrandField(root) {
-            try {
-              var sel = (root || document).querySelector('#product_brand');
-              if (!sel) return;
-              var s2 = sel.nextElementSibling;
-              if (s2 && s2.classList && s2.classList.contains('select2')) s2.remove();
-              var lab = (root || document).querySelector('label[for="product_brand"]');
-              if (lab) lab.remove();
-              var group = sel.closest('.sk-form-group');
-              if (group) group.remove(); else sel.style.display = 'none';
-            } catch(e) {}
-          }
-          document.addEventListener('DOMContentLoaded', function(){ removeBrandField(document); });
-          var targets = [
-            document.querySelector('#sk-product-edit-form'),
-            document.querySelector('.product-edit-new-container'),
-            document.querySelector('.sk-dashboard-wrap')
-          ].filter(Boolean);
-          targets.forEach(function(t){
-            new MutationObserver(function(){ removeBrandField(t); }).observe(t, {childList:true,subtree:true});
-          });
-          removeBrandField(document);
-        })();
-        <?php endif; ?>
         </script>
         <?php
     }
