@@ -76,17 +76,6 @@ if ( $store_categories_on ) {
     $sc_label           = $sc_is_multiple ? __( 'Store Categories', 'sk' ) : __( 'Store Category', 'sk' );
 }
 
-/* --- Catalog mode (conditional) --- */
-$catalog_mode_on = class_exists( 'SK\Core\CatalogMode\Helper' ) && \SK\Core\CatalogMode\Helper::is_enabled_by_admin();
-if ( $catalog_mode_on ) {
-    $cm_defaults       = \SK\Core\CatalogMode\Helper::get_defaults();
-    $cm_settings       = $profile_info['catalog_mode'] ?? $cm_defaults;
-    $cm_hide_cart      = ! empty( $cm_settings['hide_add_to_cart_button'] ) ? $cm_settings['hide_add_to_cart_button'] : $cm_defaults['hide_add_to_cart_button'];
-    $cm_hide_price     = ! empty( $cm_settings['hide_product_price'] )     ? $cm_settings['hide_product_price']     : $cm_defaults['hide_product_price'];
-    $cm_hide_cart_enabled  = class_exists( 'SK\Core\CatalogMode\Helper' ) && \SK\Core\CatalogMode\Helper::hide_add_to_cart_button_option_is_enabled_by_admin();
-    $cm_hide_price_enabled = class_exists( 'SK\Core\CatalogMode\Helper' ) && \SK\Core\CatalogMode\Helper::hide_product_price_option_is_enabled_by_admin();
-}
-
 /* --- Store slug --- */
 $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
 ?>
@@ -518,44 +507,7 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
     <?php endif; ?>
 
     <!-- ======================================================
-         SECTION 5: Katalog-Modus (conditional)
-    ====================================================== -->
-    <?php if ( $catalog_mode_on && $cm_hide_cart_enabled ) : ?>
-    <div class="sk-settings-section">
-        <div class="sk-settings-section-title">
-            <i class="fas fa-eye-slash"></i> <?php esc_html_e( 'Katalog-Modus', 'sk-core' ); ?>
-        </div>
-        <?php wp_nonce_field( 'sk_catalog_mode_settings_action', '_sk_catalog_mode_nonce' ); ?>
-        <div class="sk-form-group">
-            <label class="sk-w3 sk-control-label" for="catalog_mode_hide_add_to_cart_button"><?php esc_html_e( 'Remove Add to Cart Button', 'sk-core' ); ?></label>
-            <div class="sk-w5 sk-text-left">
-                <label for="catalog_mode_hide_add_to_cart_button">
-                    <input type="checkbox" id="catalog_mode_hide_add_to_cart_button" value="on" name="catalog_mode[hide_add_to_cart_button]"
-                        <?php checked( $cm_hide_cart, 'on' ); ?> />
-                    <span><?php esc_html_e( 'Check to remove Add to Cart option from your products.', 'sk-core' ); ?></span>
-                </label>
-            </div>
-        </div>
-        <div class="catalog_mode_extra_section">
-            <?php if ( $cm_hide_price_enabled ) : ?>
-            <div class="sk-form-group">
-                <label class="sk-w3 sk-control-label" for="catalog_mode_hide_product_price"><?php esc_attr_e( 'Hide Product Price', 'sk-core' ); ?></label>
-                <div class="sk-w5 sk-text-left">
-                    <label for="catalog_mode_hide_product_price">
-                        <input type="checkbox" id="catalog_mode_hide_product_price" value="on" name="catalog_mode[hide_product_price]"
-                            <?php checked( $cm_hide_price, 'on' ); ?> />
-                        <span><?php esc_html_e( 'Check to hide product price from your products.', 'sk-core' ); ?></span>
-                    </label>
-                </div>
-            </div>
-            <?php endif; ?>
-            <?php do_action( 'sk_catalog_mode_extra_settings_section', $current_user, $cm_settings ); ?>
-        </div>
-    </div>
-    <?php endif; ?>
-
-    <!-- ======================================================
-         SECTION 6: Store-Link
+         SECTION 5: Store-Link
     ====================================================== -->
     <div class="sk-settings-section">
         <div class="sk-settings-section-title">
@@ -754,16 +706,6 @@ function skStoreToast(message, type) {
             });
         }
     })();
-
-    // Catalog mode toggle
-    $('#catalog_mode_hide_add_to_cart_button').on('change', function() {
-        if ($(this).is(':checked')) {
-            $('div.catalog_mode_extra_section').show();
-        } else {
-            $('div.catalog_mode_extra_section').hide();
-            $('#catalog_mode_hide_product_price').prop('checked', false);
-        }
-    }).trigger('change');
 
     /* ── Onchain + Lightning Connection Test Buttons ── */
     var skpAjax = '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>';

@@ -12738,14 +12738,6 @@ body:has(.dvc-modal) .dkp-contact-icons {
 /* Product inventory section */
 .sk-product-inventory { display: none; }
 
-/* Catalog mode checkbox */
-.sk-edit-row.sk-catalog-mode { display: none !important; }
-
-/* Catalog mode checkbox in product editor */
-.sk-edit-row.sk-catalog-mode { display: none !important; }
-
-/* Catalog mode section in store settings (managed globally by admin) */
-.sk-settings-section:has(#catalog_mode_hide_add_to_cart_button) { display: none !important; }
 
 /* ==================================================================
  * Settings form helpers (sk_form_* render helpers, includes/Forms/render.php)

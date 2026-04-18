@@ -155,7 +155,6 @@ class Module {
         add_filter( 'sk_mangopay_needs_cart_validation', [ $this, 'skip_cart_validation_for_mangopay' ] );
         add_filter( 'sk_mangopay_disburse_payment', [ $this, 'skip_payment_disbursement_for_mangopay' ], 10, 2 );
         add_filter( 'sk_mangopay_payin_data', [ $this, 'modify_mangopay_payin_data' ] );
-        add_filter( 'sk_catalog_mode_hide_add_to_cart_button', [ $this, 'remove_catalogue_mode_restriction_on_sk_subscription_product' ], 99, 3 );
         add_filter( 'woocommerce_available_payment_gateways', [ $this, 'remove_unsupported_payment_gateways_on_sk_subscription_product' ], 99 );
 
         // Stores REST API.
@@ -2164,23 +2163,6 @@ class Module {
         $payin_data['fees'] = $payin_data['amount'] - 1;
 
         return $payin_data;
-    }
-
-    /**
-     * Remove catalog mode restriction.
-     *
-     *
-     * @param string      $enable Catalogue mode restriction enabled. Default `yes`
-     * @param \WC_Product $product Current Product.
-     * @param bool        $purchasable Whether the product is available to purchase.
-     *
-     * @return string
-     */
-    public function remove_catalogue_mode_restriction_on_sk_subscription_product( string $enable, $product, bool $purchasable ): string {
-        if ( 'product_pack' !== $product->get_type() ) {
-            return $enable;
-        }
-        return 'no';
     }
 
     /**

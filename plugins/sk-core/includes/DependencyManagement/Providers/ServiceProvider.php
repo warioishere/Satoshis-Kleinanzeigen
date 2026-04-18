@@ -22,7 +22,6 @@ class ServiceProvider extends BootableServiceProvider {
 		'dashboard'           => \SK\Core\Dashboard\Manager::class,
 		'customizer'          => \SK\Core\Customizer::class,
 		'product_sections'    => \SK\Core\ProductSections\Manager::class,
-		'catalog_mode'        => \SK\Core\CatalogMode\Controller::class,
 		'bg_process'          => \SK\Core\BackgroundProcess\Manager::class,
 		'frontend_manager'    => \SK\Core\Frontend\Frontend::class,
 		'rewrite'             => \SK\Core\Rewrites::class,
