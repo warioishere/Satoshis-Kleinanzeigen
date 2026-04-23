@@ -18,12 +18,27 @@ $base_url = admin_url( 'admin.php?page=sk&tab=vendors' );
 ?>
 
 <div class="sk-vendors-wrap">
+    <?php
+    $saved = isset( $_GET['saved'] ) ? sanitize_text_field( wp_unslash( $_GET['saved'] ) ) : '';
+    if ( $saved && strpos( $saved, 'drafted_' ) === 0 ) {
+        $drafted = (int) substr( $saved, 8 );
+        echo '<div class="notice notice-success is-dismissible"><p>'
+            . sprintf( esc_html( _n( '%d Angebot auf Entwurf gesetzt.', '%d Angebote auf Entwurf gesetzt.', $drafted, 'sk-core' ) ), $drafted )
+            . '</p></div>';
+    } elseif ( $saved === 'true' || $saved === 'saved' ) {
+        echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Gespeichert.', 'sk-core' ) . '</p></div>';
+    }
+    ?>
+
     <form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
         <input type="hidden" name="page" value="sk">
         <input type="hidden" name="tab" value="vendors">
         <p class="search-box">
-            <input type="search" name="s" value="<?php echo esc_attr( $search ); ?>" placeholder="<?php esc_attr_e( 'Search vendors...', 'sk-core' ); ?>">
-            <input type="submit" class="button" value="<?php esc_attr_e( 'Search', 'sk-core' ); ?>">
+            <input type="search" name="s" value="<?php echo esc_attr( $search ); ?>" placeholder="<?php esc_attr_e( 'Shop-Name, Username, E-Mail...', 'sk-core' ); ?>">
+            <input type="submit" class="button" value="<?php esc_attr_e( 'Suchen', 'sk-core' ); ?>">
+            <?php if ( $search ) : ?>
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=sk&tab=vendors' ) ); ?>" class="button-link"><?php esc_html_e( 'Zurücksetzen', 'sk-core' ); ?></a>
+            <?php endif; ?>
         </p>
     </form>
 
@@ -73,6 +88,12 @@ $base_url = admin_url( 'admin.php?page=sk&tab=vendors' );
                                     <input type="hidden" name="vendor_action" value="enable_selling">
                                     <button type="submit" class="button button-small button-primary"><?php esc_html_e( 'Enable Selling', 'sk-core' ); ?></button>
                                 <?php endif; ?>
+                            </form>
+                            <form method="post" style="display: inline;" onsubmit="return confirm('<?php echo esc_js( __( 'Alle veröffentlichten Angebote dieses Anbieters auf Entwurf setzen?', 'sk-core' ) ); ?>');">
+                                <?php wp_nonce_field( 'sk_vendor_action', 'sk_vendor_action_nonce' ); ?>
+                                <input type="hidden" name="vendor_id" value="<?php echo esc_attr( $user->ID ); ?>">
+                                <input type="hidden" name="vendor_action" value="draft_products">
+                                <button type="submit" class="button button-small" title="<?php esc_attr_e( 'Setzt alle veröffentlichten Angebote auf Entwurf (nicht gelöscht)', 'sk-core' ); ?>"><?php esc_html_e( 'Angebote → Entwurf', 'sk-core' ); ?></button>
                             </form>
                             <?php if ( $store_url ) : ?>
                                 <a href="<?php echo esc_url( $store_url ); ?>" class="button button-small" target="_blank"><?php esc_html_e( 'View Store', 'sk-core' ); ?></a>
