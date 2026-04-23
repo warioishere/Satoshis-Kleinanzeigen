@@ -15,13 +15,17 @@ $store_name = $store_info['store_name'] ?? get_the_author_meta( 'display_name', 
 $store_url  = function_exists( 'sk_get_store_url' ) ? sk_get_store_url( $vendor_id ) : '#';
 $avatar     = get_avatar( $vendor_id, 56 );
 $content    = wp_kses_post( $post->post_content );
-$thumb_url  = get_the_post_thumbnail_url( $post_id, 'large' );
 $time_full  = get_the_date( 'j. F Y, H:i', $post ) . ' Uhr';
 $like_count = \SK\Modules\Feed\Likes::get_count( $post_id );
 $comments   = (int) get_comments_number( $post_id );
 $user_liked = is_user_logged_in() ? \SK\Modules\Feed\Likes::has_liked( $post_id, get_current_user_id() ) : false;
 $feed_type  = get_post_meta( $post_id, '_sk_feed_type', true );
 $product_id = (int) get_post_meta( $post_id, '_sk_feed_product_id', true );
+$gesuch_id  = (int) get_post_meta( $post_id, '_sk_feed_gesuch_id', true );
+
+// Announce-posts rely on the embed below for their image, no big header.
+$is_announce = in_array( $feed_type, [ 'product_announce', 'gesuch_announce' ], true );
+$thumb_url   = $is_announce ? '' : get_the_post_thumbnail_url( $post_id, 'large' );
 
 get_header();
 ?>
@@ -75,6 +79,24 @@ get_header();
 						<strong><?php echo esc_html( get_the_title( $product_id ) ); ?></strong>
 						<?php if ( $product_price ) : ?>
 							<span class="sk-feed-product-embed-price"><?php echo $product_price; ?></span>
+						<?php endif; ?>
+					</div>
+				</a>
+			<?php endif; ?>
+
+			<?php if ( 'gesuch_announce' === $feed_type && $gesuch_id && get_post_status( $gesuch_id ) === 'publish' ) : ?>
+				<?php
+				$gesuch_thumb   = get_the_post_thumbnail_url( $gesuch_id, 'thumbnail' );
+				$gesuch_excerpt = wp_trim_words( wp_strip_all_tags( get_post_field( 'post_content', $gesuch_id ) ), 20, '…' );
+				?>
+				<a href="<?php echo esc_url( get_permalink( $gesuch_id ) ); ?>" class="sk-feed-product-embed">
+					<?php if ( $gesuch_thumb ) : ?>
+						<img src="<?php echo esc_url( $gesuch_thumb ); ?>" alt="" class="sk-feed-product-embed-img" />
+					<?php endif; ?>
+					<div class="sk-feed-product-embed-info">
+						<strong><?php echo esc_html( get_the_title( $gesuch_id ) ); ?></strong>
+						<?php if ( $gesuch_excerpt ) : ?>
+							<span class="sk-feed-product-embed-price"><?php echo esc_html( $gesuch_excerpt ); ?></span>
 						<?php endif; ?>
 					</div>
 				</a>

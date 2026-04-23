@@ -14,10 +14,6 @@ $store_name = $store_info['store_name'] ?? get_the_author();
 $store_url  = function_exists( 'sk_get_store_url' ) ? sk_get_store_url( $vendor_id ) : '#';
 $avatar     = get_avatar( $vendor_id, 48 );
 $content    = wp_kses_post( get_the_content() );
-$thumb_url  = get_the_post_thumbnail_url( $post_id, 'large' );
-if ( ! $thumb_url ) {
-	$thumb_url = get_post_meta( $post_id, '_sk_feed_external_image', true );
-}
 $post_ts    = (int) get_the_time( 'U' );
 $time_ago   = human_time_diff( $post_ts, time() );
 $like_count = \SK\Modules\Feed\Likes::get_count( $post_id );
@@ -26,6 +22,17 @@ $user_liked = is_user_logged_in() ? \SK\Modules\Feed\Likes::has_liked( $post_id,
 $feed_type  = get_post_meta( $post_id, '_sk_feed_type', true );
 $product_id = (int) get_post_meta( $post_id, '_sk_feed_product_id', true );
 $gesuch_id  = (int) get_post_meta( $post_id, '_sk_feed_gesuch_id', true );
+
+// For announce-posts the product/gesuch embed already has its own thumbnail,
+// so skip the big header image to avoid duplicates. Only manual posts show it.
+$is_announce = in_array( $feed_type, [ 'product_announce', 'gesuch_announce' ], true );
+$thumb_url   = '';
+if ( ! $is_announce ) {
+	$thumb_url = get_the_post_thumbnail_url( $post_id, 'large' );
+	if ( ! $thumb_url ) {
+		$thumb_url = get_post_meta( $post_id, '_sk_feed_external_image', true );
+	}
+}
 ?>
 
 <div class="sk-feed-card" data-post-id="<?php echo esc_attr( $post_id ); ?>">
