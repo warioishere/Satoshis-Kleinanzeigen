@@ -1,18 +1,29 @@
 /**
  * SK Store Reviews — Review popup, rating, submit
+ *
+ * Uses document-level delegation + lazy modal init so the buttons still work
+ * after AJAX tab switches (sk-store-tabs.js injects the reviews tab DOM on
+ * demand — at script-load time the wrapper/modal elements don't exist yet).
  */
 (function ($) {
     'use strict';
 
-    var $wrapper = $('.sk-review-wrapper');
     var ajaxAction = 'sk_store_rating_ajax_handler';
-    var $modal = $('.sk-store-review-iziModal').iziModal({
-        width: 690,
-        closeButton: true,
-        appendTo: 'body',
-        title: '',
-        headerColor: sk.modal_header_color
-    });
+
+    function getModal() {
+        var $el = $('.sk-store-review-iziModal');
+        if (!$el.length) return null;
+        if (!$el.data('iziModal')) {
+            $el.iziModal({
+                width: 690,
+                closeButton: true,
+                appendTo: 'body',
+                title: '',
+                headerColor: sk.modal_header_color
+            });
+        }
+        return $el;
+    }
 
     function initRating() {
         var $form = $('form.sk-form-container');
@@ -35,48 +46,56 @@
             '</div>' + html + '</div>';
     }
 
-    // Show add review popup
-    $wrapper.on('click', 'button.add-review-btn', function () {
-        $modal.iziModal('startLoading');
+    // Add review popup
+    $(document).on('click', '.sk-review-wrapper button.add-review-btn', function () {
+        var $m = getModal();
+        if (!$m) return;
+        var storeId = $(this).data('store_id');
+        $m.iziModal('startLoading');
         $.post(sk.ajaxurl, {
             action: ajaxAction,
             data: 'review_form',
-            store_id: $('button.add-review-btn').data('store_id')
+            store_id: storeId
         }, function (res) {
             if (res.success == 1) {
-                $modal.iziModal('setContent', wrapContent(res.data).trim());
-                $modal.iziModal('open');
+                $m.iziModal('setContent', wrapContent(res.data).trim());
+                $m.iziModal('open');
                 initRating();
             }
-            $modal.iziModal('stopLoading');
+            $m.iziModal('stopLoading');
         });
     });
 
-    // Show edit review popup
-    $wrapper.on('click', 'button.edit-review-btn', function () {
-        $modal.iziModal('startLoading');
+    // Edit review popup
+    $(document).on('click', '.sk-review-wrapper button.edit-review-btn', function () {
+        var $m = getModal();
+        if (!$m) return;
+        var $btn = $(this);
+        $m.iziModal('startLoading');
         $.post(sk.ajaxurl, {
             action: ajaxAction,
             data: 'edit_review_form',
-            store_id: $('button.edit-review-btn').data('store_id'),
-            post_id: $('button.edit-review-btn').data('post_id')
+            store_id: $btn.data('store_id'),
+            post_id: $btn.data('post_id')
         }, function (res) {
             if (res.success == 1) {
-                $modal.iziModal('setContent', wrapContent(res.data).trim());
-                $modal.iziModal('open');
+                $m.iziModal('setContent', wrapContent(res.data).trim());
+                $m.iziModal('open');
                 initRating();
             }
-            $modal.iziModal('stopLoading');
+            $m.iziModal('stopLoading');
         });
     });
 
     // Submit review
-    $('body').on('submit', '#sk-add-review-form', function (e) {
+    $(document).on('submit', '#sk-add-review-form', function (e) {
         e.preventDefault();
         var $form = $(this);
         var $error = $('#ds-error-msg');
+        var $m = getModal();
+        if (!$m) return;
 
-        $modal.iziModal('startLoading');
+        $m.iziModal('startLoading');
         $.post(sk.ajaxurl, {
             action: ajaxAction,
             data: 'submit_review',
@@ -86,12 +105,12 @@
         }, function (res) {
             if (res.success == 1) {
                 var msg = '<div class="sk-seller-rating-add-wrapper sk-izimodal-wraper sk-alert sk-alert-success">' + res.msg + '</div>';
-                $modal.iziModal('setContent', msg.trim());
+                $m.iziModal('setContent', msg.trim());
                 location.reload();
             } else if (res.success == 0) {
                 $error.removeClass('sk-hide').html(res.msg).addClass('sk-alert sk-alert-danger');
             }
-            $modal.iziModal('stopLoading');
+            $m.iziModal('stopLoading');
         });
     });
 
