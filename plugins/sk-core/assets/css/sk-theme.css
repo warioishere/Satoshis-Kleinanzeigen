@@ -11968,11 +11968,12 @@ body:has(.dvc-modal) .dkp-contact-icons {
   padding: 12px 0 !important;
 }
 
-/* Review wrapper (add-review button area) */
+/* Review wrapper (add-review button area) — match follow-button look:
+ * Bitcoin orange + white text + slightly darker orange on hover */
 .sk-review-wrapper .add-review-btn {
   background: #f7931a !important;
   border: 2px solid #f7931a !important;
-  color: #181e27 !important;
+  color: #fff !important;
   font-weight: 700 !important;
   padding: 10px 20px !important;
   border-radius: 8px !important;
@@ -11980,8 +11981,9 @@ body:has(.dvc-modal) .dkp-contact-icons {
   transition: all 0.2s !important;
 }
 .sk-review-wrapper .add-review-btn:hover {
-  background: #ff9d2e !important;
-  border-color: #ff9d2e !important;
+  background: #d97a13 !important;
+  border-color: #d97a13 !important;
+  color: #fff !important;
 }
 
 /* ==========================================================================
