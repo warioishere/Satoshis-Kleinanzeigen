@@ -11980,10 +11980,15 @@ body:has(.dvc-modal) .dkp-contact-icons {
   cursor: pointer !important;
   transition: all 0.2s !important;
 }
-.sk-review-wrapper .add-review-btn:hover {
+.sk-review-wrapper .add-review-btn:hover,
+.sk-review-wrapper .add-review-btn:focus,
+.sk-review-wrapper .add-review-btn:active {
   background: #d97a13 !important;
-  border-color: #d97a13 !important;
+  border: 2px solid #d97a13 !important;
   color: #fff !important;
+  padding: 10px 20px !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 /* ==========================================================================
