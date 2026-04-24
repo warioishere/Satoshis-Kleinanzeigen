@@ -639,8 +639,8 @@ a.sk-btn-theme.active,
 .open .dropdown-togglea.sk-btn-theme,
 .open .dropdown-toggle.sk-btn-theme {
   color: #fff;
-  background-color: #5322e7;
-  border-color: #4918dd;
+  background-color: #e07f0e;
+  border-color: #e07f0e;
 }
 input[type='submit'].sk-btn-theme:active,
 a.sk-btn-theme:active,
@@ -11966,29 +11966,6 @@ body:has(.dvc-modal) .dkp-contact-icons {
 /* Rating stars area */
 #sk-seller-rating {
   padding: 12px 0 !important;
-}
-
-/* Review wrapper (add-review button area) — match follow-button look:
- * Bitcoin orange + white text + slightly darker orange on hover */
-.sk-review-wrapper .add-review-btn {
-  background: #f7931a !important;
-  border: 2px solid #f7931a !important;
-  color: #fff !important;
-  font-weight: 700 !important;
-  padding: 10px 20px !important;
-  border-radius: 8px !important;
-  cursor: pointer !important;
-  transition: all 0.2s !important;
-}
-.sk-review-wrapper .add-review-btn:hover,
-.sk-review-wrapper .add-review-btn:focus,
-.sk-review-wrapper .add-review-btn:active {
-  background: #d97a13 !important;
-  border: 2px solid #d97a13 !important;
-  color: #fff !important;
-  padding: 10px 20px !important;
-  box-shadow: none !important;
-  transform: none !important;
 }
 
 /* ==========================================================================
