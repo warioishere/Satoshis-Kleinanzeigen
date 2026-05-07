@@ -14,6 +14,10 @@ class AutoPost {
 		// "Neues Produkt: X" cards whose link 404s / nothing in the shop.
 		add_action( 'transition_post_status', [ $this, 'on_source_unpublish' ], 20, 3 );
 		add_action( 'before_delete_post',      [ $this, 'on_source_delete' ], 20, 1 );
+		// Invalidate the WP Fastest Cache HTML for /community/ on every
+		// feed-post lifecycle change so newly published items show up.
+		add_action( 'transition_post_status', [ $this, 'on_feed_post_change' ], 25, 3 );
+		add_action( 'before_delete_post',      [ $this, 'on_feed_post_delete' ], 25, 1 );
 	}
 
 	public function on_product_publish( string $new_status, string $old_status, \WP_Post $post ) {
@@ -165,6 +169,38 @@ class AutoPost {
 		] );
 		foreach ( $feed_ids as $fid ) {
 			wp_delete_post( (int) $fid, true );
+		}
+	}
+
+	public function on_feed_post_change( string $new_status, string $old_status, \WP_Post $post ): void {
+		if ( $post->post_type !== PostType::POST_TYPE ) {
+			return;
+		}
+		if ( $new_status === $old_status ) {
+			return;
+		}
+		self::clear_feed_cache();
+	}
+
+	public function on_feed_post_delete( int $post_id ): void {
+		$post = get_post( $post_id );
+		if ( ! $post || $post->post_type !== PostType::POST_TYPE ) {
+			return;
+		}
+		self::clear_feed_cache();
+	}
+
+	private static function clear_feed_cache(): void {
+		$url = home_url( '/community/' );
+		if ( function_exists( 'wpfc_clear_cache_by_url' ) ) {
+			wpfc_clear_cache_by_url( $url );
+			return;
+		}
+		// Fallback: delete the cached HTML directly. WP Fastest Cache stores
+		// pages under wp-content/cache/all/<path>/index.html.
+		$path = WP_CONTENT_DIR . '/cache/all/community';
+		if ( is_dir( $path ) ) {
+			array_map( 'unlink', glob( $path . '/*.html' ) ?: [] );
 		}
 	}
 }
