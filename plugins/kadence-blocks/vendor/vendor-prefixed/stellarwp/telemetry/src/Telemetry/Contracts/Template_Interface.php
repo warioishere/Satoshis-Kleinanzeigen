@@ -5,9 +5,6 @@
  * @since 1.0.0
  *
  * @package KadenceWP\KadenceBlocks\StellarWP\Telemetry\Contracts
- *
- * @license GPL-2.0-or-later
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
  */
 
 namespace KadenceWP\KadenceBlocks\StellarWP\Telemetry\Contracts;

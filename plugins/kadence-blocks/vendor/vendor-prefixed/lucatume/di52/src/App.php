@@ -1,21 +1,17 @@
 <?php
+
 /**
  * A facade to make a DI container instance globally available as a Service Locator.
  *
  * @package lucatume\DI52
- *
- * @license GPL-3.0
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
  */
-
 namespace KadenceWP\KadenceBlocks\lucatume\DI52;
 
 use KadenceWP\KadenceBlocks\lucatume\DI52\Builders\ValueBuilder;
-
 /**
  * Class App
  *
- * @package lucatume\DI52
+ * @package \lucatume\DI52
  */
 class App
 {
@@ -25,7 +21,6 @@ class App
      * @var Container|null
      */
     protected static $container;
-
     /**
      * Returns the singleton instance of the DI container the application
      * will use as Service Locator.
@@ -38,10 +33,8 @@ class App
         if (!isset(static::$container)) {
             static::$container = new Container();
         }
-
         return static::$container;
     }
-
     /**
      * Sets the container instance the Application should use as a Service Locator.
      *
@@ -57,8 +50,7 @@ class App
     {
         static::$container = $container;
     }
-
-        /**
+    /**
      * Sets a variable on the container.
      *
      * @param string $key   The alias the container will use to reference the variable.
@@ -70,7 +62,6 @@ class App
     {
         static::container()->setVar($key, $value);
     }
-
     /**
      * Sets a variable on the container using the ArrayAccess API.
      *
@@ -88,7 +79,6 @@ class App
     {
         static::container()->offsetSet($offset, $value);
     }
-
     /**
      * Binds an interface a class or a string slug to an implementation and will always return the same instance.
      *
@@ -106,7 +96,6 @@ class App
     {
         static::container()->singleton($id, $implementation, $afterBuildMethods);
     }
-
     /**
      * Returns a variable stored in the container.
      *
@@ -124,7 +113,6 @@ class App
     {
         return static::container()->getVar($key, $default);
     }
-
     /**
      * Finds an entry of the container by its identifier and returns it.
      *
@@ -142,7 +130,6 @@ class App
     {
         return static::container()->offsetGet($offset);
     }
-
     /**
      * Finds an entry of the container by its identifier and returns it.
      *
@@ -159,7 +146,6 @@ class App
     {
         return static::container()->get($id);
     }
-
     /**
      * Returns an instance of the class or object bound to an interface, class  or string slug if any, else it will try
      * to automagically resolve the object to a usable instance.
@@ -181,7 +167,6 @@ class App
     {
         return static::container()->make($id);
     }
-
     /**
      * Returns true if the container can return an entry for the given identifier.
      * Returns false otherwise.
@@ -197,7 +182,6 @@ class App
     {
         return static::container()->offsetExists($offset);
     }
-
     /**
      * Returns true if the container can return an entry for the given identifier.
      * Returns false otherwise.
@@ -213,7 +197,6 @@ class App
     {
         return static::container()->has($id);
     }
-
     /**
      * Tags an array of implementations bindings for later retrieval.
      *
@@ -233,7 +216,6 @@ class App
     {
         static::container()->tag($implementationsArray, $tag);
     }
-
     /**
      * Retrieves an array of bound implementations resolving them.
      *
@@ -255,7 +237,6 @@ class App
     {
         return static::container()->tagged($tag);
     }
-
     /**
      * Checks whether a tag group exists in the container.
      *
@@ -269,7 +250,6 @@ class App
     {
         return static::container()->hasTag($tag);
     }
-
     /**
      * Registers a service provider implementation.
      *
@@ -298,7 +278,6 @@ class App
     {
         static::container()->register($serviceProviderClass, ...$alias);
     }
-
     /**
      * Binds an interface, a class or a string slug to an implementation.
      *
@@ -318,7 +297,6 @@ class App
     {
         static::container()->bind($id, $implementation, $afterBuildMethods);
     }
-
     /**
      * Boots up the application calling the `boot` method of each registered service provider.
      *
@@ -333,7 +311,6 @@ class App
     {
         static::container()->boot();
     }
-
     /**
      * Binds a class, interface or string slug to a chain of implementations decorating a base
      * object; the chain will be lazily resolved only on the first call.
@@ -353,7 +330,6 @@ class App
     {
         static::container()->singletonDecorators($id, $decorators, $afterBuildMethods);
     }
-
     /**
      * Binds a class, interface or string slug to a chain of implementations decorating a
      * base object.
@@ -374,7 +350,6 @@ class App
     {
         static::container()->bindDecorators($id, $decorators, $afterBuildMethods);
     }
-
     /**
      * Unsets a binding or tag in the container.
      *
@@ -386,7 +361,6 @@ class App
     {
         static::container()->offsetUnset($offset);
     }
-
     /**
      * Starts the `when->needs->give` chain for a contextual binding.
      *
@@ -407,7 +381,6 @@ class App
     {
         return static::container()->when($class);
     }
-
     /**
      * Second step of the `when->needs->give` chain for a contextual binding.
      *
@@ -428,7 +401,6 @@ class App
     {
         return static::container()->needs($id);
     }
-
     /**
      * Third step of the `when->needs->give` chain for a contextual binding.
      *
@@ -450,7 +422,6 @@ class App
     {
         static::container()->give($implementation);
     }
-
     /**
      * Returns a lambda function suitable to use as a callback; when called the function will build the implementation
      * bound to `$id` and return the value of a call to `$method` method with the call arguments.
@@ -467,7 +438,6 @@ class App
     {
         return static::container()->callback($id, $method);
     }
-
     /**
      * Returns a callable object that will build an instance of the specified class using the
      * specified arguments when called.
@@ -487,7 +457,6 @@ class App
     {
         return static::container()->instance($id, $buildArgs ?? [], $afterBuildMethods);
     }
-
     /**
      * Protects a value to make sure it will not be resolved, if callable or if the name of an existing class.
      *
@@ -499,7 +468,6 @@ class App
     {
         return static::container()->protect($value);
     }
-
     /**
      * Returns the Service Provider instance registered.
      *
@@ -514,7 +482,6 @@ class App
     {
         return static::container()->getProvider($providerId);
     }
-
     /**
      * Returns whether a binding exists in the container or not.
      *
@@ -529,7 +496,6 @@ class App
     {
         return static::container()->isBound($id);
     }
-
     /**
      * Sets the mask for the throwables that should be caught and re-thrown as container exceptions.
      *

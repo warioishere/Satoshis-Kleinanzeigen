@@ -1,9 +1,4 @@
 <?php
-/**
- * @license GPL-2.0
- *
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
 namespace KadenceWP\KadenceBlocks\StellarWP\DB\QueryBuilder\Concerns;
 

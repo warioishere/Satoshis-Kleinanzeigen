@@ -1,20 +1,15 @@
 <?php
-/**
- * @license MIT
- *
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
 namespace KadenceWP\KadenceBlocks\Composer\Installers;
 
-use Composer\Composer;
-use Composer\Installer\BinaryInstaller;
-use Composer\Installer\LibraryInstaller;
-use Composer\IO\IOInterface;
-use Composer\Package\Package;
-use Composer\Package\PackageInterface;
-use Composer\Repository\InstalledRepositoryInterface;
-use Composer\Util\Filesystem;
+use KadenceWP\KadenceBlocks\Composer\Composer;
+use KadenceWP\KadenceBlocks\Composer\Installer\BinaryInstaller;
+use KadenceWP\KadenceBlocks\Composer\Installer\LibraryInstaller;
+use KadenceWP\KadenceBlocks\Composer\IO\IOInterface;
+use KadenceWP\KadenceBlocks\Composer\Package\Package;
+use KadenceWP\KadenceBlocks\Composer\Package\PackageInterface;
+use KadenceWP\KadenceBlocks\Composer\Repository\InstalledRepositoryInterface;
+use KadenceWP\KadenceBlocks\Composer\Util\Filesystem;
 use React\Promise\PromiseInterface;
 
 class Installer extends LibraryInstaller

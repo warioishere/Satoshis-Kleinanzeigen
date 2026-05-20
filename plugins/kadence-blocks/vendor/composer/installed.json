@@ -2,17 +2,17 @@
     "packages": [
         {
             "name": "adbario/php-dot-notation",
-            "version": "3.3.0",
-            "version_normalized": "3.3.0.0",
+            "version": "3.5.0",
+            "version_normalized": "3.5.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/adbario/php-dot-notation.git",
-                "reference": "a94ce4493d19ea430baa8d7d210a2c9bd7129fc2"
+                "reference": "aa09db5a7a365a8d2d8dd7edfa3cd501d1a8acb0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/adbario/php-dot-notation/zipball/a94ce4493d19ea430baa8d7d210a2c9bd7129fc2",
-                "reference": "a94ce4493d19ea430baa8d7d210a2c9bd7129fc2",
+                "url": "https://api.github.com/repos/adbario/php-dot-notation/zipball/aa09db5a7a365a8d2d8dd7edfa3cd501d1a8acb0",
+                "reference": "aa09db5a7a365a8d2d8dd7edfa3cd501d1a8acb0",
                 "shasum": ""
             },
             "require": {
@@ -20,21 +20,14 @@
                 "php": "^7.4 || ^8.0"
             },
             "require-dev": {
-                "phpstan/phpstan": "^1.8",
+                "phpstan/phpstan": "^2.1",
                 "phpunit/phpunit": "^9.5",
                 "squizlabs/php_codesniffer": "^3.7"
             },
-            "time": "2023-02-24T20:27:50+00:00",
+            "time": "2026-04-04T04:29:49+00:00",
             "type": "library",
             "installation-source": "dist",
-            "autoload": {
-                "files": [
-                    "src/helpers.php"
-                ],
-                "psr-4": {
-                    "Adbar\\": "src"
-                }
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
@@ -53,7 +46,7 @@
             ],
             "support": {
                 "issues": "https://github.com/adbario/php-dot-notation/issues",
-                "source": "https://github.com/adbario/php-dot-notation/tree/3.3.0"
+                "source": "https://github.com/adbario/php-dot-notation/tree/3.5.0"
             },
             "install-path": "../adbario/php-dot-notation"
         },
@@ -94,11 +87,7 @@
                 "plugin-modifies-install-path": true
             },
             "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "Composer\\Installers\\": "src/Composer/Installers"
-                }
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
@@ -232,11 +221,7 @@
             "time": "2025-08-12T10:13:48+00:00",
             "type": "library",
             "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "enshrined\\svgSanitize\\": "src"
-                }
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "GPL-2.0-or-later"
@@ -279,11 +264,7 @@
             "time": "2025-12-27T19:43:20+00:00",
             "type": "library",
             "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "GrahamCampbell\\ResultType\\": "src/"
-                }
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
@@ -345,11 +326,7 @@
             "time": "2025-04-01T17:10:31+00:00",
             "type": "library",
             "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "lucatume\\DI52\\": "src/"
-                }
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "GPL-3.0"
@@ -433,11 +410,7 @@
                 }
             },
             "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "Monolog\\": "src/Monolog"
-                }
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
@@ -473,6 +446,83 @@
             "install-path": "../monolog/monolog"
         },
         {
+            "name": "nyholm/psr7",
+            "version": "1.8.2",
+            "version_normalized": "1.8.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Nyholm/psr7.git",
+                "reference": "a71f2b11690f4b24d099d6b16690a90ae14fc6f3"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Nyholm/psr7/zipball/a71f2b11690f4b24d099d6b16690a90ae14fc6f3",
+                "reference": "a71f2b11690f4b24d099d6b16690a90ae14fc6f3",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.2",
+                "psr/http-factory": "^1.0",
+                "psr/http-message": "^1.1 || ^2.0"
+            },
+            "provide": {
+                "php-http/message-factory-implementation": "1.0",
+                "psr/http-factory-implementation": "1.0",
+                "psr/http-message-implementation": "1.0"
+            },
+            "require-dev": {
+                "http-interop/http-factory-tests": "^0.9",
+                "php-http/message-factory": "^1.0",
+                "php-http/psr7-integration-tests": "^1.0",
+                "phpunit/phpunit": "^7.5 || ^8.5 || ^9.4",
+                "symfony/error-handler": "^4.4"
+            },
+            "time": "2024-09-09T07:06:30+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.8-dev"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": [],
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Tobias Nyholm",
+                    "email": "tobias.nyholm@gmail.com"
+                },
+                {
+                    "name": "Martijn van der Ven",
+                    "email": "martijn@vanderven.se"
+                }
+            ],
+            "description": "A fast PHP7 implementation of PSR-7",
+            "homepage": "https://tnyholm.se",
+            "keywords": [
+                "psr-17",
+                "psr-7"
+            ],
+            "support": {
+                "issues": "https://github.com/Nyholm/psr7/issues",
+                "source": "https://github.com/Nyholm/psr7/tree/1.8.2"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/Zegnat",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/nyholm",
+                    "type": "github"
+                }
+            ],
+            "install-path": "../nyholm/psr7"
+        },
+        {
             "name": "phpoption/phpoption",
             "version": "1.9.5",
             "version_normalized": "1.9.5.0",
@@ -506,11 +556,7 @@
                 }
             },
             "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "PhpOption\\": "src/PhpOption/"
-                }
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "Apache-2.0"
@@ -571,11 +617,7 @@
             "time": "2021-11-05T16:50:12+00:00",
             "type": "library",
             "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "Psr\\Container\\": "src/"
-                }
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
@@ -600,6 +642,163 @@
                 "source": "https://github.com/php-fig/container/tree/1.1.2"
             },
             "install-path": "../psr/container"
+        },
+        {
+            "name": "psr/http-client",
+            "version": "1.0.3",
+            "version_normalized": "1.0.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-fig/http-client.git",
+                "reference": "bb5906edc1c324c9a05aa0873d40117941e5fa90"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-fig/http-client/zipball/bb5906edc1c324c9a05aa0873d40117941e5fa90",
+                "reference": "bb5906edc1c324c9a05aa0873d40117941e5fa90",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.0 || ^8.0",
+                "psr/http-message": "^1.0 || ^2.0"
+            },
+            "time": "2023-09-23T14:17:50+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0.x-dev"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": [],
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "https://www.php-fig.org/"
+                }
+            ],
+            "description": "Common interface for HTTP clients",
+            "homepage": "https://github.com/php-fig/http-client",
+            "keywords": [
+                "http",
+                "http-client",
+                "psr",
+                "psr-18"
+            ],
+            "support": {
+                "source": "https://github.com/php-fig/http-client"
+            },
+            "install-path": "../psr/http-client"
+        },
+        {
+            "name": "psr/http-factory",
+            "version": "1.1.0",
+            "version_normalized": "1.1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-fig/http-factory.git",
+                "reference": "2b4765fddfe3b508ac62f829e852b1501d3f6e8a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-fig/http-factory/zipball/2b4765fddfe3b508ac62f829e852b1501d3f6e8a",
+                "reference": "2b4765fddfe3b508ac62f829e852b1501d3f6e8a",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.1",
+                "psr/http-message": "^1.0 || ^2.0"
+            },
+            "time": "2024-04-15T12:06:14+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0.x-dev"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": [],
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "https://www.php-fig.org/"
+                }
+            ],
+            "description": "PSR-17: Common interfaces for PSR-7 HTTP message factories",
+            "keywords": [
+                "factory",
+                "http",
+                "message",
+                "psr",
+                "psr-17",
+                "psr-7",
+                "request",
+                "response"
+            ],
+            "support": {
+                "source": "https://github.com/php-fig/http-factory"
+            },
+            "install-path": "../psr/http-factory"
+        },
+        {
+            "name": "psr/http-message",
+            "version": "1.1",
+            "version_normalized": "1.1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-fig/http-message.git",
+                "reference": "cb6ce4845ce34a8ad9e68117c10ee90a29919eba"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-fig/http-message/zipball/cb6ce4845ce34a8ad9e68117c10ee90a29919eba",
+                "reference": "cb6ce4845ce34a8ad9e68117c10ee90a29919eba",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.2 || ^8.0"
+            },
+            "time": "2023-04-04T09:50:52+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.1.x-dev"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": [],
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "http://www.php-fig.org/"
+                }
+            ],
+            "description": "Common interface for HTTP messages",
+            "homepage": "https://github.com/php-fig/http-message",
+            "keywords": [
+                "http",
+                "http-message",
+                "psr",
+                "psr-7",
+                "request",
+                "response"
+            ],
+            "support": {
+                "source": "https://github.com/php-fig/http-message/tree/1.1"
+            },
+            "install-path": "../psr/http-message"
         },
         {
             "name": "psr/log",
@@ -627,11 +826,7 @@
                 }
             },
             "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "Psr\\Log\\": "Psr/Log/"
-                }
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
@@ -656,17 +851,17 @@
         },
         {
             "name": "stellarwp/arrays",
-            "version": "1.3.1",
-            "version_normalized": "1.3.1.0",
+            "version": "1.3.2",
+            "version_normalized": "1.3.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/stellarwp/arrays.git",
-                "reference": "315a9b2018ac6f2475a346c89b1d7120ae07c218"
+                "reference": "e994abcdb5d76fb5fdea7f2e1549d0603c13f91e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/stellarwp/arrays/zipball/315a9b2018ac6f2475a346c89b1d7120ae07c218",
-                "reference": "315a9b2018ac6f2475a346c89b1d7120ae07c218",
+                "url": "https://api.github.com/repos/stellarwp/arrays/zipball/e994abcdb5d76fb5fdea7f2e1549d0603c13f91e",
+                "reference": "e994abcdb5d76fb5fdea7f2e1549d0603c13f91e",
                 "shasum": ""
             },
             "require-dev": {
@@ -676,14 +871,10 @@
                 "symfony/string": "^5.4",
                 "szepeviktor/phpstan-wordpress": "^1.1"
             },
-            "time": "2025-02-07T18:23:13+00:00",
+            "time": "2026-02-12T19:58:13+00:00",
             "type": "library",
             "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "StellarWP\\Arrays\\": "src/Arrays/"
-                }
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "GPL-2.0"
@@ -700,8 +891,7 @@
             ],
             "description": "A library for array manipulation.",
             "support": {
-                "issues": "https://github.com/stellarwp/arrays/issues",
-                "source": "https://github.com/stellarwp/arrays/tree/1.3.1"
+                "source": "https://github.com/stellarwp/arrays/tree/1.3.2"
             },
             "install-path": "../stellarwp/arrays"
         },
@@ -726,11 +916,7 @@
             "time": "2023-09-05T20:08:29+00:00",
             "type": "library",
             "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "StellarWP\\ContainerContract\\": "src/"
-                }
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "GPL-2.0-or-later"
@@ -757,17 +943,17 @@
         },
         {
             "name": "stellarwp/db",
-            "version": "1.2.0",
-            "version_normalized": "1.2.0.0",
+            "version": "1.3.0",
+            "version_normalized": "1.3.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/stellarwp/db.git",
-                "reference": "f92d6ae0bcd74a3f526b023bb2d6ecd13227ef96"
+                "reference": "34d6c66adf323f4839c2199d6e1119c79fc87a4f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/stellarwp/db/zipball/f92d6ae0bcd74a3f526b023bb2d6ecd13227ef96",
-                "reference": "f92d6ae0bcd74a3f526b023bb2d6ecd13227ef96",
+                "url": "https://api.github.com/repos/stellarwp/db/zipball/34d6c66adf323f4839c2199d6e1119c79fc87a4f",
+                "reference": "34d6c66adf323f4839c2199d6e1119c79fc87a4f",
                 "shasum": ""
             },
             "require-dev": {
@@ -785,14 +971,10 @@
                 "symfony/string": "^5.4",
                 "szepeviktor/phpstan-wordpress": "^1.1"
             },
-            "time": "2025-11-10T10:55:50+00:00",
+            "time": "2026-02-25T17:01:46+00:00",
             "type": "library",
             "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "StellarWP\\DB\\": "src/DB/"
-                }
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "GPL-2.0"
@@ -810,9 +992,155 @@
             "description": "A WPDB wrapper and query builder library.",
             "support": {
                 "issues": "https://github.com/stellarwp/db/issues",
-                "source": "https://github.com/stellarwp/db/tree/1.2.0"
+                "source": "https://github.com/stellarwp/db/tree/1.3.0"
             },
             "install-path": "../stellarwp/db"
+        },
+        {
+            "name": "stellarwp/harbor",
+            "version": "v1.2.0",
+            "version_normalized": "1.2.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/stellarwp/harbor.git",
+                "reference": "f22783d0d79597d5b1acf6cce73e6f3ddb701334"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/stellarwp/harbor/zipball/f22783d0d79597d5b1acf6cce73e6f3ddb701334",
+                "reference": "f22783d0d79597d5b1acf6cce73e6f3ddb701334",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "nyholm/psr7": "^1.0",
+                "php": ">=7.4",
+                "psr/http-client": "^1.0",
+                "psr/http-factory": "^1.0",
+                "psr/http-message": "^1.1",
+                "stellarwp/container-contract": "^1.0",
+                "stellarwp/licensing-api-client-wordpress": "^2.0"
+            },
+            "require-dev": {
+                "dealerdirect/phpcodesniffer-composer-installer": "^1",
+                "dpanta94/phpstan-containers": "^0",
+                "exussum12/coverage-checker": "^1.1",
+                "lucatume/codeception-snapshot-assertions": "*",
+                "lucatume/di52": "^3",
+                "lucatume/wp-browser": "*",
+                "php-stubs/wp-cli-stubs": "^2",
+                "phpcompatibility/phpcompatibility-wp": "^2",
+                "phpspec/prophecy": "*",
+                "phpspec/prophecy-phpunit": "*",
+                "phpstan/phpstan": "^2",
+                "phpunit/phpunit": "*",
+                "stellarwp/coding-standards": "^2",
+                "szepeviktor/phpstan-wordpress": ">=1.0",
+                "wp-cli/wp-cli": "^2"
+            },
+            "time": "2026-05-14T00:04:41+00:00",
+            "bin": [
+                "bin/stellar-harbor"
+            ],
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": [],
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Liquid Web",
+                    "homepage": "https://liquidweb.com"
+                }
+            ],
+            "description": "A library that integrates a WordPress product with the Liquid Web licensing system.",
+            "support": {
+                "issues": "https://github.com/stellarwp/harbor/issues",
+                "source": "https://github.com/stellarwp/harbor/tree/v1.2.0"
+            },
+            "install-path": "../stellarwp/harbor"
+        },
+        {
+            "name": "stellarwp/licensing-api-client",
+            "version": "2.0.0",
+            "version_normalized": "2.0.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/stellarwp/licensing-api-client.git",
+                "reference": "6f9e0b3e49831f49b735a9544c5fb2fea4eeedeb"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/stellarwp/licensing-api-client/zipball/6f9e0b3e49831f49b735a9544c5fb2fea4eeedeb",
+                "reference": "6f9e0b3e49831f49b735a9544c5fb2fea4eeedeb",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "php": ">=7.4",
+                "psr/http-client": "^1.0",
+                "psr/http-factory": "^1.0",
+                "psr/http-message": "^1.0 || ^2.0"
+            },
+            "time": "2026-04-23T03:36:42+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "1.1.x-dev"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": [],
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "description": "A PHP client for the Liquid Web Licensing API.",
+            "support": {
+                "source": "https://github.com/stellarwp/licensing-api-client/tree/2.0.0"
+            },
+            "install-path": "../stellarwp/licensing-api-client"
+        },
+        {
+            "name": "stellarwp/licensing-api-client-wordpress",
+            "version": "2.0.0",
+            "version_normalized": "2.0.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/stellarwp/licensing-api-client-wordpress.git",
+                "reference": "f4ece66587cd6de175ffd35d0fbc3dc06c76a1f8"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/stellarwp/licensing-api-client-wordpress/zipball/f4ece66587cd6de175ffd35d0fbc3dc06c76a1f8",
+                "reference": "f4ece66587cd6de175ffd35d0fbc3dc06c76a1f8",
+                "shasum": ""
+            },
+            "require": {
+                "nyholm/psr7": "^1.8",
+                "php": ">=7.4",
+                "stellarwp/licensing-api-client": "^2.0"
+            },
+            "time": "2026-04-23T03:38:52+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "1.1.x-dev"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": [],
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "description": "WordPress transport and factory integration for the Liquid Web Licensing API client.",
+            "support": {
+                "source": "https://github.com/stellarwp/licensing-api-client-wordpress/tree/2.0.0"
+            },
+            "install-path": "../stellarwp/licensing-api-client-wordpress"
         },
         {
             "name": "stellarwp/prophecy-container",
@@ -844,11 +1172,7 @@
                 }
             },
             "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "StellarWP\\ProphecyMonorepo\\Container\\": ""
-                }
-            },
+            "autoload": [],
             "license": [
                 "GPL-2.0-only"
             ],
@@ -891,11 +1215,7 @@
                 }
             },
             "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "StellarWP\\ProphecyMonorepo\\ImageDownloader\\": ""
-                }
-            },
+            "autoload": [],
             "license": [
                 "GPL-2.0-only"
             ],
@@ -934,11 +1254,7 @@
                 }
             },
             "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "StellarWP\\ProphecyMonorepo\\Log\\": ""
-                }
-            },
+            "autoload": [],
             "license": [
                 "GPL-2.0-only"
             ],
@@ -975,11 +1291,7 @@
                 }
             },
             "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "StellarWP\\ProphecyMonorepo\\Storage\\": ""
-                }
-            },
+            "autoload": [],
             "license": [
                 "GPL-2.0-only"
             ],
@@ -1030,11 +1342,7 @@
             "time": "2025-07-18T14:24:06+00:00",
             "type": "library",
             "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "StellarWP\\Schema\\": "src/Schema/"
-                }
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "GPL-2.0"
@@ -1079,11 +1387,7 @@
             "time": "2024-06-26T14:12:19+00:00",
             "type": "library",
             "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "StellarWP\\SuperGlobals\\": "src/SuperGlobals/"
-                }
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
@@ -1107,17 +1411,17 @@
         },
         {
             "name": "stellarwp/telemetry",
-            "version": "2.3.4",
-            "version_normalized": "2.3.4.0",
+            "version": "2.4.1",
+            "version_normalized": "2.4.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/stellarwp/telemetry.git",
-                "reference": "74c7b819d574aa5fc1392f982fb32cedc18d4c6f"
+                "reference": "c1b3a43359475460a17589dd0442310a81f51b24"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/stellarwp/telemetry/zipball/74c7b819d574aa5fc1392f982fb32cedc18d4c6f",
-                "reference": "74c7b819d574aa5fc1392f982fb32cedc18d4c6f",
+                "url": "https://api.github.com/repos/stellarwp/telemetry/zipball/c1b3a43359475460a17589dd0442310a81f51b24",
+                "reference": "c1b3a43359475460a17589dd0442310a81f51b24",
                 "shasum": ""
             },
             "require": {
@@ -1136,16 +1440,10 @@
                 "the-events-calendar/coding-standards": "dev-master",
                 "wp-coding-standards/wpcs": "^3.0.0"
             },
-            "time": "2025-04-25T18:58:09+00:00",
+            "time": "2026-04-10T15:47:09+00:00",
             "type": "library",
             "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "StellarWP\\Telemetry\\": "src/Telemetry",
-                    "StellarWP\\Telemetry\\Views_Dir\\": "src/views",
-                    "StellarWP\\Telemetry\\Assets_Dir\\": "src/resources"
-                }
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "GPL-2.0-or-later"
@@ -1153,7 +1451,7 @@
             "description": "Telemetry library for StellarWP plugins.",
             "support": {
                 "issues": "https://github.com/stellarwp/telemetry/issues",
-                "source": "https://github.com/stellarwp/telemetry/tree/2.3.4"
+                "source": "https://github.com/stellarwp/telemetry/tree/2.4.1"
             },
             "install-path": "../stellarwp/telemetry"
         },
@@ -1201,14 +1499,7 @@
             ],
             "type": "library",
             "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "StellarWP\\Uplink\\": "src/Uplink/",
-                    "StellarWP\\Uplink\\Views\\": "src/views/",
-                    "StellarWP\\Uplink\\Assets_Dir\\": "src/assets/",
-                    "StellarWP\\Uplink\\Admin_Views\\": "src/admin-views/"
-                }
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "GPL-2.0-or-later"
@@ -1256,11 +1547,7 @@
                 }
             },
             "installation-source": "dist",
-            "autoload": {
-                "files": [
-                    "function.php"
-                ]
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
@@ -1323,14 +1610,7 @@
             "time": "2024-10-22T13:05:35+00:00",
             "type": "library",
             "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "Symfony\\Component\\Filesystem\\": ""
-                },
-                "exclude-from-classmap": [
-                    "/Tests/"
-                ]
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
@@ -1414,14 +1694,7 @@
             "time": "2024-11-28T08:37:04+00:00",
             "type": "library",
             "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "Symfony\\Component\\HttpClient\\": ""
-                },
-                "exclude-from-classmap": [
-                    "/Tests/"
-                ]
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
@@ -1493,11 +1766,7 @@
                 }
             },
             "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "Symfony\\Contracts\\HttpClient\\": ""
-                }
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
@@ -1577,14 +1846,7 @@
             "time": "2025-11-03T12:58:48+00:00",
             "type": "library",
             "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "Symfony\\Component\\HttpFoundation\\": ""
-                },
-                "exclude-from-classmap": [
-                    "/Tests/"
-                ]
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
@@ -1665,14 +1927,7 @@
             "time": "2024-10-23T20:18:32+00:00",
             "type": "library",
             "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "Symfony\\Component\\Mime\\": ""
-                },
-                "exclude-from-classmap": [
-                    "/Tests/"
-                ]
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
@@ -1714,17 +1969,17 @@
         },
         {
             "name": "symfony/polyfill-ctype",
-            "version": "v1.33.0",
-            "version_normalized": "1.33.0.0",
+            "version": "v1.36.0",
+            "version_normalized": "1.36.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-ctype.git",
-                "reference": "a3cc8b044a6ea513310cbd48ef7333b384945638"
+                "reference": "141046a8f9477948ff284fa65be2095baafb94f2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/polyfill-ctype/zipball/a3cc8b044a6ea513310cbd48ef7333b384945638",
-                "reference": "a3cc8b044a6ea513310cbd48ef7333b384945638",
+                "url": "https://api.github.com/repos/symfony/polyfill-ctype/zipball/141046a8f9477948ff284fa65be2095baafb94f2",
+                "reference": "141046a8f9477948ff284fa65be2095baafb94f2",
                 "shasum": ""
             },
             "require": {
@@ -1736,7 +1991,7 @@
             "suggest": {
                 "ext-ctype": "For best performance"
             },
-            "time": "2024-09-09T11:45:10+00:00",
+            "time": "2026-04-10T16:19:22+00:00",
             "type": "library",
             "extra": {
                 "thanks": {
@@ -1745,14 +2000,7 @@
                 }
             },
             "installation-source": "dist",
-            "autoload": {
-                "files": [
-                    "bootstrap.php"
-                ],
-                "psr-4": {
-                    "Symfony\\Polyfill\\Ctype\\": ""
-                }
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
@@ -1776,7 +2024,7 @@
                 "portable"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-ctype/tree/v1.33.0"
+                "source": "https://github.com/symfony/polyfill-ctype/tree/v1.36.0"
             },
             "funding": [
                 {
@@ -1800,17 +2048,17 @@
         },
         {
             "name": "symfony/polyfill-intl-grapheme",
-            "version": "v1.33.0",
-            "version_normalized": "1.33.0.0",
+            "version": "v1.36.0",
+            "version_normalized": "1.36.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-intl-grapheme.git",
-                "reference": "380872130d3a5dd3ace2f4010d95125fde5d5c70"
+                "reference": "ad1b7b9092976d6c948b8a187cec9faaea9ec1df"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/polyfill-intl-grapheme/zipball/380872130d3a5dd3ace2f4010d95125fde5d5c70",
-                "reference": "380872130d3a5dd3ace2f4010d95125fde5d5c70",
+                "url": "https://api.github.com/repos/symfony/polyfill-intl-grapheme/zipball/ad1b7b9092976d6c948b8a187cec9faaea9ec1df",
+                "reference": "ad1b7b9092976d6c948b8a187cec9faaea9ec1df",
                 "shasum": ""
             },
             "require": {
@@ -1819,7 +2067,7 @@
             "suggest": {
                 "ext-intl": "For best performance"
             },
-            "time": "2025-06-27T09:58:17+00:00",
+            "time": "2026-04-10T16:19:22+00:00",
             "type": "library",
             "extra": {
                 "thanks": {
@@ -1828,14 +2076,7 @@
                 }
             },
             "installation-source": "dist",
-            "autoload": {
-                "files": [
-                    "bootstrap.php"
-                ],
-                "psr-4": {
-                    "Symfony\\Polyfill\\Intl\\Grapheme\\": ""
-                }
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
@@ -1861,7 +2102,7 @@
                 "shim"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-intl-grapheme/tree/v1.33.0"
+                "source": "https://github.com/symfony/polyfill-intl-grapheme/tree/v1.36.0"
             },
             "funding": [
                 {
@@ -1885,8 +2126,8 @@
         },
         {
             "name": "symfony/polyfill-intl-idn",
-            "version": "v1.33.0",
-            "version_normalized": "1.33.0.0",
+            "version": "v1.36.0",
+            "version_normalized": "1.36.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-intl-idn.git",
@@ -1914,14 +2155,7 @@
                 }
             },
             "installation-source": "dist",
-            "autoload": {
-                "files": [
-                    "bootstrap.php"
-                ],
-                "psr-4": {
-                    "Symfony\\Polyfill\\Intl\\Idn\\": ""
-                }
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
@@ -1951,7 +2185,7 @@
                 "shim"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-intl-idn/tree/v1.33.0"
+                "source": "https://github.com/symfony/polyfill-intl-idn/tree/v1.36.0"
             },
             "funding": [
                 {
@@ -1975,8 +2209,8 @@
         },
         {
             "name": "symfony/polyfill-intl-normalizer",
-            "version": "v1.33.0",
-            "version_normalized": "1.33.0.0",
+            "version": "v1.36.0",
+            "version_normalized": "1.36.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-intl-normalizer.git",
@@ -2003,17 +2237,7 @@
                 }
             },
             "installation-source": "dist",
-            "autoload": {
-                "files": [
-                    "bootstrap.php"
-                ],
-                "psr-4": {
-                    "Symfony\\Polyfill\\Intl\\Normalizer\\": ""
-                },
-                "classmap": [
-                    "Resources/stubs"
-                ]
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
@@ -2039,7 +2263,7 @@
                 "shim"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-intl-normalizer/tree/v1.33.0"
+                "source": "https://github.com/symfony/polyfill-intl-normalizer/tree/v1.36.0"
             },
             "funding": [
                 {
@@ -2063,17 +2287,17 @@
         },
         {
             "name": "symfony/polyfill-mbstring",
-            "version": "v1.33.0",
-            "version_normalized": "1.33.0.0",
+            "version": "v1.36.0",
+            "version_normalized": "1.36.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-mbstring.git",
-                "reference": "6d857f4d76bd4b343eac26d6b539585d2bc56493"
+                "reference": "6a21eb99c6973357967f6ce3708cd55a6bec6315"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/polyfill-mbstring/zipball/6d857f4d76bd4b343eac26d6b539585d2bc56493",
-                "reference": "6d857f4d76bd4b343eac26d6b539585d2bc56493",
+                "url": "https://api.github.com/repos/symfony/polyfill-mbstring/zipball/6a21eb99c6973357967f6ce3708cd55a6bec6315",
+                "reference": "6a21eb99c6973357967f6ce3708cd55a6bec6315",
                 "shasum": ""
             },
             "require": {
@@ -2086,7 +2310,7 @@
             "suggest": {
                 "ext-mbstring": "For best performance"
             },
-            "time": "2024-12-23T08:48:59+00:00",
+            "time": "2026-04-10T17:25:58+00:00",
             "type": "library",
             "extra": {
                 "thanks": {
@@ -2095,14 +2319,7 @@
                 }
             },
             "installation-source": "dist",
-            "autoload": {
-                "files": [
-                    "bootstrap.php"
-                ],
-                "psr-4": {
-                    "Symfony\\Polyfill\\Mbstring\\": ""
-                }
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
@@ -2127,7 +2344,7 @@
                 "shim"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-mbstring/tree/v1.33.0"
+                "source": "https://github.com/symfony/polyfill-mbstring/tree/v1.36.0"
             },
             "funding": [
                 {
@@ -2151,8 +2368,8 @@
         },
         {
             "name": "symfony/polyfill-php73",
-            "version": "v1.33.0",
-            "version_normalized": "1.33.0.0",
+            "version": "v1.36.0",
+            "version_normalized": "1.36.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-php73.git",
@@ -2176,17 +2393,7 @@
                 }
             },
             "installation-source": "dist",
-            "autoload": {
-                "files": [
-                    "bootstrap.php"
-                ],
-                "psr-4": {
-                    "Symfony\\Polyfill\\Php73\\": ""
-                },
-                "classmap": [
-                    "Resources/stubs"
-                ]
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
@@ -2210,7 +2417,7 @@
                 "shim"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-php73/tree/v1.33.0"
+                "source": "https://github.com/symfony/polyfill-php73/tree/v1.36.0"
             },
             "funding": [
                 {
@@ -2234,23 +2441,23 @@
         },
         {
             "name": "symfony/polyfill-php80",
-            "version": "v1.33.0",
-            "version_normalized": "1.33.0.0",
+            "version": "v1.36.0",
+            "version_normalized": "1.36.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-php80.git",
-                "reference": "0cc9dd0f17f61d8131e7df6b84bd344899fe2608"
+                "reference": "dfb55726c3a76ea3b6459fcfda1ec2d80a682411"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/polyfill-php80/zipball/0cc9dd0f17f61d8131e7df6b84bd344899fe2608",
-                "reference": "0cc9dd0f17f61d8131e7df6b84bd344899fe2608",
+                "url": "https://api.github.com/repos/symfony/polyfill-php80/zipball/dfb55726c3a76ea3b6459fcfda1ec2d80a682411",
+                "reference": "dfb55726c3a76ea3b6459fcfda1ec2d80a682411",
                 "shasum": ""
             },
             "require": {
                 "php": ">=7.2"
             },
-            "time": "2025-01-02T08:10:11+00:00",
+            "time": "2026-04-10T16:19:22+00:00",
             "type": "library",
             "extra": {
                 "thanks": {
@@ -2259,17 +2466,7 @@
                 }
             },
             "installation-source": "dist",
-            "autoload": {
-                "files": [
-                    "bootstrap.php"
-                ],
-                "psr-4": {
-                    "Symfony\\Polyfill\\Php80\\": ""
-                },
-                "classmap": [
-                    "Resources/stubs"
-                ]
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
@@ -2297,7 +2494,7 @@
                 "shim"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-php80/tree/v1.33.0"
+                "source": "https://github.com/symfony/polyfill-php80/tree/v1.36.0"
             },
             "funding": [
                 {
@@ -2357,11 +2554,7 @@
                 }
             },
             "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "Symfony\\Contracts\\Service\\": ""
-                }
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
@@ -2440,17 +2633,7 @@
             "time": "2024-11-10T20:33:58+00:00",
             "type": "library",
             "installation-source": "dist",
-            "autoload": {
-                "files": [
-                    "Resources/functions.php"
-                ],
-                "psr-4": {
-                    "Symfony\\Component\\String\\": ""
-                },
-                "exclude-from-classmap": [
-                    "/Tests/"
-                ]
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
@@ -2527,11 +2710,7 @@
                 }
             },
             "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "Symfony\\Contracts\\Translation\\": ""
-                }
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
@@ -2619,11 +2798,7 @@
                 }
             },
             "installation-source": "dist",
-            "autoload": {
-                "psr-4": {
-                    "Dotenv\\": "src/"
-                }
-            },
+            "autoload": [],
             "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "BSD-3-Clause"

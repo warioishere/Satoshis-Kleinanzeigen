@@ -1,13 +1,8 @@
 <?php
-/**
- * @license MIT
- *
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
 namespace KadenceWP\KadenceBlocks\Composer\Installers;
 
-use Composer\Package\PackageInterface;
+use KadenceWP\KadenceBlocks\Composer\Package\PackageInterface;
 
 class ExpressionEngineInstaller extends BaseInstaller
 {

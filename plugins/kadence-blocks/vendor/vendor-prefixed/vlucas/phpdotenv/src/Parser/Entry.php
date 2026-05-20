@@ -1,9 +1,4 @@
 <?php
-/**
- * @license BSD-3-Clause
- *
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
 declare(strict_types=1);
 
@@ -54,11 +49,11 @@ final class Entry
     /**
      * Get the entry value.
      *
-     * @return \KadenceWP\KadenceBlocks\PhpOption\Option<\Dotenv\Parser\Value>
+     * @return \KadenceWP\KadenceBlocks\PhpOption\Option<\KadenceWP\KadenceBlocks\Dotenv\Parser\Value>
      */
     public function getValue()
     {
-        /** @var \KadenceWP\KadenceBlocks\PhpOption\Option<\Dotenv\Parser\Value> */
+        /** @var \KadenceWP\KadenceBlocks\PhpOption\Option<\KadenceWP\KadenceBlocks\Dotenv\Parser\Value> */
         return Option::fromValue($this->value);
     }
 }

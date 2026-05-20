@@ -7,13 +7,13 @@
  * Author URI:      https://btcpayserver.org
  * Text Domain:     btcpay-greenfield-for-woocommerce
  * Domain Path:     /languages
- * Version:         2.7.5
+ * Version:         2.8.0
  * Requires PHP:    8.0
  * Tested up to:    6.9
  * Requires at least: 6.2
  * Requires Plugins: woocommerce
  * WC requires at least: 7.0
- * WC tested up to: 10.6
+ * WC tested up to: 10.7
  */
 
 use BTCPayServer\WC\Admin\Notice;
@@ -27,7 +27,7 @@ use BTCPayServer\WC\Helper\Logger;
 
 defined( 'ABSPATH' ) || exit();
 
-define( 'BTCPAYSERVER_VERSION', '2.7.5' );
+define( 'BTCPAYSERVER_VERSION', '2.8.0' );
 define( 'BTCPAYSERVER_VERSION_KEY', 'btcpay_gf_version' );
 define( 'BTCPAYSERVER_PLUGIN_FILE_PATH', plugin_dir_path( __FILE__ ) );
 define( 'BTCPAYSERVER_PLUGIN_URL', plugin_dir_url(__FILE__ ) );
@@ -41,6 +41,7 @@ class BTCPayServerWCPlugin {
 		$this->includes();
 
 		add_action( 'woocommerce_thankyou_btcpaygf_default', ['BTCPayServerWCPlugin', 'orderStatusThankYouPage'], 10, 1);
+		add_action( 'woocommerce_order_details_after_order_table', ['BTCPayServerWCPlugin', 'orderDetailsCheckoutLink'], 10, 1);
 		add_action( 'wp_ajax_btcpaygf_modal_checkout', [$this, 'processAjaxModalCheckout'] );
 		add_action( 'wp_ajax_btcpaygf_notifications', [$this, 'processAjaxNotification'] );
 		add_action( 'wp_ajax_nopriv_btcpaygf_modal_checkout', [$this, 'processAjaxModalCheckout'] );
@@ -375,12 +376,90 @@ class BTCPayServerWCPlugin {
 				break;
 		}
 
+		$checkoutLink = self::getCheckoutLink($order);
+
 		echo "
 		<section class='woocommerce-order-payment-status'>
 		    <h2 class='woocommerce-order-payment-status-title'>{$title}</h2>
 		    <p><strong>{$statusDesc}</strong></p>
+		    {$checkoutLink}
 		</section>
 		";
+	}
+
+	/**
+	 * Displays the BTCPay checkout link on the customer order details page (My Account).
+	 */
+	public static function orderDetailsCheckoutLink($order)
+	{
+		if (!$order instanceof \WC_Order) {
+			return;
+		}
+
+		$payment_method = (string) $order->get_payment_method();
+		if (strpos($payment_method, 'btcpaygf_') !== 0) {
+			return;
+		}
+
+		$checkoutLink = self::getCheckoutLink($order);
+		$refundLinks = self::getRefundLinks($order);
+
+		if ($checkoutLink === '' && $refundLinks === '') {
+			return;
+		}
+
+		$title = _x('Payment information', 'btcpay-greenfield-for-woocommerce');
+		echo "
+		<section class='woocommerce-order-payment-status'>
+		    <h2 class='woocommerce-order-payment-status-title'>{$title}</h2>
+		    {$checkoutLink}
+		    {$refundLinks}
+		</section>
+		";
+	}
+
+	/**
+	 * Returns the BTCPay checkout link HTML for unpaid orders.
+	 */
+	private static function getCheckoutLink(\WC_Order $order): string
+	{
+		$url = $order->get_meta('BTCPay_redirect');
+		if (empty($url)) {
+			return '';
+		}
+
+		$label = esc_html_x('BTCPay Invoice:', 'btcpay-greenfield-for-woocommerce');
+		$escapedUrl = esc_url($url);
+		return "<p>{$label} <a href='{$escapedUrl}' target='_blank' rel='noreferrer'>{$escapedUrl}</a></p>";
+	}
+
+	/**
+	 * Returns refund link(s) HTML if the refund visibility setting is enabled.
+	 */
+	private static function getRefundLinks(\WC_Order $order): string
+	{
+		if (get_option('btcpay_gf_refund_note_visible') !== 'yes') {
+			return '';
+		}
+
+		$refunds = $order->get_meta('BTCPay_refund', false);
+		if (empty($refunds)) {
+			return '';
+		}
+
+		$html = '';
+		$label = esc_html_x('Refund:', 'btcpay-greenfield-for-woocommerce');
+		foreach ($refunds as $refund) {
+			$value = $refund->value;
+			if (preg_match('/Link:\s*(.+)/i', $value, $matches)) {
+				$url = esc_url(trim($matches[1]));
+				if (!empty($url)) {
+					$html .= "<p>{$label} <a href='{$url}' target='_blank' rel='noreferrer'>{$url}</a></p>";
+				}
+			}
+		}
+
+		return $html;
 	}
 
 	/**
@@ -392,6 +471,17 @@ class BTCPayServerWCPlugin {
 				'woocommerce_blocks_payment_method_type_registration',
 				function( \Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry $payment_method_registry ) {
 					$payment_method_registry->register(new \BTCPayServer\WC\Blocks\DefaultGatewayBlocks());
+
+					if (get_option('btcpay_gf_separate_gateways') === 'yes') {
+						if ($separateGateways = \BTCPayServer\WC\Helper\GreenfieldApiHelper::supportedPaymentMethods()) {
+							foreach ($separateGateways as $gw) {
+								$gatewayId = 'btcpaygf_' . strtolower($gw['symbol']);
+								$payment_method_registry->register(
+									new \BTCPayServer\WC\Blocks\SeparateGatewayBlocks($gatewayId)
+								);
+							}
+						}
+					}
 				}
 			);
 		}
@@ -558,3 +648,74 @@ add_action( 'before_woocommerce_init', function() {
 
 // Register WooCommerce Blocks integration.
 add_action( 'woocommerce_blocks_loaded', [ 'BTCPayServerWCPlugin', 'blocksSupport' ] );
+
+// Render BTCPay / Lightning icons in a dedicated column on the orders list.
+function btcpaygf_render_order_list_icons( $order ): string {
+	if ( ! $order instanceof \WC_Abstract_Order ) {
+		return '';
+	}
+
+	$payment_method = (string) $order->get_payment_method();
+	if ( strpos( $payment_method, 'btcpaygf_' ) !== 0 ) {
+		return '';
+	}
+
+	$bitcoin_icon = '<img src="' . esc_url( BTCPAYSERVER_PLUGIN_URL . 'assets/images/bitcoin.svg' ) . '" alt="Bitcoin" title="Bitcoin" style="width:16px;height:16px;vertical-align:middle;" />';
+	$btcpay_icon  = '<img src="' . esc_url( BTCPAYSERVER_PLUGIN_URL . 'assets/images/btcpay-logo.svg' ) . '" alt="BTCPay" title="BTCPay" style="width:16px;height:16px;vertical-align:middle;" />';
+
+	$ln_paid  = $order->get_meta( 'BTCPay_BTC-LN_total_paid' );
+	$btc_paid = $order->get_meta( 'BTCPay_BTC_total_amount' );
+	$redirect = (string) $order->get_meta( 'BTCPay_redirect' );
+
+	$invoice_link = '';
+	if ( $redirect !== '' ) {
+		$invoice_url  = str_replace( '/i/', '/invoices/', $redirect );
+		$receipt_svg  = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M4 2v20l3-2 3 2 3-2 3 2 3-2 3 2V2l-3 2-3-2-3 2-3-2-3 2-3-2z"/><path d="M8 9h8"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>';
+		$invoice_link = ' <a href="' . esc_url( $invoice_url ) . '" target="_blank" rel="noopener noreferrer" title="' . esc_attr__( 'Open BTCPay invoice', 'btcpay-greenfield-for-woocommerce' ) . '" style="text-decoration:none;color:inherit;">' . $receipt_svg . '</a>';
+	}
+
+	if ( $ln_paid !== '' && (float) $ln_paid > 0 ) {
+		return $btcpay_icon . ' ' . $bitcoin_icon . ' <span title="Lightning Network">⚡</span>' . $invoice_link;
+	}
+
+	if ( $btc_paid !== '' ) {
+		return $btcpay_icon . ' ' . $bitcoin_icon . $invoice_link;
+	}
+
+	return $btcpay_icon . $invoice_link;
+}
+
+// Insert a column right after "status" on both HPOS and legacy screens.
+function btcpaygf_insert_icon_column( array $columns ): array {
+	$new = [];
+	foreach ( $columns as $key => $label ) {
+		$new[ $key ] = $label;
+		if ( 'order_status' === $key || 'status' === $key ) {
+			$new['btcpaygf_icons'] = __( 'BTCPay', 'btcpay-greenfield-for-woocommerce' );
+		}
+	}
+	if ( ! isset( $new['btcpaygf_icons'] ) ) {
+		$new['btcpaygf_icons'] = __( 'BTCPay', 'btcpay-greenfield-for-woocommerce' );
+	}
+	return $new;
+}
+
+// HPOS orders list.
+add_filter( 'woocommerce_shop_order_list_table_columns', 'btcpaygf_insert_icon_column' );
+add_action( 'woocommerce_shop_order_list_table_custom_column', function( $column, $order ) {
+	if ( 'btcpaygf_icons' === $column ) {
+		echo btcpaygf_render_order_list_icons( $order );
+	}
+}, 10, 2 );
+
+// Legacy (post-based) orders list.
+add_filter( 'manage_edit-shop_order_columns', 'btcpaygf_insert_icon_column' );
+add_action( 'manage_shop_order_posts_custom_column', function( $column, $post_id ) {
+	if ( 'btcpaygf_icons' !== $column ) {
+		return;
+	}
+	$order = wc_get_order( $post_id );
+	if ( $order ) {
+		echo btcpaygf_render_order_list_icons( $order );
+	}
+}, 10, 2 );

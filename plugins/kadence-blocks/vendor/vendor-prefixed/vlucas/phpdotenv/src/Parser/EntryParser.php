@@ -1,9 +1,4 @@
 <?php
-/**
- * @license BSD-3-Clause
- *
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
 declare(strict_types=1);
 
@@ -46,7 +41,7 @@ final class EntryParser
      *
      * @param string $entry
      *
-     * @return \KadenceWP\KadenceBlocks\GrahamCampbell\ResultType\Result<\Dotenv\Parser\Entry, string>
+     * @return \KadenceWP\KadenceBlocks\GrahamCampbell\ResultType\Result<\KadenceWP\KadenceBlocks\Dotenv\Parser\Entry, string>
      */
     public static function parse(string $entry)
     {
@@ -157,12 +152,12 @@ final class EntryParser
      *
      * @param string $value
      *
-     * @return \KadenceWP\KadenceBlocks\GrahamCampbell\ResultType\Result<\Dotenv\Parser\Value, string>
+     * @return \KadenceWP\KadenceBlocks\GrahamCampbell\ResultType\Result<\KadenceWP\KadenceBlocks\Dotenv\Parser\Value, string>
      */
     private static function parseValue(string $value)
     {
         if (\trim($value) === '') {
-            /** @var \KadenceWP\KadenceBlocks\GrahamCampbell\ResultType\Result<\Dotenv\Parser\Value, string> */
+            /** @var \KadenceWP\KadenceBlocks\GrahamCampbell\ResultType\Result<\KadenceWP\KadenceBlocks\Dotenv\Parser\Value, string> */
             return Success::create(Value::blank());
         }
 
@@ -174,11 +169,11 @@ final class EntryParser
             });
         }, Success::create([Value::blank(), self::INITIAL_STATE]))->flatMap(static function (array $result) {
             if (in_array($result[1], self::REJECT_STATES, true)) {
-                /** @var \KadenceWP\KadenceBlocks\GrahamCampbell\ResultType\Result<\Dotenv\Parser\Value, string> */
+                /** @var \KadenceWP\KadenceBlocks\GrahamCampbell\ResultType\Result<\KadenceWP\KadenceBlocks\Dotenv\Parser\Value, string> */
                 return Error::create('a missing closing quote');
             }
 
-            /** @var \KadenceWP\KadenceBlocks\GrahamCampbell\ResultType\Result<\Dotenv\Parser\Value, string> */
+            /** @var \KadenceWP\KadenceBlocks\GrahamCampbell\ResultType\Result<\KadenceWP\KadenceBlocks\Dotenv\Parser\Value, string> */
             return Success::create($result[0]);
         })->mapError(static function (string $err) use ($value) {
             return self::getErrorMessage($err, $value);

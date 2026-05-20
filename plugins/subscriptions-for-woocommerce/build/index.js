@@ -55695,7 +55695,7 @@ const useStyles = Object(_material_ui_core_styles__WEBPACK_IMPORTED_MODULE_2__["
 
 function App(props) {
   const [loading, setLoading] = Object(react__WEBPACK_IMPORTED_MODULE_1__["useState"])(false);
-  const [state, setState] = Object(react__WEBPACK_IMPORTED_MODULE_1__["useState"])({
+  const defaultFormState = {
     EnablePlugin: true,
     AddToCartText: 'Add to cart',
     PlaceOrderText: 'Place order',
@@ -55710,6 +55710,9 @@ function App(props) {
     EnableWpsPaypalTestmode: false,
     WpsPaypalClientId: '',
     WpsPaypalClientSecret: ''
+  };
+  const [state, setState] = Object(react__WEBPACK_IMPORTED_MODULE_1__["useState"])({ ...defaultFormState,
+    ...(frontend_ajax_object.multistep_defaults || {})
   });
   const supported_payment_gateway = frontend_ajax_object.supported_gateway;
   const [showAvailblePayment, setAvailblePayment] = Object(react__WEBPACK_IMPORTED_MODULE_1__["useState"])(supported_payment_gateway);
@@ -55747,7 +55750,11 @@ function App(props) {
         return Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_0__["createElement"])(_component_FinalStep__WEBPACK_IMPORTED_MODULE_8__["default"], null);
 
       case 4:
-        return Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_0__["createElement"])("h1", null, __('Thanks for your details', 'subscriptions-for-woocommerce'));
+        return Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_0__["createElement"])(_wordpress_element__WEBPACK_IMPORTED_MODULE_0__["Fragment"], null, Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_0__["createElement"])("h2", {
+          className: "wps-title"
+        }, __('Setup complete', 'subscriptions-for-woocommerce')), Object(_wordpress_element__WEBPACK_IMPORTED_MODULE_0__["createElement"])("p", {
+          className: "wpsFormLabel"
+        }, __('Your subscription setup has been saved. Redirecting you to the plugin dashboard now.', 'subscriptions-for-woocommerce')));
 
       default:
         return __('Unknown stepIndex', 'subscriptions-for-woocommerce');
@@ -55784,7 +55791,7 @@ function App(props) {
       setTimeout(() => {
         window.location.href = frontend_ajax_object.redirect_url;
         return null;
-      }, 3000);
+      }, 1200);
     }).catch(error => {});
   };
 

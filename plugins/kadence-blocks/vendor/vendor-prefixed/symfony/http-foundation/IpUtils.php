@@ -7,8 +7,6 @@
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
- *
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
  */
 
 namespace KadenceWP\KadenceBlocks\Symfony\Component\HttpFoundation;
@@ -39,7 +37,7 @@ class IpUtils
     public static function checkIp(?string $requestIp, $ips)
     {
         if (null === $requestIp) {
-            trigger_deprecation('symfony/http-foundation', '5.4', 'Passing null as $requestIp to "%s()" is deprecated, pass an empty string instead.', __METHOD__);
+            kadence_blocks_trigger_deprecation('symfony/http-foundation', '5.4', 'Passing null as $requestIp to "%s()" is deprecated, pass an empty string instead.', __METHOD__);
 
             return false;
         }
@@ -70,7 +68,7 @@ class IpUtils
     public static function checkIp4(?string $requestIp, string $ip)
     {
         if (null === $requestIp) {
-            trigger_deprecation('symfony/http-foundation', '5.4', 'Passing null as $requestIp to "%s()" is deprecated, pass an empty string instead.', __METHOD__);
+            kadence_blocks_trigger_deprecation('symfony/http-foundation', '5.4', 'Passing null as $requestIp to "%s()" is deprecated, pass an empty string instead.', __METHOD__);
 
             return false;
         }
@@ -123,7 +121,7 @@ class IpUtils
     public static function checkIp6(?string $requestIp, string $ip)
     {
         if (null === $requestIp) {
-            trigger_deprecation('symfony/http-foundation', '5.4', 'Passing null as $requestIp to "%s()" is deprecated, pass an empty string instead.', __METHOD__);
+            kadence_blocks_trigger_deprecation('symfony/http-foundation', '5.4', 'Passing null as $requestIp to "%s()" is deprecated, pass an empty string instead.', __METHOD__);
 
             return false;
         }

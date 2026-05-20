@@ -1,19 +1,16 @@
 <?php
+
 /**
- * The API Kadence_Blocks_provided by each builder.
+ * The API provided by each builder.
  *
  * @package lucatume\DI52
- *
- * @license GPL-3.0
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
  */
-
 namespace KadenceWP\KadenceBlocks\lucatume\DI52\Builders;
 
 /**
  * Interface BuilderInterface
  *
- * @package KadenceWP\KadenceBlocks\lucatume\DI52\Builders
+ * @package \KadenceWP\KadenceBlocks\lucatume\DI52\Builders
  */
 interface BuilderInterface
 {

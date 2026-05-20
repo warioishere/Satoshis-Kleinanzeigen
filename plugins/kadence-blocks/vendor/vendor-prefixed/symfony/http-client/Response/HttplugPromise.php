@@ -7,8 +7,6 @@
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
- *
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
  */
 
 namespace KadenceWP\KadenceBlocks\Symfony\Component\HttpClient\Response;
@@ -16,7 +14,7 @@ namespace KadenceWP\KadenceBlocks\Symfony\Component\HttpClient\Response;
 use GuzzleHttp\Promise\Create;
 use GuzzleHttp\Promise\PromiseInterface as GuzzlePromiseInterface;
 use Http\Promise\Promise as HttplugPromiseInterface;
-use Psr\Http\Message\ResponseInterface as Psr7ResponseInterface;
+use KadenceWP\KadenceBlocks\Psr\Http\Message\ResponseInterface as Psr7ResponseInterface;
 
 /**
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>

@@ -1,15 +1,10 @@
 <?php
-/**
- * @license MIT
- *
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
 namespace KadenceWP\KadenceBlocks\Composer\Installers;
 
-use Composer\Composer;
-use Composer\IO\IOInterface;
-use Composer\Plugin\PluginInterface;
+use KadenceWP\KadenceBlocks\Composer\Composer;
+use KadenceWP\KadenceBlocks\Composer\IO\IOInterface;
+use KadenceWP\KadenceBlocks\Composer\Plugin\PluginInterface;
 
 class Plugin implements PluginInterface
 {

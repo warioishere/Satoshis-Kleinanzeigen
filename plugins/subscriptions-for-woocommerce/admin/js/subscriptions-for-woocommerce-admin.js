@@ -69,6 +69,153 @@
 		
 		// PRO popup end
 
+		const adminBanner = $('.wps-sfw-admin-banner');
+		const adminBannerDismiss = $('.wps-sfw-admin-banner__dismiss');
+		const adminBannerStorageKey = 'wps_sfw_admin_banner_dismissed';
+
+		if ( adminBanner.length && window.localStorage && localStorage.getItem( adminBannerStorageKey ) === '1' ) {
+			adminBanner.hide();
+		}
+
+		$(document).on('click', '.wps-sfw-admin-banner__dismiss', function(e) {
+			e.preventDefault();
+			adminBanner.slideUp(180);
+			if ( window.localStorage ) {
+				localStorage.setItem( adminBannerStorageKey, '1' );
+			}
+		});
+
+		const expertModal = $('[data-wps-sfw-expert-modal]');
+
+		if ( expertModal.length ) {
+			const expertForm = expertModal.find('[data-wps-sfw-expert-form]');
+			const expertError = expertModal.find('[data-wps-sfw-expert-error]');
+			const expertSuccess = expertModal.find('[data-wps-sfw-expert-success]');
+			const expertSuccessMessage = expertModal.find('[data-wps-sfw-expert-success-message]');
+			const expertSubmit = expertModal.find('[data-wps-sfw-expert-submit]');
+			const defaultSuccessMessage = expertSuccessMessage.text();
+			let expertCloseTimer = null;
+
+			const setExpertError = function( message ) {
+				expertError.text( message ).prop( 'hidden', ! message );
+			};
+
+			const setExpertSubmitState = function( isLoading ) {
+				expertSubmit.prop( 'disabled', isLoading );
+				expertSubmit.text( isLoading ? expertSubmit.data( 'loading-label' ) : expertSubmit.data( 'default-label' ) );
+			};
+
+			const resetExpertModal = function() {
+				if ( expertCloseTimer ) {
+					window.clearTimeout( expertCloseTimer );
+					expertCloseTimer = null;
+				}
+
+				if ( expertForm.length && expertForm[0] ) {
+					expertForm[0].reset();
+				}
+
+				expertModal.removeClass( 'is-submitting is-success' );
+				expertForm.prop( 'hidden', false );
+				expertSuccess.prop( 'hidden', true );
+				expertSuccessMessage.text( defaultSuccessMessage );
+				setExpertSubmitState( false );
+				setExpertError( '' );
+			};
+
+			const openExpertModal = function() {
+				resetExpertModal();
+				expertModal.attr( 'aria-hidden', 'false' ).addClass( 'is-open' );
+				$( 'body' ).addClass( 'wps-sfw-expert-modal-open' );
+				expertModal.find( 'input, select, textarea, button' ).filter( ':visible:first' ).trigger( 'focus' );
+			};
+
+			const closeExpertModal = function() {
+				expertModal.attr( 'aria-hidden', 'true' ).removeClass( 'is-open is-submitting is-success' );
+				$( 'body' ).removeClass( 'wps-sfw-expert-modal-open' );
+				resetExpertModal();
+			};
+
+			const normalizeExpertFormData = function( formElement ) {
+				const formData = new window.FormData( formElement );
+				const normalized = {};
+
+				formData.forEach( function( value, key ) {
+					const normalizedKey = key.replace( /\[\]$/, '' );
+
+					if ( Object.prototype.hasOwnProperty.call( normalized, normalizedKey ) ) {
+						if ( ! Array.isArray( normalized[ normalizedKey ] ) ) {
+							normalized[ normalizedKey ] = [ normalized[ normalizedKey ] ];
+						}
+
+						normalized[ normalizedKey ].push( value );
+						return;
+					}
+
+					normalized[ normalizedKey ] = normalizedKey !== key ? [ value ] : value;
+				} );
+
+				return normalized;
+			};
+
+			$(document).on( 'click', '[data-wps-sfw-open-expert-modal]', function( e ) {
+				e.preventDefault();
+				openExpertModal();
+			});
+
+			$(document).on( 'click', '[data-wps-sfw-close-expert-modal]', function( e ) {
+				e.preventDefault();
+				closeExpertModal();
+			});
+
+			$(document).on( 'keydown', function( e ) {
+				if ( 'Escape' === e.key && expertModal.hasClass( 'is-open' ) ) {
+					closeExpertModal();
+				}
+			});
+
+			expertForm.on( 'submit', function( e ) {
+				e.preventDefault();
+
+				setExpertError( '' );
+				setExpertSubmitState( true );
+				expertModal.addClass( 'is-submitting' );
+
+				$.ajax({
+					url: sfw_admin_param.ajaxurl,
+					type: 'POST',
+					dataType: 'json',
+					data: {
+						action: sfw_admin_param.talk_to_expert_action,
+						nonce: sfw_admin_param.talk_to_expert_nonce,
+						form_data: JSON.stringify( normalizeExpertFormData( this ) )
+					}
+				}).done( function( response ) {
+					if ( ! response || ! response.success ) {
+						setExpertError( response && response.data && response.data.message ? response.data.message : sfw_admin_param.talk_to_expert_error );
+						return;
+					}
+
+					expertModal.removeClass( 'is-submitting' ).addClass( 'is-success' );
+					expertForm.prop( 'hidden', true );
+					expertSuccessMessage.text( response.data && response.data.message ? response.data.message : defaultSuccessMessage );
+					expertSuccess.prop( 'hidden', false );
+
+					expertCloseTimer = window.setTimeout( function() {
+						closeExpertModal();
+					}, parseInt( sfw_admin_param.talk_to_expert_success_delay, 10 ) || 2600 );
+				}).fail( function( xhr ) {
+					const message = xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message ? xhr.responseJSON.data.message : sfw_admin_param.talk_to_expert_error;
+					setExpertError( message );
+				}).always( function() {
+					expertModal.removeClass( 'is-submitting' );
+					if ( ! expertModal.hasClass( 'is-success' ) ) {
+						setExpertSubmitState( false );
+					}
+				});
+			});
+		}
+
 	});
 
 	$(window).load(function(){
@@ -79,27 +226,6 @@
 	});
 
 	jQuery(document).ready(function() {
-        jQuery('.wp-swings_page_subscriptions_for_woocommerce_menu td.status').each(function() {
-            const html_val = jQuery(this).text();
-            jQuery(this).empty();
-            const html_tag = jQuery(this).append('<span>' + html_val + '</span>');
-            jQuery('.wp-swings_page_subscriptions_for_woocommerce_menu td.status span').css({ 'padding': '2px 10px', 'border-radius': '2px', 'text-transform': 'capitalize' });
-
-            if (html_val == 'expired') {
-                jQuery(this).children().css({ 'color': '#943126', 'background': '#F5B7B1' });
-            } else if (html_val == 'cancelled' || html_val == 'failed' ) {
-                jQuery(this).children().css({ 'color': '#873600', 'background': '#edbb99' });
-            } else if (html_val == 'active' || html_val == 'completed' ) {
-                jQuery(this).children().css({ 'color': '#196f3d', 'background': '#a9dfbf' });
-            } else if (html_val == 'on-hold') {
-                jQuery(this).children().css({ 'color': '#9a7d0a', 'background': '#f9e79f' });
-            } else if (html_val == 'paused') {
-                jQuery(this).children().css({ 'color': '#21618c', 'background': '#aed6f1' });
-            } else {
-                jQuery(this).children().css({ 'color': '#515A5A', 'background': '#CCD1D1' });
-            }
-
-        });
 
 		jQuery(document).on( 'click', '.wps_sfw_paypal_validate', function(e){
 			e.preventDefault();

@@ -1,13 +1,8 @@
 <?php
-/**
- * @license MIT
- *
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
 namespace KadenceWP\KadenceBlocks\Composer\Installers;
 
-use Composer\DependencyResolver\Pool;
+use KadenceWP\KadenceBlocks\Composer\DependencyResolver\Pool;
 
 class MantisBTInstaller extends BaseInstaller
 {

@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit7a823630fd7197034de879f12f7ac260
+class ComposerStaticInit2b363a563784ab73a27482ad263c7374
 {
     public static $prefixLengthsPsr4 = array (
         'K' =>
@@ -33,9 +33,15 @@ class ComposerStaticInit7a823630fd7197034de879f12f7ac260
         'KadenceWP\\KadenceBlocks\\Container' => __DIR__ . '/../..' . '/includes/resources/Container.php',
         'KadenceWP\\KadenceBlocks\\Database\\Database_Provider' => __DIR__ . '/../..' . '/includes/resources/Database/Database_Provider.php',
         'KadenceWP\\KadenceBlocks\\Database\\Query' => __DIR__ . '/../..' . '/includes/resources/Database/Query.php',
+        'KadenceWP\\KadenceBlocks\\Harbor\\Actions\\Get_Known_Plugins' => __DIR__ . '/../..' . '/includes/resources/Harbor/Actions/Get_Known_Plugins.php',
+        'KadenceWP\\KadenceBlocks\\Harbor\\Actions\\Render_Harbor_License_Notice' => __DIR__ . '/../..' . '/includes/resources/Harbor/Actions/Render_Harbor_License_Notice.php',
+        'KadenceWP\\KadenceBlocks\\Harbor\\Actions\\Report_Legacy_Licenses' => __DIR__ . '/../..' . '/includes/resources/Harbor/Actions/Report_Legacy_Licenses.php',
+        'KadenceWP\\KadenceBlocks\\Harbor\\Actions\\Suppress_Legacy_Inactive_Notices' => __DIR__ . '/../..' . '/includes/resources/Harbor/Actions/Suppress_Legacy_Inactive_Notices.php',
+        'KadenceWP\\KadenceBlocks\\Harbor\\Harbor_Provider' => __DIR__ . '/../..' . '/includes/resources/Harbor/Harbor_Provider.php',
         'KadenceWP\\KadenceBlocks\\Hasher' => __DIR__ . '/../..' . '/includes/resources/Hasher.php',
         'KadenceWP\\KadenceBlocks\\Health\\Health_Provider' => __DIR__ . '/../..' . '/includes/resources/Health/Health_Provider.php',
         'KadenceWP\\KadenceBlocks\\Health\\Required_Function_Verifier' => __DIR__ . '/../..' . '/includes/resources/Health/Required_Function_Verifier.php',
+        'KadenceWP\\KadenceBlocks\\Home\\Home_Content_View_Model' => __DIR__ . '/../..' . '/includes/resources/Home/Home_Content_View_Model.php',
         'KadenceWP\\KadenceBlocks\\Image_Downloader\\Cache_Primer' => __DIR__ . '/../..' . '/includes/resources/Image_Downloader/Cache_Primer.php',
         'KadenceWP\\KadenceBlocks\\Image_Downloader\\Image_Downloader' => __DIR__ . '/../..' . '/includes/resources/Image_Downloader/Image_Downloader.php',
         'KadenceWP\\KadenceBlocks\\Image_Downloader\\Image_Downloader_Provider' => __DIR__ . '/../..' . '/includes/resources/Image_Downloader/Image_Downloader_Provider.php',
@@ -138,9 +144,9 @@ class ComposerStaticInit7a823630fd7197034de879f12f7ac260
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit7a823630fd7197034de879f12f7ac260::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit7a823630fd7197034de879f12f7ac260::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit7a823630fd7197034de879f12f7ac260::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit2b363a563784ab73a27482ad263c7374::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit2b363a563784ab73a27482ad263c7374::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInit2b363a563784ab73a27482ad263c7374::$classMap;
 
         }, null, ClassLoader::class);
     }

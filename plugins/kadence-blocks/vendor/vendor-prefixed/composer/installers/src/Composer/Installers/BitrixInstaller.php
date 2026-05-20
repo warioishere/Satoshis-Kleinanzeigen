@@ -1,13 +1,8 @@
 <?php
-/**
- * @license MIT
- *
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
 namespace KadenceWP\KadenceBlocks\Composer\Installers;
 
-use Composer\Util\Filesystem;
+use KadenceWP\KadenceBlocks\Composer\Util\Filesystem;
 
 /**
  * Installer for Bitrix Framework. Supported types of extensions:

@@ -1,9 +1,4 @@
 <?php
-/**
- * @license MIT
- *
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
 namespace KadenceWP\KadenceBlocks\Composer\Installers;
 
@@ -14,12 +9,10 @@ namespace KadenceWP\KadenceBlocks\Composer\Installers;
  * kanboard.net
  *
  * Class KanboardInstaller
- * @package Composer\Installers
+ * @package \KadenceWP\KadenceBlocks\Composer\Installers
  */
 class KanboardInstaller extends BaseInstaller
 {
     /** @var array<string, string> */
-    protected $locations = array(
-        'plugin'  => 'plugins/{$name}/',
-    );
+    protected $locations = array('plugin' => 'plugins/{$name}/');
 }

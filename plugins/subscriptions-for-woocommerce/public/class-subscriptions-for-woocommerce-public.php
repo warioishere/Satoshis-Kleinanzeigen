@@ -44,6 +44,59 @@ class Subscriptions_For_Woocommerce_Public {
 	private $version;
 
 	/**
+	 * Get a stable asset version for cache-busting.
+	 *
+	 * Uses file modification time when possible, otherwise falls back to the plugin version.
+	 *
+	 * @param string $relative_path Path relative to plugin root.
+	 * @return string
+	 */
+	private function wps_sfw_asset_version( $relative_path ) {
+		$relative_path = ltrim( (string) $relative_path, '/' );
+		$path          = SUBSCRIPTIONS_FOR_WOOCOMMERCE_DIR_PATH . $relative_path;
+
+		if ( $relative_path && file_exists( $path ) ) {
+			$mtime = filemtime( $path );
+			if ( false !== $mtime ) {
+				return (string) $mtime;
+			}
+		}
+
+		return (string) $this->version;
+	}
+
+	/**
+	 * Decide whether to enqueue public-facing assets on the current request.
+	 *
+	 * @return bool
+	 */
+	private function wps_sfw_should_enqueue_public_assets() {
+		$should_enqueue = false;
+
+		if ( is_cart() || is_checkout() || is_account_page() ) {
+			$should_enqueue = true;
+		}
+
+		if ( ! $should_enqueue && function_exists( 'is_product' ) && is_product() && function_exists( 'wc_get_product' ) ) {
+			$product = wc_get_product( get_queried_object_id() );
+			if ( $product && function_exists( 'wps_sfw_check_product_is_subscription' ) ) {
+				$should_enqueue = (bool) wps_sfw_check_product_is_subscription( $product );
+			} elseif ( $product ) {
+				$should_enqueue = ( 'subscription_box' === $product->get_type() );
+			}
+		}
+
+		if ( ! $should_enqueue ) {
+			global $post;
+			if ( $post instanceof WP_Post && function_exists( 'has_shortcode' ) ) {
+				$should_enqueue = has_shortcode( (string) $post->post_content, 'wps-subscription-dashboard' );
+			}
+		}
+
+		return (bool) apply_filters( 'wps_sfw_should_enqueue_public_assets', $should_enqueue );
+	}
+
+	/**
 	 * Initialize the class and set its properties.
 	 *
 	 * @since    1.0.0
@@ -55,6 +108,48 @@ class Subscriptions_For_Woocommerce_Public {
 		$this->plugin_name = $plugin_name;
 		$this->version = $version;
 	}
+
+	/**
+	 * Get the selected customer dashboard layout.
+	 *
+	 * @return string
+	 */
+	private function wps_sfw_get_frontend_subscription_layout() {
+		$layout = get_option( 'wps_sfw_frontend_subscription_layout', 'default' );
+
+		if ( ! in_array( $layout, array( 'default', 'aurora' ), true ) ) {
+			$layout = 'default';
+		}
+
+		return (string) apply_filters( 'wps_sfw_frontend_subscription_layout', $layout );
+	}
+
+	/**
+	 * Check whether the Aurora customer dashboard layout is enabled.
+	 *
+	 * @return bool
+	 */
+	private function wps_sfw_use_aurora_frontend_subscription_layout() {
+		return 'aurora' === $this->wps_sfw_get_frontend_subscription_layout();
+	}
+
+	/**
+	 * Get the subscriptions list template path.
+	 *
+	 * @return string
+	 */
+	private function wps_sfw_get_subscription_list_template() {
+		return $this->wps_sfw_use_aurora_frontend_subscription_layout() ? 'myaccount/wps-subscriptions-aurora.php' : 'myaccount/wps-subscriptions.php';
+	}
+
+	/**
+	 * Get the subscription detail template path.
+	 *
+	 * @return string
+	 */
+	private function wps_sfw_get_subscription_detail_template() {
+		return $this->wps_sfw_use_aurora_frontend_subscription_layout() ? 'myaccount/wps-show-subscription-details-aurora.php' : 'myaccount/wps-show-subscription-details.php';
+	}
 	/**
 	 * Register the stylesheets for the public-facing side of the site.
 	 *
@@ -62,7 +157,11 @@ class Subscriptions_For_Woocommerce_Public {
 	 */
 	public function wps_sfw_public_enqueue_styles() {
 
-		wp_enqueue_style( $this->plugin_name, SUBSCRIPTIONS_FOR_WOOCOMMERCE_DIR_URL . 'public/css/subscriptions-for-woocommerce-public.css', array(), $this->version, 'all' );
+		if ( ! $this->wps_sfw_should_enqueue_public_assets() ) {
+			return;
+		}
+
+		wp_enqueue_style( $this->plugin_name, SUBSCRIPTIONS_FOR_WOOCOMMERCE_DIR_URL . 'public/css/subscriptions-for-woocommerce-public.css', array(), $this->wps_sfw_asset_version( 'public/css/subscriptions-for-woocommerce-public.css' ), 'all' );
 	}
 
 	/**
@@ -72,7 +171,14 @@ class Subscriptions_For_Woocommerce_Public {
 	 */
 	public function wps_sfw_public_enqueue_scripts() {
 
-		wp_register_script( $this->plugin_name, SUBSCRIPTIONS_FOR_WOOCOMMERCE_DIR_URL . 'public/js/subscriptions-for-woocommerce-public.js', array( 'jquery' ), $this->version, false );
+		if ( ! $this->wps_sfw_should_enqueue_public_assets() ) {
+			return;
+		}
+
+		wp_register_script( $this->plugin_name, SUBSCRIPTIONS_FOR_WOOCOMMERCE_DIR_URL . 'public/js/subscriptions-for-woocommerce-public.js', array( 'jquery' ), $this->wps_sfw_asset_version( 'public/js/subscriptions-for-woocommerce-public.js' ), true );
+		if ( function_exists( 'wp_script_add_data' ) ) {
+			wp_script_add_data( $this->plugin_name, 'strategy', 'defer' );
+		}
 		wp_localize_script(
 			$this->plugin_name,
 			'sfw_public_param',
@@ -86,19 +192,43 @@ class Subscriptions_For_Woocommerce_Public {
 		wp_enqueue_script( $this->plugin_name );
 
 		if ( is_cart() || is_checkout() ) {
-			wp_register_script( 'wps_sfw_wc_blocks', SUBSCRIPTIONS_FOR_WOOCOMMERCE_DIR_URL . 'wc-block/cart-line-items.js', array( 'jquery', 'wp-data' ), $this->version, true );
 			$text = null;
-			$wps_sfw_place_order_button_text = $this->wps_sfw_get_place_order_button_text();
-			if ( isset( $wps_sfw_place_order_button_text ) && ! empty( $wps_sfw_place_order_button_text ) && $this->wps_sfw_check_cart_has_subscription_product() ) {
-				$text = $wps_sfw_place_order_button_text;
-			}
+			$has_subscription = false;
+			$has_subscription_box = false;
+			$subscription_box_text = '';
+
 			if ( ! empty( WC()->cart->cart_contents ) ) {
 				foreach ( WC()->cart->cart_contents as $cart_item ) {
-					if ( $cart_item['data']->get_type() == 'subscription_box' ) {
-						$wps_sfw_subscription_box_place_order_button_text = get_option( 'wps_sfw_subscription_box_place_order_button_text', '' );
-						$text = $wps_sfw_subscription_box_place_order_button_text;
+					if ( empty( $cart_item['data'] ) ) {
+						continue;
+					}
+					$product = $cart_item['data'];
+					if ( function_exists( 'wps_sfw_check_product_is_subscription' ) && wps_sfw_check_product_is_subscription( $product ) ) {
+						$has_subscription = true;
+					}
+					if ( method_exists( $product, 'get_type' ) && 'subscription_box' === $product->get_type() ) {
+						$has_subscription_box = true;
+						$subscription_box_text = (string) get_option( 'wps_sfw_subscription_box_place_order_button_text', '' );
 					}
 				}
+			}
+
+			$wps_sfw_place_order_button_text = $this->wps_sfw_get_place_order_button_text();
+			if ( ! empty( $wps_sfw_place_order_button_text ) && $has_subscription ) {
+				$text = $wps_sfw_place_order_button_text;
+			}
+			if ( $has_subscription_box ) {
+				$text = $subscription_box_text;
+			}
+
+			$should_enqueue_blocks = ( $has_subscription || $has_subscription_box );
+			if ( ! $should_enqueue_blocks ) {
+				return;
+			}
+
+			wp_register_script( 'wps_sfw_wc_blocks', SUBSCRIPTIONS_FOR_WOOCOMMERCE_DIR_URL . 'wc-block/cart-line-items.js', array( 'jquery', 'wp-data', $this->plugin_name ), $this->wps_sfw_asset_version( 'wc-block/cart-line-items.js' ), true );
+			if ( function_exists( 'wp_script_add_data' ) ) {
+				wp_script_add_data( 'wps_sfw_wc_blocks', 'strategy', 'defer' );
 			}
 			wp_localize_script(
 				'wps_sfw_wc_blocks',
@@ -263,7 +393,7 @@ class Subscriptions_For_Woocommerce_Public {
 	 */
 	public function wps_sfw_get_add_to_cart_button_text() {
 
-		$wps_add_to_cart_text = get_option( 'wps_sfw_add_to_cart_text', '' );
+		$wps_add_to_cart_text = function_exists( 'wps_sfw_get_option_with_legacy_fallback' ) ? wps_sfw_get_option_with_legacy_fallback( 'wps_sfw_add_to_cart_text', '' ) : get_option( 'wps_sfw_add_to_cart_text', '' );
 		return $wps_add_to_cart_text;
 	}
 
@@ -301,7 +431,7 @@ class Subscriptions_For_Woocommerce_Public {
 	 */
 	public function wps_sfw_get_place_order_button_text() {
 
-		$wps_sfw_place_order_button_text = get_option( 'wps_sfw_place_order_button_text', '' );
+		$wps_sfw_place_order_button_text = function_exists( 'wps_sfw_get_option_with_legacy_fallback' ) ? wps_sfw_get_option_with_legacy_fallback( 'wps_sfw_place_order_button_text', '' ) : get_option( 'wps_sfw_place_order_button_text', '' );
 		return $wps_sfw_place_order_button_text;
 	}
 
@@ -1059,10 +1189,27 @@ class Subscriptions_For_Woocommerce_Public {
 		$subscription_ids = $wpdb->get_col(
 			$wpdb->prepare( $sql, $user_id, $wps_per_page, $offset )
 		);
+
+		$sql_all_subscription_ids = "
+			SELECT DISTINCT {$table}.{$id_field}
+			FROM {$table}
+			INNER JOIN {$meta_table} AS meta ON meta.{$order_id_field} = {$table}.{$id_field}
+			WHERE meta.meta_key = 'wps_customer_id'
+			AND meta.meta_value = %s
+			AND {$table}.{$type_field} = 'wps_subscriptions'
+			ORDER BY {$table}.{$id_field} DESC
+		";
+
+		$wps_all_subscription_ids = $wpdb->get_col(
+			$wpdb->prepare( $sql_all_subscription_ids, $user_id )
+		);
+
 		wc_get_template(
-			'myaccount/wps-subscriptions.php',
+			$this->wps_sfw_get_subscription_list_template(),
 			array(
 				'wps_subscriptions' => $subscription_ids,
+				'wps_all_subscription_ids' => $wps_all_subscription_ids,
+				'wps_total_count'   => $total_count,
 				'wps_current_page'  => $wps_current_page,
 				'wps_num_pages' => $wps_num_pages,
 				'paginate'      => true,
@@ -1145,7 +1292,7 @@ class Subscriptions_For_Woocommerce_Public {
 			return;
 		}
 
-		wc_get_template( 'myaccount/wps-show-subscription-details.php', array( 'wps_subscription_id' => $wps_subscription_id ), '', SUBSCRIPTIONS_FOR_WOOCOMMERCE_DIR_PATH . 'public/partials/templates/' );
+		wc_get_template( $this->wps_sfw_get_subscription_detail_template(), array( 'wps_subscription_id' => $wps_subscription_id ), '', SUBSCRIPTIONS_FOR_WOOCOMMERCE_DIR_PATH . 'public/partials/templates/' );
 	}
 
 	/**
@@ -1188,6 +1335,12 @@ class Subscriptions_For_Woocommerce_Public {
 			do_action( 'wps_sfw_subscription_cancel', $wps_subscription_id, 'Cancel' );
 
 			do_action( 'wps_sfw_cancel_susbcription', $wps_subscription_id, $user_id );
+
+			// Some gateway integrations do not update the local subscription meta on customer cancel.
+			// Keep the frontend state consistent once the cancellation flow succeeds.
+			if ( 'cancelled' !== wps_sfw_get_meta_data( $wps_subscription_id, 'wps_subscription_status', true ) ) {
+				wps_sfw_update_meta_data( $wps_subscription_id, 'wps_subscription_status', 'cancelled' );
+			}
 
 			wps_sfw_update_meta_data( $wps_subscription_id, 'wps_subscription_cancelled_by', 'by_user' );
 			wps_sfw_update_meta_data( $wps_subscription_id, 'wps_subscription_cancelled_date', time() );
@@ -2654,47 +2807,19 @@ class Subscriptions_For_Woocommerce_Public {
 
 		$subscription_product = wc_get_product( $subscription_product_id );
 
-		if ( ! $subscription_product ) {
+		if ( ! $subscription_product || 'subscription_box' !== $subscription_product->get_type() ) {
 			wp_send_json( 'Subscription product not found.' );
 		}
 
-		$server_total        = 0;
-		$attached_products   = array();
+		$validated_products = wps_sfw_validate_subscription_box_products( $subscription_product_id, $products );
 
-		foreach ( $products as $product ) {
-
-			$product_id = isset( $product['product_id'] ) ? absint( $product['product_id'] ) : 0;
-			$quantity   = isset( $product['quantity'] ) ? max( 1, absint( $product['quantity'] ) ) : 1;
-
-			if ( ! $product_id ) {
-				continue;
-			}
-
-			$product_obj = wc_get_product( $product_id );
-
-			if ( ! $product_obj ) {
-				continue;
-			}
-
-			$price = (float) $product_obj->get_price();
-
-			if ( $price <= 0 ) {
-				wp_send_json( 'Invalid product price.' );
-			}
-
-			$server_total += $price * $quantity;
-
-			$attached_products[] = array(
-				'product_id' => $product_id,
-				'name'       => $product_obj->get_name(),
-				'image'      => wp_get_attachment_image_url( $product_obj->get_image_id(), 'thumbnail' ),
-				'quantity'   => $quantity,
-			);
+		if ( empty( $validated_products['success'] ) ) {
+			wp_send_json_error( $validated_products['message'] );
 		}
 
 		// Base subscription price
 		$base_price   = (float) $subscription_product->get_price();
-		$server_total += $base_price;
+		$server_total = (float) $validated_products['total'] + $base_price;
 
 		$wps_sfw_manage_subscription_box_price = wps_sfw_get_meta_data( $subscription_product_id, 'wps_sfw_manage_subscription_box_price', true );
 		$is_pro = false;
@@ -2725,7 +2850,7 @@ class Subscriptions_For_Woocommerce_Public {
 		$cart_item_data = array(
 			'is_subscription_main'           => true,
 			'wps_sfw_subscription_box_price' => wc_format_decimal( $final_total ),
-			'wps_sfw_attached_products'      => $attached_products,
+			'wps_sfw_attached_products'      => $validated_products['attached_products'],
 
 			'wps_sfw_subscription_number'          => wps_sfw_get_meta_data( $subscription_product_id, 'wps_sfw_subscription_number', true ),
 			'wps_sfw_subscription_interval'        => wps_sfw_get_meta_data( $subscription_product_id, 'wps_sfw_subscription_interval', true ),
@@ -2745,7 +2870,7 @@ class Subscriptions_For_Woocommerce_Public {
 			array(
 				'message' => 'Subscription added to cart!',
 				'total' => $final_total,
-				'products' => $products,
+				'products' => $validated_products['attached_products'],
 			)
 		);
 	}
@@ -3211,7 +3336,7 @@ class Subscriptions_For_Woocommerce_Public {
 
 		if ( isset( $_GET['wps-show-subscription'] ) ) {
 			$wps_subscription_id = isset( $_GET['wps-show-subscription'] ) ? intval( $_GET['wps-show-subscription'] ) : 0;
-			wc_get_template( 'myaccount/wps-show-subscription-details.php', array( 'wps_subscription_id' => $wps_subscription_id ), '', SUBSCRIPTIONS_FOR_WOOCOMMERCE_DIR_PATH . 'public/partials/templates/' );
+			wc_get_template( $this->wps_sfw_get_subscription_detail_template(), array( 'wps_subscription_id' => $wps_subscription_id ), '', SUBSCRIPTIONS_FOR_WOOCOMMERCE_DIR_PATH . 'public/partials/templates/' );
 		} else {
 			$this->wps_sfw_subscription_dashboard_content();
 		}

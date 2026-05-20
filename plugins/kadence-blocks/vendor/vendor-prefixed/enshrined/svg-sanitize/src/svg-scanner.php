@@ -6,9 +6,6 @@
  * to find issues in files specified on the
  * command line, and prints a JSON output with
  * the issues found on exit.
- *
- * @license GPL-2.0-or-later
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
  */
 
 require_once( __DIR__ . '/data/AttributeInterface.php' );

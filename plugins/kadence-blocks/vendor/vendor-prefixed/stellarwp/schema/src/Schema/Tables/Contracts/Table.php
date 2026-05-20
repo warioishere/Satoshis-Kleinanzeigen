@@ -1,9 +1,4 @@
 <?php
-/**
- * @license GPL-2.0
- *
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
 namespace KadenceWP\KadenceBlocks\StellarWP\Schema\Tables\Contracts;
 
@@ -23,7 +18,7 @@ abstract class Table implements Schema_Interface {
 	protected static $base_table_name = '';
 
 	/**
-	 * @var class-string<\StellarWP\DB\DB> The db class.
+	 * @var class-string<\KadenceWP\KadenceBlocks\StellarWP\DB\DB> The db class.
 	 */
 	protected $db;
 
@@ -68,7 +63,7 @@ abstract class Table implements Schema_Interface {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param class-string<\StellarWP\DB\DB>|null $db StellarWP\DB object.
+	 * @param class-string<\KadenceWP\KadenceBlocks\StellarWP\DB\DB>|null $db StellarWP\DB object.
 	 * @param object $container The container to use.
 	 */
 	public function __construct( $db = null, $container = null ) {

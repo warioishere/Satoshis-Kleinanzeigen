@@ -1,9 +1,4 @@
-<?php
-/**
- * @license GPL-2.0-only
- *
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
- */ declare(strict_types=1);
+<?php declare(strict_types=1);
 
 namespace KadenceWP\KadenceBlocks\StellarWP\ProphecyMonorepo\ImageDownloader;
 

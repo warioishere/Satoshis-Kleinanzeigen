@@ -7,8 +7,6 @@
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
- *
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
  */
 
 namespace KadenceWP\KadenceBlocks\Symfony\Component\HttpClient;
@@ -26,17 +24,17 @@ use Http\Message\RequestFactory;
 use Http\Message\StreamFactory;
 use Http\Message\UriFactory;
 use Http\Promise\Promise;
-use Nyholm\Psr7\Factory\Psr17Factory;
-use Nyholm\Psr7\Request;
-use Nyholm\Psr7\Uri;
-use Psr\Http\Message\RequestFactoryInterface;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseFactoryInterface;
-use Psr\Http\Message\ResponseInterface as Psr7ResponseInterface;
-use Psr\Http\Message\StreamFactoryInterface;
-use Psr\Http\Message\StreamInterface;
-use Psr\Http\Message\UriFactoryInterface;
-use Psr\Http\Message\UriInterface;
+use KadenceWP\KadenceBlocks\Nyholm\Psr7\Factory\Psr17Factory;
+use KadenceWP\KadenceBlocks\Nyholm\Psr7\Request;
+use KadenceWP\KadenceBlocks\Nyholm\Psr7\Uri;
+use KadenceWP\KadenceBlocks\Psr\Http\Message\RequestFactoryInterface;
+use KadenceWP\KadenceBlocks\Psr\Http\Message\RequestInterface;
+use KadenceWP\KadenceBlocks\Psr\Http\Message\ResponseFactoryInterface;
+use KadenceWP\KadenceBlocks\Psr\Http\Message\ResponseInterface as Psr7ResponseInterface;
+use KadenceWP\KadenceBlocks\Psr\Http\Message\StreamFactoryInterface;
+use KadenceWP\KadenceBlocks\Psr\Http\Message\StreamInterface;
+use KadenceWP\KadenceBlocks\Psr\Http\Message\UriFactoryInterface;
+use KadenceWP\KadenceBlocks\Psr\Http\Message\UriInterface;
 use KadenceWP\KadenceBlocks\Symfony\Component\HttpClient\Internal\HttplugWaitLoop;
 use KadenceWP\KadenceBlocks\Symfony\Component\HttpClient\Response\HttplugPromise;
 use KadenceWP\KadenceBlocks\Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;

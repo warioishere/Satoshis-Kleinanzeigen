@@ -7,8 +7,6 @@
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
- *
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
  */
 
 namespace KadenceWP\KadenceBlocks\Symfony\Component\HttpClient\DependencyInjection;
@@ -26,7 +24,7 @@ final class HttpClientPass implements CompilerPassInterface
     public function __construct(string $clientTag = 'http_client.client')
     {
         if (0 < \func_num_args()) {
-            trigger_deprecation('symfony/http-client', '5.3', 'Configuring "%s" is deprecated.', __CLASS__);
+            kadence_blocks_trigger_deprecation('symfony/http-client', '5.3', 'Configuring "%s" is deprecated.', __CLASS__);
         }
 
         $this->clientTag = $clientTag;

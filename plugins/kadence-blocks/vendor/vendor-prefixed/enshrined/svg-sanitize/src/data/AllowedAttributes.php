@@ -1,19 +1,14 @@
 <?php
-/**
- * @license GPL-2.0-or-later
- *
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
- */
+
 namespace KadenceWP\KadenceBlocks\enshrined\svgSanitize\data;
 
 /**
  * Class AllowedAttributes
  *
- * @package KadenceWP\KadenceBlocks\enshrined\svgSanitize\data
+ * @package \KadenceWP\KadenceBlocks\enshrined\svgSanitize\data
  */
 class AllowedAttributes implements AttributeInterface
 {
-
     /**
      * Returns an array of attributes
      *
@@ -115,7 +110,6 @@ class AllowedAttributes implements AttributeInterface
             'version',
             'width',
             'xmlns',
-
             // SVG
             'accent-height',
             'accumulate',
@@ -295,7 +289,6 @@ class AllowedAttributes implements AttributeInterface
             'y2',
             'z',
             'zoomandpan',
-
             // MathML
             'accent',
             'accentunder',
@@ -350,7 +343,6 @@ class AllowedAttributes implements AttributeInterface
             'voffset',
             'width',
             'xmlns',
-
             // XML
             'xlink:href',
             'xml:id',

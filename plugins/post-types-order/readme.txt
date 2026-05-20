@@ -2,8 +2,8 @@
 Contributors: nsp-code, tdgu
 Tags: post order, posts order, post sort, posts sort, post types order
 Requires at least: 2.8
-Tested up to: 6.9
-Stable tag: 2.4.6
+Tested up to: 7.0
+Stable tag: 2.4.7
 Requires PHP: 5.6
 License: GPLv2 or later
 
@@ -115,6 +115,10 @@ Consider upgrading to our advanced version of this plugin, which offers these fe
 
 
 == Changelog ==
+
+= 2.4.7 = 
+ - WordPress 7.0 compatibility check and tag update. 
+ - Mention the new AI Prompts feature available in APTO. 
 
 = 2.4.6 = 
  - Add a Settings link for the plugin in the Plugins area to make it easier for users to access and get started.

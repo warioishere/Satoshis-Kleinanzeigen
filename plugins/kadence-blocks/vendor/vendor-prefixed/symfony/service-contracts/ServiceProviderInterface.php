@@ -7,8 +7,6 @@
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
- *
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
  */
 
 namespace KadenceWP\KadenceBlocks\Symfony\Contracts\Service;
@@ -28,7 +26,7 @@ interface ServiceProviderInterface extends ContainerInterface
      *
      * Examples:
      *
-     *  * ['logger' => 'KadenceWP\KadenceBlocks\Psr\Log\LoggerInterface'] means the object provides a service named "logger" that implements KadenceWP\KadenceBlocks\Psr\Log\LoggerInterface
+     *  * ['logger' => 'KadenceWP\KadenceBlocks\Psr\Log\LoggerInterface'] means the object provides a service named "logger" that implements Psr\Log\LoggerInterface
      *  * ['foo' => '?'] means the container provides service name "foo" of unspecified type
      *  * ['bar' => '?Bar\Baz'] means the container provides a service "bar" of type Bar\Baz|null
      *

@@ -7,13 +7,11 @@
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
- *
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
  */
 
 namespace KadenceWP\KadenceBlocks\Symfony\Component\HttpFoundation\Session\Attribute;
 
-trigger_deprecation('symfony/http-foundation', '5.3', 'The "%s" class is deprecated.', NamespacedAttributeBag::class);
+kadence_blocks_trigger_deprecation('symfony/http-foundation', '5.3', 'The "%s" class is deprecated.', NamespacedAttributeBag::class);
 
 /**
  * This class provides structured storage of session attributes using

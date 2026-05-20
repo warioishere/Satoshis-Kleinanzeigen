@@ -7,8 +7,6 @@
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
- *
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
  */
 
 namespace KadenceWP\KadenceBlocks\Symfony\Component\HttpFoundation\Session\Storage;
@@ -101,8 +99,8 @@ class NativeSessionStorage implements SessionStorageInterface
      */
     public function __construct(array $options = [], $handler = null, ?MetadataBag $metaBag = null)
     {
-        if (!\extension_loaded('KadenceWP\KadenceBlocks\session')) {
-            throw new \LogicException('PHP extension "KadenceWP\KadenceBlocks\session" is required.');
+        if (!\extension_loaded('session')) {
+            throw new \LogicException('PHP extension "session" is required.');
         }
 
         $options += [
@@ -415,11 +413,11 @@ class NativeSessionStorage implements SessionStorageInterface
         foreach ($options as $key => $value) {
             if (isset($validOptions[$key])) {
                 if (str_starts_with($key, 'upload_progress.')) {
-                    trigger_deprecation('symfony/http-foundation', '5.4', 'Support for the "%s" session option is deprecated. The settings prefixed with "session.upload_progress." can not be changed at runtime.', $key);
+                    kadence_blocks_trigger_deprecation('symfony/http-foundation', '5.4', 'Support for the "%s" session option is deprecated. The settings prefixed with "session.upload_progress." can not be changed at runtime.', $key);
                     continue;
                 }
                 if ('url_rewriter.tags' === $key) {
-                    trigger_deprecation('symfony/http-foundation', '5.4', 'Support for the "%s" session option is deprecated. Use "trans_sid_tags" instead.', $key);
+                    kadence_blocks_trigger_deprecation('symfony/http-foundation', '5.4', 'Support for the "%s" session option is deprecated. Use "trans_sid_tags" instead.', $key);
                 }
                 if ('cookie_samesite' === $key && \PHP_VERSION_ID < 70300) {
                     // PHP < 7.3 does not support same_site cookies. We will emulate it in

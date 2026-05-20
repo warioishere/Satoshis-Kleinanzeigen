@@ -1,9 +1,4 @@
 <?php
-/**
- * @license BSD-3-Clause
- *
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
 declare(strict_types=1);
 
@@ -103,7 +98,7 @@ final class RepositoryBuilder
     /**
      * Return the array of default adapters.
      *
-     * @return \Generator<\Dotenv\Repository\Adapter\AdapterInterface>
+     * @return \Generator<\KadenceWP\KadenceBlocks\Dotenv\Repository\Adapter\AdapterInterface>
      */
     private static function defaultAdapters()
     {

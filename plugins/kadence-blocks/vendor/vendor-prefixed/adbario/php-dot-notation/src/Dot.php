@@ -6,8 +6,6 @@
  * @author  Riku Särkinen <riku@adbar.io>
  * @link    https://github.com/adbario/php-dot-notation
  * @license https://github.com/adbario/php-dot-notation/blob/3.x/LICENSE.md (MIT License)
- *
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
  */
 
 namespace KadenceWP\KadenceBlocks\Adbar;

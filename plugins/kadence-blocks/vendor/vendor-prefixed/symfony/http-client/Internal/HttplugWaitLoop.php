@@ -7,18 +7,16 @@
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
- *
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
  */
 
 namespace KadenceWP\KadenceBlocks\Symfony\Component\HttpClient\Internal;
 
 use Http\Client\Exception\NetworkException;
 use Http\Promise\Promise;
-use Psr\Http\Message\RequestInterface as Psr7RequestInterface;
-use Psr\Http\Message\ResponseFactoryInterface;
-use Psr\Http\Message\ResponseInterface as Psr7ResponseInterface;
-use Psr\Http\Message\StreamFactoryInterface;
+use KadenceWP\KadenceBlocks\Psr\Http\Message\RequestInterface as Psr7RequestInterface;
+use KadenceWP\KadenceBlocks\Psr\Http\Message\ResponseFactoryInterface;
+use KadenceWP\KadenceBlocks\Psr\Http\Message\ResponseInterface as Psr7ResponseInterface;
+use KadenceWP\KadenceBlocks\Psr\Http\Message\StreamFactoryInterface;
 use KadenceWP\KadenceBlocks\Symfony\Component\HttpClient\Response\StreamableInterface;
 use KadenceWP\KadenceBlocks\Symfony\Component\HttpClient\Response\StreamWrapper;
 use KadenceWP\KadenceBlocks\Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;

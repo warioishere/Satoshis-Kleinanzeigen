@@ -1,9 +1,4 @@
 <?php
-/**
- * @license GPL-2.0
- *
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
 namespace KadenceWP\KadenceBlocks\StellarWP\Arrays;
 
@@ -350,7 +345,7 @@ class Arr {
 	 *
 	 * @return mixed
 	 */
-	public static function first( $array, callable $callback = null, $default = null ) {
+	public static function first( $array, ?callable $callback = null, $default = null ) {
 		if ( is_null( $callback ) ) {
 			if ( empty( $array ) ) {
 				return self::value( $default );
@@ -712,7 +707,7 @@ class Arr {
 	 *
 	 * @return mixed
 	 */
-	public static function last( $array, callable $callback = null, $default = null ) {
+	public static function last( $array, ?callable $callback = null, $default = null ) {
 		if ( is_null( $callback ) ) {
 			return empty( $array ) ? self::value( $default ) : end( $array );
 		}

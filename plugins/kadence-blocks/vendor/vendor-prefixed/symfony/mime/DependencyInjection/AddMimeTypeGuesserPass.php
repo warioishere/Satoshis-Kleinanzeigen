@@ -7,8 +7,6 @@
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
- *
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
  */
 
 namespace KadenceWP\KadenceBlocks\Symfony\Component\Mime\DependencyInjection;
@@ -30,7 +28,7 @@ class AddMimeTypeGuesserPass implements CompilerPassInterface
     public function __construct(string $mimeTypesService = 'mime_types', string $mimeTypeGuesserTag = 'mime.mime_type_guesser')
     {
         if (0 < \func_num_args()) {
-            trigger_deprecation('symfony/mime', '5.3', 'Configuring "%s" is deprecated.', __CLASS__);
+            kadence_blocks_trigger_deprecation('symfony/mime', '5.3', 'Configuring "%s" is deprecated.', __CLASS__);
         }
 
         $this->mimeTypesService = $mimeTypesService;

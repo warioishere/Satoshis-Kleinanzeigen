@@ -7,8 +7,6 @@
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
- *
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
  */
 
 namespace KadenceWP\KadenceBlocks\Symfony\Component\HttpFoundation\Session\Storage;
@@ -95,7 +93,7 @@ class MetadataBag implements SessionBagInterface
     }
 
     /**
-     * Stamps a new KadenceWP\KadenceBlocks\session's metadata.
+     * Stamps a new session's metadata.
      *
      * @param int|null $lifetime Sets the cookie lifetime for the session cookie. A null value
      *                           will leave the system settings unchanged, 0 sets the cookie

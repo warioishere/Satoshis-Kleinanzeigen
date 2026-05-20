@@ -7,8 +7,6 @@
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
- *
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
  */
 
 namespace KadenceWP\KadenceBlocks\Symfony\Contracts\Service;
@@ -83,7 +81,7 @@ trait ServiceSubscriberTrait
                 }
 
                 if (\PHP_VERSION_ID >= 80000) {
-                    trigger_deprecation('symfony/service-contracts', '2.5', 'Using "%s" in "%s" without using the "%s" attribute on any method is deprecated.', ServiceSubscriberTrait::class, self::class, SubscribedService::class);
+                    kadence_blocks_trigger_deprecation('symfony/service-contracts', '2.5', 'Using "%s" in "%s" without using the "%s" attribute on any method is deprecated.', ServiceSubscriberTrait::class, self::class, SubscribedService::class);
                 }
 
                 $services[self::class.'::'.$method->name] = '?'.($returnType instanceof \ReflectionNamedType ? $returnType->getName() : $returnType);

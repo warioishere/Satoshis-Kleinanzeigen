@@ -1,19 +1,16 @@
 <?php
+
 /**
- * The API Kadence_Blocks_provided by a Builder that can be re-initialized.
+ * The API provided by a Builder that can be re-initialized.
  *
  * @package KadenceWP\KadenceBlocks\lucatume\DI52\Builders
- *
- * @license GPL-3.0
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
  */
-
 namespace KadenceWP\KadenceBlocks\lucatume\DI52\Builders;
 
 /**
  * Interface ReinitializableBuilderInterface
  *
- * @package KadenceWP\KadenceBlocks\lucatume\DI52\Builders
+ * @package \KadenceWP\KadenceBlocks\lucatume\DI52\Builders
  */
 interface ReinitializableBuilderInterface
 {

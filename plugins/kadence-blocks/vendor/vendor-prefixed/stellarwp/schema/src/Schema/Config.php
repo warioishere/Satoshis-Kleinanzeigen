@@ -1,9 +1,4 @@
 <?php
-/**
- * @license GPL-2.0
- *
- * Modified using {@see https://github.com/BrianHenryIE/strauss}.
- */
 
 namespace KadenceWP\KadenceBlocks\StellarWP\Schema;
 
@@ -20,7 +15,7 @@ class Config {
 	/**
 	 * StellarWP\DB class.
 	 *
-	 * @var class-string<\StellarWP\DB\DB>
+	 * @var class-string<\KadenceWP\KadenceBlocks\StellarWP\DB\DB>
 	 */
 	private static $db_class;
 
@@ -40,7 +35,7 @@ class Config {
 	/**
 	 * Get the StellarWP\DB class.
 	 *
-	 * @return class-string<\StellarWP\DB\DB>
+	 * @return class-string<\KadenceWP\KadenceBlocks\StellarWP\DB\DB>
 	 */
 	public static function get_db() : string {
 		if ( self::$db_class === null ) {
@@ -80,7 +75,7 @@ class Config {
 	/**
 	 * Set the StellarWP\DB class.
 	 *
-	 * @param class-string<\StellarWP\DB\DB> $db_class StellarWP\DB class.
+	 * @param class-string<\KadenceWP\KadenceBlocks\StellarWP\DB\DB> $db_class StellarWP\DB class.
 	 */
 	public static function set_db( string $db_class ) {
 		self::$db_class = $db_class;
