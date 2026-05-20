@@ -71,7 +71,7 @@ function sk_process_product_meta( int $post_id, array $data = [] ) {
 
     // Validate sale price against regular price
     if ( isset( $data['_sale_price'] ) && isset( $data['_regular_price'] ) ) {
-        if ( (float) wc_format_decimal( $data['_regular_price'] ) <= (float) wc_format_decimal( $data['_sale_price'] ) ) {
+        if ( (float) wc_format_decimal( sk_parse_price_input( $data['_regular_price'] ) ) <= (float) wc_format_decimal( sk_parse_price_input( $data['_sale_price'] ) ) ) {
             $data['_sale_price'] = '';
         }
     }

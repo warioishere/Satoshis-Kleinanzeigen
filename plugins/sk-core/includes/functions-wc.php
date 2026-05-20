@@ -1,6 +1,26 @@
 <?php
 
 /**
+ * Sanitize a free-text price input before handing it to wc_format_decimal.
+ *
+ * Vendors type things like "180.000" (DE) or "180'000" (CH) meaning 180k —
+ * wc_format_decimal reads "." as the decimal separator (WC default) and
+ * silently turns that into 180.0, which then gets rounded to 180 because
+ * SAT is configured with num_decimals=0. For integer-only currencies we
+ * therefore strip every non-digit before parsing.
+ */
+function sk_parse_price_input( $value ) {
+    $value = (string) $value;
+    if ( '' === $value ) {
+        return '';
+    }
+    if ( (int) wc_get_price_decimals() === 0 ) {
+        return preg_replace( '/\D/', '', $value );
+    }
+    return $value;
+}
+
+/**
  * Save variation product price with optional sale schedule.
  */
 function sk_save_product_price( $product_id, $regular_price, $sale_price = '', $date_from = '', $date_to = '' ) {
@@ -10,8 +30,8 @@ function sk_save_product_price( $product_id, $regular_price, $sale_price = '', $
         return;
     }
 
-    $regular_price = wc_format_decimal( $regular_price );
-    $sale_price    = '' === $sale_price ? '' : wc_format_decimal( $sale_price );
+    $regular_price = wc_format_decimal( sk_parse_price_input( $regular_price ) );
+    $sale_price    = '' === $sale_price ? '' : wc_format_decimal( sk_parse_price_input( $sale_price ) );
     $date_from     = wc_clean( $date_from );
     $date_to       = wc_clean( $date_to );
     $now           = sk_current_datetime();

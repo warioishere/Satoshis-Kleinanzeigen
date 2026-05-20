@@ -1,4 +1,4 @@
-import { getData } from '@/utils/api';
+import { getDatatableData } from '@/utils/api';
 import {
 	formatPercentage,
 	formatTime,
@@ -239,6 +239,9 @@ const createCellFormatter = ( format, columnId ) => {
 	return ( row ) => {
 		try {
 			const value = row[columnId] ?? '';
+			if ( format === FORMATS.PERCENTAGE && ( null === row[columnId] || undefined === row[columnId] || '' === row[columnId]) ) {
+				return __( 'N/A', 'burst-statistics' );
+			}
 			const formatted = formatter( value, columnId, row );
 
 			// Add a-b test icon when conversion_rate or conversions column are present, but not both.
@@ -360,9 +363,8 @@ const getDataTableData = async( params ) => {
 
 		const { startDate, endDate, range, args, columnsOptions, type } = params;
 
-		const endpoint = 'ecommerce-datatable' === type ? 'ecommerce/datatable' : 'datatable';
-
-		const { data } = await getData( endpoint, startDate, endDate, range, args );
+		const isEcommerce = 'ecommerce-datatable' === type;
+		const { data } = await getDatatableData( args.id, isEcommerce, startDate, endDate, range, args );
 
 		if ( ! data ) {
 			throw new Error( 'No data received from API' );

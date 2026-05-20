@@ -1,6 +1,7 @@
 <?php
 namespace Burst\Admin\App;
 
+use Burst\Admin\Abilities_Api\Abilities_Api;
 use Burst\Admin\App\Fields\Fields;
 use Burst\Admin\App\Fields\Reporting_Fields;
 use Burst\Admin\App\Menu\Menu;
@@ -13,6 +14,7 @@ use Burst\Frontend\Goals\Goal;
 use Burst\Frontend\Goals\Goals;
 use Burst\TeamUpdraft\Installer\Installer;
 use Burst\Traits\Admin_Helper;
+use Burst\Traits\Database_Helper;
 use Burst\Traits\Helper;
 use Burst\Traits\Sanitize;
 use Burst\Traits\Save;
@@ -30,6 +32,7 @@ require_once BURST_PATH . 'includes/Admin/App/media/media-override.php';
 class App {
 	use Helper;
 	use Admin_Helper;
+	use Database_Helper;
 	use Save;
 	use Sanitize;
 
@@ -48,11 +51,13 @@ class App {
 	 */
 	public function init(): void {
 		add_action( 'admin_menu', [ $this, 'add_menu' ] );
-		add_action( 'wp_ajax_burst_rest_api_fallback', [ $this, 'rest_api_fallback' ] );
+		add_action( 'wp_ajax_burst_rest_api_fallback_do_action', [ $this, 'rest_api_fallback_do_action' ] );
+		add_action( 'wp_ajax_burst_rest_api_fallback_get_action', [ $this, 'rest_api_fallback_get_action' ] );
 		add_action( 'admin_footer', [ $this, 'fix_duplicate_menu_item' ], 1 );
 		add_action( 'burst_after_save_field', [ $this, 'update_for_multisite' ], 10, 4 );
 		add_action( 'rest_api_init', [ $this, 'settings_rest_route' ], 8 );
 		add_filter( 'burst_localize_script', [ $this, 'extend_localized_settings_for_dashboard' ], 10, 1 );
+		add_filter( 'burst_datatable_pre_data', [ $this, 'handle_dummy_datatable_data' ], 10, 2 );
 		add_action( 'burst_weekly', [ $this, 'init_cleanup' ] );
 		add_action( 'burst_weekly_clear_referrers_cron', [ $this, 'weekly_clear_referrers_table' ] );
 		add_action( 'burst_weekly_clear_spam_browsers_cron', [ $this, 'weekly_clear_spam_browsers' ] );
@@ -64,8 +69,6 @@ class App {
 
 		$onboarding = new Burst_Onboarding();
 		$onboarding->init();
-
-		add_action( 'admin_init', [ $this, 'maybe_redirect_to_settings_page' ] );
 	}
 
 	/**
@@ -80,31 +83,13 @@ class App {
 	}
 
 	/**
-	 * After activation, redirect the user to the settings page.
-	 */
-	public function maybe_redirect_to_settings_page(): void {
-		// not processing form data, only a conditional redirect, which is available only temporarily.
-		// phpcs:ignore
-		if ( get_transient( 'burst_redirect_to_settings_page' ) && ( ! isset( $_GET['page'] ) || $_GET['page'] !== 'burst' ) ) {
-			delete_transient( 'burst_redirect_to_settings_page' );
-			// we don't redirect when installed through the onboarding of another plugin.
-			if ( get_site_option( 'teamupdraft_installation_source_burst-statistics' ) ) {
-				return;
-			}
-
-			wp_safe_redirect( $this->admin_url( 'burst' ) );
-			exit;
-		}
-	}
-
-	/**
 	 * Remove the fallback notice if REST API is working again
 	 */
 	public function remove_fallback_notice(): void {
 		if ( get_option( 'burst_ajax_fallback_active' ) !== false ) {
 			delete_option( 'burst_ajax_fallback_active' );
 			delete_option( 'burst_ajax_fallback_active_timestamp' );
-			\Burst\burst_loader()->admin->tasks->schedule_task_validation();
+			burst_loader()->admin->tasks->schedule_task_validation();
 		}
 	}
 
@@ -364,6 +349,7 @@ class App {
 				'week-to-date',
 				'month-to-date',
 				'year-to-date',
+				'all-time',
 			]
 		);
 	}
@@ -375,15 +361,84 @@ class App {
 	 * @return array<string, mixed>
 	 */
 	public function extend_localized_settings_for_dashboard( array $data ): array {
-		$data['menu']   = $this->menu->get();
-		$data['fields'] = $this->fields->get();
+		$data['menu']              = $this->menu->get();
+		$data['fields']            = $this->fields->get();
+		$data['chat_availability'] = Abilities_Api::get_chat_availability();
 		return $data;
+	}
+
+	/**
+	 * AJAX fallback handler for write actions (manage capability).
+	 */
+	public function rest_api_fallback_do_action(): void {
+		if ( ! $this->user_can_manage() ) {
+			$this->send_ajax_fallback_forbidden_response();
+		}
+
+		$this->rest_api_fallback( 'do_action' );
+	}
+
+	/**
+	 * AJAX fallback handler for read actions (view capability).
+	 */
+	public function rest_api_fallback_get_action(): void {
+		if ( ! $this->user_can_view() ) {
+			$this->send_ajax_fallback_forbidden_response();
+		}
+
+		$this->rest_api_fallback( 'get_action' );
+	}
+
+	/**
+	 * Return a standardized forbidden response for AJAX fallback requests.
+	 */
+	private function send_ajax_fallback_forbidden_response(): void {
+		$response = new \WP_REST_Response(
+			[
+				'success' => false,
+				'message' => 'You do not have permission to perform this action.',
+			]
+		);
+
+		if ( ob_get_length() ) {
+			ob_clean();
+		}
+		header( 'Content-Type: application/json' );
+		echo wp_json_encode( $response );
+		exit;
+	}
+
+	/**
+	 * Determine whether a fallback action belongs to the write/do_action scope.
+	 */
+	private function is_do_action_fallback_request( string $action ): bool {
+		if ( $action === '' ) {
+			return false;
+		}
+
+		$do_action_fragments = [
+			'/options/set',
+			'/fields/set',
+			'/goals/add',
+			'/goals/delete',
+			'/goals/set',
+			'/goals/add_predefined',
+			'/do_action/',
+		];
+
+		foreach ( $do_action_fragments as $fragment ) {
+			if ( str_contains( $action, $fragment ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
 	 * If the rest api is blocked, the code will try an admin ajax call as fall back.
 	 */
-	public function rest_api_fallback(): void {
+	public function rest_api_fallback( string $context = '' ): void {
 		$response  = [];
 		$error     = false;
 		$action    = false;
@@ -400,7 +455,15 @@ class App {
 		if ( isset( $_GET['rest_action'] ) ) {
 			// phpcs:ignore
 			$action = sanitize_text_field( $_GET['rest_action'] );
-			if ( str_contains( $action, 'burst/v1/data/ecommerce/' ) ) {
+
+			// Handle granular datatable endpoints in fallback.
+			if ( str_contains( $action, 'burst/v1/data/ecommerce/datatable/' ) ) {
+				$data_type = 'datatable-' . str_replace( 'burst/v1/data/ecommerce/datatable/', '', $action );
+				// Manually set is_ecommerce for the fallback request.
+				$_GET['is_ecommerce'] = true;
+			} elseif ( str_contains( $action, 'burst/v1/data/datatable/' ) ) {
+				$data_type = 'datatable-' . str_replace( 'burst/v1/data/datatable/', '', $action );
+			} elseif ( str_contains( $action, 'burst/v1/data/ecommerce/' ) ) {
 				$data_type = strtolower( str_replace( 'burst/v1/data/ecommerce/', '', $action ) );
 			} elseif ( str_contains( $action, 'burst/v1/data/' ) ) {
 				$data_type = strtolower( str_replace( 'burst/v1/data/', '', $action ) );
@@ -421,13 +484,29 @@ class App {
 				$action = $req_path;
 				if ( ! $data_type && strpos( $action, 'burst/v1/data/' ) !== false ) {
 					// Extract data type for /data/* when using POST.
-					$data_type = strtolower( str_replace( 'burst/v1/data/', '', $action ) );
+					if ( str_contains( $action, 'burst/v1/data/ecommerce/datatable/' ) ) {
+						$data_type                            = 'ecommerce-datatable-' . str_replace( 'burst/v1/data/ecommerce/datatable/', '', $action );
+						$request_data['data']['is_ecommerce'] = true;
+					} elseif ( str_contains( $action, 'burst/v1/data/datatable/' ) ) {
+						$data_type = 'datatable-' . str_replace( 'burst/v1/data/datatable/', '', $action );
+					} else {
+						$data_type = strtolower( str_replace( 'burst/v1/data/', '', $action ) );
+					}
 				}
 			}
 			$data = isset( $request_data['data'] ) && is_array( $request_data['data'] ) ? $request_data['data'] : [];
 
 			if ( strpos( $action, 'burst/v1/do_action/' ) !== false ) {
 				$do_action = strtolower( str_replace( 'burst/v1/do_action/', '', $action ) );
+			}
+		}
+
+		// Enforce read/write split for fallback handlers.
+		if ( $context !== '' ) {
+			$is_do_action = $this->is_do_action_fallback_request( (string) $action );
+
+			if ( ( $context === 'do_action' && ! $is_do_action ) || ( $context === 'get_action' && $is_do_action ) ) {
+				$this->send_ajax_fallback_forbidden_response();
 			}
 		}
 
@@ -456,7 +535,7 @@ class App {
 
 		// Normalize/merge params from GET and POST data.
 		$merged = $get_params;
-		foreach ( [ 'goal_id', 'type', 'date_start', 'date_end', 'args', 'search', 'filters', 'metrics', 'group_by', 'isOnboarding' ] as $k ) {
+		foreach ( [ 'goal_id', 'type', 'date_start', 'date_end', 'args', 'search', 'filters', 'metrics', 'group_by', 'isOnboarding', 'id', 'is_ecommerce' ] as $k ) {
 			if ( array_key_exists( $k, $data ) ) {
 				$merged[ $k ] = $data[ $k ];
 			}
@@ -474,7 +553,7 @@ class App {
 
 		// Build WP_REST_Request with merged params.
 		$request = new \WP_REST_Request();
-		foreach ( [ 'goal_id', 'type', 'nonce', 'date_start', 'date_end', 'args', 'search', 'filters', 'metrics', 'group_by' ] as $arg ) {
+		foreach ( [ 'goal_id', 'type', 'nonce', 'date_start', 'date_end', 'args', 'search', 'filters', 'metrics', 'group_by', 'id', 'is_ecommerce' ] as $arg ) {
 			if ( isset( $merged[ $arg ] ) ) {
 				$request->set_param( $arg, $merged[ $arg ] );
 			}
@@ -537,24 +616,30 @@ class App {
 		?>
 		<style id="burst-skeleton-styles">
 			/* Hide notices in the Burst menu */
-			.toplevel_page_burst .notice {
+			.toplevel_page_burst .notice, .toplevel_page_burst .error {
 				display: none;
 			}
 
-			/* Base styles for the Burst statistics container */
+			/* Skeleton color tokens. Dark values are single-sourced on :root so both
+				the .dark class path and the media-query path reuse the same literals. */
+			:root {
+				--burst-skeleton-dark-page: oklch(0.184 0.015 144.76);
+				--burst-skeleton-dark-panel: oklch(0.234 0.0095 144.76);
+				--burst-skeleton-dark-pulse: oklch(0.34 0.0147 144.76);
+			}
+
 			#burst-statistics {
-				/* Add any base styles for the container */
+				--burst-skeleton-panel: rgb(255 255 255);
+				--burst-skeleton-pulse: rgb(229 231 235);
 			}
 
 			/* Background colors */
 			#burst-statistics .bg-white {
-				--tw-bg-opacity: 1;
-				background-color: rgb(255 255 255 / var(--tw-bg-opacity));
+				background-color: var(--burst-skeleton-panel);
 			}
 
 			#burst-statistics .bg-gray-200 {
-				--tw-bg-opacity: 1;
-				background-color: rgb(229 231 235 / var(--tw-bg-opacity));
+				background-color: var(--burst-skeleton-pulse);
 			}
 
 			/* Layout */
@@ -664,15 +749,13 @@ class App {
 				min-height: 100%;
 			}
 
-			#burst-statistics .max-w-screen-2xl {
+			#burst-statistics .max-w-(--breakpoint-2xl) {
 				max-width: 1600px;
 			}
 
 			/* Effects */
 			#burst-statistics .shadow-md {
-				--tw-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-				--tw-shadow-colored: 0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -2px var(--tw-shadow-color);
-				box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+				box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 			}
 
 			#burst-statistics .rounded-md {
@@ -697,8 +780,7 @@ class App {
 			}
 
 			#burst-statistics .blur-sm {
-				--tw-blur: blur(4px);
-				filter: var(--tw-blur);
+				filter: blur(4px);
 			}
 
 			/* Borders */
@@ -718,9 +800,7 @@ class App {
 				#burst-statistics .max-sm\:w-32 {
 					width: 8rem;
 				}
-			}
 
-			@media not all and (min-width: 640px) {
 				#burst-statistics .max-sm\:col-span-12 {
 					grid-column: span 12 / span 12;
 				}
@@ -729,11 +809,64 @@ class App {
 					grid-row: span 1 / span 1;
 				}
 			}
+
+			/* Dark mode overrides — mirror token values from dark-scope-tokens.css so the
+				skeleton renders correctly before Tailwind loads. Utility rules keep using
+				--burst-skeleton-panel/pulse; we just swap those to the dark literals here.
+				background-color on #burst-statistics itself covers the container bg. */
+			#burst-statistics.dark {
+				--burst-skeleton-panel: var(--burst-skeleton-dark-panel);
+				--burst-skeleton-pulse: var(--burst-skeleton-dark-pulse);
+				background-color: var(--burst-skeleton-dark-page);
+			}
+
+			/* System dark preference — applies from first paint, independent of JS,
+				and also covers the WP admin body bg around the skeleton to prevent flash.
+				The :not(.light) / :not(.burst-light) guards let an explicit user
+				choice (set synchronously by the inline script below) override the
+				system preference — otherwise a user who forces light on a dark OS
+				would briefly see the dark skeleton. */
+			@media (prefers-color-scheme: dark) {
+				body.toplevel_page_burst:not(.burst-light) {
+					background-color: var(--burst-skeleton-dark-page);
+				}
+
+				#burst-statistics:not(.light) {
+					--burst-skeleton-panel: var(--burst-skeleton-dark-panel);
+					--burst-skeleton-pulse: var(--burst-skeleton-dark-pulse);
+					background-color: var(--burst-skeleton-dark-page);
+				}
+			}
 		</style>
 		<div id="burst-statistics" class="burst">
+			<script>
+				// Apply theme class from stored preference or system preference to prevent flash.
+				// Stored value is JSON-stringified by the React app (setLocalStorage) and may be
+				// '"light"', '"dark"', or '"system"'. Treat 'system' and missing value as "follow OS".
+				// When the user has explicitly forced light, we add a .light / .burst-light class
+				// so the prefers-color-scheme: dark media query above is suppressed.
+				(function() {
+					var raw = localStorage.getItem( 'burst_theme_preference' );
+					var pref = null;
+					if ( raw ) {
+						try { pref = JSON.parse( raw ); } catch ( e ) { pref = raw; }
+					}
+					var prefersDark = window.matchMedia && window.matchMedia( '(prefers-color-scheme: dark)' ).matches;
+					var isDark = pref === 'dark' || ( ( !pref || pref === 'system' ) && prefersDark );
+					var el = document.getElementById( 'burst-statistics' );
+					if ( isDark ) {
+						el.classList.add( 'dark' );
+					} else if ( pref === 'light' ) {
+						el.classList.add( 'light' );
+						if ( document.body ) {
+							document.body.classList.add( 'burst-light' );
+						}
+					}
+				})();
+			</script>
 			<div class="bg-white">
-				<div class="mx-auto flex max-w-screen-2xl items-center gap-5 px-5">
-					<div class="max-xxs:w-16 max-xxs:h-auto flex-shrink-0">
+				<div class="mx-auto flex max-w-(--breakpoint-2xl) items-center gap-5 px-5">
+					<div class="max-xxs:w-16 max-xxs:h-auto shrink-0">
 						<img width="100" src="<?php echo esc_url_raw( BURST_URL ) . 'assets/img/burst-logo.svg'; ?>" alt="Logo Burst" class="h-11 w-auto px-0 py-2">
 					</div>
 					<div class="flex items-center blur-sm animate-pulse overflow-x-hidden">
@@ -745,7 +878,7 @@ class App {
 			</div>
 
 			<!-- Content Grid -->
-			<div class="mx-auto flex max-w-screen-2xl">
+			<div class="mx-auto flex max-w-(--breakpoint-2xl)">
 				<div class="m-5 grid min-h-full w-full grid-cols-12 grid-rows-5 gap-5">
 					<!-- Left Block -->
 					<div class="col-span-6 row-span-2 bg-white shadow-md rounded-xl p-5 max-sm:col-span-12 max-sm:row-span-1">
@@ -785,6 +918,40 @@ class App {
 				</div>
 			</div>
 		</div>
+		<div id="burst-adblocker-modal" style="display:none;">
+			<div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100000;display:flex;align-items:center;justify-content:center;">
+				<div style="background:#fff;border-radius:12px;padding:32px;max-width:520px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.15);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+					<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+						<h2 style="margin:0;font-size:18px;font-weight:600;color:#111827;"><?php esc_html_e( 'Burst Statistics could not load', 'burst-statistics' ); ?></h2>
+					</div>
+					<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#4b5563;">
+						<?php esc_html_e( 'It looks like an ad blocker or browser extension is preventing Burst Statistics from loading. Burst Statistics does not display ads, but some ad blockers may block analytics tools.', 'burst-statistics' ); ?>
+					</p>
+					<p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#4b5563;">
+						<?php esc_html_e( 'Please disable your ad blocker for this site and reload the page.', 'burst-statistics' ); ?>
+					</p>
+					<div style="display:flex;gap:12px;">
+						<button onclick="location.reload();" style="padding:8px 20px;background:#4f46e5;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;">
+							<?php esc_html_e( 'Reload page', 'burst-statistics' ); ?>
+						</button>
+						<button onclick="document.getElementById('burst-adblocker-modal').style.display='none';" style="padding:8px 20px;background:#f3f4f6;color:#374151;border:1px solid #d1d5db;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;">
+							<?php esc_html_e( 'Dismiss', 'burst-statistics' ); ?>
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script>
+			setTimeout( function() {
+				if ( ! window.burstLoaded ) {
+					var modal = document.getElementById( 'burst-adblocker-modal' );
+					if ( modal ) {
+						modal.style.display = 'block';
+					}
+				}
+			}, 2000 );
+		</script>
 		<?php
 	}
 
@@ -802,18 +969,6 @@ class App {
 			// sleep for 0.5 seconds to allow the database installation to finish.
 			usleep( 500000 );
 		}
-
-		register_rest_route(
-			'burst/v1',
-			'menu',
-			[
-				'methods'             => 'GET',
-				'callback'            => [ $this, 'rest_api_menu' ],
-				'permission_callback' => function () {
-					return $this->user_can_manage();
-				},
-			]
-		);
 
 		register_rest_route(
 			'burst/v1',
@@ -913,6 +1068,24 @@ class App {
 
 		register_rest_route(
 			'burst/v1',
+			'data/ecommerce/datatable/(?P<type>[a-z\_\-]+)',
+			[
+				'methods'             => 'GET',
+				'callback'            => function ( \WP_REST_Request $request ) {
+					$request->set_param( 'is_ecommerce', true );
+					// Prepend prefix to identify as datatable request.
+					$request->set_param( 'type', 'datatable-' . $request->get_param( 'type' ) );
+
+					return $this->get_data( $request );
+				},
+				'permission_callback' => function () {
+					return $this->user_can_view_sales();
+				},
+			]
+		);
+
+		register_rest_route(
+			'burst/v1',
 			'data/ecommerce/(?P<type>[a-z\_\-]+)',
 			[
 				'methods'             => 'GET',
@@ -922,6 +1095,22 @@ class App {
 				},
 				'permission_callback' => function () {
 					return $this->user_can_view_sales();
+				},
+			]
+		);
+
+		register_rest_route(
+			'burst/v1',
+			'data/datatable/(?P<type>[a-z\_\-]+)',
+			[
+				'methods'             => 'GET',
+				'callback'            => function ( \WP_REST_Request $request ) {
+					// Prepend prefix to identify as datatable request.
+					$request->set_param( 'type', 'datatable-' . $request->get_param( 'type' ) );
+					return $this->get_data( $request );
+				},
+				'permission_callback' => function () {
+					return $this->user_can_view();
 				},
 			]
 		);
@@ -964,6 +1153,18 @@ class App {
 
 		register_rest_route(
 			'burst/v1',
+			'get_action/ecommerce/(?P<action>[a-z\_\-]+)',
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'get_action' ],
+				'permission_callback' => function () {
+					return $this->user_can_view_sales();
+				},
+			]
+		);
+
+		register_rest_route(
+			'burst/v1',
 			'/posts/',
 			[
 				'methods'             => 'GET',
@@ -980,7 +1181,6 @@ class App {
 			]
 		);
 	}
-
 
 	/**
 	 * Perform a specific action based on the provided request.
@@ -1022,7 +1222,7 @@ class App {
 				break;
 			case 'fix_task':
 				$task_id   = $data['task_id'];
-				$task      = \Burst\burst_loader()->admin->tasks->get_task_by_id( $task_id );
+				$task      = burst_loader()->admin->tasks->get_task_by_id( $task_id );
 				$option_id = sanitize_text_field( $task['fix'] );
 				$task_id   = sanitize_text_field( $task['id'] );
 				// should start with burst_ .
@@ -1034,12 +1234,12 @@ class App {
 					wp_schedule_single_event( time(), 'burst_scheduled_task_fix_' . $task_id );
 				}
 
-				\Burst\burst_loader()->admin->tasks->dismiss_task( $task_id );
+				burst_loader()->admin->tasks->dismiss_task( $task_id );
 				break;
 			case 'dismiss_task':
 				if ( isset( $data['id'] ) ) {
 					$id = sanitize_title( $data['id'] );
-					\Burst\burst_loader()->admin->tasks->dismiss_task( $id );
+					burst_loader()->admin->tasks->dismiss_task( $id );
 				}
 				break;
 			default:
@@ -1090,7 +1290,7 @@ class App {
 
 		switch ( $action ) {
 			case 'tasks':
-				$data = \Burst\burst_loader()->admin->tasks->get();
+				$data = burst_loader()->admin->tasks->get();
 				break;
 			case 'tracking':
 				$data = Endpoint::get_tracking_status_and_time();
@@ -1277,6 +1477,7 @@ class App {
 			wp_schedule_single_event( time() + 120, 'burst_weekly_clear_spam_browsers_cron' );
 		}
 	}
+
 	/**
 	 * On a weekly basis, clear the referrers table.
 	 *
@@ -1286,6 +1487,11 @@ class App {
 		if ( ! $this->user_can_manage() ) {
 			return;
 		}
+
+		if ( ! $this->table_exists( 'burst_referrers' ) ) {
+			return;
+		}
+
 		global $wpdb;
 		$wpdb->query( "TRUNCATE TABLE {$wpdb->prefix}burst_referrers" );
 	}
@@ -1366,6 +1572,42 @@ class App {
 	}
 
 	/**
+	 * Populate the referrers table from the sessions table if it is empty.
+	 * Used both by the filter UI (lazy populate on first read) and by data sharing
+	 * (which otherwise sees an empty table right after the weekly TRUNCATE).
+	 */
+	public function maybe_populate_referrers_table(): void {
+		global $wpdb;
+
+		if ( ! $this->table_exists( 'burst_referrers' ) ) {
+			return;
+		}
+
+		$count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}burst_referrers" );
+		if ( $count > 0 ) {
+			return;
+		}
+
+		$wpdb->query(
+			"INSERT IGNORE INTO {$wpdb->prefix}burst_referrers (name)
+             SELECT TRIM(TRAILING '/' FROM domain) AS domain
+             FROM (
+               SELECT
+                 LOWER(SUBSTRING_INDEX(referrer, '/', 1)) AS domain
+               FROM {$wpdb->prefix}burst_sessions
+               WHERE referrer IS NOT NULL
+                 AND referrer != ''
+                 AND referrer NOT LIKE '/%'
+             ) AS derived
+             WHERE domain != ''
+               AND SUBSTRING_INDEX(domain, ':', 1) NOT REGEXP '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$'
+             GROUP BY domain
+             ORDER BY COUNT(*) DESC
+             LIMIT 2000;"
+		);
+	}
+
+	/**
 	 * Get referrer options for the advanced filter. The table is cleared weekly, to ensure up to date data.
 	 *
 	 * @param string $search the optional search string.
@@ -1374,33 +1616,13 @@ class App {
 	private function get_referrer_options( string $search = '' ): array {
 		global $wpdb;
 
+		$this->maybe_populate_referrers_table();
+
 		$search = sanitize_text_field( $search );
 		$like   = '%' . $wpdb->esc_like( $search ) . '%';
 		$where  = strlen( $search ) > 0 ? $wpdb->prepare( 'WHERE name LIKE %s ', $like ) : '';
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where is prepared above.
-		$referrers = $wpdb->get_results( "SELECT TRIM(TRAILING '/' FROM name) as name FROM {$wpdb->prefix}burst_referrers $where ORDER BY ID ASC limit 1000", ARRAY_A );
-		if ( empty( $referrers ) ) {
-			$wpdb->query(
-				"INSERT IGNORE INTO {$wpdb->prefix}burst_referrers (name)
-                 SELECT TRIM(TRAILING '/' FROM domain) AS domain
-                 FROM (
-                   SELECT
-                     LOWER(SUBSTRING_INDEX(referrer, '/', 1)) AS domain
-                   FROM {$wpdb->prefix}burst_sessions
-                   WHERE referrer IS NOT NULL
-                     AND referrer != ''
-                     AND referrer NOT LIKE '/%'
-                 ) AS derived
-                 WHERE domain != ''
-                   AND SUBSTRING_INDEX(domain, ':', 1) NOT REGEXP '^[0-9]{1,3}(\\.[0-9]{1,3}){3}$'
-                 GROUP BY domain
-                 ORDER BY COUNT(*) DESC
-                 LIMIT 2000;"
-			);
-
-			$referrers = $wpdb->get_results( "select name from {$wpdb->prefix}burst_referrers ORDER BY ID ASC", ARRAY_A );
-		}
-		return $referrers;
+		return $wpdb->get_results( "SELECT TRIM(TRAILING '/' FROM name) as name FROM {$wpdb->prefix}burst_referrers $where ORDER BY ID ASC limit 1000", ARRAY_A );
 	}
 
 	/**
@@ -1547,7 +1769,41 @@ class App {
 	}
 
 	/**
+	 * Get the metric allow-list for each datatable.
+	 *
+	 * @return array<string, string[]> Datatable ID => list of allowed metric keys.
+	 */
+	public function get_datatable_metric_allow_list(): array {
+		$allow_list = [
+			'statistics_pages'      => [ 'page_url', 'pageviews', 'visitors', 'sessions', 'bounce_rate', 'avg_time_on_page', 'entrances', 'exit_rate', 'conversions', 'conversion_rate', 'sales', 'revenue', 'sales_conversion_rate', 'page_value' ],
+			'statistics_parameters' => [ 'parameter', 'parameters', 'visitors', 'sessions', 'bounce_rate', 'avg_time_on_page', 'conversions', 'sales', 'revenue', 'page_value' ],
+			// In free sources_referrers becomes statistics_referrers.
+			'statistics_referrers'  => [ 'referrer', 'visitors', 'sessions', 'bounce_rate', 'conversions', 'sales', 'revenue', 'page_value' ],
+			'dummy_data'            => [ 'page_url', 'pageviews', 'visitors', 'sessions', 'bounce_rate', 'avg_time_on_page', 'entrances', 'exit_rate', 'conversions', 'conversion_rate', 'sales', 'revenue', 'sales_conversion_rate', 'page_value' ],
+		];
+
+		return apply_filters( 'burst_datatable_metric_allow_list', $allow_list );
+	}
+
+	/**
+	 * Handle dummy datatable data generation for preview/demo purposes.
+	 *
+	 * @param mixed $data The pre-data value (null if not already set).
+	 * @param array $args Arguments passed to get_datatables_data.
+	 * @return array|null Dummy data array if id is 'dummy_data', otherwise null to use default DB query.
+	 */
+	public function handle_dummy_datatable_data( mixed $data, array $args ): ?array {
+		if ( 'dummy_data' === ( $args['id'] ?? null ) ) {
+			return burst_loader()->admin->statistics->get_dummy_datatable_data();
+		}
+		return $data;
+	}
+
+	/**
 	 * Get data from the REST API.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response The REST response object.
 	 */
 	public function get_data( \WP_REST_Request $request ): \WP_REST_Response {
 		// Process common request patterns.
@@ -1558,7 +1814,46 @@ class App {
 		}
 
 		$type = $processed['type'];
+
+		// Hard block: Generic datatable endpoints are forbidden for all users.
+		// All requests must use the granular data/datatable/{id} endpoints.
+		if ( 'datatable' === $type || 'ecommerce-datatable' === $type ) {
+			return $this->create_rest_response(
+				[
+					'success' => false,
+					'message' => __( 'Generic datatable endpoints are not allowed. Please use granular datatable endpoints.', 'burst-statistics' ),
+				],
+				403
+			);
+		}
+
 		$args = apply_filters( 'burst_get_data_request_args', $this->normalize_values( $request, $type ), $type, $request );
+
+		// Handle per-datatable endpoints and enforce metric allow-lists for all users.
+		if ( str_starts_with( $type, 'datatable-' ) ) {
+			$type       = str_replace( 'datatable-', '', $type );
+			$allow_list = $this->get_datatable_metric_allow_list();
+
+			if ( isset( $allow_list[ $type ] ) ) {
+				// If a datatable ID is used as the endpoint type, intersect incoming metrics with the allow-list.
+				if ( isset( $args['metrics'] ) && is_array( $args['metrics'] ) ) {
+					$args['metrics'] = array_intersect( $args['metrics'], $allow_list[ $type ] );
+				}
+
+				$args['id'] = $type;
+
+				$data = burst_loader()->admin->statistics->get_datatables_data( $args );
+				return $this->create_rest_response( $data );
+			} else {
+				return $this->create_rest_response(
+					[
+						'success' => false,
+						'message' => __( 'Unknown datatable endpoint.', 'burst-statistics' ),
+					],
+					404
+				);
+			}
+		}
 
 		switch ( $type ) {
 			case 'live-visitors':
@@ -1566,14 +1861,14 @@ class App {
 				if ( $is_onboarding ) {
 					wp_schedule_single_event( time() + MINUTE_IN_SECONDS, 'burst_clear_test_visit' );
 				}
-				$count = \Burst\burst_loader()->admin->statistics->get_live_visitors_data();
+				$count = burst_loader()->admin->statistics->get_live_visitors_data();
 				$data  = [ 'visitors' => $count ];
 				break;
 			case 'live-traffic':
-				$data = \Burst\burst_loader()->admin->statistics->get_live_traffic_data();
+				$data = burst_loader()->admin->statistics->get_live_traffic_data();
 				break;
 			case 'today':
-				$data = \Burst\burst_loader()->admin->statistics->get_today_data( $args );
+				$data = burst_loader()->admin->statistics->get_today_data( $args );
 				break;
 			case 'goals':
 				$goal_statistics = new Goal_Statistics();
@@ -1585,23 +1880,20 @@ class App {
 				$data            = [ 'goals_count' => $goals_count ];
 				break;
 			case 'insights':
-				$data = \Burst\burst_loader()->admin->statistics->get_insights_data( $args );
+				$data = burst_loader()->admin->statistics->get_insights_data( $args );
 				break;
 			case 'compare':
 				if ( isset( $args['filters']['goal_id'] ) ) {
-					$data = \Burst\burst_loader()->admin->statistics->get_compare_goals_data( $args );
+					$data = burst_loader()->admin->statistics->get_compare_goals_data( $args );
 				} else {
-					$data = \Burst\burst_loader()->admin->statistics->get_compare_data( $args );
+					$data = burst_loader()->admin->statistics->get_compare_data( $args );
 				}
 				break;
 			case 'devicestitleandvalue':
-				$data = \Burst\burst_loader()->admin->statistics->get_devices_title_and_value_data( $args );
+				$data = burst_loader()->admin->statistics->get_devices_title_and_value_data( $args );
 				break;
 			case 'devicessubtitle':
-				$data = \Burst\burst_loader()->admin->statistics->get_devices_subtitle_data( $args );
-				break;
-			case 'datatable':
-				$data = \Burst\burst_loader()->admin->statistics->get_datatables_data( $args );
+				$data = burst_loader()->admin->statistics->get_devices_subtitle_data( $args );
 				break;
 			default:
 				$data = apply_filters( 'burst_get_data', [], $type, $args, $request );
@@ -1867,7 +2159,7 @@ class App {
 		}
 		$output['fields']          = $fields;
 		$output['request_success'] = true;
-		$output['progress']        = \Burst\burst_loader()->admin->tasks->get();
+		$output['progress']        = burst_loader()->admin->tasks->get();
 
 		$output = apply_filters( 'burst_rest_api_fields_get', $output );
 		if ( ob_get_length() ) {
@@ -1959,7 +2251,6 @@ class App {
 
 		return $response;
 	}
-
 
 	/**
 	 * Save goals via REST API
@@ -2178,6 +2469,7 @@ class App {
 
 		return $this->fields->get();
 	}
+
 	/**
 	 * Removes menu items that have no associated fields from a nested menu structure.
 	 *
@@ -2203,7 +2495,6 @@ class App {
 
 		return $new_menu_items;
 	}
-
 
 	/**
 	 * Get raw posts array
@@ -2289,7 +2580,7 @@ class App {
 	 */
 	//phpcs:ignore
 	public function get_posts( \WP_REST_Request $request, array $ajax_data = [] ) {
-		if ( ! $this->user_can_view() ) {
+		if ( ! $this->user_can_manage() ) {
 			return new \WP_Error( 'rest_forbidden', 'You do not have permission to perform this action.', [ 'status' => 403 ] );
 		}
 

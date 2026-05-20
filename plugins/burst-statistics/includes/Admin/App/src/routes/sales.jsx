@@ -1,7 +1,7 @@
 /**
  * Sales Route
  */
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, notFound } from '@tanstack/react-router';
 import { __ } from '@wordpress/i18n';
 import { PageHeader } from '@/components/Common/PageHeader';
 import ErrorBoundary from '@/components/Common/ErrorBoundary';
@@ -17,9 +17,17 @@ import SalesUpsellBackground from '@/components/Upsell/Sales/SalesUpsellBackgrou
 import { EcommerceNotices } from '@/components/Upsell/Sales/EcommerceNotices';
 import UpsellCopy from '@/components/Upsell/UpsellCopy';
 import UnauthorizedModal from '@/components/Common/UnauthorizedModal';
+import { shouldLoadRoute } from '@/utils/helper';
+import NotFoundModal from '@/components/Common/NotFoundModal';
 
 export const Route = createFileRoute( '/sales' )({
 	beforeLoad: ({ context }) => {
+
+		// If plugin is not a pro version then no need to check for Unauthorized error, showing upsell for free version.
+		if ( ! context?.isPro ) {
+			return;
+		}
+
 		let canAccessSales = false;
 
 		if ( '1' === context?.canViewSales ) {
@@ -36,6 +44,14 @@ export const Route = createFileRoute( '/sales' )({
 			};
 		}
 	},
+
+	// Throwing notFound in beforeLoad does not render header.
+	loader: ({ context }) => {
+		if ( context?.menus && ! shouldLoadRoute( 'sales', context.menus ) ) {
+			throw notFound();
+		}
+	},
+	notFoundComponent: NotFoundModal,
 	component: SalesComponent,
 	errorComponent: ({ error }) => {
 		if ( 'UNAUTHORIZED' === error.type ) {
@@ -52,7 +68,7 @@ export const Route = createFileRoute( '/sales' )({
 			<div className="text-red-500 p-4">
 				{error.message ||
 					__(
-						'An error occurred loading statistics',
+						'An error occurred loading sales',
 						'burst-statistics'
 					)}
 			</div>
@@ -113,7 +129,7 @@ function SalesComponent() {
 			<ErrorBoundary>
 				<DataTableBlock
 					allowedConfigs={[ 'products' ]}
-					id={6}
+					id="sales_products"
 					isEcommerce={true}
 				/>
 			</ErrorBoundary>

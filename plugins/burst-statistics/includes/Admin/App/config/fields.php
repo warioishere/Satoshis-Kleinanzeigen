@@ -181,15 +181,6 @@ return [
 		'default'  => false,
 	],
 	[
-		'id'       => 'tips_tricks_mailinglist',
-		'menu_id'  => 'general',
-		'group_id' => 'general',
-		'type'     => 'hidden',
-		'label'    => '',
-		'disabled' => false,
-		'default'  => '',
-	],
-	[
 		'id'       => 'goals',
 		'menu_id'  => 'goals',
 		'group_id' => 'goals',
@@ -340,6 +331,32 @@ return [
 		],
 		'disabled'         => false,
 		'default'          => false,
+	],
+	[
+		'id'       => 'enable_abilities_api',
+		'menu_id'  => 'advanced',
+		'group_id' => 'scripts',
+		'type'     => function_exists( 'wp_register_ability' ) ? 'checkbox' : 'hidden',
+		'label'    => __( 'Enable Abilities API (for AI agents and automation)', 'burst-statistics' ),
+		'context'  => [
+			'text' => __( 'Allow trusted AI agents and automation tools to read Burst statistics via WordPress abilities.', 'burst-statistics' ),
+			'url'  => 'abilities-api',
+		],
+		'disabled' => false,
+		'default'  => false,
+	],
+	[
+		'id'       => 'enable_mainwp_integration',
+		'menu_id'  => 'advanced',
+		'group_id' => 'scripts',
+		'type'     => 'checkbox',
+		'label'    => __( 'Enable MainWP Dashboard Integration', 'burst-statistics' ),
+		'context'  => [
+			'text' => __( 'Allow the MainWP dashboard to display Burst statistics from child sites. Disable this to completely prevent MainWP integration.', 'burst-statistics' ),
+			'url'  => 'guides/manage-burst-statistics-across-all-your-sites-with-mainwp/',
+		],
+		'disabled' => false,
+		'default'  => false,
 	],
 
 	[

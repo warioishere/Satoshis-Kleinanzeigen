@@ -2,8 +2,8 @@ import {useState, useCallback, useEffect, useMemo, createInterpolateElement} fro
 import {__, _n, sprintf} from '@wordpress/i18n';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useLocation } from '@tanstack/react-router';
-import { doAction, getAction } from '@/utils/api';
-import { toast } from 'react-toastify';
+import { doAction } from '@/utils/api';
+import { toast } from '@/utils/toast';
 import useLicenseData from '@/hooks/useLicenseData';
 import useDateRange from '@/hooks/useDateRange';
 import { useFilters } from '@/hooks/useFilters';
@@ -11,6 +11,7 @@ import { AddFilterButton } from '../Filters/Display';
 import Modal from './Modal';
 import SelectInput from '@/components/Inputs/SelectInput';
 import ButtonInput from '@/components/Inputs/ButtonInput';
+import IconButton from '@/components/Inputs/IconButton';
 import Icon from '@/utils/Icon';
 import Tooltip from './Tooltip';
 import { FILTER_CONFIG } from '@/config/filterConfig';
@@ -18,6 +19,7 @@ import { formatDateShort } from '@/utils/formatting';
 import useShareableLinkStore from '@/store/useShareableLinkStore';
 import {copyToClipboard} from '@/utils/copyToClipboard';
 import ProBadge from '@/components/Common/ProBadge';
+import * as Checkbox from '@radix-ui/react-checkbox';
 import React from 'react';
 
 /**
@@ -174,27 +176,27 @@ const LinkConfigurationSummary = ({ currentTab, startDate, endDate, filters }) =
 	const hasFilters = 0 < activeFilters.length;
 
 	return (
-		<div className="space-y-2">
-			<h4 className="text-md font-medium text-black">
+		<div className="flex flex-col gap-2">
+			<h4 className="text-md font-medium text-text-black">
 				{__( 'What you\'re sharing:', 'burst-statistics' )}
 			</h4>
 
 			<dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
 				{/* Initial tab - always shown. */}
-				<dt className="font-base text-gray">
+				<dt className="font-base text-text-gray">
 					{__( 'Initial tab:', 'burst-statistics' )}
 				</dt>
-				<dd className="font-medium text-black">
+				<dd className="font-medium text-text-black">
 					{getTabTitle( currentTab )}
 				</dd>
 
 				{/* Date range. */}
 				{hasDateRange && (
 					<>
-						<dt className="font-base text-gray">
+						<dt className="font-base text-text-gray">
 							{__( 'Date range:', 'burst-statistics' )}
 						</dt>
-						<dd className="font-medium text-black">
+						<dd className="font-medium text-text-black">
 							{formatDateShort( startDate )} – {formatDateShort( endDate )}
 						</dd>
 					</>
@@ -203,12 +205,12 @@ const LinkConfigurationSummary = ({ currentTab, startDate, endDate, filters }) =
 				{/* Filters - combined with 'and'. */}
 				{hasFilters && (
 					<>
-						<dt className="font-base text-gray">
+						<dt className="font-base text-text-gray">
 							{sprintf(
 								_n( 'Filter:', 'Filters:', activeFilters.length, 'burst-statistics' )
 							)}
 						</dt>
-						<dd className="font-medium text-black">
+						<dd className="font-medium text-text-black">
 							{activeFilters.map( ( filter, index ) => {
 								if ( 0 === index ) {
 
@@ -224,8 +226,8 @@ const LinkConfigurationSummary = ({ currentTab, startDate, endDate, filters }) =
 								'<em>' + filter.value + '</em>'
 							),
 							{
-								strong: <span className="font-medium text-black" />,
-								em: <span className="font-light text-gray" />
+								strong: <span className="font-medium text-text-black" />,
+								em: <span className="font-light text-text-gray" />
 							}
 						)}
                     </span>
@@ -244,8 +246,8 @@ const LinkConfigurationSummary = ({ currentTab, startDate, endDate, filters }) =
 							'<em>' + filter.value + '</em>'
 						),
 						{
-							strong: <span className="font-medium text-black" />,
-							em: <span className="font-light text-gray" />
+							strong: <span className="font-medium text-text-black" />,
+							em: <span className="font-light text-text-gray" />
 						}
 					)}
                 </span>
@@ -290,19 +292,25 @@ const AdvancedOptions = ({
 	return (
 		<div className="border-t border-gray-200 -mx-4 px-4 pt-3">
 			{/* Header / Toggle. */}
-			<button
+			<ButtonInput
 				type="button"
 				onClick={onToggle}
-				className="flex w-full items-center gap-2 text-left text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+				btnVariant="tertiary"
+				size="sm"
+				ariaExpanded={isOpen}
+				className={
+					'flex w-full min-w-0 items-center gap-2 justify-start text-left text-sm font-medium text-text-gray transition-colors hover:text-text-gray ' +
+					'!border-0 !bg-transparent !shadow-none hover:!shadow-none hover:!bg-gray-50 focus:!ring-gray-400'
+				}
 			>
 				<Icon
 					name="chevron-right"
 					size={14}
-					className={`text-gray-700 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}
+					className={`text-text-gray transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}
 				/>
 				<span>{__( 'Advanced options', 'burst-statistics' )}</span>
 				<ProBadge label={window.burst_settings?.is_pro ? 'Agency' : 'Pro'} id={'share-link-advanced'} />
-			</button>
+			</ButtonInput>
 
 			{/* Content. */}
 			<AnimatePresence>
@@ -314,35 +322,44 @@ const AdvancedOptions = ({
 						transition={{ duration: 0.2 }}
 						className="overflow-hidden"
 					>
-						<div className="space-y-4 pt-4">
+						<div className="flex flex-col gap-4 pt-4">
 							{/* Permissions. */}
-							<div className="space-y-2">
-								<span className="text-sm text-gray-600">
+							<div className="flex flex-col gap-2">
+								<span className="text-sm text-text-gray-light">
 									{__( 'Allow viewer to:', 'burst-statistics' )}
 								</span>
 								<div className="flex flex-wrap gap-x-6 gap-y-2">
-									{Object.entries( PERMISSION_LABELS ).map( ([ key, label ]) => (
-										<label
-											key={key}
-											className={`flex items-center gap-2 cursor-pointer text-sm ${! shareLinkPro ? 'cursor-default' : 'cursor-pointer'}`}
+								{Object.entries( PERMISSION_LABELS ).map( ([ key, label ]) => (
+									<label
+										key={key}
+										className={`flex items-center gap-2 cursor-pointer text-sm ${! shareLinkPro ? 'cursor-default' : 'cursor-pointer'}`}
+									>
+										<Checkbox.Root
+											disabled={! shareLinkPro}
+											checked={permissions[key] || false}
+											onCheckedChange={() => onPermissionToggle( key )}
+											className="focus:ring-blue-500 flex h-4 w-4 items-center justify-center rounded border-2 border-gray-300 bg-white transition-colors hover:border-gray-400 focus:outline-hidden focus:ring-2 focus:ring-offset-2"
+											id={`permission_${key}`}
 										>
-											<input
-												disabled={! shareLinkPro}
-												type="checkbox"
-												checked={permissions[key] || false}
-												onChange={() => onPermissionToggle( key )}
-												className="rounded border-gray-400 text-wp-blue focus:ring-wp-blue cursor-pointer disabled:cursor-default disabled:opacity-60"
-											/>
-											<span className={! shareLinkPro ? 'text-gray-500' : 'text-gray'}>{label}</span>
-										</label>
-									) )}
+											<Checkbox.Indicator>
+												<Icon
+													name="check"
+													size={14}
+													color="green"
+													strokeWidth={2}
+												/>
+											</Checkbox.Indicator>
+										</Checkbox.Root>
+										<span className={! shareLinkPro ? 'text-text-gray' : 'text-text-black'}>{label}</span>
+									</label>
+								) )}
 								</div>
 							</div>
 
 							{/* Shareable tabs. */}
 							{1 < shareableTabs.length && (
-								<div className="space-y-2">
-									<span className="text-sm text-gray-600">
+								<div className="flex flex-col gap-2">
+									<span className="text-sm text-text-gray-light">
 										{__( 'Allow access to these tabs:', 'burst-statistics' )}
 									</span>
 									<div className="flex flex-wrap gap-x-6 gap-y-2">
@@ -356,17 +373,26 @@ const AdvancedOptions = ({
 													key={tab.id}
 													className={`flex items-center gap-2 text-sm ${disabled ? 'cursor-default' : 'cursor-pointer'}`}
 												>
-													<input
-														type="checkbox"
+													<Checkbox.Root
 														checked={isChecked}
-														onChange={() => onTabToggle( tab.id )}
+														onCheckedChange={() => onTabToggle( tab.id )}
 														disabled={disabled}
-														className="rounded border-gray-400 text-wp-blue focus:ring-wp-blue cursor-pointer disabled:cursor-default disabled:opacity-60"
-													/>
-													<span className={disabled ? 'text-gray-500' : 'text-gray'}>
+														className="focus:ring-blue-500 flex h-4 w-4 items-center justify-center rounded border-2 border-gray-300 bg-white transition-colors hover:border-gray-400 focus:outline-hidden focus:ring-2 focus:ring-offset-2"
+														id={`tab_${tab.id}`}
+													>
+														<Checkbox.Indicator>
+															<Icon
+																name="check"
+																size={14}
+																color="green"
+																strokeWidth={2}
+															/>
+														</Checkbox.Indicator>
+													</Checkbox.Root>
+													<span className={disabled ? 'text-text-gray-light' : 'text-text-gray'}>
 														{tab.title}
 														{isCurrentTab && (
-															<span className="ml-1 text-xs text-gray-400">
+															<span className="ml-1 text-xs text-text-gray-light">
 																({__( 'current view', 'burst-statistics' )})
 															</span>
 														)}
@@ -442,24 +468,26 @@ const ShareLinkItem = ({ link, copiedId, onCopy, onRevoke, isRevoking }) => {
 			initial={{ opacity: 0, y: -10 }}
 			animate={{ opacity: 1, y: 0 }}
 			exit={{ opacity: 0, y: -10 }}
-			className={`rounded-md border p-3 ${isCopied ? 'border-green bg-green-50' : 'border-gray-200 bg-white'} transition-colors duration-200`}
+			className={`burst-share-link-card rounded-md border p-3 ${isCopied ? 'burst-share-link-card--copied border-green bg-green-50' : 'border-gray-200 bg-white'} transition-colors duration-200`}
 		>
 			{/* Tags row. */}
 			<div className="flex gap-2 mb-2 flex-col">
 				<div className="flex flex-row gap-1.5">
 					{/* use Intl.ListFormat to format the shared tabs */}
-					<span className="text-base font-medium text-gray-700">
-						{new Intl.ListFormat( undefined, { style: 'long' }).format( sharedTabsDisplay )}
+					<span className="text-base font-medium text-text-gray">
+						{new Intl.ListFormat( undefined, { style: 'long' }).format(
+							sharedTabsDisplay
+						)}
 					</span>
-							{/* Date range. */}
-							{dateRangeDisplay && (
-						<span className="inline-flex items-center gap-1 text-xs font-light text-gray-800">
+					{/* Date range. */}
+					{dateRangeDisplay && (
+						<span className="inline-flex items-center gap-1 text-xs font-light text-text-gray">
 							<Icon name="calendar" size={10} />
 							{dateRangeDisplay}
 						</span>
 					)}
 
-					<span className="ml-auto text-xs text-gray-600">
+					<span className="ml-auto text-xs text-text-gray-light">
 						{formatExpiration( link.expires )}
 					</span>
 				</div>
@@ -474,62 +502,82 @@ const ShareLinkItem = ({ link, copiedId, onCopy, onRevoke, isRevoking }) => {
 						onClick={( e ) => e.target.select()}
 
 						//burst-share-link-output is used for automated tests.
-						className="burst-share-link-output max-w-full truncate text-sm text-gray-800 font-mono w-full bg-gray-50 px-2 py-1.5 rounded border border-gray-300 cursor-text focus:border-wp-blue focus:ring-1 focus:ring-wp-blue/20"
+						className="burst-share-link-output max-w-full truncate text-sm text-text-gray font-mono w-full bg-gray-50 px-2 py-1.5 rounded border border-gray-300 cursor-text focus:border-wp-blue focus:ring-1 focus:ring-wp-blue/20"
 					/>
 
-					<Tooltip content={isCopied ? __( 'Copied!', 'burst-statistics' ) : __( 'Copy link', 'burst-statistics' )}>
-						<button
+					<Tooltip
+						content={
+							isCopied ?
+								__( 'Copied!', 'burst-statistics' ) :
+								__( 'Copy link', 'burst-statistics' )
+						}
+					>
+						<IconButton
+							type="button"
+							variant="tertiary"
+							size="sm"
+							icon={isCopied ? 'check' : 'copy'}
+							iconSize={14}
 							onClick={() => onCopy( link )}
-							className="rounded p-1 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
-						>
-							{isCopied ? (
-								<Icon name="check" size={14} color="green" />
-							) : (
-								<Icon name="copy" size={14} />
-							)}
-						</button>
+							ariaLabel={
+								isCopied ?
+									__( 'Copied!', 'burst-statistics' ) :
+									__( 'Copy link', 'burst-statistics' )
+							}
+							className={
+								'burst-share-link-copy-btn !min-w-0 !border-0 !bg-transparent !shadow-none p-1 text-text-gray-light transition-colors ' +
+								'hover:!bg-gray-200 hover:!text-text-gray-light focus:!ring-1 focus:!ring-gray-300 ' +
+								( isCopied ? '!text-green hover:!text-green' : '' )
+							}
+						/>
 					</Tooltip>
 
 					<Tooltip content={__( 'Revoke', 'burst-statistics' )}>
-						<button
+						<IconButton
+							type="button"
+							variant="tertiary"
+							size="sm"
+							icon="times"
+							iconSize={14}
 							onClick={() => onRevoke( link.token )}
 							disabled={isRevoking}
-							className="rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red disabled:opacity-50"
-						>
-							<Icon name="times" size={14} />
-						</button>
+							ariaLabel={__( 'Revoke', 'burst-statistics' )}
+							className={
+								'burst-share-link-revoke-btn !min-w-0 !border-0 !bg-transparent !shadow-none p-1 ' +
+								'text-text-gray-light transition-colors hover:!bg-red-50 hover:!text-red focus:!ring-1 focus:!ring-red-300'
+							}
+						/>
 					</Tooltip>
 				</div>
 
+				{0 < filtersDisplay.length ||
+					( 0 < enabledPermissions.length && (
+						<div className="flex flex-wrap items-center gap-1.5">
+							{/* Filters. */}
+							{filtersDisplay.map( ( filter ) => (
+								<Tooltip
+									key={filter.key}
+									content={`${filter.label}: ${filter.value}`}
+								>
+									<span className="inline-flex items-center gap-1 rounded bg-gray-100 border border-gray-300 px-1.5 py-0.5 text-xs font-light text-text-gray">
+										<Icon name="filter" size={10} />
+										{filter.label}
+									</span>
+								</Tooltip>
+							) )}
 
-				{0 < filtersDisplay.length || 0 < enabledPermissions.length && (
-					<div className="flex flex-wrap items-center gap-1.5">
-
-					{/* Filters. */}
-					{filtersDisplay.map( ( filter ) => (
-						<Tooltip
-							key={filter.key}
-							content={`${filter.label}: ${filter.value}`}
-						>
-							<span className="inline-flex items-center gap-1 rounded bg-gray-100 border border-gray-300 px-1.5 py-0.5 text-xs font-light text-gray-800">
-								<Icon name="filter" size={10} />
-								{filter.label}
-							</span>
-						</Tooltip>
+							{/* Permissions. */}
+							{enabledPermissions.map( ( label ) => (
+								<span
+									key={label}
+									className="inline-flex items-center gap-1 rounded bg-gray-100 border border-gray-300 px-1.5 py-0.5 text-xs font-light text-text-gray"
+								>
+									<Icon name="check" size={10} />
+									{label}
+								</span>
+							) )}
+						</div>
 					) )}
-
-					{/* Permissions. */}
-					{enabledPermissions.map( ( label ) => (
-						<span
-							key={label}
-							className="inline-flex items-center gap-1 rounded bg-gray-100 border border-gray-300 px-1.5 py-0.5 text-xs font-light text-gray-800"
-						>
-							<Icon name="check" size={10} />
-							{label}
-						</span>
-					) )}
-				</div>
-				)}
 			</div>
 		</motion.div>
 	);
@@ -565,27 +613,32 @@ const ActiveLinksSection = ({
 	if ( ! isLoading && 0 === linkCount ) {
 		return null;
 	}
-
 	return (
 		<div className="border-t border-gray-200 pt-4 mt-4">
 			{/* Header / Toggle. */}
-			<button
+			<ButtonInput
 				type="button"
 				onClick={onToggle}
-				className="flex w-full items-center gap-2 text-left text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+				btnVariant="tertiary"
+				size="sm"
+				ariaExpanded={isOpen}
+				className={
+					'flex w-full min-w-0 items-center gap-2 justify-start text-left text-sm font-medium text-text-gray-light transition-colors hover:text-text-gray ' +
+					'!border-0 !bg-transparent !shadow-none hover:!shadow-none hover:!bg-gray-50 focus:!ring-gray-400'
+				}
 			>
 				<Icon
 					name="chevron-right"
 					size={14}
-					className={`text-gray-600 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}
+					className={`text-text-gray-light transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}
 				/>
 				<span>
 					{__( 'Active shared links', 'burst-statistics' )}
 					{! isLoading && 0 < linkCount && (
-						<span className="ml-1.5 text-gray-500">({linkCount})</span>
+						<span className="ml-1.5 text-text-gray-light">({linkCount})</span>
 					)}
 				</span>
-			</button>
+			</ButtonInput>
 
 			{/* Content. */}
 			<AnimatePresence>
@@ -597,9 +650,9 @@ const ActiveLinksSection = ({
 						transition={{ duration: 0.2 }}
 						className="overflow-hidden"
 					>
-						<div className="pt-3 space-y-2">
+						<div className="pt-3 flex flex-col gap-2">
 							{isLoading ? (
-								<p className="text-sm text-gray-500 py-2">
+								<p className="text-sm text-text-gray-light py-2">
 									{__( 'Loading…', 'burst-statistics' )}
 								</p>
 							) : (
@@ -714,8 +767,8 @@ export const ShareButton = () => {
 	const fetchShareLinks = useCallback( async() => {
 		setIsLoading( true );
 		try {
-			const response = await getAction( 'get_share_links' );
-			setShareLinks( response.share_links || []);
+			const response = await doAction( 'list_share_links' );
+			setShareLinks( Object.values( response.share_links || {}) );
 		} catch ( error ) {
 			console.error( 'Failed to fetch share links:', error );
 		} finally {
@@ -851,7 +904,7 @@ export const ShareButton = () => {
 			const response = await doAction( 'revoke_share_link', { token });
 
 			if ( response.success ) {
-				setShareLinks( response.share_links || []);
+				setShareLinks( Object.values( response.share_links || {}) );
 				toast.success( __( 'Link revoked', 'burst-statistics' ) );
 			}
 		} catch ( error ) {
@@ -883,14 +936,17 @@ export const ShareButton = () => {
 				onClose={handleClose}
 				title={__( 'Share dashboard', 'burst-statistics' )}
 				content={
-					<div className="space-y-4">
+					<div className="flex flex-col gap-4">
 						{/* Description. */}
-						<p className="text-gray text-sm">
-							{__( 'Generate a private, shareable link to a live view of this dashboard.', 'burst-statistics' )}
+						<p className="text-text-gray text-sm">
+							{__(
+								'Generate a private, shareable link to a live view of this dashboard.',
+								'burst-statistics'
+							)}
 						</p>
 
 						{/* Create new link section. */}
-						<div className="rounded-lg border border-gray-200 bg-white p-4 space-y-4">
+						<div className="burst-share-link-panel rounded-lg border border-gray-200 bg-white p-4 flex flex-col gap-4">
 							{/* Link configuration summary. */}
 							<LinkConfigurationSummary
 								currentTab={currentTab}
@@ -901,7 +957,7 @@ export const ShareButton = () => {
 
 							{/* Expiration. */}
 							<div className="flex items-center gap-3">
-								<span className="text-base font-medium text-gray-800">
+								<span className="text-base font-medium text-text-gray">
 									{__( 'Link expires in:', 'burst-statistics' )}
 								</span>
 								<SelectInput

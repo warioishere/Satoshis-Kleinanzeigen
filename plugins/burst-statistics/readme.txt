@@ -5,8 +5,8 @@ Tags: analytics, statistics, stats, privacy, GDPR
 Requires at least: 6.6
 License: GPL2
 Requires PHP: 8.0
-Tested up to: 6.9
-Stable tag: 3.3.0
+Tested up to: 7.0
+Stable tag: 3.4.2
 
 Analytics you'll actually use. Privacy-friendly, zero config, and designed to be actionable. Get insights, not just raw data.
 
@@ -201,8 +201,52 @@ Absolutely! Both free and premium plugins can be managed with Composer. Read the
 We value your feedback. You can [submit a support request on the WordPress forums](https://wordpress.org/support/plugin/burst-statistics/), and we will respond promptly.
 
 == Change log ==
+= 3.4.2 =
+* May 12th 2026
+* New: AI chat integration via the WordPress Abilities API, including granular datatable abilities with metric allow-listing for pages, parameters, referrers, countries, campaigns, sales and subscription products.
+* New: granular datatable REST endpoints (data/datatable/{id} and data/ecommerce/datatable/{id}) so the dashboard and AI abilities can request a specific table by id.
+* Improvement: refactor the Share class into dedicated Share_Tokens, Share_Routing, Share_Auth and Share_UI services for clearer responsibilities and easier maintenance.
+* Improvement: dark mode initialization respects an explicit "light" preference so users on a dark OS no longer briefly see a dark skeleton when they have forced light mode.
+* Improvement: upgrade routine corrects the stored activation time for sites with older data.
+* Improvement: replace native checkboxes with Radix checkboxes in the Share dialog for consistent styling.
+* Improvement: shared-link capability checks now reflect the currently requested dashboard tab instead of a single cached value, so per-tab permissions are enforced correctly during batch REST requests.
+* Fix: dashboard route returns a 404 when the user is not allowed to load it, instead of rendering an empty page.
+* Security: limit Share link viewer statistics access, props Sanjay Singh Jhala.
+* Security: REST API optimizer now matches the Burst namespace strictly against the URL path (anchored at burst/v1), props Sanjay Singh Jhala.
+* Security: harden MainWP proxy authentication. Props Sanjay Singh Jhala, Chloe Chamberland & PRISM - Wordfence
+* Security: Auto Installer now requires the install_plugins capability instead of activate_plugins and only accepts download URLs from official Burst hosts. Props Sanjay Singh Jhala.
+
+= 3.4.1.1 =
+* May 5th 2026
+* Fix: CSS styling regression due to obsolete javascript files being included in the dashboard build.
+
+= 3.4.1 =
+* April 29th 2026
+* New: automated tests for subscription statistics dashboard.
+* New: abilities API integration.
+* Improvement: move plugin activation logic to bootstrap class.
+* Improvement: split ajax fallback logic into do_action and get_action.
+* Fix: broken upgrade url in report settings.
+* Fix: When both Story report and share links are generated, the UX could generate an error.
+* Security: increase minimum required capability from view to manage in get_posts endpoint, Props Sanjay Singh Jhala.
+* Security: hardened MainWP proxy authentication and CORS origin validation, Props Sanjay Singh Jhala.
+
+= 3.4.0 =
+* April 22nd 2026
+* New: dark mode support for the Burst Statistics dashboard.
+* New: support for MainWP integration.
+* New: all time date range for datepicker selection.
+* New: support for application passwords. It is now possible to use the Burst Rest API endpoints with application passwords.
+* Improvement: add detection for ad blockers. If an ad blocker breaks the Burst dashboard, show a warning about this.
+* Improvement: PHP warning about not existing referrers table when clearing the table.
+* Fix: restore bounces filter, allowing overriding the default time used to decide if a visit is a bounce.
+* Fix: fixed a bug in the visitor calculation for referrers, caused by changes for the "exclude" option in filters, props @bikew1se.
+* Fix: Share links sessions are now cleaned up daily, to prevent extended access to the link for longer than the set expiration time, Props Sanjay Singh Jhala.
+* Security: ajax fallback for get_reports endpoint unintentionally allowed users with burst_view capability to see reports configuration, props Sanjay Singh Jhala.
+
 = 3.3.0 =
 * April 1st 2026
+* New: Time per session filter, allowing filtering by visit duration.
 * New: Dark mode support for email reports.
 * Improvement: Move columns from statistics to sessions table, reducing data storage and improving query performance.
 * Improvement: Session data included in archive CSV exports.

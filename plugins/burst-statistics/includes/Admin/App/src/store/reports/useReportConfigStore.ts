@@ -66,7 +66,7 @@ const AVAILABLE_CONTENT: ContentItems = [
 		icon: 'page',
 		pro: true,
 		component: DataTableBlock as ComponentType<BlockComponentProps>,
-		blockProps: { allowedConfigs: [ 'pages' ] }
+		blockProps: { allowedConfigs: [ 'pages' ], id: 'statistics_pages' }
 	},
 	{
 		id: 'referrers',
@@ -74,7 +74,7 @@ const AVAILABLE_CONTENT: ContentItems = [
 		icon: 'external-link',
 		pro: true,
 		component: DataTableBlock as ComponentType<BlockComponentProps>,
-		blockProps: { allowedConfigs: [ 'referrers' ] }
+		blockProps: { allowedConfigs: [ 'referrers' ], id: 'statistics_referrers' }
 	},
 	{
 		id: 'locations',
@@ -82,7 +82,7 @@ const AVAILABLE_CONTENT: ContentItems = [
 		icon: 'map-pinned',
 		pro: true,
 		component: DataTableBlock as ComponentType<BlockComponentProps>,
-		blockProps: { allowedConfigs: [ 'locations' ] }
+		blockProps: { allowedConfigs: [ 'countries' ], id: 'sources_countries' }
 	},
 	{
 		id: 'campaigns',
@@ -90,7 +90,7 @@ const AVAILABLE_CONTENT: ContentItems = [
 		icon: 'campaign',
 		pro: true,
 		component: DataTableBlock as ComponentType<BlockComponentProps>,
-		blockProps: { allowedConfigs: [ 'campaigns' ] }
+		blockProps: { allowedConfigs: [ 'campaigns' ], id: 'sources_campaigns' }
 	},
 	{
 		id: 'sales',
@@ -143,10 +143,10 @@ const AVAILABLE_CONTENT: ContentItems = [
 ];
 
 const STATUS_SEVERITY_CLASSES = {
-	success: 'bg-green-light text-green',
-	error: 'bg-red-light text-red',
-	warning: 'bg-gray-200 text-black',
-	info: 'bg-blue-light text-blue'
+	success: 'bg-green-50 text-green',
+	error: 'bg-red-50 text-red',
+	warning: 'bg-gray-200 text-text-black',
+	info: 'bg-blue-50 text-blue'
 };
 
 const REPORT_LOG_STATUS_CONFIG: Record<

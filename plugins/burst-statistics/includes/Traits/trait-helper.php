@@ -208,11 +208,17 @@ trait Helper {
 	}
 	// phpcs:enable
 
+	/**
+	 * Check if the database upgrade has been completed.
+	 */
+	protected static function database_upgrade_completed(): bool {
+		return get_option( 'burst-current-version' ) === BURST_VERSION;
+	}
 	// phpcs:disable
 	/**
 	 * Log error to error_log
 	 */
-	protected static function error_log( $message ): void {
+	protected static function error_log( $message, bool $print_stack_trace = false ): void {
 		// @phpstan-ignore-next-line.
 		if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
 			return;
@@ -233,6 +239,13 @@ trait Helper {
 				error_log( $before_text . print_r( $message, true ) );
 			} else {
 				error_log( $before_text . $message );
+			}
+
+			if ( $print_stack_trace ) {
+				ob_start();
+				debug_print_backtrace();
+				$backtrace = ob_get_clean();
+				error_log( $backtrace );
 			}
 		}
 	}
@@ -330,6 +343,7 @@ trait Helper {
 		return (string) $base_currency;
 	}
 
+
 	/**
 	 * Get ecommerce cutoff time.
 	 *
@@ -381,11 +395,9 @@ trait Helper {
 	protected static function convert_date_to_unix(
 		string $time_string
 	): int {
-		$time               = \DateTime::createFromFormat( 'Y-m-d H:i:s', $time_string );
-		$utc_time           = $time ? $time->format( 'U' ) : strtotime( $time_string );
-		$gmt_offset_seconds = self::get_wp_timezone_offset();
+		$time = \DateTime::createFromFormat( 'Y-m-d H:i:s', $time_string, wp_timezone() );
 
-		return $utc_time - $gmt_offset_seconds;
+		return $time ? $time->getTimestamp() : strtotime( $time_string );
 	}
 
 	/**

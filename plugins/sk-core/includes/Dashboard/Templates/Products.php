@@ -365,11 +365,11 @@ class Products {
                     }
 
                     if ( isset( $postdata['_regular_price'] ) ) {
-                        update_post_meta( $product_id, '_regular_price', ( $postdata['_regular_price'] === '' ) ? '' : wc_format_decimal( $postdata['_regular_price'] ) );
+                        update_post_meta( $product_id, '_regular_price', ( $postdata['_regular_price'] === '' ) ? '' : wc_format_decimal( sk_parse_price_input( $postdata['_regular_price'] ) ) );
                     }
 
                     if ( isset( $postdata['_sale_price'] ) ) {
-                        update_post_meta( $product_id, '_sale_price', ( $postdata['_sale_price'] === '' ? '' : wc_format_decimal( $postdata['_sale_price'] ) ) );
+                        update_post_meta( $product_id, '_sale_price', ( $postdata['_sale_price'] === '' ? '' : wc_format_decimal( sk_parse_price_input( $postdata['_sale_price'] ) ) ) );
                         $date_from = isset( $postdata['_sale_price_dates_from'] ) ? wc_clean( $postdata['_sale_price_dates_from'] ) : '';
                         $date_to   = isset( $postdata['_sale_price_dates_to'] ) ? wc_clean( $postdata['_sale_price_dates_to'] ) : '';
                         $now       = sk_current_datetime();
@@ -392,13 +392,13 @@ class Products {
                         }
 
                         if ( '' !== $postdata['_sale_price'] && '' === $date_to && '' === $date_from ) {
-                            update_post_meta( $product_id, '_price', wc_format_decimal( $postdata['_sale_price'] ) );
+                            update_post_meta( $product_id, '_price', wc_format_decimal( sk_parse_price_input( $postdata['_sale_price'] ) ) );
                         } else {
-                            update_post_meta( $product_id, '_price', ( $postdata['_regular_price'] === '' ) ? '' : wc_format_decimal( $postdata['_regular_price'] ) );
+                            update_post_meta( $product_id, '_price', ( $postdata['_regular_price'] === '' ) ? '' : wc_format_decimal( sk_parse_price_input( $postdata['_regular_price'] ) ) );
                         }
                         // Update price if on sale
                         if ( '' !== $postdata['_sale_price'] && $date_from && $now->modify( $date_from )->getTimestamp() < $now->getTimestamp() ) {
-                            update_post_meta( $product_id, '_price', wc_format_decimal( $postdata['_sale_price'] ) );
+                            update_post_meta( $product_id, '_price', wc_format_decimal( sk_parse_price_input( $postdata['_sale_price'] ) ) );
                         }
                     }
 
