@@ -355,12 +355,6 @@ body.single-product .woocommerce-Tabs-panel--description ul {
 	/* hier den Wert anpassen, z. B. 15px, 20px oder mehr */
 }
 
-/* WooCommerce: Rezensionen-Tab komplett verstecken (nur Single-Product) */
-.single-product .woocommerce-tabs ul.tabs li.reviews_tab,
-.single-product .woocommerce-Tabs-panel#tab-reviews,
-.single-product #reviews { /* Fallback für Themes mit #reviews-Container */
-  display: none !important;
-}
 
 /** Login Verstecken **/
 /* Statt globalem fieldset-Hide: nur auf Account/Login/Registrierung */

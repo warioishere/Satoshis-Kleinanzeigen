@@ -412,6 +412,13 @@ class Settings {
                     'type'    => 'switcher',
                     'default' => 'off',
                 ],
+                'enable_product_reviews' => [
+                    'name'    => 'enable_product_reviews',
+                    'label'   => __( 'Produkt-Rezensionen', 'sk-core' ),
+                    'desc'    => __( 'Zeigt den Rezensionen-Tab und das Kommentarformular auf Produktseiten.', 'sk-core' ),
+                    'type'    => 'switcher',
+                    'default' => 'on',
+                ],
                 'catalog_mode_settings' => [
                     'name'          => 'catalog_mode_settings',
                     'label'         => __( 'Produkt Katalog-Modus', 'sk-core' ),

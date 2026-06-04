@@ -20,6 +20,11 @@ final class CatalogMode {
         if ( self::hide_price() ) {
             add_filter( 'woocommerce_get_price_html', [ __CLASS__, 'filter_price_html' ], 99, 2 );
         }
+
+        if ( ! self::reviews_enabled() ) {
+            add_filter( 'woocommerce_product_tabs', [ __CLASS__, 'remove_reviews_tab' ], 999 );
+            add_filter( 'comments_open',            [ __CLASS__, 'close_product_comments' ], 999, 2 );
+        }
     }
 
     /**
@@ -68,5 +73,21 @@ final class CatalogMode {
      */
     public static function keep_visible( $visible, $product_id ) {
         return true;
+    }
+
+    public static function reviews_enabled(): bool {
+        return 'on' === sk_get_option( 'enable_product_reviews', 'sk_selling', 'on' );
+    }
+
+    public static function remove_reviews_tab( $tabs ) {
+        unset( $tabs['reviews'] );
+        return $tabs;
+    }
+
+    public static function close_product_comments( $open, $post_id ) {
+        if ( get_post_type( $post_id ) === 'product' ) {
+            return false;
+        }
+        return $open;
     }
 }
