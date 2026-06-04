@@ -74,11 +74,6 @@ class ModuleManager {
             return;
         }
 
-        // check license here, if invalid return
-        if ( ! $force && ! sk_ext()->license->is_valid() ) {
-            return;
-        }
-
         $active_modules    = $this->get_active_modules( $force );
         $sk_pro_modules = $this->get_all_modules();
         $activated_modules = [];
@@ -155,6 +150,16 @@ class ModuleManager {
 
             $this->sk_pro_modules = apply_filters(
                 'sk_pro_modules', [
+                    'product_votes' => [
+                        'id'           => 'product_votes',
+                        'name'         => __( 'Product Votes (Hot/Cold)', 'sk' ),
+                        'description'  => __( 'Qualifizierte User können Inserate als Heiß/Kalt bewerten — Anti-Scam-Signal.', 'sk' ),
+                        'thumbnail'    => $thumbnail_dir . '/follow-store.svg',
+                        'module_file'  => SK_CORE_DIR . '/modules' . '/product-votes/module.php',
+                        'module_class' => 'SK\Modules\ProductVotes\Module',
+                        'plan'         => [ 'professional', 'business', 'enterprise' ],
+                        'categories'   => [ 'Product Management' ],
+                    ],
                     'follow_store' => [
                         'id'           => 'follow_store',
                         'name'         => __( 'Follow Store', 'sk' ),
@@ -349,10 +354,6 @@ class ModuleManager {
      * @return array
      */
     public function get_active_modules( $force = false ) {
-        if ( ! $force && ! sk_ext()->license->is_valid() ) {
-            return [];
-        }
-
         if ( $this->active_modules ) {
             return $this->active_modules;
         }

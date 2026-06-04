@@ -1,0 +1,80 @@
+/* SK Product Votes — Hot/Cold widget rendered above WC tabs.
+ * Kadence single-product uses a grid (Bilder | Summary) — wir zwingen
+ * das Widget explizit über die volle Breite damit es bündig mit den Tabs sitzt,
+ * nicht in der Summary-Spalte hängen bleibt.
+ */
+.sk-pv-widget {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin: 24px 0 12px;
+    padding: 0;
+    clear: both;
+    width: 100%;
+    grid-column: 1 / -1;
+}
+
+.sk-pv-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.sk-pv-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 140px;
+    padding: 10px 22px;
+    border: 1px solid #2e3846;
+    background: #1a1f28;
+    color: #c5ccd6;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color .15s, border-color .15s, color .15s;
+}
+
+.sk-pv-btn:hover:not(:disabled) {
+    background: #232b36;
+    color: #e8ecf0;
+    border-color: rgba(247, 147, 26, 0.45);
+}
+
+.sk-pv-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.sk-pv-btn .sk-pv-icon { font-size: 16px; line-height: 1; }
+.sk-pv-btn .sk-pv-count {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    padding: 1px 8px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.sk-pv-hot.sk-pv-active {
+    background: #f7931a;
+    color: #fff;
+    border-color: #f7931a;
+}
+.sk-pv-hot.sk-pv-active .sk-pv-count { background: rgba(0, 0, 0, 0.2); }
+
+.sk-pv-cold.sk-pv-active {
+    background: #3b82f6;
+    color: #fff;
+    border-color: #3b82f6;
+}
+.sk-pv-cold.sk-pv-active .sk-pv-count { background: rgba(0, 0, 0, 0.2); }
+
+.sk-pv-meta {
+    margin: 0;
+    font-size: 12px;
+    color: #8a9bb0;
+    font-style: italic;
+}

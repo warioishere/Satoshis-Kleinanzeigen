@@ -11968,6 +11968,30 @@ body:has(.dvc-modal) .dkp-contact-icons {
   padding: 12px 0 !important;
 }
 
+/* Review-Form:
+ *   Site-BG = dunkel  → Labels weiß damit sie sichtbar sind
+ *   Input/Textarea-BG = weiß (palette9)  → Text-Inhalt dunkel (palette3)
+ *   Kadence's Floating-Label-Pattern setzt unfokussierte Inputs auf palette5
+ *   (helleres Grau). Beim Stern-Klick verliert das Feld den Fokus → Text wird
+ *   blass. Hier zwingen wir den Text auf palette3 unabhängig vom Fokus. */
+.woocommerce-Reviews .comment-form textarea,
+.woocommerce-Reviews .comment-form input[type="text"],
+.woocommerce-Reviews .comment-form input[type="email"],
+.woocommerce-Reviews .comment-form input[type="url"] {
+  color: #1A202C !important;
+  opacity: 1 !important;
+}
+.woocommerce-Reviews .comment-form label,
+.woocommerce-Reviews .comment-form .comment-form-rating-label,
+.woocommerce-Reviews .comment-reply-title {
+  color: #fff !important;
+  opacity: 1 !important;
+}
+.woocommerce-Reviews .comment-form ::placeholder {
+  color: #4A5568 !important;
+  opacity: 1 !important;
+}
+
 /* WP product review submit button — matches sk-btn-theme look */
 .woocommerce-Reviews .comment-form input[type="submit"],
 .comment-form .form-submit input[type="submit"] {
