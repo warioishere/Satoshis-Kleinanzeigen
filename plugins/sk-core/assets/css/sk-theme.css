@@ -11968,6 +11968,27 @@ body:has(.dvc-modal) .dkp-contact-icons {
   padding: 12px 0 !important;
 }
 
+/* WP product review submit button — matches sk-btn-theme look */
+.woocommerce-Reviews .comment-form input[type="submit"],
+.comment-form .form-submit input[type="submit"] {
+  background-color: #f7931a;
+  border: 1px solid #f7931a;
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+.woocommerce-Reviews .comment-form input[type="submit"]:hover,
+.woocommerce-Reviews .comment-form input[type="submit"]:focus,
+.comment-form .form-submit input[type="submit"]:hover,
+.comment-form .form-submit input[type="submit"]:focus {
+  background-color: #e07f0e;
+  border-color: #e07f0e;
+  color: #fff;
+}
+
 /* ==========================================================================
  * RateYo — Star Rating (jQuery plugin layout)
  * ========================================================== */

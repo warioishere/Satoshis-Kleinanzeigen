@@ -61,6 +61,7 @@ sk_ext();
 
 // Globaler Katalog-Modus (hide add-to-cart + optional price).
 add_action( 'init', [ \SK\Core\CatalogMode::class, 'init' ], 20 );
+add_action( 'init', [ \SK\Core\Antispam::class, 'init' ], 20 );
 
 // Buy Now — direct BTCPay checkout for subscriptions & boosts.
 \SK\Core\BuyNow::init();
