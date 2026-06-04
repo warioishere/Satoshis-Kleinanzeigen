@@ -68,3 +68,25 @@ add_action( 'init', [ \SK\Core\Antispam::class, 'init' ], 20 );
 
 // Vendor avatar + name on product cards.
 \SK\Core\ProductVendorInfo::init();
+
+// "Rezension(en)" → "Kommentar(e)" auf Produktseiten (Tab, Form, Headings).
+add_filter( 'gettext', function ( $translation, $text, $domain ) {
+    if ( $domain !== 'woocommerce' ) {
+        return $translation;
+    }
+    $map = [
+        'Rezensionen'   => 'Kommentare',
+        'Rezension'     => 'Kommentar',
+        'Deine Rezension' => 'Dein Kommentar',
+    ];
+    return strtr( $translation, $map );
+}, 20, 3 );
+add_filter( 'ngettext', function ( $translation, $single, $plural, $number, $domain ) {
+    if ( $domain !== 'woocommerce' ) {
+        return $translation;
+    }
+    return strtr( $translation, [
+        'Rezensionen' => 'Kommentare',
+        'Rezension'   => 'Kommentar',
+    ] );
+}, 20, 5 );
