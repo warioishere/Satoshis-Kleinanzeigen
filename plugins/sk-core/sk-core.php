@@ -70,14 +70,20 @@ add_action( 'init', [ \SK\Core\Antispam::class, 'init' ], 20 );
 \SK\Core\ProductVendorInfo::init();
 
 // "Rezension(en)" → "Kommentar(e)" auf Produktseiten (Tab, Form, Headings).
+// Rezension = feminin (die), Kommentar = maskulin (der) — Artikel mit umtauschen,
+// sonst Grammatik-Fehler à la "die erste Kommentar".
 add_filter( 'gettext', function ( $translation, $text, $domain ) {
     if ( $domain !== 'woocommerce' ) {
         return $translation;
     }
+    // strtr matched longest substring first → längere Phrasen vor kurzen.
     $map = [
-        'Rezensionen'   => 'Kommentare',
-        'Rezension'     => 'Kommentar',
-        'Deine Rezension' => 'Dein Kommentar',
+        'Schreibe die erste Rezension für' => 'Schreibe den ersten Kommentar zu',
+        'die erste Rezension'              => 'den ersten Kommentar',
+        'eine Rezension'                   => 'einen Kommentar',
+        'Deine Rezension'                  => 'Dein Kommentar',
+        'Rezensionen'                      => 'Kommentare',
+        'Rezension'                        => 'Kommentar',
     ];
     return strtr( $translation, $map );
 }, 20, 3 );
