@@ -144,7 +144,11 @@
         renderInfo: function (info) {
             if (typeof info === 'string') info = JSON.parse(info);
             var html = SkGeo.info_window_template;
-            for (var key in info) html = html.replace('{' + key + '}', info[key]);
+            // Global replace: jeder Platzhalter kann mehrfach im Template stehen
+            // (z.B. {title} als alt-Attribut + sichtbarer Linktext).
+            for (var key in info) {
+                html = html.split('{' + key + '}').join(info[key] == null ? '' : info[key]);
+            }
             return html;
         },
 

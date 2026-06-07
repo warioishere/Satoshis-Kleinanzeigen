@@ -1,48 +1,153 @@
+/* SK Geolocation — Map + Popup/Modal Styles
+ *
+ * Dunkles Theme passend zur Site, klare Karten-Optik. Genutzt für:
+ *  - Mapbox-native Single-Marker-Popup (.mapboxgl-popup-content)
+ *  - iziModal Cluster-Liste (.sk-geo-map-info-windows-in-popup)
+ *  - Fallback-Overlay (.sk-geo-card)
+ */
+
 #sk-geolocation-locations-map {
-  width: 100%;
-  height: 100%;
-  margin-bottom: 15px;
+    width: 100%;
+    height: 100%;
+    margin-bottom: 15px;
 }
 #sk-geolocation-locations-map.sk-geolocation-locations-map-top {
-  height: 300px;
-}
-.sk-geo-map-info-window {
-  width: 265px;
-}
-.sk-geo-map-info-window .info-title {
-  margin: 0 0 7px;
-}
-.sk-geo-map-info-window .info-title a {
-  font-size: 17px;
-  font-weight: 500;
-}
-.sk-geo-map-info-window address {
-  font-weight: 400;
-  font-size: 11px;
-  font-style: normal;
-  margin: 0;
-  line-height: 1.3;
-}
-.sk-geo-map-info-window .info-image {
-  max-width: 100%;
-  height: auto;
-  border-radius: 50%;
-}
-.white-popup.sk-geo-map-info-windows-in-popup {
-  padding: 30px;
-  margin: 0;
-  max-width: 100%;
-}
-.white-popup.sk-geo-map-info-windows-in-popup .sk-geo-map-info-window {
-  width: 100%;
-  margin-bottom: 18px;
-}
-.white-popup.sk-geo-map-info-windows-in-popup .sk-geo-map-info-window .info-title {
-  margin-bottom: 10px;
-  line-height: 0.8;
-}
-.white-popup.sk-geo-map-info-windows-in-popup .sk-geo-map-info-window .info-image {
-  float: right;
-  max-width: 70%;
+    height: 300px;
 }
 
+/* ---------- Karte (Produkt oder Anbieter) ---------- */
+
+.sk-geo-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px;
+    background: #1a1f28;
+    color: #e2e8f0;
+    border-radius: 10px;
+    min-width: 260px;
+    max-width: 360px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    box-sizing: border-box;
+}
+
+.sk-geo-card__media {
+    flex: 0 0 72px;
+    width: 72px;
+    height: 72px;
+    background: #232b36;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.sk-geo-card__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: 0;
+}
+
+.sk-geo-card__body {
+    flex: 1;
+    min-width: 0;
+}
+
+.sk-geo-card__title {
+    margin: 0 0 6px;
+    font-size: 16px;
+    line-height: 1.3;
+    font-weight: 600;
+}
+
+.sk-geo-card__title a {
+    color: #f7931a;
+    text-decoration: none;
+}
+.sk-geo-card__title a:hover {
+    color: #e07f0e;
+    text-decoration: underline;
+}
+
+.sk-geo-card__address {
+    margin: 0;
+    font-style: normal;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #a0aec0;
+    word-wrap: break-word;
+}
+
+/* ---------- Mapbox-Popup ---------- */
+
+.mapboxgl-popup-content {
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border-radius: 10px !important;
+}
+
+.mapboxgl-popup-content .sk-geo-card {
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+}
+
+.mapboxgl-popup-close-button {
+    color: #fff !important;
+    font-size: 22px !important;
+    padding: 2px 8px !important;
+    right: 4px !important;
+    top: 4px !important;
+    line-height: 1 !important;
+    background: rgba(0, 0, 0, 0.35) !important;
+    border-radius: 999px !important;
+    border: none !important;
+    cursor: pointer !important;
+    z-index: 1 !important;
+}
+.mapboxgl-popup-close-button:hover {
+    background: rgba(0, 0, 0, 0.55) !important;
+    color: #fff !important;
+}
+
+.mapboxgl-popup-tip {
+    border-top-color: #1a1f28 !important;
+    border-bottom-color: #1a1f28 !important;
+    border-left-color: #1a1f28 !important;
+    border-right-color: #1a1f28 !important;
+}
+
+/* ---------- Cluster-Modal (mehrere Marker an einem Spot) ---------- */
+
+.sk-geo-map-info-windows-in-popup,
+.white-popup.sk-geo-map-info-windows-in-popup {
+    padding: 22px;
+    margin: 0;
+    max-width: 100%;
+    display: grid;
+    gap: 14px;
+}
+
+.sk-geo-map-info-windows-in-popup .sk-geo-card,
+.white-popup.sk-geo-map-info-windows-in-popup .sk-geo-card {
+    width: 100%;
+    max-width: 100%;
+    box-shadow: none;
+    background: #232b36;
+    border: 1px solid #2e3846;
+}
+
+.sk-geo-map-info-windows-in-popup .sk-geo-card:hover,
+.white-popup.sk-geo-map-info-windows-in-popup .sk-geo-card:hover {
+    border-color: rgba(247, 147, 26, 0.45);
+}
+
+/* iziModal-Wrapper innen dunkel halten, Header bleibt orange */
+.sk-geo-location-modals.iziModal,
+.iziModal[class*="sk-geo-location-modals"] {
+    background: #1a1f28 !important;
+}
+.sk-geo-location-modals .iziModal-content,
+.iziModal[class*="sk-geo-location-modals"] .iziModal-content {
+    background: #1a1f28 !important;
+    color: #e2e8f0 !important;
+}
