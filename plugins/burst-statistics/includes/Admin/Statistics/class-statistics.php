@@ -307,7 +307,7 @@ class Statistics {
 	 *
 	 * @param int    $date_start Unix timestamp marking the start of the period.
 	 * @param int    $date_end   Unix timestamp marking the end of the period.
-	 * @param string $group_by   Explicit grouping interval ('hour'|'day'|'week'|'month'), or 'auto' to derive from range length.
+	 * @param string $group_by   Explicit grouping interval ('hour'|'day'|'week'|'month'|'year'), or 'auto' to derive from range length.
 	 * @return array{
 	 *     interval: string,
 	 *     interval_in_seconds: mixed,
@@ -325,13 +325,17 @@ class Statistics {
 			// Use %x (ISO year) and %v (ISO week), to prevent 0 hits on week 1 of a leap year.
 			'week'  => [ '%x-%v', 'o-W', WEEK_IN_SECONDS ],
 			'month' => [ '%Y-%m', 'Y-m', MONTH_IN_SECONDS ],
+			'year'  => [ '%Y', 'Y', YEAR_IN_SECONDS ],
 		];
 
 		// When group_by is 'auto', determine the best interval from the range length.
 		if ( 'auto' === $group_by || ! isset( $intervals[ $group_by ] ) ) {
 			$nr_of_days = $this->get_nr_of_periods( 'day', $date_start, $date_end );
 
-			if ( $nr_of_days > 364 ) {
+			if ( $nr_of_days > 1095 ) {
+				// More than ~3 years: monthly ticks become unreadable, switch to yearly.
+				$interval = 'year';
+			} elseif ( $nr_of_days > 364 ) {
 				$interval = 'month';
 			} elseif ( $nr_of_days > 48 ) {
 				$interval = 'week';
@@ -365,13 +369,20 @@ class Statistics {
 	/**
 	 * Get insights data for charting purposes.
 	 *
+	 * When `compare_mode` is set and exactly one metric is selected, a second
+	 * dataset entry is appended with `is_comparison: true`. That entry carries
+	 * the comparison-period values aligned to the current-period x-axis, plus
+	 * a `comparison_timestamps` array so the frontend can show the real
+	 * comparison date in the tooltip.
+	 *
 	 * @param array $args {
 	 *     Optional. Parameters to define time range and metrics.
-	 * @type int    $date_start Start of the data range (timestamp).
-	 * @type int    $date_end   End of the data range (timestamp).
-	 * @type string[] $metrics  List of metrics to retrieve (e.g., 'pageviews', 'visitors').
-	 * @type array  $filters    Filters to apply to the query.
-	 * @type string $group_by   Grouping interval ('auto'|'hour'|'day'|'week'|'month').
+	 * @type int      $date_start   Start of the data range (timestamp).
+	 * @type int      $date_end     End of the data range (timestamp).
+	 * @type string[] $metrics      List of metrics to retrieve (e.g., 'pageviews', 'visitors').
+	 * @type array    $filters      Filters to apply to the query.
+	 * @type string   $group_by     Grouping interval ('auto'|'hour'|'day'|'week'|'month').
+	 * @type string   $compare_mode Comparison mode: 'previous_period' or 'year_over_year'.
 	 * }
 	 * @return array{
 	 *     timestamps: int[],
@@ -382,17 +393,22 @@ class Statistics {
 	 *         backgroundColor: string,
 	 *         borderColor: string,
 	 *         label: string,
-	 *         fill: string
+	 *         fill: string,
+	 *         metric_key: string,
+	 *         is_comparison: bool,
+	 *         comparison_timestamps?: list<int>,
+	 *         compare_mode?: string
 	 *     }>
 	 * }
 	 * @throws \Exception //exception.
 	 */
 	public function get_insights_data( array $args = [] ): array {
 		$defaults = [
-			'date_start' => 0,
-			'date_end'   => 0,
-			'metrics'    => [ 'pageviews', 'visitors' ],
-			'group_by'   => 'auto',
+			'date_start'   => 0,
+			'date_end'     => 0,
+			'metrics'      => [ 'pageviews', 'visitors' ],
+			'group_by'     => 'auto',
+			'compare_mode' => '',
 		];
 		$args     = wp_parse_args( $args, $defaults );
 
@@ -401,19 +417,22 @@ class Statistics {
 		$group_by_raw = $args['group_by'] ?? 'auto';
 		$group_by     = is_array( $group_by_raw ) ? (string) ( $group_by_raw[0] ?? 'auto' ) : (string) $group_by_raw;
 
+		$start = (int) $args['date_start'];
+		$end   = (int) $args['date_end'];
+
 		$qd = new Query_Data(
 			'insights_data',
 			[
-				'date_start'     => (int) $args['date_start'],
-				'date_end'       => (int) $args['date_end'],
+				'date_start'     => $start,
+				'date_end'       => $end,
 				'select'         => $args['metrics'],
 				'filters'        => $args['filters'] ?? [],
 				'group_by'       => 'period',
 				'order_by'       => 'period',
 				'limit'          => 0,
 				'date_modifiers' => $this->get_insights_date_modifiers(
-					(int) $args['date_start'],
-					(int) $args['date_end'],
+					$start,
+					$end,
 					$group_by
 				),
 			]
@@ -425,7 +444,7 @@ class Statistics {
 		$date_modifiers = $qd->get_date_modifiers();
 		$datasets       = [];
 
-		// foreach metric.
+		// Build one dataset entry per metric.
 		foreach ( $metrics as $metrics_key => $metric ) {
 			$datasets[ $metrics_key ] = [
 				'data'            => [],
@@ -433,6 +452,8 @@ class Statistics {
 				'borderColor'     => $this->get_metric_color( $metric, 'border' ),
 				'label'           => $metric_labels[ $metric ],
 				'fill'            => 'false',
+				'metric_key'      => $metric,
+				'is_comparison'   => false,
 			];
 		}
 
@@ -455,7 +476,10 @@ class Statistics {
 				$datasets[ $metric_key ]['data'][ $formatted_date ] = 0;
 			}
 
-			$date += $date_modifiers['interval_in_seconds'];
+			// Advance by a real calendar step so month/week slots align with the SQL
+			// DATE_FORMAT keys; using a flat seconds constant would skip months
+			// (e.g. February and December) over a 12-month range.
+			$date = $this->advance_period_timestamp( $date, $date_modifiers['interval'] );
 		}
 
 		$hits = $this->get_results( $qd, ARRAY_A );
@@ -476,11 +500,148 @@ class Statistics {
 			$datasets[ $metric_key ]['data'] = array_values( $datasets[ $metric_key ]['data'] );
 		}
 
-		return [
+		$result = [
 			'timestamps'           => $timestamps,
 			'interval'             => $date_modifiers['interval'],
 			'spans_multiple_years' => $date_modifiers['spans_multiple_years'],
 			'datasets'             => $datasets,
+		];
+
+		// When a compare_mode is set and only a single metric is selected, append a comparison
+		// dataset so the frontend can render a dashed line without a separate data structure.
+		// The comparison line is only meaningful with one active metric (no multi-series overlap).
+		$compare_mode = (string) ( $args['compare_mode'] ?? '' );
+		$metrics_list = (array) ( $args['metrics'] ?? [] );
+
+		if ( ! empty( $compare_mode ) && 1 === count( $metrics_list ) ) {
+			$comparison = $this->get_insights_comparison_data(
+				$start,
+				$end,
+				$compare_mode,
+				$metrics_list,
+				$args['filters'] ?? [],
+				$date_modifiers
+			);
+
+			$active_metric = reset( $metrics_list );
+
+			// Append a comparison entry to datasets so the frontend treats it as a
+			// regular series while styling it differently based on is_comparison.
+			$result['datasets'][] = [
+				'data'                  => $comparison['datasets'][0]['data'] ?? [],
+				'backgroundColor'       => $this->get_metric_color( $active_metric, 'background' ),
+				'borderColor'           => $this->get_metric_color( $active_metric, 'border' ),
+				'label'                 => $metric_labels[ $active_metric ] ?? $active_metric,
+				'fill'                  => 'false',
+				'metric_key'            => $active_metric,
+				'is_comparison'         => true,
+				'comparison_timestamps' => $comparison['timestamps'],
+				'compare_mode'          => $compare_mode,
+			];
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Build comparison period data for the insights chart.
+	 *
+	 * Runs the same insights query against a shifted date window (previous period
+	 * or same period last year) and returns the dataset values together with the
+	 * actual comparison timestamps so the tooltip can display the correct dates.
+	 *
+	 * @param int    $start          Current period start timestamp.
+	 * @param int    $end            Current period end timestamp.
+	 * @param string $compare_mode   'previous_period' or 'year_over_year'.
+	 * @param array  $metrics        Metric keys to query.
+	 * @param array  $filters        Active filters.
+	 * @param array  $date_modifiers Date modifiers from the current period query.
+	 * @return array{
+	 *     datasets: array<int, array{data: list<int|float>}>,
+	 *     timestamps: list<int>,
+	 *     start_date: int,
+	 *     end_date: int
+	 * }
+	 */
+	private function get_insights_comparison_data( int $start, int $end, string $compare_mode, array $metrics, array $filters, array $date_modifiers ): array {
+		if ( 'year_over_year' === $compare_mode ) {
+			$compare_start = (int) strtotime( '-1 year', $start );
+			$compare_end   = (int) strtotime( '-1 year', $end );
+		} else {
+			// Default: previous period of equal length.
+			$diff          = $end - $start;
+			$compare_start = $start - $diff - 1;
+			$compare_end   = $end - $diff - 1;
+		}
+
+		$qd_compare = new Query_Data(
+			'insights_data',
+			[
+				'date_start'     => $compare_start,
+				'date_end'       => $compare_end,
+				'select'         => $metrics,
+				'filters'        => $filters,
+				'group_by'       => 'period',
+				'order_by'       => 'period',
+				'limit'          => 0,
+				// Re-use the same interval type so the result has the same number of slots.
+				'date_modifiers' => $this->get_insights_date_modifiers(
+					$compare_start,
+					$compare_end,
+					$date_modifiers['interval']
+				),
+			]
+		);
+
+		$comp_date_start     = $qd_compare->get_date_start();
+		$comp_metrics        = $qd_compare->get_select();
+		$comp_date_modifiers = $qd_compare->get_date_modifiers();
+
+		$timezone_offset = self::get_wp_timezone_offset();
+		$comp_date       = $comp_date_start + $timezone_offset;
+		$comp_timestamps = [];
+		$comp_data       = [];
+
+		// Initialise dataset slots using the comparison period's own timestamps.
+		foreach ( $comp_metrics as $metric ) {
+			$comp_data[ $metric ] = [];
+		}
+
+		for ( $i = 0; $i < $comp_date_modifiers['nr_of_intervals']; $i++ ) {
+			$formatted_date                     = date_i18n( $comp_date_modifiers['php_date_format'], $comp_date );
+			$comp_timestamps[ $formatted_date ] = $comp_date - $timezone_offset;
+
+			foreach ( $comp_metrics as $metric ) {
+				$comp_data[ $metric ][ $formatted_date ] = 0;
+			}
+
+			$comp_date = $this->advance_period_timestamp( $comp_date, $comp_date_modifiers['interval'] );
+		}
+
+		$hits = $this->get_results( $qd_compare, ARRAY_A );
+
+		foreach ( $hits as $hit ) {
+			$period = $hit['period'];
+			foreach ( $comp_metrics as $metric ) {
+				if ( isset( $comp_data[ $metric ][ $period ] ) && isset( $hit[ $metric ] ) ) {
+					$comp_data[ $metric ][ $period ] = $hit[ $metric ];
+				}
+			}
+		}
+
+		// Build indexed datasets and timestamps for the comparison period.
+		$datasets = [];
+		foreach ( $comp_metrics as $i => $metric ) {
+			$datasets[ $i ] = [
+				'data' => array_values( $comp_data[ $metric ] ),
+			];
+		}
+
+		return [
+			'datasets'   => $datasets,
+			'timestamps' => array_values( $comp_timestamps ),
+			'start_date' => $compare_start,
+			'end_date'   => $compare_end,
 		];
 	}
 	/**
@@ -914,6 +1075,7 @@ class Statistics {
 			'date_end'   => 0,
 			'metrics'    => [ 'pageviews' ],
 			'filters'    => [],
+			'group_by'   => [],
 			'limit'      => '',
 		];
 
@@ -971,11 +1133,13 @@ class Statistics {
 
 		$data = apply_filters( 'burst_datatable_data', $data, $qd );
 
-		return [
+		$response = [
 			'columns' => $columns,
 			'data'    => $data,
 			'metrics' => $metrics,
 		];
+
+		return apply_filters( 'burst_datatable_response', $response, $args );
 	}
 
 	/**
@@ -1084,20 +1248,74 @@ class Statistics {
 		int $date_start,
 		int $date_end
 	): int {
-		if ( 'month' === $period ) {
+		// Calendar-aware counts: use real boundaries so every interval slot generated
+		// by the loop in get_insights_data() matches a possible SQL DATE_FORMAT key.
+		// Plain seconds division (e.g. range / WEEK_IN_SECONDS) drifts across DST and
+		// leap weeks/years, leaving gaps in the chart.
+		if ( 'month' === $period || 'year' === $period || 'week' === $period ) {
 			$start = new \DateTime( '@' . $date_start );
 			$end   = new \DateTime( '@' . $date_end );
 			$start->setTimezone( wp_timezone() );
 			$end->setTimezone( wp_timezone() );
-			$diff = $start->diff( $end );
 
-			return $diff->y * 12 + $diff->m + 1;
+			if ( 'month' === $period ) {
+				$diff = $start->diff( $end );
+				return $diff->y * 12 + $diff->m + 1;
+			}
+
+			if ( 'year' === $period ) {
+				return (int) $end->format( 'Y' ) - (int) $start->format( 'Y' ) + 1;
+			}
+
+			// Week: align both endpoints to the ISO Monday of their week, then count weeks.
+			$start->modify( 'monday this week' )->setTime( 0, 0, 0 );
+			$end->modify( 'monday this week' )->setTime( 0, 0, 0 );
+			$diff_days = (int) $start->diff( $end )->days;
+
+			return (int) floor( $diff_days / 7 ) + 1;
 		}
 
 		$range_in_seconds  = $date_end - $date_start;
 		$period_in_seconds = defined( strtoupper( $period ) . '_IN_SECONDS' ) ? constant( strtoupper( $period ) . '_IN_SECONDS' ) : DAY_IN_SECONDS;
 
 		return (int) round( $range_in_seconds / $period_in_seconds );
+	}
+
+	/**
+	 * Advance a timestamp by one interval step.
+	 *
+	 * For calendar-aware intervals ('month', 'week') we use DateTimeImmutable so that
+	 * stepping respects real month lengths (28-31 days) instead of a flat 30-day
+	 * constant. Falling back to fixed-length seconds would cause months to be
+	 * skipped or duplicated across a year (e.g. December disappearing because
+	 * 12 * 30 days = 360 days).
+	 *
+	 * The timestamp is treated as UTC here on purpose: callers encode local
+	 * civil time into a UTC timestamp by adding the WP timezone offset, so we
+	 * advance in UTC to avoid double-applying DST shifts.
+	 *
+	 * @param int    $timestamp Unix timestamp to advance.
+	 * @param string $interval  Interval key ('hour'|'day'|'week'|'month'|'year').
+	 * @return int Advanced timestamp.
+	 */
+	private function advance_period_timestamp( int $timestamp, string $interval ): int {
+		$calendar_modifiers = [
+			'year'  => '+1 year',
+			'month' => '+1 month',
+			'week'  => '+1 week',
+		];
+
+		if ( isset( $calendar_modifiers[ $interval ] ) ) {
+			$date = ( new \DateTimeImmutable( '@' . $timestamp ) )->modify( $calendar_modifiers[ $interval ] );
+
+			return $date->getTimestamp();
+		}
+
+		if ( 'hour' === $interval ) {
+			return $timestamp + HOUR_IN_SECONDS;
+		}
+
+		return $timestamp + DAY_IN_SECONDS;
 	}
 
 	/**
@@ -1186,7 +1404,7 @@ class Statistics {
 		$possible_filters_with_prefix = apply_filters(
 			'burst_possible_filters_with_prefix',
 			[
-				'bounces'          => 'session_bounces.bounce',
+				'bounces'          => 'sessions.bounce',
 				'host'             => 'sessions.host',
 				'new_visitor'      => 'sessions.first_time_visit',
 				'page_url'         => 'statistics.page_url',
@@ -1302,7 +1520,7 @@ class Statistics {
 	 */
 	public function get_sql_select_for_metric( string $metric, Query_Data $query_data ): string {
 		$exclude_bounces = $query_data->exclude_bounces;
-		$non_bounce      = 'COALESCE(session_bounces.bounce, 0) = 0';
+		$non_bounce      = 'COALESCE(sessions.bounce, 0) = 0';
 		global $wpdb;
 		// if metric starts with  'count(' and ends with ')', then it's a custom metric.
 		// so we sanitize it and return it.
@@ -1324,10 +1542,10 @@ class Statistics {
 				: 'COUNT( statistics.ID )';
 				break;
 			case 'bounces':
-				$sql = 'COUNT(DISTINCT CASE WHEN session_bounces.bounce = 1 THEN session_bounces.session_id END) ';
+				$sql = 'COUNT(DISTINCT CASE WHEN sessions.bounce = 1 THEN sessions.ID END) ';
 				break;
 			case 'bounce_rate':
-				$sql = 'ROUND(COUNT(DISTINCT CASE WHEN session_bounces.bounce = 1 THEN session_bounces.session_id END) / COUNT(DISTINCT session_bounces.session_id) * 100, 2) ';
+				$sql = 'ROUND(COUNT(DISTINCT CASE WHEN sessions.bounce = 1 THEN sessions.ID END) / COUNT(DISTINCT sessions.ID) * 100, 2) ';
 				break;
 			case 'sessions':
 				$sql = $exclude_bounces
@@ -1685,6 +1903,8 @@ class Statistics {
 			[ 'page_url' ],
 			[ 'session_id' ],
 			[ 'time', 'page_url' ],
+			[ 'time', 'uid' ],
+			[ 'time', 'session_id' ],
 			[ 'uid', 'time' ],
 			[ 'page_id', 'page_type' ],
 		];
@@ -1754,13 +1974,120 @@ class Statistics {
 	 */
 	public function get_var( Query_Data $qd ): null|int|float {
 		global $wpdb;
-		$sql        = $this->build_raw_sql( $qd );
-		$start_time = microtime( true );
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is built and sanitized in Query_Data.
-		$result   = $wpdb->get_var( $sql );
-		$end_time = microtime( true );
-		$this->store_query_execution_time( $sql, $start_time, $end_time, $qd );
+		$sql                    = $this->build_raw_sql( $qd );
+		$timeout_ms             = $this->get_query_timeout_ms( $qd );
+		$timed_sql              = $this->add_query_timeout_hint( $sql, $timeout_ms );
+		$start_time             = microtime( true );
+		$stress_test_iterations = $this->get_stress_test_query_iterations();
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $timed_sql is built and sanitized in Query_Data and only prepends a timeout hint.
+		if ( $stress_test_iterations > 0 ) {
+			$result = null;
+			for ( $i = 0; $i < $stress_test_iterations; $i++ ) {
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $timed_sql is built and sanitized in Query_Data and only prepends a timeout hint.
+				$result = $wpdb->get_var( $timed_sql );
+			}
+			// phpcs:disable WordPress.DB.PreparedSQL -- stress logging only reads SQL text and does not execute SQL.
+			$this->log_stress_test_execution_time( $start_time, $timed_sql );
+			$this->log_stress_test_result_signature( $result, $timed_sql, 'var' );
+			// phpcs:enable WordPress.DB.PreparedSQL
+		} else {
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $timed_sql is built and sanitized in Query_Data and only prepends a timeout hint.
+			$result   = $wpdb->get_var( $timed_sql );
+			$end_time = microtime( true );
+			$this->store_query_execution_time( $sql, $start_time, $end_time, $qd );
+		}
+
+		if ( $this->is_timeout_error( $wpdb->last_error ) ) {
+			self::error_log( 'Burst query timed out in get_var for query id ' . $qd->get_id() );
+			return null;
+		}
+
 		return $result;
+	}
+
+	/**
+	 * Resolve stress-test iterations from a runtime constant.
+	 */
+	private function get_stress_test_query_iterations(): int {
+		if ( ! defined( 'BURST_STRESS_TEST_QUERIES' ) ) {
+			return 0;
+		}
+
+		return max( 0, (int) constant( 'BURST_STRESS_TEST_QUERIES' ) );
+	}
+
+	/**
+	 * Log total query execution time during stress-test mode.
+	 */
+	private function log_stress_test_execution_time( float $start_time, string $sql ): void {
+		$query_time = microtime( true ) - $start_time;
+		self::error_log( 'Query execution time: ' . $query_time . ' ' . $sql );
+	}
+
+	/**
+	 * Log a deterministic signature of the stress-test query output for baseline comparisons.
+	 */
+	private function log_stress_test_result_signature( mixed $result, string $sql, string $result_type ): void {
+		$normalized_sql = preg_replace( '/\s+/', ' ', trim( $sql ) );
+		$sql_hash       = substr( hash( 'sha256', (string) $normalized_sql ), 0, 16 );
+		$normalized     = $this->normalize_stress_result_for_hash( $result );
+		$json_payload   = wp_json_encode( $normalized );
+		$result_hash    = hash( 'sha256', (string) $json_payload );
+		$result_count   = $this->count_stress_result_items( $result );
+
+		self::error_log(
+			sprintf(
+				'Query result signature: sql_hash=%s result_hash=%s count=%d type=%s',
+				$sql_hash,
+				$result_hash,
+				$result_count,
+				$result_type
+			)
+		);
+	}
+
+	/**
+	 * Normalize result data for deterministic hashing.
+	 */
+	private function normalize_stress_result_for_hash( mixed $value ): mixed {
+		if ( is_object( $value ) ) {
+			$value = get_object_vars( $value );
+		}
+
+		if ( is_array( $value ) ) {
+			if ( $this->is_assoc_array( $value ) ) {
+				ksort( $value );
+			}
+
+			foreach ( $value as $key => $item ) {
+				$value[ $key ] = $this->normalize_stress_result_for_hash( $item );
+			}
+		}
+
+		return $value;
+	}
+
+	/**
+	 * Determine if an array has string keys.
+	 */
+	private function is_assoc_array( array $value ): bool {
+		return array_keys( $value ) !== range( 0, count( $value ) - 1 );
+	}
+
+	/**
+	 * Count top-level result items for stress output logging.
+	 */
+	private function count_stress_result_items( mixed $result ): int {
+		if ( is_array( $result ) ) {
+			return count( $result );
+		}
+
+		if ( null === $result ) {
+			return 0;
+		}
+
+		return 1;
 	}
 
 	/**
@@ -1773,6 +2100,12 @@ class Statistics {
 	 */
 	private function store_query_execution_time( string $sql, float $start, float $end, Query_Data $query_data ): void {
 		global $wpdb;
+
+		// Stress tests intentionally execute the same query repeatedly.
+		// Skip query_stats writes to prevent lock contention noise during benchmark runs.
+		if ( $this->get_stress_test_query_iterations() > 0 ) {
+			return;
+		}
 
 		$execution_time = $end - $start;
 		$date_start     = $query_data->date_start;
@@ -1803,44 +2136,62 @@ class Statistics {
 				return;
 			}
 
-			$wpdb->update(
-				$wpdb->prefix . 'burst_query_stats',
-				[
-					'avg_execution_time' => ( $existing->avg_execution_time * $existing->execution_count + $execution_time ) / ( $existing->execution_count + 1 ),
-					'max_execution_time' => max( $existing->max_execution_time, $execution_time ),
-					'min_execution_time' => min( $existing->min_execution_time, $execution_time ),
-					'execution_count'    => $existing->execution_count + 1,
-					'last_updated'       => time(),
-					'date_range_days'    => $date_range_days,
-				],
-				[ 'sql_hash' => $sql_hash ],
-				[ '%f', '%f', '%f', '%d', '%s', '%d' ],
-				[ '%s' ]
+			$updated = $this->run_query_stats_write(
+				static function () use ( $wpdb, $existing, $execution_time, $date_range_days, $sql_hash ) {
+					return $wpdb->update(
+						$wpdb->prefix . 'burst_query_stats',
+						[
+							'avg_execution_time' => ( $existing->avg_execution_time * $existing->execution_count + $execution_time ) / ( $existing->execution_count + 1 ),
+							'max_execution_time' => max( $existing->max_execution_time, $execution_time ),
+							'min_execution_time' => min( $existing->min_execution_time, $execution_time ),
+							'execution_count'    => $existing->execution_count + 1,
+							'last_updated'       => time(),
+							'date_range_days'    => $date_range_days,
+						],
+						[ 'sql_hash' => $sql_hash ],
+						[ '%f', '%f', '%f', '%d', '%s', '%d' ],
+						[ '%s' ]
+					);
+				}
 			);
+
+			if ( ! $updated ) {
+				return;
+			}
 		} else {
 			// INSERT IGNORE prevents a duplicate entry error on concurrent requests.
-			$wpdb->query(
-				$wpdb->prepare(
-					"INSERT IGNORE INTO {$wpdb->prefix}burst_query_stats
+			$inserted = $this->run_query_stats_write(
+				static function () use ( $wpdb, $sql_hash, $sql, $execution_time, $date_range_days ) {
+					return $wpdb->query(
+						$wpdb->prepare(
+							"INSERT IGNORE INTO {$wpdb->prefix}burst_query_stats
                 (sql_hash, sql_query, avg_execution_time, max_execution_time, min_execution_time, execution_count, last_updated, date_range_days)
                 VALUES (%s, %s, %f, %f, %f, %d, %d, %d)",
-					$sql_hash,
-					$sql,
-					$execution_time,
-					$execution_time,
-					$execution_time,
-					1,
-					time(),
-					$date_range_days
-				)
+							$sql_hash,
+							$sql,
+							$execution_time,
+							$execution_time,
+							$execution_time,
+							1,
+							time(),
+							$date_range_days
+						)
+					);
+				}
 			);
+
+			if ( ! $inserted ) {
+				return;
+			}
 		}
 
 		// Prune to keep only the 100 slowest queries.
 		$count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}burst_query_stats" );
 		if ( $count > 100 ) {
-			$wpdb->query(
-				"DELETE FROM {$wpdb->prefix}burst_query_stats
+			$this->run_query_stats_write(
+				static function () use ( $wpdb ) {
+					return $wpdb->query(
+						"DELETE FROM {$wpdb->prefix}burst_query_stats
 				WHERE ID NOT IN (
 					SELECT ID FROM (
 						SELECT ID FROM {$wpdb->prefix}burst_query_stats
@@ -1848,8 +2199,64 @@ class Statistics {
 						LIMIT 100
 					) AS top
 				)"
+					);
+				}
 			);
 		}
+	}
+
+	/**
+	 * Execute query_stats write operations with deadlock retries and suppressed DB-error output.
+	 */
+	private function run_query_stats_write( callable $write_operation ): bool {
+		global $wpdb;
+
+		$max_attempts = 3;
+
+		for ( $attempt = 1; $attempt <= $max_attempts; $attempt++ ) {
+			$previous_suppress = $wpdb->suppress_errors( true );
+			$wpdb->last_error  = '';
+			$operation_result  = $write_operation();
+			$error_message     = $this->get_wpdb_last_error_message();
+			$wpdb->suppress_errors( $previous_suppress );
+
+			if ( false !== $operation_result && '' === $error_message ) {
+				return true;
+			}
+
+			if ( '' === $error_message ) {
+				self::error_log( 'Query stats write failed without a database error message.' );
+				return false;
+			}
+
+			if ( ! $this->is_deadlock_db_error( $error_message ) ) {
+				self::error_log( 'Query stats write failed: ' . $error_message );
+				return false;
+			}
+
+			if ( $attempt < $max_attempts ) {
+				usleep( $attempt * 50000 );
+			}
+		}
+
+		self::error_log( 'Skipping query_stats write after repeated deadlock retries.' );
+		return false;
+	}
+
+	/**
+	 * Retrieve the current wpdb error string.
+	 */
+	private function get_wpdb_last_error_message(): string {
+		global $wpdb;
+
+		return is_string( $wpdb->last_error ) ? $wpdb->last_error : '';
+	}
+
+	/**
+	 * Detect MySQL deadlock error messages.
+	 */
+	private function is_deadlock_db_error( string $error_message ): bool {
+		return strpos( strtolower( $error_message ), 'deadlock found when trying to get lock' ) !== false;
 	}
 
 	/**
@@ -1861,14 +2268,79 @@ class Statistics {
 	 */
 	public function get_row( Query_Data $qd, string $output_type = 'OBJECT' ): null|array|object {
 		global $wpdb;
-		$sql = $this->build_raw_sql( $qd );
+		$sql                    = $this->build_raw_sql( $qd );
+		$timeout_ms             = $this->get_query_timeout_ms( $qd );
+		$timed_sql              = $this->add_query_timeout_hint( $sql, $timeout_ms );
+		$cache_ttl              = $this->get_query_cache_ttl( $qd );
+		$stress_test_iterations = $this->get_stress_test_query_iterations();
+		$cache_group            = 'burst_stats_query_results';
+		$cache_key              = '';
+		$lock                   = null;
 
-		$start_time = microtime( true );
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is built and sanitized in Query_Data.
-		$result   = $wpdb->get_row( $sql, $output_type );
-		$end_time = microtime( true );
-		$this->store_query_execution_time( $sql, $start_time, $end_time, $qd );
-		return $result;
+		if ( $cache_ttl > 0 && 0 === $stress_test_iterations ) {
+			$cache_key = $this->get_query_cache_key( $timed_sql, $output_type, true );
+			if ( $this->is_query_timeout_cached( $cache_key, $cache_group ) ) {
+				return null;
+			}
+
+			$cached = wp_cache_get( $cache_key, $cache_group );
+			if ( false !== $cached ) {
+				return $cached;
+			}
+
+			if ( $this->is_query_single_flight_enabled( $qd ) ) {
+				$lock = $this->acquire_query_single_flight_lock( $cache_key, $qd, $timeout_ms );
+				if ( ! $lock['acquired'] ) {
+					$cached_after_wait = $this->wait_for_query_cache_fill( $cache_key, $cache_group, $this->get_query_single_flight_wait_ms( $qd ) );
+					if ( false !== $cached_after_wait ) {
+						return $cached_after_wait;
+					}
+
+					// A leader query is already running and no cached value is ready yet.
+					// Return fast to prevent duplicate heavy query fan-out.
+					return null;
+				}
+			}
+		}
+
+		try {
+			$start_time = microtime( true );
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $timed_sql is built and sanitized in Query_Data and only prepends a timeout hint.
+			if ( $stress_test_iterations > 0 ) {
+				$result = null;
+				for ( $i = 0; $i < $stress_test_iterations; $i++ ) {
+					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $timed_sql is built and sanitized in Query_Data and only prepends a timeout hint.
+					$result = $wpdb->get_row( $timed_sql, $output_type );
+				}
+				// phpcs:disable WordPress.DB.PreparedSQL -- stress logging only reads SQL text and does not execute SQL.
+				$this->log_stress_test_execution_time( $start_time, $timed_sql );
+				$this->log_stress_test_result_signature( $result, $timed_sql, 'row' );
+				// phpcs:enable WordPress.DB.PreparedSQL
+			} else {
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $timed_sql is built and sanitized in Query_Data and only prepends a timeout hint.
+				$result   = $wpdb->get_row( $timed_sql, $output_type );
+				$end_time = microtime( true );
+				$this->store_query_execution_time( $sql, $start_time, $end_time, $qd );
+			}
+
+			if ( $this->is_timeout_error( $wpdb->last_error ) ) {
+				self::error_log( 'Burst query timed out in get_row for query id ' . $qd->get_id() );
+				if ( $cache_ttl > 0 && '' !== $cache_key ) {
+					$this->cache_query_timeout_marker( $cache_key, $cache_group, $qd, $timeout_ms );
+				}
+				return null;
+			}
+
+			if ( $cache_ttl > 0 && 0 === $stress_test_iterations && '' !== $cache_key && null !== $result ) {
+				wp_cache_set( $cache_key, $result, $cache_group, $cache_ttl );
+			}
+
+			return $result;
+		} finally {
+			if ( is_array( $lock ) && ! empty( $lock['acquired'] ) ) {
+				$this->release_query_single_flight_lock( $lock );
+			}
+		}
 	}
 
 	/**
@@ -1880,13 +2352,309 @@ class Statistics {
 	 */
 	public function get_results( Query_Data $qd, string $output_type = 'OBJECT' ): array|object {
 		global $wpdb;
-		$sql        = $this->build_raw_sql( $qd );
-		$start_time = microtime( true );
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $sql is built and sanitized in Query_Data.
-		$result   = $wpdb->get_results( $sql, $output_type );
-		$end_time = microtime( true );
-		$this->store_query_execution_time( $sql, $start_time, $end_time, $qd );
-		return $result;
+		$sql                    = $this->build_raw_sql( $qd );
+		$timeout_ms             = $this->get_query_timeout_ms( $qd );
+		$timed_sql              = $this->add_query_timeout_hint( $sql, $timeout_ms );
+		$cache_ttl              = $this->get_query_cache_ttl( $qd );
+		$stress_test_iterations = $this->get_stress_test_query_iterations();
+		$cache_group            = 'burst_stats_query_results';
+		$cache_key              = '';
+		$lock                   = null;
+
+		if ( $cache_ttl > 0 && 0 === $stress_test_iterations ) {
+			$cache_key = $this->get_query_cache_key( $timed_sql, $output_type, false );
+			if ( $this->is_query_timeout_cached( $cache_key, $cache_group ) ) {
+				return [];
+			}
+
+			$cached = wp_cache_get( $cache_key, $cache_group );
+			if ( false !== $cached ) {
+				return $cached;
+			}
+
+			if ( $this->is_query_single_flight_enabled( $qd ) ) {
+				$lock = $this->acquire_query_single_flight_lock( $cache_key, $qd, $timeout_ms );
+				if ( ! $lock['acquired'] ) {
+					$cached_after_wait = $this->wait_for_query_cache_fill( $cache_key, $cache_group, $this->get_query_single_flight_wait_ms( $qd ) );
+					if ( false !== $cached_after_wait ) {
+						return $cached_after_wait;
+					}
+
+					// A leader query is already running and no cached value is ready yet.
+					// Return fast to prevent duplicate heavy query fan-out.
+					return [];
+				}
+			}
+		}
+
+		try {
+			$start_time = microtime( true );
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $timed_sql is built and sanitized in Query_Data and only prepends a timeout hint.
+			if ( $stress_test_iterations > 0 ) {
+				$result = [];
+				for ( $i = 0; $i < $stress_test_iterations; $i++ ) {
+					// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $timed_sql is built and sanitized in Query_Data and only prepends a timeout hint.
+					$result = $wpdb->get_results( $timed_sql, $output_type );
+				}
+				// phpcs:disable WordPress.DB.PreparedSQL -- stress logging only reads SQL text and does not execute SQL.
+				$this->log_stress_test_execution_time( $start_time, $timed_sql );
+				$this->log_stress_test_result_signature( $result, $timed_sql, 'results' );
+				// phpcs:enable WordPress.DB.PreparedSQL
+			} else {
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $timed_sql is built and sanitized in Query_Data and only prepends a timeout hint.
+				$result   = $wpdb->get_results( $timed_sql, $output_type );
+				$end_time = microtime( true );
+				$this->store_query_execution_time( $sql, $start_time, $end_time, $qd );
+			}
+
+			if ( $this->is_timeout_error( $wpdb->last_error ) ) {
+				self::error_log( 'Burst query timed out in get_results for query id ' . $qd->get_id() );
+				if ( $cache_ttl > 0 && '' !== $cache_key ) {
+					$this->cache_query_timeout_marker( $cache_key, $cache_group, $qd, $timeout_ms );
+				}
+				return [];
+			}
+
+			if ( $cache_ttl > 0 && 0 === $stress_test_iterations && '' !== $cache_key && ! empty( $result ) ) {
+				wp_cache_set( $cache_key, $result, $cache_group, $cache_ttl );
+			}
+
+			return $result;
+		} finally {
+			if ( is_array( $lock ) && ! empty( $lock['acquired'] ) ) {
+				$this->release_query_single_flight_lock( $lock );
+			}
+		}
+	}
+
+	/**
+	 * Only enable query single-flight when a shared external object cache is active.
+	 */
+	private function is_query_single_flight_enabled( Query_Data $qd ): bool {
+		$enabled = function_exists( 'wp_using_ext_object_cache' )
+			&& wp_using_ext_object_cache();
+
+		return (bool) apply_filters( 'burst_query_single_flight_enabled', $enabled, $qd );
+	}
+
+	/**
+	 * Get the maximum follower wait time in milliseconds.
+	 */
+	private function get_query_single_flight_wait_ms( Query_Data $qd ): int {
+		$default_wait_ms = 1200;
+		$wait_ms         = (int) apply_filters( 'burst_query_single_flight_wait_ms', $default_wait_ms, $qd );
+
+		return max( 0, $wait_ms );
+	}
+
+	/**
+	 * Get lock TTL in seconds. The lock lifetime tracks query timeout with a small buffer.
+	 */
+	private function get_query_single_flight_lock_ttl( Query_Data $qd, int $timeout_ms ): int {
+		$derived_ttl  = (int) ceil( $timeout_ms / 1000 ) + 2;
+		$default_ttl  = max( 5, $derived_ttl );
+		$lock_ttl_sec = (int) apply_filters( 'burst_query_single_flight_lock_ttl', $default_ttl, $qd, $timeout_ms );
+
+		return max( 1, $lock_ttl_sec );
+	}
+
+	/**
+	 * Try to become the leader request for a query cache key.
+	 */
+	private function acquire_query_single_flight_lock( string $cache_key, Query_Data $qd, int $timeout_ms ): array {
+		$lock_group = 'burst_stats_query_locks';
+		$lock_key   = 'lock_' . $cache_key;
+		$owner      = function_exists( 'wp_generate_uuid4' )
+			? wp_generate_uuid4()
+			: uniqid( 'burst_lock_', true );
+		$lock_ttl   = $this->get_query_single_flight_lock_ttl( $qd, $timeout_ms );
+		$acquired   = wp_cache_add( $lock_key, $owner, $lock_group, $lock_ttl );
+
+		return [
+			'acquired'   => (bool) $acquired,
+			'owner'      => $owner,
+			'lock_key'   => $lock_key,
+			'lock_group' => $lock_group,
+		];
+	}
+
+	/**
+	 * Release single-flight lock if this request still owns it.
+	 */
+	private function release_query_single_flight_lock( array $lock ): void {
+		if ( empty( $lock['owner'] ) || empty( $lock['lock_key'] ) || empty( $lock['lock_group'] ) ) {
+			return;
+		}
+
+		$current_owner = wp_cache_get( $lock['lock_key'], $lock['lock_group'] );
+		if ( $current_owner === $lock['owner'] ) {
+			wp_cache_delete( $lock['lock_key'], $lock['lock_group'] );
+		}
+	}
+
+	/**
+	 * Follower requests briefly poll cache for a leader-written result.
+	 */
+	private function wait_for_query_cache_fill( string $cache_key, string $cache_group, int $wait_ms ): mixed {
+		if ( $wait_ms <= 0 ) {
+			return false;
+		}
+
+		$started_at   = microtime( true );
+		$sleep_us     = 50000;
+		$max_sleep_us = 200000;
+
+		while ( ( microtime( true ) - $started_at ) * 1000 < $wait_ms ) {
+			usleep( $sleep_us );
+
+			$cached = wp_cache_get( $cache_key, $cache_group );
+			if ( false !== $cached ) {
+				return $cached;
+			}
+
+			$sleep_us = min( $max_sleep_us, (int) ( $sleep_us * 1.5 ) );
+		}
+
+		return false;
+	}
+
+	/**
+	 * Get per-query timeout in milliseconds.
+	 *
+	 * Background cron queries (aggregation, backfill) use longer timeout (900s = 15 minutes).
+	 * Real-time dashboard queries use timeout (30s) for balance between responsiveness and reliability.
+	 *
+	 * Filters:
+	 * - 'burst_query_timeout_ms_background': Override background timeout (ms)
+	 * - 'burst_query_timeout_ms': Override real-time timeout (ms)
+	 */
+	public function get_query_timeout_ms( Query_Data $qd ): int {
+		return $this->resolve_query_timeout_ms(
+			'burst_query_timeout_ms',
+			'burst_query_timeout_ms_background',
+			$qd,
+			30000,
+			900000,
+			0,
+			true
+		);
+	}
+
+	/**
+	 * Get cache TTL in seconds for query result caching.
+	 */
+	private function get_query_cache_ttl( Query_Data $qd ): int {
+		$default_ttl = 30;
+
+		if ( $this->is_expensive_aggregation_window( $qd ) ) {
+			$default_ttl = 300;
+		}
+
+		$option_ttl = (int) get_option( 'burst_query_results_cache_ttl', -1 );
+		if ( $option_ttl >= 0 ) {
+			$default_ttl = $option_ttl;
+		}
+
+		$ttl = (int) apply_filters( 'burst_query_results_cache_ttl', $default_ttl, $qd );
+
+		return max( 0, $ttl );
+	}
+
+	/**
+	 * Build a deterministic cache key from SQL and output type.
+	 */
+	private function get_query_cache_key( string $sql, string $output_type, bool $single_row ): string {
+		$hash = hash( 'sha256', $sql . '|' . $output_type . '|' . ( $single_row ? 'row' : 'results' ) );
+
+		return 'burst_query_' . $hash;
+	}
+
+	/**
+	 * Cache a short-lived timeout marker to prevent immediate repeated retries.
+	 */
+	private function cache_query_timeout_marker( string $cache_key, string $cache_group, Query_Data $qd, int $timeout_ms ): void {
+		$timeout_cache_ttl = $this->get_query_timeout_cooldown_ttl( $qd, $timeout_ms );
+		if ( $timeout_cache_ttl <= 0 ) {
+			return;
+		}
+
+		wp_cache_set( $cache_key . ':timeout', 1, $cache_group, $timeout_cache_ttl );
+	}
+
+	/**
+	 * Check if this query recently timed out and is in cooldown.
+	 */
+	private function is_query_timeout_cached( string $cache_key, string $cache_group ): bool {
+		return false !== wp_cache_get( $cache_key . ':timeout', $cache_group );
+	}
+
+	/**
+	 * Cooldown TTL (seconds) after timeout before allowing retries.
+	 */
+	private function get_query_timeout_cooldown_ttl( Query_Data $qd, int $timeout_ms ): int {
+		$derived_default = max( 30, (int) ceil( $timeout_ms / 1000 ) );
+		$cooldown_ttl    = (int) apply_filters( 'burst_query_timeout_cooldown_ttl', $derived_default, $qd, $timeout_ms );
+
+		return max( 0, $cooldown_ttl );
+	}
+
+	/**
+	 * Detect if a query range is expensive enough for a longer cache default.
+	 */
+	private function is_expensive_aggregation_window( Query_Data $qd ): bool {
+		if ( $qd->date_start <= 0 || $qd->date_end <= 0 || $qd->date_end <= $qd->date_start ) {
+			return false;
+		}
+
+		$date_range_days = (int) ceil( ( $qd->date_end - $qd->date_start ) / DAY_IN_SECONDS );
+
+		return $date_range_days > 30;
+	}
+
+	/**
+	 * Detect if the database reported a timeout/interruption for the last query.
+	 */
+	private function is_timeout_error( string $last_error ): bool {
+		if ( '' === $last_error ) {
+			return false;
+		}
+
+		$normalized_error = strtolower( $last_error );
+
+		return str_contains( $normalized_error, 'max_execution_time' )
+			|| str_contains( $normalized_error, 'maximum statement execution time exceeded' )
+			|| str_contains( $normalized_error, 'query execution was interrupted' )
+			|| str_contains( $normalized_error, 'error 3024' )
+			|| str_contains( $normalized_error, 'error 1317' );
+	}
+
+	/**
+	 * Recommend persistent object cache when slow analytics queries are detected.
+	 */
+	public static function should_recommend_object_cache(): bool {
+		if ( function_exists( 'wp_using_ext_object_cache' ) && wp_using_ext_object_cache() ) {
+			return false;
+		}
+
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'burst_query_stats';
+
+		$exists = $wpdb->get_var(
+			$wpdb->prepare(
+				'SHOW TABLES LIKE %s',
+				$table_name
+			)
+		);
+
+		if ( ! $exists ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is built from trusted prefix.
+		$slowest_query = (float) $wpdb->get_var( "SELECT MAX(max_execution_time) FROM {$table_name}" );
+		$threshold     = (float) apply_filters( 'burst_object_cache_recommendation_threshold_seconds', 10.0 );
+
+		return $slowest_query >= max( 0.1, $threshold );
 	}
 
 	/**
@@ -1903,21 +2671,24 @@ class Statistics {
 		// Build SELECT clause first to get the actual SQL field references.
 		$select = $this->build_select_clause( $data );
 
+		// Build JOIN clauses early — detect_needed_statistics_columns() needs
+		// to see the JOIN ON references (e.g. statistics.session_id) so the
+		// subquery projects every column the outer query touches.
+		$join_sql = $this->build_join_clauses( $data, $select );
+
 		// Build FROM clause.
 		$table_name = $wpdb->prefix . 'burst_statistics AS statistics';
 
 		// if we use joins, use a pre-filtered subquery to improve performance.
 		if ( ! empty( $data->joins ) ) {
+			$columns    = implode( ', ', $this->detect_needed_statistics_columns( $data, $select, $join_sql ) );
 			$table_name = " (
-                SELECT
-                    *
+                SELECT {$columns}
                 FROM {$wpdb->prefix}burst_statistics
                 WHERE time BETWEEN {$data->date_start} AND {$data->date_end}
             ) AS statistics ";
 		}
 
-		// Build JOIN clauses - now that we have the actual SELECT clause.
-		$join_sql = $this->build_join_clauses( $data, $select );
 		$where    = $this->build_where_clause( $data );
 		$group_by = $this->build_group_by_clause( $data );
 		$having   = $this->build_having_clause( $data->having );
@@ -1947,8 +2718,13 @@ class Statistics {
             ) AS params ";
 		} elseif ( in_array( 'parameter', $data->select, true ) ) {
 			// make a faster parameters query by filtering out statistics without parameters first.
-			$table_name = " (
-                SELECT *
+			$columns = $this->detect_needed_statistics_columns( $data, $select, $join_sql );
+			if ( ! in_array( 'parameters', $columns, true ) ) {
+				$columns[] = 'parameters';
+			}
+			$columns_sql = implode( ', ', $columns );
+			$table_name  = " (
+                SELECT {$columns_sql}
                 FROM {$wpdb->prefix}burst_statistics
                 WHERE time BETWEEN {$data->date_start} AND {$data->date_end}
                     AND parameters IS NOT NULL
@@ -1959,20 +2735,12 @@ class Statistics {
 		// Pre-filter referrers if referrer is in select.
 		if ( in_array( 'referrer', $data->select, true ) ) {
 			$empty_referrers_sql = empty( $data->custom_select ) ? "AND sess.referrer != '' AND sess.referrer IS NOT NULL " : '';
-			// old versions have referrer in the burst_statistics table, so we can't use select *.
-			$table_name = " (
-                            SELECT
-                                s.ID,
-                                s.page_url,
-                                s.page_id,
-                                s.page_type,
-                                s.time,
-                                s.uid,
-                                s.time_on_page,
-                                s.parameters,
-                                s.fragment,
-                                s.session_id,
-                                sess.referrer
+			$columns             = $this->detect_needed_statistics_columns( $data, $select, $join_sql );
+			$prefixed_columns    = array_map( static fn( string $col ): string => 's.' . $col, $columns );
+			$prefixed_columns[]  = 'sess.referrer';
+			$columns_sql         = implode( ', ', $prefixed_columns );
+			$table_name          = " (
+                            SELECT {$columns_sql}
                             FROM {$wpdb->prefix}burst_statistics AS s
                             JOIN {$wpdb->prefix}burst_sessions AS sess ON s.session_id = sess.ID
                             WHERE s.time BETWEEN {$data->date_start} AND {$data->date_end}
@@ -2157,22 +2925,15 @@ class Statistics {
 		$available_joins = apply_filters(
 			'burst_available_joins',
 			[
-				'sessions'        => [
+				'sessions' => [
 					'table'      => 'burst_sessions',
 					'on'         => 'statistics.session_id = sessions.ID',
 					'type'       => 'INNER',
 					'depends_on' => [],
 				],
-				'goals'           => [
+				'goals'    => [
 					'table'      => 'burst_goal_statistics',
 					'on'         => 'statistics.ID = goals.statistic_id ' . $goal_sql,
-					'type'       => 'LEFT',
-					'depends_on' => [],
-				],
-				// Updated query to directly get bounce information from sessions table, eliminating the need for a separate subquery join.
-				'session_bounces' => [
-					'table'      => "( SELECT ID as session_id, bounce FROM {$wpdb->prefix}burst_sessions )",
-					'on'         => 'statistics.session_id = session_bounces.session_id ',
 					'type'       => 'LEFT',
 					'depends_on' => [],
 				],
@@ -2248,6 +3009,65 @@ class Statistics {
 	public function select_contains_parameters( array $select ): bool {
 		return in_array( 'parameters', $select, true ) ||
 				! empty( array_filter( $select, fn( $s ) => is_string( $s ) && strpos( $s, 'parameter' ) !== false ) );
+	}
+
+	/**
+	 * Detect which burst_statistics columns are referenced by the outer query.
+	 *
+	 * Mirrors detect_needed_joins(): scans the already-built SELECT, custom
+	 * SELECT, JOIN ON, WHERE, GROUP BY, ORDER BY and HAVING for `statistics.X`
+	 * references and returns only those columns. ID and time are always
+	 * included since the subquery needs them for joins and the time filter.
+	 * The TEXT-heavy `parameters` column and `fragment` are only included when
+	 * actually used, which keeps the materialized derived table much smaller.
+	 *
+	 * @param Query_Data $data           Query arguments.
+	 * @param string     $select_clause  Already-built SELECT clause.
+	 * @param string     $join_sql       Already-built JOIN SQL — its ON-clauses
+	 *                                   typically reference columns like
+	 *                                   `statistics.session_id` that the outer
+	 *                                   SELECT never names directly.
+	 * @return array<int, string> List of column names to project.
+	 */
+	private function detect_needed_statistics_columns( Query_Data $data, string $select_clause, string $join_sql = '' ): array {
+		static $candidates = [
+			'page_url',
+			'page_id',
+			'page_type',
+			'uid',
+			'time_on_page',
+			'parameters',
+			'fragment',
+			'session_id',
+		];
+
+		// A custom_select may reference statistics columns by bare name (e.g. `page_url`
+		// instead of `statistics.page_url`), which the prefix-based scan below cannot
+		// detect. Projecting the full candidate set keeps those queries correct.
+		if ( ! empty( $data->custom_select ) ) {
+			return array_values( array_unique( array_merge( [ 'ID', 'time' ], $candidates ) ) );
+		}
+
+		$search_string = implode(
+			' ',
+			[
+				$select_clause,
+				$join_sql,
+				$this->get_where_clause_for_filters( $data ),
+				implode( ' ', $data->order_by ),
+				implode( ' ', $data->group_by ),
+				$this->build_having_clause( $data->having ),
+			]
+		);
+
+		$needed = [ 'ID', 'time' ];
+		foreach ( $candidates as $col ) {
+			if ( strpos( $search_string, 'statistics.' . $col ) !== false ) {
+				$needed[] = $col;
+			}
+		}
+
+		return array_values( array_unique( $needed ) );
 	}
 
 	/**

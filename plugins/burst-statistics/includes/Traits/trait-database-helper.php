@@ -16,6 +16,94 @@ trait Database_Helper {
 	use Admin_Helper;
 
 	/**
+	 * Resolve query timeout in milliseconds based on runtime context.
+	 *
+	 * Background cron defaults to 15 minutes, while foreground requests default
+	 * to 30 seconds unless overridden.
+	 */
+	protected function resolve_query_timeout_ms(
+		string $foreground_filter,
+		string $background_filter,
+		mixed $filter_context = null,
+		int $foreground_default_ms = 30000,
+		int $background_default_ms = 900000,
+		int $option_default_ms = 0,
+		bool $option_override_requires_positive = true
+	): int {
+		if ( wp_doing_cron() ) {
+			$timeout_ms = $this->apply_query_timeout_filter( $background_filter, $background_default_ms, $filter_context );
+
+			return max( 0, $timeout_ms );
+		}
+
+		$default_timeout_ms = $foreground_default_ms;
+		$option_timeout_ms  = (int) get_option( 'burst_query_timeout_ms', $option_default_ms );
+
+		if ( $option_override_requires_positive ) {
+			if ( $option_timeout_ms > 0 ) {
+				$default_timeout_ms = $option_timeout_ms;
+			}
+		} else {
+			$default_timeout_ms = $option_timeout_ms;
+		}
+
+		$timeout_ms = $this->apply_query_timeout_filter( $foreground_filter, $default_timeout_ms, $filter_context );
+
+		return max( 0, $timeout_ms );
+	}
+
+	/**
+	 * Apply one of the supported timeout filters.
+	 */
+	private function apply_query_timeout_filter( string $filter_name, int $timeout_ms, mixed $filter_context = null ): int {
+		switch ( $filter_name ) {
+			case 'burst_query_timeout_ms_background':
+				return null === $filter_context
+					? (int) apply_filters( 'burst_query_timeout_ms_background', $timeout_ms )
+					: (int) apply_filters( 'burst_query_timeout_ms_background', $timeout_ms, $filter_context );
+
+			case 'burst_query_timeout_ms':
+				return null === $filter_context
+					? (int) apply_filters( 'burst_query_timeout_ms', $timeout_ms )
+					: (int) apply_filters( 'burst_query_timeout_ms', $timeout_ms, $filter_context );
+
+			case 'burst_subscription_query_timeout_ms_background':
+				return null === $filter_context
+					? (int) apply_filters( 'burst_subscription_query_timeout_ms_background', $timeout_ms )
+					: (int) apply_filters( 'burst_subscription_query_timeout_ms_background', $timeout_ms, $filter_context );
+
+			case 'burst_subscription_query_timeout_ms':
+				return null === $filter_context
+					? (int) apply_filters( 'burst_subscription_query_timeout_ms', $timeout_ms )
+					: (int) apply_filters( 'burst_subscription_query_timeout_ms', $timeout_ms, $filter_context );
+
+			default:
+				return $timeout_ms;
+		}
+	}
+
+	/**
+	 * Add MAX_EXECUTION_TIME optimizer hint to SELECT queries.
+	 */
+	protected function add_query_timeout_hint( string $sql, int $timeout_ms ): string {
+		if ( $timeout_ms <= 0 ) {
+			return $sql;
+		}
+
+		if ( stripos( $sql, 'MAX_EXECUTION_TIME(' ) !== false ) {
+			return $sql;
+		}
+
+		if ( 1 !== preg_match( '/^\s*SELECT\s+/i', $sql ) ) {
+			return $sql;
+		}
+
+		$hint = sprintf( 'SELECT /*+ MAX_EXECUTION_TIME(%d) */ ', $timeout_ms );
+
+		return preg_replace( '/^\s*SELECT\s+/i', $hint, $sql, 1 ) ?? $sql;
+	}
+
+	/**
 	 * Check if table name is valid
 	 */
 	protected function validate_table_name( string $table_name ): string {
@@ -136,5 +224,58 @@ trait Database_Helper {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Normalize an external URL for consistent storage and lookup.
+	 *
+	 * - Strips fragments (#…) before sanitization.
+	 * - Lowercases the host (RFC 3986 §3.2.2 — host is case-insensitive).
+	 * - Appends a trailing slash when there is no query string and the last
+	 *   path segment has no file extension, so scraper and tracker always
+	 *   store/look up the same string.
+	 *
+	 * @param string $url The raw URL to normalize.
+	 * @return string The normalized URL, or an empty string when invalid.
+	 */
+	protected static function normalize_external_url( string $url ): string {
+		$url = trim( $url );
+		if ( empty( $url ) ) {
+			return '';
+		}
+
+		// Strip fragment but leave query strings intact.
+		// /#[^?]*$/ stops at '?' so encoded '#' in query values is unaffected.
+		$url = (string) preg_replace( '/#[^?]*$/', '', $url );
+
+		$url = esc_url_raw( $url );
+		if ( empty( $url ) ) {
+			return '';
+		}
+
+		$parsed = wp_parse_url( $url );
+		if ( empty( $parsed['host'] ) ) {
+			return '';
+		}
+
+		// Lowercase the host to prevent duplicate rows for mixed-case hostnames.
+		$url = str_replace( $parsed['host'], strtolower( $parsed['host'] ), $url );
+
+		// Add trailing slash when there is no query string and the last path
+		// segment has no file extension. Use basename + strrchr instead of
+		// pathinfo() to avoid false positives on version numbers like /v2.1/.
+		if ( empty( $parsed['query'] ) ) {
+			$path      = $parsed['path'] ?? '/';
+			$last_seg  = basename( $path );
+			$extension = strpos( $last_seg, '.' ) !== false
+				? ltrim( (string) strrchr( $last_seg, '.' ), '.' )
+				: '';
+
+			if ( '' === $extension ) {
+				$url = trailingslashit( $url );
+			}
+		}
+
+		return $url;
 	}
 }

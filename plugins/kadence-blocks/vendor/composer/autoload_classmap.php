@@ -119,6 +119,7 @@ return array(
     'KadenceWP\\KadenceBlocks\\Shutdown\\Shutdown_Collection' => $baseDir . '/includes/resources/Shutdown/Shutdown_Collection.php',
     'KadenceWP\\KadenceBlocks\\Shutdown\\Shutdown_Handler' => $baseDir . '/includes/resources/Shutdown/Shutdown_Handler.php',
     'KadenceWP\\KadenceBlocks\\Shutdown\\Shutdown_Provider' => $baseDir . '/includes/resources/Shutdown/Shutdown_Provider.php',
+    'KadenceWP\\KadenceBlocks\\Traits\\API_Url_Trait' => $baseDir . '/includes/resources/Traits/API_Url_Trait.php',
     'KadenceWP\\KadenceBlocks\\Traits\\Image_Size_Trait' => $baseDir . '/includes/resources/Traits/Image_Size_Trait.php',
     'KadenceWP\\KadenceBlocks\\Traits\\Permalink_Trait' => $baseDir . '/includes/resources/Traits/Permalink_Trait.php',
     'KadenceWP\\KadenceBlocks\\Traits\\Rest\\Image_Trait' => $baseDir . '/includes/resources/Traits/Rest/Image_Trait.php',

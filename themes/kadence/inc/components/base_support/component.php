@@ -97,7 +97,8 @@ class Component implements Component_Interface, Templating_Component_Interface {
 	public function initialize() {
 		add_action( 'after_setup_theme', array( $this, 'action_essential_theme_support' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'install_starter_script' ) );
-		add_action( 'admin_notices', array( $this, 'kadence_starter_templates_notice' ) );
+        // 05/06/2026: this banner is temporarily commented out until kadence starter templates experience is updated.
+		// add_action( 'admin_notices', array( $this, 'kadence_starter_templates_notice' ) );
 		add_action( 'admin_notices', array( $this, 'kadence_turn_off_gutenberg_plugin_notice' ) );
 		add_action( 'wp_ajax_kadence_dismiss_notice', array( $this, 'ajax_dismiss_starter_notice' ) );
 		add_action( 'wp_ajax_kadence_dismiss_gutenberg_notice', array( $this, 'ajax_dismiss_gutenberg_notice' ) );

@@ -1,6 +1,15 @@
 <?php
 /**
- * Rest API Optimizer.
+ * Plugin Name: Burst REST API Optimizer
+ * Plugin URI: https://burst-statistics.com
+ * Description: Must-use plugin installed by Burst Pro to keep the Burst REST API fast by skipping unrelated plugins on Burst REST requests.
+ * Version: 1.0.0
+ * Requires at least: 6.6
+ * Requires PHP: 8.0
+ * Author: Burst Statistics
+ * Author URI: https://burst-statistics.com
+ * License: GPL v2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  */
 
 defined( 'ABSPATH' ) || die();
@@ -54,6 +63,8 @@ if ( ! function_exists( '\Burst\burst_exclude_plugins_for_rest_api' ) && ! funct
 			'all-in-one-wp-security-and-firewall',
 			// if Permalink manager is excluded, this can cause 404 pages.
 			'permalink-manager-for-woocommerce',
+			// If AI is excluded it give wrong chat availability status.
+			'ai',
 		];
 		/**
 		 * Allow filtering of plugins that should remain active during REST API loading of BURST.
@@ -66,7 +77,6 @@ if ( ! function_exists( '\Burst\burst_exclude_plugins_for_rest_api' ) && ! funct
 		if (
 			str_contains( $burst_rest_route, 'burst/v1/track' ) ||
 			str_contains( $burst_rest_route, 'burst/v1/auto_installer' ) ||
-			str_contains( $burst_rest_route, 'burst/v1/do_action/report/send-test-report' ) ||
 			str_contains( $burst_rest_route, 'burst/v1/otherplugins' ) ||
 			str_contains( $burst_rest_route, 'burst/v1/onboarding' ) ||
 			str_contains( $burst_rest_route, 'otherpluginsdata' ) ||
@@ -78,9 +88,18 @@ if ( ! function_exists( '\Burst\burst_exclude_plugins_for_rest_api' ) && ! funct
 		}
 
 		$integrations      = false;
-		$burst_plugin_path = get_option( 'burst_plugin_path' );
-		if ( ! empty( $burst_plugin_path ) ) {
-			$integration_file = $burst_plugin_path . 'includes/Integrations/integrations.php';
+		$burst_plugin_slug = get_option( 'burst_plugin_slug' );
+		// Strict slug validation: only normal folder-name characters.
+		// This blocks path traversal (../), absolute paths, slashes and stream
+		// wrappers such as phar:// or http://. Combined with the fixed
+		// WP_PLUGIN_DIR base below, the loaded file is guaranteed to live
+		// inside the plugins directory.
+		if (
+			is_string( $burst_plugin_slug )
+			&& $burst_plugin_slug !== ''
+			&& preg_match( '/^[a-zA-Z0-9_-]+$/', $burst_plugin_slug )
+		) {
+			$integration_file = WP_PLUGIN_DIR . '/' . $burst_plugin_slug . '/includes/Integrations/integrations.php';
 			if ( file_exists( $integration_file ) ) {
 				$integrations = require $integration_file;
 			}

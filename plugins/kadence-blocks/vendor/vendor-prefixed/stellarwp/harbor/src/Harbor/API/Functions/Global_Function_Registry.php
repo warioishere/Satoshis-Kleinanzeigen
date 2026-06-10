@@ -8,6 +8,7 @@ use KadenceWP\KadenceBlocks\LiquidWeb\Harbor\API\Functions\Actions\Register_Subm
 use KadenceWP\KadenceBlocks\LiquidWeb\Harbor\Config;
 use KadenceWP\KadenceBlocks\LiquidWeb\Harbor\Features\Manager;
 use KadenceWP\KadenceBlocks\LiquidWeb\Harbor\Licensing\Repositories\License_Repository;
+use KadenceWP\KadenceBlocks\LiquidWeb\Harbor\Portal\Catalog_Repository;
 use KadenceWP\KadenceBlocks\LiquidWeb\Harbor\Site\Data;
 use KadenceWP\KadenceBlocks\LiquidWeb\Harbor\Traits\With_Debugging;
 use Throwable;
@@ -152,6 +153,28 @@ class Global_Function_Registry {
 					self::debug_log_throwable( $e, 'Error getting site domain' );
 
 					return '';
+				}
+			}
+		);
+
+		\_lw_harbor_global_function_registry(
+			'lw_harbor_refresh_catalog',
+			$version,
+			static function (): bool {
+				try {
+					$result = Config::get_container()->get( Catalog_Repository::class )->refresh();
+
+					if ( is_wp_error( $result ) ) {
+						self::debug_log_wp_error( $result, 'Error refreshing catalog' );
+
+						return false;
+					}
+
+					return true;
+				} catch ( Throwable $e ) {
+					self::debug_log_throwable( $e, 'Error refreshing catalog' );
+
+					return false;
 				}
 			}
 		);

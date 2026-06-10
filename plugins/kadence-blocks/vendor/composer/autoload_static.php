@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit2b363a563784ab73a27482ad263c7374
+class ComposerStaticInitedf1e462b2afc3092ef8d99e886c3ce8
 {
     public static $prefixLengthsPsr4 = array (
         'K' =>
@@ -134,6 +134,7 @@ class ComposerStaticInit2b363a563784ab73a27482ad263c7374
         'KadenceWP\\KadenceBlocks\\Shutdown\\Shutdown_Collection' => __DIR__ . '/../..' . '/includes/resources/Shutdown/Shutdown_Collection.php',
         'KadenceWP\\KadenceBlocks\\Shutdown\\Shutdown_Handler' => __DIR__ . '/../..' . '/includes/resources/Shutdown/Shutdown_Handler.php',
         'KadenceWP\\KadenceBlocks\\Shutdown\\Shutdown_Provider' => __DIR__ . '/../..' . '/includes/resources/Shutdown/Shutdown_Provider.php',
+        'KadenceWP\\KadenceBlocks\\Traits\\API_Url_Trait' => __DIR__ . '/../..' . '/includes/resources/Traits/API_Url_Trait.php',
         'KadenceWP\\KadenceBlocks\\Traits\\Image_Size_Trait' => __DIR__ . '/../..' . '/includes/resources/Traits/Image_Size_Trait.php',
         'KadenceWP\\KadenceBlocks\\Traits\\Permalink_Trait' => __DIR__ . '/../..' . '/includes/resources/Traits/Permalink_Trait.php',
         'KadenceWP\\KadenceBlocks\\Traits\\Rest\\Image_Trait' => __DIR__ . '/../..' . '/includes/resources/Traits/Rest/Image_Trait.php',
@@ -144,9 +145,9 @@ class ComposerStaticInit2b363a563784ab73a27482ad263c7374
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit2b363a563784ab73a27482ad263c7374::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit2b363a563784ab73a27482ad263c7374::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit2b363a563784ab73a27482ad263c7374::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInitedf1e462b2afc3092ef8d99e886c3ce8::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInitedf1e462b2afc3092ef8d99e886c3ce8::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInitedf1e462b2afc3092ef8d99e886c3ce8::$classMap;
 
         }, null, ClassLoader::class);
     }

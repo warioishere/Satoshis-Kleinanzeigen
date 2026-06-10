@@ -50,7 +50,7 @@ const glue = () => {
  * @return {string}
  */
 const getNonce = () => {
-	return (
+	return  (
 		'nonce=' +
 		burst_settings.burst_nonce +
 		'&token=' +
@@ -64,6 +64,70 @@ const getNonce = () => {
 let lastErrorMessage = '';
 let lastErrorTime = 0;
 const NONCE_TOAST_ID = 'burst-nonce-expired';
+const activeRequestControllers = new Map();
+
+const getRequestDedupKey = ( method, path ) => {
+	const [ basePath, queryString = '' ] = path.split( '?' );
+	const normalizedPath = ( basePath || '' ).replace( /\/+/g, '/' );
+
+	// Strip cache-busting `token` and per-session `nonce`, drop empty segments
+	// from `&&` artifacts (e.g. when filters serializes to an empty array), and
+	// sort the rest so two requests for the same logical resource share a key.
+	// Avoid URLSearchParams here: with bracketed array keys like `metrics[]=`
+	// some environments silently produce empty entries, which would collapse
+	// every request for the same endpoint onto a single dedup key.
+	const sortedParams = queryString
+		.split( '&' )
+		.filter( ( entry ) => {
+			if ( '' === entry ) {
+				return false;
+			}
+			const key = entry.split( '=' )[ 0 ];
+			return 'nonce' !== key && 'token' !== key;
+		})
+		.sort()
+		.join( '&' );
+
+	return `${method}:${normalizedPath}?${sortedParams}`;
+};
+
+const createAbortableRequest = ( method, path ) => {
+	const requestKey = getRequestDedupKey( method, path );
+	const existingController = activeRequestControllers.get( requestKey );
+
+	// Keep only the newest in-flight request for each dedup key.
+	if ( existingController ) {
+		existingController.abort();
+	}
+
+	const controller = new AbortController();
+	activeRequestControllers.set( requestKey, controller );
+
+	const finalize = () => {
+		if ( activeRequestControllers.get( requestKey ) === controller ) {
+			activeRequestControllers.delete( requestKey );
+		}
+	};
+
+	return {
+		requestKey,
+		controller,
+		signal: controller.signal,
+		finalize
+	};
+};
+
+const isAbortError = ( error ) => {
+	if ( ! error ) {
+		return false;
+	}
+
+	return (
+		'AbortError' === error.name ||
+		/aborted|aborterror/i.test( error.message || '' )
+	);
+};
+
 const generateError = ( error, path = false ) => {
 	const rawError = ( error || '' ).replace( /(<([^>]+)>)/gi, '' );
 
@@ -163,10 +227,9 @@ const makeRequest = async(
     data = {},
     requireRequestSuccess = true
 ) => {
-	const controller = new AbortController();
-	const signal = controller.signal;
+	const requestContext = createAbortableRequest( method, path );
 	const auth = getRequestAuth();
-	const args = { path, method, signal };
+	const args = { path, method, signal: requestContext.signal };
 
 	args.headers = withRequestHeaders( args.headers, auth );
 
@@ -174,7 +237,6 @@ const makeRequest = async(
 		data.nonce = burst_settings.burst_nonce;
 		args.data = data;
 	}
-
 	try {
 		const response = await apiFetch( args );
 		if ( requireRequestSuccess && ! response.request_success ) {
@@ -192,21 +254,29 @@ const makeRequest = async(
 		delete response.request_success;
 		return response;
 	} catch ( error ) {
+		if ( isAbortError( error ) ) {
+			return null;
+		}
+
 		try {
 
 			// Wait for ajaxRequest to resolve before continuing.
-			return await ajaxRequest( method, path, data, auth );
+			return await ajaxRequest( method, path, data, auth, requestContext.signal );
 		} catch ( ajaxError ) {
-			const err = error || ajaxError;
-			generateError( err.message, args.path );
-			throw err;
+			if ( isAbortError( ajaxError ) ) {
+				return null;
+			}
+
+			generateError( ajaxError.message, args.path );
+			throw ajaxError;
 		}
+	} finally {
+		requestContext.finalize();
 	}
 };
 
 const isDoActionFallbackPath = ( path = '' ) => {
 	const writeFragments = [
-		'/options/set',
 		'/fields/set',
 		'/goals/add',
 		'/goals/delete',
@@ -236,15 +306,18 @@ const getAjaxFallbackUrl = ( method, path ) => {
 	return withAjaxAction( siteUrl( 'ajax' ), action );
 };
 
-const ajaxRequest = async( method, path, requestData = null, auth = getRequestAuth() ) => {
+const ajaxRequest = async(
+	method,
+	path,
+	requestData = null,
+	auth = getRequestAuth(),
+	signal = undefined
+) => {
 	const ajaxUrl = getAjaxFallbackUrl( method, path );
 	const url =
 		'GET' === method ?
 			`${ajaxUrl}&rest_action=${path.replace( '?', '&' )}` :
 			ajaxUrl;
-
-	const controller = new AbortController();
-	const signal = controller.signal;
 
 	const options = {
 		method,
@@ -258,10 +331,7 @@ const ajaxRequest = async( method, path, requestData = null, auth = getRequestAu
 	};
 
 	if ( 'POST' === method ) {
-		options.body = JSON.stringify(
-			{ path, data: requestData },
-			stripControls
-		);
+		options.body = JSON.stringify({ path, data: requestData }, stripControls );
 	}
 
 	try {
@@ -271,11 +341,11 @@ const ajaxRequest = async( method, path, requestData = null, auth = getRequestAu
 			const responseText = await response.text();
 
 			generateError(
-				`AJAX request failed: ${ response.status } ${ response.statusText }`
+				`AJAX request failed: ${response.status} ${response.statusText}`
 			);
 
 			throw new Error(
-				`AJAX request failed: ${ response.status } ${ response.statusText }. Response: ${ responseText }`
+				`AJAX request failed: ${response.status} ${response.statusText}. Response: ${responseText}`
 			);
 		}
 
@@ -293,7 +363,7 @@ const ajaxRequest = async( method, path, requestData = null, auth = getRequestAu
 			console.log( 'Ajax fallback request failed.' );
 
 			throw new Error(
-				`AJAX response validation failed. Response: ${ JSON.stringify( responseData ) }`
+				`AJAX response validation failed. Response: ${JSON.stringify( responseData )}`
 			);
 		}
 
@@ -304,7 +374,7 @@ const ajaxRequest = async( method, path, requestData = null, auth = getRequestAu
 	} catch ( error ) {
 		return Promise.reject(
 			new Error(
-				`AJAX request failed. ${ error instanceof Error ? error.message : String( error ) }`
+				`AJAX request failed. ${error instanceof Error ? error.message : String( error )}`
 			)
 		);
 	}
@@ -352,11 +422,6 @@ const siteUrl = ( type ) => {
 	return url;
 };
 
-export const setOption = ( option, value ) =>
-	makeRequest( 'burst/v1/options/set' + glue() + getNonce(), 'POST', {
-		option: { option, value }
-	});
-
 export const getFields = () =>
 	makeRequest( 'burst/v1/fields/get' + glue() + getNonce() );
 export const setFields = ( data ) => {
@@ -394,6 +459,10 @@ export const doAction = ( action, data = {}) =>
 		action_data: data,
 		should_load_ecommerce: burst_settings.shouldLoadEcommerce || false
 	}).then( ( response ) => {
+		if ( ! response ) {
+			return [];
+		}
+
 		return Object.prototype.hasOwnProperty.call( response, 'data' ) ?
 			response.data :
 			[];
@@ -417,6 +486,10 @@ export const getAction = ( action, actionData = {}) => {
 		`burst/v1/get_action/${action}${glue()}${params}`,
 		'GET'
 	).then( ( response ) => {
+		if ( ! response ) {
+			return [];
+		}
+
 		return Object.prototype.hasOwnProperty.call( response, 'data' ) ? response.data : [];
 	});
 };
@@ -497,17 +570,19 @@ export const getDatatableData = async( id, isEcommerce, startDate, endDate, rang
 };
 
 /**
- * Get data from the REST API
- * @param {string} type      - The data type to fetch
- * @param {string} startDate - Start date for the query
- * @param {string} endDate   - End date for the query
- * @param {string} range     - Date range
- * @param {Object} args      - Additional query parameters
- * @return {Promise}
+ * Get data from the REST API.
+ *
+ * @param {import('../types/api-endpoints').BurstDataType} type - Endpoint type (see `src/types/api-endpoints.ts`).
+ * @param {string} startDate - Start date for the query.
+ * @param {string} endDate   - End date for the query.
+ * @param {string} range     - Date range slug.
+ * @param {Object} [args={}] - Additional query parameters (filters, metrics, etc.).
+ * @return {Promise<{ data: * }>} Response; `data` shape depends on `type`.
  */
 export const getData = async( type, startDate, endDate, range, args = {}) => {
 
-	const { filters, metrics, currentView, selectedPages, chart_mode, distribution_view, product_id } = args;
+	// Extract filters and metrics from args if they exist.
+	const { filters, metrics, group_by, currentView, selectedPages, id, chart_mode, distribution_view, product_id, compare_mode, compare_date_start, compare_date_end, page_url } = args;
 
 	const queryParams = {
 		date_start: startDate,
@@ -528,6 +603,9 @@ export const getData = async( type, startDate, endDate, range, args = {}) => {
 	if ( metrics ) {
 		queryParams.metrics = metrics;
 	}
+	if ( group_by ) {
+		queryParams.group_by = group_by;
+	}
 	if ( currentView ) {
 		queryParams.currentView = currentView;
 	}
@@ -540,6 +618,22 @@ export const getData = async( type, startDate, endDate, range, args = {}) => {
 	if ( product_id ) {
 		queryParams.product_id = product_id;
 	}
+	if ( compare_mode ) {
+		queryParams.compare_mode = compare_mode;
+	}
+	if ( compare_date_start ) {
+		queryParams.compare_date_start = compare_date_start;
+	}
+	if ( compare_date_end ) {
+		queryParams.compare_date_end = compare_date_end;
+	}
+	if ( id ) {
+		queryParams.id = id;
+	}
+	if ( page_url ) {
+		queryParams.page_url = page_url;
+	}
+
 
 	const queryString = buildQueryString( queryParams );
 	const endpoint = `data/${type}`;

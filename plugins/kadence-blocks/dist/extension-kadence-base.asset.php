@@ -1,1 +1,1 @@
-<?php return array('dependencies' => array('kadence-icons'), 'version' => 'af0147c94481e937b8e2');
+<?php return array('dependencies' => array('react-jsx-runtime'), 'version' => '321d6dd06fc11473d36d');

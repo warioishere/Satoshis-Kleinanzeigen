@@ -11,6 +11,8 @@ use Kadence\Component_Interface;
 use Kadence\Kadence_CSS;
 use Kadence_Blocks_Frontend;
 use ElementorPro;
+use WPSEO_Primary_Term;
+
 use function Kadence\kadence;
 use function add_action;
 use function add_theme_support;
@@ -21,7 +23,8 @@ use function get_template_part;
 use function get_post_type;
 use function woocommerce_catalog_ordering;
 use function woocommerce_result_count;
-use WPSEO_Primary_Term;
+use function Kadence\is_shopkit_feature_enabled;
+
 
 /**
  * Class for adding Woocommerce plugin support.
@@ -405,7 +408,7 @@ class Component implements Component_Interface {
 	 * @return array updated classes string.
 	 */
 	public function add_product_archive_loop_classes_shopkit( $classes ) {
-		$product_image_hover_style = kadence()->option( 'product_archive_image_hover_switch' );
+		$product_image_hover_style = is_shopkit_feature_enabled( 'feature_image_swap' ) ? 'none' : kadence()->option( 'product_archive_image_hover_switch' );
 		$product_btn_style = kadence()->option( 'product_archive_button_style' );
 		$hover_style       = 'woo-archive-image-hover-' . esc_attr( $product_image_hover_style );
 		$button_style      = 'woo-archive-btn-' . esc_attr( $product_btn_style );
@@ -441,7 +444,7 @@ class Component implements Component_Interface {
 			$attributes['class'] .= ' ajax_add_to_cart';
 		}
 		$product_btn_style = kadence()->option( 'product_archive_button_style' );
-		$product_image_hover_style = kadence()->option( 'product_archive_image_hover_switch' );
+		$product_image_hover_style = is_shopkit_feature_enabled( 'feature_image_swap' ) ? 'none' : kadence()->option( 'product_archive_image_hover_switch' );
 		if ( 'button' === $product_btn_style ) {
 			$cart_text = sprintf(
 				'<a href="%s" %s>%s</a>',
@@ -1148,7 +1151,7 @@ class Component implements Component_Interface {
 		}
 		$product_style = kadence()->option( 'product_archive_style' );
 		$product_btn_style = kadence()->option( 'product_archive_button_style' );
-		$product_image_hover_style = kadence()->option( 'product_archive_image_hover_switch' );
+		$product_image_hover_style = is_shopkit_feature_enabled( 'feature_image_swap' ) ? 'none' : kadence()->option( 'product_archive_image_hover_switch' );
 		if ( is_main_query() && is_archive() && wc_get_loop_prop( 'is_paginated' ) && apply_filters( 'kadence_enabled_product_archive_attributes', true, $GLOBALS['woocommerce_loop'] ) ) {
 			$attributes = $this->get_archive_infinite_attributes();
 		} else {
@@ -1178,7 +1181,7 @@ class Component implements Component_Interface {
 
 		$link = apply_filters( 'woocommerce_loop_product_link', get_the_permalink(), $product ); // phpcs:ignore WPThemeReview.CoreFunctionality.PrefixAllGlobals.NonPrefixedHooknameFound
 		$has_hover_image = '';
-		if ( 'none' !== kadence()->option( 'product_archive_image_hover_switch' ) ) {
+		if ( ! is_shopkit_feature_enabled( 'feature_image_swap' ) && 'none' !== kadence()->option( 'product_archive_image_hover_switch' ) ) {
 			if ( is_a( $product, 'WC_Product' ) ) {
 				$attachment_ids = $product->get_gallery_image_ids();
 				if ( $attachment_ids ) {
@@ -1198,7 +1201,7 @@ class Component implements Component_Interface {
 	 * Insert a second product image if enabled and if image exists.
 	 */
 	public function archive_loop_second_image() {
-		if ( 'none' !== kadence()->option( 'product_archive_image_hover_switch' ) ) {
+		if ( ! is_shopkit_feature_enabled( 'feature_image_swap' ) && 'none' !== kadence()->option( 'product_archive_image_hover_switch' ) ) {
 			global $product;
 			if ( is_a( $product, 'WC_Product' ) ) {
 				$attachment_ids = $product->get_gallery_image_ids();

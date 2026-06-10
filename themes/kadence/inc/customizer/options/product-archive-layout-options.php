@@ -653,7 +653,24 @@ $settings = array(
 				),
 			),
 			'responsive' => false,
-			'class'      => 'kadence-three-col kadence-auto-height',
+			'class'      => is_shopkit_feature_enabled( 'feature_image_swap' )
+				? 'kadence-three-col kadence-auto-height kadence-control-disabled'
+				: 'kadence-three-col kadence-auto-height',
+			'notice'     => is_shopkit_feature_enabled( 'feature_image_swap' )
+				? wp_kses(
+					sprintf(
+						/* translators: %s: link to Shop Kit Image Swap settings */
+						__( 'This setting is being overridden by Shop Kit\'s Image Swap Module. <a target="_blank" href="%s">Click here</a> to manage Image Swap settings.', 'kadence' ),
+						esc_url( admin_url( 'admin.php?page=iconic-wis-settings' ) )
+					),
+					[ 
+						'a' => [ 
+							'href'   => [], 
+							'target' => [],
+						],
+					]
+				)
+				: '',
 		),
 	),
 	'product_archive_style' => array(

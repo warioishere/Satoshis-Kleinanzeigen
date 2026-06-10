@@ -10,6 +10,7 @@ import useLicenseData from '@/hooks/useLicenseData';
 import TrialPopup from '@/components/Upsell/TrialPopup';
 import { shouldLoadRoute } from '@/utils/helper';
 
+
 export const Route = createFileRoute( '/sources' )({
 	component: Sources,
 
@@ -46,18 +47,17 @@ function Sources() {
 		<>
 			<TrialPopup />
 			<PageHeader />
+
 			<ErrorBoundary>
 				<WorldMapBlock />
 			</ErrorBoundary>
+
 			<ErrorBoundary>
 				<DataTableBlock allowedConfigs={[ 'countries' ]} id="sources_countries" />
 			</ErrorBoundary>
 
 			<ErrorBoundary>
 				<DataTableBlock allowedConfigs={[ 'campaigns' ]} id="sources_campaigns" />
-			</ErrorBoundary>
-			<ErrorBoundary>
-				<DataTableBlock allowedConfigs={[ 'referrers' ]} id="sources_referrers" />
 			</ErrorBoundary>
 		</>
 	);

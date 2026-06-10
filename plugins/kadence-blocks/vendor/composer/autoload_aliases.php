@@ -3965,6 +3965,30 @@ namespace KadenceWP\KadenceBlocks {
     array (
     ),
   ),
+  'LiquidWeb\\Harbor\\Portal\\Herald_Legacy_Url_Builder' => 
+  array (
+    'type' => 'class',
+    'classname' => 'Herald_Legacy_Url_Builder',
+    'isabstract' => false,
+    'namespace' => 'LiquidWeb\\Harbor\\Portal',
+    'extends' => 'KadenceWP\\KadenceBlocks\\LiquidWeb\\Harbor\\Portal\\Herald_Legacy_Url_Builder',
+    'implements' => 
+    array (
+      0 => 'LiquidWeb\\Harbor\\Portal\\Contracts\\Download_Url_Builder',
+    ),
+  ),
+  'LiquidWeb\\Harbor\\Portal\\Herald_Routing_Url_Builder' => 
+  array (
+    'type' => 'class',
+    'classname' => 'Herald_Routing_Url_Builder',
+    'isabstract' => false,
+    'namespace' => 'LiquidWeb\\Harbor\\Portal',
+    'extends' => 'KadenceWP\\KadenceBlocks\\LiquidWeb\\Harbor\\Portal\\Herald_Routing_Url_Builder',
+    'implements' => 
+    array (
+      0 => 'LiquidWeb\\Harbor\\Portal\\Contracts\\Download_Url_Builder',
+    ),
+  ),
   'LiquidWeb\\Harbor\\Portal\\Herald_Url_Builder' => 
   array (
     'type' => 'class',

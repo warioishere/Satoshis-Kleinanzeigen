@@ -9,6 +9,9 @@ namespace Kadence;
 
 use Kadence\Template_Tags;
 use Kadence\Theme;
+use KadenceWP\KadenceShopKit\App;
+use KadenceWP\KadenceShopKit\Features\Feature_Repository;
+
 use function get_template_directory;
 
 /**
@@ -27,6 +30,23 @@ function kadence() : Template_Tags {
 
 	return $theme->template_tags();
 }
+/**
+ * Checks if a Kadence Shop Kit feature is enabled.
+ *
+ * @param string $feature_id The feature ID to check.
+ * @return bool True if the feature is enabled, false otherwise.
+ */
+function is_shopkit_feature_enabled( string $feature_id ) : bool {
+	if ( ! class_exists( App::class ) ) {
+		return false;
+	}
+
+	/** @var Feature_Repository $repository */
+	$repository = App::container()->get( Feature_Repository::class );
+
+	return $repository->has( $feature_id ) && $repository->is_enabled( $feature_id );
+}
+
 // Load the CSS class.
 require get_template_directory() . '/inc/class-kadence-css.php';
 // Load the Local Font class.

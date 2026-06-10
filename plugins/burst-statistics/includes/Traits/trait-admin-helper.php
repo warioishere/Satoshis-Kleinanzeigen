@@ -77,7 +77,7 @@ trait Admin_Helper {
 			$token = burst_loader()->admin->share->tokens->get_current_token();
 
 			if ( empty( $token ) ) {
-				return burst_loader()->user_can_view = false;
+				return burst_loader()->user_can_view_sales = false;
 			} else {
 				return burst_loader()->admin->share->routing->current_shared_request_tab_is_allowed();
 			}
@@ -189,9 +189,13 @@ trait Admin_Helper {
 	/**
 	 * Checks if the user has admin access to the Burst plugin.
 	 */
-	protected function has_admin_access(): bool {
+	protected function has_admin_access( bool $allow_track_only = false ): bool {
 		if ( isset( burst_loader()->has_admin_access ) ) {
 			return burst_loader()->has_admin_access;
+		}
+
+		if ( ! $allow_track_only && BURST_TRACK_ONLY ) {
+			return false;
 		}
 
 		// Check fast-paths that don't require user/caps.
@@ -214,7 +218,8 @@ trait Admin_Helper {
 		}
 
 		if (
-			self::is_http_basic_auth_request()
+			self::is_burst_rest_request_path()
+			&& self::is_http_basic_auth_request()
 			&& self::is_confirmed_application_password_auth()
 		) {
 			return burst_loader()->has_admin_access = true;
@@ -299,43 +304,42 @@ trait Admin_Helper {
 			'burst_localize_script',
 			[
 				// Core plugin information.
-				'burst_version'                => BURST_VERSION,
-				'is_pro'                       => defined( 'BURST_PRO' ),
-				'plugin_url'                   => BURST_URL,
-				'installed_by'                 => get_site_option( 'teamupdraft_installation_source_burst-statistics', '' ),
+				'burst_version'                        => BURST_VERSION,
+				'is_pro'                               => defined( 'BURST_PRO' ),
+				'plugin_url'                           => BURST_URL,
+				'installed_by'                         => get_site_option( 'teamupdraft_installation_source_burst-statistics', '' ),
 
 				// URLs and endpoints.
-				'rest_url'                     => get_rest_url(),
-				'site_url'                     => defined( 'BURST_HEADLESS_DOMAIN' ) ? esc_url_raw( BURST_HEADLESS_DOMAIN ) : get_site_url(),
-				'admin_ajax_url'               => add_query_arg( [ 'action' => 'burst_rest_api_fallback' ], admin_url( 'admin-ajax.php' ) ),
-				'dashboard_url'                => $this->admin_url( 'burst' ),
-				'network_link'                 => network_site_url( 'plugins.php' ),
+				'rest_url'                             => get_rest_url(),
+				'site_url'                             => defined( 'BURST_HEADLESS_DOMAIN' ) ? esc_url_raw( BURST_HEADLESS_DOMAIN ) : get_site_url(),
+				'admin_ajax_url'                       => add_query_arg( [ 'action' => 'burst_rest_api_fallback' ], admin_url( 'admin-ajax.php' ) ),
+				'dashboard_url'                        => $this->admin_url( 'burst' ),
+				'network_link'                         => network_site_url( 'plugins.php' ),
 
 				// Security and authentication.
-				'nonce'                        => wp_create_nonce( 'wp_rest' ),
-				'burst_nonce'                  => wp_create_nonce( 'burst_nonce' ),
-				'current_ip'                   => Ip::get_ip_address(),
+				'nonce'                                => wp_create_nonce( 'wp_rest' ),
+				'burst_nonce'                          => wp_create_nonce( 'burst_nonce' ),
+				'current_ip'                           => Ip::get_ip_address(),
 
 				// User permissions and capabilities.
-				'user_roles'                   => $this->get_user_roles(),
-				'view_sales_burst_statistics'  => $this->user_can_view_sales(),
-				'manage_burst_statistics'      => $this->user_can_manage(),
-				'can_install_plugins'          => $user_can_install,
-				'share_link_permissions'       => self::get_share_link_permissions(),
+				'user_roles'                           => $this->get_user_roles(),
+				'view_sales_burst_statistics'          => $this->user_can_view_sales(),
+				'manage_burst_statistics'              => $this->user_can_manage(),
+				'can_install_plugins'                  => $user_can_install,
+				'share_link_permissions'               => self::get_share_link_permissions(),
 
 				// Localization and internationalization.
-				'json_translations'            => $js_data['json_translations'],
-				'date_format'                  => get_option( 'date_format' ),
-				'gmt_offset'                   => get_option( 'gmt_offset' ),
-				'burst_activation_time'        => (int) get_option( 'burst_activation_time', 1640995200 ),
+				'json_translations'                    => $js_data['json_translations'],
+				'date_format'                          => get_option( 'date_format' ),
+				'gmt_offset'                           => get_option( 'gmt_offset' ),
+				'burst_activation_time'                => (int) get_option( 'burst_activation_time', 1640995200 ),
 
 				// Configuration and options.
-				'date_ranges'                  => $this->get_date_ranges(),
-				'time_format'                  => get_option( 'time_format' ),
-				'tour_shown'                   => $this->get_option_int( 'burst_tour_shown_once' ),
-
+				'date_ranges'                          => $this->get_date_ranges(),
+				'time_format'                          => get_option( 'time_format' ),
 				// Date picker's starting date.
-				'burst_date_picker_start_date' => (int) get_option( 'burst_activation_time', 1640995200 ),
+				'burst_date_picker_start_date'         => (int) get_option( 'burst_activation_time', 1640995200 ),
+				'external_links_first_cycle_completed' => (int) get_option( 'burst_external_links_last_completed', 0 ) > 0,
 			]
 		);
 	}
@@ -442,7 +446,7 @@ trait Admin_Helper {
 		// Scope the skip to the actual auth mechanism of *this* request: the `did_action` flag
 		// is global per request, so on its own it would also skip nonce checks in cookie-auth
 		// paths that happen after an earlier app-password authentication in the same request.
-		if ( self::is_http_basic_auth_request() && (bool) did_action( 'wp_application_passwords_did_authenticate' ) ) {
+		if ( self::is_http_basic_auth_request() && (bool) did_action( 'application_password_did_authenticate' ) ) {
 			return true;
 		}
 		if ( empty( $nonce ) ) {
@@ -471,13 +475,35 @@ trait Admin_Helper {
 	}
 
 	/**
+	 * Whether the current request targets a Burst REST API endpoint.
+	 *
+	 * This is used to avoid running Burst-specific auth probing on unrelated
+	 * REST routes (e.g. WooCommerce), which can taint global REST auth status.
+	 */
+	private static function is_burst_rest_request_path(): bool {
+		// unslashed and sanitized later in this function.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+		$raw_uri = $_SERVER['REQUEST_URI'] ?? '';
+		if ( ! is_string( $raw_uri ) || $raw_uri === '' ) {
+			return false;
+		}
+
+		$uri = sanitize_url( wp_unslash( $raw_uri ) );
+		return strpos( $uri, '/burst/v1/' ) !== false || strpos( $uri, '%2Fburst%2Fv1%2F' ) !== false;
+	}
+
+	/**
 	 * Confirm that the current Basic Auth request is authenticated via Application Passwords.
 	 *
-	 * At early bootstrap points the `wp_application_passwords_did_authenticate` action may
+	 * At early bootstrap points the `application_password_did_authenticate` action may
 	 * not have fired yet, so we also perform an explicit validation fallback.
 	 */
 	private static function is_confirmed_application_password_auth(): bool {
-		if ( (bool) did_action( 'wp_application_passwords_did_authenticate' ) ) {
+		if ( ! self::is_burst_rest_request_path() ) {
+			return false;
+		}
+
+		if ( (bool) did_action( 'application_password_did_authenticate' ) ) {
 			return true;
 		}
 
