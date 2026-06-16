@@ -1100,3 +1100,107 @@ add_action('admin_post_tg_force_resend', function(){
     wp_safe_redirect($redirect);
     exit;
 });
+
+// =========================
+// == Boost / Hervorhebung ==
+// =========================
+// Wenn ein Vendor sein Inserat boostet (product-adv Modul), wird es erneut im
+// zentralen Telegram-Channel gepostet — frische Reichweite, der Sinn vom Boost.
+// Eigene Message mit Boost-Header, eigenes Meta (_telegram_boost_message_id) —
+// kollidiert NICHT mit _telegram_message_id, Edit/Delete des Erstposts bleibt intakt.
+
+if (!defined('TELEGRAM_BOOST_REPOST_COOLDOWN')) {
+    define('TELEGRAM_BOOST_REPOST_COOLDOWN', 3600); // Sekunden, gleicher Boost nicht öfter
+}
+
+$GLOBALS['_tn_boost_queue'] = [];
+
+add_action('sk_after_product_advertisement_created', function($insert_id, $data, $args) {
+    $product_id = isset($data['product_id']) ? (int) $data['product_id'] : 0;
+    if (!$product_id) {
+        error_log('[TG] BOOST: no product_id in advertisement data');
+        return;
+    }
+    $GLOBALS['_tn_boost_queue'][$product_id] = true;
+    error_log("[TG] BOOST queued #$product_id (advertisement #$insert_id)");
+}, 10, 3);
+
+register_shutdown_function(function() {
+    if (empty($GLOBALS['_tn_boost_queue'])) return;
+
+    // Response zuerst an den Browser flushen, Vendor wartet nicht aufs Posten.
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+    }
+
+    foreach (array_keys($GLOBALS['_tn_boost_queue']) as $post_id) {
+        $post = get_post($post_id);
+        if (!$post || $post->post_type !== 'product' || $post->post_status !== 'publish') {
+            error_log("[TG] BOOST skip #$post_id: not a published product");
+            continue;
+        }
+
+        $last = (int) get_post_meta($post_id, '_telegram_boost_last', true);
+        if ($last && (time() - $last) < TELEGRAM_BOOST_REPOST_COOLDOWN) {
+            error_log("[TG] BOOST skip #$post_id: reposted within cooldown");
+            continue;
+        }
+
+        telegram_send_boost_message($post_id);
+    }
+
+    $GLOBALS['_tn_boost_queue'] = [];
+});
+
+/** Postet ein geboostetes Inserat als neue, markierte Message in den Channel. */
+function telegram_send_boost_message($post_id) {
+    error_log('[TG] telegram_send_boost_message: ENTER post_id=' . $post_id);
+
+    $bot_token = get_option('telegram_bot_token');
+    $chat_id   = get_option('telegram_chat_id');
+    if (!$bot_token || !$chat_id) {
+        error_log('[TG] telegram_send_boost_message: ABORT missing bot_token or chat_id');
+        return false;
+    }
+
+    $built     = telegram_build_caption_and_media($post_id);
+    $caption    = "⭐️ *HERVORGEHOBENES INSERAT* ⭐️\n\n" . $built['caption'];
+    $image_url  = $built['image_url'] ? tn_ensure_telegram_compatible_image($built['image_url']) : null;
+
+    if ($image_url) {
+        $endpoint = "https://api.telegram.org/bot{$bot_token}/sendPhoto";
+        $payload  = array(
+            'chat_id'    => $chat_id,
+            'photo'      => $image_url,
+            'caption'    => $caption,
+            'parse_mode' => 'Markdown',
+        );
+    } else {
+        $endpoint = "https://api.telegram.org/bot{$bot_token}/sendMessage";
+        $payload  = array(
+            'chat_id'    => $chat_id,
+            'text'       => $caption,
+            'parse_mode' => 'Markdown',
+        );
+    }
+
+    $resp = telegram_api_post($endpoint, $payload);
+    if (is_wp_error($resp)) {
+        error_log('[TG] boost send error: ' . $resp->get_error_message());
+        return false;
+    }
+
+    $code = wp_remote_retrieve_response_code($resp);
+    $body = json_decode(wp_remote_retrieve_body($resp), true);
+
+    if ($code === 200 && isset($body['ok']) && $body['ok']) {
+        $mid = $body['result']['message_id'] ?? null;
+        if ($mid) update_post_meta($post_id, '_telegram_boost_message_id', $mid);
+        update_post_meta($post_id, '_telegram_boost_last', time());
+        error_log('[TG] BOOST sent #' . $post_id . ' mid=' . ($mid ?: '?'));
+        return true;
+    }
+
+    error_log('[TG] boost send HTTP error: ' . wp_remote_retrieve_body($resp));
+    return false;
+}
