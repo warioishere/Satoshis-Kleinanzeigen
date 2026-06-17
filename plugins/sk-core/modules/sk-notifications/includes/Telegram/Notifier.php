@@ -184,20 +184,16 @@ add_action('admin_init', 'telegram_notification_register_settings');
 // =====================
 
 /**
- * Basic Markdown escape (für parse_mode "Markdown", nicht V2).
- * Achtung: Wir escapen NICHT den Telegram-Handle (weder Label noch URL).
+ * Escape for Telegram parse_mode "HTML".
+ * Only &, <, > must be escaped (in that order) — everything else is allowed raw.
+ * Do NOT use esc_html(): it also encodes quotes, which Telegram renders literally.
  */
-function telegram_md_escape_basic($text) {
-    // Nur die Zeichen escapen, die Telegram Markdown (nicht V2) wirklich stören:
-    $map = array(
-        '*' => '\*',
-        '_' => '\_',
-        '[' => '\[',
-        ']' => '\]',
-        '`' => '\`',
-        // KEINE runden Klammern hier!
-    );
-    return strtr($text, $map);
+function tn_tg_html_esc($text) {
+    $text = (string) $text;
+    $text = str_replace('&', '&amp;', $text);
+    $text = str_replace('<', '&lt;', $text);
+    $text = str_replace('>', '&gt;', $text);
+    return $text;
 }
 
 /**
@@ -209,8 +205,7 @@ function telegram_build_caption_and_media($post_id) {
     error_log('[TG] telegram_build_caption_and_media: ENTER post_id=' . $post_id);
     $title_raw    = get_the_title($post_id);
     $title_clean  = tn_clean_text((string)$title_raw);     // Entities weg + NBSP -> Space
-    $title_clean  = str_replace('*', '"', $title_clean);   // Replace asterisks with quotes to avoid Markdown conflicts
-    $title        = telegram_md_escape_basic($title_clean); // erst danach Markdown escapen
+    $title        = tn_tg_html_esc($title_clean);          // HTML-escape, asterisks bleiben literal
     error_log('[TG] telegram_build_caption_and_media: title_raw=' . substr($title_raw, 0, 100) . ' title_clean=' . substr($title_clean, 0, 100));
 
     // HTML-Entities (z. B. &nbsp; &amp; &quot;) entfernen und NBSP in normale Leerzeichen wandeln
@@ -223,8 +218,10 @@ function telegram_build_caption_and_media($post_id) {
     $full_desc_raw = preg_replace('/\A(?:\s*\n)+/', '', $full_desc_raw);
     $full_desc_raw = preg_replace('/(?:\n\s*)+\z/', '', $full_desc_raw);
 
-    $full_desc     = telegram_md_escape_basic($full_desc_raw);
-    $short_desc    = mb_substr($full_desc, 0, 500) . (mb_strlen($full_desc) > 500 ? '...' : '');
+    // Truncate on the raw text first, then escape — escaping first could split an
+    // entity like &amp; mid-sequence and trigger a Telegram HTTP 400.
+    $short_desc    = mb_substr($full_desc_raw, 0, 500) . (mb_strlen($full_desc_raw) > 500 ? '...' : '');
+    $short_desc    = tn_tg_html_esc($short_desc);
 
     $vendor_id  = get_post_field('post_author', $post_id);
     $store_info = function_exists('sk_get_store_info') ? sk_get_store_info($vendor_id) : array();
@@ -258,8 +255,8 @@ function telegram_build_caption_and_media($post_id) {
 
     $shipping_note_raw   = get_post_meta($post_id, '_p2p_shipping_note', true);
     $shipping_note_clean = tn_clean_text((string)$shipping_note_raw); // Entities & NBSP weg
-    $shipping_note       = telegram_md_escape_basic($shipping_note_clean);
-    $shipping_str        = !empty($shipping_note) ? "\n\n*Versand: $shipping_note*" : '';
+    $shipping_note       = tn_tg_html_esc($shipping_note_clean);
+    $shipping_str        = !empty($shipping_note) ? "\n\n<b>Versand: $shipping_note</b>" : '';
 
     $extra_info = '';
 
@@ -280,7 +277,9 @@ function telegram_build_caption_and_media($post_id) {
         // Telegram-Handle: KEIN Escaping im Label und NICHT in der URL
         if (!empty($store_info['telegram']) && !empty($store_info['show_telegram'])) {
             $handle_clean = ltrim(trim($store_info['telegram']), '@');
-            $extra_info  .= "\n📜 Telegram: [@$handle_clean](https://t.me/$handle_clean)";
+            $handle_label = tn_tg_html_esc('@' . $handle_clean);
+            $handle_url   = tn_tg_html_esc('https://t.me/' . $handle_clean);
+            $extra_info  .= "\n📜 Telegram: <a href=\"$handle_url\">$handle_label</a>";
         }
 
         $email_public = false;
@@ -348,7 +347,7 @@ function telegram_build_caption_and_media($post_id) {
         }
 
         if ($email !== '') {
-            $extra_info .= "\n📧 E-Mail: " . telegram_md_escape_basic($email);
+            $extra_info .= "\n📧 E-Mail: " . tn_tg_html_esc($email);
         }
         // --- Nostr-Handle mit Primal-Link, gekürzt darstellen ---
         if (!empty($store_info['nostr']) && !empty($store_info['show_nostr'])) {
@@ -361,8 +360,10 @@ function telegram_build_caption_and_media($post_id) {
             // Bei npub bleibt's einfach, sonst kannst du nprofile direkt übernehmen.
             $nostr_url = "https://primal.net/p/" . $nostr_raw;
 
-            // Als klickbaren Markdown-Link mit Blitz-Emoji
-            $extra_info .= "\n⚡️ Nostr: [{$nostr_display}]({$nostr_url})";
+            // Klickbarer HTML-Link mit Blitz-Emoji
+            $nostr_label = tn_tg_html_esc($nostr_display);
+            $nostr_href  = tn_tg_html_esc($nostr_url);
+            $extra_info .= "\n⚡️ Nostr: <a href=\"{$nostr_href}\">{$nostr_label}</a>";
         }
 
         // --- X/Twitter: nur wenn Feld vorhanden UND öffentlich ---
@@ -370,10 +371,10 @@ function telegram_build_caption_and_media($post_id) {
             $tw_handle = trim((string)$store_info['twitter']);
             $tw_handle = ltrim($tw_handle, '@');
             if ($tw_handle !== '') {
-                // Label escapen (Markdown basic), URL unverändert – wie bei deinen anderen Links
-                $label_escaped = telegram_md_escape_basic('@' . $tw_handle);
-                $url = 'https://x.com/' . rawurlencode($tw_handle);
-                $extra_info .= "\n🐦 X/Twitter: [{$label_escaped}]({$url})";
+                // Label HTML-escapen, URL ebenfalls (rawurlencode lässt kein < > & übrig, aber safe)
+                $label_escaped = tn_tg_html_esc('@' . $tw_handle);
+                $url = tn_tg_html_esc('https://x.com/' . rawurlencode($tw_handle));
+                $extra_info .= "\n🐦 X/Twitter: <a href=\"{$url}\">{$label_escaped}</a>";
             }
         }
 
@@ -381,24 +382,24 @@ function telegram_build_caption_and_media($post_id) {
         if (!empty($store_info['phone_number']) && !empty($store_info['show_phone_number'])) {
             $tel_raw = trim((string)$store_info['phone_number']);
 
-            // Label: so anzeigen, wie der Vendor es eingibt (nur Markdown-Label escapen)
-            $label_escaped = telegram_md_escape_basic($tel_raw);
+            // Label: so anzeigen, wie der Vendor es eingibt (HTML-escapen)
+            $label_escaped = tn_tg_html_esc($tel_raw);
 
             // Href: für "tel:" bereinigen (Ziffern + Plus + optionales Präfix)
             // -> Entfernt Leerzeichen, Klammern, Bindestriche etc.
             $tel_href = preg_replace('/[^0-9+]/', '', $tel_raw);
 
             if ($tel_href !== '') {
-                $extra_info .= "\n📞 Telefon: [{$label_escaped}](tel:{$tel_href})";
+                $extra_info .= "\n📞 Telefon: <a href=\"tel:{$tel_href}\">{$label_escaped}</a>";
             }
         }
     }
     // End of feewall check
 
     $permalink = get_permalink($post_id);
-    $caption = "🛒 *$title*\n\n*$price_label $price_str*$shipping_str\n\n$short_desc\n\n$extra_info";
+    $caption = "🛒 <b>$title</b>\n\n<b>$price_label $price_str</b>$shipping_str\n\n$short_desc\n\n$extra_info";
     if ($permalink) {
-        $caption .= "\n\nZum Inserat 👉 $permalink";
+        $caption .= "\n\nZum Inserat 👉 " . tn_tg_html_esc($permalink);
     }
 
     $image_id  = get_post_thumbnail_id($post_id);
@@ -488,14 +489,14 @@ function telegram_send_message($post_id) {
             'chat_id'      => $chat_id,
             'photo'        => $image_url,
             'caption'      => $caption,
-            'parse_mode'   => 'Markdown',
+            'parse_mode'   => 'HTML',
         );
         $endpoint = "https://api.telegram.org/bot{$bot_token}/sendPhoto";
     } else {
         $payload  = array(
             'chat_id'      => $chat_id,
             'text'         => $caption,
-            'parse_mode'   => 'Markdown',
+            'parse_mode'   => 'HTML',
         );
         $endpoint = "https://api.telegram.org/bot{$bot_token}/sendMessage";
     }
@@ -551,7 +552,7 @@ function telegram_edit_message_for_update($post_id) {
                     'type'       => 'photo',
                     'media'      => $image_url,
                     'caption'    => $caption,
-                    'parse_mode' => 'Markdown',
+                    'parse_mode' => 'HTML',
                 );
                 $resp = telegram_api_post($endpoint, array(
                     'chat_id'      => $chat_id,
@@ -570,7 +571,7 @@ function telegram_edit_message_for_update($post_id) {
                     'chat_id'      => $chat_id,
                     'message_id'   => (int)$msg_id,
                     'caption'      => $caption,
-                    'parse_mode'   => 'Markdown',
+                    'parse_mode'   => 'HTML',
                 ));
                 if (is_wp_error($resp) || wp_remote_retrieve_response_code($resp) >= 400) {
                     error_log('[Telegram] editMessageCaption failed: ' . (is_wp_error($resp) ? $resp->get_error_message() : wp_remote_retrieve_body($resp)));
@@ -606,7 +607,7 @@ function telegram_edit_message_for_update($post_id) {
                 'chat_id'      => $chat_id,
                 'message_id'   => (int)$msg_id,
                 'text'         => $caption,
-                'parse_mode'   => 'Markdown',
+                'parse_mode'   => 'HTML',
             ));
             if (is_wp_error($resp) || wp_remote_retrieve_response_code($resp) >= 400) {
                 error_log('[Telegram] editMessageText failed: ' . (is_wp_error($resp) ? $resp->get_error_message() : wp_remote_retrieve_body($resp)));
@@ -621,7 +622,7 @@ function telegram_edit_message_for_update($post_id) {
         'chat_id'      => $chat_id,
         'message_id'   => (int)$msg_id,
         'caption'      => $caption,
-        'parse_mode'   => 'Markdown',
+        'parse_mode'   => 'HTML',
     ));
     if (is_wp_error($resp) || wp_remote_retrieve_response_code($resp) >= 400) {
         $endpoint = "https://api.telegram.org/bot{$bot_token}/editMessageText";
@@ -629,7 +630,7 @@ function telegram_edit_message_for_update($post_id) {
             'chat_id'      => $chat_id,
             'message_id'   => (int)$msg_id,
             'text'         => $caption,
-            'parse_mode'   => 'Markdown',
+            'parse_mode'   => 'HTML',
         ));
     }
 }
@@ -722,14 +723,14 @@ function telegram_mark_unavailable_fallback($post_id) {
 
     $title_raw   = get_the_title($post_id);
     $title_clean = tn_clean_text((string)$title_raw);
-    $title       = telegram_md_escape_basic($title_clean);
-    $message     = "❌ *Das Inserat \"{$title}\" ist nicht mehr verfügbar.*";
+    $title       = tn_tg_html_esc($title_clean);
+    $message     = "❌ <b>Das Inserat \"{$title}\" ist nicht mehr verfügbar.</b>";
 
     $endpoint = "https://api.telegram.org/bot{$bot_token}/sendMessage";
     $resp = telegram_api_post($endpoint, array(
         'chat_id'             => $chat_id,
         'text'                => $message,
-        'parse_mode'          => 'Markdown',
+        'parse_mode'          => 'HTML',
         'reply_to_message_id' => (int)$message_id,
     ));
 
@@ -1168,7 +1169,7 @@ function telegram_send_boost_message($post_id) {
     }
 
     $built     = telegram_build_caption_and_media($post_id);
-    $caption    = "⭐️ *HERVORGEHOBENES INSERAT* ⭐️\n\n" . $built['caption'];
+    $caption    = "⭐️ <b>HERVORGEHOBENES INSERAT</b> ⭐️\n\n" . $built['caption'];
     $image_url  = $built['image_url'] ? tn_ensure_telegram_compatible_image($built['image_url']) : null;
 
     if ($image_url) {
@@ -1177,14 +1178,14 @@ function telegram_send_boost_message($post_id) {
             'chat_id'    => $chat_id,
             'photo'      => $image_url,
             'caption'    => $caption,
-            'parse_mode' => 'Markdown',
+            'parse_mode' => 'HTML',
         );
     } else {
         $endpoint = "https://api.telegram.org/bot{$bot_token}/sendMessage";
         $payload  = array(
             'chat_id'    => $chat_id,
             'text'       => $caption,
-            'parse_mode' => 'Markdown',
+            'parse_mode' => 'HTML',
         );
     }
 
