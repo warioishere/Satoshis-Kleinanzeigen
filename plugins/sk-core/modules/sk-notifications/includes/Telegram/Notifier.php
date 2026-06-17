@@ -908,6 +908,10 @@ function telegram_handle_product_unpublish_or_delete($post_id) {
     $post = get_post($post_id);
     if (!$post || $post->post_type !== 'product') return;
 
+    // Boost repost is tracked separately from the first post — remove it too,
+    // independent of _telegram_deleted (which only guards the first post).
+    telegram_delete_boost_message($post_id);
+
     if (get_post_meta($post_id, '_telegram_deleted', true)) return;
 
     $deleted = telegram_delete_message_unpublish($post_id);
@@ -1102,15 +1106,15 @@ add_action('admin_post_tg_force_resend', function(){
 });
 
 // =========================
-// == Boost / Hervorhebung ==
+// == Boost / Highlight ==
 // =========================
-// Wenn ein Vendor sein Inserat boostet (product-adv Modul), wird es erneut im
-// zentralen Telegram-Channel gepostet — frische Reichweite, der Sinn vom Boost.
-// Eigene Message mit Boost-Header, eigenes Meta (_telegram_boost_message_id) —
-// kollidiert NICHT mit _telegram_message_id, Edit/Delete des Erstposts bleibt intakt.
+// When a vendor boosts their listing (product-adv module), it is reposted to
+// the central Telegram channel — fresh reach, which is the point of a boost.
+// Separate message with a boost header and its own meta (_telegram_boost_message_id) —
+// does NOT collide with _telegram_message_id, edit/delete of the first post stays intact.
 
 if (!defined('TELEGRAM_BOOST_REPOST_COOLDOWN')) {
-    define('TELEGRAM_BOOST_REPOST_COOLDOWN', 3600); // Sekunden, gleicher Boost nicht öfter
+    define('TELEGRAM_BOOST_REPOST_COOLDOWN', 3600); // seconds, same boost not reposted more often
 }
 
 $GLOBALS['_tn_boost_queue'] = [];
@@ -1128,7 +1132,7 @@ add_action('sk_after_product_advertisement_created', function($insert_id, $data,
 register_shutdown_function(function() {
     if (empty($GLOBALS['_tn_boost_queue'])) return;
 
-    // Response zuerst an den Browser flushen, Vendor wartet nicht aufs Posten.
+    // Flush the response to the browser first — the vendor does not wait for the post.
     if (function_exists('fastcgi_finish_request')) {
         fastcgi_finish_request();
     }
@@ -1152,7 +1156,7 @@ register_shutdown_function(function() {
     $GLOBALS['_tn_boost_queue'] = [];
 });
 
-/** Postet ein geboostetes Inserat als neue, markierte Message in den Channel. */
+/** Posts a boosted listing as a new, marked message in the channel. */
 function telegram_send_boost_message($post_id) {
     error_log('[TG] telegram_send_boost_message: ENTER post_id=' . $post_id);
 
@@ -1202,5 +1206,35 @@ function telegram_send_boost_message($post_id) {
     }
 
     error_log('[TG] boost send HTTP error: ' . wp_remote_retrieve_body($resp));
+    return false;
+}
+
+/** Removes the separate boost repost from the channel (own message id). */
+function telegram_delete_boost_message($post_id) {
+    $bot_token  = get_option('telegram_bot_token');
+    $chat_id    = get_option('telegram_chat_id');
+    $message_id = get_post_meta($post_id, '_telegram_boost_message_id', true);
+
+    if (empty($bot_token) || empty($chat_id) || empty($message_id)) return false;
+
+    $endpoint = "https://api.telegram.org/bot{$bot_token}/deleteMessage";
+    $payload  = array('chat_id' => $chat_id, 'message_id' => (int)$message_id);
+    $resp     = telegram_api_post($endpoint, $payload);
+
+    if (is_wp_error($resp)) {
+        error_log('[TG] BOOST deleteMessage WP_Error: ' . $resp->get_error_message());
+        return false;
+    }
+    $code = wp_remote_retrieve_response_code($resp);
+    $body = json_decode(wp_remote_retrieve_body($resp), true);
+
+    if ($code === 200 && isset($body['ok']) && $body['ok'] === true) {
+        delete_post_meta($post_id, '_telegram_boost_message_id');
+        delete_post_meta($post_id, '_telegram_boost_last');
+        error_log('[TG] BOOST deleted #' . $post_id);
+        return true;
+    }
+
+    error_log('[TG] BOOST deleteMessage failed: ' . wp_remote_retrieve_body($resp));
     return false;
 }
