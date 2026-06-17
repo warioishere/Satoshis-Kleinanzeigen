@@ -908,6 +908,10 @@ function telegram_handle_product_unpublish_or_delete($post_id) {
     $post = get_post($post_id);
     if (!$post || $post->post_type !== 'product') return;
 
+    // Boost repost is tracked separately from the first post — remove it too,
+    // independent of _telegram_deleted (which only guards the first post).
+    telegram_delete_boost_message($post_id);
+
     if (get_post_meta($post_id, '_telegram_deleted', true)) return;
 
     $deleted = telegram_delete_message_unpublish($post_id);
@@ -1100,3 +1104,137 @@ add_action('admin_post_tg_force_resend', function(){
     wp_safe_redirect($redirect);
     exit;
 });
+
+// =========================
+// == Boost / Highlight ==
+// =========================
+// When a vendor boosts their listing (product-adv module), it is reposted to
+// the central Telegram channel — fresh reach, which is the point of a boost.
+// Separate message with a boost header and its own meta (_telegram_boost_message_id) —
+// does NOT collide with _telegram_message_id, edit/delete of the first post stays intact.
+
+if (!defined('TELEGRAM_BOOST_REPOST_COOLDOWN')) {
+    define('TELEGRAM_BOOST_REPOST_COOLDOWN', 3600); // seconds, same boost not reposted more often
+}
+
+$GLOBALS['_tn_boost_queue'] = [];
+
+add_action('sk_after_product_advertisement_created', function($insert_id, $data, $args) {
+    $product_id = isset($data['product_id']) ? (int) $data['product_id'] : 0;
+    if (!$product_id) {
+        error_log('[TG] BOOST: no product_id in advertisement data');
+        return;
+    }
+    $GLOBALS['_tn_boost_queue'][$product_id] = true;
+    error_log("[TG] BOOST queued #$product_id (advertisement #$insert_id)");
+}, 10, 3);
+
+register_shutdown_function(function() {
+    if (empty($GLOBALS['_tn_boost_queue'])) return;
+
+    // Flush the response to the browser first — the vendor does not wait for the post.
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+    }
+
+    foreach (array_keys($GLOBALS['_tn_boost_queue']) as $post_id) {
+        $post = get_post($post_id);
+        if (!$post || $post->post_type !== 'product' || $post->post_status !== 'publish') {
+            error_log("[TG] BOOST skip #$post_id: not a published product");
+            continue;
+        }
+
+        $last = (int) get_post_meta($post_id, '_telegram_boost_last', true);
+        if ($last && (time() - $last) < TELEGRAM_BOOST_REPOST_COOLDOWN) {
+            error_log("[TG] BOOST skip #$post_id: reposted within cooldown");
+            continue;
+        }
+
+        telegram_send_boost_message($post_id);
+    }
+
+    $GLOBALS['_tn_boost_queue'] = [];
+});
+
+/** Posts a boosted listing as a new, marked message in the channel. */
+function telegram_send_boost_message($post_id) {
+    error_log('[TG] telegram_send_boost_message: ENTER post_id=' . $post_id);
+
+    $bot_token = get_option('telegram_bot_token');
+    $chat_id   = get_option('telegram_chat_id');
+    if (!$bot_token || !$chat_id) {
+        error_log('[TG] telegram_send_boost_message: ABORT missing bot_token or chat_id');
+        return false;
+    }
+
+    $built     = telegram_build_caption_and_media($post_id);
+    $caption    = "⭐️ *HERVORGEHOBENES INSERAT* ⭐️\n\n" . $built['caption'];
+    $image_url  = $built['image_url'] ? tn_ensure_telegram_compatible_image($built['image_url']) : null;
+
+    if ($image_url) {
+        $endpoint = "https://api.telegram.org/bot{$bot_token}/sendPhoto";
+        $payload  = array(
+            'chat_id'    => $chat_id,
+            'photo'      => $image_url,
+            'caption'    => $caption,
+            'parse_mode' => 'Markdown',
+        );
+    } else {
+        $endpoint = "https://api.telegram.org/bot{$bot_token}/sendMessage";
+        $payload  = array(
+            'chat_id'    => $chat_id,
+            'text'       => $caption,
+            'parse_mode' => 'Markdown',
+        );
+    }
+
+    $resp = telegram_api_post($endpoint, $payload);
+    if (is_wp_error($resp)) {
+        error_log('[TG] boost send error: ' . $resp->get_error_message());
+        return false;
+    }
+
+    $code = wp_remote_retrieve_response_code($resp);
+    $body = json_decode(wp_remote_retrieve_body($resp), true);
+
+    if ($code === 200 && isset($body['ok']) && $body['ok']) {
+        $mid = $body['result']['message_id'] ?? null;
+        if ($mid) update_post_meta($post_id, '_telegram_boost_message_id', $mid);
+        update_post_meta($post_id, '_telegram_boost_last', time());
+        error_log('[TG] BOOST sent #' . $post_id . ' mid=' . ($mid ?: '?'));
+        return true;
+    }
+
+    error_log('[TG] boost send HTTP error: ' . wp_remote_retrieve_body($resp));
+    return false;
+}
+
+/** Removes the separate boost repost from the channel (own message id). */
+function telegram_delete_boost_message($post_id) {
+    $bot_token  = get_option('telegram_bot_token');
+    $chat_id    = get_option('telegram_chat_id');
+    $message_id = get_post_meta($post_id, '_telegram_boost_message_id', true);
+
+    if (empty($bot_token) || empty($chat_id) || empty($message_id)) return false;
+
+    $endpoint = "https://api.telegram.org/bot{$bot_token}/deleteMessage";
+    $payload  = array('chat_id' => $chat_id, 'message_id' => (int)$message_id);
+    $resp     = telegram_api_post($endpoint, $payload);
+
+    if (is_wp_error($resp)) {
+        error_log('[TG] BOOST deleteMessage WP_Error: ' . $resp->get_error_message());
+        return false;
+    }
+    $code = wp_remote_retrieve_response_code($resp);
+    $body = json_decode(wp_remote_retrieve_body($resp), true);
+
+    if ($code === 200 && isset($body['ok']) && $body['ok'] === true) {
+        delete_post_meta($post_id, '_telegram_boost_message_id');
+        delete_post_meta($post_id, '_telegram_boost_last');
+        error_log('[TG] BOOST deleted #' . $post_id);
+        return true;
+    }
+
+    error_log('[TG] BOOST deleteMessage failed: ' . wp_remote_retrieve_body($resp));
+    return false;
+}
