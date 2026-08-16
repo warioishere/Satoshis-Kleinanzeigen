@@ -48,6 +48,11 @@ final class Module {
             new ReportAutoSuspend();
         }
 
+        if ( sk_get_option( 'sk_antifraud_keyword_review', 'sk_antifraud', 'off' ) === 'on' ) {
+            require_once SK_ANTIFRAUD_INCLUDES . '/KeywordReview.php';
+            new KeywordReview();
+        }
+
         add_action( 'sk_activated_module_sk_anti_fraud', [ $this, 'activate' ] );
 
         // Ensure tables exist (safe to call repeatedly — uses IF NOT EXISTS).

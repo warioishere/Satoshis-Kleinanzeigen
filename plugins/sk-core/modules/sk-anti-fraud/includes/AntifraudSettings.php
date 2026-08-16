@@ -121,6 +121,29 @@ class AntifraudSettings {
                 'desc'    => __( 'Ab wie vielen bestätigten Lieferungen das Limit aufgehoben wird.', 'sk-core' ),
             ],
 
+            // ── Keyword Review ──
+            'sk_antifraud_kw_header' => [
+                'name'  => 'sk_antifraud_kw_header',
+                'label' => __( 'Inserate-Prüfung nach Stichwörtern', 'sk-core' ),
+                'type'  => 'sub_section',
+                'desc'  => __( 'Hält Inserate mit riskanten Stichwörtern zur manuellen Freigabe zurück. Funktioniert unabhängig vom Reputationssystem.', 'sk-core' ),
+            ],
+            'sk_antifraud_keyword_review' => [
+                'name'    => 'sk_antifraud_keyword_review',
+                'label'   => __( 'Stichwort-Prüfung aktivieren', 'sk-core' ),
+                'type'    => 'switcher',
+                'default' => 'off',
+                'desc'    => __( 'Betroffene Inserate werden beim Veröffentlichen auf Entwurf gesetzt, der Anbieter informiert und eine E-Mail an den Admin geschickt.', 'sk-core' ),
+            ],
+            'sk_antifraud_keywords' => [
+                'name'        => 'sk_antifraud_keywords',
+                'label'       => __( 'Stichwörter', 'sk-core' ),
+                'type'        => 'text',
+                'default'     => 'ticket,tickets,eintrittskarte,eintrittskarten,konzertkarte,konzertkarten',
+                'placeholder' => 'ticket,tickets,eintrittskarte',
+                'desc'        => __( 'Kommagetrennt. Wird in Titel, Beschreibung, Schlagwörtern und Kategorien gesucht, Gross-/Kleinschreibung egal. Teiltreffer zählen — „ticket" erfasst auch „Tickets".', 'sk-core' ),
+            ],
+
             // ── Report Auto-Suspend ──
             'sk_antifraud_rs_header' => [
                 'name'  => 'sk_antifraud_rs_header',
