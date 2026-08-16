@@ -258,6 +258,20 @@ class Settings {
 
         if ( empty( $sk_name ) ) {
             $error->add( 'sk_name', __( 'Store name required', 'sk-core' ) );
+        } else {
+            /**
+             * Validate the chosen store name — used to stop vendors from taking
+             * over the name of an existing shop.
+             *
+             * @param null|WP_Error $result
+             * @param string        $store_name
+             * @param int           $store_id
+             */
+            $name_check = apply_filters( 'sk_validate_store_name', null, $sk_name, get_current_user_id() );
+
+            if ( is_wp_error( $name_check ) ) {
+                $error->add( 'sk_name_taken', $name_check->get_error_message() );
+            }
         }
 
         $sk_gravatar = isset( $_POST['sk_gravatar'] ) ? absint( $_POST['sk_gravatar'] ) : 0;
@@ -312,6 +326,15 @@ class Settings {
             if ( empty( $sk_name ) ) {
                 if ( function_exists( 'sk_add_notice' ) ) {
                     sk_add_notice( __( 'Bitte gib einen Anzeigenamen für deinen Shop ein.', 'sk-core' ), 'error' );
+                }
+                return;
+            }
+
+            $name_check = apply_filters( 'sk_validate_store_name', null, $sk_name, get_current_user_id() );
+
+            if ( is_wp_error( $name_check ) ) {
+                if ( function_exists( 'sk_add_notice' ) ) {
+                    sk_add_notice( $name_check->get_error_message(), 'error' );
                 }
                 return;
             }

@@ -191,6 +191,21 @@ class AntifraudSettings {
                 'desc'    => __( 'Nur Meldungen aus diesem Zeitraum zählen zur Schwelle. 0 = alle.', 'sk-core' ),
             ],
 
+            // ── Shop-Name ──
+            'sk_antifraud_name_header' => [
+                'name'  => 'sk_antifraud_name_header',
+                'label' => __( 'Schutz des Shop-Namens', 'sk-core' ),
+                'type'  => 'sub_section',
+                'desc'  => __( 'Shop-Namen waren bisher nicht eindeutig. Wer den Namen eines bekannten Anbieters übernimmt, erbt dessen Vertrauensvorschuss — so lief der letzte Ticket-Betrug.', 'sk-core' ),
+            ],
+            'sk_antifraud_store_name_guard' => [
+                'name'    => 'sk_antifraud_store_name_guard',
+                'label'   => __( 'Shop-Namen eindeutig halten', 'sk-core' ),
+                'type'    => 'switcher',
+                'default' => 'off',
+                'desc'    => __( 'Speichern wird abgelehnt, wenn der Name schon vergeben ist, und du bekommst eine E-Mail mit beiden Accounts. Verglichen wird ohne Gross-/Kleinschreibung, Leerzeichen und Sonderzeichen — „Florian_Stangl21" und „florian stangl 21" gelten als derselbe Name.', 'sk-core' ),
+            ],
+
             // ── Ban-Signale ──
             'sk_antifraud_ban_header' => [
                 'name'  => 'sk_antifraud_ban_header',

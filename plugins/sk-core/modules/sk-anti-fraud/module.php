@@ -60,6 +60,11 @@ final class Module {
             new ReportAutoSuspend();
         }
 
+        if ( sk_get_option( 'sk_antifraud_store_name_guard', 'sk_antifraud', 'off' ) === 'on' ) {
+            require_once SK_ANTIFRAUD_INCLUDES . '/StoreNameGuard.php';
+            new StoreNameGuard();
+        }
+
         if ( sk_get_option( 'sk_antifraud_keyword_review', 'sk_antifraud', 'off' ) === 'on' ) {
             require_once SK_ANTIFRAUD_INCLUDES . '/KeywordReview.php';
             new KeywordReview();
