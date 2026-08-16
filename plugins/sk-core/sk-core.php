@@ -63,6 +63,9 @@ sk_ext();
 add_action( 'init', [ \SK\Core\CatalogMode::class, 'init' ], 20 );
 add_action( 'init', [ \SK\Core\Antispam::class, 'init' ], 20 );
 
+// Seiten-Cache leeren wenn Inhalte gelöscht oder versteckt werden.
+\SK\Core\PageCache::init();
+
 // Buy Now — direct BTCPay checkout for subscriptions & boosts.
 \SK\Core\BuyNow::init();
 

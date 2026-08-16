@@ -191,16 +191,6 @@ class AutoPost {
 	}
 
 	private static function clear_feed_cache(): void {
-		$url = home_url( '/community/' );
-		if ( function_exists( 'wpfc_clear_cache_by_url' ) ) {
-			wpfc_clear_cache_by_url( $url );
-			return;
-		}
-		// Fallback: delete the cached HTML directly. WP Fastest Cache stores
-		// pages under wp-content/cache/all/<path>/index.html.
-		$path = WP_CONTENT_DIR . '/cache/all/community';
-		if ( is_dir( $path ) ) {
-			array_map( 'unlink', glob( $path . '/*.html' ) ?: [] );
-		}
+		\SK\Core\PageCache::queue_url( home_url( '/community/' ) );
 	}
 }
