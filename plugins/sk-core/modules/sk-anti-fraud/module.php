@@ -24,6 +24,7 @@ final class Module {
         require_once SK_ANTIFRAUD_INCLUDES . '/Suspension.php';
         require_once SK_ANTIFRAUD_INCLUDES . '/ReportGuards.php';
         require_once SK_ANTIFRAUD_INCLUDES . '/VendorSummary.php';
+        require_once SK_ANTIFRAUD_INCLUDES . '/BanSignals.php';
         new AntifraudSettings();
 
         // Only load features if master switch is on.
@@ -34,6 +35,10 @@ final class Module {
         // Report guards are always active with the master switch — they protect
         // the reporting itself, independent of what reacts to reports.
         new ReportGuards();
+
+        // Watch for banned identifiers coming back on a new account.
+        require_once SK_ANTIFRAUD_INCLUDES . '/BanWatcher.php';
+        new BanWatcher();
 
         if ( sk_get_option( 'sk_antifraud_fingerprint', 'sk_antifraud', 'off' ) === 'on' ) {
             require_once SK_ANTIFRAUD_INCLUDES . '/FingerprintCollector.php';

@@ -25,6 +25,16 @@ $base_url = admin_url( 'admin.php?page=sk&tab=vendors' );
         echo '<div class="notice notice-success is-dismissible"><p>'
             . sprintf( esc_html( _n( '%d Angebot auf Entwurf gesetzt.', '%d Angebote auf Entwurf gesetzt.', $drafted, 'sk-core' ) ), $drafted )
             . '</p></div>';
+    } elseif ( $saved && strpos( $saved, 'banned_' ) === 0 ) {
+        $parts = explode( '_', $saved );
+        echo '<div class="notice notice-success is-dismissible"><p>'
+            . sprintf(
+                esc_html__( 'Anbieter gesperrt: %1$d Merkmale gespeichert, %2$d Inserate offline. Bitte nicht löschen — sonst geht die Spur verloren.', 'sk-core' ),
+                (int) ( $parts[1] ?? 0 ),
+                (int) ( $parts[2] ?? 0 )
+            )
+            . ' <a href="' . esc_url( admin_url( 'admin.php?page=sk&tab=antifraud&sub=signals' ) ) . '">'
+            . esc_html__( 'Ban-Signale ansehen', 'sk-core' ) . '</a></p></div>';
     } elseif ( $saved === 'true' || $saved === 'saved' ) {
         echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Gespeichert.', 'sk-core' ) . '</p></div>';
     }
@@ -95,6 +105,23 @@ $base_url = admin_url( 'admin.php?page=sk&tab=vendors' );
                                 <input type="hidden" name="vendor_action" value="draft_products">
                                 <button type="submit" class="button button-small" title="<?php esc_attr_e( 'Setzt alle veröffentlichten Angebote auf Entwurf (nicht gelöscht)', 'sk-core' ); ?>"><?php esc_html_e( 'Angebote → Entwurf', 'sk-core' ); ?></button>
                             </form>
+
+                            <?php if ( class_exists( '\SK\Modules\AntiFraud\BanSignals' ) ) :
+                                $is_banned = \SK\Modules\AntiFraud\BanSignals::is_banned( $user->ID );
+                                ?>
+                                <?php if ( $is_banned ) : ?>
+                                    <span class="button button-small" style="pointer-events:none;opacity:.7;" title="<?php esc_attr_e( 'Merkmale sind gesperrt — Freischalten unter SK → Anti-Fraud', 'sk-core' ); ?>">
+                                        <?php esc_html_e( 'Gesperrt', 'sk-core' ); ?>
+                                    </span>
+                                <?php else : ?>
+                                    <form method="post" style="display: inline;" onsubmit="return confirm('<?php echo esc_js( __( 'Anbieter als Scammer sperren? Wallet, npub, Lightning-Adresse, Telegram-Handle, E-Mail und Telefon werden dauerhaft gespeichert und alle Inserate gehen offline. Nicht löschen — sonst geht die Spur verloren.', 'sk-core' ) ); ?>');">
+                                        <?php wp_nonce_field( 'sk_vendor_action', 'sk_vendor_action_nonce' ); ?>
+                                        <input type="hidden" name="vendor_id" value="<?php echo esc_attr( $user->ID ); ?>">
+                                        <input type="hidden" name="vendor_action" value="ban_scammer">
+                                        <button type="submit" class="button button-small" style="color:#b32d2e;border-color:#b32d2e;" title="<?php esc_attr_e( 'Merkmale einfrieren und alles offline nehmen', 'sk-core' ); ?>"><?php esc_html_e( 'Als Scammer sperren', 'sk-core' ); ?></button>
+                                    </form>
+                                <?php endif; ?>
+                            <?php endif; ?>
                             <?php if ( $store_url ) : ?>
                                 <a href="<?php echo esc_url( $store_url ); ?>" class="button button-small" target="_blank"><?php esc_html_e( 'View Store', 'sk-core' ); ?></a>
                             <?php endif; ?>

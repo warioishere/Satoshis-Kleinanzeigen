@@ -191,6 +191,21 @@ class AntifraudSettings {
                 'desc'    => __( 'Nur Meldungen aus diesem Zeitraum zählen zur Schwelle. 0 = alle.', 'sk-core' ),
             ],
 
+            // ── Ban-Signale ──
+            'sk_antifraud_ban_header' => [
+                'name'  => 'sk_antifraud_ban_header',
+                'label' => __( 'Gesperrte Merkmale', 'sk-core' ),
+                'type'  => 'sub_section',
+                'desc'  => __( 'Beim Sperren eines Anbieters werden Wallet, npub, Lightning-Adresse, Telegram-Handle, E-Mail und Telefon eingefroren. Meldet sich eins davon auf einem neuen Account an, wirst du benachrichtigt — das greift auch über Tor und neue IPs, weil er sich bezahlen lassen und erreichbar sein muss.', 'sk-core' ),
+            ],
+            'sk_antifraud_ban_autosuspend' => [
+                'name'    => 'sk_antifraud_ban_autosuspend',
+                'label'   => __( 'Bei Treffer automatisch sperren', 'sk-core' ),
+                'type'    => 'switcher',
+                'default' => 'off',
+                'desc'    => __( 'Aus: du bekommst nur eine E-Mail und entscheidest selbst. Empfohlen, denn ein Fehltreffer nimmt sonst sofort einen ehrlichen Anbieter offline.', 'sk-core' ),
+            ],
+
             // ── Melde-Schutz ──
             'sk_antifraud_guard_header' => [
                 'name'  => 'sk_antifraud_guard_header',

@@ -3,6 +3,7 @@
 namespace SK\Core\Admin\PhpDashboard;
 
 use SK\Modules\AntiFraud\AntifraudSettings;
+use SK\Modules\AntiFraud\BanSignals;
 use SK\Modules\AntiFraud\Suspension;
 
 /**
@@ -35,16 +36,18 @@ class AntiFraudPage extends AbstractPage {
     private function get_sub_tab(): string {
         $sub = isset( $_GET['sub'] ) ? sanitize_key( $_GET['sub'] ) : 'general';
 
-        return in_array( $sub, [ 'general', 'suspended' ], true ) ? $sub : 'general';
+        return in_array( $sub, [ 'general', 'suspended', 'signals' ], true ) ? $sub : 'general';
     }
 
     public function render(): void {
         $sub      = $this->get_sub_tab();
         $base_url = admin_url( 'admin.php?page=sk&tab=antifraud' );
 
-        $fields    = AntifraudSettings::get_fields();
-        $opts      = AntifraudSettings::get_options();
-        $suspended = Suspension::get_suspended();
+        $fields      = AntifraudSettings::get_fields();
+        $opts        = AntifraudSettings::get_options();
+        $suspended   = Suspension::get_suspended();
+        $signals     = BanSignals::all();
+        $signal_types = BanSignals::TYPES;
 
         include sk()->plugin_path() . '/templates/admin/php-dashboard/antifraud.php';
     }
@@ -90,11 +93,32 @@ class AntiFraudPage extends AbstractPage {
             $vendor_id = isset( $_POST['vendor_id'] ) ? absint( $_POST['vendor_id'] ) : 0;
 
             if ( $vendor_id ) {
-                $restored          = Suspension::unsuspend( $vendor_id );
-                $args['restored']  = $restored;
+                // A ban also stored signals — drop them together with the block.
+                if ( BanSignals::is_banned( $vendor_id ) ) {
+                    $args['restored'] = BanSignals::unban( $vendor_id );
+                } else {
+                    $args['restored'] = Suspension::unsuspend( $vendor_id );
+                }
             }
 
             $args['sub'] = 'suspended';
+
+        } elseif ( 'add_signal' === $action ) {
+            $type  = isset( $_POST['signal_type'] ) ? sanitize_text_field( wp_unslash( $_POST['signal_type'] ) ) : '';
+            $value = isset( $_POST['signal_value'] ) ? sanitize_text_field( wp_unslash( $_POST['signal_value'] ) ) : '';
+
+            $args['added'] = BanSignals::add( $type, $value ) ? 'true' : 'false';
+            $args['sub']   = 'signals';
+
+        } elseif ( 'delete_signal' === $action ) {
+            $signal_id = isset( $_POST['signal_id'] ) ? absint( $_POST['signal_id'] ) : 0;
+
+            if ( $signal_id ) {
+                BanSignals::remove( $signal_id );
+                $args['removed'] = 'true';
+            }
+
+            $args['sub'] = 'signals';
 
         } else {
             return;

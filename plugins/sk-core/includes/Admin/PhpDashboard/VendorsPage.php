@@ -97,6 +97,12 @@ class VendorsPage extends AbstractPage {
         } elseif ( $action === 'draft_products' ) {
             $count = $this->set_vendor_products_to_draft( $user_id );
             $notice = 'drafted_' . $count;
+        } elseif ( $action === 'ban_scammer' && class_exists( '\SK\Modules\AntiFraud\BanSignals' ) ) {
+            // Freeze the durable identifiers first, then take everything offline.
+            // Deleting the account instead would erase every trace, which is why
+            // repeat scammers were impossible to recognise.
+            $result = \SK\Modules\AntiFraud\BanSignals::ban( $user_id );
+            $notice = 'banned_' . $result['signals'] . '_' . $result['listings'];
         }
 
         wp_safe_redirect( add_query_arg( [
