@@ -71,6 +71,7 @@ class ExtendedAdmin {
         $pages['subscriptions']  = new \SK\Core\Admin\PhpDashboard\SubscriptionsPage();
         $pages['advertisements'] = new \SK\Core\Admin\PhpDashboard\AdvertisementsPage();
         $pages['abuse-reports']  = new \SK\Core\Admin\PhpDashboard\AbuseReportsPage();
+        $pages['feedback']       = new \SK\Core\Admin\PhpDashboard\FeedbackPage();
 
         return $pages;
     }

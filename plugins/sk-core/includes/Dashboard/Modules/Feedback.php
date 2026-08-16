@@ -11,20 +11,24 @@ defined( 'ABSPATH' ) || exit;
  */
 class Feedback {
 
-	const CPT       = 'wp_simple_feedback';
-	const NONCE     = 'wpsf_nonce';
-	const OPTS_KEY  = 'wpsf_options';
-	const PAGE_SLUG = 'wpsf-admin';
+	const CPT      = 'wp_simple_feedback';
+	const NONCE    = 'wpsf_nonce';
+	const OPTS_KEY = 'wpsf_options';
 
 	public function __construct() {
 		add_action( 'init', [ $this, 'register_cpt' ] );
 		add_shortcode( 'feedback_box', [ $this, 'shortcode_box' ] );
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_assets' ] );
-		add_action( 'admin_menu', [ $this, 'register_admin_page' ] );
-		add_action( 'admin_init', [ $this, 'register_settings' ] );
 		add_action( 'wp_ajax_wpsf_submit', [ $this, 'handle_submit' ] );
 		add_action( 'wp_ajax_nopriv_wpsf_submit', [ $this, 'handle_submit' ] );
 		add_action( 'wp_dashboard_setup', [ $this, 'register_dashboard_widget' ] );
+	}
+
+	/**
+	 * Admin URL of the Feedback tab inside the SK dashboard.
+	 */
+	public static function admin_url( string $sub = 'entries' ): string {
+		return admin_url( 'admin.php?page=sk&tab=feedback&sub=' . $sub );
 	}
 
 	// ── CPT ────────────────────────────────────────────────────────────────────
@@ -65,36 +69,7 @@ class Feedback {
 
 	// ── Admin ──────────────────────────────────────────────────────────────────
 
-	public function register_admin_page(): void {
-		add_menu_page(
-			__( 'Feedback', 'sk-core' ),
-			__( 'Feedback', 'sk-core' ),
-			'manage_options',
-			self::PAGE_SLUG,
-			[ $this, 'admin_page_render' ],
-			'dashicons-feedback',
-			58
-		);
-		add_submenu_page( self::PAGE_SLUG, __( 'Eingänge', 'sk-core' ), __( 'Eingänge', 'sk-core' ), 'manage_options', self::PAGE_SLUG . '&tab=entries' );
-		add_submenu_page( self::PAGE_SLUG, __( 'Einstellungen', 'sk-core' ), __( 'Einstellungen', 'sk-core' ), 'manage_options', self::PAGE_SLUG . '&tab=settings' );
-	}
-
-	public function register_settings(): void {
-		register_setting( 'wpsf_settings_group', self::OPTS_KEY, [
-			'type'              => 'array',
-			'sanitize_callback' => function ( $opts ) {
-				return [
-					'title'         => sanitize_text_field( $opts['title'] ?? 'Dein Feedback' ),
-					'description'   => wp_kses_post( $opts['description'] ?? 'Wir freuen uns über kurzes, ehrliches Feedback.' ),
-					'rate_limit'    => max( 0, intval( $opts['rate_limit'] ?? 60 ) ),
-					'require_login' => ! empty( $opts['require_login'] ) ? 1 : 0,
-				];
-			},
-			'default' => $this->get_defaults(),
-		] );
-	}
-
-	private function get_defaults(): array {
+	public static function get_defaults(): array {
 		return [
 			'title'         => 'Dein Feedback',
 			'description'   => 'Wir freuen uns über kurzes, ehrliches Feedback.',
@@ -103,109 +78,23 @@ class Feedback {
 		];
 	}
 
-	private function get_options(): array {
-		return wp_parse_args( get_option( self::OPTS_KEY, [] ), $this->get_defaults() );
+	public static function get_options(): array {
+		return wp_parse_args( get_option( self::OPTS_KEY, [] ), self::get_defaults() );
 	}
 
-	public function admin_page_render(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return;
-		}
+	/**
+	 * Sanitize a raw settings array coming from the admin form.
+	 */
+	public static function sanitize_options( array $opts ): array {
+		$defaults = self::get_defaults();
 
-		$active_tab = 'entries';
-		if ( isset( $_GET['tab'] ) && in_array( $_GET['tab'], [ 'entries', 'settings' ], true ) ) {
-			$active_tab = sanitize_key( $_GET['tab'] );
-		} elseif ( isset( $_GET['page'] ) && strpos( $_GET['page'], 'tab=settings' ) !== false ) {
-			$active_tab = 'settings';
-		}
-
-		$opts = $this->get_options();
-		?>
-		<div class="wrap">
-			<h1><?php esc_html_e( 'Feedback', 'sk-core' ); ?></h1>
-
-			<h2 class="nav-tab-wrapper">
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=' . self::PAGE_SLUG . '&tab=entries' ) ); ?>"
-				   class="nav-tab <?php echo $active_tab === 'entries' ? 'nav-tab-active' : ''; ?>">
-					<?php esc_html_e( 'Eingänge', 'sk-core' ); ?>
-				</a>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=' . self::PAGE_SLUG . '&tab=settings' ) ); ?>"
-				   class="nav-tab <?php echo $active_tab === 'settings' ? 'nav-tab-active' : ''; ?>">
-					<?php esc_html_e( 'Einstellungen', 'sk-core' ); ?>
-				</a>
-			</h2>
-
-			<?php if ( $active_tab === 'settings' ) : ?>
-				<form method="post" action="options.php">
-					<?php settings_fields( 'wpsf_settings_group' ); ?>
-					<table class="form-table" role="presentation">
-						<tr>
-							<th scope="row"><label for="wpsf_title"><?php esc_html_e( 'Titel', 'sk-core' ); ?></label></th>
-							<td><input id="wpsf_title" type="text" name="<?php echo esc_attr( self::OPTS_KEY ); ?>[title]" class="regular-text" value="<?php echo esc_attr( $opts['title'] ); ?>"/></td>
-						</tr>
-						<tr>
-							<th scope="row"><label for="wpsf_description"><?php esc_html_e( 'Beschreibung', 'sk-core' ); ?></label></th>
-							<td><textarea id="wpsf_description" name="<?php echo esc_attr( self::OPTS_KEY ); ?>[description]" rows="5" class="large-text"><?php echo esc_textarea( $opts['description'] ); ?></textarea></td>
-						</tr>
-						<tr>
-							<th scope="row"><?php esc_html_e( 'Nur eingeloggte Nutzer', 'sk-core' ); ?></th>
-							<td><label><input type="checkbox" name="<?php echo esc_attr( self::OPTS_KEY ); ?>[require_login]" value="1" <?php checked( 1, intval( $opts['require_login'] ) ); ?>/> <?php esc_html_e( 'Feedback nur für angemeldete Benutzer erlauben', 'sk-core' ); ?></label></td>
-						</tr>
-						<tr>
-							<th scope="row"><label for="wpsf_rate_limit"><?php esc_html_e( 'Rate Limit (Sekunden)', 'sk-core' ); ?></label></th>
-							<td><input id="wpsf_rate_limit" type="number" class="small-text" min="0" name="<?php echo esc_attr( self::OPTS_KEY ); ?>[rate_limit]" value="<?php echo intval( $opts['rate_limit'] ); ?>"/> <span class="description"><?php esc_html_e( 'Minimale Sekunden zwischen Einsendungen pro IP', 'sk-core' ); ?></span></td>
-						</tr>
-					</table>
-					<?php submit_button(); ?>
-				</form>
-				<p><strong><?php esc_html_e( 'Shortcode:', 'sk-core' ); ?></strong> <code>[feedback_box]</code></p>
-
-			<?php else : ?>
-				<?php
-				$q = new \WP_Query( [
-					'post_type'      => self::CPT,
-					'posts_per_page' => 50,
-					'post_status'    => 'publish',
-					'orderby'        => 'date',
-					'order'          => 'DESC',
-				] );
-				if ( $q->have_posts() ) : ?>
-					<table class="widefat striped">
-						<thead>
-						<tr>
-							<th><?php esc_html_e( 'Datum', 'sk-core' ); ?></th>
-							<th><?php esc_html_e( 'Titel', 'sk-core' ); ?></th>
-							<th><?php esc_html_e( 'Nachricht', 'sk-core' ); ?></th>
-							<th><?php esc_html_e( 'Benutzer', 'sk-core' ); ?></th>
-							<th><?php esc_html_e( 'IP', 'sk-core' ); ?></th>
-						</tr>
-						</thead>
-						<tbody>
-						<?php while ( $q->have_posts() ) : $q->the_post();
-							$uid = get_post_meta( get_the_ID(), '_wpsf_user_id', true );
-							$ip  = get_post_meta( get_the_ID(), '_wpsf_ip', true );
-							?>
-							<tr>
-								<td><?php echo esc_html( get_the_date( 'Y-m-d H:i' ) ); ?></td>
-								<td><?php echo esc_html( get_the_title() ); ?></td>
-								<td><?php echo wp_kses_post( wpautop( get_the_content() ) ); ?></td>
-								<td><?php
-									$userdata = $uid ? get_userdata( $uid ) : null;
-									echo $userdata ? esc_html( $userdata->user_login ) : '—';
-								?></td>
-								<td><?php echo $ip ? esc_html( $ip ) : '—'; ?></td>
-							</tr>
-						<?php endwhile; wp_reset_postdata(); ?>
-						</tbody>
-					</table>
-				<?php else : ?>
-					<p><?php esc_html_e( 'Noch kein Feedback vorhanden.', 'sk-core' ); ?></p>
-				<?php endif; ?>
-			<?php endif; ?>
-		</div>
-		<?php
+		return [
+			'title'         => sanitize_text_field( $opts['title'] ?? $defaults['title'] ),
+			'description'   => wp_kses_post( $opts['description'] ?? $defaults['description'] ),
+			'rate_limit'    => max( 0, intval( $opts['rate_limit'] ?? $defaults['rate_limit'] ) ),
+			'require_login' => ! empty( $opts['require_login'] ) ? 1 : 0,
+		];
 	}
-
 	// ── Dashboard Widget ───────────────────────────────────────────────────────
 
 	public function register_dashboard_widget(): void {
@@ -235,13 +124,13 @@ class Feedback {
 		} else {
 			echo '<p>' . esc_html__( 'Noch kein Feedback vorhanden.', 'sk-core' ) . '</p>';
 		}
-		echo '<p><a class="button button-primary" href="' . esc_url( admin_url( 'admin.php?page=' . self::PAGE_SLUG . '&tab=entries' ) ) . '">' . esc_html__( 'Alle anzeigen', 'sk-core' ) . '</a></p>';
+		echo '<p><a class="button button-primary" href="' . esc_url( self::admin_url( 'entries' ) ) . '">' . esc_html__( 'Alle anzeigen', 'sk-core' ) . '</a></p>';
 	}
 
 	// ── Shortcode ──────────────────────────────────────────────────────────────
 
 	public function shortcode_box( $atts = [] ): string {
-		$opts = $this->get_options();
+		$opts = self::get_options();
 		if ( $opts['require_login'] && ! is_user_logged_in() ) {
 			return '<div class="wpsf-notice">' . esc_html__( 'Bitte einloggen, um Feedback zu senden.', 'sk-core' ) . '</div>';
 		}
@@ -276,7 +165,7 @@ class Feedback {
 			wp_die();
 		}
 
-		$opts = $this->get_options();
+		$opts = self::get_options();
 
 		// Rate limit per IP.
 		$ip  = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
@@ -339,7 +228,7 @@ class Feedback {
 		$site_name = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
 		$user      = $user_id ? get_userdata( $user_id ) : null;
 		$user_line = $user ? sprintf( '%s (#%d, %s)', $user->user_login, $user_id, $user->user_email ) : __( 'Gast (nicht eingeloggt)', 'sk-core' );
-		$edit_link = admin_url( 'admin.php?page=' . self::PAGE_SLUG . '&tab=entries' );
+		$edit_link = self::admin_url( 'entries' );
 
 		$subject = sprintf( '[%s] %s', $site_name, $title );
 		$body    = sprintf(
