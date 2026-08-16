@@ -4,72 +4,110 @@ namespace SK\Modules\AntiFraud;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Take a vendor offline once enough independent people reported them.
+ *
+ * Only reports that are hard to fake count towards the threshold:
+ *   - from logged in users (guests are stored but never counted)
+ *   - one per reporter, no matter how many listings they reported
+ *   - from accounts old enough (see ReportGuards::is_eligible_reporter)
+ *   - within the configured time window, so old resolved complaints expire
+ */
 class ReportAutoSuspend {
 
     public function __construct() {
-        add_action( 'sk_report_abuse_created_report', [ $this, 'check_threshold' ], 10, 2 );
+        // The hook passes ( $report, $product, $vendor, $customer ) — the old
+        // signature here expected ( $report_id, $data ) and fataled on the
+        // WC_Product array access.
+        add_action( 'sk_report_abuse_created_report', [ $this, 'check_threshold' ], 10, 1 );
     }
 
     /**
-     * After a report is created, check if the vendor has enough reports for auto-suspend.
-     *
-     * @param int   $report_id  The new report ID.
-     * @param array $data       Report data.
+     * @param object $report Row from the reports table.
      */
-    public function check_threshold( $report_id, $data ) {
-        $vendor_id = $data['vendor_id'] ?? 0;
-        if ( ! $vendor_id ) {
+    public function check_threshold( $report ): void {
+        if ( ! is_object( $report ) || empty( $report->vendor_id ) ) {
             return;
         }
 
-        // Already suspended?
-        if ( get_user_meta( $vendor_id, 'sk_auto_suspended', true ) ) {
+        $vendor_id = (int) $report->vendor_id;
+
+        if ( Suspension::is_suspended( $vendor_id ) ) {
             return;
         }
 
         $threshold = (int) sk_get_option( 'sk_antifraud_report_threshold', 'sk_antifraud', '3' );
 
-        // Count unique reporter IPs for this vendor.
+        if ( $threshold < 1 ) {
+            return;
+        }
+
+        $reporters = self::get_eligible_reporters( $vendor_id );
+
+        if ( count( $reporters ) < $threshold ) {
+            return;
+        }
+
+        $drafted = Suspension::suspend( $vendor_id, 'report_threshold_' . count( $reporters ) );
+
+        $this->notify_admin( $vendor_id, $reporters, $drafted );
+    }
+
+    /**
+     * Distinct reporter IDs that count towards the threshold.
+     *
+     * @return int[]
+     */
+    public static function get_eligible_reporters( int $vendor_id ): array {
         global $wpdb;
-        $table = $wpdb->prefix . 'sk_report_abuse_reports';
 
-        // Get all reports for this vendor.
-        $reports = $wpdb->get_results( $wpdb->prepare(
-            "SELECT customer_id FROM {$table} WHERE vendor_id = %d",
-            $vendor_id
+        $table       = $wpdb->prefix . 'sk_report_abuse_reports';
+        $window_days = (int) sk_get_option( 'sk_antifraud_report_window_days', 'sk_antifraud', '30' );
+
+        $sql    = "SELECT DISTINCT customer_id FROM {$table} WHERE vendor_id = %d AND customer_id > 0";
+        $params = [ $vendor_id ];
+
+        if ( $window_days > 0 ) {
+            $sql     .= ' AND reported_at >= %s';
+            $params[] = gmdate( 'Y-m-d H:i:s', time() - $window_days * DAY_IN_SECONDS );
+        }
+
+        $ids = $wpdb->get_col( $wpdb->prepare( $sql, $params ) );
+
+        return array_values( array_filter(
+            array_map( 'intval', (array) $ids ),
+            [ ReportGuards::class, 'is_eligible_reporter' ]
         ) );
+    }
 
-        if ( count( $reports ) < $threshold ) {
+    private function notify_admin( int $vendor_id, array $reporters, int $drafted ): void {
+        $to = get_option( 'admin_email' );
+
+        if ( ! $to ) {
             return;
         }
 
-        // Count unique reporters (customer_id).
-        $unique_reporters = $wpdb->get_var( $wpdb->prepare(
-            "SELECT COUNT(DISTINCT customer_id) FROM {$table} WHERE vendor_id = %d AND customer_id IS NOT NULL AND customer_id > 0",
-            $vendor_id
-        ) );
+        $vendor    = get_userdata( $vendor_id );
+        $name      = $vendor ? $vendor->user_login : (string) $vendor_id;
+        $site_name = wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
 
-        if ( (int) $unique_reporters < $threshold ) {
-            return;
-        }
-
-        // Auto-suspend.
-        FingerprintCollector::suspend_user( $vendor_id, 'report_threshold_' . $unique_reporters );
-
-        // Notify admin.
-        $vendor = get_userdata( $vendor_id );
         $subject = sprintf(
-            '[SK Anti-Fraud] Auto-Suspend: %s (%d Reports)',
-            $vendor ? $vendor->user_login : $vendor_id,
-            $unique_reporters
+            /* translators: 1: site name, 2: vendor name, 3: number of reporters */
+            __( '[%1$s] Anbieter automatisch offline: %2$s (%3$d Meldungen)', 'sk-core' ),
+            $site_name,
+            $name,
+            count( $reporters )
         );
 
-        $body  = "Vendor wurde automatisch suspendiert wegen {$unique_reporters} Reports von verschiedenen Usern.\n\n";
-        $body .= "Vendor: " . ( $vendor ? $vendor->user_login : $vendor_id ) . " (ID {$vendor_id})\n";
-        $body .= "Reports gesamt: " . count( $reports ) . "\n";
-        $body .= "Verschiedene Reporter: {$unique_reporters}\n\n";
-        $body .= admin_url( "user-edit.php?user_id={$vendor_id}" );
+        $body  = __( 'Ein Anbieter wurde automatisch offline genommen, weil mehrere unabhängige Nutzer ihn gemeldet haben.', 'sk-core' ) . "\n\n";
+        $body .= VendorSummary::text( $vendor_id ) . "\n\n";
+        $body .= sprintf( __( 'Zur Schwelle zählende Melder: %d', 'sk-core' ), count( $reporters ) ) . "\n";
+        $body .= sprintf( __( 'Jetzt offline genommen: %d Inserate', 'sk-core' ), $drafted ) . "\n\n";
 
-        wp_mail( get_option( 'admin_email' ), $subject, $body );
+        $body .= __( 'Prüfen und ggf. wieder freischalten:', 'sk-core' ) . "\n";
+        $body .= admin_url( 'admin.php?page=sk&tab=antifraud&sub=suspended' ) . "\n\n";
+        $body .= __( 'Anbieter-Profil:', 'sk-core' ) . ' ' . admin_url( 'user-edit.php?user_id=' . $vendor_id ) . "\n";
+
+        wp_mail( $to, $subject, $body );
     }
 }

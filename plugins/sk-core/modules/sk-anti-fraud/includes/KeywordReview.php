@@ -175,11 +175,8 @@ class KeywordReview {
 
         $body  = __( 'Ein Inserat wurde automatisch auf Entwurf gesetzt und wartet auf Prüfung.', 'sk-core' ) . "\n\n";
         $body .= sprintf( __( 'Inserat: %s', 'sk-core' ), $post->post_title ) . "\n";
-        $body .= sprintf( __( 'Treffer: %s', 'sk-core' ), implode( ', ', $matched ) ) . "\n";
-        $body .= sprintf(
-            __( 'Anbieter: %s', 'sk-core' ),
-            $vendor ? sprintf( '%s (#%d)', $vendor->user_login, $vendor->ID ) : (string) $post->post_author
-        ) . "\n\n";
+        $body .= sprintf( __( 'Treffer: %s', 'sk-core' ), implode( ', ', $matched ) ) . "\n\n";
+        $body .= VendorSummary::text( (int) $post->post_author ) . "\n\n";
         $body .= __( 'Bearbeiten:', 'sk-core' ) . ' ' . admin_url( 'post.php?post=' . $post->ID . '&action=edit' ) . "\n";
 
         if ( $vendor ) {

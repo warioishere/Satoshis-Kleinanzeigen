@@ -46,6 +46,19 @@ function sk_report_abuse_create_report( $args ) {
 
     $args = wp_parse_args( $args, $defaults );
 
+    /**
+     * Allow blocking a report before it is stored — rate limiting, duplicate
+     * detection etc. Return a WP_Error to reject.
+     *
+     * @param null|WP_Error $block
+     * @param array         $args
+     */
+    $blocked = apply_filters( 'sk_report_abuse_pre_create_report', null, $args );
+
+    if ( is_wp_error( $blocked ) ) {
+        return $blocked;
+    }
+
     $report       = [];
     $placeholders = [];
 

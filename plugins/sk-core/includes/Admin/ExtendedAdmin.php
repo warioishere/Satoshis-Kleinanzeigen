@@ -73,6 +73,11 @@ class ExtendedAdmin {
         $pages['abuse-reports']  = new \SK\Core\Admin\PhpDashboard\AbuseReportsPage();
         $pages['feedback']       = new \SK\Core\Admin\PhpDashboard\FeedbackPage();
 
+        // Only when the anti-fraud module is loaded — the page reads its classes.
+        if ( \SK\Core\Admin\PhpDashboard\AntiFraudPage::is_available() ) {
+            $pages['antifraud'] = new \SK\Core\Admin\PhpDashboard\AntiFraudPage();
+        }
+
         return $pages;
     }
 

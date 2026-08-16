@@ -6,25 +6,43 @@ defined( 'ABSPATH' ) || exit;
 
 class AntifraudSettings {
 
+    /** Option name the settings are stored under. */
+    const OPTION = 'sk_antifraud';
+
     public function __construct() {
-        add_filter( 'sk_settings_sections', [ $this, 'add_section' ] );
-        add_filter( 'sk_settings_fields', [ $this, 'add_fields' ] );
+        // The settings live in their own SK tab (SK → Anti-Fraud), not in the
+        // generic settings screen — the tab also hosts the suspension list.
     }
 
-    public function add_section( $sections ) {
-        $sections[] = [
-            'id'                   => 'sk_antifraud',
-            'title'                => __( 'Anti-Fraud', 'sk-core' ),
-            'icon_url'             => '',
-            'description'          => __( 'Scam-Schutz für den Marketplace', 'sk-core' ),
-            'settings_title'       => __( 'Anti-Fraud', 'sk-core' ),
-            'settings_description' => __( 'Fingerprinting, Käufer-Warnungen, Verkaufslimits und Report-Auto-Suspend.', 'sk-core' ),
-        ];
-        return $sections;
+    /**
+     * Field definitions, rendered by \SK\Core\Admin\PhpDashboard\AntiFraudPage.
+     */
+    public static function get_fields(): array {
+        return self::fields();
     }
 
-    public function add_fields( $fields ) {
-        $fields['sk_antifraud'] = [
+    /**
+     * Defaults for every field.
+     */
+    public static function get_defaults(): array {
+        $defaults = [];
+
+        foreach ( self::fields() as $name => $field ) {
+            if ( 'sub_section' === $field['type'] ) {
+                continue;
+            }
+            $defaults[ $name ] = $field['default'] ?? '';
+        }
+
+        return $defaults;
+    }
+
+    public static function get_options(): array {
+        return wp_parse_args( (array) get_option( self::OPTION, [] ), self::get_defaults() );
+    }
+
+    private static function fields(): array {
+        return [
 
             // ── Master Switch ──
             'sk_antifraud_header' => [
@@ -160,13 +178,40 @@ class AntifraudSettings {
             ],
             'sk_antifraud_report_threshold' => [
                 'name'    => 'sk_antifraud_report_threshold',
-                'label'   => __( 'Report-Schwelle', 'sk-core' ),
+                'label'   => __( 'Melde-Schwelle', 'sk-core' ),
                 'type'    => 'text',
                 'default' => '3',
-                'desc'    => __( 'Anzahl Reports von verschiedenen IPs für Auto-Delist.', 'sk-core' ),
+                'desc'    => __( 'Ab so vielen unterschiedlichen Meldern gehen alle Inserate des Anbieters offline.', 'sk-core' ),
+            ],
+            'sk_antifraud_report_window_days' => [
+                'name'    => 'sk_antifraud_report_window_days',
+                'label'   => __( 'Zeitfenster (Tage)', 'sk-core' ),
+                'type'    => 'text',
+                'default' => '30',
+                'desc'    => __( 'Nur Meldungen aus diesem Zeitraum zählen zur Schwelle. 0 = alle.', 'sk-core' ),
+            ],
+
+            // ── Melde-Schutz ──
+            'sk_antifraud_guard_header' => [
+                'name'  => 'sk_antifraud_guard_header',
+                'label' => __( 'Schutz vor Melde-Missbrauch', 'sk-core' ),
+                'type'  => 'sub_section',
+                'desc'  => __( 'Meldungen können Anbieter offline nehmen — diese Grenzen verhindern, dass das als Waffe gegen Konkurrenz benutzt wird. Gilt sobald Anti-Fraud aktiv ist.', 'sk-core' ),
+            ],
+            'sk_antifraud_reports_per_hour' => [
+                'name'    => 'sk_antifraud_reports_per_hour',
+                'label'   => __( 'Meldungen pro Stunde und IP', 'sk-core' ),
+                'type'    => 'text',
+                'default' => '5',
+                'desc'    => __( 'Mehr Meldungen aus derselben IP werden abgewiesen. 0 = kein Limit. Zusätzlich gilt immer: eine Meldung pro Nutzer und Inserat.', 'sk-core' ),
+            ],
+            'sk_antifraud_reporter_min_age' => [
+                'name'    => 'sk_antifraud_reporter_min_age',
+                'label'   => __( 'Mindestalter des Melders (Tage)', 'sk-core' ),
+                'type'    => 'text',
+                'default' => '14',
+                'desc'    => __( 'Meldungen jüngerer Accounts werden gespeichert, zählen aber nicht zur Schwelle. Verhindert Delisting per Wegwerf-Accounts. 0 = kein Mindestalter.', 'sk-core' ),
             ],
         ];
-
-        return $fields;
     }
 }

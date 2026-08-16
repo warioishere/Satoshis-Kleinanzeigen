@@ -21,12 +21,19 @@ final class Module {
         define( 'SK_ANTIFRAUD_INCLUDES', SK_ANTIFRAUD_PATH . '/includes' );
 
         require_once SK_ANTIFRAUD_INCLUDES . '/AntifraudSettings.php';
+        require_once SK_ANTIFRAUD_INCLUDES . '/Suspension.php';
+        require_once SK_ANTIFRAUD_INCLUDES . '/ReportGuards.php';
+        require_once SK_ANTIFRAUD_INCLUDES . '/VendorSummary.php';
         new AntifraudSettings();
 
         // Only load features if master switch is on.
         if ( sk_get_option( 'sk_antifraud_enabled', 'sk_antifraud', 'off' ) !== 'on' ) {
             return;
         }
+
+        // Report guards are always active with the master switch — they protect
+        // the reporting itself, independent of what reacts to reports.
+        new ReportGuards();
 
         if ( sk_get_option( 'sk_antifraud_fingerprint', 'sk_antifraud', 'off' ) === 'on' ) {
             require_once SK_ANTIFRAUD_INCLUDES . '/FingerprintCollector.php';
