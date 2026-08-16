@@ -31,6 +31,9 @@ final class PageCache {
     /** @var string[] URL paths queued for removal. */
     private static $paths = [];
 
+    /** @var bool Front page queued for removal. */
+    private static $flush_home = false;
+
     /** @var bool Shutdown handler already registered. */
     private static $scheduled = false;
 
@@ -102,6 +105,76 @@ final class PageCache {
         if ( $permalink ) {
             self::queue_url( $permalink );
         }
+
+        self::queue_archives_for( $post_id );
+    }
+
+    /**
+     * Queue the listing pages a post shows up on: shop page, its category and
+     * tag archives (including parent categories, which list child products too)
+     * and the front page. Terms have to be read before the post is deleted.
+     */
+    public static function queue_archives_for( int $post_id ): void {
+        $post = get_post( $post_id );
+
+        if ( ! $post ) {
+            return;
+        }
+
+        // Front page — lists newest items.
+        self::queue_home();
+
+        if ( 'product' === $post->post_type ) {
+            $shop_id = (int) get_option( 'woocommerce_shop_page_id' );
+
+            if ( $shop_id ) {
+                $shop_url = get_permalink( $shop_id );
+
+                if ( $shop_url ) {
+                    self::queue_url( $shop_url );
+                }
+            }
+
+            self::queue_terms( $post_id, 'product_cat', true );
+            self::queue_terms( $post_id, 'product_tag', false );
+
+            return;
+        }
+
+        // Other watched types use their post type archive, if there is one.
+        $archive = get_post_type_archive_link( $post->post_type );
+
+        if ( $archive ) {
+            self::queue_url( $archive );
+        }
+    }
+
+    /**
+     * @param bool $with_ancestors Also queue parent terms (products bubble up
+     *                             into parent category listings).
+     */
+    private static function queue_terms( int $post_id, string $taxonomy, bool $with_ancestors ): void {
+        $terms = get_the_terms( $post_id, $taxonomy );
+
+        if ( ! is_array( $terms ) ) {
+            return;
+        }
+
+        foreach ( $terms as $term ) {
+            $ids = [ $term->term_id ];
+
+            if ( $with_ancestors ) {
+                $ids = array_merge( $ids, get_ancestors( $term->term_id, $taxonomy, 'taxonomy' ) );
+            }
+
+            foreach ( $ids as $term_id ) {
+                $link = get_term_link( (int) $term_id, $taxonomy );
+
+                if ( ! is_wp_error( $link ) && $link ) {
+                    self::queue_url( $link );
+                }
+            }
+        }
     }
 
     public static function queue_store( int $user_id ): void {
@@ -117,19 +190,23 @@ final class PageCache {
     }
 
     public static function queue_url( string $url ): void {
-        $path = wp_parse_url( $url, PHP_URL_PATH );
-
-        if ( ! $path || '/' === $path ) {
-            return;
-        }
-
-        $path = trim( $path, '/' );
+        $path = trim( (string) wp_parse_url( $url, PHP_URL_PATH ), '/' );
 
         if ( '' === $path ) {
+            // Site root — cached as a file, not a directory.
+            self::queue_home();
             return;
         }
 
         self::$paths[ $path ] = true;
+        self::schedule_flush();
+    }
+
+    /**
+     * Queue the front page (cache/all/index.html plus its pagination).
+     */
+    public static function queue_home(): void {
+        self::$flush_home = true;
         self::schedule_flush();
     }
 
@@ -151,27 +228,33 @@ final class PageCache {
      * Remove the cached HTML of every queued path.
      */
     public static function flush_now(): void {
-        if ( empty( self::$paths ) ) {
-            return;
-        }
+        foreach ( self::CACHE_ROOTS as $root ) {
+            $base = realpath( WP_CONTENT_DIR . $root );
 
-        foreach ( array_keys( self::$paths ) as $path ) {
-            foreach ( self::CACHE_ROOTS as $root ) {
-                $dir = WP_CONTENT_DIR . $root . '/' . $path;
+            if ( ! $base ) {
+                continue;
+            }
 
-                // Guard against escaping the cache directory.
-                $base = realpath( WP_CONTENT_DIR . $root );
-                $real = realpath( $dir );
+            foreach ( array_keys( self::$paths ) as $path ) {
+                $real = realpath( $base . '/' . $path );
 
-                if ( ! $base || ! $real || strpos( $real, $base ) !== 0 ) {
+                // Guard against escaping the cache directory. The strict
+                // inequality keeps the cache root itself from being removed.
+                if ( ! $real || $real === $base || strpos( $real, $base . DIRECTORY_SEPARATOR ) !== 0 ) {
                     continue;
                 }
 
                 self::rmdir_recursive( $real );
             }
+
+            if ( self::$flush_home ) {
+                @unlink( $base . '/index.html' );
+                self::rmdir_recursive( $base . '/page' );
+            }
         }
 
-        self::$paths = [];
+        self::$paths      = [];
+        self::$flush_home = false;
     }
 
     private static function rmdir_recursive( string $path ): void {
