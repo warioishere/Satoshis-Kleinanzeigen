@@ -29,6 +29,30 @@ function nap_log(string $msg): void {
 }
 
 /**
+ * Did the relay actually accept the event?
+ *
+ * Relay::send() always returns an object, so a plain "!== false" check treated
+ * a rejection as a success. Only an explicit isSuccess=false counts as refused;
+ * anything unexpected is treated as accepted so we never post twice.
+ */
+function nap_relay_accepted($response): bool {
+    if (is_object($response) && property_exists($response, 'isSuccess')) {
+        return (bool) $response->isSuccess;
+    }
+    return $response !== false;
+}
+
+/**
+ * Readable reason from a relay response, for the log.
+ */
+function nap_relay_message($response): string {
+    if (is_object($response) && property_exists($response, 'message') && $response->message !== '') {
+        return (string) $response->message;
+    }
+    return 'keine Begruendung';
+}
+
+/**
  * Optionen lesen (mit Defaults)
  */
 function nap_get_options(): array {
@@ -366,11 +390,14 @@ register_shutdown_function(function() {
                 $relay->setMessage($eventMessage);
                 $response = $relay->send();
 
-                if ($response !== false) {
+                // send() always returns an object, so the old "!== false" check
+                // counted a rejecting relay as a success. Trust an explicit
+                // isSuccess=false, treat anything else as accepted.
+                if (nap_relay_accepted($response)) {
                     $sent_any = true;
                     nap_log(sprintf('Event %s an Relay %s gesendet.', $eventId, $relayUrl));
                 } else {
-                    nap_log(sprintf('Relay %s antwortete nicht auf Event %s.', $relayUrl, $eventId));
+                    nap_log(sprintf('Relay %s lehnte Event %s ab: %s', $relayUrl, $eventId, nap_relay_message($response)));
                 }
             } catch (\Throwable $e) {
                 nap_log(sprintf('Fehler beim Senden an %s: %s', $relayUrl, $e->getMessage()));
@@ -441,9 +468,11 @@ function nap_force_send_product( int $post_id ): bool {
             $relay->setMessage($eventMessage);
             $response = $relay->send();
 
-            if ($response !== false) {
+            if (nap_relay_accepted($response)) {
                 $sent_any = true;
                 nap_log(sprintf('Force send: Event %s an Relay %s gesendet.', $eventId, $relayUrl));
+            } else {
+                nap_log(sprintf('Force send: Relay %s lehnte Event %s ab: %s', $relayUrl, $eventId, nap_relay_message($response)));
             }
         } catch (\Throwable $e) {
             nap_log(sprintf('Force send: Fehler an %s: %s', $relayUrl, $e->getMessage()));

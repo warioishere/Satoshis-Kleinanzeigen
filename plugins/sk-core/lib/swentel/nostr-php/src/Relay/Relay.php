@@ -7,6 +7,7 @@ namespace swentel\nostr\Relay;
 use swentel\nostr\MessageInterface;
 use swentel\nostr\RelayInterface;
 use swentel\nostr\RelayResponse\RelayResponse;
+use swentel\nostr\RelayResponse\RelayResponseNotice;
 use WebSocket;
 
 class Relay implements RelayInterface
@@ -116,12 +117,18 @@ class Relay implements RelayInterface
             }
             $result = RelayResponse::create(json_decode($response->getContent()));
         } catch (WebSocket\Exception\ClientException $e) {
-            $result = [
-                'ERROR',
-                '',
+            // Upstream returns a plain array here, which violates the declared
+            // RelayResponse return type and turns every websocket failure into
+            // a TypeError instead of a handleable response. 'ERROR' is also not
+            // a case of RelayResponseEnum, so it cannot be passed through
+            // RelayResponse::create() — NOTICE is the fitting type.
+            $result = new RelayResponseNotice([
+                'NOTICE',
+                $e->getMessage(),
                 false,
                 $e->getMessage(),
-            ];
+            ]);
+            $result->isSuccess = false;
         }
         return $result;
     }
