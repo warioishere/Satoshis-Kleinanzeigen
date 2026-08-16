@@ -468,6 +468,16 @@ function telegram_api_post($endpoint, $body) {
 function telegram_send_message($post_id) {
     error_log('[TG] telegram_send_message: ENTER post_id=' . $post_id);
 
+    // The send happens on shutdown or via cron, long after it was queued. In
+    // between the listing may have been pulled — keyword review drafts flagged
+    // listings, an admin may have trashed it. Never announce something that is
+    // no longer publicly visible.
+    $current_status = get_post_status($post_id);
+    if ($current_status !== 'publish') {
+        error_log('[TG] telegram_send_message: ABORT #' . $post_id . ' is "' . $current_status . '", not publish');
+        return false;
+    }
+
     $bot_token = get_option('telegram_bot_token');
     $chat_id   = get_option('telegram_chat_id');
     if (!$bot_token || !$chat_id) {
@@ -850,6 +860,15 @@ register_shutdown_function(function() {
     }
 
     foreach ($_tn_shutdown_queue as $post_id => $type) {
+        // Queued while it was still publish — it may have been pulled since
+        // (keyword review, trash). Drop it instead of scheduling cron retries
+        // that could never succeed.
+        if (get_post_status($post_id) !== 'publish') {
+            error_log("[TG] SHUTDOWN SKIP #$post_id: no longer published");
+            delete_post_meta($post_id, '_telegram_job_scheduled');
+            continue;
+        }
+
         $was_sent = (bool) get_post_meta($post_id, '_telegram_sent', true);
         $msg_id   = get_post_meta($post_id, '_telegram_message_id', true);
 

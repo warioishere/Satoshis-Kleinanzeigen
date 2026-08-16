@@ -326,6 +326,14 @@ register_shutdown_function(function() {
             continue;
         }
 
+        // Queued while it was publish — keyword review or an admin may have
+        // pulled it since. Events on relays cannot be taken back, so this check
+        // matters more here than anywhere else.
+        if (get_post_status($post_id) !== 'publish') {
+            nap_log(sprintf('SHUTDOWN SKIP #%d — nicht mehr veroeffentlicht.', $post_id));
+            continue;
+        }
+
         try {
             $note = new Event();
             $note->setKind(1);
