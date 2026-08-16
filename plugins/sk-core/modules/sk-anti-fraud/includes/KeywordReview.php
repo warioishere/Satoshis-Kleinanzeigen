@@ -142,6 +142,10 @@ class KeywordReview {
         update_post_meta( $post->ID, self::META_FLAGGED, current_time( 'mysql' ) );
         update_post_meta( $post->ID, self::META_MATCHED, implode( ', ', $matched ) );
 
+        // Persist independently of post and account — both are usually gone by
+        // the time anyone looks into a case.
+        ReviewLog::record( (int) $post->ID, implode( ', ', $matched ), 'keyword' );
+
         set_transient(
             self::NOTICE_TRANSIENT . (int) $post->post_author,
             [

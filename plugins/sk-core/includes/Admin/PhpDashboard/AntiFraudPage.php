@@ -4,6 +4,7 @@ namespace SK\Core\Admin\PhpDashboard;
 
 use SK\Modules\AntiFraud\AntifraudSettings;
 use SK\Modules\AntiFraud\BanSignals;
+use SK\Modules\AntiFraud\ReviewLog;
 use SK\Modules\AntiFraud\Suspension;
 
 /**
@@ -36,7 +37,7 @@ class AntiFraudPage extends AbstractPage {
     private function get_sub_tab(): string {
         $sub = isset( $_GET['sub'] ) ? sanitize_key( $_GET['sub'] ) : 'general';
 
-        return in_array( $sub, [ 'general', 'suspended', 'signals' ], true ) ? $sub : 'general';
+        return in_array( $sub, [ 'general', 'suspended', 'signals', 'log' ], true ) ? $sub : 'general';
     }
 
     public function render(): void {
@@ -48,6 +49,7 @@ class AntiFraudPage extends AbstractPage {
         $suspended   = Suspension::get_suspended();
         $signals     = BanSignals::all();
         $signal_types = BanSignals::TYPES;
+        $log_entries  = ReviewLog::all();
 
         include sk()->plugin_path() . '/templates/admin/php-dashboard/antifraud.php';
     }
@@ -109,6 +111,16 @@ class AntiFraudPage extends AbstractPage {
 
             $args['added'] = BanSignals::add( $type, $value ) ? 'true' : 'false';
             $args['sub']   = 'signals';
+
+        } elseif ( 'delete_log' === $action ) {
+            $log_id = isset( $_POST['log_id'] ) ? absint( $_POST['log_id'] ) : 0;
+
+            if ( $log_id ) {
+                ReviewLog::remove( $log_id );
+                $args['removed'] = 'true';
+            }
+
+            $args['sub'] = 'log';
 
         } elseif ( 'delete_signal' === $action ) {
             $signal_id = isset( $_POST['signal_id'] ) ? absint( $_POST['signal_id'] ) : 0;

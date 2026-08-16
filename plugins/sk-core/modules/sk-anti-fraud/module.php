@@ -11,6 +11,9 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Module {
 
+    /** Bump when a table changes so activate() runs again. */
+    const DB_VERSION = '1.1';
+
     public $version;
 
     public function __construct() {
@@ -25,6 +28,7 @@ final class Module {
         require_once SK_ANTIFRAUD_INCLUDES . '/ReportGuards.php';
         require_once SK_ANTIFRAUD_INCLUDES . '/VendorSummary.php';
         require_once SK_ANTIFRAUD_INCLUDES . '/BanSignals.php';
+        require_once SK_ANTIFRAUD_INCLUDES . '/ReviewLog.php';
         new AntifraudSettings();
 
         // Only load features if master switch is on.
@@ -72,10 +76,10 @@ final class Module {
 
         add_action( 'sk_activated_module_sk_anti_fraud', [ $this, 'activate' ] );
 
-        // Ensure tables exist (safe to call repeatedly — uses IF NOT EXISTS).
-        if ( false === get_option( 'sk_antifraud_db_version' ) ) {
+        // Ensure tables exist (dbDelta is safe to call repeatedly).
+        if ( get_option( 'sk_antifraud_db_version' ) !== self::DB_VERSION ) {
             $this->activate();
-            update_option( 'sk_antifraud_db_version', '1.0' );
+            update_option( 'sk_antifraud_db_version', self::DB_VERSION );
         }
     }
 
@@ -119,5 +123,7 @@ final class Module {
             PRIMARY KEY  (id),
             KEY idx_lookup (signal_type, signal_value)
         ) $charset;" );
+
+        ReviewLog::create_table();
     }
 }

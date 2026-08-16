@@ -51,6 +51,13 @@ if ( ! defined( 'ABSPATH' ) ) {
                 <span class="count">(<?php echo esc_html( count( $signals ) ); ?>)</span>
             <?php endif; ?>
         </a>
+        <a href="<?php echo esc_url( $base_url . '&sub=log' ); ?>"
+           class="nav-tab <?php echo $sub === 'log' ? 'nav-tab-active' : ''; ?>">
+            <?php esc_html_e( 'Protokoll', 'sk-core' ); ?>
+            <?php if ( ! empty( $log_entries ) ) : ?>
+                <span class="count">(<?php echo esc_html( count( $log_entries ) ); ?>)</span>
+            <?php endif; ?>
+        </a>
     </h2>
 
     <?php if ( isset( $_GET['added'] ) ) : ?>
@@ -65,7 +72,86 @@ if ( ! defined( 'ABSPATH' ) ) {
         <div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Merkmal entfernt.', 'sk-core' ); ?></p></div>
     <?php endif; ?>
 
-    <?php if ( 'signals' === $sub ) : ?>
+    <?php if ( 'log' === $sub ) : ?>
+
+        <p class="description" style="margin-bottom:12px;">
+            <?php esc_html_e( 'Jedes zurückgehaltene Inserat, mit Anbieterdaten als Kopie. Der Eintrag bleibt lesbar, auch wenn Inserat und Account längst gelöscht sind — genau dafür ist er da.', 'sk-core' ); ?>
+        </p>
+
+        <?php if ( empty( $log_entries ) ) : ?>
+            <p><?php esc_html_e( 'Noch nichts protokolliert.', 'sk-core' ); ?></p>
+        <?php else : ?>
+            <table class="wp-list-table widefat fixed striped">
+                <thead>
+                    <tr>
+                        <th scope="col" style="width:13%;"><?php esc_html_e( 'Zeitpunkt', 'sk-core' ); ?></th>
+                        <th scope="col"><?php esc_html_e( 'Inserat', 'sk-core' ); ?></th>
+                        <th scope="col" style="width:14%;"><?php esc_html_e( 'Treffer', 'sk-core' ); ?></th>
+                        <th scope="col" style="width:24%;"><?php esc_html_e( 'Anbieter', 'sk-core' ); ?></th>
+                        <th scope="col" style="width:12%;"><?php esc_html_e( 'Status heute', 'sk-core' ); ?></th>
+                        <th scope="col" style="width:8%;"><?php esc_html_e( 'Aktion', 'sk-core' ); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ( $log_entries as $entry ) :
+                        $post_status  = get_post_status( $entry->product_id );
+                        $vendor_alive = (bool) get_userdata( $entry->vendor_id );
+                        ?>
+                        <tr>
+                            <td><?php echo esc_html( date_i18n( 'd.m.Y H:i', strtotime( $entry->created_at ) ) ); ?></td>
+                            <td>
+                                <?php if ( $post_status ) : ?>
+                                    <a href="<?php echo esc_url( admin_url( 'post.php?post=' . $entry->product_id . '&action=edit' ) ); ?>">
+                                        <?php echo esc_html( $entry->product_title ); ?>
+                                    </a>
+                                <?php else : ?>
+                                    <?php echo esc_html( $entry->product_title ); ?>
+                                <?php endif; ?>
+                                <br><span style="color:#787c82;font-size:11px;">#<?php echo esc_html( $entry->product_id ); ?></span>
+                            </td>
+                            <td><code style="font-size:11px;"><?php echo esc_html( $entry->matched ); ?></code></td>
+                            <td>
+                                <?php if ( $entry->vendor_store ) : ?>
+                                    <strong><?php echo esc_html( $entry->vendor_store ); ?></strong><br>
+                                <?php endif; ?>
+                                <?php if ( $vendor_alive ) : ?>
+                                    <a href="<?php echo esc_url( admin_url( 'user-edit.php?user_id=' . $entry->vendor_id ) ); ?>">
+                                        <?php echo esc_html( $entry->vendor_login ); ?>
+                                    </a>
+                                <?php else : ?>
+                                    <?php echo esc_html( $entry->vendor_login ?: '—' ); ?>
+                                    <span style="color:#b32d2e;"><?php esc_html_e( '(gelöscht)', 'sk-core' ); ?></span>
+                                <?php endif; ?>
+                                <br><span style="color:#787c82;font-size:11px;">
+                                    #<?php echo esc_html( $entry->vendor_id ); ?>
+                                    <?php if ( $entry->vendor_email ) : ?> · <?php echo esc_html( $entry->vendor_email ); ?><?php endif; ?>
+                                    <?php if ( $entry->vendor_registered ) : ?>
+                                        · <?php printf( esc_html__( 'reg. %s', 'sk-core' ), esc_html( date_i18n( 'd.m.Y', strtotime( $entry->vendor_registered ) ) ) ); ?>
+                                    <?php endif; ?>
+                                </span>
+                            </td>
+                            <td>
+                                <?php if ( ! $post_status ) : ?>
+                                    <span style="color:#b32d2e;"><?php esc_html_e( 'gelöscht', 'sk-core' ); ?></span>
+                                <?php else : ?>
+                                    <?php echo esc_html( $post_status ); ?>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <form method="post" onsubmit="return confirm('<?php echo esc_js( __( 'Diesen Protokolleintrag löschen?', 'sk-core' ) ); ?>');">
+                                    <?php wp_nonce_field( 'sk_antifraud_action', 'sk_antifraud_nonce' ); ?>
+                                    <input type="hidden" name="antifraud_action" value="delete_log">
+                                    <input type="hidden" name="log_id" value="<?php echo esc_attr( $entry->id ); ?>">
+                                    <button type="submit" class="button button-small"><?php esc_html_e( 'Löschen', 'sk-core' ); ?></button>
+                                </form>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+
+    <?php elseif ( 'signals' === $sub ) : ?>
 
         <p class="description" style="margin-bottom:12px;">
             <?php esc_html_e( 'Merkmale gesperrter Anbieter. Taucht eins davon auf einem anderen Account auf — beim Login oder beim Speichern der Shop-Einstellungen — bekommst du eine E-Mail. Wirkt auch bei Tor und wechselnder IP, weil ein Betrüger sich bezahlen lassen und erreichbar sein muss.', 'sk-core' ); ?>
