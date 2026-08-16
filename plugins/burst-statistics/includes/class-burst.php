@@ -9,6 +9,7 @@ use Burst\Pro\Pro;
 use Burst\Integrations\Integrations;
 use Burst\Traits\Admin_Helper;
 use Burst\Admin\AutoInstaller\Auto_Installer;
+use Burst\Admin\Search_Console\Search_Console;
 
 	// ignore the 'only one object' rule, as it is a trick for compatibility.
     //phpcs:ignore
@@ -31,6 +32,7 @@ use Burst\Admin\AutoInstaller\Auto_Installer;
 	public ?bool $has_admin_access         = null;
 	public ?bool $is_logged_in_rest        = null;
 	public ?bool $is_shareable_link_viewer = null;
+	public ?bool $is_mainwp_request        = null;
 	public string $admin_url;
 	/**
 	 * Constructor
@@ -69,7 +71,7 @@ use Burst\Admin\AutoInstaller\Auto_Installer;
 		define( 'BURST_DASHBOARD_URL', admin_url( 'admin.php?page=burst' ) );
 		define( 'BURST_PLUGIN', plugin_basename( BURST_FILE ) );
 		define( 'BURST_PLUGIN_NAME', defined( 'BURST_PRO' ) ? 'Burst Pro' : 'Burst Statistics' );
-		define( 'BURST_VERSION', '3.5.0' );
+		define( 'BURST_VERSION', '3.6.2' );
 		define( 'BURST_PUBLIC_KEY', 'bst_7k9mQpX2vL4nWzR8jYhF6tGcU5eBxN3dS1aM0iKoHgJfVq' );
 		// deprecated constant.
         //phpcs:ignore
@@ -120,6 +122,13 @@ use Burst\Admin\AutoInstaller\Auto_Installer;
 			$this->admin->init();
 			$capability = new Capability();
 			$capability->init();
+		}
+
+		// The Google Search Console OAuth popup returns to admin-post.php and must be
+		// handled even when the capability gate above is closed: its only trust anchor
+		// is the single-use OAuth nonce, not the login cookie.
+		if ( is_admin() && $this->get_option_bool( 'enable_search_console' ) ) {
+			( new Search_Console() )->register_oauth_callback();
 		}
 
 		if ( defined( 'BURST_PRO_FILE' ) ) {

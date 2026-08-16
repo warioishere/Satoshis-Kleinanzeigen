@@ -4,6 +4,7 @@ import getSubscriptionsProgressData from '@/api/getSubscriptionsProgressData';
 import Icon from '@/utils/Icon';
 import { formatNumber } from '@/utils/formatting';
 
+// fallow-ignore-next-line complexity
 const SubscriptionsLargeSiteNotice = () => {
 	const { data, isError } = useQuery({
 		queryKey: [ 'subscriptions-backfill-progress' ],
@@ -53,7 +54,7 @@ const SubscriptionsLargeSiteNotice = () => {
 		);
 
 	return (
-		<div className="col-span-12 flex flex-col rounded-xl border border-gray-200 bg-white p-6 shadow-xs dark:border-gray-100 sm:p-8">
+		<div className="col-span-12 flex flex-col rounded-xl border border-gray-200 bg-white p-6 shadow-xs dark:border-gray-100 @sm:p-8">
 			<div className="flex items-start gap-4">
 				<Icon
 					name="help"
@@ -62,7 +63,7 @@ const SubscriptionsLargeSiteNotice = () => {
 					className="mt-1 shrink-0"
 				/>
 				<div className="flex-1">
-					<h2 className="mb-2 text-lg font-semibold text-text-black dark:text-text-white sm:text-xl">
+					<h2 className="mb-2 text-lg font-semibold text-text-black dark:text-text-white @sm:text-xl">
 						{heading}
 					</h2>
 					<p className="mb-3 text-text-gray dark:text-text-white">

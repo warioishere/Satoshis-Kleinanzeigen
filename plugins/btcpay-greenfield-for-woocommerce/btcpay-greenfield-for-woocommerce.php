@@ -7,13 +7,13 @@
  * Author URI:      https://btcpayserver.org
  * Text Domain:     btcpay-greenfield-for-woocommerce
  * Domain Path:     /languages
- * Version:         2.8.0
+ * Version:         2.8.1
  * Requires PHP:    8.0
- * Tested up to:    6.9
+ * Tested up to:    7.0
  * Requires at least: 6.2
  * Requires Plugins: woocommerce
  * WC requires at least: 7.0
- * WC tested up to: 10.7
+ * WC tested up to: 11.0
  */
 
 use BTCPayServer\WC\Admin\Notice;
@@ -21,13 +21,14 @@ use BTCPayServer\WC\Gateway\DefaultGateway;
 use BTCPayServer\WC\Gateway\SeparateGateways;
 use BTCPayServer\WC\Helper\GreenfieldApiAuthorization;
 use BTCPayServer\WC\Helper\GreenfieldApiWebhook;
+use BTCPayServer\WC\Helper\OrderReturn;
 use BTCPayServer\WC\Helper\SatsMode;
 use BTCPayServer\WC\Helper\GreenfieldApiHelper;
 use BTCPayServer\WC\Helper\Logger;
 
 defined( 'ABSPATH' ) || exit();
 
-define( 'BTCPAYSERVER_VERSION', '2.8.0' );
+define( 'BTCPAYSERVER_VERSION', '2.8.1' );
 define( 'BTCPAYSERVER_VERSION_KEY', 'btcpay_gf_version' );
 define( 'BTCPAYSERVER_PLUGIN_FILE_PATH', plugin_dir_path( __FILE__ ) );
 define( 'BTCPAYSERVER_PLUGIN_URL', plugin_dir_url(__FILE__ ) );
@@ -39,6 +40,7 @@ class BTCPayServerWCPlugin {
 
 	public function __construct() {
 		$this->includes();
+		OrderReturn::register();
 
 		add_action( 'woocommerce_thankyou_btcpaygf_default', ['BTCPayServerWCPlugin', 'orderStatusThankYouPage'], 10, 1);
 		add_action( 'woocommerce_order_details_after_order_table', ['BTCPayServerWCPlugin', 'orderDetailsCheckoutLink'], 10, 1);
@@ -46,8 +48,6 @@ class BTCPayServerWCPlugin {
 		add_action( 'wp_ajax_btcpaygf_notifications', [$this, 'processAjaxNotification'] );
 		add_action( 'wp_ajax_nopriv_btcpaygf_modal_checkout', [$this, 'processAjaxModalCheckout'] );
 		add_action( 'admin_enqueue_scripts', [$this, 'enqueueAdminScripts'] );
-		add_action( 'wp_ajax_btcpaygf_modal_blocks_checkout', [$this, 'processAjaxModalBlocksCheckout'] );
-		add_action( 'wp_ajax_nopriv_btcpaygf_modal_blocks_checkout', [$this, 'processAjaxModalBlocksCheckout'] );
 
 		// Run the updates.
 		\BTCPayServer\WC\Helper\UpdateManager::processUpdates();
@@ -221,6 +221,15 @@ class BTCPayServerWCPlugin {
 			$permissions = array_merge(GreenfieldApiAuthorization::REQUIRED_PERMISSIONS, GreenfieldApiAuthorization::OPTIONAL_PERMISSIONS);
 
 			try {
+				$state = GreenfieldApiHelper::createApiSetupState($host);
+				$callbackUrl = add_query_arg(
+					[
+						'btcpay-settings-callback' => '1',
+						'state' => $state,
+					],
+					home_url('/')
+				);
+
 				// Create the redirect url to BTCPay instance.
 				$url = \BTCPayServer\Client\ApiKey::getAuthorizeUrl(
 					$host,
@@ -228,7 +237,7 @@ class BTCPayServerWCPlugin {
 					'WooCommerce',
 					true,
 					true,
-					home_url('?btcpay-settings-callback'),
+					$callbackUrl,
 					null
 				);
 
@@ -269,58 +278,6 @@ class BTCPayServerWCPlugin {
 		} catch (\Throwable $e) {
 			Logger::debug('Error processing modal checkout ajax callback: ' . $e->getMessage());
 		}
-	}
-
-	/**
-	 * Handles the modal AJAX callback on the blocks checkout page.
-	 */
-	public function processAjaxModalBlocksCheckout() {
-
-		Logger::debug('Entering ' . __METHOD__);
-		Logger::debug('$_POST: ' . print_r($_POST, true));
-
-		$nonce = sanitize_text_field($_POST['apiNonce']);
-		if ( ! wp_verify_nonce( $nonce, 'btcpay-nonce' ) ) {
-			wp_die('Unauthorized!', '', ['response' => 401]);
-		}
-
-		if ( get_option('btcpay_gf_modal_checkout') !== 'yes' ) {
-			wp_die('Modal checkout mode not enabled.', '', ['response' => 400]);
-		}
-
-		$selectedPaymentGateway = sanitize_text_field($_POST['paymentGateway']);
-		$orderId = sanitize_text_field($_POST['orderId']);
-		$order = wc_get_order($orderId);
-
-		if ($order) {
-
-			$orderPaymentMethod = $order->get_payment_method();
-			if (empty($orderPaymentMethod) || $orderPaymentMethod !== $selectedPaymentGateway) {
-				$order->set_payment_method($selectedPaymentGateway);
-				$order->save();
-			}
-
-			$payment_gateways = \WC_Payment_Gateways::instance();
-
-			if ($payment_gateway = $payment_gateways->payment_gateways()[$selectedPaymentGateway]) {
-
-				// Run the process_payment() method.
-				$result = $payment_gateway->process_payment($order->get_id());
-
-				if (isset($result['result']) && $result['result'] === 'success') {
-					wp_send_json_success($result);
-				} else {
-					wp_send_json_error($result);
-				}
-
-			} else {
-				wp_send_json_error('Payment gateway not found.');
-			}
-		} else {
-			wp_send_json_error('Order not found, stopped processing.');
-		}
-
-		wp_die();
 	}
 
 	/**
@@ -571,36 +528,54 @@ add_action( 'template_redirect', function() {
 	}
 
 	$btcPaySettingsUrl = admin_url('admin.php?page=wc-settings&tab=btcpay_settings');
+	$redirectToSettings = static function () use ($btcPaySettingsUrl): void {
+		wp_safe_redirect($btcPaySettingsUrl);
+		exit;
+	};
 
-	$rawData = file_get_contents('php://input');
-	Logger::debug('Redirect payload: ' . print_r($rawData, true));
-
-	$data = json_decode( $rawData, true );
-
-	// Check if the payload api key comes from the actually requested server. Abort if not.
-	$storedUrl = get_option('btcpay_gf_url');
-	if (!GreenfieldApiHelper::checkApiKeyWorks($storedUrl, sanitize_text_field($_POST['apiKey']))) {
-		$messageAbort = __('Error on verifiying redirected API wey with stored BTCPay Server url. Aborting API wizard. Please try again or do a manual setup.', 'btcpay-greenfield-for-woocommerce');
-		Logger::debug($messageAbort);
+	$state = isset($_GET['state']) && is_string($_GET['state'])
+		? sanitize_text_field(wp_unslash($_GET['state']))
+		: null;
+	$storedUrl = GreenfieldApiHelper::consumeApiSetupState($state);
+	if ($storedUrl === null) {
+		$messageAbort = __('Invalid or expired API setup request. Please start the setup wizard again.', 'btcpay-greenfield-for-woocommerce');
+		Logger::debug($messageAbort, true);
 		Notice::addNotice('error', $messageAbort);
-		wp_redirect($btcPaySettingsUrl);
+		$redirectToSettings();
 	}
 
-	// Data does get submitted with url-encoded payload, so parse $_POST here.
-	if (!empty($_POST)) {
-		$data['apiKey'] = sanitize_html_class($_POST['apiKey'] ?? null);
-		if (is_array($_POST['permissions'])) {
-			foreach ($_POST['permissions'] as $key => $value) {
-				$data['permissions'][$key] = sanitize_text_field($_POST['permissions'][$key] ?? null);
+	$apiKey = isset($_POST['apiKey']) && is_string($_POST['apiKey'])
+		? sanitize_text_field(wp_unslash($_POST['apiKey']))
+		: '';
+	$permissions = [];
+	if (isset($_POST['permissions']) && is_array($_POST['permissions'])) {
+		foreach (wp_unslash($_POST['permissions']) as $permission) {
+			if (is_string($permission)) {
+				$permissions[] = sanitize_text_field($permission);
 			}
 		}
 	}
+
+	// Check if the payload API key comes from the server requested by the setup flow.
+	if ($apiKey === '' || !GreenfieldApiHelper::checkApiKeyWorks($storedUrl, $apiKey)) {
+		$messageAbort = __('Error on verifiying redirected API wey with stored BTCPay Server url. Aborting API wizard. Please try again or do a manual setup.', 'btcpay-greenfield-for-woocommerce');
+		Logger::debug($messageAbort);
+		Notice::addNotice('error', $messageAbort);
+		$redirectToSettings();
+	}
+
+	// Data is submitted with a URL-encoded payload by BTCPay Server.
+	$data = [
+		'apiKey' => $apiKey,
+		'permissions' => $permissions,
+	];
 
 	if (isset($data['apiKey']) && isset($data['permissions'])) {
 		$apiData = new \BTCPayServer\WC\Helper\GreenfieldApiAuthorization($data);
 		if ($apiData->hasSingleStore() && $apiData->hasRequiredPermissions()) {
 			update_option('btcpay_gf_api_key', $apiData->getApiKey());
 			update_option('btcpay_gf_store_id', $apiData->getStoreID());
+			update_option('btcpay_gf_url', $storedUrl);
 			update_option('btcpay_gf_connection_details', 'yes');
 			Notice::addNotice('success', __('Successfully received api key and store id from BTCPay Server API. Please finish setup by saving this settings form.', 'btcpay-greenfield-for-woocommerce'));
 
@@ -617,15 +592,15 @@ add_action( 'template_redirect', function() {
 				delete_option('btcpay_gf_webhook');
 			}
 
-			wp_redirect($btcPaySettingsUrl);
+			$redirectToSettings();
 		} else {
 			Notice::addNotice('error', __('Please make sure you only select one store on the BTCPay API authorization page.', 'btcpay-greenfield-for-woocommerce'));
-			wp_redirect($btcPaySettingsUrl);
+			$redirectToSettings();
 		}
 	}
 
 	Notice::addNotice('error', __('Error processing the data from BTCPay. Please try again.', 'btcpay-greenfield-for-woocommerce'));
-	wp_redirect($btcPaySettingsUrl);
+	$redirectToSettings();
 });
 
 // Installation routine.

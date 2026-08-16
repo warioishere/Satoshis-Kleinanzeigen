@@ -18,6 +18,7 @@ import { safeDecodeURI } from '@/utils/lib';
  *
  * @return {JSX.Element} Sub-table of parameter variations for the page row.
  */
+// fallow-ignore-next-line complexity
 const ParameterVariationsRow = ({ data, startDate, endDate, range }) => {
 	const pageUrl = data?.page_url || '';
 	const totalPageviews = Number( data?.pageviews ?? 0 );
@@ -49,7 +50,7 @@ const ParameterVariationsRow = ({ data, startDate, endDate, range }) => {
 	);
 
 	return (
-		<div className="border-b border-gray-100 bg-gray-50 px-6 py-3 max-xl:px-2.5">
+		<div className="border-b border-gray-100 bg-gray-50 px-6 py-3 @max-xl:px-2.5">
 			<div className="mb-2 flex items-baseline gap-2 text-sm">
 				<span className="font-medium text-text-black">
 					{safeDecodeURI( pageUrl )}

@@ -9,6 +9,8 @@ import Icon from '@/utils/Icon';
 import { BarDataTable } from '@/components/DataTable/BarDataTable';
 import { useSearchTermsData } from './useSearchTermsData';
 import { getSearchTermsColumns } from './columns';
+import MetricInfo from '@/components/Common/MetricInfo';
+import useColumnsBySiteUrl from '@/hooks/useColumnsBySiteUrl';
 
 type SearchTermsBlockProps = {
 
@@ -17,7 +19,7 @@ type SearchTermsBlockProps = {
 };
 
 /** Maximum rows shown in the compact block view. */
-const TOP_N = 10;
+const TOP_N = 5;
 
 /**
  * Compact dashboard block showing the top site-search terms.
@@ -36,15 +38,7 @@ const SearchTermsBlock = memo( ({ className = '' }: SearchTermsBlockProps ) => {
 
 	const navigate = useNavigate();
 	const location = useRouterState({ select: ( s ) => s.location });
-
-	const siteUrl =
-		( window as unknown as { burst_settings?: { site_url?: string } })
-			?.burst_settings?.site_url ?? window.location.origin;
-
-	const columns = useMemo(
-		() => getSearchTermsColumns({ siteUrl }),
-		[ siteUrl ]
-	);
+	const columns = useColumnsBySiteUrl( getSearchTermsColumns );
 
 	const filteredData = useMemo( () => {
 		const base = noResultsOnly ? data.filter( ( r ) => 0 === r.results ) : data;
@@ -73,7 +67,9 @@ const SearchTermsBlock = memo( ({ className = '' }: SearchTermsBlockProps ) => {
 				className="border-b border-gray-200"
 				isLoading={isLoading}
 				title={<>
-					{__( 'Search terms', 'burst-statistics' )}
+					<MetricInfo metricKey="search_terms" side="bottom">
+						{__( 'Website searches', 'burst-statistics' )}
+					</MetricInfo>
 					{/* Expand to overlay. */}
 					<button
 						type="button"
@@ -99,7 +95,7 @@ const SearchTermsBlock = memo( ({ className = '' }: SearchTermsBlockProps ) => {
 									<Icon name="check" size={11} color="green" strokeWidth={2.5} />
 								</Checkbox.Indicator>
 							</Checkbox.Root>
-							{__( 'No results only', 'burst-statistics' )}
+							{__( 'Without results', 'burst-statistics' )}
 						</label>
 					</div>
 				}

@@ -10,6 +10,12 @@ import TextInput from '@/components/Inputs/TextInput';
 import { PageFilter } from '@/components/Filters/PageFilter';
 import clsx from 'clsx';
 
+// Blocks that have no per-block data settings (date range / filters / comment).
+const BLOCKS_WITHOUT_SETTINGS = [ 'logo', 'text_block', 'hero' ];
+
+const hasBlockSettings = ( blockId: string ): boolean =>
+	! BLOCKS_WITHOUT_SETTINGS.includes( blockId );
+
 interface BlockSettingsSidebarProps {
 	reportBlockIndex: number;
 	className?: string;
@@ -19,6 +25,7 @@ interface BlockSettingsSidebarProps {
  * Sidebar component for editing block settings in the report editor.
  * Displays block title, date range, filters, comments, and action buttons.
  */
+// fallow-ignore-next-line complexity
 export const BlockSettingsSidebar: React.FC<BlockSettingsSidebarProps> = ({ reportBlockIndex, className }) => {
 	const contents = useWizardStore( ( state ) => state.wizard.content );
 	const block = contents[reportBlockIndex];
@@ -122,8 +129,8 @@ export const BlockSettingsSidebar: React.FC<BlockSettingsSidebarProps> = ({ repo
 				</div>
 			) }
 
-			{/* Scrollable content. Controls not needed for logo block.	 */}
-			{ ( 'logo' !== block.id && 'text_block' !== block.id && 'hero' !== block.id ) &&
+			{/* Scrollable content. Date range / filters / comment only apply to data blocks. */}
+			{ hasBlockSettings( block.id ) &&
 				<div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6">
 				{/* Date Range Section. */}
 				<div className="flex flex-col gap-3">

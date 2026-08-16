@@ -5,7 +5,8 @@ import {
 	formatTime,
 	getCountryName,
 	getContinentName,
-	formatCurrency, formatCurrencyCompact
+	formatCurrency, formatCurrencyCompact,
+	truncateMiddle
 } from '@/utils/formatting';
 import Flag from '@/components/Statistics/Flag';
 import ClickToFilter from '@/components/Common/ClickToFilter';
@@ -27,7 +28,54 @@ const FORMATS = {
 	REFERRER: 'referrer',
 	FLOAT: 'float',
 	CURRENCY: 'currency',
-	SEARCH_RESULTS: 'search_results'
+	SEARCH_RESULTS: 'search_results',
+	STRING: 'string',
+	EXTERNAL_LINK: 'external_link',
+	FORM_TITLE: 'form_title',
+	SOURCE_CATEGORY: 'source_category'
+};
+
+export const getSourceCategoryMeta = ( key ) => {
+	const localized = window.burst_settings?.source_categories?.[ key ];
+	if ( localized ) {
+		return localized;
+	}
+
+	const defaults = {
+		search: {
+			label: __( 'Search', 'burst-statistics' ),
+			color: 'var(--color-blue-500)'
+		},
+		social: {
+			label: __( 'Social', 'burst-statistics' ),
+			color: 'var(--color-yellow-500)'
+		},
+		referral: {
+			label: __( 'Referral', 'burst-statistics' ),
+			color: 'var(--color-orange-500)'
+		},
+		aiReferral: {
+			label: __( 'AI referral', 'burst-statistics' ),
+			color: 'var(--color-primary-500)'
+		},
+		paid: {
+			label: __( 'Paid', 'burst-statistics' ),
+			color: 'var(--color-red-500)'
+		},
+		email: {
+			label: __( 'Email', 'burst-statistics' ),
+			color: 'var(--color-green-500)'
+		},
+		direct: {
+			label: __( 'Direct / unknown', 'burst-statistics' ),
+			color: 'var(--color-gray-500)'
+		}
+	};
+
+	return defaults[ key ] || {
+		label: key || __( 'Unknown', 'burst-statistics' ),
+		color: 'var(--color-gray-500)'
+	};
 };
 
 // Memoized filter components - created once, reused everywhere
@@ -111,6 +159,7 @@ const SearchResultsCell = memo( ({ value, term }) => {
 
 SearchResultsCell.displayName = 'SearchResultsCell';
 
+// fallow-ignore-next-line complexity
 const CurrencyValue = memo( ({ value }) => {
 	const exactValue = value?.value || 0;
 
@@ -160,7 +209,80 @@ const COLUMN_FORMATTERS = {
 	[FORMATS.CURRENCY]: ( value ) => <CurrencyValue value={value} />,
 	[FORMATS.SEARCH_RESULTS]: ( value, _columnId, row ) => (
 		<SearchResultsCell value={value} term={ row?.term } />
-	)
+	),
+	[FORMATS.STRING]: ( value ) => value,
+	[FORMATS.SOURCE_CATEGORY]: ( value ) => {
+		const key = String( value || '' );
+		const meta = getSourceCategoryMeta( key );
+
+		return (
+			<span className="inline-flex items-center gap-2">
+				<span
+					className="inline-block h-2.5 w-2.5 rounded-full"
+					style={{ backgroundColor: meta.color }}
+				/>
+				<span>{ meta.label }</span>
+			</span>
+		);
+	},
+	[FORMATS.EXTERNAL_LINK]: ( value ) => {
+		let display = value;
+		try {
+			const parsed = new URL( value );
+			display = parsed.hostname + ( '/' !== parsed.pathname ? parsed.pathname : '' );
+		} catch {
+
+			// Fall back to the raw URL if parsing fails.
+		}
+
+		return (
+			<a
+				href={ value }
+				target="_blank"
+				rel="noopener noreferrer"
+				className="inline-flex items-center gap-1 text-text-black hover:text-blue-600 transition-colors"
+				title={ value }
+			>
+				<span>{ truncateMiddle( display, 44 ) }</span>
+				<Icon name="external-link" size={ 11 } color="gray" className="shrink-0" />
+			</a>
+		);
+	},
+	[FORMATS.FORM_TITLE]: ( value, _columnId, row ) => {
+		const submissionsUrl = row?.submissions_url;
+		const providerLabel = row?.form_provider_label;
+
+		const titleContent = submissionsUrl ? (
+			<a
+				href={ submissionsUrl }
+				target="_blank"
+				rel="noopener noreferrer"
+				className="inline-flex items-center gap-1 text-text-black hover:text-blue-600 transition-colors font-medium min-w-0"
+				title={ value }
+			>
+				<span className="truncate">{ value }</span>
+				<Icon name="external-link" size={ 11 } color="gray" className="shrink-0" />
+			</a>
+		) : (
+			<span
+				className="block truncate font-medium text-text-black"
+				title={ value }
+			>
+				{ value }
+			</span>
+		);
+
+		return (
+			<span className="flex flex-col min-w-0">
+				{ titleContent }
+				{ providerLabel && (
+					<span className="text-xs text-text-gray truncate">
+						{ providerLabel }
+					</span>
+				) }
+			</span>
+		);
+	}
 };
 
 /**
@@ -179,6 +301,7 @@ const createSortFunction = ( columnId, format ) => {
 
 	const isCurrency = format === FORMATS.CURRENCY;
 
+	// fallow-ignore-next-line complexity
 	return ( rowA, rowB ) => {
 		const valueA = rowA[columnId];
 		const valueB = rowB[columnId];
@@ -234,6 +357,7 @@ const createSortFunction = ( columnId, format ) => {
 	};
 };
 
+// fallow-ignore-next-line complexity
 const addABTestIcon = ( content, row ) => {
 	if ( ! row.is_ab_test ) {
 		return content;
@@ -279,6 +403,7 @@ const createCellFormatter = ( format, columnId ) => {
 		return ( row ) => row[columnId] || '';
 	}
 
+	// fallow-ignore-next-line complexity
 	return ( row ) => {
 		try {
 			const value = row[columnId] ?? '';
@@ -379,6 +504,7 @@ const transformDataTableData = ( response, columnOptions ) => {
  * @param {Object} params - Input parameters
  * @throws {Error} If required parameters are missing
  */
+// fallow-ignore-next-line complexity
 const validateParams = ({ startDate, endDate, range, columnsOptions }) => {
 	if ( ! startDate || ! endDate || ! range ) {
 		throw new Error( 'Missing required parameters: startDate, endDate, range' );
@@ -407,7 +533,8 @@ const getDataTableData = async( params ) => {
 		const { startDate, endDate, range, args, columnsOptions, type } = params;
 
 		const isEcommerce = 'ecommerce-datatable' === type;
-		const { data } = await getDatatableData( args.id, isEcommerce, startDate, endDate, range, args );
+		const response = await getDatatableData( args.id, isEcommerce, startDate, endDate, range, args );
+		const data = response?.data;
 
 		if ( ! data ) {
 			throw new Error( 'No data received from API' );
@@ -429,14 +556,7 @@ const getDataTableData = async( params ) => {
 
 export {
 	FORMATS,
-	COLUMN_FORMATTERS,
-	createSortFunction,
-	createCellFormatter,
-	transformColumn,
-	transformDataTableData,
-	validateResponse,
-	validateParams,
-	SearchResultsCell
+	COLUMN_FORMATTERS
 };
 
 export default getDataTableData;

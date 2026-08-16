@@ -212,7 +212,7 @@ class WoocommerceProductsSliderRest
 				'methods' => 'POST',
 				'callback' => array($this, 'get_post_data'),
 				'permission_callback' => function () {
-					return current_user_can('edit_posts');
+					return current_user_can('manage_options');
 				},
 			)
 		);

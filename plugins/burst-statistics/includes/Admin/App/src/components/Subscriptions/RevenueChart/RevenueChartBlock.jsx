@@ -94,6 +94,7 @@ function RevenueModeFilter({ chartMode, onApply }) {
  *
  * @return {JSX.Element} The RevenueChartBlock component.
  */
+// fallow-ignore-next-line complexity
 export function RevenueChartBlock() {
 	const { startDate, endDate, range, filters } = useDate( ( state ) => state );
 	const chartMode = useSubscriptionsStore( ( state ) => state.chartMode );
@@ -145,7 +146,7 @@ export function RevenueChartBlock() {
 	const loadingColors = [ 'var(--color-gray-400)', 'var(--color-gray-300)' ];
 
 	return (
-		<Block className="row-span-1 lg:col-span-12 xl:col-span-6 group/root">
+		<Block className="row-span-1 @lg:col-span-12 @xl:col-span-6 group/root">
 			<BlockHeading
 				title={ isRevenueMode ? __( 'New & Renewal revenue', 'burst-statistics' ) : __( 'New & Renewal sales', 'burst-statistics' ) }
 				className="border-b border-gray-200"

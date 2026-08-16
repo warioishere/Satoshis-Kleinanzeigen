@@ -1,3 +1,6 @@
+= 1.5.1 | 24th June 2026
+* fix: prevent fatal in woo_extra_body_classes on taxonomy archives
+
 = 1.5.0 | 11th May 2026
 * Tweak: When Kadence Shop Kit's Image Swap module is active, the "Product Image Hover Switch" setting is now disabled to prevent conflicts.
 * Tweak: The AI Starter Templates notice has been temporarily removed.

@@ -5,11 +5,14 @@ import { __ } from '@wordpress/i18n';
 import * as Select from '@radix-ui/react-select';
 import Icon from '@/utils/Icon';
 import DataTableBlock from '@/components/Statistics/DataTableBlock';
-import OutgoingLinksOverlayTable from '@/components/OutgoingLinks/OutgoingLinksOverlayTable';
 import { PageFilter } from '@/components/Filters/PageFilter';
 import DateRange from '@/components/Statistics/DateRange';
 import ErrorBoundary from '@/components/Common/ErrorBoundary';
 import { FILTER_KEYS } from '@/config/filterConfig';
+import {
+	SHEET_OVERLAY_PROPS,
+	SHEET_PANEL_PROPS
+} from '@/components/Common/sheetMotionProps';
 
 // Duration in ms, matched to the exit spring animation.
 const EXIT_DURATION_MS = 0;
@@ -26,8 +29,11 @@ const VARIANT_META: Record<string, { label: string; icon: string }> = {
 	parameters: { label: __( 'Parameters', 'burst-statistics' ), icon: 'parameters' },
 	products: { label: __( 'Products', 'burst-statistics' ), icon: 'shopping-cart' },
 	subscription_products: { label: __( 'Plan performance', 'burst-statistics' ), icon: 'calendar-sync' },
-	search_terms: { label: __( 'Search terms', 'burst-statistics' ), icon: 'search' },
-	outgoing_links: { label: __( 'Outgoing links', 'burst-statistics' ), icon: 'external-link' }
+	search_terms: { label: __( 'Website searches', 'burst-statistics' ), icon: 'search' },
+	not_found_pages: { label: __( '404 Pages', 'burst-statistics' ), icon: 'page' },
+	outgoing_links: { label: __( 'Outgoing links', 'burst-statistics' ), icon: 'external-link' },
+	forms: { label: __( 'Forms', 'burst-statistics' ), icon: 'chat' },
+	reading_engagement: { label: __( 'Reading engagement', 'burst-statistics' ), icon: 'page' }
 };
 
 /**
@@ -40,6 +46,7 @@ const VARIANT_META: Record<string, { label: string; icon: string }> = {
  *
  * @return {JSX.Element} The overlay component.
  */
+// fallow-ignore-next-line complexity
 export const DataTableOverlay: React.FC = () => {
 	const navigate = useNavigate();
 
@@ -149,32 +156,12 @@ export const DataTableOverlay: React.FC = () => {
 		<AnimatePresence>
 			{ isVisible && (
 				<motion.div
+					{...SHEET_OVERLAY_PROPS}
 					id="datatable-overlay"
-					className="fixed inset-0 left-0 max-[960px]:left-9 max-[782px]:left-0 z-9999 dark:bg-gray-400 bg-gray-700 bg-opacity-90 flex items-end justify-center px-4"
-					initial={{ opacity: 0 }}
-					animate={{ opacity: 1 }}
-					exit={{ opacity: 0 }}
-					transition={{ duration: 0.15, ease: 'easeOut' }}
 					onClick={ handleClose }
 				>
 					<motion.div
-						initial={{ opacity: 0, y: 500, scale: 0.7 }}
-						animate={{ opacity: 1, y: 0, scale: 1 }}
-						exit={{ opacity: 0, y: 500, scale: 0.7 }}
-						transition={{
-							delay: 0.1,
-							y: {
-								type: 'spring',
-								stiffness: 135,
-								damping: 18,
-								mass: 0.45
-							},
-							opacity: {
-								duration: 0.18,
-								ease: 'easeOut'
-							}
-						}}
-						className="w-full h-[95vh] max-h-[95vh] max-w-(--breakpoint-2xl)"
+						{...SHEET_PANEL_PROPS}
 						onClick={ ( e ) => e.stopPropagation() }
 					>
 						<div className="h-full bg-gray-100 rounded-t-2xl shadow-2xl overflow-hidden flex flex-col">
@@ -265,15 +252,11 @@ export const DataTableOverlay: React.FC = () => {
 						{/* Table area — fills remaining space, scrollable. */}
 						<div className="flex flex-col flex-1 min-h-0 overflow-y-auto p-4 gap-4">
 							<ErrorBoundary>
-								{ 'outgoing_links' === selectedVariant ? (
-									<OutgoingLinksOverlayTable />
-								) : (
-									<DataTableBlock
-										allowedConfigs={ [ selectedVariant ] }
-										id={ dataTableId }
-										isInOverlay={ true }
-									/>
-								) }
+								<DataTableBlock
+									allowedConfigs={ [ selectedVariant ] }
+									id={ dataTableId }
+									isInOverlay={ true }
+								/>
 							</ErrorBoundary>
 						</div>
 						</div>
@@ -283,5 +266,3 @@ export const DataTableOverlay: React.FC = () => {
 		</AnimatePresence>
 	);
 };
-
-export default DataTableOverlay;

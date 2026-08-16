@@ -10,6 +10,7 @@ use Burst\Traits\Admin_Helper;
 use Burst\Traits\Database_Helper;
 use Burst\Traits\Save;
 use Burst\Frontend\Goals\Goals;
+use Burst\Admin\Share\Share;
 
 
 class Upgrade {
@@ -151,7 +152,7 @@ class Upgrade {
 
 		// ensure the onboarding doesn't start again if users already had the plugin activated.
 		if ( $prev_version && version_compare( $prev_version, '2.1.0', '<' ) ) {
-			if ( defined( 'BURST_PRO' ) ) {
+			if ( ! defined( 'BURST_FREE' ) ) {
 				update_option( 'burst_activation_time_pro', time(), false );
 			}
 		}
@@ -260,7 +261,8 @@ class Upgrade {
 				\Burst\burst_loader()->admin->tasks->add_task( 'opt-in-sharing' );
 			}
 
-			if ( $this->get_option_bool( 'enable_cookieless_tracking' ) && ! $this->get_option_bool( 'enable_turbo_mode' ) ) {
+			$cookieless = $this->get_option_bool( 'enable_cookieless_tracking' ) || ( $this->get_option( 'privacy_level', 'cookie' ) !== 'cookie' );
+			if ( $cookieless && ! $this->get_option_bool( 'enable_turbo_mode' ) ) {
 				\Burst\burst_loader()->admin->tasks->add_task( 'turbo_mode_recommended' );
 			}
 		}
@@ -323,11 +325,60 @@ class Upgrade {
 		}
 
 		if ( $prev_version && version_compare( $prev_version, '3.5.0', '<' ) ) {
-			// External link tracking is enabled by default for upgraded installs.
-			$this->update_option( 'track_external_links', true );
-			( new Tasks() )->add_task( 'external_links_tracking' );
-
 			burst_reinstall_rest_api_optimizer();
+		}
+
+		if ( $prev_version && version_compare( $prev_version, '3.5.1', '<' ) ) {
+			// Convert oversized/string report columns to fitted/native types.
+			update_option( 'burst_db_upgrade_report_table_types', true, false );
+		}
+
+		if ( $prev_version && version_compare( $prev_version, '3.6.0', '<' ) ) {
+			// Remove historic spam/invalid browsers left over from before the
+			// user agent allowlist was tightened.
+			update_option( 'burst_db_upgrade_clean_spam_browsers', true, false );
+
+			// Country GeoIP tracking ships in free as of 3.6. Download the database
+			// (the burst_locations country lookup is seeded by install_locations_table
+			// via the run_table_init_hook below). The "available from" timestamp is set
+			// only here — i.e. on an upgrade from an existing install — so a fresh
+			// install, which has country data from its first hit, shows no notice.
+			update_option( 'burst_import_geo_ip_on_activation', true, false );
+			// Stored via the settings system (not a standalone option) so the React
+			// world-map notice can read it through getValue().
+			$this->update_option( 'country_geo_database_available_time', time() );
+		}
+
+		if ( $prev_version && version_compare( $prev_version, '3.6.1', '<' ) ) {
+			// Reinstall the optimizer so fields/get keeps other plugins loaded,
+			// which the integrations settings page needs for plugin detection.
+			burst_reinstall_rest_api_optimizer();
+			if ( defined( 'BURST_FREE' ) ) {
+				burst_delete_option( 'track_external_links' );
+			}
+
+			// Backfill the descriptive bio and website link on the existing viewer
+			// user so admins understand why the account exists.
+			( new Share() )->auth->backfill_viewer_profile();
+
+			// Migrate privacy_level based on current enable_cookieless_tracking value.
+			$cookieless = $this->get_option_bool( 'enable_cookieless_tracking' );
+			$this->update_option( 'privacy_level', $cookieless ? 'fingerprint' : 'cookie' );
+
+			if ( defined( 'BURST_FREE' ) ) {
+				delete_option( 'burst_trial_offered' );
+				\Burst\burst_loader()->admin->tasks->dismiss_task( 'trial_offer_loyal_users' );
+			}
+			\Burst\burst_loader()->admin->tasks->add_task( 'search_console_integration' );
+		}
+
+		if ( $prev_version && version_compare( $prev_version, '3.6.2', '<' ) ) {
+			// Enable the low-traffic plugin update suggestions for existing
+			// installs. Free feature; fresh installs get it via setup_defaults().
+			$this->update_option( 'plugin_update_suggestions', true );
+			// Calculate the low-traffic window shortly after the upgrade, so the
+			// update-timing hints on plugins.php have data on their first render.
+			wp_schedule_single_event( time() + 10 * MINUTE_IN_SECONDS, 'burst_calculate_low_traffic_time' );
 		}
 
 		$admin = new Admin();

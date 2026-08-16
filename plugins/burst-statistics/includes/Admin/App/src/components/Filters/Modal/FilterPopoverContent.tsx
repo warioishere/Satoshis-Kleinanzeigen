@@ -95,6 +95,7 @@ const FilterPopoverContent: React.FC<FilterPopoverContentProps> = ({
 		onClose();
 	};
 
+	// fallow-ignore-next-line complexity
 	const getFilterDescription = (): string => {
 		if ( 'setup' !== currentStep || ! selectedConfig ) {
 			return '';
@@ -150,10 +151,10 @@ const FilterPopoverContent: React.FC<FilterPopoverContentProps> = ({
 		if ( 'setup' === currentStep && selectedConfig ) {
 			return (
 				<div>
-					<div className="flex items-center space-x-3 mb-4">
+					<div className="flex items-center gap-3 mb-4">
 						<button
 							onClick={handleBack}
-							className="flex items-center space-x-2 text-sm text-text-gray-light hover:text-text-gray focus:outline-hidden focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded transition-all duration-200"
+							className="flex items-center gap-2 text-sm text-text-gray-light hover:text-text-gray focus:outline-hidden focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded transition-all duration-200"
 							aria-label={__( 'Back to filters', 'burst-statistics' )}
 							type="button"
 						>
@@ -161,7 +162,7 @@ const FilterPopoverContent: React.FC<FilterPopoverContentProps> = ({
 							<span>{__( 'Back to filters', 'burst-statistics' )}</span>
 						</button>
 					</div>
-					<div className="flex items-center space-x-3">
+					<div className="flex items-center gap-3">
 						<div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-100">
 							<Icon name={selectedConfig.icon} color="gray" size={20} />
 						</div>
@@ -204,7 +205,7 @@ const FilterPopoverContent: React.FC<FilterPopoverContentProps> = ({
 		}
 
 		return (
-			<div className="flex justify-end space-x-3 w-full">
+			<div className="flex justify-end gap-3 w-full">
 				<ButtonInput
 					onClick={handleApplyClick}
 					btnVariant="primary"

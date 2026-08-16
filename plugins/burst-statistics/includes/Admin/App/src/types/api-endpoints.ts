@@ -21,7 +21,8 @@ export type BurstCoreDataType =
 export type BurstProDataType =
 	| 'geo'
 	| 'page-parameters'
-	| 'page-parameter-counts';
+	| 'page-parameter-counts'
+	| 'sources-over-time';
 
 /** Ecommerce segment after `ecommerce/` (Pro). */
 export type BurstEcommerceDataType =
@@ -60,9 +61,3 @@ export interface InsightsData {
 	datasets: InsightsChartDataset[];
 }
 
-export interface BurstDataResponse<T = unknown> {
-	data: T;
-	request_success?: boolean;
-	message?: string;
-	code?: number;
-}

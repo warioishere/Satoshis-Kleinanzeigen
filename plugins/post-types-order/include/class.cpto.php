@@ -336,7 +336,7 @@
                     // Localize the script with new data
                     $CPTO_variables = array(
                                                 'post_type'             =>  $screen->post_type,
-                                                'archive_sort_nonce'    =>  wp_create_nonce( 'CPTO_archive_sort_nonce_' . $userdata->ID) 
+                                                'archive_sort_nonce'    =>  wp_create_nonce( 'CPTO_archive_sort_nonce' ) 
                                             );
                     wp_localize_script( 'cpto', 'CPTO', $CPTO_variables );
 
@@ -378,6 +378,9 @@
                     
                     //verify the nonce
                     if (! wp_verify_nonce( $nonce, 'interface_sort_nonce') )
+                        die();
+                        
+                    if ( ! current_user_can( $this->functions->get_required_capability( ) ) )
                         die();
                     
                     parse_str( sanitize_text_field( wp_unslash( $_POST['order'] ) ) , $data );
@@ -446,7 +449,10 @@
                     $nonce      =   ( isset( $_POST['archive_sort_nonce'] ) ) ? sanitize_text_field( wp_unslash( $_POST['archive_sort_nonce'] ) ) : '';
                     
                     //verify the nonce
-                    if ( ! wp_verify_nonce( $nonce, 'CPTO_archive_sort_nonce_' . $userdata->ID ) )
+                    if ( ! wp_verify_nonce( $nonce, 'CPTO_archive_sort_nonce' ) )
+                        die();
+                        
+                    if ( ! current_user_can( $this->functions->get_required_capability( $post_type ) ) )
                         die();
                     
                     parse_str( sanitize_text_field( wp_unslash( $_POST['order'] ) ) , $data );
@@ -531,20 +537,6 @@
                     $post_types = get_post_types();
                     
                     $options          =     $this->functions->get_options();
-                    //get the required user capability
-                    $capability = '';
-                    if(isset($options['capability']) && !empty($options['capability']))
-                        {
-                            $capability = $options['capability'];
-                        }
-                    else if (is_numeric($options['level']))
-                        {
-                            $capability = $this->functions->userdata_get_user_level();
-                        }
-                        else
-                            {
-                                $capability = 'manage_options';  
-                            }
                     
                     $PTO_Interface =    new PTO_Interface();
                     
@@ -567,7 +559,7 @@
                             if(isset($options['show_reorder_interfaces'][$post_type_name]) && $options['show_reorder_interfaces'][$post_type_name] !== 'show')
                                 continue;
                                 
-                            $required_capability = apply_filters('pto/edit_capability', $capability, $post_type_name);
+                            $required_capability = $this->functions->get_required_capability ( $post_type_name );
                             
                             if ( $post_type_name == 'post' )
                                 $hookID   = add_submenu_page('edit.php', __('Re-Order', 'post-types-order'), __('Re-Order', 'post-types-order'), $required_capability, 'order-post-types-'.$post_type_name, array( $PTO_Interface, 'sort_page') );

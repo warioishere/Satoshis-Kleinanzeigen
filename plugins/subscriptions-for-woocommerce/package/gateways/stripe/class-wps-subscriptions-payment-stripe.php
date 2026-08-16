@@ -169,20 +169,29 @@ if ( ! class_exists( 'Wps_Subscriptions_Payment_Stripe' ) ) {
 						// Get source from order.
 						$prepared_source = $this->prepare_order_source( $parent_order );
 
+						// Per-order diagnostics: capture exactly why a renewal may stop before POST payment_intents.
+						$wps_sfw_src_obj    = ( $prepared_source && isset( $prepared_source->source_object ) ) ? $prepared_source->source_object : null;
+						$wps_sfw_src_id     = ( $prepared_source && isset( $prepared_source->source ) ) ? $prepared_source->source : '';
+						$wps_sfw_src_type   = is_object( $wps_sfw_src_obj ) ? ( isset( $wps_sfw_src_obj->type ) ? $wps_sfw_src_obj->type : ( isset( $wps_sfw_src_obj->object ) ? $wps_sfw_src_obj->object : 'unknown' ) ) : 'none';
+						$wps_sfw_src_status = ( is_object( $wps_sfw_src_obj ) && isset( $wps_sfw_src_obj->status ) ) ? $wps_sfw_src_obj->status : 'n/a';
+						
+
 						if ( ! $prepared_source ) {
+							
 							throw new WC_Stripe_Exception( WC_Stripe_Helper::get_localized_messages()['missing'] );
 						}
 
 						$source_object = $prepared_source->source_object;
 
 						if ( ! $prepared_source->customer ) {
+							
 							throw new WC_Stripe_Exception(
 								'Failed to process renewal for order ' . $renewal_order->get_id() . '. Stripe customer id is missing in the order',
 								__( 'Customer not found', 'subscriptions-for-woocommerce' )
 							);
 						}
 
-						// WC_Stripe_Logger::log( "Info: Begin processing subscription payment for order {$order_id} for the amount of {$amount}" );
+						
 
 						/*
 						 * If we're doing a retry and source is chargeable, we need to pass
@@ -197,9 +206,7 @@ if ( ! class_exists( 'Wps_Subscriptions_Payment_Stripe' ) ) {
 							$prepared_source->source = '';
 						}
 
-						// if ( $this->lock_order_payment( $renewal_order ) ) {
-						// 	return false;
-						// }
+						
 
 						$response                   = $this->create_and_confirm_intent_for_off_session( $renewal_order, $prepared_source, $amount );
 						$is_authentication_required = $this->is_authentication_required_for_payment( $response );
@@ -230,8 +237,11 @@ if ( ! class_exists( 'Wps_Subscriptions_Payment_Stripe' ) ) {
 							$this->process_response( ( ! empty( $latest_charge ) ) ? $latest_charge : $response, $renewal_order );
 						}
 					} catch ( WC_Stripe_Exception $e ) {
-						// WC_Stripe_Logger::log( 'Error: ' . $e->getMessage() );
+						
 						do_action( 'wc_gateway_stripe_process_payment_error', $e, $renewal_order );
+
+						$wps_wsp_stripe_message = method_exists( $e, 'getLocalizedMessage' ) ? $e->getLocalizedMessage() : $e->getMessage();
+						do_action( 'wps_sfw_recurring_payment_failed', $renewal_order->get_id(), new WP_Error( $e->getCode(), $wps_wsp_stripe_message ) );
 					}
 				}
 			}

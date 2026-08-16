@@ -32,6 +32,10 @@
             Allows you to block the spam bot IP so that they can't visit your website.
         </li>
 
+        <li><label>Spam Keyword Filter</label>
+            Automatically marks submissions as spam when they contain any of the specified words or phrases.
+        </li>
+
         <li><label>Get HoneyPot Extended Now !</label>
             Get WP Armour Extended and make WP Armour more powerful.
             <br/>

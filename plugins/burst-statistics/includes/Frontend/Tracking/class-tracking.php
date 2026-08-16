@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use Burst\Frontend\Endpoint;
 use Burst\Frontend\Ip\Ip;
-use Burst\Pro\Frontend\External_Link\External_Link_Frontend;
+use Burst\Frontend\Search\Search;
 use Burst\Traits\Database_Helper;
 use Burst\Traits\Helper;
 use Burst\Traits\Sanitize;
@@ -27,6 +27,35 @@ class Tracking {
 	public string $beacon_enabled;
 	public array $lookup_table_cache = [];
 	public array $goals              = [];
+
+	/**
+	 * Register the GeoIP enrichment on construction.
+	 *
+	 * Done in the constructor (not init) so it also applies on the SHORTINIT beacon
+	 * endpoint, which instantiates `new Tracking()` directly but never calls init().
+	 */
+	public function __construct() {
+		if ( ! has_filter( 'burst_before_track_hit', [ self::class, 'add_geoip_location_data' ] ) ) {
+			add_filter( 'burst_before_track_hit', [ self::class, 'add_geoip_location_data' ], 10, 3 );
+		}
+	}
+
+	/**
+	 * Enrich the tracked hit with location data.
+	 *
+	 * The reader class is resolved lazily (at hit time): free uses the core Country
+	 * reader, Pro swaps in its City reader via the burst_geoip_handler filter.
+	 *
+	 * @param array<string, mixed>      $arr          The tracking data.
+	 * @param string                    $hit_type     The type of hit.
+	 * @param array<string, mixed>|null $previous_hit Previous hit data, if any.
+	 * @return array<string, mixed>
+	 */
+	public static function add_geoip_location_data( array $arr, string $hit_type, ?array $previous_hit ): array {
+		$handler = apply_filters( 'burst_geoip_handler', Tracking_GeoIp::class );
+		return $handler::add_location_data( $arr, $hit_type, $previous_hit );
+	}
+
 	/**
 	 * Constructor
 	 */
@@ -74,10 +103,9 @@ class Tracking {
 		$should_load_ecommerce = $sanitized_data['should_load_ecommerce'];
 		unset( $sanitized_data['should_load_ecommerce'] );
 
-		$external_link_url = '';
-		if ( $this->get_option_bool( 'track_external_links' ) && ! empty( $sanitized_data['external_link_url'] ) ) {
-			$external_link_url = $sanitized_data['external_link_url'];
-		}
+		// Preserve the external link URL before it is unset below; it is passed to
+		// the burst_track_external_link action, which Pro handles.
+		$external_link_url = $sanitized_data['external_link_url'] ?? '';
 
 		// If new hit, get the last row.
 		$result = $this->get_hit_type( $sanitized_data );
@@ -103,6 +131,8 @@ class Tracking {
 			'device_id'          => $sanitized_data['device_id'] ?? 0,
 		];
 
+		$search_term = $sanitized_data['search_term'] ?? '';
+
 		// $statistic contains only fields that belong on burst_statistics.
 		unset(
 			$sanitized_data['city_code'],
@@ -112,7 +142,8 @@ class Tracking {
 			$sanitized_data['browser_id'],
 			$sanitized_data['browser_version_id'],
 			$sanitized_data['platform_id'],
-			$sanitized_data['device_id']
+			$sanitized_data['device_id'],
+			$sanitized_data['search_term']
 		);
 		$statistic = $sanitized_data;
 
@@ -176,20 +207,27 @@ class Tracking {
 			do_action( 'burst_before_create_statistic', $statistic );
 			$statistic['time'] = time();
 			$insert_id         = $this->create_statistic( $statistic );
+			if ( ! empty( $search_term ) ) {
+				$frontend_search = new Search();
+				$frontend_search->init();
+				$statistic['search_term'] = $search_term;
+			}
 			do_action( 'burst_after_create_statistic', $insert_id, $statistic );
 		}
 
 		$statistic_id = $statistic['ID'] ?? ( $insert_id ?? 0 );
 
 		if ( $statistic_id > 0 ) {
-			$completed_goals = $this->get_completed_goals( $statistic['completed_goals'], $statistic['page_url'] );
+			$completed_goals = $this->get_completed_goals( $statistic['completed_goals'], $statistic['page_url'], (int) ( $statistic['page_id'] ?? 0 ) );
 			if ( ! empty( $completed_goals ) ) {
 				$this->create_goal_statistic( $statistic_id, $completed_goals );
 			}
 
-			if ( $this->get_option_bool( 'track_external_links' ) && ! empty( $external_link_url ) ) {
-				External_Link_Frontend::track_external_link( (int) $statistic_id, $external_link_url );
-			}
+			// External link tracking is a Pro-only feature. Pro hooks
+			// burst_track_external_link from Pro/Frontend/Tracking/tracking.php
+			// (where the track_external_links option and empty-URL checks live), so
+			// the free build carries no reference to the Pro class.
+			do_action( 'burst_track_external_link', (int) $statistic_id, $external_link_url );
 		}
 
 		return 'success';
@@ -399,6 +437,12 @@ class Tracking {
 		];
 		$data     = wp_parse_args( $data, $defaults );
 
+		$privacy_level = $this->get_option( 'privacy_level', 'cookie' );
+		if ( $privacy_level === 'private_mode' ) {
+			$data['fingerprint'] = null;
+			$data['uid']         = $this->get_private_uid();
+		}
+
 		// update array.
 		$sanitized_data                    = [];
 		$destructured_url                  = $this->sanitize_url( $data['url'] );
@@ -423,7 +467,39 @@ class Tracking {
 		$sanitized_data['page_id']               = (int) $data['page_id'];
 		$sanitized_data['page_type']             = $this->sanitize_page_identifier( $data['page_type'] );
 		$sanitized_data['should_load_ecommerce'] = filter_var( $data['should_load_ecommerce'], FILTER_VALIDATE_BOOLEAN );
+		$sanitized_data['search_term']           = isset( $data['search_term'] ) ? sanitize_text_field( wp_unslash( (string) $data['search_term'] ) ) : '';
+
 		return $sanitized_data;
+	}
+
+	/**
+	 * Generate a private mode UID.
+	 */
+	private function get_private_uid(): string {
+		$ip   = Ip::get_ip_address();
+		$ua   = isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
+		$salt = $this->get_rotating_salt();
+		return hash( 'sha256', $ip . $ua . $salt );
+	}
+
+	/**
+	 * Get the rotating salt for private mode tracking.
+	 */
+	private function get_rotating_salt(): string {
+		$option_name = 'burst_rotating_salt';
+		$stored      = get_option( $option_name, [] );
+		$today       = gmdate( 'Y-m-d' );
+
+		if ( ! is_array( $stored ) || empty( $stored['salt'] ) || empty( $stored['date'] ) || $stored['date'] !== $today ) {
+			$salt   = bin2hex( random_bytes( 32 ) );
+			$stored = [
+				'date' => $today,
+				'salt' => $salt,
+			];
+			update_option( $option_name, $stored, false );
+		}
+
+		return $stored['salt'];
 	}
 
 	/**
@@ -680,7 +756,8 @@ class Tracking {
 					'ajaxUrl'             => admin_url( 'admin-ajax.php' ),
 				],
 				'options'  => [
-					'cookieless'            => $this->get_option_int( 'enable_cookieless_tracking' ),
+					'privacy_level'         => $this->get_option( 'privacy_level', 'cookie' ),
+					'cookieless'            => ( $this->get_option( 'privacy_level', 'cookie' ) !== 'cookie' ) ? 1 : 0,
 					'pageUrl'               => get_permalink(),
 					'beacon_enabled'        => (int) $this->beacon_enabled(),
 					'do_not_track'          => $this->get_option_int( 'enable_do_not_track' ),
@@ -688,6 +765,7 @@ class Tracking {
 					'track_url_change'      => $this->get_option_int( 'track_url_change' ),
 					'track_external_links'  => $this->get_option_int( 'track_external_links' ),
 					'cookie_retention_days' => apply_filters( 'burst_cookie_retention_days', 30 ),
+					'page_id'               => is_singular() ? (int) get_queried_object_id() : 0,
 					'debug'                 => defined( 'BURST_DEBUG' ) && \BURST_DEBUG ? 1 : 0,
 				],
 				'goals'    => [
@@ -814,9 +892,10 @@ class Tracking {
 	 * @param int    $goal_id The ID of the goal to check.
 	 * @param string $page_url The current page URL.
 	 * @param array  $goals the available goals.
+	 * @param int    $page_id Post ID of the tracked page, as sent in the hit payload. 0 if unknown.
 	 * @return bool Returns true if the goal is completed, false otherwise.
 	 */
-	public function goal_is_completed( int $goal_id, string $page_url, array $goals ): bool {
+	public function goal_is_completed( int $goal_id, string $page_url, array $goals, int $page_id = 0 ): bool {
 		$goal = array_filter(
 			$goals,
 			function ( $goal ) use ( $goal_id ) {
@@ -832,6 +911,13 @@ class Tracking {
 
 		switch ( $goal['type'] ) {
 			case 'visits':
+				// Match on the post ID of the tracked page. Runs on the tracking
+				// endpoints (REST and the SHORTINIT beacon), so there is no main
+				// query here — is_singular()/get_queried_object_id() are unusable
+				// and the beacon doesn't even load them.
+				if ( ! empty( $goal['page_id'] ) && $page_id > 0 && (int) $goal['page_id'] === $page_id ) {
+					return true;
+				}
 				// Improved URL comparison logic could go here.
 				// @TODO: Maybe add support for * and ? wildcards?.
 				if ( rtrim( $page_url, '/' ) === rtrim( $goal['url'], '/' ) ) {
@@ -851,9 +937,10 @@ class Tracking {
 	 *
 	 * @param array<int> $completed_client_goals Array of goal IDs completed on the client.
 	 * @param string     $page_url               Page URL used to verify server-side goal completion.
+	 * @param int        $page_id                Post ID of the tracked page, 0 if unknown.
 	 * @return array<int> List of completed goal IDs.
 	 */
-	public function get_completed_goals( array $completed_client_goals, string $page_url ): array {
+	public function get_completed_goals( array $completed_client_goals, string $page_url, int $page_id = 0 ): array {
 		$completed_server_goals = [];
 		$server_goals           = $this->get_active_goals( [ 'visits' ] );
 		// if server side goals exist.
@@ -861,7 +948,7 @@ class Tracking {
 			// loop through server side goals.
 			foreach ( $server_goals as $goal ) {
 				// if goal is completed.
-				if ( $this->goal_is_completed( $goal['ID'], $page_url, $server_goals ) ) {
+				if ( $this->goal_is_completed( $goal['ID'], $page_url, $server_goals, $page_id ) ) {
 					// add goal id to completed goals array.
 					$completed_server_goals[] = $goal['ID'];
 				}
@@ -1004,7 +1091,6 @@ class Tracking {
 		global $wpdb;
 		unset( $data['host'] );
 		$data = $this->remove_empty_values( $data );
-
 		// Ensure 'ID' is present for update.
 		if ( ! isset( $data['ID'] ) ) {
             // phpcs:ignore
@@ -1110,8 +1196,26 @@ class Tracking {
 
 		// Check if session save path exists and is writable.
 		$save_path = session_save_path();
-        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable
-		if ( empty( $save_path ) || ! is_dir( $save_path ) || ! is_writable( $save_path ) ) {
+		$is_valid  = false;
+
+		// Non-file session handlers (redis, memcached, database, custom) don't
+		// use a filesystem path, so the directory checks below don't apply and
+		// the uploads fallback would break a working setup. Detect those either
+		// by the save handler or by a URL-style save path such as "redis://" or
+		// "tcp://host:port" and leave the configured session storage untouched.
+		$is_file_handler = 'files' === ini_get( 'session.save_handler' );
+		$is_url_path     = is_string( $save_path ) && preg_match( '~^[a-z][a-z0-9+.-]*://~i', $save_path );
+
+		if ( ! $is_file_handler || $is_url_path ) {
+			$is_valid = true;
+		} elseif ( ! empty( $save_path ) ) {
+			// Silence open_basedir warnings: outside the allowed paths these
+			// return false, which correctly triggers the uploads fallback below.
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_is_writable -- Suppressing potential open_basedir warnings for edge cases.
+			$is_valid = @is_dir( $save_path ) && @is_writable( $save_path );
+		}
+
+		if ( ! $is_valid ) {
 			// Load WordPress default constants manually.
 			require_once ABSPATH . WPINC . '/default-constants.php';
 			wp_plugin_directory_constants();

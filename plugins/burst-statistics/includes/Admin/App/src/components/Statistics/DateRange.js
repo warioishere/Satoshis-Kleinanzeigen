@@ -1,11 +1,13 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { format, isSameDay, parseISO } from 'date-fns';
 import Icon from '@/utils/Icon';
 import { useDateRange } from '@/hooks/useDateRange';
+import useIsMobile from '@/hooks/useIsMobile';
 import {
 	getDateWithOffset,
 	getAvailableRanges,
 	getDisplayDates,
+	getDatePickerLocale,
 	availableRanges,
 	BURST_START_DATE
 } from '@/utils/formatting';
@@ -61,6 +63,7 @@ const DateRange = () => {
 
 	const [ isOpen, setIsOpen ] = useState( false );
 	const { startDate, endDate, setDateRange, range } = useDateRange();
+	const isMobile = useIsMobile();
 
 	const [ selectionRange, setSelectionRange ] = useState({
 		startDate: parseISO( startDate ),
@@ -70,6 +73,20 @@ const DateRange = () => {
 
 	const countClicks = useRef( 0 );
 	const selectedRanges = burst_settings.date_ranges;
+
+	// Lock DOM scrolling when popover is open on mobile
+	useEffect( () => {
+		if ( ! isMobile || ! isOpen || ! userCanFilterDateRange ) {
+			return;
+		}
+
+		const originalOverflow = document.body.style.overflow;
+		document.body.style.overflow = 'hidden';
+
+		return () => {
+			document.body.style.overflow = originalOverflow;
+		};
+	}, [ isMobile, isOpen, userCanFilterDateRange ]);
 
 	// Memoize computed values.
 	const dateRanges = useMemo(
@@ -83,6 +100,8 @@ const DateRange = () => {
 	);
 
 	const updateDateRange = useCallback(
+
+		// fallow-ignore-next-line complexity
 		( ranges ) => {
 			if ( ! userCanFilterDateRange ) {
 				return;
@@ -133,7 +152,10 @@ const DateRange = () => {
 	return (
 		<div className="ml-auto w-auto">
 			{isOpen && userCanFilterDateRange && (
-				<div className="fixed inset-0 bg-black/30 z-40" />
+				<div
+					className="fixed inset-0 bg-black/30"
+					style={{ zIndex: 100000 }}
+				/>
 			)}
 			<div className="relative z-50">
 			<ReactPopover.Root
@@ -148,23 +170,30 @@ const DateRange = () => {
 					disabled={! userCanFilterDateRange}
 				/>
 
-				<div className="relative z-2">
+				<ReactPopover.Portal>
 					<ReactPopover.Content
 						align="end"
 						sideOffset={10}
 						arrowPadding={10}
+						collisionPadding={16}
+						avoidCollisions={true}
 						id="burst-statistics"
+						style={{ zIndex: 100001 }}
 					>
-						<div className="z-50 rounded-lg border border-gray-200 bg-white shadow-md">
+						<div
+							className="rounded-lg border border-gray-200 bg-white shadow-md max-h-[75vh] lg:max-h-none overflow-y-auto w-full max-w-[calc(100vw-20px)] sm:max-w-none"
+							style={{ WebkitOverflowScrolling: 'touch' }}
+						>
 							<DateRangePicker
 								ranges={[ selectionRange ]}
 								rangeColors={[ 'var(--color-green)' ]}
+								locale={getDatePickerLocale()}
 								dateDisplayFormat="dd MMMM yyyy"
 								monthDisplayFormat="MMMM"
 								onChange={updateDateRange}
 								inputRanges={[]}
 								showSelectionPreview={true}
-								months={2}
+								months={isMobile ? 1 : 2}
 								direction="horizontal"
 								minDate={BURST_START_DATE}
 								maxDate={getDateWithOffset()}
@@ -172,7 +201,7 @@ const DateRange = () => {
 							/>
 						</div>
 					</ReactPopover.Content>
-				</div>
+				</ReactPopover.Portal>
 			</ReactPopover.Root>
 			</div>
 		</div>

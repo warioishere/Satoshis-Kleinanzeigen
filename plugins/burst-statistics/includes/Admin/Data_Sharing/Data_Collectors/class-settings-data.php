@@ -17,6 +17,8 @@ class Settings_Data extends Data_Collector {
 
 	/**
 	 * Normalize common option encodings to a strict boolean.
+	 *
+	 * Mixed $value: this normalizes a raw get_option() value, which can be any serialized type (bool|int|float|string|null); narrowing would defeat its purpose.
 	 */
 	private function normalize_option_boolean( mixed $value, bool $default_value = false ): bool {
 		if ( is_bool( $value ) ) {
@@ -159,7 +161,8 @@ class Settings_Data extends Data_Collector {
 
 		return [
 			'enable_turbo_mode'                   => $this->get_burst_setting_bool( 'enable_turbo_mode' ),
-			'enable_cookieless_tracking'          => $this->get_burst_setting_bool( 'enable_cookieless_tracking' ),
+			'privacy_level'                       => $this->get_option( 'privacy_level', 'cookie' ),
+			'enable_cookieless_tracking'          => $this->get_option( 'privacy_level', 'cookie' ) !== 'cookie',
 			'enable_do_not_track'                 => $this->get_burst_setting_bool( 'enable_do_not_track' ),
 			'dismiss_non_error_notices'           => $this->get_burst_setting_bool( 'dismiss_non_error_notices' ),
 			'filtering_by_domain'                 => $this->get_burst_setting_bool( 'filtering_by_domain' ),
@@ -173,7 +176,8 @@ class Settings_Data extends Data_Collector {
 			'subscription_tier'                   => $this->get_subscription_tier(),
 			'excluded_user_roles'                 => $this->get_option( 'user_role_blocklist', [] ),
 			'uses_ip_exclusion'                   => $this->get_burst_setting_bool( 'ip_blocklist' ),
-			'geo_ip_database_type'                => $this->get_option( 'geo_ip_database_type', 'city' ),
+			// Derived, not stored: free always tracks country, Pro always tracks city.
+			'geo_ip_database_type'                => defined( 'BURST_PRO_FILE' ) ? 'city' : 'country',
 			'archive_mode'                        => $this->get_option( 'archive_data', 'none' ),
 			'archive_months'                      => $this->get_option_int( 'archive_after_months' ),
 			'site_category'                       => $this->get_option( 'site_category', 'uncategorized' ),
@@ -195,6 +199,7 @@ class Settings_Data extends Data_Collector {
 			'burst_license_status'                => $license_status,
 			'enable_mainwp_integration'           => $this->get_burst_setting_bool( 'enable_mainwp_integration' ),
 			'enable_abilities_api'                => $this->get_burst_setting_bool( 'enable_abilities_api' ),
+			'burst_headless_domain'               => defined( 'BURST_HEADLESS_DOMAIN' ),
 		];
 	}
 

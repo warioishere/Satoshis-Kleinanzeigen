@@ -20,6 +20,8 @@ trait Database_Helper {
 	 *
 	 * Background cron defaults to 15 minutes, while foreground requests default
 	 * to 30 seconds unless overridden.
+	 *
+	 * Mixed $filter_context: opaque payload forwarded as-is to the timeout apply_filters() hooks; its type is defined by third-party filter callbacks.
 	 */
 	protected function resolve_query_timeout_ms(
 		string $foreground_filter,
@@ -54,6 +56,8 @@ trait Database_Helper {
 
 	/**
 	 * Apply one of the supported timeout filters.
+	 *
+	 * Mixed $filter_context: opaque payload forwarded as-is to apply_filters(); its type is defined by third-party filter callbacks.
 	 */
 	private function apply_query_timeout_filter( string $filter_name, int $timeout_ms, mixed $filter_context = null ): int {
 		switch ( $filter_name ) {
@@ -150,6 +154,7 @@ trait Database_Helper {
 			[
 				'burst_statistics',
 				'burst_sessions',
+				'burst_locations',
 				'burst_goals',
 				'burst_goal_statistics',
 				'burst_browsers',
@@ -159,6 +164,8 @@ trait Database_Helper {
 				'burst_referrers',
 				'burst_known_uids',
 				'burst_query_stats',
+				'burst_searches',
+				'burst_statistics_searches',
 			],
 		);
 	}
@@ -224,6 +231,86 @@ trait Database_Helper {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Drops a named index from a table when it exists.
+	 *
+	 * Indexes added through add_index() are named `{columns}_index` (columns
+	 * joined by underscores, sanitized with sanitize_key). Pass that exact name.
+	 *
+	 * @param string $table_name The table to drop the index from (without prefix).
+	 * @param string $index_name The index name to drop.
+	 */
+	protected function drop_index( string $table_name, string $index_name ): void {
+		global $wpdb;
+		if ( ! $this->user_can_manage() ) {
+			return;
+		}
+
+		$table_name = $wpdb->prefix . $this->validate_table_name( $table_name );
+		$index_name = esc_sql( $index_name );
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name validated, index name escaped.
+		$exists = $wpdb->get_results( $wpdb->prepare( "SHOW INDEX FROM $table_name WHERE Key_name = %s", $index_name ) );
+		if ( empty( $exists ) ) {
+			return;
+		}
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name validated, index name escaped.
+		$wpdb->query( "ALTER TABLE $table_name DROP INDEX $index_name" );
+		if ( $wpdb->last_error ) {
+			self::error_log( "Error dropping index $index_name from $table_name: " . $wpdb->last_error );
+		}
+	}
+
+	/**
+	 * Acquire the table install/upgrade lock, following the WP_Upgrader::create_lock()
+	 * pattern: the unique key on option_name makes the INSERT atomic, so exactly one
+	 * of several concurrent requests wins. A get/set transient check is not atomic —
+	 * parallel requests would both pass it and run dbDelta/ALTER concurrently,
+	 * filling debug.log with duplicate column/key errors.
+	 *
+	 * @return bool True when the lock was acquired (or taken over from a crashed run).
+	 */
+	protected function acquire_upgrade_lock(): bool {
+		global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- add_option() is not atomic (ON DUPLICATE KEY UPDATE), INSERT IGNORE is.
+		$acquired = $wpdb->query(
+			$wpdb->prepare(
+				"INSERT IGNORE INTO `{$wpdb->options}` ( `option_name`, `option_value`, `autoload` ) VALUES (%s, %s, 'off')",
+				'burst_upgrade_process_lock',
+				(string) time()
+			)
+		);
+
+		if ( $acquired ) {
+			return true;
+		}
+
+		if ( $this->upgrade_lock_active() ) {
+			return false;
+		}
+
+		// Stale lock from a crashed run: take it over.
+		update_option( 'burst_upgrade_process_lock', (string) time(), false );
+		return true;
+	}
+
+	/**
+	 * Whether a request currently holds a non-stale install/upgrade lock. A lock
+	 * older than a minute is considered left behind by a crashed run.
+	 */
+	protected function upgrade_lock_active(): bool {
+		$locked_at = (int) get_option( 'burst_upgrade_process_lock' );
+		return $locked_at > time() - MINUTE_IN_SECONDS;
+	}
+
+	/**
+	 * Release the table install/upgrade lock.
+	 */
+	protected function release_upgrade_lock(): void {
+		delete_option( 'burst_upgrade_process_lock' );
 	}
 
 	/**

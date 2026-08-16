@@ -6,6 +6,7 @@ import { useWizardStore } from '@/store/reports/useWizardStore';
 import { getReportPreview } from '@/utils/api';
 import ShadowContainer from '@/components/Common/ShadowContainer';
 
+// fallow-ignore-next-line complexity
 export const LivePreviewClassic = ({ className }: { className?: string }) => {
     const frequency = useWizardStore( ( state ) => state.wizard.frequency );
     const contents = useWizardStore( ( state ) => state.wizard.content );
@@ -41,7 +42,7 @@ export const LivePreviewClassic = ({ className }: { className?: string }) => {
             { hasSelectedContent && ! isFetching && data?.preview_html && (
                 <ShadowContainer
                     html={ data.preview_html }
-                    className="w-full burst-classic-html-container border rounded bg-white"
+                    className="w-full burst-classic-html-container border rounded bg-white min-h-[500px]"
                 />
             ) }
         </div>

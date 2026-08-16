@@ -3,7 +3,7 @@ Contributors: nsp-code, tdgu
 Tags: post order, posts order, post sort, posts sort, post types order
 Requires at least: 2.8
 Tested up to: 7.0
-Stable tag: 2.4.7
+Stable tag: 2.4.8
 Requires PHP: 5.6
 License: GPLv2 or later
 
@@ -115,6 +115,10 @@ Consider upgrading to our advanced version of this plugin, which offers these fe
 
 
 == Changelog ==
+
+= 2.4.8 = 
+ - Improved required user capability and Ajax capability checks.
+ - PHP 8.5.7 compatibility check.
 
 = 2.4.7 = 
  - WordPress 7.0 compatibility check and tag update. 

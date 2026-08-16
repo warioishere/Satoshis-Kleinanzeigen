@@ -3,8 +3,8 @@
 	Donate link: https://pickplugins.com/pickplugins-products-slider/
 	Tags: product slider, woocommerce slider, carousel slider, product category slider, woo slider, carousel slider,  woocommerce product slider
 	Requires at least: 3.8
-	Tested up to: 6.9
-	Stable tag: 1.13.62
+	Tested up to: 7.0
+	Stable tag: 1.13.63
 	License: GPLv2 or later
 	License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -140,6 +140,9 @@ then paste this shortcode anywhere in your page to display slider
 5. screenshot-5
 
 == Changelog ==
+
+    = 1.13.63 =
+    * 2026-07-14 fix -  Security issue fixed - Insecure Direct Object References.
 
     = 1.13.62 =
     * 2026-04-02 fix -  Security issue fixed.

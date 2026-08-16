@@ -49,40 +49,6 @@ const upsellConfigs: UpsellConfigsProps = {
 		},
 		testID: 'sales-upsell-copy-v1',
 		variations: {
-			A: {
-				utm_medium: 'sales-upsell-variation-a',
-				title: __(
-					'Is your checkout costing you sales?',
-					'burst-statistics'
-				),
-				description: __(
-					'You work hard to bring visitors to your site. But do you know why some buy and others leave? Without the right insights, it’s impossible to see where your funnel is leaking revenue. Burst Pro reveals what’s working, what’s broken, and where you can make small changes that drive big results.',
-					'burst-statistics'
-				),
-				bullets: [
-					{
-						icon: 'goals',
-						text: __(
-							'Find drop-offs: See exactly where visitors leave in your checkout funnel.',
-							'burst-statistics'
-						)
-					},
-					{
-						icon: 'goals',
-						text: __(
-							'Reduce cart abandonment: Identify checkout issues before they cost sales.',
-							'burst-statistics'
-						)
-					},
-					{
-						icon: 'goals',
-						text: __(
-							'Spot opportunities: Learn which products, channels, and devices generate the most revenue.',
-							'burst-statistics'
-						)
-					}
-				]
-			},
 			B: {
 				utm_medium: 'sales-upsell-variation-b',
 				title: __(
@@ -118,9 +84,9 @@ const upsellConfigs: UpsellConfigsProps = {
 	},
 	sources: {
 		upgradePlan: {
-			header: __( 'Unlock Source Insights', 'burst-statistics' ),
+			header: __( 'See which sources actually bring visitors', 'burst-statistics' ),
 			subTitle: __(
-				'Get detailed insights into where your traffic comes from.',
+				'Free shows your visitor locations. Pro adds source trends, top referrers, and campaign performance, so you can see where traffic and conversions come from.',
 				'burst-statistics'
 			),
 			licenseInsufficient: ''
@@ -199,12 +165,62 @@ const upsellConfigs: UpsellConfigsProps = {
 			}
 		}
 	},
+	forms: {
+		upgradePlan: {
+			header: __( 'Track form submissions and conversion rates', 'burst-statistics' ),
+			subTitle: __(
+				'Burst Pro shows which forms are being submitted and how well they convert. Upgrade when you need to measure which forms are working.',
+				'burst-statistics'
+			),
+			licenseInsufficient: __(
+				'Your current license does not include forms tracking.',
+				'burst-statistics'
+			)
+		},
+		testID: 'forms-upsell-copy-v1',
+		variations: {
+			A: {
+				utm_medium: 'forms-upsell-variation-a',
+				title: __(
+					'Are your forms losing you conversions?',
+					'burst-statistics'
+				),
+				description: __(
+					'Your forms are where visitors become leads and customers. But if people start filling them in and never submit, you’re losing conversions without knowing why. Burst Pro shows you exactly how visitors interact with your forms, so you can fix what’s holding them back.',
+					'burst-statistics'
+				),
+				bullets: [
+					{
+						icon: 'goals',
+						text: __(
+							'Track submissions: See which forms convert and which get ignored.',
+							'burst-statistics'
+						)
+					},
+					{
+						icon: 'filter',
+						text: __(
+							'Spot abandonment: Find out where visitors give up before submitting.',
+							'burst-statistics'
+						)
+					},
+					{
+						icon: 'goals',
+						text: __(
+							'Boost conversions: Optimize your forms based on real interaction data.',
+							'burst-statistics'
+						)
+					}
+				]
+			}
+		}
+	},
 	external_links: {
 		upgradePlan: {
-			header: __( 'Unlock Outgoing Links Tracking', 'burst-statistics' ),
-			subTitle: '',
+			header: __( 'Start tracking outgoing links', 'burst-statistics' ),
+			subTitle: 'Outgoing link tracking is available in Burst Pro - Creator',
 			licenseInsufficient: __(
-				'Your current license does not include Outgoing Links tracking.',
+				'Your current license does not include outgoing link tracking.',
 				'burst-statistics'
 			)
 		},
@@ -252,6 +268,7 @@ const upsellConfigs: UpsellConfigsProps = {
  * @param root0.className
  * @param root0.type
  */
+// fallow-ignore-next-line complexity
 const UpsellCopy: React.FC<UpsellCopyProps> = ({
 	className = '',
 	type = 'sources',
@@ -282,10 +299,13 @@ const UpsellCopy: React.FC<UpsellCopyProps> = ({
 	// Unified compact block layout for both Free and Pro configurations
 	if ( compact ) {
 		return (
-			<div className="text-center flex flex-col gap-3 w-full max-w-[220px] mx-auto items-stretch">
+			<div className="text-center flex flex-col gap-3 w-full max-w-96 mx-auto items-stretch">
 				<h2 className="text-xl font-semibold text-text-gray">
 					{upsellConfig.upgradePlan.header}
 				</h2>
+				<p className="text-base text-text-gray max-w-md mx-auto">
+					{upsellConfig.upgradePlan.subTitle}
+				</p>
 
 				<div className="flex flex-col gap-2 w-full items-stretch mt-2">
 					{isPro && ! licenseActivated && (
@@ -341,7 +361,7 @@ const UpsellCopy: React.FC<UpsellCopyProps> = ({
 						upsellConfig.upgradePlan.licenseInsufficient}
 				</p>
 
-				<div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+				<div className="flex flex-col @sm:flex-row gap-4 justify-center items-center">
 					{! licenseActivated && (
 						<ButtonInput
 							btnVariant="primary"
@@ -375,7 +395,7 @@ const UpsellCopy: React.FC<UpsellCopyProps> = ({
 			className={`mx-auto flex justify-center max-w-3xl gap-8 flex-wrap${className}`}
 		>
 			<div className="text-center">
-				<h2 className="mb-4 text-2xl font-bold leading-tight text-text-black md:text-3xl">
+				<h2 className="mb-4 text-2xl font-bold leading-tight text-text-black @md:text-3xl">
 					{content.title}
 				</h2>
 

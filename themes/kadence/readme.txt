@@ -1,10 +1,10 @@
 === Kadence ===
-Contributors: britner
+Contributors: britner, stellarwp
 Tags: translation-ready, accessibility-ready, two-columns, right-sidebar, left-sidebar, footer-widgets, blog, custom-logo, custom-background, custom-menu, rtl-language-support, editor-style, threaded-comments, custom-colors, featured-images, wide-blocks, full-width-template, theme-options, e-commerce.
 Requires at least: 6.3
 Tested up to: 6.9.1
 Requires PHP: 7.4
-Stable tag: 1.5.0
+Stable tag: 1.5.2
 License: GNU General Public License v3.0 (or later)
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -25,6 +25,9 @@ Please report security bugs found in the source code of the Kadence Theme throug
 Please report security bugs found in the Kadence theme's source code through the Patchstack Vulnerability Disclosure Program https://patchstack.com/database/vdp/kadence. The Patchstack team will assist you with verification, CVE assignment, and notify the developers of this theme.
 
 = Changelog =
+
+= 1.5.1 | 24th June 2026
+* fix: prevent fatal in woo_extra_body_classes on taxonomy archives
 
 = 1.5.0 | 11th May 2026
 * Tweak: When Kadence Shop Kit's Image Swap module is active, the "Product Image Hover Switch" setting is now disabled to prevent conflicts.

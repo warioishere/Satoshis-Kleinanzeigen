@@ -712,7 +712,8 @@ class Subscriptions_For_Woocommerce_Admin {
 
 								if ( isset( $_POST[ $sfw_genaral_setting['id'] ] ) && ! empty( $_POST[ $sfw_genaral_setting['id'] ] ) ) {
 
-									$posted_value = $this->wps_sfw_sanitize_admin_setting_value( wp_unslash( $_POST[ $sfw_genaral_setting['id'] ] ) );
+									// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized via wps_sfw_sanitize_admin_setting_value().
+								$posted_value = $this->wps_sfw_sanitize_admin_setting_value( wp_unslash( $_POST[ $sfw_genaral_setting['id'] ] ) );
 									update_option( $sfw_genaral_setting['id'], $posted_value );
 								} else {
 									update_option( $sfw_genaral_setting['id'], '' );
@@ -752,6 +753,7 @@ class Subscriptions_For_Woocommerce_Admin {
 								$_POST[ $wsp_api_setting['id'] ] = 'wps_' . wc_rand_hash();
 							}
 							if ( isset( $_POST[ $wsp_api_setting['id'] ] ) ) {
+								// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized via wps_sfw_sanitize_admin_setting_value().
 								$posted_value = $this->wps_sfw_sanitize_admin_setting_value( wp_unslash( $_POST[ $wsp_api_setting['id'] ] ) );
 								update_option( $wsp_api_setting['id'], $posted_value );
 							} else {
@@ -792,7 +794,10 @@ class Subscriptions_For_Woocommerce_Admin {
 
 								if ( isset( $_POST[ $sfw_subscription_box_setting['id'] ] ) && ! empty( $_POST[ $sfw_subscription_box_setting['id'] ] ) ) {
 
-									$posted_value = $this->wps_sfw_sanitize_admin_setting_value( wp_unslash( $_POST[ $sfw_subscription_box_setting['id'] ] ) );
+										$raw_value = isset( $_POST[ $sfw_subscription_box_setting['id'] ] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+											? wp_unslash( $_POST[ $sfw_subscription_box_setting['id'] ] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+											: '';
+										$posted_value = $this->wps_sfw_sanitize_admin_setting_value( $raw_value );
 									update_option( $sfw_subscription_box_setting['id'], $posted_value );
 								} else {
 									update_option( $sfw_subscription_box_setting['id'], '' );
@@ -1081,7 +1086,7 @@ class Subscriptions_For_Woocommerce_Admin {
 	 */
 	public function wps_sfw_admin_cancel_susbcription() {
 
-		if ( isset( $_GET['wps_subscription_status_admin'] ) && isset( $_GET['wps_subscription_id'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['wps_sfw_cancel_nonce'] ) ), $_GET['wps_subscription_id'] . $_GET['wps_subscription_status_admin'] )  && current_user_can( 'manage_woocommerce' ) ) {
+		if ( isset( $_GET['wps_subscription_status_admin'] ) && isset( $_GET['wps_subscription_id'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['wps_sfw_cancel_nonce'] ) ), sanitize_text_field( wp_unslash( $_GET['wps_subscription_id'] ) ) . sanitize_text_field( wp_unslash( $_GET['wps_subscription_status_admin'] ) ) )  && current_user_can( 'manage_woocommerce' ) ) {
 
 			$wps_status   = sanitize_text_field( wp_unslash( $_GET['wps_subscription_status_admin'] ) );
 			$wps_subscription_id = sanitize_text_field( wp_unslash( $_GET['wps_subscription_id'] ) );
@@ -1131,6 +1136,10 @@ class Subscriptions_For_Woocommerce_Admin {
 	public function wps_sfw_save_settings_filter() {
 
 		check_ajax_referer( 'ajax-nonce', 'nonce' );
+
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_send_json( false );
+		}
 
 		$term_accpted = ! empty( $_POST['consetCheck'] ) ? sanitize_text_field( wp_unslash( $_POST['consetCheck'] ) ) : ' ';
 		if ( ! empty( $term_accpted ) && 'yes' == $term_accpted ) {
@@ -1240,6 +1249,11 @@ class Subscriptions_For_Woocommerce_Admin {
 	 */
 	public function wps_sfw_install_plugin_configuration() {
 		check_ajax_referer( 'ajax-nonce', 'nonce' );
+
+		if ( ! current_user_can( 'install_plugins' ) || ! current_user_can( 'activate_plugins' ) ) {
+			wp_send_json( false );
+		}
+		
 		$wps_plugin_name = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : '';
 		$response = false;
 		if ( ! empty( $wps_plugin_name ) ) {
@@ -1517,6 +1531,86 @@ class Subscriptions_For_Woocommerce_Admin {
 			}
 			wp_send_json_success();
 		}
+	}
+
+	/**
+	 * Show the dismissible membership feature banner on the plugin page.
+	 *
+	 * @since 2.0.0
+	 */
+	public function wps_sfw_membership_feature_notice() {
+		if ( ! current_user_can( 'manage_woocommerce' ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown
+			return;
+		}
+
+		if ( get_user_meta( get_current_user_id(), 'wps_sfw_membership_feature_notice_dismissed', true ) ) {
+			return;
+		}
+
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		$wps_page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+		$wps_tab  = isset( $_GET['sfw_tab'] ) ? sanitize_key( wp_unslash( $_GET['sfw_tab'] ) ) : '';
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+		// Plugin page only, and not on the membership tab it links to.
+		if ( 'subscriptions_for_woocommerce_menu' !== $wps_page || 'wps-membership-manage' === $wps_tab ) {
+			return;
+		}
+
+		$wps_manage_url  = admin_url(
+			'admin.php?page=subscriptions_for_woocommerce_menu&sfw_tab=wps-membership-manage&wps_mem_tab=plans'
+		);
+		$wps_dismiss_url = wp_nonce_url(
+			add_query_arg( 'wps_sfw_dismiss_membership_notice', '1' ),
+			'wps_sfw_dismiss_membership_notice'
+		);
+		?>
+		<div class="notice wps-sfw-mem-banner">
+			<span class="wps-sfw-mem-banner__badge">
+				<?php esc_html_e( 'NEW', 'subscriptions-for-woocommerce' ); ?>
+			</span>
+			<div class="wps-sfw-mem-banner__body">
+				<strong class="wps-sfw-mem-banner__title">
+					<?php esc_html_e( 'Membership is now built into Subscriptions for WooCommerce', 'subscriptions-for-woocommerce' ); ?>
+				</strong>
+				<span class="wps-sfw-mem-banner__text">
+					<?php esc_html_e( 'Create membership plans, manage members, and restrict content right from your subscriptions dashboard.', 'subscriptions-for-woocommerce' ); ?>
+				</span>
+			</div>
+			<a class="wps-sfw-mem-banner__cta" href="<?php echo esc_url( $wps_manage_url ); ?>">
+				<?php esc_html_e( 'Manage Membership', 'subscriptions-for-woocommerce' ); ?>
+			</a>
+			<a class="wps-sfw-mem-banner__dismiss" href="<?php echo esc_url( $wps_dismiss_url ); ?>">
+				<?php esc_html_e( 'Dismiss', 'subscriptions-for-woocommerce' ); ?>
+			</a>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Save dismissal of the membership feature banner.
+	 *
+	 * @since 2.0.0
+	 */
+	public function wps_sfw_dismiss_membership_feature_notice() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ! isset( $_GET['wps_sfw_dismiss_membership_notice'] ) ) {
+			return;
+		}
+
+		$wps_nonce = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
+		if ( ! wp_verify_nonce( $wps_nonce, 'wps_sfw_dismiss_membership_notice' ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'manage_woocommerce' ) ) { // phpcs:ignore WordPress.WP.Capabilities.Unknown
+			return;
+		}
+
+		update_user_meta( get_current_user_id(), 'wps_sfw_membership_feature_notice_dismissed', 1 );
+
+		wp_safe_redirect( remove_query_arg( array( 'wps_sfw_dismiss_membership_notice', '_wpnonce' ) ) );
+		exit;
 	}
 
 	/**
@@ -2038,7 +2132,7 @@ class Subscriptions_For_Woocommerce_Admin {
 				$clean_steps = array();
 			if ( ! empty( $_POST['wps_sfw_steps'] ) && is_array( $_POST['wps_sfw_steps'] ) ) {
 
-				$raw = wp_unslash( $_POST['wps_sfw_steps'] );
+				$raw = wp_unslash( $_POST['wps_sfw_steps'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Each element is sanitized individually below (sanitize_text_field/absint per field).
 
 				// Keep DOM order (step1, step2, ...), even if keys come jumbled.
 				uksort(
@@ -2120,7 +2214,7 @@ class Subscriptions_For_Woocommerce_Admin {
 	 */
 	public function wps_sfw_admin_reactivate_onhold_susbcription() {
 
-		if ( isset( $_GET['wps_subscription_status_admin_reactivate'] ) && isset( $_GET['wps_subscription_id'] ) &&  wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['wps_sfw_pause_nonce'] ) ), $_GET['wps_subscription_id'] . $_GET['wps_subscription_status_admin_reactivate']  ) && current_user_can( 'manage_woocommerce' ) ) {
+		if ( isset( $_GET['wps_subscription_status_admin_reactivate'] ) && isset( $_GET['wps_subscription_id'] ) &&  wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['wps_sfw_pause_nonce'] ) ), sanitize_text_field( wp_unslash( $_GET['wps_subscription_id'] ) ) . sanitize_text_field( wp_unslash( $_GET['wps_subscription_status_admin_reactivate'] ) )  ) && current_user_can( 'manage_woocommerce' ) ) {
 			$wps_status   = sanitize_text_field( wp_unslash( $_GET['wps_subscription_status_admin_reactivate'] ) );
 			$wps_subscription_id = sanitize_text_field( wp_unslash( $_GET['wps_subscription_id'] ) );
 			if ( wps_sfw_check_valid_subscription( $wps_subscription_id ) ) {

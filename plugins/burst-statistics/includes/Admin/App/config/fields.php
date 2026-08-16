@@ -22,6 +22,12 @@ defined( 'ABSPATH' ) || die();
  *                                      - bool: true/false
  *                                      - array: Disabled for specific option values (used with select/radio)
  * @property mixed $default             Default value for the setting
+ * @property bool|null $visible         Static visibility, resolved server-side from the saved option (unlike the live
+ *                                      react_conditions), so it only changes after a save + refetch. Defaults to true
+ *                                      (wp_parse_args in Fields/class-fields.php); the UI hides the field only when it
+ *                                      is exactly false. The field stays registered in the form, so hiding it never
+ *                                      marks unsaved changes. Used by Search Console 'gsc_connect' to reveal the
+ *                                      connect UI only once the enable toggle is saved on.
  * @property array|null $options        Available options for select/radio/checkbox_group types
  *                                      - array: key-value pairs or nested arrays with 'label', 'context', 'recommended' properties
  *                                      - string: Function name to call (e.g., 'get_user_roles()')
@@ -119,26 +125,49 @@ return [
 		'disabled'               => false,
 		'default'                => false,
 		'recommended_conditions' => [
-			'enable_cookieless_tracking' => true,
+			'privacy_level' => [ 'private_mode', 'fingerprint' ],
 		],
 	],
 	[
-		'id'       => 'enable_cookieless_tracking',
+		'id'       => 'privacy_level',
 		'menu_id'  => 'general',
-		'group_id' => 'general',
-		'type'     => 'checkbox',
-		'label'    => __( 'Enable Cookieless tracking', 'burst-statistics' ),
-		'context'  => [
-			'text' => __( 'Track visitors without cookies using browser & device info.', 'burst-statistics' ),
-			'url'  => 'definition/what-is-cookieless-tracking/',
-		],
+		'group_id' => 'privacy',
+		'type'     => 'radio',
+		'label'    => __( 'How Burst recognizes visitors', 'burst-statistics' ),
+		'context'  => __( 'Stronger privacy means less accurate returning-visitor data', 'burst-statistics' ),
 		'disabled' => false,
-		'default'  => false,
+		'default'  => 'cookie',
+		'options'  => [
+			'private_mode' => [
+				'label'       => __( 'Cookieless', 'burst-statistics' ),
+				'icon'        => 'shield',
+				'returning'   => __( 'Not recognized across days or sessions', 'burst-statistics' ),
+				'description' => __( 'Anonymous daily hash. No cookie, no fingerprint.', 'burst-statistics' ),
+				'meter'       => 3,
+				'level'       => __( 'Strongest', 'burst-statistics' ),
+			],
+			'fingerprint'  => [
+				'label'       => __( 'Cookieless fingerprint', 'burst-statistics' ),
+				'icon'        => 'fingerprint',
+				'returning'   => __( 'Recognized across days, no cookie stored', 'burst-statistics' ),
+				'description' => __( 'Recognizes devices from browser and device info.', 'burst-statistics' ),
+				'meter'       => 2,
+				'level'       => __( 'Strong', 'burst-statistics' ),
+			],
+			'cookie'       => [
+				'label'       => __( 'Cookie', 'burst-statistics' ),
+				'icon'        => 'cookie',
+				'returning'   => __( 'Recognized across days', 'burst-statistics' ),
+				'description' => __( 'First-party cookie stores an anonymous ID.', 'burst-statistics' ),
+				'meter'       => 2,
+				'level'       => __( 'Strong', 'burst-statistics' ),
+			],
+		],
 	],
 	[
 		'id'       => 'enable_do_not_track',
 		'menu_id'  => 'general',
-		'group_id' => 'general',
+		'group_id' => 'privacy',
 		'type'     => 'checkbox',
 		'label'    => __( "Honor 'Do Not Track' requests", 'burst-statistics' ),
 		'context'  => __( "Stop tracking visitors who have 'Do Not Track' enabled in their browser.", 'burst-statistics' ),
@@ -238,36 +267,25 @@ return [
 		'default'  => false,
 	],
 	[
-		'id'       => 'geo_ip_database_type',
-		'menu_id'  => 'advanced',
-		'group_id' => 'data_collection',
-		'type'     => 'radio',
-		'label'    => __( 'Visitor location detail', 'burst-statistics' ),
-		'disabled' => false,
-		'default'  => 'city',
-		'pro'      => [
-			'url' => 'pricing/',
-		],
-		'options'  => [
-			'city'    => [
-				'label'       => __( 'Country, City & Region details', 'burst-statistics' ),
-				'context'     => __( 'Provides detailed location data including city and region. This uses a larger database and may result in slightly slower tracking.', 'burst-statistics' ),
-				'recommended' => true,
-			],
-			'country' => [
-				'label'   => __( 'Country only', 'burst-statistics' ),
-				'context' => __( 'Provides basic location insights. This uses a smaller database for faster tracking and less data storage.', 'burst-statistics' ),
-			],
-		],
-	],
-	[
-		'id'       => 'burst_update_to_city_geo_database_time',
+		'id'       => 'update_to_city_geo_database_time',
 		'menu_id'  => 'advanced',
 		'group_id' => 'data_collection',
 		'type'     => 'hidden',
 		'label'    => '',
 		'disabled' => false,
 		'default'  => 1751328000,
+	],
+	[
+		// Timestamp from which country data is available, shown in the world map
+		// notice. Set only on upgrade from an existing install (default 0 hides the
+		// notice on fresh installs).
+		'id'       => 'country_geo_database_available_time',
+		'menu_id'  => 'advanced',
+		'group_id' => 'data_collection',
+		'type'     => 'hidden',
+		'label'    => '',
+		'disabled' => false,
+		'default'  => 0,
 	],
 	[
 		'id'       => 'filtering_by_domain',

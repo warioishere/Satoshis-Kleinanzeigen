@@ -7,15 +7,16 @@ import { useReportConfigStore } from '@/store/reports/useReportConfigStore';
 import MemoizedBlock from './MemoizedBlock';
 import { BlockSettingsSidebar } from './BlockSettingsSidebar';
 import useSettingsData from '@/hooks/useSettingsData';
+import { getContentBlockConfig } from '../reportContentHelpers';
 
+// fallow-ignore-next-line complexity
 export const LivePreviewBlocks = ({ className }: { className?: string }) => {
 	const contents = useWizardStore( ( state ) => state.wizard.content );
-	const { getStartDate, getEndDate, getFilters, isEditingMode } = useWizardStore( ( state ) => state );
-	const selectedBlockIndex = useWizardStore( ( state ) => state.selectedBlockIndex );
-	const setSelectedBlockIndex = useWizardStore( ( state ) => state.setSelectedBlockIndex );
+	const { getStartDate, getEndDate, getFilters, isEditingMode, selectedBlockIndex, setSelectedBlockIndex } = useWizardStore( ( state ) => state );
 	const availableContent = useReportConfigStore( ( state ) => state.availableContent );
 	const { getValue } = useSettingsData();
 	const brandColor: string = getValue( 'brand_color' );
+	const customCss: string = getValue( 'custom_css' );
 	const containerRef = useRef<HTMLDivElement>( null );
 	const previewRef = useRef<HTMLDivElement>( null );
 	const previousContentLengthRef = useRef( contents.length );
@@ -52,9 +53,11 @@ export const LivePreviewBlocks = ({ className }: { className?: string }) => {
 			<div
 				ref={previewRef}
 				data-preview-container
-				className='flex-1 overflow-y-auto burst-scroll transition-all duration-300'
+				className='burst-story-page flex-1 overflow-y-auto burst-scroll transition-all duration-300'
 				onClick={handlePreviewClick}
 			>
+                { customCss && <style>{customCss}</style> }
+
                 {
 					brandColor && (
 						<div style={{ backgroundColor: brandColor, height: '13px' }} className="w-full" />
@@ -63,8 +66,10 @@ export const LivePreviewBlocks = ({ className }: { className?: string }) => {
 
 				<div className="px-6">
                     {
+
+						// fallow-ignore-next-line complexity
 						contents.map( ( block, reportBlockIndex ) => {
-							const blockConfig = availableContent.find( ( item ) => item.id === block.id );
+							const blockConfig = getContentBlockConfig( availableContent, block.id );
 
 							if ( ! blockConfig?.component ) {
 								return null;

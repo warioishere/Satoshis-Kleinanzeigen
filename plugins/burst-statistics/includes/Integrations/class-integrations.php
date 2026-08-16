@@ -34,6 +34,11 @@ class Integrations {
 			return $this->should_load_ecommerce;
 		}
 
+		if ( $this->is_mainwp_request() ) {
+			$this->should_load_ecommerce = true;
+			return $this->should_load_ecommerce;
+		}
+
 		$this->should_load_ecommerce = false;
 		foreach ( $this->integrations as $plugin => $details ) {
 			if ( isset( $details['load_ecommerce_integration'] ) && $details['load_ecommerce_integration'] && $this->plugin_is_active( $plugin ) ) {
@@ -55,6 +60,12 @@ class Integrations {
 		if ( $this->should_load_subscriptions !== null ) {
 			return $this->should_load_subscriptions;
 		}
+
+		if ( $this->is_mainwp_request() ) {
+			$this->should_load_subscriptions = true;
+			return $this->should_load_subscriptions;
+		}
+
 		$this->should_load_subscriptions = (bool) apply_filters( 'burst_subscription_integrations_enabled', false );
 		return $this->should_load_subscriptions;
 	}
@@ -198,7 +209,56 @@ class Integrations {
 	}
 
 	/**
-	 * Check if the plugin is active
+	 * Check if a plugin file (as passed by the activated_plugin / deactivated_plugin hooks,
+	 * e.g. "woocommerce/woocommerce.php") is one of the ecommerce integrations.
+	 */
+	public function is_ecommerce_integration_plugin( string $plugin_file ): bool {
+		$slug = dirname( $plugin_file );
+		if ( $slug === '.' ) {
+			$slug = basename( $plugin_file, '.php' );
+		}
+		return ! empty( $this->integrations[ $slug ]['load_ecommerce_integration'] );
+	}
+
+	/**
+	 * Check if a specific integration is enabled by the user.
+	 *
+	 * Returns false when the integration itself is toggled off OR when any of its
+	 * required parent integrations are disabled — so disabling WooCommerce
+	 * automatically disables WooCommerce Payments, Subscriptions, and Subscriben
+	 * without a separate cascade-write.
+	 *
+	 * @param string $slug The integration slug.
+	 * @return bool True if enabled (default), false if explicitly disabled.
+	 */
+	public function is_integration_enabled( string $slug ): bool {
+		if ( ! isset( $this->integrations[ $slug ] ) ) {
+			return false;
+		}
+
+		$options = get_option( 'burst_options_settings', [] );
+		$key     = 'enable_integration_' . sanitize_key( $slug );
+
+		// Default is enabled; only treat as disabled when explicitly set to 0/false.
+		$own_enabled = ! isset( $options[ $key ] ) || (bool) $options[ $key ];
+
+		if ( ! $own_enabled ) {
+			return false;
+		}
+
+		// If any required parent is disabled, this integration is also disabled.
+		$required = $this->integrations[ $slug ]['required_plugins'] ?? [];
+		foreach ( $required as $parent_slug ) {
+			if ( ! $this->is_integration_enabled( $parent_slug ) ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Check if the plugin is active (installed + detected + user-enabled).
 	 *
 	 * @param string $plugin The plugin slug.
 	 * @return bool True if the plugin is active, false otherwise.
@@ -208,14 +268,28 @@ class Integrations {
 			return false;
 		}
 
-		$details  = $this->integrations[ $plugin ];
+		if ( ! $this->plugin_is_detected( $this->integrations[ $plugin ] ) ) {
+			return false;
+		}
+
+		return $this->is_integration_enabled( $plugin );
+	}
+
+	/**
+	 * Check whether an integration's plugin is installed: its constant, function,
+	 * class or theme name is detected, regardless of the user-facing enabled toggle.
+	 *
+	 * @param array<string, mixed> $details Integration definition.
+	 * @return bool True if the plugin is installed.
+	 */
+	public function plugin_is_detected( array $details ): bool {
 		$constant = $details['constant_or_function'] ?? '';
 		$theme    = wp_get_theme();
 
 		return defined( $constant )
-				|| function_exists( $constant )
-				|| class_exists( $constant )
-				|| ( isset( $theme->name ) && $theme->name === $constant );
+			|| function_exists( $constant )
+			|| class_exists( $constant )
+			|| ( isset( $theme->name ) && $theme->name === $constant );
 	}
 
 	/**

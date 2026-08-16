@@ -30,6 +30,37 @@
                     return ($user_level);
                 }
                 
+                
+            
+            /**
+            * Resolve the capability required to use the re-order interfaces / AJAX endpoints
+            * 
+            * Centralises the logic previously duplicated in add_menu() and init_cpto(),
+            * so the menu, the page-load gate, and the AJAX handlers can never drift apart.
+            * 
+            * @param string $post_type_name Optional post type, passed through to the pto/edit_capability filter
+            * @return string A capability name suitable for current_user_can()
+            */
+            function get_required_capability($post_type_name = '')
+                {
+                    $options = self::get_options();
+
+                    if (isset($options['capability']) && !empty($options['capability']))
+                        {
+                            $capability = $options['capability'];
+                        }
+                    else if (isset($options['level']) && is_numeric($options['level']))
+                        {
+                            $capability = $this->userdata_get_user_level();
+                        }
+                        else
+                            {
+                                $capability = 'manage_options';
+                            }
+
+                    return apply_filters('pto/edit_capability', $capability, $post_type_name);
+                }
+                
             
             /**
             * Retrieve the plugin options

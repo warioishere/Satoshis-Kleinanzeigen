@@ -112,7 +112,7 @@ const burst_set_cookie = (name, value) => {
  */
 const burst_use_cookies = () => {
   if (burst.cache.useCookies !== null) return burst.cache.useCookies;
-  const result = navigator.cookieEnabled && !burst.options.cookieless;
+  const result = navigator.cookieEnabled && !burst.options.cookieless && burst.options.privacy_level !== 'private_mode';
   burst.cache.useCookies = result;
   return result;
 };
@@ -373,11 +373,13 @@ async function burst_update_hit(
 
 	const [time, id] = await Promise.all([
 		burst_get_time_on_page(),
-		update_uid
-			? Promise.all([burst_uid(), burst_fingerprint()])
-			: burst_use_cookies()
-				? burst_uid()
-				: burst_fingerprint(),
+		burst.options.privacy_level === 'private_mode'
+			? Promise.resolve(update_uid ? [false, false] : false)
+			: update_uid
+				? Promise.all([burst_uid(), burst_fingerprint()])
+				: burst_use_cookies()
+					? burst_uid()
+					: burst_fingerprint(),
 	]);
 
 	const data = {
@@ -415,7 +417,9 @@ async function burst_track_hit(extraData = {}) {
 
   const [time, id] = await Promise.all([
     burst_get_time_on_page(),
-    burst_use_cookies() ? burst_uid() : burst_fingerprint()
+    burst.options.privacy_level === 'private_mode'
+      ? Promise.resolve(false)
+      : burst_use_cookies() ? burst_uid() : burst_fingerprint()
   ]);
 
   //wait for body document to resolve.
@@ -429,6 +433,7 @@ async function burst_track_hit(extraData = {}) {
     console.warn('Burst: missing page_id attribute, not able to resolve body element.');
   }
 
+  const burstSearchParams = new URLSearchParams(location.search);
   const data = {
     uid: burst_use_cookies() ? id : false,
     fingerprint: burst_use_cookies() ? false : id,
@@ -441,6 +446,7 @@ async function burst_track_hit(extraData = {}) {
     page_id: document.body?.dataset?.burst_id ?? document.body?.dataset?.b_id ?? 0,
     page_type: document.body?.dataset?.burst_type ?? document.body?.dataset?.b_type ?? '',
     should_load_ecommerce: burst.should_load_ecommerce,
+    search_term: burstSearchParams.get('s') || '',
     ...extraData,
   };
 
@@ -541,7 +547,10 @@ function burst_init_events() {
     if (document.readyState !== 'loading') {
       burst_track_hit();
     } else {
-      document.addEventListener('load', burst_track_hit);
+      // Note: 'load' does not fire on document (only on window), so listen for
+      // DOMContentLoaded, which fires as soon as parsing completes - the same
+      // moment a deferred script would have run.
+      document.addEventListener('DOMContentLoaded', burst_track_hit, { once: true });
     }
   } else {
     burst_track_hit();

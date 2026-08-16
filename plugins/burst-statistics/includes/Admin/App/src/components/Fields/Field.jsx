@@ -22,9 +22,13 @@ import ExportSettingsField from './ExportSettingsField';
 import AnonymousUsageDataField from './AnonymousUsageDataField';
 import ThemeToggleField from './ThemeToggleField';
 import ColorPickerField from './ColorPickerField';
+import CssField from './CssField';
 import { EmailWysiwygField } from './Wysiwyg/WysiwygField';
 import useLicenseData from '@/hooks/useLicenseData';
 import { ReportLogsField } from '@/components/Fields/ReportLogsField';
+import GoogleSearchConsoleField from './GoogleSearchConsoleField';
+import IntegrationRowField from './IntegrationRowField';
+import IntegrationsIntroField from './IntegrationsIntroField';
 
 const fieldComponents = {
 	text: TextField,
@@ -49,9 +53,14 @@ const fieldComponents = {
 	anonymous_usage_data: AnonymousUsageDataField,
 	theme_toggle: ThemeToggleField,
 	wysiwyg: EmailWysiwygField,
-	color_picker: ColorPickerField
+	color_picker: ColorPickerField,
+	css: CssField,
+	gsc_connect: GoogleSearchConsoleField,
+	integration_row: IntegrationRowField,
+	integrations_intro: IntegrationsIntroField
 };
 
+// fallow-ignore-next-line complexity
 const Field = memo( ({ setting, control, ...props }) => {
 	const { isLicenseValid, tier } = useLicenseData();
 
@@ -229,7 +238,7 @@ const Field = memo( ({ setting, control, ...props }) => {
 				name={setting.id}
 				control={control}
 				rules={validationRules}
-				defaultValue={setting.value || setting.default}
+				defaultValue={( setting.value !== undefined && '' !== setting.value ) ? setting.value : setting.default}
 				render={({ field, fieldState }) => (
 					<FieldComponent
 						field={field}

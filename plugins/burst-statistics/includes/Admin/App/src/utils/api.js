@@ -65,6 +65,7 @@ let lastErrorMessage = '';
 let lastErrorTime = 0;
 const NONCE_TOAST_ID = 'burst-nonce-expired';
 const activeRequestControllers = new Map();
+const activeRequests = new Map();
 
 const getRequestDedupKey = ( method, path ) => {
 	const [ basePath, queryString = '' ] = path.split( '?' );
@@ -93,6 +94,7 @@ const getRequestDedupKey = ( method, path ) => {
 
 const createAbortableRequest = ( method, path ) => {
 	const requestKey = getRequestDedupKey( method, path );
+
 	const existingController = activeRequestControllers.get( requestKey );
 
 	// Keep only the newest in-flight request for each dedup key.
@@ -128,6 +130,7 @@ const isAbortError = ( error ) => {
 	);
 };
 
+// fallow-ignore-next-line complexity
 const generateError = ( error, path = false ) => {
 	const rawError = ( error || '' ).replace( /(<([^>]+)>)/gi, '' );
 
@@ -221,12 +224,21 @@ const withRequestHeaders = ( headers = {}, auth = getRequestAuth() ) => {
 	};
 };
 
-const makeRequest = async(
+const makeRequest = (
     path,
     method = 'GET',
     data = {},
     requireRequestSuccess = true
 ) => {
+	const requestKey = getRequestDedupKey( method, path );
+
+	if ( 'GET' === method ) {
+		const existingPromise = activeRequests.get( requestKey );
+		if ( existingPromise ) {
+			return existingPromise;
+		}
+	}
+
 	const requestContext = createAbortableRequest( method, path );
 	const auth = getRequestAuth();
 	const args = { path, method, signal: requestContext.signal };
@@ -237,42 +249,55 @@ const makeRequest = async(
 		data.nonce = burst_settings.burst_nonce;
 		args.data = data;
 	}
-	try {
-		const response = await apiFetch( args );
-		if ( requireRequestSuccess && ! response.request_success ) {
-			if ( Object.prototype.hasOwnProperty.call( response, 'message' ) ) {
-				generateError( response.message, args.path );
-			} else {
-				generateError( 'unexpected response', args.path );
-			}
-		}
 
-		if ( response.code && 200 !== response.code ) {
-			generateError( response.message, args.path );
-		}
-
-		delete response.request_success;
-		return response;
-	} catch ( error ) {
-		if ( isAbortError( error ) ) {
-			return null;
-		}
-
+	// fallow-ignore-next-line complexity
+	const promise = ( async() => {
 		try {
-
-			// Wait for ajaxRequest to resolve before continuing.
-			return await ajaxRequest( method, path, data, auth, requestContext.signal );
-		} catch ( ajaxError ) {
-			if ( isAbortError( ajaxError ) ) {
-				return null;
+			const response = await apiFetch( args );
+			if ( requireRequestSuccess && ! response.request_success ) {
+				if ( Object.prototype.hasOwnProperty.call( response, 'message' ) ) {
+					generateError( response.message, args.path );
+				} else {
+					generateError( 'unexpected response', args.path );
+				}
 			}
 
-			generateError( ajaxError.message, args.path );
-			throw ajaxError;
+			if ( response.code && 200 !== response.code ) {
+				generateError( response.message, args.path );
+			}
+
+			delete response.request_success;
+			return response;
+		} catch ( error ) {
+			if ( isAbortError( error ) ) {
+				throw error;
+			}
+
+			try {
+
+				// Wait for ajaxRequest to resolve before continuing.
+				return await ajaxRequest( method, path, data, auth, requestContext.signal );
+			} catch ( ajaxError ) {
+				if ( isAbortError( ajaxError ) ) {
+					throw ajaxError;
+				}
+
+				generateError( ajaxError.message, args.path );
+				throw ajaxError;
+			}
+		} finally {
+			requestContext.finalize();
+			if ( 'GET' === method ) {
+				activeRequests.delete( requestKey );
+			}
 		}
-	} finally {
-		requestContext.finalize();
+	})();
+
+	if ( 'GET' === method ) {
+		activeRequests.set( requestKey, promise );
 	}
+
+	return promise;
 };
 
 const isDoActionFallbackPath = ( path = '' ) => {
@@ -306,6 +331,7 @@ const getAjaxFallbackUrl = ( method, path ) => {
 	return withAjaxAction( siteUrl( 'ajax' ), action );
 };
 
+// fallow-ignore-next-line complexity
 const ajaxRequest = async(
 	method,
 	path,
@@ -536,7 +562,8 @@ const buildQueryString = ( params ) => {
 		.join( '&' );
 };
 
-export const getDatatableData = async( id, isEcommerce, startDate, endDate, range, args = {}) => {
+// fallow-ignore-next-line complexity
+const buildBaseQueryParams = ( startDate, endDate, range, args ) => {
 	const { filters, metrics, group_by, selectedPages } = args;
 
 	const queryParams = {
@@ -562,6 +589,11 @@ export const getDatatableData = async( id, isEcommerce, startDate, endDate, rang
 		queryParams.group_by = group_by;
 	}
 
+	return queryParams;
+};
+
+export const getDatatableData = async( id, isEcommerce, startDate, endDate, range, args = {}) => {
+	const queryParams = buildBaseQueryParams( startDate, endDate, range, args );
 	const queryString = buildQueryString( queryParams );
 	const endpoint = isEcommerce ? `data/ecommerce/datatable/${id}` : `data/datatable/${id}`;
 	const path = `burst/v1/${endpoint}${glue()}${queryString}`;
@@ -579,33 +611,13 @@ export const getDatatableData = async( id, isEcommerce, startDate, endDate, rang
  * @param {Object} [args={}] - Additional query parameters (filters, metrics, etc.).
  * @return {Promise<{ data: * }>} Response; `data` shape depends on `type`.
  */
+// fallow-ignore-next-line complexity
 export const getData = async( type, startDate, endDate, range, args = {}) => {
 
 	// Extract filters and metrics from args if they exist.
-	const { filters, metrics, group_by, currentView, selectedPages, id, chart_mode, distribution_view, product_id, compare_mode, compare_date_start, compare_date_end, page_url } = args;
+	const { currentView, chart_mode, distribution_view, product_id, compare_mode, compare_date_start, compare_date_end, page_url, least_engagement } = args;
 
-	const queryParams = {
-		date_start: startDate,
-		date_end: endDate,
-		date_range: range,
-		nonce: burst_settings.burst_nonce,
-		should_load_ecommerce: burst_settings.shouldLoadEcommerce || false,
-		goal_id: args.goal_id,
-		token: Math.random().toString( 36 ).replace( /[^a-z]+/g, '' ).substr( 0, 5 ) // nosemgrep
-	};
-
-	if ( selectedPages ) {
-		queryParams.selected_pages = selectedPages;
-	}
-	if ( filters ) {
-		queryParams.filters = filters;
-	}
-	if ( metrics ) {
-		queryParams.metrics = metrics;
-	}
-	if ( group_by ) {
-		queryParams.group_by = group_by;
-	}
+	const queryParams = buildBaseQueryParams( startDate, endDate, range, args );
 	if ( currentView ) {
 		queryParams.currentView = currentView;
 	}
@@ -627,11 +639,12 @@ export const getData = async( type, startDate, endDate, range, args = {}) => {
 	if ( compare_date_end ) {
 		queryParams.compare_date_end = compare_date_end;
 	}
-	if ( id ) {
-		queryParams.id = id;
-	}
+
 	if ( page_url ) {
 		queryParams.page_url = page_url;
+	}
+	if ( least_engagement !== undefined ) {
+		queryParams.least_engagement = least_engagement;
 	}
 
 
@@ -668,13 +681,16 @@ export const getPosts = ( search ) =>
 		}
 	);
 
-export const postChatMessage = ( message, history = []) =>
+export const postChatMessage = ( message, history = [], model = '' ) =>
 	doAction( 'chat', {
 		message,
-		history
+		history,
+		...( model ? { model } : {})
 	});
 
 export const getChatStatus = () => doAction( 'chat_status' );
+
+export const getAvailableModels = () => doAction( 'chat_models' );
 
 /**
  * Retrieves a value from local storage with a 'burst_' prefix and parses it as

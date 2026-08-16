@@ -4,7 +4,7 @@ Tags: gutenberg, blocks, page builder, editor, gutenberg blocks
 Donate link: https://www.kadencewp.com/about-us/
 Requires at least: 6.6
 Tested up to: 7.0
-Stable tag: 3.7.5
+Stable tag: 3.7.9.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -168,6 +168,42 @@ Please report security bugs found in the source code of the Kadence Blocks plugi
 Please report security bugs found in the Kadence Blocks plugin's source code through the Patchstack Vulnerability Disclosure Program https://patchstack.com/database/vdp/kadence-blocks. The Patchstack team will assist you with verification, CVE assignment, and notify the developers of this plugin.
 
 == Changelog ==
+
+= 3.7.9.1 =
+Release Date: 12th August 2026
+* Security: Enhanced security on image processing REST API module.
+
+= 3.7.9 =
+Release Date: 5th August 2026
+* Tweak: Improved the unified licensing page experience.
+* Fix: Restored support for custom design library locations.
+* Fix: Resolved a JavaScript error that prevented Auto Spacing Under from working when the Advanced Header used a Transparent Header inside a block theme template.
+* Fixed: Advanced Gallery Block - Resolved an issue where long captions stretched slides to the full container width in the Fluid Carousel gallery type when captions were set to display below the image.
+
+= 3.7.8.2 =
+Release Date: 29th July 2026
+* Security: Improved markup handling in block output.
+
+= 3.7.8.1 =
+Release Date: 27th July 2026
+* Security: Hardened library requests to only use known locations.
+* Security: Improved output escaping for block attributes.
+
+= 3.7.8 =
+Release Date: 29th June 2026
+* Security: Hardened capability checks in the pattern and template import process.
+* Security: Enhanced authorization checks on the performance optimizer data endpoints.
+
+= 3.7.7 =
+Release Date: 24rd June 2026
+* Fix: Resolved an issue with the Advanced Text Block after updating from earlier Kadence Blocks versions
+* Fix: Advanced Text Block dynamic links now resolve to the correct post when used inside a query loop
+* Fix: Row Layout Block breakout left/right margins no longer incorrectly apply to columns inside nested row layouts in the editor
+
+= 3.7.6 =
+Release Date: 11th June 2026
+* Tweak: Improved the Kadence add-ons update flow for legacy licenses.
+* Tweak: Kadence AI requests are now routed through a server-side proxy.
 
 = 3.7.5 =
 Release Date: 1st June 2026
@@ -380,7 +416,7 @@ Release Date: 14th August 2025
 * Fix: bad class name in heading block
 * Fix: Row Layout Block Tablet/Mobile Spacing Issue
 * Fix: Nested Navigation Block does not work properly in Dashboard > Kadence > Navigations
-* Fix: Countdown Block repeater date is wrong in some sitiuations
+* Fix: Countdown Block repeater date is wrong in some situations
 * Fix: Icon color issue in search block
 * Fix: Freeze submenu preview setting for hover to open
 
@@ -469,7 +505,7 @@ Release Date: May 1st 2025
 * Enhancement: Improved design library navigation, filtering, and sorting.
 * Fix: Comma separated CC field not sending to multiple users.
 * Fix: Transparent Logo Reverts to Default Logo After Scrolling Back Up with Sticky Header Enabled.
-* Fix: Text alignemnt on frontend in table block.
+* Fix: Text alignment on frontend in table block.
 
 = 3.5.5 =
 Release Date: April 28th 2025

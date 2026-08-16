@@ -8,7 +8,7 @@ function wpa_load_scripts(){
         wp_enqueue_script( 'wpascript', plugins_url( '/js/wpa.js', __FILE__ ), array('jquery'), $GLOBALS['wpa_version'], true );
     }
 
-    wp_add_inline_script( 'wpascript', 'wpa_field_info = '.json_encode(wpa_field_info()));
+    wp_add_inline_script( 'wpascript', 'wpa_field_info = JSON.parse(atob("'.base64_encode(json_encode(wpa_field_info())).'"));');
     wp_enqueue_style( 'wpa-css', plugins_url( '/css/wpa.css', __FILE__ ), array(), $GLOBALS['wpa_version']);
 }
 
@@ -140,12 +140,12 @@ function wpa_check_is_spam($form_data){
 			(empty($form_data['alt_s']))
 
 		){
-		/* DEPRECATED LEVEL 2 
-		if (function_exists('wpae_2level_spam_check')){ 
-			return wpae_2level_spam_check($form_data[$GLOBALS['wpa_field_name']]);
+		
+		if (function_exists('wpae_check_is_spam')){ 
+			return wpae_check_is_spam($form_data);
 		} else {
 			return false; // FALSE MEANS NOT SPAM
-		}*/
+		}
 		return false; // FALSE MEANS NOT SPAM
 	} else {
 		return true; // TRUE MEANS SPAM

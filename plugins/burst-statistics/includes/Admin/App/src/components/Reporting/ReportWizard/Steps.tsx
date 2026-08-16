@@ -18,6 +18,7 @@ export const Steps = () => {
 
 	return (
 		<div className="flex items-center justify-between">
+			{/* fallow-ignore-next-line complexity */}
 			{steps.map( ( step, idx ) => {
 				const isClickable = canNavigateToStep();
 
@@ -73,7 +74,7 @@ export const Steps = () => {
 						</div>
 
 						{idx < steps.length - 1 && (
-							<div className="md:block h-0.5 w-full mx-5 bg-gray-300 rounded-xs" />
+							<div className="@md:block h-0.5 w-full mx-5 bg-gray-300 rounded-xs" />
 						)}
 					</React.Fragment>
 				);
