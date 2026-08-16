@@ -59,14 +59,84 @@ class Manager {
 
     /**
      * Check if an email address is a generated placeholder.
+     *
+     * The *.local suffixes are always generated. The site's own domain is a
+     * special case: auto-created LNURL logins live there (satoshi-440@…), but
+     * so do real mailboxes like info@ or admin@ — blocking the whole domain
+     * silently swallowed every admin notification. Only the generated
+     * local-part patterns count as placeholders there.
      */
     public static function is_placeholder_email( string $email ): bool {
         $email = strtolower( trim( $email ) );
+
+        if ( '' === $email ) {
+            return true;
+        }
+
+        // Real, configured mailboxes are never placeholders.
+        if ( in_array( $email, self::get_real_mailboxes(), true ) ) {
+            return false;
+        }
+
         foreach ( self::$placeholder_suffixes as $suffix ) {
-            if ( substr( $email, -strlen( $suffix ) ) === $suffix ) {
+            if ( substr( $email, -strlen( $suffix ) ) !== $suffix ) {
+                continue;
+            }
+
+            // Dedicated placeholder domains — nothing real ever lives there.
+            if ( '.local' === substr( $suffix, -6 ) ) {
                 return true;
             }
+
+            // Own domain: only auto-generated local parts.
+            return self::is_generated_local_part( $email );
         }
+
+        return false;
+    }
+
+    /**
+     * Mailboxes that must always be deliverable, even on the site's own domain.
+     */
+    private static function get_real_mailboxes(): array {
+        $mailboxes = [
+            (string) get_option( 'admin_email' ),
+            (string) get_option( 'woocommerce_email_from_address' ),
+        ];
+
+        /**
+         * Filter the addresses that are never treated as placeholders.
+         *
+         * @param array $mailboxes
+         */
+        $mailboxes = apply_filters( 'sk_email_real_mailboxes', $mailboxes );
+
+        return array_filter( array_map( 'strtolower', array_map( 'trim', $mailboxes ) ) );
+    }
+
+    /**
+     * Does the local part match one of our auto-generated login patterns?
+     */
+    private static function is_generated_local_part( string $email ): bool {
+        $local = strstr( $email, '@', true );
+
+        if ( false === $local || '' === $local ) {
+            return true;
+        }
+
+        // LNURL-auth: "<prefix><counter>", prefix configurable, default "satoshi-".
+        $prefix = (string) get_option( 'lnurl-auth-usercreation-prefix' );
+        $prefix = strtolower( $prefix !== '' ? $prefix : 'satoshi-' );
+
+        if ( 0 === strpos( $local, $prefix ) ) {
+            return true;
+        }
+
+        // Nostr: raw 64-char hex pubkey as local part.
+        if ( preg_match( '/^[0-9a-f]{64}$/', $local ) ) {
+            return true;
+        }
+
         return false;
     }
 

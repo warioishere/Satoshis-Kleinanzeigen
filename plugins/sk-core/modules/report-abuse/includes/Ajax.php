@@ -54,6 +54,25 @@ class Ajax {
     }
 
     /**
+     * Check a submitted reason against the reasons configured in the settings.
+     *
+     * @param string $reason
+     *
+     * @return bool
+     */
+    private static function is_valid_reason( $reason ) {
+        $option = sk_report_abuse_get_option();
+
+        foreach ( (array) $option['abuse_reasons'] as $abuse_reason ) {
+            if ( isset( $abuse_reason['value'] ) && $abuse_reason['value'] === $reason ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Submit report form
      *
      *
@@ -68,13 +87,38 @@ class Ajax {
             ], 400 );
         }
 
-        $args = wp_parse_args( $_POST['form_data'], [
+        // The frontend posts form_data as a JSON blob. Older callers used a
+        // urlencoded query string — accept both, otherwise wp_parse_args()
+        // silently swallows the whole JSON into one key and every field
+        // ends up empty ("Missing reason param." on every submit).
+        $raw     = wp_unslash( $_POST['form_data'] );
+        $decoded = json_decode( $raw, true );
+
+        if ( ! is_array( $decoded ) ) {
+            $decoded = [];
+            wp_parse_str( $raw, $decoded );
+        }
+
+        $args = wp_parse_args( $decoded, [
             'reason'         => '',
             'product_id'     => 0,
             'customer_name'  => '',
             'customer_email' => '',
             'description'    => '',
         ] );
+
+        $args['reason']         = sanitize_text_field( $args['reason'] );
+        $args['product_id']     = absint( $args['product_id'] );
+        $args['customer_name']  = sanitize_text_field( $args['customer_name'] );
+        $args['customer_email'] = sanitize_email( $args['customer_email'] );
+        $args['description']    = sanitize_textarea_field( $args['description'] );
+
+        // Only accept reasons that are actually configured in the settings.
+        if ( ! empty( $args['reason'] ) && ! self::is_valid_reason( $args['reason'] ) ) {
+            wp_send_json_error( [
+                'message' => esc_html__( 'Invalid reason.', 'sk' ),
+            ], 400 );
+        }
 
         $customer_id = get_current_user_id();
 

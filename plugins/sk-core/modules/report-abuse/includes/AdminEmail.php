@@ -126,7 +126,12 @@ class AdminEmail extends WC_Email {
      * @return void
      */
     public function trigger( $report ) {
-        if ( ! $this->is_enabled() && ! $this->get_recipient() ) {
+        // Both are required — with && a disabled email still went out as long
+        // as a recipient was configured, so the WooCommerce toggle did nothing.
+        if ( ! $this->is_enabled() || ! $this->get_recipient() ) {
+            return;
+        }
+        if ( ! is_object( $report ) || empty( $report->product_id ) ) {
             return;
         }
         $this->setup_locale();
