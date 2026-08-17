@@ -1,6 +1,6 @@
 <?php
 
-namespace SK\Core\Dashboard\Modules;
+namespace SK\Modules\Auth;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -68,14 +68,14 @@ class BtcLogin {
 			}
 		}
 
-		wp_enqueue_style( 'sk-btc-login', plugins_url( 'assets/css/sk-btc-login.css', SK_CORE_FILE ), [], SK_CORE_VERSION );
+		wp_enqueue_style( 'sk-btc-login', SK_AUTH_ASSETS . '/css/sk-btc-login.css', [], SK_AUTH_VERSION );
 
-		$js_path = SK_CORE_DIR . '/assets/js/dashboard/btclogin-tabs.js';
+		$js_path = SK_AUTH_PATH . '/assets/js/btclogin-tabs.js';
 		wp_enqueue_script(
 			'sk-btclogin-tabs',
-			SK_CORE_ASSETS . '/js/dashboard/btclogin-tabs.js',
+			SK_AUTH_ASSETS . '/js/btclogin-tabs.js',
 			[],
-			file_exists( $js_path ) ? (string) filemtime( $js_path ) : SK_CORE_VERSION,
+			file_exists( $js_path ) ? (string) filemtime( $js_path ) : SK_AUTH_VERSION,
 			true
 		);
 

@@ -103,6 +103,9 @@ final class Module {
      * By SK.
      */
     private function load_btc_login() {
+        require_once SK_AUTH_INCLUDES . '/BtcLogin.php';
+
+        new BtcLogin();
     }
 
     /**

@@ -30,7 +30,6 @@ class ModuleLoader {
         new Modules\CurrencyIcon();
         new Modules\ProfileAvatar();
         new Modules\ProductSlider();
-        new Modules\BtcLogin();
         new Modules\AiCategorizer();
         new Modules\Feedback();
         new Modules\UserOnboarding();
