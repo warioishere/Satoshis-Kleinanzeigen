@@ -55,7 +55,13 @@ class BtcLogin {
 		$error = '';
 		$tab   = isset( $_POST['btclogin_tab'] ) ? sanitize_text_field( $_POST['btclogin_tab'] ) : ( isset( $_GET['tab'] ) ? sanitize_text_field( $_GET['tab'] ) : 'login' );
 
-		if ( isset( $_POST['btclogin_action'] ) && wp_verify_nonce( $_POST['_btclogin_nonce'] ?? '', 'btclogin_nonce' ) ) {
+		// The nonce alone cannot stop login CSRF: logged-out visitors all share the
+		// same nonce, so an attacker can fetch a valid one. The request origin can.
+		$same_origin = ! function_exists( 'sk_is_same_origin_request' ) || sk_is_same_origin_request();
+
+		if ( isset( $_POST['btclogin_action'] )
+			&& $same_origin
+			&& wp_verify_nonce( $_POST['_btclogin_nonce'] ?? '', 'btclogin_nonce' ) ) {
 			$error = $this->handle_form( $tab );
 			if ( $error === null ) {
 				return ''; // redirect happened

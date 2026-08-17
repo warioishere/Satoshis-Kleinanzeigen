@@ -71,6 +71,11 @@ class UAC_Nostr_Login_Integration {
      * create a new account and hits an "email already in use" error.
      */
     public function maybe_handle_linked_login() {
+        // Same login-CSRF guard as the main Nostr login handler.
+        if (function_exists('sk_is_same_origin_request') && !sk_is_same_origin_request()) {
+            return;
+        }
+
         $authtoken_raw = isset($_POST['authtoken']) ? sanitize_text_field(wp_unslash($_POST['authtoken'])) : '';
         if (empty($authtoken_raw)) return;
 

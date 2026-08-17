@@ -517,6 +517,80 @@ function sk_get_new_post_status( $seller_id = null ) {
 }
 
 /**
+ * Did this request originate from our own site?
+ *
+ * Login endpoints cannot rely on nonces: the login form is served to logged-out
+ * visitors, and a WordPress nonce for user 0 is identical for everybody, so an
+ * attacker can simply fetch a valid one. Without an origin check a foreign page
+ * can therefore submit a login and leave the visitor signed in as the attacker
+ * (login CSRF). Sec-Fetch-Site is set by the browser and cannot be forged by
+ * page scripts, which makes it the reliable signal here.
+ *
+ *
+ * @return bool True when the request looks same-origin, or when the client sent
+ *              no origin information at all (very old or non-browser clients).
+ */
+function sk_is_same_origin_request() {
+    if ( ! empty( $_SERVER['HTTP_SEC_FETCH_SITE'] ) ) {
+        $site = strtolower( trim( sanitize_text_field( wp_unslash( $_SERVER['HTTP_SEC_FETCH_SITE'] ) ) ) );
+
+        // 'none' is a user-initiated navigation (typed URL, bookmark).
+        return in_array( $site, [ 'same-origin', 'same-site', 'none' ], true );
+    }
+
+    $host = strtolower( (string) wp_parse_url( home_url(), PHP_URL_HOST ) );
+
+    foreach ( [ 'HTTP_ORIGIN', 'HTTP_REFERER' ] as $header ) {
+        if ( empty( $_SERVER[ $header ] ) ) {
+            continue;
+        }
+
+        $candidate = wp_parse_url( sanitize_text_field( wp_unslash( $_SERVER[ $header ] ) ), PHP_URL_HOST );
+
+        if ( ! $candidate ) {
+            continue;
+        }
+
+        return strtolower( $candidate ) === $host;
+    }
+
+    return true;
+}
+
+/**
+ * Does this account have a password its owner actually knows?
+ *
+ * Accounts created through Nostr or LNURL get a random password nobody ever
+ * saw, so they cannot be asked to confirm it. Everyone else can.
+ *
+ *
+ * @param int $user_id
+ * @return bool
+ */
+function sk_account_has_password( $user_id ) {
+    $user_id = (int) $user_id;
+
+    if ( ! $user_id ) {
+        return false;
+    }
+
+    if ( get_user_meta( $user_id, 'sk_password_set', true ) ) {
+        return true;
+    }
+
+    // Registered with address + self-chosen password.
+    if ( get_user_meta( $user_id, 'btc_address', true ) ) {
+        return true;
+    }
+
+    $has_key_login = get_user_meta( $user_id, 'nostr_public_key', true )
+        || get_user_meta( $user_id, 'lnurl-auth-bjm-id', true );
+
+    // No key-based login means the password is the only way in.
+    return ! $has_key_login;
+}
+
+/**
  * Client IP address of the current request.
  *
  * Proxy headers (X-Forwarded-For, CF-Connecting-IP, …) are sent by the client

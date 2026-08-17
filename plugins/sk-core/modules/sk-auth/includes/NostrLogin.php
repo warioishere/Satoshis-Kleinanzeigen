@@ -196,6 +196,13 @@ class Nostr_Login_Handler {
         // No WP nonce check — login page may serve cached nonces for nopriv users.
         // Security is provided by the NIP-98 signature + timestamp window.
 
+        // A foreign page must not be able to submit a login and leave the visitor
+        // signed in as the attacker. A nonce cannot prevent that here (see
+        // sk_is_same_origin_request()), the request origin can.
+        if ( function_exists( 'sk_is_same_origin_request' ) && ! sk_is_same_origin_request() ) {
+            wp_send_json_error( [ 'message' => __( 'Anfrage von fremder Herkunft.', 'sk-core' ) ] );
+        }
+
         // Sanitize input data
         $metadata_json = sanitize_text_field( wp_unslash( $_POST['metadata'] ?? '' ) );
         $authtoken = sanitize_text_field( wp_unslash( $_POST['authtoken'] ?? '' ) );
