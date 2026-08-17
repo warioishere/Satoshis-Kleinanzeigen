@@ -65,13 +65,25 @@ class PaymentCard {
 	/**
 	 * Rebuild a verified card for one chat message.
 	 *
-	 * @param array $message Message entry from _dvc_messages.
+	 * @param array $message Message entry as returned by ChatMessages::all().
 	 * @param int   $chat_id Chat the message belongs to.
 	 * @return array|null Card data, or null if nothing verifiable.
 	 */
 	public static function build( array $message, int $chat_id ): ?array {
-		$claim = self::extract_claim( (string) ( $message['message'] ?? '' ) );
-		if ( ! $claim || ! $chat_id ) {
+		if ( ! $chat_id ) {
+			return null;
+		}
+
+		// Messages written since the move to the sk_chat_messages table carry the
+		// reference in their own columns, so nothing has to be parsed out of text.
+		$claim = self::claim_from_columns( $message, $chat_id );
+
+		// Older rows only have the marker in the message body.
+		if ( ! $claim ) {
+			$claim = self::extract_claim( (string) ( $message['message'] ?? '' ) );
+		}
+
+		if ( ! $claim ) {
 			return null;
 		}
 
@@ -85,6 +97,43 @@ class PaymentCard {
 			$chat_id,
 			(int) ( $message['user_id'] ?? 0 )
 		);
+	}
+
+	/**
+	 * Build the claim from the message's own columns.
+	 *
+	 * Same shape as extract_claim() so both paths verify identically.
+	 */
+	private static function claim_from_columns( array $message, int $chat_id ): ?array {
+		$card_type = (string) ( $message['card_type'] ?? '' );
+
+		if ( $card_type === '' ) {
+			return null;
+		}
+
+		$marker = array_search( $card_type, self::TYPES, true );
+
+		if ( $marker === false ) {
+			return null;
+		}
+
+		$data = [];
+
+		if ( ! empty( $message['payment_hash'] ) ) {
+			$data['payment_hash'] = (string) $message['payment_hash'];
+		}
+
+		// Purchase requests reference a product instead of a payment.
+		// build_purchase_request() compares the claim against the chat's product,
+		// exactly as it does for the marker payload.
+		if ( $marker === 'lightning_purchase_request' ) {
+			$data['product_id'] = (int) get_post_meta( $chat_id, '_dvc_product_id', true );
+		}
+
+		return [
+			'marker' => $marker,
+			'data'   => $data,
+		];
 	}
 
 	/**

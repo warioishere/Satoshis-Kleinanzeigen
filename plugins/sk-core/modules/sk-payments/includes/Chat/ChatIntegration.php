@@ -2,6 +2,7 @@
 
 namespace SK\Modules\Payments\Chat;
 
+use SK\Core\Dashboard\ChatMessages;
 use SK\Modules\Payments\StoreSettings;
 
 defined( 'ABSPATH' ) || exit;
@@ -90,7 +91,7 @@ class ChatIntegration {
             wp_send_json_error( [ 'message' => $chat_id->get_error_message() ] );
         }
 
-        $this->add_chat_message( $chat_id, $buyer_id, $message_text );
+        $this->add_chat_message( $chat_id, $buyer_id, $message_text, [ 'card_type' => 'purchase_request' ] );
 
         $dashboard_url = sk_get_navigation_url( 'vendor-chat' );
         $chat_url = add_query_arg( 'chat_id', $chat_id, $dashboard_url );
@@ -161,18 +162,10 @@ class ChatIntegration {
         ] );
 
         $message_text = "[lightning_invoice]{$message_data}[/lightning_invoice]";
-        $this->add_chat_message( $chat_id, $vendor_id, $message_text );
-
-        global $wpdb;
-        $messages = get_post_meta( $chat_id, '_dvc_messages', true );
-        $msg_idx  = is_array( $messages ) ? count( $messages ) - 1 : 0;
-        $wpdb->update(
-            $wpdb->prefix . 'sk_lightning_payments',
-            [ 'chat_message_idx' => $msg_idx ],
-            [ 'payment_hash' => $data['payment_hash'] ],
-            [ '%d' ],
-            [ '%s' ]
-        );
+        $this->add_chat_message( $chat_id, $vendor_id, $message_text, [
+            'card_type'    => 'lightning_invoice',
+            'payment_hash' => $data['payment_hash'],
+        ] );
 
         wp_send_json_success( $data );
     }
@@ -270,22 +263,22 @@ class ChatIntegration {
 
         $marker = $payment->context === 'onchain' ? 'onchain_confirmed' : 'lightning_payment_confirmed';
 
-        $messages = get_post_meta( $chat_id, '_dvc_messages', true );
-        $messages = is_array( $messages ) ? $messages : [];
-        foreach ( $messages as $msg ) {
-            $text = $msg['message'] ?? '';
-            if ( strpos( $text, $payment_hash ) !== false && strpos( $text, $marker ) !== false ) {
-                return;
-            }
+        $card_type = PaymentCard::TYPES[ $marker ];
+
+        if ( ChatMessages::has_payment_message( $chat_id, $payment_hash, $card_type ) ) {
+            return;
         }
 
         $message_data = wp_json_encode( [
-            'type'         => PaymentCard::TYPES[ $marker ],
+            'type'         => $card_type,
             'payment_hash' => $payment_hash,
             'amount_sats'  => (int) $payment->amount_sats,
         ] );
 
-        $this->add_chat_message( $chat_id, (int) $payment->vendor_id, "[{$marker}]{$message_data}[/{$marker}]" );
+        $this->add_chat_message( $chat_id, (int) $payment->vendor_id, "[{$marker}]{$message_data}[/{$marker}]", [
+            'card_type'    => $card_type,
+            'payment_hash' => $payment_hash,
+        ] );
     }
 
     /**
@@ -385,19 +378,8 @@ class ChatIntegration {
         return self::do_find_or_create_chat( $user_id, $vendor_id, $product_id, $product_title );
     }
 
-    public static function add_chat_message_static( int $chat_id, int $user_id, string $message ) {
-        $messages   = get_post_meta( $chat_id, '_dvc_messages', true );
-        $messages   = is_array( $messages ) ? $messages : [];
-        $messages[] = [
-            'user_id'   => $user_id,
-            'message'   => $message,
-            'timestamp' => current_time( 'timestamp' ),
-        ];
-        update_post_meta( $chat_id, '_dvc_messages', $messages );
-        update_post_meta( $chat_id, '_dvc_last_message_time', current_time( 'timestamp' ) );
-
-        // A new message revives the thread for anyone who had deleted it.
-        delete_post_meta( $chat_id, '_dvc_deleted_by' );
+    public static function add_chat_message_static( int $chat_id, int $user_id, string $message, array $card = [] ) {
+        ChatMessages::append( $chat_id, $user_id, $message, $card );
     }
 
     private function find_or_create_chat( int $user_id, int $vendor_id, int $product_id, string $product_title ) {
@@ -451,25 +433,13 @@ class ChatIntegration {
         update_post_meta( $chat_id, '_dvc_participant_1', $user_id );
         update_post_meta( $chat_id, '_dvc_participant_2', $vendor_id );
         update_post_meta( $chat_id, '_dvc_product_id', $product_id );
-        update_post_meta( $chat_id, '_dvc_messages', [] );
         update_post_meta( $chat_id, '_dvc_archived_by', [] );
 
         return $chat_id;
     }
 
-    private function add_chat_message( int $chat_id, int $user_id, string $message ) {
-        $messages   = get_post_meta( $chat_id, '_dvc_messages', true );
-        $messages   = is_array( $messages ) ? $messages : [];
-        $messages[] = [
-            'user_id'   => $user_id,
-            'message'   => $message,
-            'timestamp' => current_time( 'timestamp' ),
-        ];
-        update_post_meta( $chat_id, '_dvc_messages', $messages );
-        update_post_meta( $chat_id, '_dvc_last_message_time', current_time( 'timestamp' ) );
-
-        // A new message revives the thread for anyone who had deleted it.
-        delete_post_meta( $chat_id, '_dvc_deleted_by' );
+    private function add_chat_message( int $chat_id, int $user_id, string $message, array $card = [] ) {
+        ChatMessages::append( $chat_id, $user_id, $message, $card );
     }
 
     /**

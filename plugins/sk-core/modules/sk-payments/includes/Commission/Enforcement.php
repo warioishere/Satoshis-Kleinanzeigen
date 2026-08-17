@@ -303,7 +303,6 @@ class Enforcement {
         update_post_meta( $chat_id, '_dvc_participant_1', $admin_id );
         update_post_meta( $chat_id, '_dvc_participant_2', $vendor_id );
         update_post_meta( $chat_id, '_dvc_commission_chat', '1' );
-        update_post_meta( $chat_id, '_dvc_messages', [] );
         update_post_meta( $chat_id, '_dvc_archived_by', [] );
 
         return $chat_id;

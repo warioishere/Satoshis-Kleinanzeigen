@@ -49,6 +49,8 @@ class ModuleLoader {
         $table_name      = $wpdb->prefix . 'sk_merkliste';
         $charset_collate = $wpdb->get_charset_collate();
 
+        ChatMessages::maybe_install();
+
         $already_exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table_name ) ) === $table_name;
         if ( $already_exists ) {
             return;

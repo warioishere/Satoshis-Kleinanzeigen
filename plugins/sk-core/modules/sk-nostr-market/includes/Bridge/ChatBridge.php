@@ -19,9 +19,6 @@ class ChatBridge {
             return;
         }
 
-        // Hook into VendorChat message saving to detect vendor replies.
-        add_action( 'updated_post_meta', [ __CLASS__, 'on_chat_meta_updated' ], 10, 4 );
-
         // AJAX: Vendor creates invoice in a bridge chat → sent as Nostr DM.
         add_action( 'wp_ajax_sk_nostr_bridge_invoice', [ __CLASS__, 'ajax_create_bridge_invoice' ] );
 
@@ -159,74 +156,51 @@ class ChatBridge {
             $nostr_pubkey = '';
         }
 
-        $messages   = get_post_meta( $chat_id, '_dvc_messages', true );
-        $messages   = is_array( $messages ) ? $messages : [];
-        $messages[] = [
-            'user_id'      => $sender_id,
-            'message'      => $message,
-            'timestamp'    => current_time( 'timestamp' ),
+        \SK\Core\Dashboard\ChatMessages::append( $chat_id, $sender_id, $message, [
             'nostr_pubkey' => strtolower( $nostr_pubkey ),
-        ];
-        update_post_meta( $chat_id, '_dvc_messages', $messages );
-        update_post_meta( $chat_id, '_dvc_last_message_time', current_time( 'timestamp' ) );
-
-        // A new message revives the thread for anyone who had deleted it.
-        delete_post_meta( $chat_id, '_dvc_deleted_by' );
+        ] );
     }
 
     /**
-     * Detect when VendorChat messages are updated.
-     * If a vendor adds a message to a bridge chat, send it as NIP-04 DM.
+     * Mirror a vendor reply in a bridge chat back to Nostr as a DM.
+     *
+     * Called directly by ChatMessages::append(). It used to hang off an
+     * updated_post_meta hook on _dvc_messages, which stopped being a thing when
+     * messages moved into their own table.
+     *
+     * @param int    $chat_id
+     * @param int    $sender_id
+     * @param string $text
+     * @param string $nostr_pubkey Set when the message CAME from Nostr.
      */
-    public static function on_chat_meta_updated( $meta_id, $post_id, $meta_key, $meta_value ): void {
-        if ( $meta_key !== '_dvc_messages' ) {
+    public static function mirror_to_nostr( int $chat_id, int $sender_id, string $text, string $nostr_pubkey = '' ): void {
+        if ( $text === '' ) {
             return;
         }
 
-        // Is this a bridge chat?
-        $is_bridge = get_post_meta( $post_id, '_dvc_nostr_bridge', true );
-        if ( $is_bridge !== '1' ) {
+        // Came from Nostr — do not echo it back.
+        if ( $nostr_pubkey !== '' ) {
             return;
         }
 
-        $nostr_pubkey = get_post_meta( $post_id, '_dvc_nostr_pubkey', true );
-        if ( empty( $nostr_pubkey ) ) {
+        if ( get_post_meta( $chat_id, '_dvc_nostr_bridge', true ) !== '1' ) {
             return;
         }
 
-        // Get the latest message.
-        $messages = is_array( $meta_value ) ? $meta_value : [];
-        if ( empty( $messages ) ) {
+        $recipient = get_post_meta( $chat_id, '_dvc_nostr_pubkey', true );
+        if ( empty( $recipient ) ) {
             return;
         }
 
-        $latest = end( $messages );
-
-        // Skip if message is from the admin (incoming Nostr message).
-        $admin_id = self::get_admin_user_id();
-        if ( (int) ( $latest['user_id'] ?? 0 ) === $admin_id ) {
+        // Messages written as the admin are incoming ones.
+        if ( $sender_id === self::get_admin_user_id() ) {
             return;
         }
 
-        // Skip if message already has a nostr_pubkey (it came from Nostr, don't echo back).
-        if ( ! empty( $latest['nostr_pubkey'] ) ) {
-            return;
-        }
+        $store_info  = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( $sender_id ) : [];
+        $vendor_name = $store_info['store_name'] ?? ( get_userdata( $sender_id )->display_name ?? 'Vendor' );
 
-        // This is a vendor reply — send as NIP-04 DM to the Nostr user.
-        $text = $latest['message'] ?? '';
-        if ( empty( $text ) ) {
-            return;
-        }
-
-        // Get vendor name for context.
-        $vendor_id = (int) ( $latest['user_id'] ?? 0 );
-        $store_info = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( $vendor_id ) : [];
-        $vendor_name = $store_info['store_name'] ?? ( get_userdata( $vendor_id )->display_name ?? 'Vendor' );
-
-        $dm_text = "{$vendor_name}: {$text}";
-
-        self::send_dm( $nostr_pubkey, $dm_text );
+        self::send_dm( $recipient, "{$vendor_name}: {$text}" );
     }
 
     /**

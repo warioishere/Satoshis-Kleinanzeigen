@@ -2,6 +2,7 @@
 
 namespace SK\Core\Dashboard\Modules;
 
+use SK\Core\Dashboard\ChatMessages;
 use SK\Core\Dashboard\DashboardModule;
 
 /**
@@ -31,6 +32,9 @@ class VendorChat extends DashboardModule {
 
 	protected function register_extras(): void {
 		add_action( 'init',                         [ $this, 'register_cpt' ] );
+		add_action( 'init',                         [ ChatMessages::class, 'maybe_install' ] );
+		// Custom table rows are not covered by post deletion.
+		add_action( 'before_delete_post',           [ $this, 'delete_chat_messages' ] );
 		// Badge runs AFTER Registry injects at 50 so it can modify the entry.
 		add_filter( 'sk_get_dashboard_nav',         [ $this, 'add_notification_badge' ], 60 );
 		add_action( 'wp_enqueue_scripts',           [ $this, 'enqueue_assets' ] );
@@ -443,7 +447,6 @@ class VendorChat extends DashboardModule {
 			update_post_meta( $chat_id, '_dvc_participant_1', $current_user_id );
 			update_post_meta( $chat_id, '_dvc_participant_2', $vendor_id );
 			update_post_meta( $chat_id, '_dvc_product_id',    $product_id );
-			update_post_meta( $chat_id, '_dvc_messages',      [] );
 			update_post_meta( $chat_id, '_dvc_archived_by',   [] );
 
 			$this->add_message_to_chat( $chat_id, $current_user_id, $message );
@@ -740,7 +743,7 @@ class VendorChat extends DashboardModule {
 	}
 
 	/**
-	 * Append a message to a chat's _dvc_messages meta array.
+	 * Append a message to a chat.
 	 *
 	 *
 	 * @param int    $chat_id
@@ -749,21 +752,9 @@ class VendorChat extends DashboardModule {
 	 */
 	public function add_message_to_chat( $chat_id, $user_id, $message ) {
 		// Never let user text carry a payment marker (see sanitize_user_message).
-		$message    = self::sanitize_user_message( $message );
-		$messages   = get_post_meta( $chat_id, '_dvc_messages', true );
-		$messages   = is_array( $messages ) ? $messages : [];
-		$messages[] = [
-			'user_id'   => $user_id,
-			'message'   => $message,
-			'timestamp' => current_time( 'timestamp' ),
-		];
+		$message = self::sanitize_user_message( $message );
 
-		update_post_meta( $chat_id, '_dvc_messages', $messages );
-		update_post_meta( $chat_id, '_dvc_last_message_time', current_time( 'timestamp' ) );
-
-		// A new message revives the thread for anyone who had deleted it, so
-		// nobody can lose an incoming reply by having cleaned up earlier.
-		delete_post_meta( $chat_id, '_dvc_deleted_by' );
+		ChatMessages::append( (int) $chat_id, (int) $user_id, $message );
 	}
 
 	/**
@@ -774,10 +765,7 @@ class VendorChat extends DashboardModule {
 	 * @return array
 	 */
 	public function get_messages( $chat_id ) {
-		// Clear object cache to ensure fresh data (important for AJAX polling).
-		wp_cache_delete( $chat_id, 'post_meta' );
-		$messages = get_post_meta( $chat_id, '_dvc_messages', true );
-		return is_array( $messages ) ? $messages : [];
+		return ChatMessages::all( (int) $chat_id );
 	}
 
 	/**
@@ -882,6 +870,22 @@ class VendorChat extends DashboardModule {
 		if ( in_array( $p1, $deleted_by, true ) && in_array( $p2, $deleted_by, true ) ) {
 			wp_delete_post( $chat_id, true );
 		}
+	}
+
+	/**
+	 * Drop a chat's messages when its post is deleted.
+	 *
+	 * Post meta goes away with the post, rows in our own table do not.
+	 *
+	 *
+	 * @param int $post_id
+	 */
+	public function delete_chat_messages( $post_id ) {
+		if ( get_post_type( $post_id ) !== 'vendor_chat' ) {
+			return;
+		}
+
+		ChatMessages::delete_for_chat( (int) $post_id );
 	}
 
 	/**

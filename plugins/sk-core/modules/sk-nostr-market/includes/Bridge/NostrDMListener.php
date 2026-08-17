@@ -392,7 +392,6 @@ class NostrDMListener {
         update_post_meta( $chat_id, '_dvc_participant_1', $admin_id );
         update_post_meta( $chat_id, '_dvc_participant_2', $vendor_id );
         update_post_meta( $chat_id, '_dvc_product_id', $product_id );
-        update_post_meta( $chat_id, '_dvc_messages', [] );
         update_post_meta( $chat_id, '_dvc_archived_by', [] );
 
         // Bridge metadata.

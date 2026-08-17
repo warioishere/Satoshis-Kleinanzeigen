@@ -149,8 +149,7 @@ if ( ! function_exists( 'dvc_get_other_participant' ) ) {
 
 if ( ! function_exists( 'dvc_get_chat_messages' ) ) {
 	function dvc_get_chat_messages( $chat_id ) {
-		$messages = get_post_meta( $chat_id, '_dvc_messages', true );
-		return is_array( $messages ) ? $messages : [];
+		return \SK\Core\Dashboard\ChatMessages::all( (int) $chat_id );
 	}
 }
 
