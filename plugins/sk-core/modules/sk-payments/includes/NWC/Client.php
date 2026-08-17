@@ -209,18 +209,14 @@ class Client {
         }
     }
 
+    /**
+     * @see \SK\Modules\Payments\Secret Authenticated encryption (AES-256-GCM).
+     */
     public static function encrypt_connection_string( string $connection_string ): string {
-        $key = wp_salt( 'auth' );
-        $iv  = random_bytes( 16 );
-        $encrypted = openssl_encrypt( $connection_string, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv );
-        return base64_encode( $iv . $encrypted );
+        return \SK\Modules\Payments\Secret::encrypt( $connection_string );
     }
 
     public static function decrypt_connection_string( string $encrypted ): string {
-        $key  = wp_salt( 'auth' );
-        $data = base64_decode( $encrypted );
-        $iv   = substr( $data, 0, 16 );
-        $encrypted_data = substr( $data, 16 );
-        return openssl_decrypt( $encrypted_data, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv );
+        return \SK\Modules\Payments\Secret::decrypt( $encrypted );
     }
 }

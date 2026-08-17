@@ -2,7 +2,7 @@
 
 namespace SK\Modules\Payments\Admin;
 
-use SK\Modules\Payments\NWC\Client as NWCClient;
+use SK\Modules\Payments\Secret;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -112,8 +112,10 @@ class AdminSettings {
 
         if ( ! empty( $lndhub_raw ) && strpos( $lndhub_raw, 'lndhub://' ) === 0 ) {
             // Encrypt and store separately.
-            $encrypted = NWCClient::encrypt_connection_string( $lndhub_raw );
-            update_option( self::LNDHUB_OPTION, $encrypted );
+            $encrypted = Secret::encrypt( $lndhub_raw );
+            if ( $encrypted !== '' ) {
+                update_option( self::LNDHUB_OPTION, $encrypted );
+            }
         }
 
         // Always remove plain text from the settings option.
@@ -128,11 +130,7 @@ class AdminSettings {
      * Get the decrypted marketplace LNDHub connection string.
      */
     public static function get_marketplace_lndhub(): string {
-        $encrypted = get_option( self::LNDHUB_OPTION, '' );
-        if ( empty( $encrypted ) ) {
-            return '';
-        }
-
-        return NWCClient::decrypt_connection_string( $encrypted );
+        // Upgrades legacy CBC ciphertext to GCM on first read.
+        return Secret::from_option( self::LNDHUB_OPTION );
     }
 }

@@ -211,19 +211,20 @@ class StoreSettings {
         $info = $client->get_info();
         $nwc_works = ! is_wp_error( $info );
 
-        $encrypted = NWC\Client::encrypt_connection_string( $nwc_raw );
+        $encrypted = Secret::encrypt( $nwc_raw );
+        if ( $encrypted === '' ) {
+            // Never overwrite a working connection with an empty value.
+            return;
+        }
+
         update_user_meta( $store_id, 'sk_nwc_connection', $encrypted );
         $settings['lightning_nwc'] = $nwc_works;
         update_user_meta( $store_id, 'sk_profile_settings', $settings );
     }
 
     public static function get_nwc_client( int $vendor_id ) {
-        $encrypted = get_user_meta( $vendor_id, 'sk_nwc_connection', true );
-        if ( empty( $encrypted ) ) {
-            return null;
-        }
-
-        $connection_string = NWC\Client::decrypt_connection_string( $encrypted );
+        // Upgrades legacy CBC ciphertext to GCM on first read.
+        $connection_string = Secret::from_user_meta( $vendor_id, 'sk_nwc_connection' );
         if ( empty( $connection_string ) ) {
             return null;
         }
@@ -260,19 +261,20 @@ class StoreSettings {
         $info = $client->get_info();
         $works = ! is_wp_error( $info );
 
-        $encrypted = LNDHub\Client::encrypt_connection_string( $raw );
+        $encrypted = Secret::encrypt( $raw );
+        if ( $encrypted === '' ) {
+            // Never overwrite a working connection with an empty value.
+            return;
+        }
+
         update_user_meta( $store_id, 'sk_lndhub_connection', $encrypted );
         $settings['lightning_lndhub'] = $works;
         update_user_meta( $store_id, 'sk_profile_settings', $settings );
     }
 
     public static function get_lndhub_client( int $vendor_id ) {
-        $encrypted = get_user_meta( $vendor_id, 'sk_lndhub_connection', true );
-        if ( empty( $encrypted ) ) {
-            return null;
-        }
-
-        $connection_string = LNDHub\Client::decrypt_connection_string( $encrypted );
+        // Upgrades legacy CBC ciphertext to GCM on first read.
+        $connection_string = Secret::from_user_meta( $vendor_id, 'sk_lndhub_connection' );
         if ( empty( $connection_string ) ) {
             return null;
         }
@@ -333,7 +335,12 @@ class StoreSettings {
         $test = Onchain\XpubDerivation::derive_address( $raw, 0 );
         $valid = ! is_wp_error( $test );
 
-        $encrypted = NWC\Client::encrypt_connection_string( $raw );
+        $encrypted = Secret::encrypt( $raw );
+        if ( $encrypted === '' ) {
+            // Never overwrite a stored xpub with an empty value.
+            return;
+        }
+
         update_user_meta( $store_id, 'sk_xpub', $encrypted );
 
         if ( ! get_user_meta( $store_id, 'sk_xpub_index', true ) ) {
@@ -378,8 +385,8 @@ class StoreSettings {
      */
     public static function get_next_onchain_address( int $vendor_id ): string {
         if ( self::has_xpub( $vendor_id ) ) {
-            $encrypted = get_user_meta( $vendor_id, 'sk_xpub', true );
-            $xpub = NWC\Client::decrypt_connection_string( $encrypted );
+            // Upgrades legacy CBC ciphertext to GCM on first read.
+            $xpub = Secret::from_user_meta( $vendor_id, 'sk_xpub' );
 
             // Atomic index increment to prevent race condition.
             global $wpdb;
