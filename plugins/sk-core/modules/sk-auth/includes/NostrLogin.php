@@ -281,12 +281,9 @@ class Nostr_Login_Handler {
             $sanitized_metadata['website'] = esc_url_raw( $metadata['website'] );
             // Optionally validate URL
         }
-        if ( isset( $metadata['email'] ) ) {
-            $sanitized_metadata['email'] = sanitize_email( $metadata['email'] );
-            if ( ! is_email( $sanitized_metadata['email'] ) ) {
-                $sanitized_metadata['email'] = '';
-            }
-        }
+        // No email is taken from the metadata: it is not covered by the NIP-98
+        // signature, so it is a claim by the caller and must never influence
+        // which account this login ends up on.
         if ( isset( $metadata['lud16'] ) ) {
             $sanitized_metadata['lud16'] = sanitize_text_field( $metadata['lud16'] );
         }
@@ -349,19 +346,11 @@ class Nostr_Login_Handler {
             $username = 'satoshi-' . wp_generate_password( 5, false, false );
         }
 
-        $email = ! empty( $sanitized_metadata['email'] ) ? sanitize_email( $sanitized_metadata['email'] ) : sanitize_text_field( $public_key ) . '@nostr.local';
-
-        if ( ! is_email( $email ) ) {
-            $email = sanitize_text_field( $public_key ) . '@nostr.local';
-        }
-
-        // Check if a user with this email already exists — link instead of failing.
-        $existing = get_user_by( 'email', $email );
-        if ( $existing ) {
-            update_user_meta( $existing->ID, 'nostr_public_key', sanitize_text_field( $public_key ) );
-            $this->update_user_metadata( $existing->ID, $sanitized_metadata );
-            return $existing->ID;
-        }
+        // The account address is derived from the verified public key, never from
+        // the submitted metadata: the metadata travels outside the signed NIP-98
+        // event, so anyone could claim any address. Matching an existing account
+        // by such an address would hand out that account to the caller.
+        $email = sanitize_text_field( $public_key ) . '@nostr.local';
 
         $user_id = wp_create_user( $username, wp_generate_password(), $email );
 

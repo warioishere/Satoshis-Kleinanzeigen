@@ -71,33 +71,46 @@ class UAC_Nostr_Login_Integration {
      * create a new account and hits an "email already in use" error.
      */
     public function maybe_handle_linked_login() {
-        // Extract pubkey from authtoken (base64-encoded JSON event)
         $authtoken_raw = isset($_POST['authtoken']) ? sanitize_text_field(wp_unslash($_POST['authtoken'])) : '';
         if (empty($authtoken_raw)) return;
 
-        $authtoken = base64_decode($authtoken_raw);
-        if (!$authtoken) return;
+        // Read the claimed pubkey WITHOUT trusting it — it is only used to decide
+        // whether this handler has to intervene at all. Nothing may be
+        // authenticated on the strength of it: a Nostr pubkey is public, so
+        // anyone can name someone else's.
+        $claimed = json_decode(base64_decode($authtoken_raw));
+        if (!$claimed || empty($claimed->pubkey) || !is_string($claimed->pubkey)) return;
 
-        $event = json_decode($authtoken);
-        if (!$event || empty($event->pubkey)) return;
+        $claimed_pubkey = strtolower(sanitize_text_field($claimed->pubkey));
+        if (!preg_match('/^[a-f0-9]{64}$/', $claimed_pubkey)) return;
 
-        $pubkey = sanitize_text_field($event->pubkey);
-        if (!preg_match('/^[a-f0-9]{64}$/i', $pubkey)) return;
-
-        // Look up UAC-linked account (includes fallback to nostr_public_key meta)
-        $linked_user_id = $this->account_linker->get_user_by_nostr($pubkey);
+        // Is there a linked account for it, and does nostr-login need our help?
+        $linked_user_id = $this->account_linker->get_user_by_nostr($claimed_pubkey);
         if (!$linked_user_id) return;
 
         // If the linked user already has nostr_public_key set for this pubkey,
         // nostr-login's own get_user_by_public_key() will find them — no need to intercept.
         $existing_pubkey = get_user_meta($linked_user_id, 'nostr_public_key', true);
-        if ($existing_pubkey === $pubkey) return;
+        if (strtolower((string) $existing_pubkey) === $claimed_pubkey) return;
 
-        // Verify nonce before logging in
+        // From here on we would log somebody in, so the signature has to hold.
+        // verify_nostr_identity() checks the Schnorr signature, the NIP-98 kind,
+        // the timestamp window, the endpoint binding and single use.
+        $verified = $this->verify_nostr_identity($authtoken_raw);
+        if (is_wp_error($verified)) return;
+
+        if (strtolower($verified['pubkey']) !== $claimed_pubkey) return;
+
+        // Resolve the account from the VERIFIED key, not from the claim.
+        $user_id = $this->account_linker->get_user_by_nostr(strtolower($verified['pubkey']));
+        if (!$user_id) return;
+
+        // Nonce stays as an extra hurdle, but it is not an authentication factor:
+        // nostr-login hands one out to logged-out visitors on request.
         $nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
         if (!wp_verify_nonce($nonce, 'nostr-login-nonce')) return;
 
-        $user = get_user_by('ID', $linked_user_id);
+        $user = get_user_by('ID', $user_id);
         if (!$user) return;
 
         wp_set_current_user($user->ID);
@@ -172,13 +185,29 @@ class UAC_Nostr_Login_Integration {
         }
 
         // Check kind is 27235 (NIP-98)
-        if ('27235' != $nip98->kind) {
+        if (27235 !== (int) ($nip98->kind ?? 0)) {
             return new WP_Error('invalid_kind', 'Ungültiger Event-Typ. NIP-98 Auth-Event erwartet.');
         }
 
-        // Check timestamp is recent (within 60 seconds)
-        if (time() - $nip98->created_at > 60) {
+        // Timestamp window in BOTH directions — a one-sided check accepts a
+        // token dated far in the future, which would then never expire.
+        if (abs(time() - (int) ($nip98->created_at ?? 0)) > 60) {
             return new WP_Error('expired_token', 'Authentifizierungstoken ist abgelaufen.');
+        }
+
+        // Bind the token to this endpoint and method, so a NIP-98 token the user
+        // signed for some other service cannot be replayed here to link its key.
+        $tags = array_column($nip98->tags ?? [], 1, 0);
+
+        $expected_url = strtolower(preg_replace('#^http://#', 'https://', admin_url('admin-ajax.php')));
+        $provided_url = strtolower(preg_replace('#^http://#', 'https://', $tags['u'] ?? ''));
+
+        if ($provided_url !== $expected_url) {
+            return new WP_Error('invalid_url', 'Auth-Token gilt nicht für diese Seite.');
+        }
+
+        if (strtolower($tags['method'] ?? '') !== 'post') {
+            return new WP_Error('invalid_method', 'Auth-Token hat die falsche Methode.');
         }
 
         // Validate public key format
@@ -186,8 +215,21 @@ class UAC_Nostr_Login_Integration {
             return new WP_Error('invalid_pubkey', 'Ungültiges Format des öffentlichen Schlüssels.');
         }
 
+        // Single use: linking and merging are destructive, so a captured token
+        // must not work twice.
+        $event_id = $nip98->id ?? '';
+        if (empty($event_id)) {
+            return new WP_Error('invalid_authtoken', 'Auth-Token ohne Event-ID.');
+        }
+
+        $replay_key = 'sk_uac_nip98_' . md5($event_id);
+        if (get_transient($replay_key)) {
+            return new WP_Error('token_reused', 'Auth-Token bereits verwendet. Bitte erneut versuchen.');
+        }
+        set_transient($replay_key, 1, 60);
+
         return array(
-            'pubkey' => $nip98->pubkey
+            'pubkey' => strtolower($nip98->pubkey)
         );
     }
 }
