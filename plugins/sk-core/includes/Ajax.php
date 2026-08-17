@@ -47,10 +47,40 @@ class Ajax {
     }
 
     /**
-     * Load variations
+     * May the current user edit this product?
      *
-     * @return void
+     * The 'skdar' capability only says "has a vendor dashboard" — every seller
+     * has it. Without an author check on top, any seller could edit or delete
+     * the products of any other seller by passing their product ID.
+     *
+     * @param int $product_id
+     * @return bool
      */
+    public static function can_edit_product( $product_id ) {
+        $product_id = absint( $product_id );
+
+        if ( ! $product_id ) {
+            return false;
+        }
+
+        $post = get_post( $product_id );
+
+        if ( ! $post || ! in_array( $post->post_type, [ 'product', 'product_variation' ], true ) ) {
+            return false;
+        }
+
+        // Variations belong to their parent product.
+        if ( 'product_variation' === $post->post_type && $post->post_parent ) {
+            return self::can_edit_product( $post->post_parent );
+        }
+
+        if ( current_user_can( 'manage_options' ) || current_user_can( 'edit_others_products' ) ) {
+            return true;
+        }
+
+        return (int) $post->post_author === (int) sk_get_current_user_id();
+    }
+
     public function load_variations() {
         ob_start();
 
@@ -58,6 +88,10 @@ class Ajax {
 
         // Check permissions again and make sure we have what we need
         if ( ! current_user_can( 'skdar' ) || empty( $_POST['product_id'] ) || empty( $_POST['attributes'] ) ) {
+            die( -1 );
+        }
+
+        if ( ! self::can_edit_product( $_POST['product_id'] ) ) {
             die( -1 );
         }
 
@@ -226,6 +260,10 @@ class Ajax {
 
         // Check permissions again and make sure we have what we need
         if ( ! current_user_can( 'skdar' ) || empty( $_POST ) || empty( $_POST['product_id'] ) ) {
+            die( -1 );
+        }
+
+        if ( ! self::can_edit_product( $_POST['product_id'] ) ) {
             die( -1 );
         }
 
@@ -645,6 +683,10 @@ class Ajax {
             die( -1 );
         }
 
+        if ( ! self::can_edit_product( $_POST['product_id'] ) ) {
+            die( -1 );
+        }
+
         $product_id  = absint( $_POST['product_id'] );
         $bulk_action = wc_clean( $_POST['bulk_action'] );
         $data        = ! empty( $_POST['data'] ) ? array_map( 'wc_clean', $_POST['data'] ) : [];
@@ -686,14 +728,21 @@ class Ajax {
             die( -1 );
         }
 
-        $variation_ids = (array) $_POST['variation_ids'];
+        $variation_ids = (array) ( $_POST['variation_ids'] ?? [] );
 
         foreach ( $variation_ids as $variation_id ) {
-            $variation = get_post( $variation_id );
+            $variation = get_post( absint( $variation_id ) );
 
-            if ( $variation && 'product_variation' === $variation->post_type ) {
-                wp_delete_post( $variation_id );
+            if ( ! $variation || 'product_variation' !== $variation->post_type ) {
+                continue;
             }
+
+            // Only the owner of the parent product may delete its variations.
+            if ( ! self::can_edit_product( $variation->ID ) ) {
+                continue;
+            }
+
+            wp_delete_post( $variation->ID );
         }
 
         die();
@@ -755,27 +804,6 @@ class Ajax {
                 'order' => $order,
             ]
         );
-
-        die();
-    }
-
-    /**
-     * Delete variations via ajax function
-     */
-    public function remove_variation() {
-        if ( ! current_user_can( 'skdar' ) ) {
-            die( -1 );
-        }
-
-        $variation_ids = (array) $_POST['variation_ids'];
-
-        foreach ( $variation_ids as $variation_id ) {
-            $variation = get_post( $variation_id );
-
-            if ( $variation && 'product_variation' === $variation->post_type ) {
-                wp_delete_post( $variation_id );
-            }
-        }
 
         die();
     }
@@ -913,6 +941,11 @@ class Ajax {
         global $post;
 
         $post_id = intval( $_POST['post_id'] );
+
+        if ( ! self::can_edit_product( $post_id ) ) {
+            die( -1 );
+        }
+
         $post    = get_post( $post_id ); // Set $post global so its available like within the admin screens
         $loop    = intval( $_POST['loop'] );
 
@@ -1070,6 +1103,10 @@ class Ajax {
 
         if ( ! $post_id ) {
             die();
+        }
+
+        if ( ! current_user_can( 'skdar' ) || ! self::can_edit_product( $post_id ) ) {
+            die( -1 );
         }
 
         $variations = [];

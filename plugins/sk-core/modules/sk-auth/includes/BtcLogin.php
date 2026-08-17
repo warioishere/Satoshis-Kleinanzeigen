@@ -196,6 +196,7 @@ class BtcLogin {
 		}
 
 		update_user_meta( $user_id, 'btc_address', $address );
+		update_user_meta( $user_id, 'sk_password_set', 1 );
 		wp_update_user( [ 'ID' => $user_id, 'display_name' => $username ] );
 
 		wp_set_current_user( $user_id );
@@ -205,21 +206,76 @@ class BtcLogin {
 		exit;
 	}
 
+
+	/** Failed password attempts allowed per address and per IP before locking out. */
+	const MAX_LOGIN_ATTEMPTS = 5;
+
+	/** How long a lockout lasts. */
+	const LOGIN_LOCKOUT = 900;
+
+	/**
+	 * Is this address or IP currently locked out?
+	 *
+	 * The Bitcoin address is a public identifier, so without a limit the login
+	 * form is an offline-quality brute force oracle against the password.
+	 */
+	private static function login_blocked( string $address ): bool {
+		foreach ( self::login_keys( $address ) as $key ) {
+			if ( (int) get_transient( $key ) >= self::MAX_LOGIN_ATTEMPTS ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private static function register_failed_login( string $address ): void {
+		foreach ( self::login_keys( $address ) as $key ) {
+			set_transient( $key, (int) get_transient( $key ) + 1, self::LOGIN_LOCKOUT );
+		}
+	}
+
+	private static function clear_failed_logins( string $address ): void {
+		foreach ( self::login_keys( $address ) as $key ) {
+			delete_transient( $key );
+		}
+	}
+
+	/**
+	 * @return string[] Counter keys: one per address, one per client IP.
+	 */
+	private static function login_keys( string $address ): array {
+		$ip = function_exists( 'sk_get_client_ip' ) ? sk_get_client_ip() : '';
+
+		return [
+			'sk_btclogin_a_' . md5( strtolower( $address ) ),
+			'sk_btclogin_i_' . md5( $ip !== '' ? $ip : 'unknown' ),
+		];
+	}
+
 	/**
 	 * Handle login.
 	 */
 	private function handle_login( string $address, string $password ): ?string {
+		if ( self::login_blocked( $address ) ) {
+			return 'Zu viele Fehlversuche. Bitte in 15 Minuten erneut versuchen.';
+		}
+
 		$users = get_users( [ 'meta_key' => 'btc_address', 'meta_value' => $address, 'number' => 1 ] );
 
 		if ( empty( $users ) ) {
+			self::register_failed_login( $address );
 			return 'Bitcoin-Adresse oder Passwort falsch.';
 		}
 
 		$user = wp_authenticate( $users[0]->user_login, $password );
 
 		if ( ! $user || is_wp_error( $user ) ) {
+			self::register_failed_login( $address );
 			return 'Bitcoin-Adresse oder Passwort falsch.';
 		}
+
+		self::clear_failed_logins( $address );
 
 		wp_set_current_user( $user->ID );
 		wp_set_auth_cookie( $user->ID, true );
