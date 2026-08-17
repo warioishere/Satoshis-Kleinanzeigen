@@ -6,7 +6,7 @@
  *   - swentel/nostr-php v1.9.2 (NWC Client, Nostr Login, Auto Poster)
  *   - bitwasp/bech32 (LNURL Auth, Nostr Login)
  *   - eza/lnurl-php (LNURL Auth)
- *   - endroid/qr-code + bacon/bacon-qr-code (LNURL Auth)
+ *   - endroid/qr-code + bacon/bacon-qr-code (LNURL Auth, Zahlungs-QR)
  *   - phrity/websocket (NWC Client WebSocket)
  *   - simplito/elliptic-php (Nostr, LNURL)
  *   - paragonie/ecc (Nostr crypto)
@@ -45,8 +45,6 @@
         'Endroid\\QrCode\\'      => $dir . '/endroid/qr-code/src',
         'BaconQrCode\\'          => $dir . '/bacon/bacon-qr-code/src',
         'DASPRiD\\Enum\\'        => $dir . '/dasprid/enum/src',
-        'chillerlan\\QRCode\\'   => $dir . '/chillerlan/php-qrcode/src',
-        'chillerlan\\Settings\\' => $dir . '/chillerlan/php-settings-container/src',
     ];
 
     spl_autoload_register( function ( $class ) use ( $map ) {
