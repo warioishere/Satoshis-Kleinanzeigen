@@ -14,6 +14,17 @@ $current_user_id = get_current_user_id();
 $active_chats   = dvc_get_user_chats( $current_user_id, false );
 $archived_chats = dvc_get_user_chats( $current_user_id, true );
 
+// One query each for the previews and the unread markers, instead of loading
+// every message of every chat in the loops below.
+$list_chat_ids  = array_map(
+	static function ( $chat ) {
+		return (int) $chat->ID;
+	},
+	array_merge( $active_chats, $archived_chats )
+);
+$last_messages  = dvc_get_last_messages( $list_chat_ids );
+$unread_counts  = dvc_get_unread_counts( $list_chat_ids, $current_user_id );
+
 // Get current view
 $view    = isset( $_GET['view'] ) ? sanitize_text_field( $_GET['view'] ) : 'active';
 $chat_id = isset( $_GET['chat_id'] ) ? intval( $_GET['chat_id'] ) : 0;
@@ -74,9 +85,8 @@ do_action( 'sk_dashboard_wrap_start' );
 								: $other_user->display_name;
 							$product_id    = get_post_meta( $chat->ID, '_dvc_product_id', true );
 							$product_title = get_the_title( $product_id );
-							$messages      = dvc_get_chat_messages( $chat->ID );
-							$last_message  = ! empty( $messages ) ? end( $messages ) : null;
-							$unread        = dvc_has_unread_messages( $chat->ID, $current_user_id );
+							$last_message  = $last_messages[ (int) $chat->ID ] ?? null;
+							$unread        = ! empty( $unread_counts[ (int) $chat->ID ] );
 							?>
 							<div class="dvc-chat-item <?php echo $chat_id == $chat->ID ? 'active' : ''; ?> <?php echo $unread ? 'unread' : ''; ?>"
 								data-chat-id="<?php echo esc_attr( $chat->ID ); ?>">
@@ -130,8 +140,7 @@ do_action( 'sk_dashboard_wrap_start' );
 								: $other_user->display_name;
 							$product_id    = get_post_meta( $chat->ID, '_dvc_product_id', true );
 							$product_title = get_the_title( $product_id );
-							$messages      = dvc_get_chat_messages( $chat->ID );
-							$last_message  = ! empty( $messages ) ? end( $messages ) : null;
+							$last_message  = $last_messages[ (int) $chat->ID ] ?? null;
 							?>
 							<div class="dvc-chat-item <?php echo $chat_id == $chat->ID ? 'active' : ''; ?>"
 								data-chat-id="<?php echo esc_attr( $chat->ID ); ?>">

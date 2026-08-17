@@ -30,13 +30,54 @@ class Fake_WPDB {
 	public function insert( $table, $data, $format = null ) {
 		$this->ops[] = 'insert';
 		$row = (object) $data;
+		$row->id = $this->next_id++;
 		$this->rows[ (int) $data['chat_id'] ][] = $row;
-		$this->insert_id = $this->next_id++;
+		$this->insert_id = $row->id;
 		return 1;
+	}
+
+	/** All rows across all chats. */
+	private function all_rows() {
+		$out = [];
+		foreach ( $this->rows as $rows ) { foreach ( $rows as $r ) { $out[] = $r; } }
+		return $out;
 	}
 
 	public function get_results( $query ) {
 		$this->ops[] = 'select';
+
+		// unread_counts(): "... WHERE user_id <> N AND ( (chat_id = A AND id > B) OR ... ) GROUP BY chat_id"
+		if ( stripos( $query, 'COUNT(*) AS unread' ) !== false ) {
+			preg_match( '/user_id <> (\d+)/', $query, $u );
+			$viewer = (int) ( $u[1] ?? 0 );
+			preg_match_all( '/\(chat_id = (\d+) AND id > (\d+)\)/', $query, $cl, PREG_SET_ORDER );
+			$out = [];
+			foreach ( $cl as $c ) {
+				$chat = (int) $c[1]; $after = (int) $c[2]; $n = 0;
+				foreach ( $this->rows[ $chat ] ?? [] as $r ) {
+					if ( (int) $r->user_id !== $viewer && (int) $r->id > $after ) { $n++; }
+				}
+				if ( $n ) { $out[] = (object) [ 'chat_id' => $chat, 'unread' => $n ]; }
+			}
+			return $out;
+		}
+
+		// last_messages(): newest row per chat.
+		if ( stripos( $query, 'MAX(id) AS max_id' ) !== false ) {
+			preg_match( '/chat_id IN \(([0-9,]*)\)/', $query, $m );
+			$ids = array_filter( array_map( 'intval', explode( ',', $m[1] ?? '' ) ) );
+			$out = [];
+			foreach ( $ids as $chat ) {
+				$rows = $this->rows[ $chat ] ?? [];
+				if ( ! $rows ) { continue; }
+				$newest = $rows[0];
+				foreach ( $rows as $r ) { if ( (int) $r->id > (int) $newest->id ) { $newest = $r; } }
+				$copy = clone $newest; $copy->chat_id = $chat;
+				$out[] = $copy;
+			}
+			return $out;
+		}
+
 		if ( ! preg_match( '/chat_id = (\d+)/', $query, $m ) ) { return []; }
 		return $this->rows[ (int) $m[1] ] ?? [];
 	}
@@ -45,6 +86,11 @@ class Fake_WPDB {
 		$this->ops[] = 'select_var';
 		if ( ! preg_match( '/chat_id = (\d+)/', $query, $m ) ) { return 0; }
 		$rows = $this->rows[ (int) $m[1] ] ?? [];
+		if ( stripos( $query, 'MAX(id)' ) !== false ) {
+			$max = 0;
+			foreach ( $rows as $r ) { $max = max( $max, (int) $r->id ); }
+			return $max;
+		}
 		if ( stripos( $query, 'payment_hash =' ) !== false ) {
 			preg_match( "/payment_hash = '([^']*)'/", $query, $h );
 			preg_match( "/card_type = '([^']*)'/", $query, $c );
@@ -70,6 +116,10 @@ $wpdb = new Fake_WPDB();
 $GLOBALS['options'] = [ 'sk_chat_messages_db_version' => '1' ];   // table already installed
 $GLOBALS['postmeta'] = [];
 $GLOBALS['transients'] = [];
+$GLOBALS['usermeta'] = [];
+
+function get_user_meta( $id, $key, $single = false ) { return $GLOBALS['usermeta'][ $id ][ $key ] ?? ''; }
+function update_user_meta( $id, $key, $v ) { $GLOBALS['usermeta'][ $id ][ $key ] = $v; return true; }
 
 function get_option( $k, $d = false ) { return $GLOBALS['options'][ $k ] ?? $d; }
 function update_option( $k, $v ) { $GLOBALS['options'][ $k ] = $v; return true; }
@@ -187,6 +237,72 @@ check( 'empty legacy meta removed', isset( $GLOBALS['postmeta'][31]['_dvc_messag
 // --- Deleting a chat clears its rows ---------------------------------------
 ChatMessages::delete_for_chat( 10 );
 check( 'delete_for_chat removes the messages', ChatMessages::all( 10 ), [] );
+
+// --- Read markers and unread counts ----------------------------------------
+//
+// Unread state used to be one entry per received message in a user meta array
+// that was never pruned. It is now derived: one marker per chat, counted
+// against the messages table.
+
+$BUYER  = 3;
+$VENDOR = 7;
+
+// Chat 50: buyer writes twice, vendor once.
+ChatMessages::append( 50, $BUYER,  'Frage 1' );
+ChatMessages::append( 50, $BUYER,  'Frage 2' );
+ChatMessages::append( 50, $VENDOR, 'Antwort' );
+
+check( 'vendor sees the buyer messages as unread',
+	ChatMessages::unread_counts( [ 50 ], $VENDOR ), [ 50 => 2 ] );
+check( 'buyer sees the vendor message as unread',
+	ChatMessages::unread_counts( [ 50 ], $BUYER ), [ 50 => 1 ] );
+check( 'own messages never count as unread',
+	array_sum( ChatMessages::unread_counts( [ 50 ], $VENDOR ) ), 2 );
+
+ChatMessages::mark_read( 50, $VENDOR );
+check( 'after reading, nothing is unread for the vendor',
+	ChatMessages::unread_counts( [ 50 ], $VENDOR ), [] );
+check( 'reading does not affect the other party',
+	ChatMessages::unread_counts( [ 50 ], $BUYER ), [ 50 => 1 ] );
+
+ChatMessages::append( 50, $BUYER, 'Noch eine Frage' );
+check( 'a new message becomes unread again',
+	ChatMessages::unread_counts( [ 50 ], $VENDOR ), [ 50 => 1 ] );
+
+// The marker is one entry per chat, not per message.
+$markers = ChatMessages::read_markers( $VENDOR );
+check( 'exactly one marker per chat', count( $markers ), 1 );
+check( 'marker is a message id', is_int( $markers[50] ) && $markers[50] > 0, true );
+
+// Several chats in a single query.
+ChatMessages::append( 51, $BUYER, 'Chat B' );
+ChatMessages::append( 52, $BUYER, 'Chat C 1' );
+ChatMessages::append( 52, $BUYER, 'Chat C 2' );
+
+$wpdb->ops = [];
+$counts = ChatMessages::unread_counts( [ 50, 51, 52 ], $VENDOR );
+check( 'three chats counted in ONE query', count( array_filter( $wpdb->ops, function ( $o ) { return $o === 'select'; } ) ), 1 );
+check( 'counts per chat', $counts, [ 50 => 1, 51 => 1, 52 => 2 ] );
+check( 'total unread across chats', array_sum( $counts ), 4 );
+
+check( 'chats without unread are absent', isset( ChatMessages::unread_counts( [ 53 ], $VENDOR )[53] ), false );
+check( 'empty chat list needs no query', ChatMessages::unread_counts( [], $VENDOR ), [] );
+check( 'user 0 has no unread', ChatMessages::unread_counts( [ 50 ], 0 ), [] );
+
+// Deleting a chat forgets its marker.
+ChatMessages::forget_read_marker( 50, [ $VENDOR, $BUYER ] );
+check( 'marker removed with the chat', isset( ChatMessages::read_markers( $VENDOR )[50] ), false );
+
+// --- Last message per chat, one query --------------------------------------
+$wpdb->ops = [];
+$last = ChatMessages::last_messages( [ 50, 51, 52 ] );
+check( 'previews for three chats in ONE query', count( array_filter( $wpdb->ops, function ( $o ) { return $o === 'select'; } ) ), 1 );
+check( 'newest message of chat 50', $last[50]['message'], 'Noch eine Frage' );
+check( 'newest message of chat 52', $last[52]['message'], 'Chat C 2' );
+check( 'preview has the legacy keys',
+	array_keys( $last[51] ) === [ 'user_id', 'message', 'timestamp', 'card_type', 'payment_hash', 'nostr_pubkey' ], true );
+check( 'unknown chat has no preview', isset( $last[999] ), false );
+check( 'empty list needs no query', ChatMessages::last_messages( [] ), [] );
 
 printf( "\n%s\n", $fails ? "{$fails} FAILURE(S)" : 'all checks passed' );
 exit( $fails ? 1 : 0 );

@@ -450,7 +450,6 @@ class VendorChat extends DashboardModule {
 			update_post_meta( $chat_id, '_dvc_archived_by',   [] );
 
 			$this->add_message_to_chat( $chat_id, $current_user_id, $message );
-			$this->add_notification( $vendor_id, $chat_id );
 
 			wp_send_json_success( [
 				'message' => __( 'Chat erstellt und Nachricht gesendet!', 'sk' ),
@@ -488,7 +487,6 @@ class VendorChat extends DashboardModule {
 
 		$other_user_id = $this->get_other_participant( $chat_id, $current_user_id );
 		if ( $other_user_id ) {
-			$this->add_notification( $other_user_id, $chat_id );
 
 			// Mirror to Nostr DM if both users have Nostr identities.
 			if ( class_exists( 'SK\Modules\Auth\NostrIdentity' ) && class_exists( 'SK\Modules\NostrMarket\Bridge\ChatBridge' ) ) {
@@ -885,7 +883,14 @@ class VendorChat extends DashboardModule {
 			return;
 		}
 
-		ChatMessages::delete_for_chat( (int) $post_id );
+		$post_id = (int) $post_id;
+
+		ChatMessages::forget_read_marker( $post_id, [
+			(int) get_post_meta( $post_id, '_dvc_participant_1', true ),
+			(int) get_post_meta( $post_id, '_dvc_participant_2', true ),
+		] );
+
+		ChatMessages::delete_for_chat( $post_id );
 	}
 
 	/**
@@ -933,61 +938,38 @@ class VendorChat extends DashboardModule {
 	}
 
 	/**
-	 * Store an unread notification for a user.
+	 * Number of unread messages across all of a user's chats.
 	 *
-	 *
-	 * @param int $user_id
-	 * @param int $chat_id
-	 */
-	public function add_notification( $user_id, $chat_id ) {
-		$notifications   = get_user_meta( $user_id, '_dvc_notifications', true );
-		$notifications   = is_array( $notifications ) ? $notifications : [];
-		$notifications[] = [
-			'chat_id'   => $chat_id,
-			'timestamp' => current_time( 'timestamp' ),
-			'read'      => false,
-		];
-		update_user_meta( $user_id, '_dvc_notifications', $notifications );
-	}
-
-	/**
-	 * Return the number of unread notifications for a user.
+	 * Derived from the messages table and the per-chat read markers, so nothing
+	 * has to be tracked per received message.
 	 *
 	 *
 	 * @param int $user_id
 	 * @return int
 	 */
 	public function get_unread_count( $user_id ) {
-		$notifications = get_user_meta( $user_id, '_dvc_notifications', true );
-		$notifications = is_array( $notifications ) ? $notifications : [];
+		$chat_ids = ChatMessages::chat_ids_for_participant( (int) $user_id );
 
-		return count( array_filter( $notifications, function ( $n ) {
-			return empty( $n['read'] );
-		} ) );
+		if ( empty( $chat_ids ) ) {
+			return 0;
+		}
+
+		return (int) array_sum( ChatMessages::unread_counts( $chat_ids, (int) $user_id ) );
 	}
 
 	/**
-	 * Mark all notifications for a specific chat as read.
+	 * Mark everything currently in the chat as read for this user.
 	 *
 	 *
 	 * @param int $chat_id
 	 * @param int $user_id
 	 */
 	public function mark_as_read( $chat_id, $user_id ) {
-		$notifications = get_user_meta( $user_id, '_dvc_notifications', true );
-		$notifications = is_array( $notifications ) ? $notifications : [];
-
-		foreach ( $notifications as $key => $notification ) {
-			if ( isset( $notification['chat_id'] ) && $notification['chat_id'] == $chat_id ) {
-				$notifications[ $key ]['read'] = true;
-			}
-		}
-
-		update_user_meta( $user_id, '_dvc_notifications', $notifications );
+		ChatMessages::mark_read( (int) $chat_id, (int) $user_id );
 	}
 
 	/**
-	 * Check if a chat has unread messages for a user.
+	 * Does this chat hold messages the user has not seen?
 	 *
 	 *
 	 * @param int $chat_id
@@ -995,18 +977,9 @@ class VendorChat extends DashboardModule {
 	 * @return bool
 	 */
 	public function has_unread_messages( $chat_id, $user_id ) {
-		$notifications = get_user_meta( $user_id, '_dvc_notifications', true );
-		$notifications = is_array( $notifications ) ? $notifications : [];
+		$counts = ChatMessages::unread_counts( [ (int) $chat_id ], (int) $user_id );
 
-		foreach ( $notifications as $notification ) {
-			if ( isset( $notification['chat_id'] ) &&
-				$notification['chat_id'] == $chat_id &&
-				empty( $notification['read'] ) ) {
-				return true;
-			}
-		}
-
-		return false;
+		return ! empty( $counts[ (int) $chat_id ] );
 	}
 }
 

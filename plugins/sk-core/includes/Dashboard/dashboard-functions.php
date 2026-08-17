@@ -126,14 +126,7 @@ if ( ! function_exists( 'dvc_is_chat_participant' ) ) {
 
 if ( ! function_exists( 'dvc_mark_chat_as_read' ) ) {
 	function dvc_mark_chat_as_read( $chat_id, $user_id ) {
-		$notifications = get_user_meta( $user_id, '_dvc_notifications', true );
-		$notifications = is_array( $notifications ) ? $notifications : [];
-		foreach ( $notifications as $key => $n ) {
-			if ( isset( $n['chat_id'] ) && $n['chat_id'] == $chat_id ) {
-				$notifications[ $key ]['read'] = true;
-			}
-		}
-		update_user_meta( $user_id, '_dvc_notifications', $notifications );
+		\SK\Core\Dashboard\ChatMessages::mark_read( (int) $chat_id, (int) $user_id );
 	}
 }
 
@@ -175,13 +168,35 @@ if ( ! function_exists( 'dvc_prepare_chat_message' ) ) {
 
 if ( ! function_exists( 'dvc_has_unread_messages' ) ) {
 	function dvc_has_unread_messages( $chat_id, $user_id ) {
-		$notifications = get_user_meta( $user_id, '_dvc_notifications', true );
-		$notifications = is_array( $notifications ) ? $notifications : [];
-		foreach ( $notifications as $n ) {
-			if ( isset( $n['chat_id'] ) && $n['chat_id'] == $chat_id && empty( $n['read'] ) ) {
-				return true;
-			}
-		}
-		return false;
+		$counts = \SK\Core\Dashboard\ChatMessages::unread_counts( [ (int) $chat_id ], (int) $user_id );
+
+		return ! empty( $counts[ (int) $chat_id ] );
+	}
+}
+
+if ( ! function_exists( 'dvc_get_last_messages' ) ) {
+	/**
+	 * Newest message of each chat, in one query.
+	 *
+	 * The list used to load every message of every chat just to show one line.
+	 *
+	 * @param int[] $chat_ids
+	 * @return array [ chat_id => message array ]
+	 */
+	function dvc_get_last_messages( array $chat_ids ) {
+		return \SK\Core\Dashboard\ChatMessages::last_messages( $chat_ids );
+	}
+}
+
+if ( ! function_exists( 'dvc_get_unread_counts' ) ) {
+	/**
+	 * Unread counts per chat, in one query.
+	 *
+	 * @param int[] $chat_ids
+	 * @param int   $user_id
+	 * @return array [ chat_id => count ]
+	 */
+	function dvc_get_unread_counts( array $chat_ids, $user_id ) {
+		return \SK\Core\Dashboard\ChatMessages::unread_counts( $chat_ids, (int) $user_id );
 	}
 }

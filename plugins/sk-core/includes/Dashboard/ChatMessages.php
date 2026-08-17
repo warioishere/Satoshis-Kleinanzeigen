@@ -194,6 +194,205 @@ class ChatMessages {
 	}
 
 	/**
+	 * User meta holding [ chat_id => last read message id ].
+	 *
+	 * Unread state used to be one entry per received message in
+	 * `_dvc_notifications`, appended forever and never pruned, unserialized on
+	 * every page load for the nav badge. One marker per chat is bounded by the
+	 * number of conversations instead of the number of messages.
+	 */
+	const READ_META = '_dvc_read_up_to';
+
+	/**
+	 * Read markers of a user: [ chat_id => message_id ].
+	 */
+	public static function read_markers( int $user_id ): array {
+		$markers = get_user_meta( $user_id, self::READ_META, true );
+
+		if ( ! is_array( $markers ) ) {
+			return [];
+		}
+
+		$clean = [];
+		foreach ( $markers as $chat_id => $message_id ) {
+			$clean[ (int) $chat_id ] = (int) $message_id;
+		}
+
+		return $clean;
+	}
+
+	/**
+	 * Mark everything currently in the chat as read for this user.
+	 */
+	public static function mark_read( int $chat_id, int $user_id ): void {
+		if ( ! $chat_id || ! $user_id ) {
+			return;
+		}
+
+		self::maybe_install();
+
+		global $wpdb;
+
+		$latest = (int) $wpdb->get_var( $wpdb->prepare(
+			'SELECT MAX(id) FROM ' . self::table() . ' WHERE chat_id = %d',
+			$chat_id
+		) );
+
+		$markers = self::read_markers( $user_id );
+
+		if ( ( $markers[ $chat_id ] ?? 0 ) === $latest ) {
+			return;
+		}
+
+		$markers[ $chat_id ] = $latest;
+
+		update_user_meta( $user_id, self::READ_META, $markers );
+	}
+
+	/**
+	 * Forget the read marker of a chat, for every user that has one.
+	 */
+	public static function forget_read_marker( int $chat_id, array $user_ids ): void {
+		foreach ( $user_ids as $user_id ) {
+			$user_id = (int) $user_id;
+			$markers = self::read_markers( $user_id );
+
+			if ( ! isset( $markers[ $chat_id ] ) ) {
+				continue;
+			}
+
+			unset( $markers[ $chat_id ] );
+			update_user_meta( $user_id, self::READ_META, $markers );
+		}
+	}
+
+	/**
+	 * IDs of the chats a user takes part in.
+	 *
+	 * Lean postmeta query — the nav badge needs the IDs on every page load and
+	 * has no use for the post objects.
+	 *
+	 * @param int $user_id
+	 * @return int[]
+	 */
+	public static function chat_ids_for_participant( int $user_id ): array {
+		if ( ! $user_id ) {
+			return [];
+		}
+
+		global $wpdb;
+
+		$ids = $wpdb->get_col( $wpdb->prepare(
+			"SELECT DISTINCT pm.post_id
+			 FROM {$wpdb->postmeta} pm
+			 JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+			 WHERE p.post_type = 'vendor_chat'
+			   AND p.post_status = 'publish'
+			   AND pm.meta_key IN ( '_dvc_participant_1', '_dvc_participant_2' )
+			   AND pm.meta_value = %s",
+			(string) $user_id
+		) );
+
+		return array_map( 'intval', (array) $ids );
+	}
+
+	/**
+	 * Unread message counts per chat, in one query.
+	 *
+	 * Counts messages from somebody else that are newer than the user's read
+	 * marker for that chat.
+	 *
+	 * @param int[] $chat_ids
+	 * @param int   $user_id
+	 * @return array [ chat_id => count ], only chats that have unread messages.
+	 */
+	public static function unread_counts( array $chat_ids, int $user_id ): array {
+		$chat_ids = array_values( array_unique( array_map( 'intval', $chat_ids ) ) );
+		$chat_ids = array_filter( $chat_ids );
+
+		if ( empty( $chat_ids ) || ! $user_id ) {
+			return [];
+		}
+
+		self::maybe_install();
+
+		$markers = self::read_markers( $user_id );
+
+		// One OR-clause per chat, so a single query covers all of them.
+		$clauses = [];
+		foreach ( $chat_ids as $chat_id ) {
+			$clauses[] = sprintf( '(chat_id = %d AND id > %d)', $chat_id, (int) ( $markers[ $chat_id ] ?? 0 ) );
+		}
+
+		global $wpdb;
+
+		$rows = $wpdb->get_results( $wpdb->prepare(
+			'SELECT chat_id, COUNT(*) AS unread FROM ' . self::table() . '
+			 WHERE user_id <> %d AND ( ' . implode( ' OR ', $clauses ) . ' )
+			 GROUP BY chat_id',
+			$user_id
+		) );
+
+		$counts = [];
+		foreach ( (array) $rows as $row ) {
+			$counts[ (int) $row->chat_id ] = (int) $row->unread;
+		}
+
+		return $counts;
+	}
+
+	/**
+	 * Newest message of each chat, in one query.
+	 *
+	 * For the conversation list, which used to load every message of every chat
+	 * just to show the last line.
+	 *
+	 * @param int[] $chat_ids
+	 * @return array [ chat_id => message array ]
+	 */
+	public static function last_messages( array $chat_ids ): array {
+		$chat_ids = array_values( array_unique( array_map( 'intval', $chat_ids ) ) );
+		$chat_ids = array_filter( $chat_ids );
+
+		if ( empty( $chat_ids ) ) {
+			return [];
+		}
+
+		self::maybe_install();
+
+		foreach ( $chat_ids as $chat_id ) {
+			self::migrate_legacy( $chat_id );
+		}
+
+		global $wpdb;
+
+		$ids   = implode( ',', $chat_ids );
+		$table = self::table();
+
+		$rows = $wpdb->get_results(
+			"SELECT m.chat_id, m.user_id, m.message, m.card_type, m.payment_hash, m.nostr_pubkey, m.created_at
+			 FROM {$table} m
+			 JOIN ( SELECT chat_id, MAX(id) AS max_id FROM {$table}
+			        WHERE chat_id IN ({$ids}) GROUP BY chat_id ) newest
+			   ON newest.chat_id = m.chat_id AND newest.max_id = m.id"
+		);
+
+		$last = [];
+		foreach ( (array) $rows as $row ) {
+			$last[ (int) $row->chat_id ] = [
+				'user_id'      => (int) $row->user_id,
+				'message'      => (string) $row->message,
+				'timestamp'    => (int) strtotime( $row->created_at . ' UTC' ),
+				'card_type'    => $row->card_type,
+				'payment_hash' => $row->payment_hash,
+				'nostr_pubkey' => $row->nostr_pubkey,
+			];
+		}
+
+		return $last;
+	}
+
+	/**
 	 * Remove all messages of a chat. Called when the chat post is deleted.
 	 */
 	public static function delete_for_chat( int $chat_id ): void {
