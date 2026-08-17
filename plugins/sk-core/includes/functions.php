@@ -517,33 +517,73 @@ function sk_get_new_post_status( $seller_id = null ) {
 }
 
 /**
- * Function to get the client ip address
+ * Client IP address of the current request.
+ *
+ * Proxy headers (X-Forwarded-For, CF-Connecting-IP, …) are sent by the client
+ * and can say anything, so they are only used when the request actually reaches
+ * us through a proxy — see sk_is_trusted_proxy(). Anything else would let a
+ * visitor pick a fresh IP per request and walk through IP-based rate limits and
+ * fraud fingerprints.
+ *
+ * Canonical implementation: all modules resolve the client IP through this.
  *
  *
- * @return string
+ * @return string Validated IP address, or '' if none could be determined.
  */
 function sk_get_client_ip() {
-    if ( isset( $_SERVER['HTTP_X_REAL_IP'] ) ) {
-        $ipaddress = sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_REAL_IP'] ) );
-    } elseif ( isset( $_SERVER['HTTP_CLIENT_IP'] ) ) {
-        $ipaddress = sanitize_text_field( wp_unslash( $_SERVER['HTTP_CLIENT_IP'] ) );
-    } elseif ( isset( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
-        // Proxy servers can send through this header like this: X-Forwarded-For: client1, proxy1, proxy2
-        // Make sure we always only send through the first IP in the list which should always be the client IP.
-        $ipaddress = (string) rest_is_ip_address( trim( current( preg_split( '/,/', sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) ) ) ) );
-    } elseif ( isset( $_SERVER['HTTP_X_FORWARDED'] ) ) {
-        $ipaddress = sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_FORWARDED'] ) );
-    } elseif ( isset( $_SERVER['HTTP_FORWARDED_FOR'] ) ) {
-        $ipaddress = sanitize_text_field( wp_unslash( $_SERVER['HTTP_FORWARDED_FOR'] ) );
-    } elseif ( isset( $_SERVER['HTTP_FORWARDED'] ) ) {
-        $ipaddress = sanitize_text_field( wp_unslash( $_SERVER['HTTP_FORWARDED'] ) );
-    } elseif ( isset( $_SERVER['REMOTE_ADDR'] ) ) {
-        $ipaddress = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) );
-    } else {
-        $ipaddress = 'UNKNOWN';
+    $remote = isset( $_SERVER['REMOTE_ADDR'] )
+        ? trim( sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) )
+        : '';
+
+    if ( sk_is_trusted_proxy( $remote ) ) {
+        foreach ( [ 'HTTP_CF_CONNECTING_IP', 'HTTP_X_REAL_IP', 'HTTP_X_FORWARDED_FOR' ] as $header ) {
+            if ( empty( $_SERVER[ $header ] ) ) {
+                continue;
+            }
+
+            // X-Forwarded-For is a chain; the original client is leftmost.
+            $value = sanitize_text_field( wp_unslash( $_SERVER[ $header ] ) );
+            foreach ( explode( ',', $value ) as $candidate ) {
+                $candidate = trim( $candidate );
+                if ( filter_var( $candidate, FILTER_VALIDATE_IP ) ) {
+                    return $candidate;
+                }
+            }
+        }
     }
 
-    return $ipaddress;
+    return filter_var( $remote, FILTER_VALIDATE_IP ) ? $remote : '';
+}
+
+/**
+ * May the proxy headers of this request be trusted?
+ *
+ * True for peers listed in the SK_TRUSTED_PROXIES constant (comma separated,
+ * set in wp-config.php — needed for Cloudflare and other external proxies),
+ * and for private/loopback peers, which mean a local reverse proxy passed the
+ * request on. A public peer address is the client talking to us directly, and
+ * its forwarding headers are not evidence of anything.
+ *
+ *
+ * @param string $remote_addr
+ * @return bool
+ */
+function sk_is_trusted_proxy( $remote_addr ) {
+    if ( ! filter_var( $remote_addr, FILTER_VALIDATE_IP ) ) {
+        return false;
+    }
+
+    // When the constant is defined it is authoritative — an empty value means
+    // "no proxy in front of this site, never trust a forwarding header".
+    if ( defined( 'SK_TRUSTED_PROXIES' ) ) {
+        $trusted = array_filter( array_map( 'trim', explode( ',', (string) SK_TRUSTED_PROXIES ) ) );
+
+        return in_array( $remote_addr, $trusted, true );
+    }
+
+    // Undeclared: a private/loopback peer means a local reverse proxy passed the
+    // request on. filter_var returns false for private/reserved ranges here.
+    return ! filter_var( $remote_addr, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE );
 }
 
 /**

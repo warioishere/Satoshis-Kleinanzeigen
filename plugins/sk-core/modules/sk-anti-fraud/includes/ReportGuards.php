@@ -101,21 +101,16 @@ class ReportGuards {
         return ( time() - $registered ) >= $min_days * DAY_IN_SECONDS;
     }
 
+    /**
+     * Client IP for rate limiting.
+     *
+     * Resolved centrally by sk_get_client_ip(), which ignores spoofable proxy
+     * headers unless the request really came through a proxy — otherwise the
+     * rate limit here could be bypassed by sending a new X-Forwarded-For.
+     */
     public static function get_client_ip(): string {
-        foreach ( [ 'HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR' ] as $key ) {
-            if ( empty( $_SERVER[ $key ] ) ) {
-                continue;
-            }
+        $ip = function_exists( 'sk_get_client_ip' ) ? sk_get_client_ip() : '';
 
-            $ip = sanitize_text_field( wp_unslash( $_SERVER[ $key ] ) );
-
-            if ( false !== strpos( $ip, ',' ) ) {
-                $ip = trim( explode( ',', $ip )[0] );
-            }
-
-            return $ip;
-        }
-
-        return 'unknown';
+        return $ip !== '' ? $ip : 'unknown';
     }
 }

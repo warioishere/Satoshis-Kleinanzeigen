@@ -288,17 +288,17 @@ class FingerprintCollector {
         wp_mail( get_option( 'admin_email' ), $subject, $body );
     }
 
+    /**
+     * Client IP for the fraud fingerprint.
+     *
+     * Resolved centrally by sk_get_client_ip(), which ignores spoofable proxy
+     * headers unless the request really came through a proxy — a forgeable IP
+     * would make the whole fingerprint worthless.
+     */
     private static function get_client_ip(): string {
-        foreach ( [ 'HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR' ] as $key ) {
-            if ( ! empty( $_SERVER[ $key ] ) ) {
-                $ip = sanitize_text_field( $_SERVER[ $key ] );
-                if ( strpos( $ip, ',' ) !== false ) {
-                    $ip = trim( explode( ',', $ip )[0] );
-                }
-                return $ip;
-            }
-        }
-        return 'unknown';
+        $ip = function_exists( 'sk_get_client_ip' ) ? sk_get_client_ip() : '';
+
+        return $ip !== '' ? $ip : 'unknown';
     }
 
     private static function get_user_city( int $user_id ): string {
