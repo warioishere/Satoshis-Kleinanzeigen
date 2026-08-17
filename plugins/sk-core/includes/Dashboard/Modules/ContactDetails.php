@@ -180,33 +180,6 @@ class ContactDetails {
         return $settings;
     }
 
-    /**
-     * Does this account have a password its owner actually knows?
-     *
-     * Accounts created through Nostr or LNURL get a random password nobody ever
-     * saw, so those users must be able to set their first one without entering
-     * it. Everyone else has to prove the current password.
-     *
-     * @param int $user_id
-     * @return bool
-     */
-    private static function has_user_set_password( int $user_id ): bool {
-        if ( get_user_meta( $user_id, 'sk_password_set', true ) ) {
-            return true;
-        }
-
-        // Registered with address + self-chosen password.
-        if ( get_user_meta( $user_id, 'btc_address', true ) ) {
-            return true;
-        }
-
-        $has_key_login = get_user_meta( $user_id, 'nostr_public_key', true )
-            || get_user_meta( $user_id, 'lnurl-auth-bjm-id', true );
-
-        // No key-based login means the password is the only way in.
-        return ! $has_key_login;
-    }
-
     public function save_account_fields( int $store_id ): void {
         if ( $store_id <= 0 ) return;
         $user = get_userdata( $store_id );
@@ -235,7 +208,7 @@ class ContactDetails {
             // into a way to set a new password without knowing the old one.
             // Only accounts that never had a password (Nostr/LNURL logins) may
             // set their first one without it.
-            $needs_current = self::has_user_set_password( $store_id );
+            $needs_current = sk_account_has_password( $store_id );
 
             if ( ! $needs_current || wp_check_password( $current_pw, $user->user_pass, $store_id ) ) {
                 $update['user_pass'] = $pw1;

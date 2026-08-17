@@ -382,9 +382,33 @@ class Settings {
                 $exists = email_exists( $email_san );
                 if ( ! $exists || (int) $exists === (int) $store_id ) {
                     if ( $user instanceof \WP_User && $email_san !== $current_email ) {
-                        wp_update_user( [ 'ID' => $store_id, 'user_email' => $email_san ] );
+                        // Changing the address is the first half of a takeover via
+                        // password reset, so it needs the account password. Accounts
+                        // that log in by key only have no password to confirm.
+                        $needs_password = function_exists( 'sk_account_has_password' )
+                            && sk_account_has_password( $store_id );
+
+                        $confirm = isset( $_POST['sk_email_change_password'] )
+                            ? wp_unslash( $_POST['sk_email_change_password'] )
+                            : '';
+
+                        if ( $needs_password && ! wp_check_password( $confirm, $user->user_pass, $store_id ) ) {
+                            if ( function_exists( 'sk_add_notice' ) ) {
+                                sk_add_notice(
+                                    __( 'Zum Ändern der E-Mail-Adresse bitte das aktuelle Passwort eingeben.', 'sk-core' ),
+                                    'error'
+                                );
+                            }
+                            // Keep the stored address untouched.
+                            $email_san = $current_email;
+                        } else {
+                            wp_update_user( [ 'ID' => $store_id, 'user_email' => $email_san ] );
+                        }
                     }
-                    $sk_settings['setting_email'] = $email_san;
+
+                    if ( $email_san !== '' ) {
+                        $sk_settings['setting_email'] = $email_san;
+                    }
                 }
             } elseif ( $current_email ) {
                 $sk_settings['setting_email'] = $current_email;

@@ -199,6 +199,20 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
                       . $public_toggle( 'setting_show_email', 'yes', $cd_show_email === 'checked' ),
         ] );
 
+        // Changing the address needs the account password — only accounts that
+        // actually have one can be asked for it (Nostr/LNURL logins cannot).
+        if ( function_exists( 'sk_account_has_password' ) && sk_account_has_password( $current_user ) ) {
+            sk_form_input( [
+                'type'  => 'password',
+                'name'  => 'sk_email_change_password',
+                'id'    => 'sk_email_change_password',
+                'value' => '',
+                'label' => __( 'Aktuelles Passwort', 'sk-core' ),
+                'hint'  => __( 'Nur nötig, wenn du die E-Mail-Adresse änderst.', 'sk-core' ),
+                'wrapper_class' => 'sk-contact-email-confirm',
+            ] );
+        }
+
         sk_form_input( [
             'name'   => 'telegram',
             'value'  => $cd_telegram,
