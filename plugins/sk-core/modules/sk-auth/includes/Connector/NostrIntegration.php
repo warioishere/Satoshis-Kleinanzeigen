@@ -135,25 +135,6 @@ class UAC_Nostr_Login_Integration {
     }
 
     /**
-     * Filter to check for linked accounts (if we add a custom filter to Nostr Login plugin).
-     *
-     * This is a placeholder for potential future integration.
-     *
-     * @param int $user_id The user ID
-     * @param string $nostr_pubkey The Nostr public key
-     * @return int The user ID to use for authentication
-     */
-    public function check_linked_account($user_id, $nostr_pubkey) {
-        $primary_user_id = $this->account_linker->get_user_by_nostr($nostr_pubkey);
-
-        if ($primary_user_id && $primary_user_id !== $user_id) {
-            return $primary_user_id;
-        }
-
-        return $user_id;
-    }
-
-    /**
      * Verify a Nostr public key for linking.
      *
      * This verifies that the user controls the Nostr identity by checking

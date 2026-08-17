@@ -42,17 +42,10 @@ if ( ! function_exists( 'sk_admin_menu_capability' ) ) {
  * @return int
  */
 function sk_get_current_user_id() {
-    if ( current_user_can( 'vendor_staff' ) ) {
-        $staff_id  = get_current_user_id();
-        $vendor_id = (int) get_user_meta( $staff_id, '_vendor_id', true );
-
-        if ( empty( $vendor_id ) ) {
-            return $staff_id;
-        }
-
-        return $vendor_id;
-    }
-
+    // This used to map a vendor_staff user onto their vendor via the _vendor_id
+    // meta. The vendor-staff module is gone and nothing writes that meta any
+    // more, so the branch was dead — and dead branches in a function that
+    // decides "whose products may I edit" are the wrong kind of leftover.
     return get_current_user_id();
 }
 

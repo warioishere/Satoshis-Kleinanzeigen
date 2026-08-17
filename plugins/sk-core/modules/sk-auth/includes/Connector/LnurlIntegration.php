@@ -58,24 +58,6 @@ class UAC_LNURL_Auth_Integration {
         }
     }
 
-    /**
-     * Filter to check for linked accounts (if we add a custom filter to LNURL-Auth plugin).
-     *
-     * This is a placeholder for potential future integration.
-     *
-     * @param int $user_id The user ID
-     * @param string $node_key The LNURL node linking key
-     * @return int The user ID to use for authentication
-     */
-    public function check_linked_account($user_id, $node_key) {
-        $primary_user_id = $this->account_linker->get_user_by_lnurl($node_key);
-
-        if ($primary_user_id && $primary_user_id !== $user_id) {
-            return $primary_user_id;
-        }
-
-        return $user_id;
-    }
 
     /**
      * Verify an LNURL-Auth identity for linking.

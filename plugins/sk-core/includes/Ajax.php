@@ -891,41 +891,6 @@ class Ajax {
     }
 
     /**
-     * Add Predefined Attribute
-     *
-     *
-     * @return json success|$content (array)
-     */
-    public function add_predefined_attribute() {
-        $attr_name               = $_POST['name'];
-        $single                  = ( isset( $_POST['from'] ) && $_POST['from'] === 'popup' ) ? 'single-' : '';
-        $remove_btn              = ( isset( $_POST['from'] ) && $_POST['from'] === 'popup' ) ? 'single_' : '';
-        $attribute_taxonomy_name = wc_attribute_taxonomy_name( $attr_name );
-        $tax                     = get_taxonomy( $attribute_taxonomy_name );
-        $options                 = get_terms( $attribute_taxonomy_name, 'orderby=name&hide_empty=0' );
-        $att_val                 = wp_list_pluck( $options, 'name' );
-        ob_start();
-        ?>
-        <tr class="sk-<?php echo $single; ?>attribute-options">
-            <td width="20%">
-                <input type="text" disabled="disabled" value="<?php echo $attr_name; ?>" class="sk-form-control sk-<?php echo $single; ?>attribute-option-name-label"
-                       data-attribute_name="<?php echo wc_sanitize_taxonomy_name( str_replace( 'pa_', '', $attribute_taxonomy_name ) ); ?>">
-                <input type="hidden" name="attribute_names[]" value="<?php echo esc_attr( $attribute_taxonomy_name ); ?>" class="sk-<?php echo $single; ?>attribute-option-name">
-                <input type="hidden" name="attribute_is_taxonomy[]" value="1">
-            </td>
-            <td colspan="3"><input type="text" name="attribute_values[]" value="<?php echo implode( ',', $att_val ); ?>" data-preset_attr="<?php echo implode( ',', $att_val ); ?>"
-                                   class="sk-form-control sk-<?php echo $single; ?>attribute-option-values"></td>
-            <td>
-                <button title="<?php _e( 'Clear All', 'sk' ); ?>" class="sk-btn sk-btn-theme clear_attributes"><?php _e( 'Clear', 'sk' ); ?></button>
-                <button title="Delete" class="sk-btn sk-btn-theme remove_<?php echo $remove_btn; ?>attribute"><i class="far fa-trash-alt"></i></button>
-            </td>
-        </tr>
-        <?php
-        $content = ob_get_clean();
-        wp_send_json_success( $content );
-    }
-
-    /**
      * Add variation via ajax function
      *
      *
