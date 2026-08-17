@@ -88,7 +88,9 @@ class NostrDMListener {
         }
 
         try {
-            $ctx = stream_context_create( [ 'ssl' => [ 'verify_peer' => false, 'verify_peer_name' => false ] ] );
+            // Relay TLS must be verified — otherwise a MITM can inject events
+            // that end up as chat messages.
+            $ctx = stream_context_create( [ 'ssl' => [ 'verify_peer' => true, 'verify_peer_name' => true ] ] );
             $client = new \WebSocket\Client( $relay_url, [ 'context' => $ctx, 'timeout' => 10 ] );
 
             $sub_id = bin2hex( random_bytes( 8 ) );
@@ -143,9 +145,15 @@ class NostrDMListener {
         $content       = $event['content'] ?? '';
         $event_id      = $event['id'] ?? '';
 
-        if ( empty( $sender_pubkey ) || empty( $content ) || empty( $event_id ) ) {
+        if ( empty( $content ) || empty( $event_id ) ) {
             return;
         }
+
+        // Pubkeys are used in meta queries and displayed to vendors.
+        if ( ! preg_match( '/^[0-9a-f]{64}$/i', $sender_pubkey ) ) {
+            return;
+        }
+        $sender_pubkey = strtolower( $sender_pubkey );
 
         // Skip our own messages.
         if ( $sender_pubkey === $our_pubkey ) {
@@ -215,10 +223,11 @@ class NostrDMListener {
 
         // Build order message for VendorChat.
         $product_title = $post->post_title;
-        $quantity      = $first_item['quantity'] ?? 1;
-        $name          = $order['name'] ?? '';
-        $address       = $order['address'] ?? '';
-        $note          = $order['message'] ?? '';
+        // Everything below comes from an unauthenticated Nostr DM.
+        $quantity      = max( 1, (int) ( $first_item['quantity'] ?? 1 ) );
+        $name          = self::clean_field( $order['name'] ?? '', 120 );
+        $address       = self::clean_field( $order['address'] ?? '', 400 );
+        $note          = self::clean_field( $order['message'] ?? '', 2000 );
         $npub          = self::pubkey_to_npub( $sender_pubkey );
 
         $message = "[nostr_order]\n";
@@ -323,6 +332,11 @@ class NostrDMListener {
      * Handle a plain text message — route to existing bridge chat or first vendor.
      */
     private static function handle_message( string $text, string $sender_pubkey, string $event_id ): void {
+        $text = self::clean_field( $text, 4000 );
+        if ( $text === '' ) {
+            return;
+        }
+
         // Find existing bridge chat for this pubkey.
         $existing_chat = self::find_bridge_chat( $sender_pubkey );
 
@@ -409,6 +423,30 @@ class NostrDMListener {
 
         $query = new \WP_Query( $args );
         return $query->have_posts() ? $query->posts[0]->ID : 0;
+    }
+
+    /**
+     * Sanitize a field from an untrusted Nostr DM before it becomes chat text.
+     *
+     * Strips markup, caps the length, and removes payment markers so an
+     * outside party cannot inject a payment card into a vendor's chat.
+     */
+    private static function clean_field( $value, int $max_length ): string {
+        if ( ! is_scalar( $value ) ) {
+            return '';
+        }
+
+        $text = sanitize_textarea_field( (string) $value );
+
+        if ( class_exists( 'SK\Core\Dashboard\Modules\VendorChat' ) ) {
+            $text = \SK\Core\Dashboard\Modules\VendorChat::sanitize_user_message( $text );
+        }
+
+        if ( mb_strlen( $text ) > $max_length ) {
+            $text = mb_substr( $text, 0, $max_length ) . '…';
+        }
+
+        return trim( $text );
     }
 
     private static function pubkey_to_npub( string $hex_pubkey ): string {

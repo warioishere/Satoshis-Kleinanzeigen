@@ -144,16 +144,34 @@ class ChatBridge {
      * Add a message to a bridge chat (incoming from Nostr).
      */
     public static function add_message( int $chat_id, int $sender_id, string $message, string $nostr_pubkey ): void {
+        // Bridge messages can originate from any Nostr user, so payment markers
+        // are stripped here as well — a card must always come from a verified
+        // payment row, never from message text.
+        if ( class_exists( 'SK\Core\Dashboard\Modules\VendorChat' ) ) {
+            $message = \SK\Core\Dashboard\Modules\VendorChat::sanitize_user_message( $message );
+        }
+
+        if ( $message === '' ) {
+            return;
+        }
+
+        if ( $nostr_pubkey !== '' && ! preg_match( '/^[0-9a-f]{64}$/i', $nostr_pubkey ) ) {
+            $nostr_pubkey = '';
+        }
+
         $messages   = get_post_meta( $chat_id, '_dvc_messages', true );
         $messages   = is_array( $messages ) ? $messages : [];
         $messages[] = [
             'user_id'      => $sender_id,
             'message'      => $message,
             'timestamp'    => current_time( 'timestamp' ),
-            'nostr_pubkey' => $nostr_pubkey,
+            'nostr_pubkey' => strtolower( $nostr_pubkey ),
         ];
         update_post_meta( $chat_id, '_dvc_messages', $messages );
         update_post_meta( $chat_id, '_dvc_last_message_time', current_time( 'timestamp' ) );
+
+        // A new message revives the thread for anyone who had deleted it.
+        delete_post_meta( $chat_id, '_dvc_deleted_by' );
     }
 
     /**
