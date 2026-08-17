@@ -664,6 +664,11 @@ class VendorChat extends DashboardModule {
 		$message = preg_replace( '#\[(lightning_[a-z_]+|onchain_[a-z_]+)\].*?\[/\1\]#is', '', $message );
 		$message = preg_replace( $pattern, '', (string) $message );
 
+		// Collapse the gap the removed block left behind, like
+		// PaymentCard::strip_markers() does. Only reached when a marker was
+		// present, so ordinary messages keep their spacing.
+		$message = preg_replace( '/[ \t]+/', ' ', (string) $message );
+
 		return trim( (string) $message );
 	}
 

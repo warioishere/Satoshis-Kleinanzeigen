@@ -81,7 +81,8 @@ $sanitize = function ( $message ) {
 	$pattern = '#\[/?(?:lightning_[a-z_]+|onchain_[a-z_]+)\]#i';
 	if ( ! preg_match( $pattern, $message ) ) { return $message; }
 	$message = preg_replace( '#\[(lightning_[a-z_]+|onchain_[a-z_]+)\].*?\[/\1\]#is', '', $message );
-	return trim( (string) preg_replace( $pattern, '', (string) $message ) );
+	$message = preg_replace( $pattern, '', (string) $message );
+	return trim( (string) preg_replace( '/[ \t]+/', ' ', (string) $message ) );
 };
 
 check( 'sanitize: forged invoice killed', $sanitize( $forged_invoice ), '' );
@@ -93,8 +94,8 @@ check( 'sanitize: brackets in normal text survive',
 	$sanitize( 'Ich nehme [1] und [2]' ), 'Ich nehme [1] und [2]' );
 check( 'sanitize: unknown future marker also killed',
 	$sanitize( '[lightning_refund_offer]{"x":1}[/lightning_refund_offer]' ), '' );
-check( 'sanitize: text around marker kept',
-	$sanitize( 'vorher ' . $forged_invoice . ' nachher' ), 'vorher  nachher' );
+check( 'sanitize: text around marker kept without a double gap',
+	$sanitize( 'vorher ' . $forged_invoice . ' nachher' ), 'vorher nachher' );
 
 printf( "\n%s\n", $fails ? "{$fails} FAILURE(S)" : 'all checks passed' );
 exit( $fails ? 1 : 0 );
