@@ -12,6 +12,10 @@
  * bootstrap, which resolves the plugin root.
  */
 
+// Plugin files start with `defined( 'ABSPATH' ) || exit;` — without it a test
+// would exit silently with status 0 and look like it passed.
+defined( 'ABSPATH' ) || define( 'ABSPATH', sys_get_temp_dir() . '/' );
+
 // Plugin root, derived from this file's location — never a hardcoded path.
 define( 'SK_TEST_PLUGIN', dirname( __DIR__ ) );
 

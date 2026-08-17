@@ -6,7 +6,7 @@
 
 require __DIR__ . '/bootstrap.php';
 
-define( 'ABSPATH', '/tmp/' );
+defined( 'ABSPATH' ) || define( 'ABSPATH', '/tmp/' );
 
 require SK_TEST_PLUGIN . '/lib/autoload.php';
 

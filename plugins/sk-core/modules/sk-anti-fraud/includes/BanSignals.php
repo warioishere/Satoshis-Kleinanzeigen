@@ -2,6 +2,8 @@
 
 namespace SK\Modules\AntiFraud;
 
+use SK\Core\Vendor\Suspension;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -111,7 +113,7 @@ final class BanSignals {
 
         update_user_meta( $user_id, self::META_BANNED, 1 );
 
-        $listings = Suspension::suspend( $user_id, 'banned' . ( $note ? ': ' . $note : '' ) );
+        $listings = Suspension::suspend( $user_id, Suspension::SOURCE_ANTI_FRAUD, 'banned' . ( $note ? ': ' . $note : '' ) );
 
         return [ 'signals' => $stored, 'listings' => $listings ];
     }
@@ -121,7 +123,7 @@ final class BanSignals {
         delete_user_meta( $user_id, self::META_BANNED );
         delete_user_meta( $user_id, self::META_FLAGGED );
 
-        return Suspension::unsuspend( $user_id );
+        return Suspension::unsuspend( $user_id, Suspension::SOURCE_ANTI_FRAUD );
     }
 
     public static function is_banned( int $user_id ): bool {

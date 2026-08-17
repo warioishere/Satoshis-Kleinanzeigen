@@ -5,7 +5,7 @@
 
 require __DIR__ . '/bootstrap.php';
 
-define( 'ABSPATH', '/tmp/' );
+defined( 'ABSPATH' ) || define( 'ABSPATH', '/tmp/' );
 
 $GLOBALS['sk_test_salt'] = 'k9Xq2!vLm4Zt7Rw0PbNc8FhJ1sYd6EuA3gTiOa5MnQrVzW+lKpB/eS-XyCfDhGjU';
 function wp_salt( $scheme = 'auth' ) { return $GLOBALS['sk_test_salt']; }

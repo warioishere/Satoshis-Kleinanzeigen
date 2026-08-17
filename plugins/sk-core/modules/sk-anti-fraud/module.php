@@ -24,7 +24,6 @@ final class Module {
         define( 'SK_ANTIFRAUD_INCLUDES', SK_ANTIFRAUD_PATH . '/includes' );
 
         require_once SK_ANTIFRAUD_INCLUDES . '/AntifraudSettings.php';
-        require_once SK_ANTIFRAUD_INCLUDES . '/Suspension.php';
         require_once SK_ANTIFRAUD_INCLUDES . '/ReportGuards.php';
         require_once SK_ANTIFRAUD_INCLUDES . '/VendorSummary.php';
         require_once SK_ANTIFRAUD_INCLUDES . '/BanSignals.php';

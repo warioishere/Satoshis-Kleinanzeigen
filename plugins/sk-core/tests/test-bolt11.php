@@ -5,7 +5,7 @@
 
 require __DIR__ . '/bootstrap.php';
 
-define( 'ABSPATH', '/tmp/' );
+defined( 'ABSPATH' ) || define( 'ABSPATH', '/tmp/' );
 
 class WP_Error {
 	public $code;

@@ -6,7 +6,7 @@
 
 require __DIR__ . '/bootstrap.php';
 
-define( 'ABSPATH', '/tmp/' );
+defined( 'ABSPATH' ) || define( 'ABSPATH', '/tmp/' );
 if ( ! function_exists( '__' ) ) {
 	function __( $text, $domain = null ) { return $text; }
 }

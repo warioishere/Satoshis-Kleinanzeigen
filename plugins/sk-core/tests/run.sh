@@ -58,6 +58,15 @@ for test in test-*.php; do
     output="$("$php_bin" "$test" 2>&1)"
     status=$?
 
+    # A test that prints nothing did not run its checks — plugin files bail out
+    # with a bare `exit` when a required constant is missing, which would
+    # otherwise look like a pass.
+    if [ -z "$output" ]; then
+        failed=$((failed + 1))
+        printf '  FAIL  %-24s produced no output\n' "$test"
+        continue
+    fi
+
     if [ "$status" -eq 0 ]; then
         printf '  ok    %-24s %s\n' "$test" "$(printf '%s' "$output" | tail -1)"
         [ "$verbose" -eq 1 ] && printf '%s\n' "$output"

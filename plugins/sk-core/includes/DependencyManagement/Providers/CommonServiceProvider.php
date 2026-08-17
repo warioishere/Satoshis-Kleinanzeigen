@@ -13,6 +13,7 @@ class CommonServiceProvider extends BaseServiceProvider {
 		\SK\Core\ProductCategory\Hooks::class,
 		\SK\Core\Vendor\Hooks::class,
 		\SK\Core\Vendor\UserSwitch::class,
+		\SK\Core\Vendor\SuspensionGuard::class,
 		\SK\Core\CacheInvalidate::class,
 		\SK\Core\Privacy::class,
 		\SK\Core\Exceptions\Handler::class,

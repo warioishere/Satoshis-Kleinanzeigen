@@ -5,7 +5,7 @@ namespace SK\Core\Admin\PhpDashboard;
 use SK\Modules\AntiFraud\AntifraudSettings;
 use SK\Modules\AntiFraud\BanSignals;
 use SK\Modules\AntiFraud\ReviewLog;
-use SK\Modules\AntiFraud\Suspension;
+use SK\Core\Vendor\Suspension;
 
 /**
  * Anti-Fraud tab in the SK dashboard — settings plus the suspension list.
@@ -99,7 +99,7 @@ class AntiFraudPage extends AbstractPage {
                 if ( BanSignals::is_banned( $vendor_id ) ) {
                     $args['restored'] = BanSignals::unban( $vendor_id );
                 } else {
-                    $args['restored'] = Suspension::unsuspend( $vendor_id );
+                    $args['restored'] = Suspension::unsuspend( $vendor_id, Suspension::SOURCE_ANTI_FRAUD );
                 }
             }
 

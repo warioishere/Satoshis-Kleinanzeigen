@@ -2,6 +2,8 @@
 
 namespace SK\Modules\AntiFraud;
 
+use SK\Core\Vendor\Suspension;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -32,7 +34,7 @@ class ReportAutoSuspend {
 
         $vendor_id = (int) $report->vendor_id;
 
-        if ( Suspension::is_suspended( $vendor_id ) ) {
+        if ( Suspension::is_suspended_by( $vendor_id, Suspension::SOURCE_ANTI_FRAUD ) ) {
             return;
         }
 
@@ -48,7 +50,7 @@ class ReportAutoSuspend {
             return;
         }
 
-        $drafted = Suspension::suspend( $vendor_id, 'report_threshold_' . count( $reporters ) );
+        $drafted = Suspension::suspend( $vendor_id, Suspension::SOURCE_ANTI_FRAUD, 'report_threshold_' . count( $reporters ) );
 
         $this->notify_admin( $vendor_id, $reporters, $drafted );
     }

@@ -2,6 +2,8 @@
 
 namespace SK\Modules\AntiFraud;
 
+use SK\Core\Vendor\Suspension;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -86,8 +88,8 @@ class BanWatcher {
         $suspended = false;
 
         if ( 'on' === sk_get_option( 'sk_antifraud_ban_autosuspend', 'sk_antifraud', 'off' )
-             && ! Suspension::is_suspended( $user_id ) ) {
-            Suspension::suspend( $user_id, 'ban_signal_match' );
+             && ! Suspension::is_suspended_by( $user_id, Suspension::SOURCE_ANTI_FRAUD ) ) {
+            Suspension::suspend( $user_id, Suspension::SOURCE_ANTI_FRAUD, 'ban_signal_match' );
             $suspended = true;
         }
 

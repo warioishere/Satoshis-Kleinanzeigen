@@ -2,6 +2,8 @@
 
 namespace SK\Modules\AntiFraud;
 
+use SK\Core\Vendor\Suspension;
+
 defined( 'ABSPATH' ) || exit;
 
 class FingerprintCollector {
@@ -244,31 +246,16 @@ class FingerprintCollector {
     }
 
     /**
-     * Suspend a user: draft all products, close store.
+     * Suspend a user.
+     *
+     * Was a third hand-rolled copy of this: it drafted the listings without
+     * recording which ones, so nothing could restore them afterwards, and wrote
+     * the store flag into skdar_profile_settings — a key nothing reads.
+     *
+     * @return int Number of listings taken offline.
      */
     public static function suspend_user( int $user_id, string $reason = '' ) {
-        update_user_meta( $user_id, 'sk_auto_suspended', 1 );
-        update_user_meta( $user_id, 'sk_auto_suspended_reason', $reason );
-
-        // Draft all products.
-        $products = get_posts( [
-            'author'         => $user_id,
-            'post_type'      => 'product',
-            'post_status'    => 'publish',
-            'posts_per_page' => -1,
-            'fields'         => 'ids',
-        ] );
-
-        foreach ( $products as $pid ) {
-            wp_update_post( [ 'ID' => $pid, 'post_status' => 'draft' ] );
-        }
-
-        // Close store.
-        $store_info = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( $user_id ) : [];
-        if ( is_array( $store_info ) ) {
-            $store_info['store_open_close'] = 'close';
-            update_user_meta( $user_id, 'skdar_profile_settings', $store_info );
-        }
+        return Suspension::suspend( $user_id, Suspension::SOURCE_ANTI_FRAUD, $reason );
     }
 
     private static function notify_admin( int $user_id, int $score, array $signals ) {

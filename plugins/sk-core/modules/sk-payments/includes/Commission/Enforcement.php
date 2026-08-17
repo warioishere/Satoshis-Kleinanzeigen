@@ -2,6 +2,7 @@
 
 namespace SK\Modules\Payments\Commission;
 
+use SK\Core\Vendor\Suspension;
 use SK\Modules\Payments\Chat\ChatIntegration;
 
 defined( 'ABSPATH' ) || exit;
@@ -59,9 +60,7 @@ class Enforcement {
         $reminders_sent  = (int) get_user_meta( $vendor_id, 'sk_commission_reminders_sent', true );
         $last_reminder   = get_user_meta( $vendor_id, 'sk_commission_last_reminder', true );
         $max_reminders   = (int) sk_get_option( 'sk_commission_reminders', 'sk_lightning', '3' );
-        $is_suspended    = get_user_meta( $vendor_id, 'sk_commission_suspended', true ) === '1';
-
-        if ( $is_suspended ) {
+        if ( Suspension::is_suspended_by( $vendor_id, Suspension::SOURCE_COMMISSION ) ) {
             return;
         }
 
@@ -73,11 +72,15 @@ class Enforcement {
         // Get unpaid total.
         global $wpdb;
         $table = $wpdb->prefix . 'sk_commissions';
+        // Same 7-day threshold that selected this vendor, so the reminder does not
+        // claim money that is not overdue yet.
         $unpaid = $wpdb->get_row( $wpdb->prepare(
             "SELECT COUNT(*) as cnt, COALESCE(SUM(commission_sats), 0) as total_sats
              FROM {$table}
-             WHERE vendor_id = %d AND status IN ('pending', 'invoiced')",
-            $vendor_id
+             WHERE vendor_id = %d AND status IN ('pending', 'invoiced')
+             AND created_at <= %s",
+            $vendor_id,
+            wp_date( 'Y-m-d H:i:s', time() - 7 * DAY_IN_SECONDS )
         ) );
 
         if ( ! $unpaid || $unpaid->cnt < 1 ) {
@@ -146,32 +149,14 @@ class Enforcement {
      * Suspend a vendor.
      */
     private static function suspend_vendor( int $vendor_id, int $total_sats, int $count ) {
-        global $wpdb;
-
-        // Track which products were published before suspension.
-        $published_ids = $wpdb->get_col( $wpdb->prepare(
-            "SELECT ID FROM {$wpdb->posts}
-             WHERE post_author = %d AND post_type = 'product' AND post_status = 'publish'",
-            $vendor_id
-        ) );
-        update_user_meta( $vendor_id, 'sk_commission_suspended_products', $published_ids );
-
-        // Products → draft.
-        if ( ! empty( $published_ids ) ) {
-            $ids_placeholder = implode( ',', array_map( 'intval', $published_ids ) );
-            $wpdb->query( "UPDATE {$wpdb->posts} SET post_status = 'draft' WHERE ID IN ({$ids_placeholder})" );
-        }
-
-        update_user_meta( $vendor_id, 'sk_commission_suspended', '1' );
-        update_user_meta( $vendor_id, 'sk_commission_suspended_at', current_time( 'mysql' ) );
-
-        // Close store.
-        $store_settings = get_user_meta( $vendor_id, 'sk_profile_settings', true );
-        if ( is_array( $store_settings ) ) {
-            $store_settings['sk_commission_was_enabled'] = $store_settings['store_open_close'] ?? '';
-            $store_settings['store_open_close'] = 'close';
-            update_user_meta( $vendor_id, 'sk_profile_settings', $store_settings );
-        }
+        // Shared mechanism: drafts the listings via wp_update_post (so caches and
+        // lookup tables follow) and keeps the vendor offline while any other
+        // suspension source is still active.
+        Suspension::suspend(
+            $vendor_id,
+            Suspension::SOURCE_COMMISSION,
+            sprintf( '%d unpaid commission(s), %d sats', $count, $total_sats )
+        );
 
         // Notify vendor via chat.
         $admin_id = self::get_admin_user_id();
@@ -184,6 +169,31 @@ class Enforcement {
 
             ChatIntegration::add_chat_message_static( $chat_id, $admin_id, $message );
         }
+
+        self::notify_admin_of_suspension( $vendor_id, $total_sats, $count );
+    }
+
+    /**
+     * Let the admin know a vendor went offline.
+     */
+    private static function notify_admin_of_suspension( int $vendor_id, int $total_sats, int $count ) {
+        $vendor = get_userdata( $vendor_id );
+        $name   = $vendor ? $vendor->user_login : (string) $vendor_id;
+
+        wp_mail(
+            get_option( 'admin_email' ),
+            sprintf( '[SK] Verkaeufer gesperrt: %s', $name ),
+            sprintf(
+                "Der Verkaeufer %s (ID %d) wurde wegen unbezahlter Kommissionen gesperrt.\n\n" .
+                "Offen: %d Kommission(en) ueber %d Sats.\n\n" .
+                "Die Sperre hebt sich automatisch auf, sobald alles bezahlt ist.\n%s",
+                $name,
+                $vendor_id,
+                $count,
+                $total_sats,
+                admin_url( 'user-edit.php?user_id=' . $vendor_id )
+            )
+        );
     }
 
     /**
@@ -191,9 +201,9 @@ class Enforcement {
      */
     private static function check_unsuspend() {
         $suspended = get_users( [
-            'meta_key'   => 'sk_commission_suspended',
-            'meta_value' => '1',
-            'fields'     => 'ID',
+            'meta_key'     => Suspension::META_SOURCES,
+            'meta_compare' => 'EXISTS',
+            'fields'       => 'ID',
         ] );
 
         if ( empty( $suspended ) ) {
@@ -204,6 +214,10 @@ class Enforcement {
         $table = $wpdb->prefix . 'sk_commissions';
 
         foreach ( $suspended as $vendor_id ) {
+            if ( ! Suspension::is_suspended_by( (int) $vendor_id, Suspension::SOURCE_COMMISSION ) ) {
+                continue;
+            }
+
             $unpaid = (int) $wpdb->get_var( $wpdb->prepare(
                 "SELECT COUNT(*) FROM {$table}
                  WHERE vendor_id = %d AND status IN ('pending', 'invoiced')",
@@ -217,39 +231,27 @@ class Enforcement {
     }
 
     private static function unsuspend_vendor( int $vendor_id ) {
-        global $wpdb;
+        // Lifts only the commission source: a vendor also suspended by
+        // anti-fraud stays offline, and their listings stay drafted.
+        $restored = Suspension::unsuspend( $vendor_id, Suspension::SOURCE_COMMISSION );
 
-        // Only restore products that were published before suspension.
-        $suspended_products = get_user_meta( $vendor_id, 'sk_commission_suspended_products', true );
-        if ( ! empty( $suspended_products ) && is_array( $suspended_products ) ) {
-            $ids_placeholder = implode( ',', array_map( 'intval', $suspended_products ) );
-            $wpdb->query( "UPDATE {$wpdb->posts} SET post_status = 'publish' WHERE ID IN ({$ids_placeholder}) AND post_status = 'draft'" );
-        }
-
-        delete_user_meta( $vendor_id, 'sk_commission_suspended' );
-        delete_user_meta( $vendor_id, 'sk_commission_suspended_at' );
-        delete_user_meta( $vendor_id, 'sk_commission_suspended_products' );
         delete_user_meta( $vendor_id, 'sk_commission_reminders_sent' );
         delete_user_meta( $vendor_id, 'sk_commission_last_reminder' );
 
-        // Restore store.
-        $store_settings = get_user_meta( $vendor_id, 'sk_profile_settings', true );
-        if ( is_array( $store_settings ) && isset( $store_settings['sk_commission_was_enabled'] ) ) {
-            $store_settings['store_open_close'] = $store_settings['sk_commission_was_enabled'];
-            unset( $store_settings['sk_commission_was_enabled'] );
-            update_user_meta( $vendor_id, 'sk_profile_settings', $store_settings );
-        }
+        $still_suspended = Suspension::is_suspended( $vendor_id );
 
         // Notify via chat.
         $admin_id = self::get_admin_user_id();
         $chat_id  = self::get_or_create_commission_chat( $admin_id, $vendor_id );
         if ( $chat_id ) {
-            ChatIntegration::add_chat_message_static(
-                $chat_id,
-                $admin_id,
-                "Alle Kommissionen bezahlt — dein Store ist wieder aktiv und deine Produkte sind wieder sichtbar."
-            );
+            $message = $still_suspended
+                ? 'Alle Kommissionen bezahlt. Dein Konto ist aus einem anderen Grund weiterhin gesperrt — bitte wende dich an den Support.'
+                : 'Alle Kommissionen bezahlt — dein Store ist wieder aktiv und deine Produkte sind wieder sichtbar.';
+
+            ChatIntegration::add_chat_message_static( $chat_id, $admin_id, $message );
         }
+
+        return $restored;
     }
 
     /**
