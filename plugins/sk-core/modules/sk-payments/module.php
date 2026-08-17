@@ -28,9 +28,13 @@ final class Module {
 
     private function includes() {
         require_once SK_PAYMENTS_INCLUDES . '/Activator.php';
+        require_once SK_PAYMENTS_INCLUDES . '/Secret.php';
         require_once SK_PAYMENTS_INCLUDES . '/StoreSettings.php';
+        require_once SK_PAYMENTS_INCLUDES . '/QrImage.php';
+        require_once SK_PAYMENTS_INCLUDES . '/ClientIp.php';
         require_once SK_PAYMENTS_INCLUDES . '/Admin/AdminPage.php';
         require_once SK_PAYMENTS_INCLUDES . '/Admin/AdminSettings.php';
+        require_once SK_PAYMENTS_INCLUDES . '/Chat/PaymentCard.php';
         require_once SK_PAYMENTS_INCLUDES . '/Chat/ChatIntegration.php';
         require_once SK_PAYMENTS_INCLUDES . '/Dashboard/TransactionsPage.php';
         require_once SK_PAYMENTS_INCLUDES . '/NWC/Client.php';
