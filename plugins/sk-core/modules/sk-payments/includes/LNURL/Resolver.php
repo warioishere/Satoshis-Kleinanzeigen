@@ -25,7 +25,7 @@ class Resolver {
 
         $url = "https://{$domain}/.well-known/lnurlp/{$user}";
 
-        $response = wp_remote_get( $url, [
+        $response = wp_safe_remote_get( $url, [
             'timeout' => 10,
             'headers' => [ 'Accept' => 'application/json' ],
         ] );
@@ -60,7 +60,7 @@ class Resolver {
             return $url;
         }
 
-        $response = wp_remote_get( $url, [
+        $response = wp_safe_remote_get( $url, [
             'timeout' => 10,
             'headers' => [ 'Accept' => 'application/json' ],
         ] );
@@ -92,7 +92,7 @@ class Resolver {
         $separator = ( strpos( $callback_url, '?' ) !== false ) ? '&' : '?';
         $url = $callback_url . $separator . 'amount=' . $amount_msats;
 
-        $response = wp_remote_get( $url, [
+        $response = wp_safe_remote_get( $url, [
             'timeout' => 15,
             'headers' => [ 'Accept' => 'application/json' ],
         ] );

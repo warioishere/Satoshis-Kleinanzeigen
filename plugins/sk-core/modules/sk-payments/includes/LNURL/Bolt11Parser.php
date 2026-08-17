@@ -6,6 +6,71 @@ defined( 'ABSPATH' ) || exit;
 
 class Bolt11Parser {
 
+    /** msats per BTC. */
+    const MSATS_PER_BTC = 100000000000;
+
+    /** BOLT-11 amount multipliers as msats-per-unit. */
+    const MULTIPLIERS = [
+        'm' => 100000000, // milli: 1e-3 BTC
+        'u' => 100000,    // micro: 1e-6 BTC
+        'n' => 100,       // nano:  1e-9 BTC
+        'p' => 0,         // pico:  1e-12 BTC — handled separately (sub-msat)
+    ];
+
+    /**
+     * Amount encoded in a bolt11 invoice, in millisatoshis.
+     *
+     * The amount lives in the human readable part (e.g. "lnbc250u"), before the
+     * bech32 separator. Invoices without an amount are rejected: an open
+     * invoice lets the payer pick any value, which we cannot verify.
+     *
+     * @param string $bolt11
+     * @return int|\WP_Error msats
+     */
+    public static function get_amount_msats( string $bolt11 ) {
+        $bolt11 = strtolower( trim( $bolt11 ) );
+
+        if ( strpos( $bolt11, 'lightning:' ) === 0 ) {
+            $bolt11 = substr( $bolt11, 10 );
+        }
+
+        // The bech32 charset excludes "1", so the last "1" is the separator.
+        $sep = strrpos( $bolt11, '1' );
+        if ( $sep === false || $sep < 1 ) {
+            return new \WP_Error( 'bolt11_invalid', 'Ungültiges bolt11-Format.' );
+        }
+
+        $hrp = substr( $bolt11, 0, $sep );
+
+        // ln + currency prefix + optional amount + optional multiplier.
+        if ( ! preg_match( '/^ln(?:bcrt|bc|tbs|tb|sb)(\d*)([munp]?)$/', $hrp, $m ) ) {
+            return new \WP_Error( 'bolt11_hrp', 'bolt11-Präfix konnte nicht gelesen werden.' );
+        }
+
+        $digits     = $m[1];
+        $multiplier = $m[2];
+
+        if ( $digits === '' ) {
+            return new \WP_Error( 'bolt11_no_amount', 'bolt11 enthält keinen Betrag.' );
+        }
+
+        $value = (int) $digits;
+
+        if ( $multiplier === '' ) {
+            return $value * self::MSATS_PER_BTC;
+        }
+
+        if ( $multiplier === 'p' ) {
+            // 1p = 0.1 msats, so only multiples of 10 are whole msats.
+            if ( $value % 10 !== 0 ) {
+                return new \WP_Error( 'bolt11_sub_msat', 'bolt11-Betrag ist kein ganzzahliger msat-Wert.' );
+            }
+            return intdiv( $value, 10 );
+        }
+
+        return $value * self::MULTIPLIERS[ $multiplier ];
+    }
+
     public static function get_payment_hash( string $bolt11 ) {
         $bolt11 = strtolower( trim( $bolt11 ) );
 

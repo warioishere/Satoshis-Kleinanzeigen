@@ -10,6 +10,9 @@ defined( 'ABSPATH' ) || exit;
  */
 class ZapButton {
 
+    /** Wallet lookups a single IP may trigger per minute on the public verify endpoint. */
+    const MAX_LOOKUPS_PER_MINUTE = 60;
+
     public function __construct() {
         // Store page — next to follow button in tab bar.
         if ( sk_get_option( 'sk_zaps_on_store', 'sk_zaps', 'on' ) === 'on' ) {
@@ -115,16 +118,36 @@ class ZapButton {
      * AJAX: Check if a zap invoice was paid via vendor's LNDHub/NWC.
      */
     public static function ajax_check_payment() {
-        $vendor_id    = (int) ( $_POST['vendor_id'] ?? 0 );
-        $payment_hash = sanitize_text_field( $_POST['payment_hash'] ?? '' );
+        $vendor_id    = absint( $_POST['vendor_id'] ?? 0 );
+        $payment_hash = strtolower( sanitize_text_field( wp_unslash( $_POST['payment_hash'] ?? '' ) ) );
 
-        if ( ! $vendor_id || ! $payment_hash ) {
+        // This is the LUD-21 verify URL, so wallets call it unauthenticated.
+        // That means it must not become a way to hammer or probe vendor wallets
+        // with arbitrary hashes: strict format, then rate limits.
+        if ( ! $vendor_id || ! preg_match( '/^[0-9a-f]{64}$/', $payment_hash ) ) {
             wp_send_json_error( [ 'settled' => false ] );
         }
 
         if ( ! class_exists( 'SK\Modules\Payments\StoreSettings' ) ) {
             wp_send_json_error( [ 'settled' => false ] );
         }
+
+        // One wallet lookup per hash per second is plenty for real polling.
+        $throttle_key = 'sk_zapchk_' . $payment_hash;
+        if ( get_transient( $throttle_key ) ) {
+            wp_send_json_success( [ 'settled' => false, 'throttled' => true ] );
+        }
+        set_transient( $throttle_key, 1, 1 );
+
+        // Per-IP budget so nobody can use the endpoint to flood vendor wallets.
+        $ip      = function_exists( 'sk_get_client_ip' ) ? sk_get_client_ip() : '';
+        $ip_key  = 'sk_zapip_' . md5( $ip !== '' ? $ip : 'unknown' );
+        $lookups = (int) get_transient( $ip_key );
+
+        if ( $lookups >= self::MAX_LOOKUPS_PER_MINUTE ) {
+            wp_send_json_error( [ 'settled' => false, 'message' => 'Zu viele Anfragen.' ] );
+        }
+        set_transient( $ip_key, $lookups + 1, MINUTE_IN_SECONDS );
 
         // Try NWC first, then LNDHub.
         $client = \SK\Modules\Payments\StoreSettings::get_nwc_client( $vendor_id );
@@ -337,6 +360,8 @@ class ZapButton {
         wp_localize_script( 'sk-zaps', 'skZaps', [
             'defaultAmount' => (int) sk_get_option( 'sk_zaps_default_amount', 'sk_zaps', '21' ),
             'relays'        => array_values( $relays ),
+            // QR codes are rendered on our own server, never by a third party.
+            'qrUrl'         => rest_url( 'sk/v1/lightning/qr' ),
         ] );
 
         // Inline CSS.

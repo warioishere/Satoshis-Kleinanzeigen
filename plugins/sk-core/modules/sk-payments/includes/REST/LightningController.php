@@ -6,6 +6,8 @@ use SK\Modules\Payments\LNURL\Resolver;
 use SK\Modules\Payments\LNURL\Bolt11Parser;
 use SK\Modules\Payments\LNURL\ExchangeRate;
 use SK\Modules\Payments\StoreSettings;
+use SK\Modules\Payments\QrImage;
+use SK\Modules\Payments\ClientIp;
 use WP_Error;
 use WP_REST_Controller;
 use WP_REST_Request;
@@ -18,6 +20,9 @@ class LightningController extends WP_REST_Controller {
 
     protected $namespace = 'sk/v1';
     protected $rest_base = 'lightning';
+
+    /** Max proofs returned by the public proof endpoint. */
+    const PROOF_LIMIT = 100;
 
     public function register_routes() {
         register_rest_route( $this->namespace, '/' . $this->rest_base . '/invoice', [
@@ -101,6 +106,17 @@ class LightningController extends WP_REST_Controller {
             ],
         ] );
 
+        register_rest_route( $this->namespace, '/' . $this->rest_base . '/qr', [
+            [
+                'methods'             => WP_REST_Server::READABLE,
+                'callback'            => [ $this, 'get_qr' ],
+                'permission_callback' => '__return_true',
+                'args'                => [
+                    'data' => [ 'required' => true, 'type' => 'string' ],
+                ],
+            ],
+        ] );
+
         register_rest_route( $this->namespace, '/' . $this->rest_base . '/rate', [
             [
                 'methods'             => WP_REST_Server::READABLE,
@@ -112,6 +128,22 @@ class LightningController extends WP_REST_Controller {
 
     public function check_logged_in() {
         return is_user_logged_in();
+    }
+
+    /**
+     * Is the current user one of the two parties of this payment?
+     *
+     * Payment status is not public: without this check anyone could poll a
+     * payment_hash and learn whether and when a stranger's purchase settled.
+     */
+    private static function user_is_party( object $payment ): bool {
+        $user_id = get_current_user_id();
+
+        if ( ! $user_id ) {
+            return false;
+        }
+
+        return $user_id === (int) $payment->vendor_id || $user_id === (int) $payment->buyer_id;
     }
 
     public function create_invoice( WP_REST_Request $request ) {
@@ -232,10 +264,35 @@ class LightningController extends WP_REST_Controller {
             }
         }
 
+        // The invoice must ask for exactly the amount we requested. A hostile or
+        // broken LNURL backend must not be able to hand the buyer a different
+        // amount than the UI shows.
+        $invoice_msats = Bolt11Parser::get_amount_msats( $bolt11 );
+
+        if ( is_wp_error( $invoice_msats ) ) {
+            return new WP_Error(
+                'amount_unverifiable',
+                'Invoice-Betrag konnte nicht geprüft werden: ' . $invoice_msats->get_error_message(),
+                [ 'status' => 502 ]
+            );
+        }
+
+        if ( $invoice_msats !== $amount_sats * 1000 ) {
+            return new WP_Error(
+                'amount_mismatch',
+                sprintf(
+                    'Invoice lautet über %d Sats statt der angeforderten %d Sats.',
+                    (int) round( $invoice_msats / 1000 ),
+                    $amount_sats
+                ),
+                [ 'status' => 502 ]
+            );
+        }
+
         $rate = ExchangeRate::get_btc_eur_rate();
         $exchange_rate = is_wp_error( $rate ) ? null : $rate;
 
-        $qr_data_uri = self::generate_qr_data_uri( strtoupper( $bolt11 ) );
+        $qr_data_uri = QrImage::bolt11( $bolt11 );
 
         $table = $wpdb->prefix . 'sk_lightning_payments';
         $wpdb->insert( $table, [
@@ -250,7 +307,7 @@ class LightningController extends WP_REST_Controller {
             'context'         => $chat_id ? 'chat' : 'direct',
             'verify_url'      => $verify_url ?: null,
             'exchange_rate'   => $exchange_rate,
-            'buyer_ip_hash'   => hash( 'sha256', self::get_client_ip() ),
+            'buyer_ip_hash'   => ClientIp::hash(),
             'created_at'      => current_time( 'mysql' ),
         ], [
             '%d', '%d', '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%f', '%s', '%s',
@@ -319,6 +376,10 @@ class LightningController extends WP_REST_Controller {
             return new WP_Error( 'not_found', 'Zahlung nicht gefunden.', [ 'status' => 404 ] );
         }
 
+        if ( ! self::user_is_party( $payment ) ) {
+            return new WP_Error( 'forbidden', 'Keine Berechtigung für diese Zahlung.', [ 'status' => 403 ] );
+        }
+
         if ( $payment->status === 'confirmed' ) {
             return new WP_REST_Response( [
                 'status'       => 'confirmed',
@@ -374,7 +435,9 @@ class LightningController extends WP_REST_Controller {
             ], 200 );
         }
 
-        $response = wp_remote_get( $payment->verify_url, [
+        // verify_url comes from the vendor's LNURL server, so it is treated as
+        // an untrusted URL: wp_safe_remote_get blocks loopback/private targets.
+        $response = wp_safe_remote_get( $payment->verify_url, [
             'timeout' => 5,
             'headers' => [ 'Accept' => 'application/json' ],
         ] );
@@ -522,6 +585,36 @@ class LightningController extends WP_REST_Controller {
         ], 200 );
     }
 
+    /**
+     * GET /sk/v1/lightning/qr?data=<bolt11|bitcoin: URI>
+     *
+     * For flows where the invoice only exists in the browser (zaps). Rendering
+     * happens here so no third party learns the invoices or gets to choose the
+     * image the payer scans. Only payment payloads are accepted.
+     */
+    public function get_qr( WP_REST_Request $request ) {
+        $data = trim( (string) $request->get_param( 'data' ) );
+
+        if ( strlen( $data ) > 1000 ) {
+            return new WP_Error( 'qr_too_long', 'Payload zu lang.', [ 'status' => 400 ] );
+        }
+
+        $is_bolt11 = (bool) preg_match( '/^ln[a-z0-9]{20,}$/i', $data );
+        $is_bip21  = (bool) preg_match( '/^bitcoin:[a-zA-Z0-9]{20,90}(?:\?[A-Za-z0-9=&.\-_%]*)?$/', $data );
+
+        if ( ! $is_bolt11 && ! $is_bip21 ) {
+            return new WP_Error( 'qr_invalid', 'Nur bolt11-Invoices und bitcoin:-URIs werden gerendert.', [ 'status' => 400 ] );
+        }
+
+        $uri = $is_bolt11 ? QrImage::bolt11( $data ) : QrImage::data_uri( $data );
+
+        if ( $uri === '' ) {
+            return new WP_Error( 'qr_failed', 'QR-Code konnte nicht erzeugt werden.', [ 'status' => 500 ] );
+        }
+
+        return new WP_REST_Response( [ 'qr' => $uri ], 200 );
+    }
+
     public function get_rate( WP_REST_Request $request ) {
         $currency = strtoupper( $request->get_param( 'currency' ) ?: 'EUR' );
         if ( ! in_array( $currency, [ 'EUR', 'CHF' ], true ) ) {
@@ -600,13 +693,23 @@ class LightningController extends WP_REST_Controller {
             $wpdb->prepare( "SELECT * FROM {$rep_table} WHERE vendor_id = %d", $vendor_id )
         );
 
+        $total = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$table} WHERE vendor_id = %d AND reputation_valid = 1",
+            $vendor_id
+        ) );
+
+        // This endpoint is public by design (anyone may verify a vendor's
+        // reputation), so it stays bounded and omits the raw bolt11: the
+        // invoice carries the memo and is not needed to check the preimage.
         $payments = $wpdb->get_results( $wpdb->prepare(
-            "SELECT payment_hash, amount_sats, payment_request, preimage, preimage_verified,
+            "SELECT payment_hash, amount_sats, preimage, preimage_verified,
                     created_at, confirmed_at, product_id
              FROM {$table}
              WHERE vendor_id = %d AND reputation_valid = 1
-             ORDER BY confirmed_at DESC",
-            $vendor_id
+             ORDER BY confirmed_at DESC
+             LIMIT %d",
+            $vendor_id,
+            self::PROOF_LIMIT
         ) );
 
         $proofs = [];
@@ -614,7 +717,6 @@ class LightningController extends WP_REST_Controller {
             $proof = [
                 'payment_hash'      => $p->payment_hash,
                 'amount_sats'       => (int) $p->amount_sats,
-                'bolt11'            => $p->payment_request,
                 'product'           => $p->product_id ? get_the_title( $p->product_id ) : null,
                 'created_at'        => $p->created_at,
                 'confirmed_at'      => $p->confirmed_at,
@@ -638,6 +740,8 @@ class LightningController extends WP_REST_Controller {
             'unique_buyers'      => $rep ? (int) $rep->unique_buyers : 0,
             'valid_volume_sats'  => $rep ? (int) $rep->valid_volume_sats : 0,
             'last_calculated_at' => $rep ? $rep->last_calculated_at : null,
+            'proofs_total'       => $total,
+            'proofs_shown'       => count( $proofs ),
             'proofs'             => $proofs,
             'verification_howto' => [
                 'description' => 'Jeder Eintrag mit preimage kann verifiziert werden: SHA256(hex2bin(preimage)) muss den payment_hash ergeben.',
@@ -665,6 +769,10 @@ class LightningController extends WP_REST_Controller {
 
         if ( ! $payment ) {
             return new WP_Error( 'not_found', 'Zahlung nicht gefunden.', [ 'status' => 404 ] );
+        }
+
+        if ( ! self::user_is_party( $payment ) ) {
+            return new WP_Error( 'forbidden', 'Keine Berechtigung für diese Zahlung.', [ 'status' => 403 ] );
         }
 
         if ( $payment->context !== 'onchain' ) {
@@ -743,28 +851,4 @@ class LightningController extends WP_REST_Controller {
         ], 200 );
     }
 
-    private static function generate_qr_data_uri( string $data ): string {
-        return 'qr:' . $data;
-    }
-
-    private static function get_client_ip(): string {
-        $headers = [
-            'HTTP_CF_CONNECTING_IP',
-            'HTTP_X_FORWARDED_FOR',
-            'HTTP_X_REAL_IP',
-            'REMOTE_ADDR',
-        ];
-
-        foreach ( $headers as $header ) {
-            if ( ! empty( $_SERVER[ $header ] ) ) {
-                $ip = sanitize_text_field( wp_unslash( $_SERVER[ $header ] ) );
-                if ( strpos( $ip, ',' ) !== false ) {
-                    $ip = trim( explode( ',', $ip )[0] );
-                }
-                return $ip;
-            }
-        }
-
-        return 'unknown-' . wp_generate_password( 16, false );
-    }
 }

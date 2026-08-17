@@ -287,8 +287,10 @@
      */
     function showInvoiceFallback(invoice, amountSats) {
         var html = '<div style="text-align:center;margin-top:12px;display:flex;flex-direction:column;align-items:center;">';
-        html += '<p style="color:#e8ecf0;font-size:14px;margin-bottom:8px;">' + amountSats + ' Sats</p>';
-        html += '<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(invoice.toUpperCase()) + '" style="border-radius:8px;background:#fff;padding:6px;display:block;" />';
+        html += '<p style="color:#e8ecf0;font-size:14px;margin-bottom:8px;">' + parseInt(amountSats, 10) + ' Sats</p>';
+        // Placeholder — filled by loadZapQr() with a server-rendered image, so
+        // the invoice never reaches a third-party QR service.
+        html += '<div id="sk-zap-qr" style="min-height:180px;display:flex;align-items:center;justify-content:center;color:#5a6a7e;font-size:12px;">QR wird erzeugt…</div>';
         html += '<div style="margin-top:10px;display:flex;gap:6px;justify-content:center;">';
         html += '<button class="sk-zap-close" onclick="navigator.clipboard.writeText(\'' + escAttr(invoice) + '\');this.textContent=\'Kopiert!\'">Invoice kopieren</button>';
         html += '<a href="lightning:' + escAttr(invoice) + '" class="sk-zap-send" style="text-align:center;text-decoration:none;display:block;">In Wallet öffnen</a>';
@@ -297,6 +299,32 @@
         $('#sk-zap-send').hide();
         $('.sk-zap-amounts, .sk-zap-custom').hide();
         $('#sk-zap-status').html(html);
+
+        loadZapQr(invoice);
+    }
+
+    /**
+     * Fetch the QR image for an invoice from our own REST endpoint.
+     */
+    function loadZapQr(invoice) {
+        var $target = $('#sk-zap-qr');
+        if (!$target.length || !defaults.qrUrl) {
+            $target.text('QR nicht verfügbar — bitte Invoice kopieren.');
+            return;
+        }
+
+        $.getJSON(defaults.qrUrl, { data: invoice })
+            .done(function (res) {
+                if (res && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(String(res.qr || ''))) {
+                    $target.html('<img src="' + escAttr(res.qr) + '" alt="QR Code" ' +
+                        'style="max-width:180px;width:100%;border-radius:8px;background:#fff;padding:6px;display:block;" />');
+                } else {
+                    $target.text('QR nicht verfügbar — bitte Invoice kopieren.');
+                }
+            })
+            .fail(function () {
+                $target.text('QR nicht verfügbar — bitte Invoice kopieren.');
+            });
     }
 
     function setStatus(html, success) {

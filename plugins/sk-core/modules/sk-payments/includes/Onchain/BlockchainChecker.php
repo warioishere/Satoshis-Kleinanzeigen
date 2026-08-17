@@ -18,6 +18,23 @@ class BlockchainChecker {
     const FULCRUM_TIMEOUT = 8;
 
     /**
+     * SHA256 fingerprint of the Fulcrum server's DER certificate.
+     *
+     * Fulcrum serves a self-signed certificate, so CA validation cannot work —
+     * we pin the certificate instead. Without a pin, anyone able to MITM the
+     * connection could fake a payment confirmation.
+     *
+     * Read the current value with:
+     *   openssl s_client -connect private-fulcrum.yourdevice.ch:50002 \
+     *     </dev/null 2>/dev/null | openssl x509 -outform der | sha256sum
+     *
+     * Override in wp-config.php via SK_FULCRUM_CERT_SHA256 after a cert change.
+     * A mismatch makes the Fulcrum connection fail and falls back to
+     * mempool.space, so payments keep working — just slower.
+     */
+    const FULCRUM_CERT_SHA256 = '1a6004674fe3330ba67cf157896ef87bad1229ba457d7992ea29c2c9a53d0597';
+
+    /**
      * Check if an address received at least $expected_sats.
      */
     public static function check_payment( string $address, int $expected_sats, string $since = '' ): array {
@@ -54,11 +71,16 @@ class BlockchainChecker {
             return $scripthash;
         }
 
-        // Open SSL connection to Fulcrum.
+        // Open SSL connection to Fulcrum, pinned to its self-signed cert.
+        $fingerprint = defined( 'SK_FULCRUM_CERT_SHA256' )
+            ? strtolower( (string) SK_FULCRUM_CERT_SHA256 )
+            : self::FULCRUM_CERT_SHA256;
+
         $ctx = stream_context_create( [
             'ssl' => [
                 'verify_peer'      => false,
                 'verify_peer_name' => false,
+                'peer_fingerprint' => [ 'sha256' => $fingerprint ],
             ],
         ] );
 
@@ -376,7 +398,7 @@ class BlockchainChecker {
      * Fallback: mempool.space REST API.
      */
     private static function check_mempool( string $address, int $expected_sats, string $since ) {
-        $response = wp_remote_get( "https://mempool.space/api/address/{$address}/txs", [
+        $response = wp_remote_get( 'https://mempool.space/api/address/' . rawurlencode( $address ) . '/txs', [
             'timeout' => 8,
             'headers' => [ 'Accept' => 'application/json' ],
         ] );

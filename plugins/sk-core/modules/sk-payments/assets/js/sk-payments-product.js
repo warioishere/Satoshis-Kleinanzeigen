@@ -98,10 +98,8 @@
         $.post(SKP.ajaxurl, {
             action: 'skp_create_onchain_payment',
             nonce: SKP.nonce,
-            vendor_id: pendingData.vendor_id,
-            product_id: pendingData.product_id,
-            product_title: pendingData.product_title,
-            price_sats: pendingData.price_sats
+            // Vendor, title and price are resolved server-side from the product.
+            product_id: pendingData.product_id
         }, function (res) {
             $btn.prop('disabled', false).text('Sofortkauf');
             if (res.success) {
@@ -138,10 +136,12 @@
         html += '<a href="' + escAttr(data.bip21) + '" style="flex:1;padding:8px;background:#f7931a;border:none;border-radius:6px;color:#fff;text-align:center;font-size:13px;text-decoration:none;display:flex;align-items:center;justify-content:center;"><i class="fab fa-bitcoin"></i>&nbsp;In Wallet öffnen</a>';
         html += '</div>';
 
-        // QR Code.
-        html += '<div style="text-align:center;margin-bottom:12px;">';
-        html += '<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(data.bip21) + '" alt="QR" style="border-radius:8px;background:#fff;padding:6px;" />';
-        html += '</div>';
+        // QR Code — rendered server-side by QrImage, never by a third party.
+        if (/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(String(data.qr || ''))) {
+            html += '<div style="text-align:center;margin-bottom:12px;">';
+            html += '<img src="' + escAttr(data.qr) + '" alt="QR" style="max-width:180px;width:100%;border-radius:8px;background:#fff;padding:6px;" />';
+            html += '</div>';
+        }
 
         // Polling status.
         html += '<div id="skp-onchain-status" style="text-align:center;padding:10px;font-size:13px;color:#5a6a7e;">';
