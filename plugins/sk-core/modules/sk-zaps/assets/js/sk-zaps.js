@@ -292,8 +292,11 @@
         // the invoice never reaches a third-party QR service.
         html += '<div id="sk-zap-qr" style="min-height:180px;display:flex;align-items:center;justify-content:center;color:#5a6a7e;font-size:12px;">QR wird erzeugt…</div>';
         html += '<div style="margin-top:10px;display:flex;gap:6px;justify-content:center;">';
-        html += '<button class="sk-zap-close" onclick="navigator.clipboard.writeText(\'' + escAttr(invoice) + '\');this.textContent=\'Kopiert!\'">Invoice kopieren</button>';
-        html += '<a href="lightning:' + escAttr(invoice) + '" class="sk-zap-send" style="text-align:center;text-decoration:none;display:block;">In Wallet öffnen</a>';
+        // The value goes into a data attribute, not into an inline onclick: there
+        // the browser decodes HTML entities before JavaScript parses the string,
+        // so an escaped quote would still break out into JS context.
+        html += '<button type="button" class="sk-zap-close sk-zap-copy" data-copy="' + escAttr(invoice) + '">Invoice kopieren</button>';
+        html += '<a href="lightning:' + encodeURIComponent(invoice) + '" class="sk-zap-send" style="text-align:center;text-decoration:none;display:block;">In Wallet öffnen</a>';
         html += '</div></div>';
 
         $('#sk-zap-send').hide();
@@ -302,6 +305,18 @@
 
         loadZapQr(invoice);
     }
+
+    // Copy handler for the invoice fallback.
+    $(document).on('click', '.sk-zap-copy', function () {
+        var text = $(this).data('copy');
+        if (!text || !navigator.clipboard) return;
+
+        var $btn = $(this);
+        navigator.clipboard.writeText(String(text)).then(function () {
+            $btn.text('Kopiert!');
+            setTimeout(function () { $btn.text('Invoice kopieren'); }, 2000);
+        });
+    });
 
     /**
      * Fetch the QR image for an invoice from our own REST endpoint.

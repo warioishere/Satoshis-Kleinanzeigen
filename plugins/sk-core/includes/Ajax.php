@@ -37,11 +37,8 @@ class Ajax {
 
         // Single product Design ajax
         add_action( 'wp_ajax_sk_get_pre_attribute', [ $this, 'add_attr_predefined_attribute' ] );
-        add_action( 'wp_ajax_nopriv_sk_get_pre_attribute', [ $this, 'add_attr_predefined_attribute' ] );
         add_action( 'wp_ajax_sk_add_new_attribute', [ $this, 'add_new_attribute' ] );
-        add_action( 'wp_ajax_nopriv_sk_add_new_attribute', [ $this, 'add_new_attribute' ] );
         add_action( 'wp_ajax_sk_load_order_items', [ $this, 'load_order_items' ] );
-        add_action( 'wp_ajax_nopriv_sk_load_order_items', [ $this, 'load_order_items' ] );
 
         add_action( 'wp_ajax_sk_toggle_seller', [ $this, 'toggle_seller_status' ] );
     }
@@ -811,11 +808,21 @@ class Ajax {
     public function add_attr_predefined_attribute() {
         check_ajax_referer( 'sk_reviews' );
 
+        if ( ! current_user_can( 'skdar' ) ) {
+            die( -1 );
+        }
+
         global $wc_product_attributes;
 
         $thepostid = 0;
-        $taxonomy  = sanitize_text_field( $_POST['taxonomy'] );
-        $i         = absint( $_POST['i'] );
+        $taxonomy  = sanitize_text_field( $_POST['taxonomy'] ?? '' );
+        $i         = absint( $_POST['i'] ?? 0 );
+
+        // Only known attribute taxonomies — an unknown one would hit an
+        // undefined index below.
+        if ( $taxonomy !== '' && ! isset( $wc_product_attributes[ $taxonomy ] ) ) {
+            die( -1 );
+        }
         $attribute = [
             'name'         => $taxonomy,
             'value'        => '',

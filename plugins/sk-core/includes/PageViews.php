@@ -40,7 +40,10 @@ class PageViews {
 		if ( is_singular( 'product' ) ) {
 			global $post;
 
-			if ( sk_get_current_user_id() !== $post->post_author ) {
+			// post_author comes out of the database as a string, so a strict
+			// comparison against an int was always true and sellers counted
+			// their own listing views.
+			if ( sk_get_current_user_id() !== (int) $post->post_author ) {
 				wp_enqueue_script( 'jquery' );
 				add_action( 'wp_footer', array( $this, 'load_scripts' ) );
 			}
