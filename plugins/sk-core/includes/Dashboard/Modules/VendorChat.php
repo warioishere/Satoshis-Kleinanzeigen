@@ -407,7 +407,9 @@ class VendorChat extends DashboardModule {
 		$current_user_id = get_current_user_id();
 		$vendor_id       = isset( $_POST['vendor_id'] )  ? intval( $_POST['vendor_id'] )  : 0;
 		$product_id      = isset( $_POST['product_id'] ) ? intval( $_POST['product_id'] ) : 0;
-		$message         = isset( $_POST['message'] )    ? sanitize_textarea_field( $_POST['message'] ) : '';
+		$message         = isset( $_POST['message'] )
+			? self::sanitize_user_message( sanitize_textarea_field( wp_unslash( $_POST['message'] ) ) )
+			: '';
 
 		if ( ! $vendor_id || ! $product_id ) {
 			wp_send_json_error( [ 'message' => __( 'Ungültige Anfrage.', 'sk' ) ] );
@@ -467,7 +469,9 @@ class VendorChat extends DashboardModule {
 
 		$current_user_id = get_current_user_id();
 		$chat_id         = isset( $_POST['chat_id'] ) ? intval( $_POST['chat_id'] ) : 0;
-		$message         = isset( $_POST['message'] ) ? sanitize_textarea_field( $_POST['message'] ) : '';
+		$message         = isset( $_POST['message'] )
+			? self::sanitize_user_message( sanitize_textarea_field( wp_unslash( $_POST['message'] ) ) )
+			: '';
 
 		if ( ! $chat_id || empty( $message ) ) {
 			wp_send_json_error( [ 'message' => __( 'Ungültige Anfrage.', 'sk' ) ] );
@@ -521,7 +525,8 @@ class VendorChat extends DashboardModule {
 
 		$this->mark_as_read( $chat_id, $current_user_id );
 
-		// Enrich messages with display_name + avatar for JS rendering.
+		// Enrich messages with display_name + avatar for JS rendering, and
+		// replace payment markers with server-verified card data.
 		$messages = $this->get_messages( $chat_id );
 		foreach ( $messages as &$msg ) {
 			$user = get_userdata( $msg['user_id'] );
@@ -530,6 +535,10 @@ class VendorChat extends DashboardModule {
 				? $store_info['store_name']
 				: ( $user ? $user->display_name : '' );
 			$msg['avatar'] = get_avatar_url( $msg['user_id'], [ 'size' => 32 ] );
+
+			$prepared       = self::prepare_message( $msg, $chat_id );
+			$msg['message'] = $prepared['text'];
+			$msg['card']    = $prepared['card'];
 		}
 		unset( $msg );
 
@@ -558,13 +567,9 @@ class VendorChat extends DashboardModule {
 			wp_send_json_error( [ 'message' => __( 'Du bist kein Teilnehmer dieses Chats.', 'sk' ) ] );
 		}
 
-		$deleted = wp_delete_post( $chat_id, true );
+		$this->delete_chat_for_user( $chat_id, $current_user_id );
 
-		if ( $deleted ) {
-			wp_send_json_success( [ 'message' => __( 'Chat gelöscht.', 'sk' ) ] );
-		} else {
-			wp_send_json_error( [ 'message' => __( 'Fehler beim Löschen.', 'sk' ) ] );
-		}
+		wp_send_json_success( [ 'message' => __( 'Chat gelöscht.', 'sk' ) ] );
 	}
 
 	/**
@@ -634,6 +639,68 @@ class VendorChat extends DashboardModule {
 	}
 
 	/**
+	 * Strip payment markers from user supplied message text.
+	 *
+	 * Payment cards ([lightning_invoice], [onchain_payment], …) are rendered
+	 * from verified data by PaymentCard. Nobody may type one and have it show
+	 * up as a real invoice, QR code or payment confirmation.
+	 *
+	 *
+	 * @param string $message
+	 * @return string
+	 */
+	public static function sanitize_user_message( $message ) {
+		$message = (string) $message;
+
+		// Superset of the markers PaymentCard knows, so new card types stay covered.
+		$pattern = '#\[/?(?:lightning_[a-z_]+|onchain_[a-z_]+)\]#i';
+
+		if ( ! preg_match( $pattern, $message ) ) {
+			return $message;
+		}
+
+		// Whole blocks first, then any leftover tag.
+		$message = preg_replace( '#\[(lightning_[a-z_]+|onchain_[a-z_]+)\].*?\[/\1\]#is', '', $message );
+		$message = preg_replace( $pattern, '', (string) $message );
+
+		return trim( (string) $message );
+	}
+
+	/**
+	 * Build the render data for one chat message.
+	 *
+	 * Returns the text to display plus — only if the message references a
+	 * payment that really belongs to this chat — the verified card data. Raw
+	 * marker text never reaches the reader.
+	 *
+	 *
+	 * @param array $message
+	 * @param int   $chat_id
+	 * @return array
+	 */
+	public static function prepare_message( $message, $chat_id ) {
+		$message = (array) $message;
+		$text    = isset( $message['message'] ) ? (string) $message['message'] : '';
+
+		if ( ! class_exists( '\SK\Modules\Payments\Chat\PaymentCard' ) ) {
+			$stripped = self::sanitize_user_message( $text );
+			return [
+				'text' => $stripped !== '' ? $stripped : __( '⚡ Zahlungsnachricht', 'sk' ),
+				'card' => null,
+			];
+		}
+
+		$card = \SK\Modules\Payments\Chat\PaymentCard::build( $message, (int) $chat_id );
+
+		return [
+			'text' => $card
+				? __( '⚡ Zahlungsnachricht', 'sk' )
+				: \SK\Modules\Payments\Chat\PaymentCard::to_display_text( $text ),
+			'card' => $card,
+		];
+	}
+
+	/**
 	 * Find an existing chat between two users for a specific product.
 	 *
 	 *
@@ -681,6 +748,8 @@ class VendorChat extends DashboardModule {
 	 * @param string $message
 	 */
 	public function add_message_to_chat( $chat_id, $user_id, $message ) {
+		// Never let user text carry a payment marker (see sanitize_user_message).
+		$message    = self::sanitize_user_message( $message );
 		$messages   = get_post_meta( $chat_id, '_dvc_messages', true );
 		$messages   = is_array( $messages ) ? $messages : [];
 		$messages[] = [
@@ -691,6 +760,10 @@ class VendorChat extends DashboardModule {
 
 		update_post_meta( $chat_id, '_dvc_messages', $messages );
 		update_post_meta( $chat_id, '_dvc_last_message_time', current_time( 'timestamp' ) );
+
+		// A new message revives the thread for anyone who had deleted it, so
+		// nobody can lose an incoming reply by having cleaned up earlier.
+		delete_post_meta( $chat_id, '_dvc_deleted_by' );
 	}
 
 	/**
@@ -767,6 +840,10 @@ class VendorChat extends DashboardModule {
 
 		$filtered = [];
 		foreach ( $all_chats as $chat ) {
+			if ( self::is_deleted_for_user( $chat->ID, $user_id ) ) {
+				continue;
+			}
+
 			$archived_by = get_post_meta( $chat->ID, '_dvc_archived_by', true );
 			$archived_by = is_array( $archived_by ) ? $archived_by : [];
 			$is_archived = in_array( $user_id, $archived_by );
@@ -777,6 +854,49 @@ class VendorChat extends DashboardModule {
 		}
 
 		return $filtered;
+	}
+
+	/**
+	 * Hide a chat for one user.
+	 *
+	 * Deleting used to remove the post for both sides, which let a scammer wipe
+	 * the whole payment conversation from their counterpart's dashboard. The
+	 * chat is now only hidden, and removed for good once both participants have
+	 * deleted it.
+	 *
+	 *
+	 * @param int $chat_id
+	 * @param int $user_id
+	 */
+	public function delete_chat_for_user( $chat_id, $user_id ) {
+		$deleted_by   = get_post_meta( $chat_id, '_dvc_deleted_by', true );
+		$deleted_by   = is_array( $deleted_by ) ? array_map( 'intval', $deleted_by ) : [];
+		$deleted_by[] = (int) $user_id;
+		$deleted_by   = array_values( array_unique( $deleted_by ) );
+
+		update_post_meta( $chat_id, '_dvc_deleted_by', $deleted_by );
+
+		$p1 = (int) get_post_meta( $chat_id, '_dvc_participant_1', true );
+		$p2 = (int) get_post_meta( $chat_id, '_dvc_participant_2', true );
+
+		if ( in_array( $p1, $deleted_by, true ) && in_array( $p2, $deleted_by, true ) ) {
+			wp_delete_post( $chat_id, true );
+		}
+	}
+
+	/**
+	 * Has this user deleted the chat from their own dashboard?
+	 *
+	 *
+	 * @param int $chat_id
+	 * @param int $user_id
+	 * @return bool
+	 */
+	public static function is_deleted_for_user( $chat_id, $user_id ) {
+		$deleted_by = get_post_meta( $chat_id, '_dvc_deleted_by', true );
+		$deleted_by = is_array( $deleted_by ) ? array_map( 'intval', $deleted_by ) : [];
+
+		return in_array( (int) $user_id, $deleted_by, true );
 	}
 
 	/**

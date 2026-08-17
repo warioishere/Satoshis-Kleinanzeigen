@@ -3,7 +3,6 @@
 namespace SK\Modules\Payments\Chat;
 
 use SK\Modules\Payments\StoreSettings;
-use SK\Modules\Payments\LNURL\ExchangeRate;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -57,41 +56,30 @@ class ChatIntegration {
             wp_send_json_error( [ 'message' => 'Nicht eingeloggt.' ] );
         }
 
-        $vendor_id     = absint( $_POST['vendor_id'] ?? 0 );
-        $product_id    = absint( $_POST['product_id'] ?? 0 );
-        $product_title = sanitize_text_field( wp_unslash( $_POST['product_title'] ?? '' ) );
-        $price_fiat    = floatval( $_POST['price_fiat'] ?? 0 );
-        $currency      = sanitize_text_field( wp_unslash( $_POST['currency'] ?? 'EUR' ) );
-        $price_sats    = absint( $_POST['price_sats'] ?? 0 );
-        $buyer_id      = get_current_user_id();
+        $product_id = absint( $_POST['product_id'] ?? 0 );
+        $buyer_id   = get_current_user_id();
 
-        if ( ! in_array( strtoupper( $currency ), [ 'EUR', 'CHF' ], true ) ) {
-            $currency = 'EUR';
+        if ( ! $product_id || get_post_type( $product_id ) !== 'product' ) {
+            wp_send_json_error( [ 'message' => 'Inserat nicht gefunden.' ] );
         }
-        $currency = strtoupper( $currency );
 
-        if ( ! $vendor_id || ! $product_id ) {
-            wp_send_json_error( [ 'message' => 'Fehlende Parameter.' ] );
+        // Vendor and product data come from the product, not from the request.
+        $vendor_id     = (int) get_post_field( 'post_author', $product_id );
+        $product_title = get_the_title( $product_id );
+
+        if ( ! $vendor_id ) {
+            wp_send_json_error( [ 'message' => 'Kein Verkäufer für dieses Inserat.' ] );
         }
 
         if ( $buyer_id === $vendor_id ) {
             wp_send_json_error( [ 'message' => 'Du kannst nicht bei dir selbst kaufen.' ] );
         }
 
-        if ( $price_fiat > 0 ) {
-            $fresh_sats = ExchangeRate::fiat_to_sats( $price_fiat, $currency );
-            if ( ! is_wp_error( $fresh_sats ) ) {
-                $price_sats = $fresh_sats;
-            }
-        }
-
+        // Only the reference is stored — title and price are rebuilt from the
+        // product by PaymentCard on every render.
         $message_data = wp_json_encode( [
-            'type'          => 'purchase_request',
-            'product_id'    => $product_id,
-            'product_title' => $product_title,
-            'price_fiat'    => $price_fiat,
-            'currency'      => $currency,
-            'price_sats'    => $price_sats,
+            'type'       => 'purchase_request',
+            'product_id' => $product_id,
         ] );
 
         $message_text = "[lightning_purchase_request]{$message_data}[/lightning_purchase_request]";
@@ -123,7 +111,6 @@ class ChatIntegration {
 
         $chat_id     = absint( $_POST['chat_id'] ?? 0 );
         $amount_sats = absint( $_POST['amount_sats'] ?? 0 );
-        $product_id  = absint( $_POST['product_id'] ?? 0 );
         $vendor_id   = get_current_user_id();
 
         if ( ! $chat_id || ! $amount_sats ) {
@@ -133,6 +120,15 @@ class ChatIntegration {
         if ( ! $this->is_chat_participant( $chat_id, $vendor_id ) ) {
             wp_send_json_error( [ 'message' => 'Keine Berechtigung für diesen Chat.' ] );
         }
+
+        // Only the seller may issue an invoice — otherwise a "buyer" could put
+        // an invoice on their own wallet into the chat and get paid.
+        if ( ! $this->is_chat_vendor( $chat_id, $vendor_id ) ) {
+            wp_send_json_error( [ 'message' => 'Nur der Verkäufer des Inserats kann eine Invoice erstellen.' ] );
+        }
+
+        // The chat defines the product, not the request.
+        $product_id = (int) get_post_meta( $chat_id, '_dvc_product_id', true );
 
         $buyer_id = $this->get_other_participant( $chat_id, $vendor_id );
 
@@ -156,14 +152,12 @@ class ChatIntegration {
 
         $data = $response->get_data();
 
+        // Only the reference is stored — the card itself is rebuilt from the
+        // payment row by PaymentCard on every render.
         $message_data = wp_json_encode( [
-            'type'            => 'lightning_invoice',
-            'payment_request' => $data['payment_request'],
-            'payment_hash'    => $data['payment_hash'],
-            'amount_sats'     => $amount_sats,
-            'qr_data_uri'     => $data['qr_data_uri'],
-            'deeplink'        => $data['deeplink'],
-            'expires_at'      => $data['expires_at'],
+            'type'         => 'lightning_invoice',
+            'payment_hash' => $data['payment_hash'],
+            'amount_sats'  => $amount_sats,
         ] );
 
         $message_text = "[lightning_invoice]{$message_data}[/lightning_invoice]";
@@ -190,11 +184,10 @@ class ChatIntegration {
             wp_send_json_error( [ 'message' => 'Nicht eingeloggt.' ] );
         }
 
-        $payment_hash = sanitize_text_field( wp_unslash( $_POST['payment_hash'] ?? '' ) );
-        $chat_id      = absint( $_POST['chat_id'] ?? 0 );
+        $payment_hash = $this->get_posted_payment_hash();
 
-        if ( empty( $payment_hash ) ) {
-            wp_send_json_error( [ 'message' => 'Payment-Hash fehlt.' ] );
+        if ( ! $payment_hash ) {
+            wp_send_json_error( [ 'message' => 'Ungültiger Payment-Hash.' ] );
         }
 
         $request = new \WP_REST_Request( 'POST', '/sk/v1/lightning/confirm' );
@@ -207,7 +200,7 @@ class ChatIntegration {
             wp_send_json_error( [ 'message' => $response->get_error_message() ] );
         }
 
-        $this->add_payment_confirmed_message( $payment_hash, $chat_id );
+        $this->add_payment_confirmed_message( $payment_hash );
 
         wp_send_json_success( [ 'status' => 'confirmed' ] );
     }
@@ -215,49 +208,95 @@ class ChatIntegration {
     public function ajax_payment_confirmed_message() {
         check_ajax_referer( 'sk_lightning_nonce', 'nonce' );
 
-        $payment_hash = sanitize_text_field( wp_unslash( $_POST['payment_hash'] ?? '' ) );
-        $chat_id      = absint( $_POST['chat_id'] ?? 0 );
-
-        if ( empty( $payment_hash ) || ! $chat_id ) {
-            wp_send_json_error( [ 'message' => 'Fehlende Parameter.' ] );
+        if ( ! is_user_logged_in() ) {
+            wp_send_json_error( [ 'message' => 'Nicht eingeloggt.' ] );
         }
 
-        $this->add_payment_confirmed_message( $payment_hash, $chat_id );
+        $payment_hash = $this->get_posted_payment_hash();
+
+        if ( ! $payment_hash ) {
+            wp_send_json_error( [ 'message' => 'Ungültiger Payment-Hash.' ] );
+        }
+
+        global $wpdb;
+        $payment = $wpdb->get_row( $wpdb->prepare(
+            "SELECT vendor_id, buyer_id, chat_id FROM {$wpdb->prefix}sk_lightning_payments WHERE payment_hash = %s",
+            $payment_hash
+        ) );
+
+        if ( ! $payment || ! (int) $payment->chat_id ) {
+            wp_send_json_error( [ 'message' => 'Zahlung nicht gefunden.' ] );
+        }
+
+        // Only the two parties of the payment may trigger its confirmation
+        // message — and it always lands in the payment's own chat.
+        $user_id = get_current_user_id();
+        if ( $user_id !== (int) $payment->vendor_id && $user_id !== (int) $payment->buyer_id ) {
+            wp_send_json_error( [ 'message' => 'Keine Berechtigung für diese Zahlung.' ] );
+        }
+
+        $this->add_payment_confirmed_message( $payment_hash );
         wp_send_json_success();
     }
 
-    private function add_payment_confirmed_message( string $payment_hash, int $chat_id ) {
+    /**
+     * Post a confirmation card into the chat the payment belongs to.
+     *
+     * The chat is taken from the payment row, never from the request, and the
+     * payment has to be settled — a confirmation card can therefore not be
+     * placed into a foreign chat or faked for an unpaid invoice.
+     */
+    private function add_payment_confirmed_message( string $payment_hash ) {
+        global $wpdb;
+
+        $payment = $wpdb->get_row( $wpdb->prepare(
+            "SELECT amount_sats, vendor_id, chat_id, context, status
+             FROM {$wpdb->prefix}sk_lightning_payments WHERE payment_hash = %s",
+            $payment_hash
+        ) );
+
+        if ( ! $payment ) {
+            return;
+        }
+
+        $chat_id = (int) $payment->chat_id;
         if ( ! $chat_id ) {
             return;
         }
 
+        if ( ! in_array( $payment->status, PaymentCard::SETTLED_STATES, true ) ) {
+            return;
+        }
+
+        $marker = $payment->context === 'onchain' ? 'onchain_confirmed' : 'lightning_payment_confirmed';
+
         $messages = get_post_meta( $chat_id, '_dvc_messages', true );
         $messages = is_array( $messages ) ? $messages : [];
         foreach ( $messages as $msg ) {
-            if ( strpos( $msg['message'] ?? '', $payment_hash ) !== false
-                 && strpos( $msg['message'] ?? '', 'lightning_payment_confirmed' ) !== false ) {
+            $text = $msg['message'] ?? '';
+            if ( strpos( $text, $payment_hash ) !== false && strpos( $text, $marker ) !== false ) {
                 return;
             }
         }
 
-        global $wpdb;
-        $payment = $wpdb->get_row(
-            $wpdb->prepare(
-                "SELECT amount_sats, vendor_id FROM {$wpdb->prefix}sk_lightning_payments WHERE payment_hash = %s",
-                $payment_hash
-            )
-        );
-
         $message_data = wp_json_encode( [
-            'type'         => 'payment_confirmed',
+            'type'         => PaymentCard::TYPES[ $marker ],
             'payment_hash' => $payment_hash,
-            'amount_sats'  => $payment ? $payment->amount_sats : 0,
+            'amount_sats'  => (int) $payment->amount_sats,
         ] );
 
-        $message_text = "[lightning_payment_confirmed]{$message_data}[/lightning_payment_confirmed]";
+        $this->add_chat_message( $chat_id, (int) $payment->vendor_id, "[{$marker}]{$message_data}[/{$marker}]" );
+    }
 
-        $sender = $payment ? (int) $payment->vendor_id : get_current_user_id();
-        $this->add_chat_message( $chat_id, $sender, $message_text );
+    /**
+     * Read and validate the payment_hash from the request.
+     *
+     * @return string Lowercase 64-char hex hash, or '' if invalid.
+     */
+    private function get_posted_payment_hash(): string {
+        $hash = sanitize_text_field( wp_unslash( $_POST['payment_hash'] ?? '' ) );
+
+        return preg_match( '/^[0-9a-f]{64}$/i', $hash ) ? strtolower( $hash ) : '';
     }
 
     public function ajax_confirm_delivery() {
@@ -356,6 +395,9 @@ class ChatIntegration {
         ];
         update_post_meta( $chat_id, '_dvc_messages', $messages );
         update_post_meta( $chat_id, '_dvc_last_message_time', current_time( 'timestamp' ) );
+
+        // A new message revives the thread for anyone who had deleted it.
+        delete_post_meta( $chat_id, '_dvc_deleted_by' );
     }
 
     private function find_or_create_chat( int $user_id, int $vendor_id, int $product_id, string $product_title ) {
@@ -425,6 +467,25 @@ class ChatIntegration {
         ];
         update_post_meta( $chat_id, '_dvc_messages', $messages );
         update_post_meta( $chat_id, '_dvc_last_message_time', current_time( 'timestamp' ) );
+
+        // A new message revives the thread for anyone who had deleted it.
+        delete_post_meta( $chat_id, '_dvc_deleted_by' );
+    }
+
+    /**
+     * Is this user the selling side of the chat?
+     *
+     * The product author is authoritative; only when the product is gone does
+     * the participant_2 slot (always the vendor) decide.
+     */
+    private function is_chat_vendor( int $chat_id, int $user_id ): bool {
+        $product_id = (int) get_post_meta( $chat_id, '_dvc_product_id', true );
+
+        if ( $product_id && get_post_status( $product_id ) ) {
+            return (int) get_post_field( 'post_author', $product_id ) === $user_id;
+        }
+
+        return (int) get_post_meta( $chat_id, '_dvc_participant_2', true ) === $user_id;
     }
 
     private function is_chat_participant( int $chat_id, int $user_id ): bool {

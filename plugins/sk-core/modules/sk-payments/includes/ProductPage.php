@@ -132,14 +132,25 @@ class ProductPage {
             wp_send_json_error( [ 'message' => 'Nicht eingeloggt.' ] );
         }
 
-        $vendor_id     = absint( $_POST['vendor_id'] ?? 0 );
-        $product_id    = absint( $_POST['product_id'] ?? 0 );
-        $product_title = sanitize_text_field( wp_unslash( $_POST['product_title'] ?? '' ) );
-        $price_sats    = absint( $_POST['price_sats'] ?? 0 );
-        $buyer_id      = get_current_user_id();
+        $product_id = absint( $_POST['product_id'] ?? 0 );
+        $buyer_id   = get_current_user_id();
 
-        if ( ! $vendor_id || ! $product_id || ! $price_sats ) {
-            wp_send_json_error( [ 'message' => 'Fehlende Parameter.' ] );
+        if ( ! $product_id || get_post_type( $product_id ) !== 'product' ) {
+            wp_send_json_error( [ 'message' => 'Inserat nicht gefunden.' ] );
+        }
+
+        // Vendor, title and price come from the product, not from the request.
+        $product = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
+        if ( ! $product ) {
+            wp_send_json_error( [ 'message' => 'Inserat nicht gefunden.' ] );
+        }
+
+        $vendor_id     = (int) get_post_field( 'post_author', $product_id );
+        $product_title = $product->get_name();
+        $price_sats    = (int) $product->get_price();
+
+        if ( ! $vendor_id || $price_sats < 1 ) {
+            wp_send_json_error( [ 'message' => 'Inserat hat keinen gültigen Preis.' ] );
         }
 
         if ( $buyer_id === $vendor_id ) {
@@ -174,7 +185,7 @@ class ProductPage {
             'status'          => 'pending',
             'context'         => 'onchain',
             'verify_url'      => $address,
-            'buyer_ip_hash'   => hash( 'sha256', self::get_client_ip() ),
+            'buyer_ip_hash'   => ClientIp::hash(),
             'created_at'      => current_time( 'mysql' ),
         ], [
             '%d', '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s',
@@ -188,14 +199,12 @@ class ProductPage {
         if ( $chat_enabled && $vendor_chat_active ) {
             $chat_id = Chat\ChatIntegration::find_or_create_chat_static( $buyer_id, $vendor_id, $product_id, $product_title );
             if ( ! is_wp_error( $chat_id ) ) {
+                // Only the reference is stored — address and amount are rebuilt
+                // from the payment row by PaymentCard on every render.
                 $message_data = wp_json_encode( [
-                    'type'          => 'onchain_payment',
-                    'product_id'    => $product_id,
-                    'product_title' => $product_title,
-                    'price_sats'    => $price_sats,
-                    'btc_amount'    => $btc_amount,
-                    'address'       => $address,
-                    'payment_hash'  => $payment_hash,
+                    'type'         => 'onchain_payment',
+                    'payment_hash' => $payment_hash,
+                    'amount_sats'  => $price_sats,
                 ] );
                 $message_text = "[onchain_payment]{$message_data}[/onchain_payment]";
                 Chat\ChatIntegration::add_chat_message_static( $chat_id, $buyer_id, $message_text );
@@ -213,6 +222,8 @@ class ProductPage {
             }
         }
 
+        $bip21 = 'bitcoin:' . $address . '?amount=' . $btc_amount;
+
         wp_send_json_success( [
             'address'       => $address,
             'amount_sats'   => $price_sats,
@@ -220,20 +231,9 @@ class ProductPage {
             'payment_hash'  => $payment_hash,
             'product_title' => $product_title,
             'chat_url'      => $chat_url,
-            'bip21'         => 'bitcoin:' . $address . '?amount=' . $btc_amount,
+            'bip21'         => $bip21,
+            'qr'            => QrImage::data_uri( $bip21 ),
         ] );
     }
 
-    private static function get_client_ip(): string {
-        foreach ( [ 'HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR' ] as $header ) {
-            if ( ! empty( $_SERVER[ $header ] ) ) {
-                $ip = sanitize_text_field( wp_unslash( $_SERVER[ $header ] ) );
-                if ( strpos( $ip, ',' ) !== false ) {
-                    $ip = trim( explode( ',', $ip )[0] );
-                }
-                return $ip;
-            }
-        }
-        return 'unknown-' . wp_generate_password( 16, false );
-    }
 }

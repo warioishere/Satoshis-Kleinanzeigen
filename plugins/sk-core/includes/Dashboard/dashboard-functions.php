@@ -73,6 +73,9 @@ if ( ! function_exists( 'dvc_get_user_chats' ) ) {
 
 		$filtered = [];
 		foreach ( $all_chats as $chat ) {
+			if ( dvc_is_chat_deleted_for_user( $chat->ID, $user_id ) ) {
+				continue;
+			}
 			$archived_by = get_post_meta( $chat->ID, '_dvc_archived_by', true );
 			$archived_by = is_array( $archived_by ) ? $archived_by : [];
 			if ( $archived === in_array( $user_id, $archived_by ) ) {
@@ -80,6 +83,36 @@ if ( ! function_exists( 'dvc_get_user_chats' ) ) {
 			}
 		}
 		return $filtered;
+	}
+}
+
+if ( ! function_exists( 'dvc_is_chat_deleted_for_user' ) ) {
+	/**
+	 * Did this user delete the chat from their own dashboard?
+	 *
+	 * @param int $chat_id
+	 * @param int $user_id
+	 * @return bool
+	 */
+	function dvc_is_chat_deleted_for_user( $chat_id, $user_id ) {
+		$deleted_by = get_post_meta( $chat_id, '_dvc_deleted_by', true );
+		$deleted_by = is_array( $deleted_by ) ? array_map( 'intval', $deleted_by ) : [];
+
+		return in_array( (int) $user_id, $deleted_by, true );
+	}
+}
+
+if ( ! function_exists( 'dvc_can_view_chat' ) ) {
+	/**
+	 * May this user open the chat? Participant and not deleted by them.
+	 *
+	 * @param int $chat_id
+	 * @param int $user_id
+	 * @return bool
+	 */
+	function dvc_can_view_chat( $chat_id, $user_id ) {
+		return dvc_is_chat_participant( $chat_id, $user_id )
+			&& ! dvc_is_chat_deleted_for_user( $chat_id, $user_id );
 	}
 }
 
@@ -118,6 +151,26 @@ if ( ! function_exists( 'dvc_get_chat_messages' ) ) {
 	function dvc_get_chat_messages( $chat_id ) {
 		$messages = get_post_meta( $chat_id, '_dvc_messages', true );
 		return is_array( $messages ) ? $messages : [];
+	}
+}
+
+if ( ! function_exists( 'dvc_prepare_chat_message' ) ) {
+	/**
+	 * Render data for one chat message: display text + verified payment card.
+	 *
+	 * @param array $message
+	 * @param int   $chat_id
+	 * @return array{text:string, card:?array}
+	 */
+	function dvc_prepare_chat_message( $message, $chat_id ) {
+		if ( class_exists( '\SK\Core\Dashboard\Modules\VendorChat' ) ) {
+			return \SK\Core\Dashboard\Modules\VendorChat::prepare_message( $message, $chat_id );
+		}
+
+		return [
+			'text' => isset( $message['message'] ) ? (string) $message['message'] : '',
+			'card' => null,
+		];
 	}
 }
 

@@ -19,7 +19,7 @@ $view    = isset( $_GET['view'] ) ? sanitize_text_field( $_GET['view'] ) : 'acti
 $chat_id = isset( $_GET['chat_id'] ) ? intval( $_GET['chat_id'] ) : 0;
 
 // If viewing a specific chat
-if ( $chat_id && dvc_is_chat_participant( $chat_id, $current_user_id ) ) {
+if ( $chat_id && dvc_can_view_chat( $chat_id, $current_user_id ) ) {
 	dvc_mark_chat_as_read( $chat_id, $current_user_id );
 }
 
@@ -98,8 +98,8 @@ do_action( 'sk_dashboard_wrap_start' );
 									<?php if ( $last_message ) : ?>
 										<div class="dvc-chat-item-preview">
 											<?php
-											$preview = wp_trim_words( $last_message['message'], 8, '...' );
-											echo esc_html( $preview );
+											$preview = dvc_prepare_chat_message( $last_message, $chat->ID );
+											echo esc_html( wp_trim_words( $preview['text'], 8, '...' ) );
 											?>
 										</div>
 									<?php endif; ?>
@@ -159,7 +159,7 @@ do_action( 'sk_dashboard_wrap_start' );
 
 			<!-- Chat window -->
 			<div class="dvc-chat-window">
-				<?php if ( $chat_id && dvc_is_chat_participant( $chat_id, $current_user_id ) ) : ?>
+				<?php if ( $chat_id && dvc_can_view_chat( $chat_id, $current_user_id ) ) : ?>
 					<?php
 					$other_user_id = dvc_get_other_participant( $chat_id, $current_user_id );
 					$other_user    = get_userdata( $other_user_id );
@@ -218,8 +218,12 @@ do_action( 'sk_dashboard_wrap_start' );
 								$message_user    = get_userdata( $message['user_id'] );
 								$msg_store_info  = sk_get_store_info( $message['user_id'] );
 								$msg_name        = ! empty( $msg_store_info['store_name'] ) ? $msg_store_info['store_name'] : ( $message_user ? $message_user->display_name : '' );
+								$prepared        = dvc_prepare_chat_message( $message, $chat_id );
 								?>
-								<div class="dvc-message <?php echo $is_own_message ? 'own' : 'other'; ?>">
+								<div class="dvc-message <?php echo $is_own_message ? 'own' : 'other'; ?>"
+									<?php if ( $prepared['card'] ) : ?>
+									data-sk-card="<?php echo esc_attr( wp_json_encode( $prepared['card'] ) ); ?>"
+									<?php endif; ?>>
 									<div class="dvc-message-avatar">
 										<?php echo get_avatar( $message['user_id'], 32 ); ?>
 									</div>
@@ -231,7 +235,7 @@ do_action( 'sk_dashboard_wrap_start' );
 											</span>
 										</div>
 										<div class="dvc-message-text">
-											<?php echo nl2br( esc_html( $message['message'] ) ); ?>
+											<?php echo nl2br( esc_html( $prepared['text'] ) ); ?>
 										</div>
 									</div>
 								</div>

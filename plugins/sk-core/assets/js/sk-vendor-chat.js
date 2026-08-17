@@ -249,15 +249,23 @@
 					minute: '2-digit',
 				});
 
+				// Payment cards are verified server-side and travel as data-sk-card;
+				// sk-lightning-pay.js renders them from that attribute only.
+				var cardAttr = message.card
+					? ' data-sk-card="' + DVC.escapeHtml(JSON.stringify(message.card)) + '"'
+					: '';
+
 				html +=
 					'<div class="dvc-message ' +
 					(isOwn ? 'own' : 'other') +
-					'">' +
-					(message.avatar ? '<div class="dvc-message-avatar"><img src="' + message.avatar + '" alt=""></div>' : '') +
+					'"' +
+					cardAttr +
+					'>' +
+					(message.avatar ? '<div class="dvc-message-avatar"><img src="' + DVC.escapeHtml(message.avatar) + '" alt=""></div>' : '') +
 					'<div class="dvc-message-content">' +
 					'<div class="dvc-message-header">' +
 					'<strong>' +
-					(message.display_name || '') +
+					DVC.escapeHtml(message.display_name || '') +
 					'</strong>' +
 					'<span class="dvc-message-time">' +
 					timeStr +
@@ -424,7 +432,7 @@
 				'"': '&quot;',
 				"'": '&#039;',
 			};
-			return text.replace(/[&<>\"']/g, function (m) {
+			return String(text === null || text === undefined ? '' : text).replace(/[&<>\"']/g, function (m) {
 				return map[m];
 			});
 		},

@@ -77,18 +77,12 @@
     $(document).on('click', '.sk-lightning-pay-btn', function (e) {
         e.preventDefault();
         var $btn = $(this);
-        var priceSats = $btn.data('price-sats');
-        var fiatAmount = satsToFiat(priceSats);
 
+        // Vendor, title and price are resolved server-side from the product.
         var data = {
             action: 'sk_create_purchase_request',
             nonce: SKL.nonce,
-            vendor_id: $btn.data('vendor-id'),
-            product_id: $btn.data('product-id'),
-            product_title: $btn.data('product-title'),
-            price_fiat: fiatAmount || 0,
-            currency: userCurrency,
-            price_sats: priceSats
+            product_id: $btn.data('product-id')
         };
 
         $btn.prop('disabled', true).text('⚡ Wird gesendet...');
@@ -108,93 +102,64 @@
 
     /* ─── Chat Message Rendering ─── */
 
+    /**
+     * Render payment cards.
+     *
+     * The card data comes exclusively from the server via data-sk-card, where
+     * PaymentCard has rebuilt it from the payment row. Message text is never
+     * parsed — otherwise anyone could type a marker and fake an invoice.
+     */
     function renderLightningMessages() {
         $('.dvc-message').each(function () {
             var $msg = $(this);
             if ($msg.data('sk-lightning-rendered')) return;
-
-            var text = $msg.find('.dvc-message-text').text().trim();
-
-            // Purchase Request
-            var prMatch = text.match(/\[lightning_purchase_request\](.*?)\[\/lightning_purchase_request\]/);
-            if (prMatch) {
-                try {
-                    var prData = JSON.parse(prMatch[1]);
-                    renderPurchaseRequest($msg, prData);
-                } catch (e) { /* ignore parse errors */ }
-            }
-
-            // Invoice
-            var invMatch = text.match(/\[lightning_invoice\](.*?)\[\/lightning_invoice\]/);
-            if (invMatch) {
-                try {
-                    var invData = JSON.parse(invMatch[1]);
-                    renderInvoice($msg, invData);
-                } catch (e) { /* ignore */ }
-            }
-
-            // Payment Confirmed
-            var confMatch = text.match(/\[lightning_payment_confirmed\](.*?)\[\/lightning_payment_confirmed\]/);
-            if (confMatch) {
-                try {
-                    var confData = JSON.parse(confMatch[1]);
-                    renderConfirmation($msg, confData);
-                } catch (e) { /* ignore */ }
-            }
-
-            // Onchain Payment
-            var ocMatch = text.match(/\[onchain_payment\](.*?)\[\/onchain_payment\]/);
-            if (ocMatch) {
-                try {
-                    var ocData = JSON.parse(ocMatch[1]);
-                    renderOnchainPayment($msg, ocData);
-                } catch (e) { /* ignore */ }
-            }
-
-            // Onchain Confirmed
-            var ocConfMatch = text.match(/\[onchain_confirmed\](.*?)\[\/onchain_confirmed\]/);
-            if (ocConfMatch) {
-                try {
-                    var ocConfData = JSON.parse(ocConfMatch[1]);
-                    renderOnchainConfirmed($msg, ocConfData);
-                } catch (e) { /* ignore */ }
-            }
-
             $msg.data('sk-lightning-rendered', true);
+
+            var card = $msg.data('sk-card');
+            if (!card || typeof card !== 'object' || !card.type) return;
+
+            switch (card.type) {
+                case 'purchase_request':
+                    renderPurchaseRequest($msg, card);
+                    break;
+                case 'lightning_invoice':
+                    renderInvoice($msg, card);
+                    break;
+                case 'payment_confirmed':
+                    renderConfirmation($msg, card);
+                    break;
+                case 'onchain_payment':
+                    renderOnchainPayment($msg, card);
+                    break;
+                case 'onchain_confirmed':
+                    renderOnchainConfirmed($msg, card);
+                    break;
+            }
         });
     }
 
     function renderPurchaseRequest($msg, data) {
-        var satsFormatted = formatSats(data.price_sats);
+        var priceSats = intVal(data.price_sats);
+        var satsFormatted = formatSats(priceSats);
         var isVendor = !$msg.hasClass('own');
 
-        // Use currency from message data if available, otherwise detect.
-        var msgCurrency = data.currency || userCurrency;
-        var msgSymbol = msgCurrency === 'CHF' ? 'CHF' : '€';
-
-        // Show fiat from message data, or calculate from sats.
+        // Fiat is always derived from the live rate.
         var fiatDisplay = '';
-        if (data.price_fiat && data.price_fiat > 0) {
-            var fiatNum = Number(data.price_fiat).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            fiatDisplay = fiatNum + ' ' + msgSymbol + ' · ';
-        } else {
-            // Fallback: calculate from sats using live rate.
-            var calcFiat = satsToFiat(data.price_sats);
-            if (calcFiat) {
-                fiatDisplay = formatFiat(calcFiat) + ' · ';
-            }
+        var calcFiat = satsToFiat(priceSats);
+        if (calcFiat) {
+            fiatDisplay = formatFiat(calcFiat) + ' · ';
         }
 
         var html = '<div class="skl-purchase-request">' +
             '<div class="skl-pr-header">⚡ Kaufanfrage</div>' +
             '<div class="skl-pr-product">' + escHtml(data.product_title) + '</div>' +
-            '<div class="skl-pr-price">' + fiatDisplay + satsFormatted + ' Sats</div>';
+            '<div class="skl-pr-price">' + escHtml(fiatDisplay + satsFormatted) + ' Sats</div>';
 
         if (isVendor) {
             html += '<button class="skl-create-invoice-btn" ' +
-                'data-product-id="' + data.product_id + '" ' +
-                'data-amount-sats="' + data.price_sats + '" ' +
-                'data-chat-id="' + getChatId() + '">' +
+                'data-product-id="' + intVal(data.product_id) + '" ' +
+                'data-amount-sats="' + priceSats + '" ' +
+                'data-chat-id="' + escAttr(getChatId()) + '">' +
                 '⚡ Invoice erstellen</button>';
         }
 
@@ -204,20 +169,25 @@
     }
 
     function renderInvoice($msg, data) {
-        var satsFormatted = formatSats(data.amount_sats);
+        var paymentHash = hexId(data.payment_hash);
+        if (!paymentHash) return;
+
+        var amountSats = intVal(data.amount_sats);
+        var satsFormatted = formatSats(amountSats);
         var isVendor = $msg.hasClass('own'); // Vendor sent the invoice
 
         var fiatInfo = '';
-        var calcFiat = satsToFiat(data.amount_sats);
+        var calcFiat = satsToFiat(amountSats);
         if (calcFiat) {
             fiatInfo = ' ≈ ' + formatFiat(calcFiat);
         }
 
         var html = '<div class="skl-invoice">' +
-            '<div class="skl-inv-header">⚡ Lightning Invoice — ' + satsFormatted + ' Sats' + fiatInfo + '</div>';
+            '<div class="skl-inv-header">⚡ Lightning Invoice — ' + escHtml(satsFormatted) + ' Sats' + escHtml(fiatInfo) + '</div>';
 
-        // QR Code
-        html += '<div class="skl-qr-container" id="skl-qr-' + data.payment_hash.substring(0, 8) + '"></div>';
+        // QR Code (rendered server-side)
+        html += '<div class="skl-qr-container" style="text-align:center;padding:16px;">' +
+            qrImageTag(data.qr, 220) + '</div>';
 
         // bolt11 copyable
         html += '<div class="skl-bolt11-wrap">' +
@@ -227,19 +197,22 @@
 
         // Deeplink (for buyer)
         if (!isVendor) {
-            html += '<a href="' + escAttr(data.deeplink) + '" class="skl-deeplink-btn">⚡ In Wallet öffnen</a>';
+            html += '<a href="' + escAttr(safeUri(data.deeplink)) + '" class="skl-deeplink-btn">⚡ In Wallet öffnen</a>';
         }
 
-        // Polling status indicator
-        html += '<div class="skl-payment-status" data-payment-hash="' + data.payment_hash + '" ' +
+        // Payment status — settled state comes from the server.
+        html += '<div class="skl-payment-status" data-payment-hash="' + escAttr(paymentHash) + '" ' +
             'style="text-align:center;padding:8px;font-size:13px;color:#5a6a7e;">' +
-            '<i class="fas fa-spinner fa-spin"></i> Warte auf Zahlung…</div>';
+            (data.settled
+                ? '<span style="color:#5cb85c;">✅ Zahlung bestätigt!</span>'
+                : '<i class="fas fa-spinner fa-spin"></i> Warte auf Zahlung…') +
+            '</div>';
 
         // Vendor: manual confirm button (fallback if no auto-verify)
-        if (isVendor) {
+        if (isVendor && !data.settled) {
             html += '<button class="skl-vendor-confirm-btn" ' +
-                'data-payment-hash="' + data.payment_hash + '" ' +
-                'data-chat-id="' + getChatId() + '" ' +
+                'data-payment-hash="' + escAttr(paymentHash) + '" ' +
+                'data-chat-id="' + escAttr(getChatId()) + '" ' +
                 'style="width:100%;margin-top:8px;background:rgba(40,167,69,0.12);color:#5cb85c;border:1px solid rgba(40,167,69,0.25);padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px;">' +
                 '✓ Zahlung in Wallet erhalten — bestätigen</button>';
         }
@@ -248,24 +221,24 @@
 
         $msg.find('.dvc-message-text').html(html);
 
-        generateQR('skl-qr-' + data.payment_hash.substring(0, 8), data.payment_request);
-
-        // Start auto-polling for payment verification.
-        startPaymentPolling(data.payment_hash);
+        if (!data.settled) {
+            startPaymentPolling(paymentHash);
+        }
     }
 
     function renderConfirmation($msg, data) {
-        var satsFormatted = formatSats(data.amount_sats);
+        var amountSats = intVal(data.amount_sats);
+        var satsFormatted = formatSats(amountSats);
 
         var fiatInfo = '';
-        var calcFiat = satsToFiat(data.amount_sats);
+        var calcFiat = satsToFiat(amountSats);
         if (calcFiat) {
             fiatInfo = ' ≈ ' + formatFiat(calcFiat);
         }
 
         var html = '<div class="skl-confirmed">' +
             '<div class="skl-conf-icon">✅</div>' +
-            '<div class="skl-conf-text">Zahlung gemeldet — ' + satsFormatted + ' Sats' + fiatInfo + '</div>';
+            '<div class="skl-conf-text">Zahlung bestätigt — ' + escHtml(satsFormatted) + ' Sats' + escHtml(fiatInfo) + '</div>';
 
         html += '</div>';
 
@@ -275,38 +248,43 @@
     /* ─── Onchain Payment in Chat ─── */
 
     function renderOnchainPayment($msg, data) {
-        var satsFormatted = formatSats(data.price_sats);
+        var paymentHash = hexId(data.payment_hash);
+        if (!paymentHash) return;
+
+        var amountSats = intVal(data.amount_sats);
+        var satsFormatted = formatSats(amountSats);
         var isVendor = !$msg.hasClass('own');
 
         var html = '<div class="skl-purchase-request">' +
             '<div class="skl-pr-header"><i class="fab fa-bitcoin"></i> Onchain-Kaufanfrage</div>' +
             '<div class="skl-pr-product">' + escHtml(data.product_title) + '</div>' +
-            '<div class="skl-pr-price">' + satsFormatted + ' Sats (' + data.btc_amount + ' BTC)</div>';
+            '<div class="skl-pr-price">' + escHtml(satsFormatted) + ' Sats (' + escHtml(data.btc_amount) + ' BTC)</div>';
 
         html += '<div style="margin:10px 0;background:#0f1923;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:10px;word-break:break-all;font-family:monospace;font-size:12px;color:#e8ecf0;">' +
             escHtml(data.address) + '</div>';
 
         html += '<div style="display:flex;gap:6px;margin-bottom:8px;">' +
             '<button class="skl-copy-btn" data-copy="' + escAttr(data.address) + '" style="font-size:11px;">Adresse kopieren</button>' +
-            '<a href="https://mempool.space/address/' + escAttr(data.address) + '" target="_blank" rel="noopener" style="font-size:11px;color:#f7931a;text-decoration:none;padding:6px 10px;"><i class="fas fa-external-link-alt"></i> mempool.space</a>' +
+            '<a href="https://mempool.space/address/' + encodeURIComponent(data.address) + '" target="_blank" rel="noopener" style="font-size:11px;color:#f7931a;text-decoration:none;padding:6px 10px;"><i class="fas fa-external-link-alt"></i> mempool.space</a>' +
             '</div>';
 
+        // QR Code (rendered server-side)
         html += '<div style="text-align:center;margin-bottom:8px;">' +
-            '<img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=' +
-            encodeURIComponent('bitcoin:' + data.address + '?amount=' + data.btc_amount) +
-            '" alt="QR" style="border-radius:6px;background:#fff;padding:4px;" />' +
-            '</div>';
+            qrImageTag(data.qr, 180) + '</div>';
 
-        // Polling status.
-        html += '<div class="skl-payment-status" data-payment-hash="' + data.payment_hash + '" ' +
+        // Payment status — settled state comes from the server.
+        html += '<div class="skl-payment-status" data-payment-hash="' + escAttr(paymentHash) + '" ' +
             'style="text-align:center;padding:8px;font-size:13px;color:#5a6a7e;">' +
-            '<i class="fas fa-spinner fa-spin"></i> Warte auf Blockchain-Bestätigung...</div>';
+            (data.settled
+                ? '<span style="color:#5cb85c;">✅ Onchain-Zahlung bestätigt!</span>'
+                : '<i class="fas fa-spinner fa-spin"></i> Warte auf Blockchain-Bestätigung...') +
+            '</div>';
 
         // Vendor: manual confirm button.
-        if (isVendor) {
+        if (isVendor && !data.settled) {
             html += '<button class="skl-vendor-confirm-btn" ' +
-                'data-payment-hash="' + data.payment_hash + '" ' +
-                'data-chat-id="' + getChatId() + '" ' +
+                'data-payment-hash="' + escAttr(paymentHash) + '" ' +
+                'data-chat-id="' + escAttr(getChatId()) + '" ' +
                 'style="width:100%;margin-top:8px;background:rgba(40,167,69,0.12);color:#5cb85c;border:1px solid rgba(40,167,69,0.25);padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px;">' +
                 'Zahlung in Wallet erhalten — bestätigen</button>';
         }
@@ -315,19 +293,21 @@
 
         $msg.find('.dvc-message-text').html(html);
 
-        // Start onchain polling.
-        startOnchainChatPolling(data.payment_hash);
+        if (!data.settled) {
+            startOnchainChatPolling(paymentHash);
+        }
     }
 
     function renderOnchainConfirmed($msg, data) {
-        var satsFormatted = formatSats(data.amount_sats);
+        var satsFormatted = formatSats(intVal(data.amount_sats));
 
         var html = '<div class="skl-confirmed">' +
             '<div class="skl-conf-icon">✅</div>' +
-            '<div class="skl-conf-text">Onchain-Zahlung bestätigt — ' + satsFormatted + ' Sats</div>';
+            '<div class="skl-conf-text">Onchain-Zahlung bestätigt — ' + escHtml(satsFormatted) + ' Sats</div>';
 
-        if (data.txid) {
-            html += '<div style="margin-top:6px;font-size:11px;"><a href="https://mempool.space/tx/' + escAttr(data.txid) + '" target="_blank" rel="noopener" style="color:#f7931a;">TX auf mempool.space ansehen</a></div>';
+        var txid = hexId(data.txid);
+        if (txid) {
+            html += '<div style="margin-top:6px;font-size:11px;"><a href="https://mempool.space/tx/' + escAttr(txid) + '" target="_blank" rel="noopener" style="color:#f7931a;">TX auf mempool.space ansehen</a></div>';
         }
 
         html += '</div>';
@@ -358,18 +338,19 @@
                 data: { payment_hash: paymentHash },
                 headers: { 'X-WP-Nonce': SKL.restNonce },
                 success: function (res) {
+                    var txid = hexId(res.txid);
                     if (res.confirmed) {
                         clearInterval(onchainChatPolls[paymentHash]);
                         delete onchainChatPolls[paymentHash];
                         var msg = '✅ Onchain-Zahlung bestätigt!';
-                        if (res.txid) {
-                            msg += ' <a href="https://mempool.space/tx/' + res.txid + '" target="_blank" rel="noopener" style="color:#f7931a;font-size:11px;">TX ansehen</a>';
+                        if (txid) {
+                            msg += ' <a href="https://mempool.space/tx/' + escAttr(txid) + '" target="_blank" rel="noopener" style="color:#f7931a;font-size:11px;">TX ansehen</a>';
                         }
                         updatePaymentStatus(paymentHash, msg, true);
                     } else if (res.in_mempool) {
                         var memMsg = '<span style="color:#f7931a;">TX im Mempool erkannt';
-                        if (res.txid) {
-                            memMsg += ' — <a href="https://mempool.space/tx/' + res.txid + '" target="_blank" rel="noopener" style="color:#f7931a;">ansehen</a>';
+                        if (txid) {
+                            memMsg += ' — <a href="https://mempool.space/tx/' + escAttr(txid) + '" target="_blank" rel="noopener" style="color:#f7931a;">ansehen</a>';
                         }
                         memMsg += '</span>';
                         updatePaymentStatus(paymentHash, memMsg, false);
@@ -510,19 +491,20 @@
         }
     });
 
-    /* ─── QR Code Generation ─── */
+    /* ─── QR Code ─── */
 
-    function generateQR(containerId, data) {
-        var $container = $('#' + containerId);
-        if (!$container.length) return;
+    /**
+     * QR images are rendered server-side by QrImage and travel inside the card
+     * as a PNG data URI. Nothing about a payment leaves the site, and no third
+     * party can swap the image the payer scans.
+     */
+    function qrImageTag(dataUri, size) {
+        if (!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(String(dataUri || ''))) {
+            return '';
+        }
 
-        $container.html(
-            '<div style="text-align:center;padding:16px;">' +
-            '<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' +
-            encodeURIComponent(data.toUpperCase()) +
-            '" alt="QR Code" style="max-width:200px;border-radius:8px;" />' +
-            '</div>'
-        );
+        return '<img src="' + escAttr(dataUri) + '" alt="QR Code" ' +
+            'style="max-width:' + intVal(size) + 'px;width:100%;border-radius:8px;background:#fff;" />';
     }
 
     /* ─── Helpers ─── */
@@ -534,12 +516,31 @@
 
     function escHtml(str) {
         var div = document.createElement('div');
-        div.textContent = str;
+        div.textContent = String(str === null || str === undefined ? '' : str);
         return div.innerHTML;
     }
 
     function escAttr(str) {
-        return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return String(str === null || str === undefined ? '' : str)
+            .replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    /** Non-negative integer, or 0. */
+    function intVal(value) {
+        var n = parseInt(value, 10);
+        return isNaN(n) || n < 0 ? 0 : n;
+    }
+
+    /** 64-char hex (payment hash / txid), or '' — never interpolate anything else. */
+    function hexId(value) {
+        var str = String(value === null || value === undefined ? '' : value);
+        return /^[0-9a-f]{64}$/i.test(str) ? str.toLowerCase() : '';
+    }
+
+    /** Only wallet/web schemes reach an href — no javascript:/data: URIs. */
+    function safeUri(value) {
+        var url = String(value === null || value === undefined ? '' : value).trim();
+        return /^(?:lightning:|bitcoin:|https:\/\/)[^\s"'<>]+$/i.test(url) ? url : '#';
     }
 
     /* ─── Observer: re-render when chat messages change ─── */
