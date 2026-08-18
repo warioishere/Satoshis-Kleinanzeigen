@@ -4,7 +4,6 @@
  */
 (function () {
     'use strict';
-    var primary = ['edit', 'delete', 'view'];
 
     /* ── Mobile only: add "mehr ▾" pill that expands row details ── */
     function initDesktopCollapse() {
