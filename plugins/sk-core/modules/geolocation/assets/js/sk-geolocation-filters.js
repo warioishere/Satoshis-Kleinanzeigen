@@ -73,10 +73,6 @@
             }
         });
 
-        // Store filter nonce
-        var nonce = self.$form.find('[name="_store_filter_nonce"]').first().val();
-        if (nonce) self.setParam('_store_filter_nonce', nonce);
-
         // Product category picker (React component integration)
         $(document.body).on('sk_product_category_picker_ready', function () {
             var $cat = self.$form.find('[name="product_cat"]');
@@ -258,7 +254,7 @@
     GeoFilter.prototype.redirect = function (scope) {
         var params = [];
         for (var key in this.queries) {
-            if (['post_type', 'sk_seller_search', 's'].indexOf(key) >= 0) continue;
+            if (['post_type', 'sk_seller_search', 's', '_store_filter_nonce'].indexOf(key) >= 0) continue;
             if (key === 'distance' && (!this.latitude || !this.longitude)) continue;
             params.push(key + '=' + this.queries[key]);
         }
@@ -271,7 +267,11 @@
             params.push('post_type=product');
             url = this.$form.find('[name="wc_shop_page"]').val();
         } else {
+            // Only the store listing checks this nonce, so it stays out of shop URLs.
+            var nonce = this.$form.find('[name="_store_filter_nonce"]').first().val();
+
             if (seller) params.push('sk_seller_search=' + encodeURIComponent(seller));
+            if (nonce) params.push('_store_filter_nonce=' + nonce);
             url = this.$form.find('[name="sk_store_listing_page"]').val();
         }
 

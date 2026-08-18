@@ -135,6 +135,12 @@ function sk_geo_filter_form( $scope = '', $display = 'inline' ) {
 
     $get_current_page_url = home_url();
 
+    $shop_page_url = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : '';
+
+    if ( ! $shop_page_url ) {
+        $shop_page_url = $get_current_page_url;
+    }
+
     $store_listing_page_url = $get_current_page_url;
 
     if ( $scope === 'vendor' || $scope === '' ) {
@@ -167,7 +173,7 @@ function sk_geo_filter_form( $scope = '', $display = 'inline' ) {
             'unit'     => ( 'km' === $distance_unit ) ? 'km' : 'miles',
         ),
         'wc_categories_args' => $wc_categories_args,
-        'wc_shop_page'       => $get_current_page_url,
+        'wc_shop_page'       => $shop_page_url,
         'store_listing_page' => remove_query_arg( 'lang', $store_listing_page_url ),
     );
 
