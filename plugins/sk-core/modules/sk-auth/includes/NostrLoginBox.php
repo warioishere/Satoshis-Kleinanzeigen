@@ -128,6 +128,8 @@ class NostrLoginBox {
      * Shortcode [nostr_login_box].
      */
     public static function render_shortcode(): string {
+        wp_enqueue_style( 'sk-nostr-login-box', SK_AUTH_ASSETS . '/css/nostr-login-box.css', array(), SK_AUTH_VERSION );
+
         if ( is_user_logged_in() ) {
             return '';
         }
@@ -290,34 +292,6 @@ class NostrLoginBox {
         });
         </script>
 
-        <style>
-        .nostr-login-box {
-          background: #181e27;
-          padding: 2rem;
-          border-radius: 12px;
-          color: white;
-          text-align: center;
-          max-width: 400px;
-          margin: 0 auto;
-        }
-        #nostr-login-button {
-          background: #8e30eb;
-          color: #fff;
-          font-size: 1.3rem;
-          font-weight: bold;
-          border: none;
-          border-radius: 10px;
-          padding: 1rem 2.5rem;
-          cursor: pointer;
-          box-shadow: 0 0 10px #ff0077aa;
-          transition: all 0.3s ease;
-        }
-        #nostr-login-button:hover {
-          background: #e6006d;
-          box-shadow: 0 0 20px #ff0077cc;
-          transform: scale(1.05);
-        }
-        </style>
         <?php
         return ob_get_clean();
     }

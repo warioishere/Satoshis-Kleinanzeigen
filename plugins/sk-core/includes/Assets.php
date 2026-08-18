@@ -238,6 +238,26 @@ class Assets {
                 'src'  => SK_CORE_ASSETS . '/css/sk-gesuche-list.css',
                 'deps' => [],
             ],
+            'sk-admin-user-profile'      => [
+                'src'  => SK_CORE_ASSETS . '/css/sk-admin-user-profile.css',
+                'deps' => [],
+            ],
+            'sk-seo-audit'               => [
+                'src'  => SK_CORE_ASSETS . '/css/sk-seo-audit.css',
+                'deps' => [],
+            ],
+            'sk-vendor-chat-settings'    => [
+                'src'  => SK_CORE_ASSETS . '/css/sk-vendor-chat-settings.css',
+                'deps' => [],
+            ],
+            'sk-empty-slider'            => [
+                'src'  => SK_CORE_ASSETS . '/css/sk-empty-slider.css',
+                'deps' => [],
+            ],
+            'sk-contact-hint'            => [
+                'src'  => SK_CORE_ASSETS . '/css/sk-contact-hint.css',
+                'deps' => [],
+            ],
             'sk-tinymce'                 => [
                 'src'     => site_url( '/wp-includes/css/editor.css' ),
                 'deps'    => [],

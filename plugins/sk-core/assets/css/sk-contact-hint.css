@@ -1,0 +1,5 @@
+/**
+ * Dashboard hint shown when a vendor has no public contact details.
+ */
+.sk-dashboard .sk-dashboard-content .kontakt-hinweis{display:block;width:100%;box-sizing:border-box;margin:0 0 20px;padding:16px 20px;background-color:#fff3cd;border:1px solid #ffeeba;color:#856404;border-radius:8px;text-align:center;font-weight:500;font-size:16px;}
+.sk-dashboard .sk-dashboard-content .kontakt-hinweis__link{display:inline-block;margin-left:8px;color:#d9534f;text-decoration:underline;}

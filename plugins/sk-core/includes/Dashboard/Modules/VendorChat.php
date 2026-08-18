@@ -253,6 +253,8 @@ class VendorChat extends DashboardModule {
 	 *
 	 */
 	public function render_settings_page() {
+		wp_enqueue_style( 'sk-vendor-chat-settings' );
+
 		if ( isset( $_POST['dvc_save_settings'] ) && check_admin_referer( 'dvc_settings_nonce' ) ) {
 			$enabled = isset( $_POST['dvc_enabled'] ) ? 'yes' : 'no';
 			update_option( 'dvc_enabled', $enabled );
@@ -304,50 +306,6 @@ class VendorChat extends DashboardModule {
 				</div>
 			</div>
 		</div>
-		<style>
-			.dvc-toggle-switch {
-				position: relative;
-				display: inline-block;
-				width: 60px;
-				height: 34px;
-			}
-			.dvc-toggle-switch input {
-				opacity: 0;
-				width: 0;
-				height: 0;
-			}
-			.dvc-toggle-slider {
-				position: absolute;
-				cursor: pointer;
-				top: 0;
-				left: 0;
-				right: 0;
-				bottom: 0;
-				background-color: #ccc;
-				transition: .4s;
-				border-radius: 34px;
-			}
-			.dvc-toggle-slider:before {
-				position: absolute;
-				content: "";
-				height: 26px;
-				width: 26px;
-				left: 4px;
-				bottom: 4px;
-				background-color: white;
-				transition: .4s;
-				border-radius: 50%;
-			}
-			input:checked + .dvc-toggle-slider {
-				background-color: #f7931a;
-			}
-			input:focus + .dvc-toggle-slider {
-				box-shadow: 0 0 1px #f7931a;
-			}
-			input:checked + .dvc-toggle-slider:before {
-				transform: translateX(26px);
-			}
-		</style>
 		<?php
 	}
 

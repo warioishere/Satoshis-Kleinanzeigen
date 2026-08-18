@@ -332,6 +332,7 @@ class DPS_Admin {
 
         wp_register_style( 'dps-custom-style', DPS_URL . '/assets/css/style' . $suffix . '.css', false, $version );
         wp_register_style( 'sk-subscription-related-orders', DPS_URL . '/assets/css/admin-related-orders.css', false, $version );
+        wp_register_style( 'sk-subscription-order-page', DPS_URL . '/assets/css/admin-order-page.css', false, $version );
         wp_register_script( 'dps-custom-admin-js', DPS_URL . '/assets/js/admin-script' . $suffix . '.js', array( 'jquery' ), $version, true );
     }
 
@@ -350,7 +351,7 @@ class DPS_Admin {
 
         $screen = sk_is_hpos_enabled() ? wc_get_page_screen_id( 'shop_order' ) : 'shop_order';
         if ( $screen === $hook || $screen === get_current_screen()->post_type ) {
-            add_action( 'admin_head', [ $this, 'load_admin_order_page_css' ], 10 );
+            wp_enqueue_style( 'sk-subscription-order-page' );
         }
     }
 
@@ -360,102 +361,6 @@ class DPS_Admin {
      *
      * @return void
      */
-    public function load_admin_order_page_css() {
-        ?>
-        <style>
-            table.wp-list-table .column-subscription_relationship {
-                width: 48px;
-                text-align: center;
-            }
-
-            table.wp-list-table span.normal_order {
-                color: #999;
-            }
-
-            table.wp-list-table .subscription_head:after,
-            table.wp-list-table .sk_vs_recurring_order:after,
-            table.wp-list-table .sk_vs_non_recurring_order:after,
-            table.wp-list-table .sk_vs_renew_order:after
-            {
-                font-weight: 400;
-                margin: 0;
-                text-indent: 0;
-                position: absolute;
-                width: 100%;
-                height: 100%;
-                text-align: center;
-                line-height: 16px;
-                top: 0;
-                speak: none;
-                font-variant: normal;
-                text-transform: none;
-                -webkit-font-smoothing: antialiased;
-                left: 0;
-            }
-
-            table.wp-list-table .subscription_head,
-            table.wp-list-table .sk_vs_recurring_order,
-            table.wp-list-table .sk_vs_non_recurring_order,
-            table.wp-list-table .sk_vs_renew_order {
-                display: block;
-                text-indent: -9999px;
-                position: relative;
-                height: 1em;
-                margin: 0 auto;
-            }
-
-            table.wp-list-table .subscription_head {
-                width: 1em;
-            }
-
-            table.wp-list-table .subscription_head:after {
-                font-family: WooCommerce;
-                content: "\e014";
-            }
-
-            table.wp-list-table .sk_vs_recurring_order:after {
-                font-family: Dashicons;
-                font-size: 20px;
-                line-height: 20px;
-                content: "\f113";
-                color: #3ba0aa;
-            }
-
-            table.wp-list-table .sk_vs_non_recurring_order:after {
-                font-family: Dashicons;
-                font-size: 20px;
-                line-height: 20px;
-                content: "\f469";
-                color: #8a9da8;
-            }
-
-            table.wp-list-table .sk_vs_renew_order:after {
-                font-family: Dashicons;
-                font-size: 20px;
-                line-height: 20px;
-                content: "\f321";
-                color: #62baf4;
-            }
-
-            table.wp-list-table .subscription_parent_order,
-            table.wp-list-table .subscription_resubscribe_order,
-            table.wp-list-table .subscription_renewal_order {
-                font-size: 18px;
-            }
-
-            @media only screen and (max-width: 782px) {
-                table.wp-list-table .sk_vs_renew_order,
-                table.wp-list-table .sk_vs_non_recurring_order,
-                table.wp-list-table .sk_vs_recurring_order {
-                    margin: 0;
-                }
-                table.wp-list-table .column-subscription_relationship {
-                    text-align: inherit;
-                }
-            }
-        </style>
-        <?php
-    }
 
     /**
      * Add woocommerce extra product type

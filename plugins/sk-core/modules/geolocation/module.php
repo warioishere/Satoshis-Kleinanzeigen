@@ -23,7 +23,6 @@ class Module {
 
         if ( ! empty( $sk_appearance['mapbox_access_token'] ) ) {
             $this->has_map_api_key = true;
-            add_action( 'wp_footer', array( $this, 'render_mapbox_script' ), 30 );
         }
 
         $this->define_constants();
@@ -268,24 +267,6 @@ class Module {
         ];
 
         return $notices;
-    }
-
-    /**
-     * Show mapbox some extra scripts only for RTL
-     *
-     *
-     * @return void
-     */
-    public function render_mapbox_script() {
-        if ( is_rtl() ) {
-            ?>
-            <style type="text/css">
-                .mapboxgl-map {
-                    text-align: inherit;
-                }
-            </style>
-            <?php
-        }
     }
 
     /**

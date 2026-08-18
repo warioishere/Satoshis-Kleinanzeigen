@@ -102,29 +102,12 @@ class ProductSlider {
         $dashboard_url = site_url( '/dashboard/products/' );
         $hilfe_url     = site_url( '/faq/#wie-kann-ich-mein-angebot-hervorheben-boost' );
 
-        static $css_injected = false;
-        $css = '';
-        if ( ! $css_injected ) {
-            $css_injected = true;
-            $css = '<style>'
-                . '.empty-slider-infobox{display:flex;align-items:center;gap:16px;padding:20px;border:1px dashed #cfd6df;border-radius:16px;background:linear-gradient(180deg,#f8fafc,#f4f6f9);box-shadow:0 1px 2px rgba(0,0,0,.04)}'
-                . '.empty-slider-infobox .icon{width:44px;height:44px;flex:0 0 44px;border-radius:12px;background:#fff;display:grid;place-items:center;border:1px solid #e6eaf0}'
-                . '.empty-slider-infobox .content{flex:1 1 auto}'
-                . '.empty-slider-infobox h3{margin:0 0 4px;font-size:18px;line-height:1.3}'
-                . '.empty-slider-infobox p{margin:0 0 10px;color:#556070}'
-                . '.empty-slider-infobox .actions{display:flex;gap:10px;flex-wrap:wrap}'
-                . '.empty-slider-infobox .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;text-decoration:none;border:1px solid #e6eaf0;background:#fff;transition:.15s}'
-                . '.empty-slider-infobox .btn.primary{background:#F7931A;border-color:#F7931A;color:#111}'
-                . '.empty-slider-infobox .btn:hover{transform:translateY(-1px)}'
-                . '@media(prefers-color-scheme:dark){.empty-slider-infobox{background:linear-gradient(180deg,#1f2630,#1b2230);border-color:#394453}.empty-slider-infobox .icon{background:#222a36;border-color:#394453}.empty-slider-infobox p{color:#b7c0cd}.empty-slider-infobox .btn{background:#232b38;border-color:#394453;color:#e8edf5}}'
-                . '</style>';
-        }
+        wp_enqueue_style( 'sk-empty-slider' );
 
         $svg_bolt  = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M13 2L3 14h7l-1 8 11-14h-7l0-6z" stroke="currentColor" stroke-width="1.5" fill="currentColor"/></svg>';
         $svg_arrow = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
-        return $css
-            . '<div class="empty-slider-infobox ' . esc_attr( $atts['class'] ) . '">'
+        return '<div class="empty-slider-infobox ' . esc_attr( $atts['class'] ) . '">'
             . '<div class="icon" aria-hidden="true" style="color:#F7931A">' . $svg_bolt . '</div>'
             . '<div class="content">'
             . '<h3>' . esc_html( $atts['title'] ) . '</h3>'

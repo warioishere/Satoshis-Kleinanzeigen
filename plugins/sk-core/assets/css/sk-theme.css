@@ -13117,3 +13117,8 @@ div.sk-error { border-left-color: #ef4444; }
   background-color: #1a2332;
   color: #fff;
 }
+
+/* Mapbox in RTL: Textausrichtung vom Container erben */
+[dir="rtl"] .mapboxgl-map {
+  text-align: inherit;
+}

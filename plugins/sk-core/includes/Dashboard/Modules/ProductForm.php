@@ -229,6 +229,8 @@ class ProductForm {
             wp_die( __( 'You do not have permission to access this page.', 'sk' ) );
         }
 
+        wp_enqueue_style( 'sk-seo-audit' );
+
         $per_page = max( 1, absint( apply_filters( 'sk_seo_autofill_focuskw_per_page', 20 ) ) );
         $paged    = isset( $_GET['paged'] ) ? max( 1, absint( wp_unslash( $_GET['paged'] ) ) ) : 1;
         $messages = [];
@@ -336,12 +338,6 @@ class ProductForm {
             });
         })();
         </script>
-        <style>
-            .status-missing td,.status-desynced td{background:#fff8e5}
-            .status-missing td:first-child,.status-desynced td:first-child{border-left:3px solid #f0ad4e}
-            .sk-seo-status.status-ok{color:#008a20}
-            .sk-seo-status.status-missing,.sk-seo-status.status-desynced{color:#d63638}
-        </style>
         <?php
     }
 

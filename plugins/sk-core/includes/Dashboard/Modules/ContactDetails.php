@@ -320,11 +320,7 @@ class ContactDetails {
         $info = sk_get_store_info( $user_id );
         if ( $this->vendor_has_public_contact( $user_id, $info ) ) return;
 
-        static $css_printed = false;
-        if ( ! $css_printed ) {
-            $css_printed = true;
-            echo '<style>.sk-dashboard .sk-dashboard-content .kontakt-hinweis{display:block;width:100%;box-sizing:border-box;margin:0 0 20px;padding:16px 20px;background-color:#fff3cd;border:1px solid #ffeeba;color:#856404;border-radius:8px;text-align:center;font-weight:500;font-size:16px;}.sk-dashboard .sk-dashboard-content .kontakt-hinweis__link{display:inline-block;margin-left:8px;color:#d9534f;text-decoration:underline;}</style>';
-        }
+        wp_enqueue_style( 'sk-contact-hint' );
         $url = esc_url( site_url( '/dashboard/settings/store/' ) );
         echo '<div class="kontakt-hinweis" role="alert">⚠️ Hinweis: Du hast noch keine Kontaktinformationen hinterlegt oder öffentlich gemacht. Es kann sich sonst niemand bei dir auf dein Inserat melden. <a class="kontakt-hinweis__link" href="' . $url . '">Kontaktdaten jetzt festlegen</a></div>';
     }

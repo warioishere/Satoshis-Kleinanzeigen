@@ -41,6 +41,7 @@ class UserProfile {
                 ),
             );
 
+            wp_enqueue_style( 'sk-admin-user-profile' );
             wp_enqueue_script( 'speaking-url' );
             wp_localize_script( 'jquery', 'sk_user_profile', $admin_admin_script );
         }
@@ -349,43 +350,6 @@ class UserProfile {
             </tbody>
         </table>
 
-        <style type="text/css">
-        .sk-hide { display: none; }
-        .button-area { padding-top: 100px; }
-        .sk-banner {
-            border: 4px dashed #d8d8d8;
-            height: 300px;
-            margin: 0;
-            overflow: hidden;
-            position: relative;
-            text-align: center;
-            max-width: 625px;
-        }
-        .sk-banner img { max-width:100%; }
-        .sk-banner .sk-remove-banner-image {
-            position:absolute;
-            width:100%;
-            height:270px;
-            background:#000;
-            top:0;
-            left:0;
-            opacity:.7;
-            font-size:100px;
-            color:#f00;
-            padding-top:70px;
-            display:none
-        }
-        .sk-banner:hover .sk-remove-banner-image {
-            display:block;
-            cursor: pointer;
-        }
-        .text-success {
-            color: green;
-        }
-        .text-danger {
-            color: red;
-        }
-        </style>
 
         <script type="text/javascript">
         jQuery(function($){

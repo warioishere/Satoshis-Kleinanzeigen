@@ -177,6 +177,8 @@ final class Module {
     }
 
     public function render_sk_login() {
+        wp_enqueue_style( 'sk-login-panels', SK_AUTH_ASSETS . '/css/sk-login-panels.css', [], SK_AUTH_VERSION );
+
         if ( is_user_logged_in() ) {
             $user = wp_get_current_user();
             $dashboard_url = function_exists( 'sk_get_navigation_url' ) ? sk_get_navigation_url( 'dashboard' ) : home_url( '/dashboard/' );
@@ -204,29 +206,6 @@ final class Module {
                 </div>
             </div>
         </div>
-        <style>
-        .sk-login-tabs { max-width: 480px; margin: 0 auto; }
-        .sk-login-tab-buttons {
-            display: flex; gap: 0; border-bottom: 2px solid #2b3240;
-            margin-bottom: 1.5rem;
-        }
-        .sk-login-tab-btn {
-            flex: 1; padding: 12px 16px; border: none; background: #181e27;
-            color: #8b949e; font-size: 15px; font-weight: 600; cursor: pointer;
-            border-bottom: 3px solid transparent; transition: all 0.2s;
-        }
-        .sk-login-tab-btn:first-child { border-radius: 8px 0 0 0; }
-        .sk-login-tab-btn:last-child { border-radius: 0 8px 0 0; }
-        .sk-login-tab-btn:hover { color: #e2e8f0; background: #1f2733; }
-        .sk-login-tab-btn.active {
-            color: #f7931a; border-bottom-color: #f7931a; background: #1f2733;
-        }
-        .sk-login-panel { display: none; text-align: center; padding: 1rem 0; }
-        .sk-login-panel.active { display: block; }
-        @media (max-width: 480px) {
-            .sk-login-tab-btn { font-size: 13px; padding: 10px 8px; }
-        }
-        </style>
         <script>
         (function() {
             var btns = document.querySelectorAll('.sk-login-tab-btn');

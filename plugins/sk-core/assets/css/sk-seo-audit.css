@@ -1,0 +1,7 @@
+/**
+ * SEO focus keyword audit screen.
+ */
+.status-missing td,.status-desynced td{background:#fff8e5}
+.status-missing td:first-child,.status-desynced td:first-child{border-left:3px solid #f0ad4e}
+.sk-seo-status.status-ok{color:#008a20}
+.sk-seo-status.status-missing,.sk-seo-status.status-desynced{color:#d63638}
