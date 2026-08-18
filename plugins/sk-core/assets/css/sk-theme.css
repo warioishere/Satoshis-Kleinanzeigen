@@ -7010,10 +7010,7 @@ ul.product_list_widget li div[style*="font-size: 0.8em"] {
   box-sizing: border-box !important;
   border-radius: 0 !important;
   background-color: #252d38 !important;
-  /* Kept small on purpose: nearly every dashboard page puts its own cards in
-     here, and those bring their own 20px. Two shells of padding is what made
-     the actual content feel squeezed. */
-  padding: 14px !important;
+  padding: 24px !important;
   overflow: visible;
   margin-top: 0 !important;
 }
@@ -7031,7 +7028,7 @@ ul.product_list_widget li div[style*="font-size: 0.8em"] {
     width: 100% !important;
   }
   .sk-dashboard .sk-dashboard-content {
-    padding: 10px !important;
+    padding: 16px !important;
   }
 }
 
@@ -13091,70 +13088,3 @@ div.sk-message { border-left-color: #22c55e; }
 p.sk-error,
 div.sk-error { border-left-color: #ef4444; }
 
-
-/* =====================================================================
-   Dashboard — einheitliche Abstands-Skala
-   =====================================================================
-   Vorher hatte jede Box ihren eigenen Innenabstand: die Schale 24px, die
-   Hinweisbox 20px, Einstellungsfelder 20px, die Produktliste 15px, Widgets
-   10-20px. Keiner davon wurde auf dem Smartphone kleiner, dadurch blieb dort
-   vom Inhalt kaum Breite uebrig.
-
-   Zwei Groessen reichen: die Schale und die Karten darin. Beide schrumpfen
-   mit dem Viewport, damit das Verhaeltnis stimmt.
-   ===================================================================== */
-
-.sk-dashboard {
-  --sk-dash-shell: 14px;
-  --sk-dash-card: 18px;
-}
-
-@media (max-width: 991px) {
-  .sk-dashboard {
-    --sk-dash-shell: 10px;
-    --sk-dash-card: 14px;
-  }
-}
-
-@media (max-width: 480px) {
-  .sk-dashboard {
-    --sk-dash-shell: 8px;
-    --sk-dash-card: 12px;
-  }
-}
-
-.sk-dashboard .sk-dashboard-content {
-  padding: var(--sk-dash-shell) !important;
-}
-
-/* Karten-Ebene: alles, was innerhalb der Schale eine eigene Box aufmacht. */
-.sk-dashboard .sk-dashboard-content .kontakt-hinweis {
-  padding: var(--sk-dash-card) !important;
-}
-
-.sk-dashboard .sk-settings-field,
-.sk-dashboard .sk-settings-section-title,
-.sk-dashboard .sk-settings-form .sk-form-group {
-  padding-left: var(--sk-dash-card) !important;
-  padding-right: var(--sk-dash-card) !important;
-}
-
-.sk-dashboard .sk-settings-field--bio {
-  padding-left: var(--sk-dash-card) !important;
-  padding-right: var(--sk-dash-card) !important;
-}
-
-.sk-product-listing .sk-product-listing-area {
-  padding-left: 0;
-  padding-right: 0;
-}
-
-.sk-dashboard #sk-product-list-table td:not(.col-thumb),
-.sk-dashboard #sk-product-list-table thead th {
-  padding-left: var(--sk-dash-card);
-  padding-right: var(--sk-dash-card);
-}
-
-.sk-dashboard .sk-dashboard-content article.dashboard-content-area .dashboard-widget {
-  padding: 0 var(--sk-dash-card);
-}
