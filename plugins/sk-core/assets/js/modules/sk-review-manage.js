@@ -65,8 +65,14 @@
     });
 
     // Bulk action: select all checkboxes
-    $(document).on('change', '#cb-select-all-reviews', function () {
-        $('.cb-select-review').prop('checked', $(this).is(':checked'));
+    $(document).on('change', '.sk-check-all', function () {
+        $('.sk-check-col').prop('checked', $(this).is(':checked'));
+    });
+
+    // Untick "select all" as soon as a single row is unticked again.
+    $(document).on('change', '.sk-check-col', function () {
+        var $boxes = $('.sk-check-col');
+        $('.sk-check-all').prop('checked', $boxes.length > 0 && $boxes.length === $boxes.filter(':checked').length);
     });
 
 })(jQuery);
