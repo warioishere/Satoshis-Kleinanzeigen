@@ -66,6 +66,11 @@
             if (e.type === 'keypress' && e.which !== 13) return;
             self.setParam('s', $(this).val());
             self.setParam('sk_seller_search', $(this).val());
+
+            if (e.type === 'keypress') {
+                e.preventDefault();
+                self.redirect(self.switchableScope);
+            }
         });
 
         // Store filter nonce
@@ -262,11 +267,11 @@
         var url;
 
         if (scope === 'product') {
-            if (s) params.push('s=' + s);
+            if (s) params.push('s=' + encodeURIComponent(s));
             params.push('post_type=product');
             url = this.$form.find('[name="wc_shop_page"]').val();
         } else {
-            if (seller) params.push('sk_seller_search=' + seller);
+            if (seller) params.push('sk_seller_search=' + encodeURIComponent(seller));
             url = this.$form.find('[name="sk_store_listing_page"]').val();
         }
 
