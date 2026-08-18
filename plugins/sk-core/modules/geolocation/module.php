@@ -21,9 +21,7 @@ class Module {
     public function __construct() {
         $sk_appearance = get_option( 'sk_appearance', array() );
 
-        if ( ! empty( $sk_appearance['gmap_api_key'] ) && 'google_maps' === $sk_appearance['map_api_source'] ) {
-            $this->has_map_api_key = true;
-        } elseif ( ! empty( $sk_appearance['mapbox_access_token'] ) && 'mapbox' === $sk_appearance['map_api_source'] ) {
+        if ( ! empty( $sk_appearance['mapbox_access_token'] ) ) {
             $this->has_map_api_key = true;
             add_action( 'wp_footer', array( $this, 'render_mapbox_script' ), 30 );
         }

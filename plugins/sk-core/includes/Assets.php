@@ -330,10 +330,6 @@ class Assets {
                 'src'  => $asset_url . '/js/maps/store-map-mapbox.js',
                 'deps' => [ 'jquery' ],
             ],
-            'sk-store-map-google'    => [
-                'src'  => $asset_url . '/js/maps/store-map-google.js',
-                'deps' => [ 'jquery' ],
-            ],
             'sk-tinymce'             => [
                 'src'  => site_url( '/wp-includes/js/tinymce/tinymce.min.js' ),
                 'deps' => [],
@@ -579,7 +575,7 @@ class Assets {
             }
 
             if ( SK_CORE_LOAD_SCRIPTS ) {
-                $this->load_gmap_script();
+                $this->load_map_scripts();
 
                 wp_enqueue_script( 'jquery-ui-sortable' );
                 wp_enqueue_script( 'jquery-ui-datepicker' );
@@ -679,7 +675,7 @@ class Assets {
 
         if ( SK_CORE_LOAD_SCRIPTS ) {
             self::load_form_validate_script();
-            $this->load_gmap_script();
+            $this->load_map_scripts();
 
             wp_enqueue_script( 'jquery' );
             wp_enqueue_script( 'jquery-ui' );
@@ -701,27 +697,20 @@ class Assets {
     }
 
     /**
-     * Load Google Maps or Mapbox scripts
+     * Load the Mapbox scripts and styles.
      */
-    public function load_gmap_script() {
-        $source = sk_get_option( 'map_api_source', 'sk_appearance', 'google_maps' );
+    public function load_map_scripts() {
+        $access_token = sk_get_option( 'mapbox_access_token', 'sk_appearance', null );
 
-        if ( 'mapbox' === $source ) {
-            $access_token = sk_get_option( 'mapbox_access_token', 'sk_appearance', null );
+        if ( $access_token ) {
+            wp_enqueue_style( 'sk-mapbox-gl', SK_CORE_ASSETS . '/vendor/mapbox/mapbox-gl.css', [], SK_CORE_VERSION );
+            wp_enqueue_style( 'sk-mapbox-gl-geocoder', SK_CORE_ASSETS . '/vendor/mapbox/mapbox-gl-geocoder.css', [ 'sk-mapbox-gl' ], SK_CORE_VERSION );
 
-            if ( $access_token ) {
-                wp_enqueue_style( 'sk-mapbox-gl', SK_CORE_ASSETS . '/vendor/mapbox/mapbox-gl.css', [], SK_CORE_VERSION );
-                wp_enqueue_style( 'sk-mapbox-gl-geocoder', SK_CORE_ASSETS . '/vendor/mapbox/mapbox-gl-geocoder.css', [ 'sk-mapbox-gl' ], SK_CORE_VERSION );
-
-                wp_enqueue_script( 'sk-maps', SK_CORE_ASSETS . '/vendor/mapbox/mapbox-gl.js', [], SK_CORE_VERSION, true );
-                wp_add_inline_script( 'sk-maps', '(function(){var O=XMLHttpRequest.prototype.open,S=XMLHttpRequest.prototype.send;XMLHttpRequest.prototype.open=function(m,u){this._u=u;return O.apply(this,arguments)};XMLHttpRequest.prototype.send=function(){if(this._u&&this._u.indexOf("events.mapbox.com")!==-1)return;return S.apply(this,arguments)};var F=window.fetch;window.fetch=function(u){if(typeof u==="string"&&u.indexOf("events.mapbox.com")!==-1)return Promise.resolve(new Response("",{status:204}));return F.apply(this,arguments)};if(navigator.sendBeacon){var B=navigator.sendBeacon.bind(navigator);navigator.sendBeacon=function(u,d){if(typeof u==="string"&&u.indexOf("events.mapbox.com")!==-1)return true;return B(u,d)}}})();', 'after' );
-                wp_enqueue_script( 'sk-mapbox-suggestions', SK_CORE_ASSETS . '/js/suggestions-polyfill.js', [], SK_CORE_VERSION, true );
-                wp_enqueue_script( 'sk-mapbox-gl-geocoder', SK_CORE_ASSETS . '/vendor/mapbox/mapbox-gl-geocoder.min.js', [ 'sk-maps' ], SK_CORE_VERSION, true );
-            }
+            wp_enqueue_script( 'sk-maps', SK_CORE_ASSETS . '/vendor/mapbox/mapbox-gl.js', [], SK_CORE_VERSION, true );
+            wp_add_inline_script( 'sk-maps', '(function(){var O=XMLHttpRequest.prototype.open,S=XMLHttpRequest.prototype.send;XMLHttpRequest.prototype.open=function(m,u){this._u=u;return O.apply(this,arguments)};XMLHttpRequest.prototype.send=function(){if(this._u&&this._u.indexOf("events.mapbox.com")!==-1)return;return S.apply(this,arguments)};var F=window.fetch;window.fetch=function(u){if(typeof u==="string"&&u.indexOf("events.mapbox.com")!==-1)return Promise.resolve(new Response("",{status:204}));return F.apply(this,arguments)};if(navigator.sendBeacon){var B=navigator.sendBeacon.bind(navigator);navigator.sendBeacon=function(u,d){if(typeof u==="string"&&u.indexOf("events.mapbox.com")!==-1)return true;return B(u,d)}}})();', 'after' );
+            wp_enqueue_script( 'sk-mapbox-suggestions', SK_CORE_ASSETS . '/js/suggestions-polyfill.js', [], SK_CORE_VERSION, true );
+            wp_enqueue_script( 'sk-mapbox-gl-geocoder', SK_CORE_ASSETS . '/vendor/mapbox/mapbox-gl-geocoder.min.js', [ 'sk-maps' ], SK_CORE_VERSION, true );
         }
-
-        // Backward compatibility script handler
-        wp_register_script( 'google-maps', false, [ 'sk-maps' ], SK_CORE_VERSION, true );
     }
 
     /**

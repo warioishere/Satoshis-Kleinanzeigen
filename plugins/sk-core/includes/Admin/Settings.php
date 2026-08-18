@@ -527,31 +527,6 @@ class Settings {
                     'type'    => 'switcher',
                     'default' => 'on',
                 ],
-                'map_api_source'             => [
-                    'name'               => 'map_api_source',
-                    'label'              => __( 'Map API Source', 'sk-core' ),
-                    'desc'               => __( 'Which map API source you want to use in your site?', 'sk-core' ),
-                    'refresh_after_save' => true,
-                    'type'               => 'radio',
-                    'default'            => 'google_maps',
-                    'options'            => [
-                        'google_maps' => __( 'Google Maps', 'sk-core' ),
-                        'mapbox'      => __( 'Mapbox', 'sk-core' ),
-                    ],
-                ],
-                'gmap_api_key'               => [
-                    'name'    => 'gmap_api_key',
-                    'label'   => __( 'Google Map API Key', 'sk-core' ),
-                    'desc'    => __( '<a href="https://developers.google.com/maps/documentation/javascript/" target="_blank" rel="noopener noreferrer">API Key</a> is needed to display map on store page', 'sk-core' ),
-                    'type'    => 'text',
-                    'secret_text' => true,
-                    'tooltip' => __( 'Insert Google API Key (with hyperlink) to display store map.', 'sk-core' ),
-                    'show_if' => [
-                        'map_api_source' => [
-                            'equal' => 'google_maps',
-                        ],
-                    ],
-                ],
                 'mapbox_access_token'        => [
                     'name'    => 'mapbox_access_token',
                     'label'   => __( 'Mapbox Access Token', 'sk-core' ),
@@ -559,11 +534,6 @@ class Settings {
                     'type'    => 'text',
                     'secret_text' => true,
                     'tooltip' => __( 'Insert Mapbox Access Token (with hyperlink) to display store map.', 'sk-core' ),
-                    'show_if' => [
-                        'map_api_source' => [
-                            'equal' => 'mapbox',
-                        ],
-                    ],
                 ],
                 'contact_seller'             => [
                     'name'    => 'contact_seller',

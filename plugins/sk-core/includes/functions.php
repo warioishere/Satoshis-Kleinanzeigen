@@ -3061,7 +3061,6 @@ function sk_admin_settings_rearrange_map( $option, $section ) {
     $map = apply_filters(
         'sk_admin_settings_rearrange_map', [
             'store_map_sk_general'                  => [ 'store_map', 'sk_appearance' ],
-            'gmap_api_key_sk_general'               => [ 'gmap_api_key', 'sk_appearance' ],
             'contact_seller_sk_general'             => [ 'contact_seller', 'sk_appearance' ],
             'enable_theme_store_sidebar_sk_general' => [ 'enable_theme_store_sidebar', 'sk_appearance' ],
         ]
@@ -3249,13 +3248,7 @@ function sk_met_minimum_php_version_for_wc( $required_version = '7.0' ) {
 function sk_has_map_api_key() {
     $sk_appearance = get_option( 'sk_appearance', [] );
 
-    if ( ! empty( $sk_appearance['map_api_source'] ) && 'google_maps' === $sk_appearance['map_api_source'] && ! empty( $sk_appearance['gmap_api_key'] ) ) {
-        return true;
-    } elseif ( ! empty( $sk_appearance['map_api_source'] ) && 'mapbox' === $sk_appearance['map_api_source'] && ! empty( $sk_appearance['mapbox_access_token'] ) ) {
-        return true;
-    }
-
-    return false;
+    return ! empty( $sk_appearance['mapbox_access_token'] );
 }
 
 /**

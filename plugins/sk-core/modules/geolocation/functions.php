@@ -52,7 +52,7 @@ function sk_geo_enqueue_locations_map() {
     sk_geo_get_template( 'map-marker-info-window' );
     $info_window_template = ob_get_clean();
 
-    sk()->scripts->load_gmap_script();
+    sk()->scripts->load_map_scripts();
 
     wp_enqueue_style( 'sk-geo-locations-map' );
     wp_enqueue_script( 'sk-geo-locations-map' );
@@ -84,11 +84,7 @@ function sk_geo_enqueue_locations_map() {
         'is_auto_zoom'         => is_singular( 'product' ) ? 0 : 1, // Autozoom only work when pass 1
     );
 
-    $source = sk_get_option( 'map_api_source', 'sk_appearance', 'google_maps' );
-
-    if ( 'mapbox' === $source ) {
-        $sk_geo['mapbox_access_token'] = sk_get_option( 'mapbox_access_token', 'sk_appearance', null );
-    }
+    $sk_geo['mapbox_access_token'] = sk_get_option( 'mapbox_access_token', 'sk_appearance', null );
 
     wp_localize_script( 'sk-geo-locations-map', 'SkGeo', $sk_geo );
 }
@@ -105,7 +101,7 @@ function sk_geo_enqueue_locations_map() {
 function sk_geo_filter_form( $scope = '', $display = 'inline' ) {
     global $wp;
 
-    sk()->scripts->load_gmap_script();
+    sk()->scripts->load_map_scripts();
 
     wp_enqueue_style( 'sk-geo-filters' );
     wp_enqueue_script( 'sk-geo-filters' );
@@ -191,14 +187,10 @@ function sk_geo_filter_form( $scope = '', $display = 'inline' ) {
         $args['store_category'] = ! empty( $get_data['store_categories'] ) ? sanitize_text_field( $get_data['store_categories'] ) : null;
     }
 
-    $source = sk_get_option( 'map_api_source', 'sk_appearance', 'google_maps' );
+    $mapbox_access_token = sk_get_option( 'mapbox_access_token', 'sk_appearance', null );
 
-    if ( 'mapbox' === $source ) {
-        $mapbox_access_token = sk_get_option( 'mapbox_access_token', 'sk_appearance', null );
-
-        if ( $mapbox_access_token ) {
-            $args['mapbox_access_token'] = $mapbox_access_token;
-        }
+    if ( $mapbox_access_token ) {
+        $args['mapbox_access_token'] = $mapbox_access_token;
     }
 
     sk_geo_get_template( 'filters', $args );
@@ -257,7 +249,7 @@ function sk_geo_float_val( $val ) {
  * @return void
  */
 function sk_geo_store_lists_filter_form() {
-    sk()->scripts->load_gmap_script();
+    sk()->scripts->load_map_scripts();
 
     wp_enqueue_style( 'sk-geo-filters' );
     wp_enqueue_script( 'sk-geo-filters-store-lists' );
@@ -288,14 +280,10 @@ function sk_geo_store_lists_filter_form() {
         ],
     ];
 
-    $source = sk_get_option( 'map_api_source', 'sk_appearance', 'google_maps' );
+    $mapbox_access_token = sk_get_option( 'mapbox_access_token', 'sk_appearance', null );
 
-    if ( 'mapbox' === $source ) {
-        $mapbox_access_token = sk_get_option( 'mapbox_access_token', 'sk_appearance', null );
-
-        if ( $mapbox_access_token ) {
-            $args['mapbox_access_token'] = $mapbox_access_token;
-        }
+    if ( $mapbox_access_token ) {
+        $args['mapbox_access_token'] = $mapbox_access_token;
     }
 
     sk_geo_get_template( 'store-lists-filters', $args );

@@ -49,22 +49,9 @@
                 <?php endif; ?>
             </div>
 
-            <?php
-                $source = sk_get_option( 'map_api_source', 'sk_appearance', 'google_maps' );
-
-                if ( 'mapbox' === $source ) {
-                    $access_token = sk_get_option( 'mapbox_access_token', 'sk_appearance', null );
-                    ?>
-                        <div id="sk-geolocation-product-location-map" class="sk-maps-mapbox"></div>
-                        <input type="hidden" name="_sk_geolocation_mapbox_access_token" value="<?php echo esc_attr( $access_token ); ?>">
-                    <?php
-                } else {
-                    ?>
-                        <div id="sk-geolocation-product-location-map"></div>
-                    <?php
-                }
-
-            ?>
+            <?php $access_token = sk_get_option( 'mapbox_access_token', 'sk_appearance', null ); ?>
+            <div id="sk-geolocation-product-location-map" class="sk-maps-mapbox"></div>
+            <input type="hidden" name="_sk_geolocation_mapbox_access_token" value="<?php echo esc_attr( $access_token ); ?>">
         </div>
     </div>
 

@@ -314,7 +314,7 @@ class Performance {
             [ 'scripts' => [ 'sk-pro-frontend-shipping' ],     'styles' => [ 'sk-pro-frontend-shipping' ],     'needed_on' => [ 'settings' ] ],
             [ 'scripts' => [ 'sk-pro-store-seo' ],              'styles' => [ 'sk-pro-store-seo' ],              'needed_on' => [ 'settings' ] ],
             [ 'scripts' => [ 'sk-date-range-picker' ], 'styles' => [ 'sk-date-range-picker' ], 'needed_on' => [ 'settings', 'products' ] ],
-            [ 'scripts' => [ 'sk-maps', 'google-maps' ],        'styles' => [ 'sk-mapbox-gl', 'sk-mapbox-gl-geocoder' ], 'needed_on' => [ 'settings' ] ],
+            [ 'scripts' => [ 'sk-maps' ],                       'styles' => [ 'sk-mapbox-gl', 'sk-mapbox-gl-geocoder' ], 'needed_on' => [ 'settings' ] ],
             [ 'scripts' => [ 'wc-password-strength-meter' ],    'styles' => [],                                  'needed_on' => [ 'settings' ] ],
         ];
         $scripts = wp_scripts();
