@@ -45,21 +45,4 @@ wp_enqueue_script( 'sk-mapbox-with-search' );
     .mapboxgl-ctrl-geocoder--input{
         padding-left: 30px !important;
     }
-
-    .sk-mapboxgl-ctrl.mapboxgl-ctrl-group > button {
-        width: auto;
-        padding: 1px 8px;
-    }
-
-    .mapboxgl-ctrl-top-left .mapboxgl-ctrl-geocoder {
-        display: none;
-    }
-
-    .mapboxgl-ctrl-top-left.show-geocoder .mapboxgl-ctrl-geocoder {
-        display: block;
-    }
-
-    .mapboxgl-ctrl-top-left.show-geocoder .sk-mapboxgl-ctrl {
-        display: none;
-    }
 </style>

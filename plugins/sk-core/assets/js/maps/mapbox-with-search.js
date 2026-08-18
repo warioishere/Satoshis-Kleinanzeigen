@@ -49,44 +49,6 @@ jQuery(document).ready(function ($) {
         var skGeocoder = null;
         var skMarker = null;
 
-        function SearchButtonControl(mapId) {
-            this._mapId = mapId;
-        }
-
-        SearchButtonControl.prototype.onAdd = function (map) {
-            var self = this;
-
-            this._map = map;
-
-            var icon = document.createElement('span');
-            icon.className = 'dashicons dashicons-search';
-
-            var label = document.createTextNode('Search Map');
-
-            var button = document.createElement('button');
-            button.type = 'button';
-            button.appendChild(icon);
-            button.appendChild(label);
-            button.addEventListener('click', function (e) {
-                e.preventDefault();
-                var control = document.getElementById(self._mapId).getElementsByClassName('mapboxgl-ctrl-top-left')[0];
-                control.className = control.className + ' ' + 'show-geocoder';
-            });
-
-            var container = document.createElement('div');
-            container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group sk-mapboxgl-ctrl';
-            container.appendChild(button);
-
-            this._container = container;
-
-            return this._container;
-        };
-
-        SearchButtonControl.prototype.onRemove = function () {
-            this._container.parentNode.removeChild(this._container);
-            this._map = undefined;
-        };
-
         function onMarkerDragEnd() {
             var lng = skMarker.getLngLat().wrap().lng;
             var lat = skMarker.getLngLat().wrap().lat;
@@ -111,7 +73,6 @@ jQuery(document).ready(function ($) {
 
                 if (features && features.length) {
                     skGeocoder._typeahead.update(features);
-                    $(skMapbox._controlContainer).find('.mapboxgl-ctrl-top-left').addClass('show-geocoder');
                 }
             }).always(function () {
                 skGeocoder._inputEl.disabled = false;
