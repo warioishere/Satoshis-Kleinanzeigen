@@ -20,6 +20,12 @@
         var mapboxId    = '<?php echo esc_attr( $map_id ); ?>';
         var location    = <?php echo wp_json_encode( $location ); ?>
 
+        // Reverse-Geocoding laeuft ueber den eigenen Server, damit die Anfrage
+        // nicht mit unserem Token aus dem Browser rausgeht. Der Kartendienst
+        // selbst braucht den Token weiterhin zum Zeichnen der Kacheln.
+        var skGeocodeUrl   = '<?php echo esc_url_raw( admin_url( 'admin-ajax.php' ) ); ?>';
+        var skGeocodeNonce = '<?php echo esc_attr( wp_create_nonce( 'sk_geo_geocode' ) ); ?>';
+
         mapboxgl.accessToken = accessToken;
 
         var skMapbox = new mapboxgl.Map( {
@@ -72,8 +78,6 @@
         };
 
         function onMarkerDragEnd () {
-            var urlOrigin = skGeocoder.geocoderService.client.origin;
-            var accessToken = skGeocoder.geocoderService.client.accessToken;
             var lng = skMarker.getLngLat().wrap().lng;
             var lat = skMarker.getLngLat().wrap().lat;
 
@@ -84,17 +88,19 @@
                 longitude: lng,
             } );
 
-            var url = urlOrigin + '/geocoding/v5/mapbox.places/' + lng + '%2C' + lat + '.json?access_token=' + accessToken + '&cachebuster=' + +new Date() + '&autocomplete=true';
-
             skGeocoder._inputEl.disabled = true;
             skGeocoder._loadingEl.style.display = 'block';
 
-            jQuery.ajax( {
-                url: url,
-                method: 'get',
+            jQuery.post( skGeocodeUrl, {
+                action: 'sk_geo_geocode',
+                nonce: skGeocodeNonce,
+                lng: lng,
+                lat: lat,
             } ).done( function ( response ) {
-                if ( response.features ) {
-                    skGeocoder._typeahead.update( response.features );
+                var features = ( response && response.success && response.data ) ? response.data.features : null;
+
+                if ( features && features.length ) {
+                    skGeocoder._typeahead.update( features );
                     $( skMapbox._controlContainer ).find( '.mapboxgl-ctrl-top-left' ).addClass( 'show-geocoder' );
                 }
             } ).always( function () {
