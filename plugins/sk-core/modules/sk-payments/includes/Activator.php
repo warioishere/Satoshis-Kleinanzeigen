@@ -40,6 +40,8 @@ class Activator {
             verify_url VARCHAR(512) NULL,
             preimage VARCHAR(64) NULL,
             preimage_verified TINYINT(1) NOT NULL DEFAULT 0,
+            confirmed_via VARCHAR(20) NULL,
+            reputation_state VARCHAR(20) NOT NULL DEFAULT 'pending',
             exchange_rate DECIMAL(16,8) NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             confirmed_at DATETIME NULL,
@@ -50,6 +52,7 @@ class Activator {
             KEY buyer_id (buyer_id),
             KEY status (status),
             KEY reputation_at (reputation_at),
+            KEY reputation_state (reputation_state),
             KEY chat_id (chat_id)
         ) {$charset};
 

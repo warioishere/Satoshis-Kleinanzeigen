@@ -68,6 +68,9 @@ class ProofPage {
         return SK_REPUTATION_TEMPLATES . '/store-lightning-proof.php';
     }
 
+    /** Upper bound for the public proof page. */
+    const PROOF_LIMIT = 200;
+
     public static function get_proofs( int $vendor_id ): array {
         global $wpdb;
         $table = $wpdb->prefix . 'sk_lightning_payments';
@@ -82,8 +85,10 @@ class ProofPage {
                     created_at, confirmed_at, product_id, context
              FROM {$table}
              WHERE vendor_id = %d AND reputation_valid = 1
-             ORDER BY confirmed_at DESC",
-            $vendor_id
+             ORDER BY confirmed_at DESC
+             LIMIT %d",
+            $vendor_id,
+            self::PROOF_LIMIT
         ) );
     }
 }

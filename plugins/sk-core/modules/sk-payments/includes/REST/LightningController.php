@@ -347,8 +347,11 @@ class LightningController extends WP_REST_Controller {
         $now    = current_time( 'mysql' );
         $rep_at = wp_date( 'Y-m-d H:i:s', time() + 7 * DAY_IN_SECONDS );
 
+        // Marked as vendor-asserted: nothing was checked here, so the
+        // reputation module must not treat it like a settled invoice.
         $updated = $wpdb->query( $wpdb->prepare(
-            "UPDATE {$table} SET status = 'confirmed', confirmed_at = %s, reputation_at = %s
+            "UPDATE {$table} SET status = 'confirmed', confirmed_at = %s, reputation_at = %s,
+             confirmed_via = 'vendor'
              WHERE payment_hash = %s AND status = 'pending'",
             $now,
             $rep_at,
@@ -489,6 +492,7 @@ class LightningController extends WP_REST_Controller {
             'status'        => 'confirmed',
             'confirmed_at'  => $now,
             'reputation_at' => $rep_at,
+            'confirmed_via' => $via,
         ];
 
         if ( $preimage && preg_match( '/^[0-9a-f]{64}$/i', $preimage ) ) {
@@ -562,6 +566,7 @@ class LightningController extends WP_REST_Controller {
                 'reputation_at'    => $now,
                 'reputation_valid' => $valid ? 1 : 0,
                 'reputation_flags' => ! empty( $flags ) ? wp_json_encode( $flags ) : null,
+                'reputation_state' => $valid ? 'credited' : 'rejected',
             ],
             [ 'payment_hash' => $payment_hash, 'status' => 'confirmed' ]
         );
@@ -816,7 +821,7 @@ class LightningController extends WP_REST_Controller {
 
             $wpdb->query( $wpdb->prepare(
                 "UPDATE {$table} SET status = 'confirmed', confirmed_at = %s, reputation_at = %s,
-                 preimage = %s, preimage_verified = 1
+                 preimage = %s, preimage_verified = 1, confirmed_via = 'onchain'
                  WHERE payment_hash = %s AND status = 'pending'",
                 $now,
                 $rep_at,

@@ -28,18 +28,37 @@ class Calculator {
         return $flags;
     }
 
+    /**
+     * How a payment may have been confirmed for it to count.
+     *
+     * 'vendor' is the manual button in the seller dashboard — nothing is
+     * checked there, so it must never build reputation.
+     */
+    const VERIFIED_SOURCES = [ 'nwc', 'lndhub', 'lnurl', 'onchain' ];
+
     public static function is_reputation_valid( object $payment ): bool {
+        // Reputation claims that Bitcoin actually moved. Only a settled
+        // invoice or a confirmed on-chain transaction proves that.
+        if ( ! in_array( (string) ( $payment->confirmed_via ?? '' ), self::VERIFIED_SOURCES, true ) ) {
+            return false;
+        }
+
         if ( empty( $payment->product_id ) ) {
             return false;
         }
 
+        // The listing only has to still exist. Requiring 'publish' would drop
+        // exactly the normal case on a classifieds site: item sold, listing
+        // taken down, reputation credited a week later.
         $product_post = get_post( $payment->product_id );
-        if ( ! $product_post || $product_post->post_status !== 'publish' ) {
+        if ( ! $product_post ) {
             return false;
         }
-        $published_at = strtotime( $product_post->post_date_gmt );
-        $payment_at   = strtotime( $payment->created_at );
-        if ( ( $payment_at - $published_at ) < DAY_IN_SECONDS ) {
+
+        $published_at = (int) get_post_time( 'U', true, $product_post );
+        $payment_at   = self::to_timestamp( $payment->created_at );
+
+        if ( ! $published_at || ! $payment_at || ( $payment_at - $published_at ) < DAY_IN_SECONDS ) {
             return false;
         }
 
@@ -51,8 +70,9 @@ class Calculator {
         if ( ! $buyer ) {
             return false;
         }
-        $registered = strtotime( $buyer->user_registered );
-        if ( ( time() - $registered ) < 7 * DAY_IN_SECONDS ) {
+
+        $registered = strtotime( $buyer->user_registered . ' UTC' );
+        if ( ! $registered || ( time() - $registered ) < 7 * DAY_IN_SECONDS ) {
             return false;
         }
 
@@ -62,6 +82,19 @@ class Calculator {
         }
 
         return true;
+    }
+
+    /**
+     * Payment timestamps are stored in site time, everything they are compared
+     * against is UTC. Without this the 24h and 7 day rules drift by the site's
+     * offset, and by another hour across DST.
+     */
+    private static function to_timestamp( ?string $site_local ): int {
+        if ( empty( $site_local ) ) {
+            return 0;
+        }
+
+        return (int) strtotime( get_gmt_from_date( $site_local ) . ' UTC' );
     }
 
     public static function recalculate_vendor( int $vendor_id ) {
@@ -113,6 +146,15 @@ class Calculator {
         return $score;
     }
 
+    /**
+     * Two signals, both from the only address we ever see — the buyer's.
+     *
+     * The vendor's own IP is never recorded (they are not in the request), so
+     * the first check can only catch a vendor who also bought from that same
+     * connection. The second catches the more common shape: several distinct
+     * "buyers" of one vendor sharing one address. The threshold is three,
+     * because two people behind one CGNAT or office line is entirely normal.
+     */
     private static function check_ip_overlap( object $payment ): bool {
         if ( empty( $payment->buyer_ip_hash ) ) {
             return false;
@@ -121,7 +163,7 @@ class Calculator {
         global $wpdb;
         $table = $wpdb->prefix . 'sk_lightning_payments';
 
-        $match = $wpdb->get_var( $wpdb->prepare(
+        $vendor_bought_here = (int) $wpdb->get_var( $wpdb->prepare(
             "SELECT COUNT(*) FROM {$table}
              WHERE buyer_id = %d AND buyer_ip_hash = %s AND id != %d",
             $payment->vendor_id,
@@ -129,7 +171,19 @@ class Calculator {
             $payment->id
         ) );
 
-        return $match > 0;
+        if ( $vendor_bought_here > 0 ) {
+            return true;
+        }
+
+        $identities_on_one_line = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(DISTINCT buyer_id) FROM {$table}
+             WHERE vendor_id = %d AND buyer_ip_hash = %s
+             AND status IN ('confirmed', 'delivered')",
+            $payment->vendor_id,
+            $payment->buyer_ip_hash
+        ) );
+
+        return $identities_on_one_line >= 3;
     }
 
     private static function check_circular( object $payment ): bool {
@@ -178,20 +232,30 @@ class Calculator {
         return $ring > 0;
     }
 
+    /**
+     * Only settled payments count here. Counting pending rows as well let
+     * anyone flag a competitor for free: register six accounts, request six
+     * invoices, never pay, and every genuine payment to that vendor in the
+     * same 24 hours loses its reputation.
+     */
     private static function check_burst( object $payment ): bool {
         global $wpdb;
         $table  = $wpdb->prefix . 'sk_lightning_payments';
-        $cutoff = wp_date( 'Y-m-d H:i:s', strtotime( $payment->created_at ) - DAY_IN_SECONDS );
+
+        $payment_ts   = self::to_timestamp( $payment->created_at ) ?: time();
+        $window_start = gmdate( 'Y-m-d H:i:s', $payment_ts - DAY_IN_SECONDS );
+        $new_account  = gmdate( 'Y-m-d H:i:s', $payment_ts - 14 * DAY_IN_SECONDS );
 
         $count = $wpdb->get_var( $wpdb->prepare(
             "SELECT COUNT(DISTINCT p.buyer_id) FROM {$table} p
              INNER JOIN {$wpdb->users} u ON u.ID = p.buyer_id
              WHERE p.vendor_id = %d
+             AND p.status IN ('confirmed', 'delivered')
              AND p.created_at >= %s
              AND u.user_registered >= %s",
             $payment->vendor_id,
-            $cutoff,
-            wp_date( 'Y-m-d H:i:s', time() - 14 * DAY_IN_SECONDS )
+            get_date_from_gmt( $window_start ),
+            $new_account
         ) );
 
         return $count > 5;

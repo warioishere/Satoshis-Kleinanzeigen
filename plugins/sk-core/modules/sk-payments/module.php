@@ -12,8 +12,22 @@ final class Module {
         $this->version = sk_assets_version( __DIR__ . '/assets' );
         $this->define_constants();
         $this->includes();
+        $this->maybe_upgrade();
         $this->load_hooks();
         $this->instances();
+    }
+
+    /**
+     * Tables were only ever built on activation, so an installed module never
+     * picked up new columns. dbDelta is idempotent, running it on a version
+     * change is enough.
+     */
+    private function maybe_upgrade() {
+        if ( get_option( 'sk_payments_db_version' ) === SK_PAYMENTS_VERSION ) {
+            return;
+        }
+
+        Activator::create_tables();
     }
 
     private function define_constants() {

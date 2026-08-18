@@ -30,10 +30,15 @@ class Cron {
         global $wpdb;
         $table = $wpdb->prefix . 'sk_lightning_payments';
 
+        // reputation_state carries the decision. Selecting on reputation_valid
+        // alone meant every rejected payment was re-examined on every run: the
+        // burst mail went out again every six hours, and once 100 permanently
+        // rejected rows had piled up they filled the LIMIT and no new payment
+        // was ever credited again.
         $pending = $wpdb->get_results(
             $wpdb->prepare(
                 "SELECT * FROM {$table}
-                 WHERE reputation_valid = 0
+                 WHERE reputation_state = 'pending'
                  AND status IN ('confirmed', 'delivered')
                  AND (status = 'delivered' OR (reputation_at IS NOT NULL AND reputation_at <= %s))
                  LIMIT 100",
@@ -52,9 +57,10 @@ class Cron {
                 [
                     'reputation_valid' => $valid ? 1 : 0,
                     'reputation_flags' => ! empty( $flags ) ? wp_json_encode( $flags ) : null,
+                    'reputation_state' => $valid ? 'credited' : 'rejected',
                 ],
                 [ 'id' => $payment->id ],
-                [ '%d', '%s' ],
+                [ '%d', '%s', '%s' ],
                 [ '%d' ]
             );
 
@@ -115,12 +121,18 @@ class Cron {
             $tier = 'lightning-starter';
         }
 
+        $last_tier = get_user_meta( $vendor_id, 'sk_nostr_reputation_tier', true );
+
+        // Dropped below the lowest tier: forget it, so re-reaching it
+        // publishes again instead of staying silent forever.
         if ( empty( $tier ) ) {
+            if ( $last_tier ) {
+                delete_user_meta( $vendor_id, 'sk_nostr_reputation_tier' );
+            }
+
             return;
         }
 
-        // Check if we already published this tier.
-        $last_tier = get_user_meta( $vendor_id, 'sk_nostr_reputation_tier', true );
         if ( $last_tier === $tier ) {
             return;
         }
@@ -196,6 +208,16 @@ class Cron {
     }
 
     private function notify_admin_burst( object $payment ) {
+        // One mail per vendor per day. Previously a burst of twenty payments
+        // meant twenty mails, on every single cron run.
+        $throttle = 'sk_rep_burst_' . (int) $payment->vendor_id;
+
+        if ( get_transient( $throttle ) ) {
+            return;
+        }
+
+        set_transient( $throttle, 1, DAY_IN_SECONDS );
+
         $admin_email = get_option( 'admin_email' );
         $vendor      = get_userdata( $payment->vendor_id );
         $vendor_name = $vendor ? $vendor->display_name : '#' . $payment->vendor_id;
