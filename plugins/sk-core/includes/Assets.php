@@ -286,6 +286,30 @@ class Assets {
                 'src'  => $asset_url . '/js/modules/sk-store-listing.js',
                 'deps' => [ 'jquery' ],
             ],
+            'sk-dashboard-nav'       => [
+                'src'  => $asset_url . '/js/dashboard/nav-mobile-menu.js',
+                'deps' => [],
+            ],
+            'sk-mapbox-with-search'  => [
+                'src'  => $asset_url . '/js/maps/mapbox-with-search.js',
+                'deps' => [ 'jquery' ],
+            ],
+            'sk-seller-search-categories' => [
+                'src'  => $asset_url . '/js/seller-search-categories.js',
+                'deps' => [ 'jquery' ],
+            ],
+            'sk-orders-widget'       => [
+                'src'  => $asset_url . '/js/dashboard/orders-widget.js',
+                'deps' => [ 'jquery' ],
+            ],
+            'sk-store-map-mapbox'    => [
+                'src'  => $asset_url . '/js/maps/store-map-mapbox.js',
+                'deps' => [ 'jquery' ],
+            ],
+            'sk-store-map-google'    => [
+                'src'  => $asset_url . '/js/maps/store-map-google.js',
+                'deps' => [ 'jquery' ],
+            ],
             'sk-tinymce'             => [
                 'src'  => site_url( '/wp-includes/js/tinymce/tinymce.min.js' ),
                 'deps' => [],

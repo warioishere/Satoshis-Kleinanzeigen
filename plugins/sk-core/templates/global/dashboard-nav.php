@@ -1,6 +1,8 @@
 <?php
 $home_url     = home_url();
-$active_class = ' class="active"'
+$active_class = ' class="active"';
+
+wp_enqueue_script( 'sk-dashboard-nav' );
 ?>
 
 <div class="sk-dash-sidebar">
@@ -36,15 +38,3 @@ $active_class = ' class="active"'
     do_action( 'sk_dashboard_sidebar_end' );
     ?>
 </div>
-<script>
-(function () {
-    var nav = document.getElementById('sk-navigation');
-    if (!nav) return;
-    nav.addEventListener('click', function (e) {
-        var a = e.target.closest('a');
-        if (!a) return;
-        var toggle = document.getElementById('toggle-mobile-menu');
-        if (toggle) toggle.checked = false;
-    });
-})();
-</script>

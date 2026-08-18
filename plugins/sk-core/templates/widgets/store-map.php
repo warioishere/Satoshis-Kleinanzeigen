@@ -9,12 +9,6 @@ if ( empty( $map_location ) ) {
     return;
 }
 
-?>
-    <div class="location-container">
-        <div id="sk-store-location"></div>
-    </div>
-<?php
-
 $source = sk_get_option( 'map_api_source', 'sk_appearance', 'google_maps' );
 
 $location  = explode( ',', $map_location );

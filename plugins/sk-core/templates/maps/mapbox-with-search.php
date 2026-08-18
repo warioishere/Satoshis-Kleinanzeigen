@@ -1,6 +1,18 @@
+<?php
+wp_enqueue_script( 'sk-mapbox-with-search' );
+?>
 <input id="sk-map-lat" type="hidden" name="location" value="<?php echo esc_attr( $map_location ); ?>" size="30" />
 
-<div class="sk-map-wrap">
+<div class="sk-map-wrap"
+    data-map-id="<?php echo esc_attr( $map_id ); ?>"
+    data-access-token="<?php echo esc_attr( $access_token ); ?>"
+    data-address="<?php echo esc_attr( $location['address'] ); ?>"
+    data-latitude="<?php echo esc_attr( $location['latitude'] ); ?>"
+    data-longitude="<?php echo esc_attr( $location['longitude'] ); ?>"
+    data-zoom="<?php echo esc_attr( $location['zoom'] ); ?>"
+    data-geocode-url="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>"
+    data-geocode-nonce="<?php echo esc_attr( wp_create_nonce( 'sk_geo_geocode' ) ); ?>"
+    data-placeholder="<?php esc_attr_e( 'Search Address', 'sk-core' ); ?>">
     <div class="sk-map-search-bar">
         <input id="sk-map-add" type="hidden" class="sk-map-search" value="<?php echo esc_attr( $map_address ); ?>" name="find_address" placeholder="<?php esc_attr_e( 'Address', 'sk-core' ); ?>" size="30" />
         <a href="#" class="sk-map-find-btn" id="sk-location-find-btn" type="button"><?php esc_html_e( 'Find Address', 'sk-core' ); ?></a>
@@ -11,157 +23,6 @@
         <div id="<?php echo esc_attr( $map_id ); ?>"></div>
     </div>
 </div>
-
-<script>
-    jQuery(document).ready(function ($) {
-        'use strict';
-
-        var accessToken = '<?php echo esc_attr( $access_token ); ?>';
-        var mapboxId    = '<?php echo esc_attr( $map_id ); ?>';
-        var location    = <?php echo wp_json_encode( $location ); ?>
-
-        // Reverse-Geocoding laeuft ueber den eigenen Server, damit die Anfrage
-        // nicht mit unserem Token aus dem Browser rausgeht. Der Kartendienst
-        // selbst braucht den Token weiterhin zum Zeichnen der Kacheln.
-        var skGeocodeUrl   = '<?php echo esc_url_raw( admin_url( 'admin-ajax.php' ) ); ?>';
-        var skGeocodeNonce = '<?php echo esc_attr( wp_create_nonce( 'sk_geo_geocode' ) ); ?>';
-
-        mapboxgl.accessToken = accessToken;
-
-        var skMapbox = new mapboxgl.Map( {
-            container: mapboxId,
-            style: 'mapbox://styles/mapbox/streets-v12',
-            center: [ location.longitude, location.latitude ],
-            zoom: location.zoom,
-        } );
-
-        var skGeocoder = null;
-        var skMarker = null;
-
-        function SearchButtonControl ( mapId ) {
-            this._mapId = mapId;
-        }
-
-        SearchButtonControl.prototype.onAdd = function ( map ) {
-            var self = this;
-
-            this._map = map;
-
-            var icon = document.createElement( 'span' );
-            icon.className = 'dashicons dashicons-search';
-
-            var label = document.createTextNode( 'Search Map' );
-
-            var button = document.createElement( 'button' );
-            button.type = 'button';
-            // button.className = 'button';
-            button.appendChild( icon );
-            button.appendChild( label );
-            button.addEventListener( 'click', function ( e ) {
-                e.preventDefault();
-                var control = document.getElementById( self._mapId ).getElementsByClassName( 'mapboxgl-ctrl-top-left' )[0];
-                control.className = control.className + ' ' + 'show-geocoder';
-            } );
-
-            var container = document.createElement( 'div' );
-            container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group sk-mapboxgl-ctrl';
-            container.appendChild( button );
-
-            this._container = container;
-
-            return this._container;
-        };
-
-        SearchButtonControl.prototype.onRemove = function () {
-            this._container.parentNode.removeChild( this._container );
-            this._map = undefined;
-        };
-
-        function onMarkerDragEnd () {
-            var lng = skMarker.getLngLat().wrap().lng;
-            var lat = skMarker.getLngLat().wrap().lat;
-
-            skMapbox.setCenter( [ lng, lat ] );
-
-            setLocation( {
-                latitude: lat,
-                longitude: lng,
-            } );
-
-            skGeocoder._inputEl.disabled = true;
-            skGeocoder._loadingEl.style.display = 'block';
-
-            jQuery.post( skGeocodeUrl, {
-                action: 'sk_geo_geocode',
-                nonce: skGeocodeNonce,
-                lng: lng,
-                lat: lat,
-            } ).done( function ( response ) {
-                var features = ( response && response.success && response.data ) ? response.data.features : null;
-
-                if ( features && features.length ) {
-                    skGeocoder._typeahead.update( features );
-                    $( skMapbox._controlContainer ).find( '.mapboxgl-ctrl-top-left' ).addClass( 'show-geocoder' );
-                }
-            } ).always( function () {
-                skGeocoder._inputEl.disabled = false;
-                skGeocoder._loadingEl.style.display = '';
-            } );
-        }
-
-        function setLocation( newLocation ) {
-            location = Object.assign( location, newLocation );
-
-            $('[name="location"]').val( location.latitude + ',' + location.longitude );
-            $('[name="find_address"]').val( location.address );
-        }
-
-        skMapbox.addControl( new mapboxgl.NavigationControl() );
-
-        skMapbox.on( 'load', function () {
-            skGeocoder = new MapboxGeocoder( {
-                accessToken: mapboxgl.accessToken,
-                mapboxgl: mapboxgl,
-                zoom: skMapbox.getZoom(),
-                placeholder: '<?php esc_html_e( 'Search Address', 'sk-core' ); ?>',
-                marker: false,
-                reverseGeocode: true,
-            });
-
-            document.getElementById('sk-geocoder').appendChild(skGeocoder.onAdd(skMapbox));
-
-            skGeocoder.setInput( location.address );
-
-            skGeocoder.on( 'result', function ( resultData ) {
-                var result = resultData.result;
-                var lngLat = result.center;
-                var address = result.place_name;
-
-                skMarker.setLngLat( lngLat );
-                skMapbox.setCenter( [ lngLat[0], lngLat[1] ] );
-
-                setLocation( {
-                    address: address,
-                    latitude: lngLat[1],
-                    longitude: lngLat[0],
-                } );
-            } );
-        } );
-
-        skMarker = new mapboxgl.Marker( {
-            draggable: true
-        } )
-            .setLngLat( [ location.longitude, location.latitude ] )
-            .addTo( skMapbox )
-            .on( 'dragend', onMarkerDragEnd );
-
-        $( '#sk-map-add' ).on( 'input', function ( e ) {
-            setLocation( {
-                address: e.target.value
-            } );
-        } );
-    });
-</script>
 
 <style>
     #<?php echo esc_js( $map_id ); ?> {

@@ -14,6 +14,17 @@
  * @var string $on_hold_url On Hold Order Url.
  *
  */
+
+wp_enqueue_script( 'sk-orders-widget' );
+wp_localize_script(
+    'sk-orders-widget',
+    'skOrdersWidget',
+    [
+        'values' => array_values( wp_list_pluck( $order_data, 'value' ) ),
+        'colors' => array_values( wp_list_pluck( $order_data, 'color' ) ),
+        'labels' => array_values( wp_list_pluck( $order_data, 'label' ) ),
+    ]
+);
 ?>
 
 <div class="dashboard-widget orders">
@@ -62,28 +73,3 @@
         <canvas id="order-stats"></canvas>
     </div>
 </div> <!-- .orders -->
-
-<script type="text/javascript">
-    jQuery(function ($) {
-        var order_stats = <?php echo wp_json_encode( wp_list_pluck( $order_data, 'value' ) ); ?>;
-        var colors = <?php echo wp_json_encode( wp_list_pluck( $order_data, 'color' ) ); ?>;
-        var labels = <?php echo wp_json_encode( wp_list_pluck( $order_data, 'label' ) ); ?>;
-
-        var ctx = $("#order-stats").get(0).getContext("2d");
-        var donn = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                datasets: [{
-                    data: order_stats,
-                    backgroundColor: colors
-                }],
-                labels: labels,
-            },
-            options: {
-                plugins: {
-                    legend: false
-                }
-            }
-        });
-    });
-</script>

@@ -1,3 +1,6 @@
+<?php
+wp_enqueue_script( 'sk-seller-search-categories' );
+?>
 <div class="sk-w4">
     <select
         class="sk-select2 sk-form-control"
@@ -11,18 +14,3 @@
         <?php endforeach; ?>
     </select>
 </div>
-
-<script>
-    jQuery( document ).ready( function ( $ ) {
-        var form = $( '.sk-seller-search-form' ),
-            category = form.find( '[name="sk_seller_category"]' );
-
-        form.on( 'sk_seller_search_populate_data', function ( e, data ) {
-            data.store_categories = category.val();
-        } );
-
-        category.on( 'change', function () {
-            form.trigger( 'sk_seller_search' );
-        } );
-    } );
-</script>
