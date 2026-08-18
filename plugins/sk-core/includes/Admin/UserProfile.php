@@ -555,7 +555,7 @@ class UserProfile {
         update_user_meta( $user_id, 'sk_enable_selling', $selling );
         update_user_meta( $user_id, 'sk_publishing', $publishing );
         update_user_meta( $user_id, 'sk_feature_seller', $feature_seller );
-        update_user_meta( $user_id, 'sk_store_name', $store_settings['store_name'] );
+        sk_set_store_name( $user_id, $store_settings['store_name'] );
 
         do_action( 'sk_process_seller_meta_fields', $user_id );
     }

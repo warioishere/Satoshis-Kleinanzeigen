@@ -140,7 +140,7 @@ class Registration {
         ];
 
         update_user_meta( $user_id, 'sk_profile_settings', $sk_settings );
-        update_user_meta( $user_id, 'sk_store_name', $sk_settings['store_name'] );
+        sk_set_store_name( $user_id, $sk_settings['store_name'] );
 
         do_action( 'sk_new_seller_created', $user_id, $sk_settings );
     }

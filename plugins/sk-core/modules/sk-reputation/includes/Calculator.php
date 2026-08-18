@@ -90,11 +90,7 @@ class Calculator {
      * offset, and by another hour across DST.
      */
     private static function to_timestamp( ?string $site_local ): int {
-        if ( empty( $site_local ) ) {
-            return 0;
-        }
-
-        return (int) strtotime( get_gmt_from_date( $site_local ) . ' UTC' );
+        return sk_to_utc_timestamp( $site_local );
     }
 
     public static function recalculate_vendor( int $vendor_id ) {

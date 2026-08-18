@@ -764,15 +764,10 @@ class Ajax {
 
 		// Every accepted call costs the author's wallet a lookup, so cap how
 		// often one user can trigger that.
-		$budget_key = 'sk_feed_zapchk_' . get_current_user_id();
-		$lookups    = (int) get_transient( $budget_key );
-
-		if ( $lookups >= 10 ) {
+		if ( ! sk_rate_limit( 'zap-lookup:' . get_current_user_id(), 10 ) ) {
 			delete_post_meta( $post_id, '_sk_zap_hash_' . $payment_hash );
 			wp_send_json_error( [ 'message' => __( 'Zu viele Anfragen.', 'sk-core' ) ] );
 		}
-
-		set_transient( $budget_key, $lookups + 1, MINUTE_IN_SECONDS );
 
 		$amount = self::verify_settled_zap( (int) $post->post_author, $payment_hash );
 

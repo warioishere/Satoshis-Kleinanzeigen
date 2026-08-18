@@ -414,7 +414,7 @@ class Settings {
                 $sk_settings['setting_email'] = $current_email;
             }
 
-            update_user_meta( $store_id, 'sk_store_name', $sk_settings['store_name'] );
+            sk_set_store_name( $store_id, $sk_settings['store_name'] );
 
             // Sync separate geo user meta so product geolocation picks up the vendor's address.
             if ( ! empty( $location ) ) {

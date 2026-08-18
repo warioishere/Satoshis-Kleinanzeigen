@@ -207,7 +207,7 @@ class Manager {
         }
 
         $vendor->update_meta( 'sk_profile_settings', $store_data );
-        $vendor->update_meta( 'sk_store_name', $store_data['store_name'] );
+        sk_set_store_name( $vendor->get_id(), $store_data['store_name'] );
         $vendor->set_store_name( $store_data['store_name'] );
 
         /**
@@ -321,7 +321,7 @@ class Manager {
         // update vendor store data
         if ( ! empty( $data['store_name'] ) ) {
             $vendor->set_store_name( $data['store_name'] );
-            $vendor->update_meta( 'sk_store_name', $data['store_name'] );
+            sk_set_store_name( $vendor->get_id(), $data['store_name'] );
         }
 
         if ( ! empty( $data['phone'] ) ) {

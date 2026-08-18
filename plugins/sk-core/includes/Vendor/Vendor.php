@@ -1190,7 +1190,7 @@ class Vendor {
         }
 
         if ( ! empty( $this->changes['store_name'] ) ) {
-            $this->update_meta( 'sk_store_name', $this->changes['store_name'] );
+            sk_set_store_name( $this->get_id(), $this->changes['store_name'] );
         }
     }
 

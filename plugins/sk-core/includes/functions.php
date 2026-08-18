@@ -3980,3 +3980,87 @@ function sk_assets_version( string $dir ): string {
 
     return $cache[ $dir ] = (string) ( $max ?: time() );
 }
+
+/**
+ * Set a vendor's store name in the one place that owns it.
+ *
+ * The name lives in sk_profile_settings['store_name'], but the vendor search,
+ * the store listing, the REST controller and the admin user search all query
+ * the denormalised copy in sk_store_name. Writing only one of the two has
+ * caused real bugs twice: a shop named through the Nostr profile sync was
+ * invisible to the vendor search, and the Nostr banner sync wrote the whole
+ * array to a meta key nothing reads.
+ *
+ * Every path that changes the name should go through here.
+ *
+ * @param int    $user_id Vendor user ID.
+ * @param string $name    New store name, unsanitised.
+ *
+ * @return string The stored name.
+ */
+function sk_set_store_name( int $user_id, string $name ): string {
+    $name = sanitize_text_field( $name );
+
+    if ( ! $user_id ) {
+        return $name;
+    }
+
+    $settings = get_user_meta( $user_id, 'sk_profile_settings', true );
+
+    if ( ! is_array( $settings ) ) {
+        $settings = [];
+    }
+
+    $settings['store_name'] = $name;
+
+    update_user_meta( $user_id, 'sk_profile_settings', $settings );
+    update_user_meta( $user_id, 'sk_store_name', $name );
+
+    return $name;
+}
+
+/**
+ * Simple per-key rate limit backed by a transient.
+ *
+ * Nine hand-rolled variants of this had grown across the payment, zap, feed and
+ * geolocation code, each with its own key scheme. Consumes one slot and reports
+ * whether the caller may proceed.
+ *
+ * @param string $bucket Identifier, e.g. 'geocode:' . $ip_hash.
+ * @param int    $max    Allowed calls within the window.
+ * @param int    $window Window length in seconds.
+ *
+ * @return bool True while below the limit.
+ */
+function sk_rate_limit( string $bucket, int $max, int $window = MINUTE_IN_SECONDS ): bool {
+    $key   = 'sk_rl_' . md5( $bucket );
+    $count = (int) get_transient( $key );
+
+    if ( $count >= $max ) {
+        return false;
+    }
+
+    set_transient( $key, $count + 1, $window );
+
+    return true;
+}
+
+/**
+ * Turn a site-local MySQL datetime into a UTC timestamp.
+ *
+ * WordPress runs PHP in UTC while current_time('mysql') writes site time, so
+ * strtotime() on a stored timestamp is off by the site's offset — measured at
+ * 7200 seconds on this install. The same mistake had been made independently in
+ * the reputation, on-chain and commission code.
+ *
+ * @param string|null $site_local Datetime as stored by current_time('mysql').
+ *
+ * @return int Unix timestamp, 0 when the input is empty or unparsable.
+ */
+function sk_to_utc_timestamp( ?string $site_local ): int {
+    if ( empty( $site_local ) ) {
+        return 0;
+    }
+
+    return (int) strtotime( get_gmt_from_date( $site_local ) . ' UTC' );
+}

@@ -272,12 +272,7 @@ class NostrRelaySync {
                 $user = get_userdata( $user_id );
                 // Only update if store name is empty or matches the generated username.
                 if ( empty( $store_name ) || ( $user && $store_name === $user->user_login ) ) {
-                    $store_info['store_name'] = sanitize_text_field( $profile['name'] );
-                    // skdar_profile_settings wird nirgends gelesen — der Sync lief ins Leere.
-                    update_user_meta( $user_id, 'sk_profile_settings', $store_info );
-                    // Vendor search and the store listing query sk_store_name,
-                    // so the denormalised copy has to move along.
-                    update_user_meta( $user_id, 'sk_store_name', $store_info['store_name'] );
+                    sk_set_store_name( $user_id, $profile['name'] );
                     $updated = true;
                 }
             }

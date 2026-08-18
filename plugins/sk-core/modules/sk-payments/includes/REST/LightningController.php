@@ -154,16 +154,7 @@ class LightningController extends WP_REST_Controller {
      * user can ask for one.
      */
     private static function invoice_rate_allows( int $user_id ): bool {
-        $key   = 'sk_inv_rate_' . $user_id;
-        $count = (int) get_transient( $key );
-
-        if ( $count >= 15 ) {
-            return false;
-        }
-
-        set_transient( $key, $count + 1, MINUTE_IN_SECONDS );
-
-        return true;
+        return sk_rate_limit( 'invoice:' . $user_id, 15 );
     }
 
     public function create_invoice( WP_REST_Request $request ) {

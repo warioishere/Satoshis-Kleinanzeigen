@@ -2381,25 +2381,6 @@ span.error {
   color: #fff;
   animation: showNav 350ms ease-in-out both;
 }
-.sk-dashboard #sk-dashboard-fullwidth-wrapper .sk-dash-sidebar {
-  transition: width 0.2s ease;
-  width: var(--sk-sidebar-width, 250px);
-  max-width: var(--sk-sidebar-width, 250px);
-}
-.sk-dashboard #sk-dashboard-fullwidth-wrapper .sk-dashboard-wrap {
-  z-index: 1;
-  position: relative;
-}
-.sk-dashboard #sk-dashboard-fullwidth-wrapper .sk-dashboard-wrap .sk-dashboard-content {
-  position: relative;
-  padding: 48px;
-}
-.sk-dashboard #sk-dashboard-fullwidth-wrapper .sk-dashboard-wrap .sk-dash-sidebar {
-  visibility: hidden;
-}
-.sk-dashboard #sk-dashboard-fullwidth-wrapper .sk-dashboard-wrap .sk-dashboard-content {
-  display: none;
-}
 @keyframes showNav {
   from {
     opacity: 0;
@@ -2426,20 +2407,8 @@ span.error {
   }
 }
 @media screen and (max-width: 768px) {
-  .sk-dashboard #sk-dashboard-fullwidth-wrapper {
-    position: relative;
-  }
-  .sk-dashboard #sk-dashboard-fullwidth-wrapper .sk-dash-sidebar {
-    display: none;
-  }
-  .sk-dashboard #sk-dashboard-fullwidth-wrapper .sk-dashboard-wrap .sk-dashboard-content {
-    padding: 24px;
-  }
 }
 @media screen and (max-width: 600px) {
-  #sk-dashboard-fullwidth-wrapper #sk-vendor-dashboard-layout-root {
-    z-index: 99999;
-  }
 }
 html,
 body {
@@ -2851,9 +2820,6 @@ div.media-sidebar a.edit-attachment {
   padding-left: 5px;
   padding-right: 5px;
 }
-.sk-dashboard #sk-dashboard-fullwidth-wrapper .sk-dashboard-content {
-  width: calc(100% - var(--sk-sidebar-width, 250px));
-}
 .sk-dashboard .select2-search__field {
   min-width: 220px !important;
 }
@@ -2870,30 +2836,8 @@ div.media-sidebar a.edit-attachment {
   box-shadow: 0 1px 0 0 #e0e0e0;
 }
 @media screen and (max-width: 768px) {
-  #sk-dashboard-fullwidth-wrapper .sk-dashboard-content {
-    width: 100%;
-  }
-  #sk-dashboard-fullwidth-wrapper .sk-frontend-layout header {
-    padding: 0 22px;
-    min-height: 60px;
-    height: 60px;
-  }
-  #sk-dashboard-fullwidth-wrapper .sk-frontend-layout .visit-store,
-  #sk-dashboard-fullwidth-wrapper .sk-frontend-layout .header-avatar {
-    padding: 0;
-  }
-  #sk-dashboard-fullwidth-wrapper .sk-frontend-layout .header-avatar {
-    padding-left: 20px;
-  }
-  #sk-dashboard-fullwidth-wrapper .sk-frontend-layout .visit-store {
-    font-size: 12px;
-    padding-right: 20px;
-  }
 }
 @media screen and (max-width: 600px) {
-  #sk-dashboard-fullwidth-wrapper #sk-vendor-dashboard-layout-root {
-    top: 0;
-  }
 }
 .sk-orders-content .sk-orders-area .sk-order-left-content {
   margin-right: 3%;

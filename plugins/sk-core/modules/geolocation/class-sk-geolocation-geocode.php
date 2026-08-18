@@ -138,16 +138,8 @@ class SK_Geolocation_Geocode {
     }
 
     private function rate_allows(): bool {
-        $ip    = function_exists( 'sk_get_client_ip' ) ? sk_get_client_ip() : '';
-        $key   = 'sk_geo_gc_rate_' . md5( $ip !== '' ? $ip : 'unknown' );
-        $count = (int) get_transient( $key );
+        $ip = function_exists( 'sk_get_client_ip' ) ? sk_get_client_ip() : '';
 
-        if ( $count >= self::MAX_PER_MINUTE ) {
-            return false;
-        }
-
-        set_transient( $key, $count + 1, MINUTE_IN_SECONDS );
-
-        return true;
+        return sk_rate_limit( 'geocode:' . ( $ip !== '' ? $ip : 'unknown' ), self::MAX_PER_MINUTE );
     }
 }

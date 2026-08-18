@@ -230,25 +230,10 @@ class LnurlPayEndpoint {
      * Bounded invoice creation: 10 per caller per minute, 60 per vendor.
      */
     private function rate_allows( int $vendor_id ): bool {
-        $ip     = function_exists( 'sk_get_client_ip' ) ? sk_get_client_ip() : '';
-        $ip_key = 'sk_lnurlp_ip_' . md5( $ip !== '' ? $ip : 'unknown' );
-        $by_ip  = (int) get_transient( $ip_key );
+        $ip = function_exists( 'sk_get_client_ip' ) ? sk_get_client_ip() : '';
 
-        if ( $by_ip >= 10 ) {
-            return false;
-        }
-
-        $vendor_key = 'sk_lnurlp_v_' . $vendor_id;
-        $by_vendor  = (int) get_transient( $vendor_key );
-
-        if ( $by_vendor >= 60 ) {
-            return false;
-        }
-
-        set_transient( $ip_key, $by_ip + 1, MINUTE_IN_SECONDS );
-        set_transient( $vendor_key, $by_vendor + 1, MINUTE_IN_SECONDS );
-
-        return true;
+        return sk_rate_limit( 'lnurlp-ip:' . ( $ip !== '' ? $ip : 'unknown' ), 10 )
+            && sk_rate_limit( 'lnurlp-vendor:' . $vendor_id, 60 );
     }
 
     /**

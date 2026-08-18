@@ -35,14 +35,9 @@ class StoreSettings {
             wp_send_json_error( [ 'message' => 'Nur für Verkäufer.' ] );
         }
 
-        $key   = 'sk_pay_test_' . $user_id;
-        $count = (int) get_transient( $key );
-
-        if ( $count >= 10 ) {
+        if ( ! sk_rate_limit( 'wallet-test:' . $user_id, 10 ) ) {
             wp_send_json_error( [ 'message' => 'Zu viele Tests, bitte kurz warten.' ] );
         }
-
-        set_transient( $key, $count + 1, MINUTE_IN_SECONDS );
     }
 
     public function ajax_test_btcaddr() {

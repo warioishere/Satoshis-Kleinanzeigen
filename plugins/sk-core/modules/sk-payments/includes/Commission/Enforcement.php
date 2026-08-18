@@ -65,7 +65,7 @@ class Enforcement {
         }
 
         // 1 week minimum between reminders.
-        if ( $last_reminder && strtotime( $last_reminder ) > time() - 7 * DAY_IN_SECONDS ) {
+        if ( $last_reminder && sk_to_utc_timestamp( $last_reminder ) > time() - 7 * DAY_IN_SECONDS ) {
             return;
         }
 

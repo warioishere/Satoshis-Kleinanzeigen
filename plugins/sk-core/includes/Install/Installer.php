@@ -32,7 +32,7 @@ class Installer {
                 continue;
             }
             $user = get_user_by( 'id', $user_id );
-            update_user_meta( $user_id, 'sk_store_name', $user->display_name );
+            sk_set_store_name( $user_id, $user->display_name );
         }
     }
 

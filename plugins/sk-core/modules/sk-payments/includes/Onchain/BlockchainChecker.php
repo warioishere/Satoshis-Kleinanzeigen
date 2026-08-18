@@ -407,11 +407,7 @@ class BlockchainChecker {
      * UTC, so strtotime() on them was off by the site's offset.
      */
     private static function to_timestamp( string $site_local ): int {
-        if ( $site_local === '' ) {
-            return 0;
-        }
-
-        return (int) strtotime( get_gmt_from_date( $site_local ) . ' UTC' );
+        return sk_to_utc_timestamp( $site_local );
     }
 
     /**
