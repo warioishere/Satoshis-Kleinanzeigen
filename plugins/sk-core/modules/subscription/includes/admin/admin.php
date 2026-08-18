@@ -331,6 +331,7 @@ class DPS_Admin {
         [ $suffix, $version ] = sk_get_script_suffix_and_version();
 
         wp_register_style( 'dps-custom-style', DPS_URL . '/assets/css/style' . $suffix . '.css', false, $version );
+        wp_register_style( 'sk-subscription-related-orders', DPS_URL . '/assets/css/admin-related-orders.css', false, $version );
         wp_register_script( 'dps-custom-admin-js', DPS_URL . '/assets/js/admin-script' . $suffix . '.js', array( 'jquery' ), $version, true );
     }
 

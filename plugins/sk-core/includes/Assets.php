@@ -222,6 +222,22 @@ class Assets {
                 'deps'    => [],
                 'version' => self::asset_version( $dir . 'css/sk-theme.css' ),
             ],
+            'sk-store-settings'          => [
+                'src'  => SK_CORE_ASSETS . '/css/sk-store-settings.css',
+                'deps' => [],
+            ],
+            'sk-map-picker'              => [
+                'src'  => SK_CORE_ASSETS . '/css/sk-map-picker.css',
+                'deps' => [],
+            ],
+            'sk-gesuch-single'           => [
+                'src'  => SK_CORE_ASSETS . '/css/sk-gesuch-single.css',
+                'deps' => [],
+            ],
+            'sk-gesuche-list'            => [
+                'src'  => SK_CORE_ASSETS . '/css/sk-gesuche-list.css',
+                'deps' => [],
+            ],
             'sk-tinymce'                 => [
                 'src'     => site_url( '/wp-includes/css/editor.css' ),
                 'deps'    => [],

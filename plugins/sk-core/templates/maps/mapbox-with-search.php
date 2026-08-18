@@ -1,4 +1,5 @@
 <?php
+wp_enqueue_style( 'sk-map-picker' );
 wp_enqueue_script( 'sk-mapbox-with-search' );
 ?>
 <input id="sk-map-lat" type="hidden" name="location" value="<?php echo esc_attr( $map_location ); ?>" size="30" />
@@ -24,25 +25,3 @@ wp_enqueue_script( 'sk-mapbox-with-search' );
     </div>
 </div>
 
-<style>
-    .sk-map-canvas {
-        width: 100%;
-        height: 300px;
-    }
-
-    .sk-geocoder {
-        z-index: 1;
-        width: 100%;
-        left: 50%;
-        margin-left: 0%;
-        margin: 0px auto;
-    }
-
-    .mapboxgl-ctrl-geocoder {
-        min-width: 100%;
-    }
-
-    .mapboxgl-ctrl-geocoder--input{
-        padding-left: 30px !important;
-    }
-</style>

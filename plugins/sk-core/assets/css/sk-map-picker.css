@@ -1,0 +1,22 @@
+/**
+ * Mapbox address picker used by the store settings form.
+ */
+.sk-map-canvas {
+    width: 100%;
+    height: 300px;
+}
+
+.sk-geocoder {
+    z-index: 1;
+    width: 100%;
+    left: 50%;
+    margin: 0 auto;
+}
+
+.mapboxgl-ctrl-geocoder {
+    min-width: 100%;
+}
+
+.mapboxgl-ctrl-geocoder--input {
+    padding-left: 30px !important;
+}

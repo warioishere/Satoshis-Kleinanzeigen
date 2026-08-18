@@ -1,0 +1,19 @@
+/**
+ * Store settings form.
+ *
+ * The banner dimensions come from the vendor settings and are handed in as the
+ * custom properties --sk-banner-width / --sk-banner-height on the form.
+ */
+.sk-settings-content .sk-settings-area .sk-banner {
+    max-width: var(--sk-banner-width);
+    max-height: var(--sk-banner-height);
+}
+
+.sk-settings-content .sk-settings-area .sk-banner .sk-remove-banner-image {
+    height: var(--sk-banner-height);
+}
+
+.skp-saved::placeholder {
+    color: #e8ecf0 !important;
+    opacity: 1;
+}

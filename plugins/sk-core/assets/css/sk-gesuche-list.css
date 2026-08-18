@@ -1,0 +1,145 @@
+/**
+ * "Alle Gesuche" listing page.
+ */
+/* ===== Page Container ===== */
+#primary.content-area.alle-gesuche-page{
+  width:100%;
+  max-width:1320px;
+  box-sizing:border-box;
+  margin:0 auto;
+  padding:0 20px 40px;
+}
+
+/* ===== Header ===== */
+.entry-header{ text-align:left; margin: 16px 0 24px; }
+.entry-title{
+  margin:0;
+  font-size: clamp(1.6rem, 1.1rem + 2vw, 2.2rem);
+  line-height:1.15;
+  color:#fff;
+}
+.entry-subtitle{ margin:.35rem 0 0; color:#cbd5e1; }
+
+/* ===== Grid ===== */
+.gesuche-grid-container{
+  display:grid;
+  gap: 20px;
+  grid-template-columns: 1fr;
+  padding-bottom: 40px;
+}
+@media (min-width: 768px){
+  .gesuche-grid-container{ grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1100px){
+  .gesuche-grid-container{ grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ===== Card: jetzt #252d38 ===== */
+.gesuch-card{
+  position:relative;
+  border-radius:14px;
+  background:#252d38;                 /* NEU: statt Gradient */
+  border: 1px solid #2e3847;          /* kühler Rahmen */
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+.gesuch-card:hover{
+  transform: translateY(-3px);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  box-shadow: 0 16px 40px rgba(0,0,0,.35);
+  border-color:#344155;
+}
+/* optional: Akzentkante oben beibehalten */
+.gesuch-card::before{
+  content:"";
+  position:absolute; inset:0 0 auto 0; height:3px;
+  background: linear-gradient(90deg, rgba(247,147,26,.7), rgba(247,147,26,0) 40%, rgba(247,147,26,0) 60%, rgba(247,147,26,.7));
+  opacity:.35;
+}
+
+/* Innerer Flex-Wrapper */
+.gesuch-card__inner{
+  display:flex; flex-direction:column;
+  padding:16px 16px 14px;
+  min-height: 260px;
+}
+
+/* Header block */
+.gesuch-header{
+  display:flex; flex-direction:column; gap:10px; margin-bottom:8px;
+}
+.vendor-info{ display:flex; align-items:center; gap:10px; }
+.vendor-avatar{
+  width:40px; height:40px; border-radius:50%;
+  object-fit:cover; flex:0 0 40px; border:1px solid #2e3847;
+}
+.vendor-meta{ display:flex; flex-direction:column; line-height:1.2; }
+.vendor-link, .vendor-name{ color:#e5e7eb; font-weight:700; text-decoration:none; }
+.vendor-link:hover{ color:#F7931A; }
+.created-date{ font-size:.86rem; color:#92a0b3; }
+
+/* Title */
+.gesuch-title{ margin:2px 0 0; font-size: clamp(1.05rem, .95rem + .5vw, 1.25rem); }
+.gesuch-title a{
+  color:#fff; text-decoration:none;
+  display:-webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  overflow:hidden;
+}
+.gesuch-title a:hover{ color:#F7931A; }
+
+/* Content (clamped visually) */
+.gesuch-content{
+  color:#d6dbe3;
+  margin-top:6px; margin-bottom:10px;
+  overflow:hidden;
+  display:-webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 8;
+  flex-grow:1;
+}
+.gesuch-content p:last-child{ margin-bottom:0; }
+
+/* Footer / Actions */
+.gesuch-footer{
+  margin-top:auto;
+  display:flex; justify-content:flex-end;
+  padding-top:10px;
+  border-top:1px dashed #2e3847;      /* an neue Farbe angepasst */
+}
+.btn{
+  display:inline-flex; align-items:center; justify-content:center;
+  gap:.4rem; padding:.55rem .9rem; border-radius:10px;
+  font-weight:700; text-decoration:none; line-height:1;
+  border:1px solid transparent;
+  transition: transform .08s ease, background-color .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease;
+  user-select:none;
+}
+.btn:active{ transform: translateY(0); }
+.btn-outline-orange{
+  color:#F7931A; background:transparent; border-color:#F7931A33;
+  box-shadow: 0 2px 10px rgba(247,147,26,.12) inset;
+}
+.btn-outline-orange:hover{
+  background:#241a11;
+  border-color:#F7931A;
+  box-shadow: 0 4px 16px rgba(247,147,26,.22) inset;
+}
+
+/* Empty state – auf #252d38 angleichen */
+.empty-state{
+  color:#cbd5e1;
+  background:#252d38;
+  border:1px dashed #2e3847;
+  border-radius:10px;
+  padding:1.25rem;
+  text-align:center;
+}
+
+/* Karte in der Grid-Zelle voll strecken */
+.gesuche-grid-container .gesuch-card{ height: 100%; }
+
+/* Innerer Flex-Wrapper soll die ganze Kartenhöhe einnehmen */
+.gesuch-card__inner{ display:flex; flex-direction:column; flex:1; min-height:0; }
+
+/* Content darf wachsen und Restplatz füllen */
+.gesuch-content{ flex:1; min-height:0; }

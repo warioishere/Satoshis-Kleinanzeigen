@@ -25,12 +25,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 ?>
 <?php do_action( 'sk_product_edit_before_product_advertisement', $product_id ); ?>
 
-<style>
-    .product-edit-new-container .sk-proudct-advertisement {
-        margin-bottom: 20px;
-    }
-</style>
-
 <div class="sk-edit-row sk-proudct-advertisement sk-clearfix">
     <div class="sk-section-heading">
         <h2>

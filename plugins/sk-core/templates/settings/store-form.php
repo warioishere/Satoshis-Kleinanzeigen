@@ -34,6 +34,7 @@ $map_address  = $profile_info['find_address'] ?? '';
 $banner_width  = sk_get_vendor_store_banner_width();
 $banner_height = sk_get_vendor_store_banner_height();
 
+wp_enqueue_style( 'sk-store-settings' );
 wp_enqueue_script( 'sk-store-settings-form' );
 wp_localize_script(
     'sk-store-settings-form',
@@ -109,7 +110,8 @@ if ( $store_categories_on ) {
 $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
 ?>
 
-<form method="post" id="sk-store-form" action="" class="sk-settings-form" novalidate>
+<form method="post" id="sk-store-form" action="" class="sk-settings-form" novalidate
+    style="--sk-banner-width: <?php echo esc_attr( $banner_width ); ?>px; --sk-banner-height: <?php echo esc_attr( $banner_height ); ?>px;">
     <?php wp_nonce_field( 'sk_store_settings_nonce' ); ?>
 
     <!-- ======================================================
@@ -597,15 +599,4 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
 </div>
 
 
-
-<style>
-.sk-settings-content .sk-settings-area .sk-banner {
-    max-width: <?php echo esc_attr( $banner_width ); ?>px;
-    max-height: <?php echo esc_attr( $banner_height ); ?>px;
-}
-.sk-settings-content .sk-settings-area .sk-banner .sk-remove-banner-image {
-    height: <?php echo esc_attr( $banner_height ); ?>px;
-}
-.skp-saved::placeholder { color: #e8ecf0 !important; opacity: 1; }
-</style>
 
