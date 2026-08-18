@@ -3,7 +3,6 @@
 namespace SK\Core\Dashboard\Templates;
 
 use SK\Core\ProductCategory\Helper;
-use SK\Core\Utilities\ReportUtil;
 
 /**
  *  Product Functionality for Product Handler
@@ -244,11 +243,6 @@ class Products {
      * @return void
      */
     public function render_product_listing_template( $action ) {
-        if ( ReportUtil::is_report_products_url() ) {
-            sk_get_template_part( 'dashboard/dashboard' );
-            return;
-        }
-
         $bulk_statuses = apply_filters(
             'sk_bulk_product_statuses', [
                 '-1'     => __( 'Bulk Actions', 'sk-core' ),
