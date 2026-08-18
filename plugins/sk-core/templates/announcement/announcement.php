@@ -33,6 +33,15 @@ if ( ! empty( $announcements ) ) {
 		$first_notice = $first_notice->set_read_status( 'read' );
 	}
 }
+
+wp_enqueue_script( 'sk-announcement' );
+wp_localize_script(
+	'sk-announcement',
+	'skAnnouncement',
+	[
+		'nonce' => wp_create_nonce( 'sk_announcement_nonce' ),
+	]
+);
 ?>
 
 <div class="sk-dashboard-wrap">
@@ -134,60 +143,3 @@ if ( ! empty( $announcements ) ) {
 	<?php do_action( 'sk_dashboard_content_after' ); ?>
 </div>
 
-<script>
-(function($) {
-	var $list = $('.sk-announcement-list');
-	var $content = $('#sk-announcement-content-area');
-	var nonce = '<?php echo wp_create_nonce( 'sk_announcement_nonce' ); ?>';
-
-	$list.on('click', '.sk-announcement-list-item', function(e) {
-		e.preventDefault();
-		var $item = $(this);
-		var noticeId = $item.data('notice-id');
-
-		// Update active state
-		$list.find('.sk-announcement-list-item').removeClass('active');
-		$item.addClass('active');
-
-		// Remove unread state
-		$item.removeClass('unread').find('.sk-announcement-badge').remove();
-
-		// Show loading
-		$content.html(
-			'<div class="sk-announcement-empty-detail">' +
-				'<i class="fas fa-spinner fa-spin"></i>' +
-				'<p>Laden...</p>' +
-			'</div>'
-		);
-
-		// Fetch content
-		$.post(sk.ajaxurl, {
-			action: 'sk_announcement_get_notice',
-			nonce: nonce,
-			notice_id: noticeId
-		}, function(response) {
-			if (response.success) {
-				var d = response.data;
-				$content.html(
-					'<div class="sk-announcement-detail">' +
-						'<div class="sk-announcement-detail-header">' +
-							'<h3>' + $('<span>').text(d.title).html() + '</h3>' +
-							'<span class="sk-announcement-detail-date">' +
-								'<i class="far fa-calendar-alt"></i> ' + d.date +
-							'</span>' +
-						'</div>' +
-						'<div class="sk-announcement-detail-body">' + d.content + '</div>' +
-					'</div>'
-				);
-			} else {
-				$content.html(
-					'<div class="sk-announcement-empty-detail">' +
-						'<i class="fas fa-exclamation-triangle"></i>' +
-						'<p>Ankündigung nicht gefunden</p>' +
-					'</div>'
-				);
-			}
-		});
-	});
-})(jQuery);
-</script>

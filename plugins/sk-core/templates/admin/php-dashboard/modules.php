@@ -9,6 +9,19 @@
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
+
+wp_enqueue_script( 'sk-php-dashboard-modules' );
+wp_localize_script(
+    'sk-php-dashboard-modules',
+    'skPhpModules',
+    [
+        'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
+        'nonce'         => wp_create_nonce( 'sk_php_toggle_module' ),
+        'activeLabel'   => __( 'Active', 'sk' ),
+        'inactiveLabel' => __( 'Inactive', 'sk' ),
+        'errorMessage'  => __( 'Failed to toggle module.', 'sk' ),
+    ]
+);
 ?>
 
 <div class="sk-modules-wrap">
@@ -40,41 +53,3 @@ if ( ! defined( 'ABSPATH' ) ) {
         </div>
     <?php endif; ?>
 </div>
-
-<script>
-(function() {
-    var nonce = '<?php echo esc_js( wp_create_nonce( 'sk_php_toggle_module' ) ); ?>';
-
-    document.querySelectorAll('.sk-module-toggle').forEach(function(checkbox) {
-        checkbox.addEventListener('change', function() {
-            var moduleId = this.getAttribute('data-module-id');
-            var active = this.checked ? '1' : '0';
-            var label = this.nextElementSibling;
-
-            var data = new FormData();
-            data.append('action', 'sk_php_toggle_module');
-            data.append('nonce', nonce);
-            data.append('module_id', moduleId);
-            data.append('active', active);
-
-            fetch(ajaxurl, {
-                method: 'POST',
-                body: data,
-                credentials: 'same-origin'
-            }).then(function(response) {
-                return response.json();
-            }).then(function(result) {
-                if (result.success) {
-                    label.textContent = active === '1' ? '<?php echo esc_js( __( 'Active', 'sk' ) ); ?>' : '<?php echo esc_js( __( 'Inactive', 'sk' ) ); ?>';
-                } else {
-                    checkbox.checked = !checkbox.checked;
-                    alert('<?php echo esc_js( __( 'Failed to toggle module.', 'sk' ) ); ?>');
-                }
-            }).catch(function() {
-                checkbox.checked = !checkbox.checked;
-                alert('<?php echo esc_js( __( 'Failed to toggle module.', 'sk' ) ); ?>');
-            });
-        });
-    });
-})();
-</script>

@@ -294,9 +294,33 @@ class Assets {
                 'src'  => $asset_url . '/js/maps/mapbox-with-search.js',
                 'deps' => [ 'jquery' ],
             ],
+            'sk-seller-search-form'  => [
+                'src'  => $asset_url . '/js/seller-search-form.js',
+                'deps' => [ 'jquery', 'sk-util-helper' ],
+            ],
             'sk-seller-search-categories' => [
                 'src'  => $asset_url . '/js/seller-search-categories.js',
                 'deps' => [ 'jquery' ],
+            ],
+            'sk-announcement'        => [
+                'src'  => $asset_url . '/js/dashboard/announcement.js',
+                'deps' => [ 'jquery', 'sk-util-helper' ],
+            ],
+            'sk-products-listing'    => [
+                'src'  => $asset_url . '/js/products/products-listing.js',
+                'deps' => [],
+            ],
+            'sk-php-dashboard-modules' => [
+                'src'  => $asset_url . '/js/admin/php-dashboard/modules.js',
+                'deps' => [],
+            ],
+            'sk-php-dashboard-settings' => [
+                'src'  => $asset_url . '/js/admin/php-dashboard/settings.js',
+                'deps' => [],
+            ],
+            'sk-gesuch-copy-link'    => [
+                'src'  => $asset_url . '/js/gesuche/copy-link.js',
+                'deps' => [],
             ],
             'sk-orders-widget'       => [
                 'src'  => $asset_url . '/js/dashboard/orders-widget.js',
