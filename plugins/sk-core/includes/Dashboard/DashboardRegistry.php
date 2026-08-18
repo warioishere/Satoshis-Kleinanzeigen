@@ -74,17 +74,12 @@ class DashboardRegistry {
      * Previously hardcoded in functions-dashboard-navigation.php.
      */
     private static function register_base_menus(): void {
-        $analytics_suffix = class_exists( '\SK\Core\Utilities\ReportUtil' )
-            && \SK\Core\Utilities\ReportUtil::is_analytics_enabled()
-            ? '?path=%2Fanalytics%2FOverview'
-            : '';
-
         self::register_config( [
             'slug'       => 'dashboard',
             'title'      => __( 'Dashboard', 'sk-core' ),
             'icon'       => '<i class="fas fa-tachometer-alt"></i>',
             'icon_name'  => 'House',
-            'url'        => sk_get_navigation_url() . $analytics_suffix,
+            'url'        => sk_get_navigation_url(),
             'pos'        => 10,
             'permission' => 'sk_view_overview_menu',
         ] );

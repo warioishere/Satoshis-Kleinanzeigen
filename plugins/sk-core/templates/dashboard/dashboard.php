@@ -40,39 +40,11 @@
             /**
              *  Added sk_dashboard_before_widgets hook
              *
-             * @hooked sk_show_profile_progressbar
+             * @hooked Notices::output_welcome_box
              *
              */
             do_action( 'sk_dashboard_before_widgets' );
             ?>
-
-            <div class="sk-w6 sk-dash-left">
-
-                <?php
-
-                /**
-                 *  Added sk_dashboard_left_widgets hook
-                 *
-                 * @hooked get_review_widget
-                 *
-                 */
-                do_action( 'sk_dashboard_left_widgets' );
-                ?>
-
-            </div> <!-- .col-md-6 -->
-
-            <div class="sk-w6 sk-dash-right">
-                <?php
-                /**
-                 *  Added sk_dashboard_right_widgets hook
-                 *
-                 * @hooked get_announcement_widget
-                 *
-                 */
-                do_action( 'sk_dashboard_right_widgets' );
-                ?>
-
-            </div>
 
         </article><!-- .dashboard-content-area -->
 

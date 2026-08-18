@@ -5,7 +5,6 @@ namespace SK\Core;
 use Automattic\WooCommerce\Internal\Admin\WCAdminAssets;
 use SK\Core\ProductCategory\Helper as CategoryHelper;
 use SK\Core\Utilities\OrderUtil;
-use SK\Core\Utilities\ReportUtil;
 
 class Assets {
 
@@ -547,7 +546,7 @@ class Assets {
                 'routeComponents' => [ 'default' => null ],
                 'urls'            => [
                     'assetsUrl'    => SK_CORE_ASSETS,
-                    'dashboardUrl' => sk_get_navigation_url() . ( ReportUtil::is_analytics_enabled() ? '?path=%2Fanalytics%2FOverview' : '' ),
+                    'dashboardUrl' => sk_get_navigation_url(),
                     'storeUrl'     => sk_get_store_url( sk_get_current_user_id() ),
                 ],
             ]

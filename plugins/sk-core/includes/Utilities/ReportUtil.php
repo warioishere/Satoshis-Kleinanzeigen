@@ -1,33 +1,11 @@
 <?php
 namespace SK\Core\Utilities;
 
-use Automattic\WooCommerce\Internal\Admin\Analytics;
-
 /**
  * ReportUtil class
  *
  */
 class ReportUtil {
-
-    /**
-     * Check if analytics is enabled for the current seller.
-     *
-     * This checks if the seller is enabled and the analytics toggle option is set to "yes".
-     *
-     *
-     * @return bool True if analytics is enabled, false otherwise.
-     */
-    public static function is_analytics_enabled(): bool {
-        $is_analytics_enabled = 'yes' === get_option( Analytics::TOGGLE_OPTION_NAME, 'no' );
-
-        /**
-         * Filter to modify the analytics enabled status for the current seller.
-         *
-         *
-         * @param bool $is_enabled Whether analytics is enabled for the current seller.
-         */
-        return apply_filters( 'sk_is_analytics_enabled', $is_analytics_enabled );
-    }
 
     /**
      * Check if product listing is belongs to Report menu
