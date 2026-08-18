@@ -7,24 +7,34 @@ defined( 'ABSPATH' ) || exit;
 class FeedPage {
 
 	public function __construct() {
-		// Convert @StoreName mentions and #hashtags to links — only on feed pages.
-		add_filter( 'comment_text', [ __CLASS__, 'linkify_mentions' ], 20 );
-		add_filter( 'comment_text', [ __CLASS__, 'linkify_hashtags' ], 21 );
+		// Nothing to hook. Feed templates render their text through
+		// self::render_content(), everything else on the site is none of our
+		// business — the filters used to run on every comment sitewide.
+	}
 
-		// Only apply to post content on our feed templates, not globally.
-		add_action( 'template_redirect', function () {
-			if ( get_query_var( 'sk_feed_view' ) || get_query_var( 'vendor_feed' ) ) {
-				add_filter( 'the_content', [ __CLASS__, 'linkify_mentions' ], 20 );
-				add_filter( 'the_content', [ __CLASS__, 'linkify_hashtags' ], 21 );
-			}
-		} );
+	/**
+	 * Turn stored feed text into display HTML.
+	 *
+	 * Mentions and hashtags are resolved on the plain text first, so the regex
+	 * can never reach into an attribute of a link we just built.
+	 */
+	public static function render_content( string $raw ): string {
+		$text = self::linkify_mentions( $raw );
+		$text = self::linkify_hashtags( $text );
+		$text = make_clickable( $text );
+		$text = wpautop( $text );
+
+		return wp_kses_post( $text );
 	}
 
 	/**
 	 * Replace @StoreName with a link to the store page.
+	 *
+	 * The @ has to start a word, otherwise every e-mail address in a post
+	 * would be treated as a mention.
 	 */
 	public static function linkify_mentions( string $text ): string {
-		return preg_replace_callback( '/@([A-Za-z0-9À-ÿ][A-Za-z0-9À-ÿ .&\'-]{0,49})/', function ( $m ) {
+		return preg_replace_callback( '/(?<![\w.@-])@([A-Za-z0-9À-ÿ][A-Za-z0-9À-ÿ .&\'-]{0,49})/u', function ( $m ) {
 			$name = trim( $m[1] );
 			$user = self::find_vendor_by_store_name( $name );
 			if ( ! $user ) {
@@ -46,21 +56,35 @@ class FeedPage {
 		}, $text );
 	}
 
+	/**
+	 * Look the store name up in the database instead of scanning a fixed
+	 * slice of users. Resolved names are cached for the request, a feed page
+	 * can easily contain the same mention a dozen times.
+	 */
 	private static function find_vendor_by_store_name( string $name ): ?\WP_User {
-		$users = get_users( [
-			'role__in' => [ 'seller', 'administrator' ],
-			'number'   => 50,
-		] );
+		static $cache = [];
 
-		foreach ( $users as $user ) {
-			$info = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( $user->ID ) : [];
-			$store_name = $info['store_name'] ?? '';
-			if ( $store_name && mb_strtolower( $store_name ) === mb_strtolower( $name ) ) {
-				return $user;
-			}
+		$key = mb_strtolower( $name );
+
+		if ( array_key_exists( $key, $cache ) ) {
+			return $cache[ $key ];
 		}
 
-		return null;
+		$users = get_users( [
+			'role__in'   => [ 'seller', 'administrator' ],
+			'number'     => 1,
+			'meta_query' => [
+				[
+					'key'     => 'sk_store_name',
+					'value'   => $name,
+					'compare' => '=',
+				],
+			],
+		] );
+
+		$cache[ $key ] = $users ? $users[0] : null;
+
+		return $cache[ $key ];
 	}
 
 	/**
@@ -111,7 +135,7 @@ class FeedPage {
 		}
 
 		// Hashtag search.
-		$tag = sanitize_text_field( $_GET['tag'] ?? '' );
+		$tag = sanitize_text_field( wp_unslash( $_GET['tag'] ?? '' ) );
 		if ( $tag ) {
 			$args['s'] = '#' . $tag;
 		}

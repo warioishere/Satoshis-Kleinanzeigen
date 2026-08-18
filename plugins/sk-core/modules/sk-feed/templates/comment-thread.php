@@ -37,7 +37,7 @@ if ( ! function_exists( 'sk_feed_render_comments' ) ) {
 						<span class="sk-feed-comment-time sk-timeago" data-ts="<?php echo esc_attr( $comment_ts ); ?>"><?php printf( esc_html__( 'vor %s', 'sk-core' ), $time_ago ); ?></span>
 					</div>
 					<div class="sk-feed-comment-text">
-						<?php echo wp_kses_post( wpautop( $comment->comment_content ) ); ?>
+						<?php echo \SK\Modules\Feed\FeedPage::render_content( $comment->comment_content ); ?>
 					</div>
 					<?php if ( is_user_logged_in() && $depth < 3 ) : ?>
 						<button type="button" class="sk-feed-reply-btn" data-comment-id="<?php echo esc_attr( $comment->comment_ID ); ?>" data-post-id="<?php echo esc_attr( $post_id ); ?>">

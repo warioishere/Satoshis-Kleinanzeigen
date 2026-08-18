@@ -38,9 +38,13 @@ class AutoPost {
 		}
 
 		// Prevent duplicate auto-posts for same product.
+		// Includes drafts: a previously unpublished announcement is revived
+		// instead of replaced, otherwise toggling the listing status would
+		// bump it to the top of the feed over and over.
 		$existing = get_posts( [
 			'post_type'   => PostType::POST_TYPE,
 			'author'      => $vendor_id,
+			'post_status' => [ 'publish', 'draft', 'pending' ],
 			'meta_key'    => '_sk_feed_product_id',
 			'meta_value'  => $post->ID,
 			'fields'      => 'ids',
@@ -48,6 +52,7 @@ class AutoPost {
 		] );
 
 		if ( ! empty( $existing ) ) {
+			self::restore_announcement( (int) $existing[0] );
 			return;
 		}
 
@@ -94,9 +99,13 @@ class AutoPost {
 			return;
 		}
 
+		// Includes drafts: a previously unpublished announcement is revived
+		// instead of replaced, otherwise toggling the listing status would
+		// bump it to the top of the feed over and over.
 		$existing = get_posts( [
 			'post_type'   => PostType::POST_TYPE,
 			'author'      => $vendor_id,
+			'post_status' => [ 'publish', 'draft', 'pending' ],
 			'meta_key'    => '_sk_feed_gesuch_id',
 			'meta_value'  => $post->ID,
 			'fields'      => 'ids',
@@ -104,6 +113,7 @@ class AutoPost {
 		] );
 
 		if ( ! empty( $existing ) ) {
+			self::restore_announcement( (int) $existing[0] );
 			return;
 		}
 
@@ -142,7 +152,13 @@ class AutoPost {
 			return;
 		}
 		$meta_key = $post->post_type === 'product' ? '_sk_feed_product_id' : '_sk_feed_gesuch_id';
-		self::delete_announcements_for_source( $post->ID, $meta_key );
+
+		// Park it as a draft rather than deleting — the card disappears from
+		// the feed either way, but likes, comments and the original date
+		// survive a republish.
+		foreach ( self::find_announcements_for_source( $post->ID, $meta_key ) as $fid ) {
+			wp_update_post( [ 'ID' => (int) $fid, 'post_status' => 'draft' ] );
+		}
 	}
 
 	/**
@@ -159,7 +175,13 @@ class AutoPost {
 	}
 
 	private static function delete_announcements_for_source( int $source_id, string $meta_key ): void {
-		$feed_ids = get_posts( [
+		foreach ( self::find_announcements_for_source( $source_id, $meta_key ) as $fid ) {
+			wp_delete_post( (int) $fid, true );
+		}
+	}
+
+	private static function find_announcements_for_source( int $source_id, string $meta_key ): array {
+		return get_posts( [
 			'post_type'   => PostType::POST_TYPE,
 			'meta_key'    => $meta_key,
 			'meta_value'  => $source_id,
@@ -167,9 +189,17 @@ class AutoPost {
 			'numberposts' => -1,
 			'post_status' => 'any',
 		] );
-		foreach ( $feed_ids as $fid ) {
-			wp_delete_post( (int) $fid, true );
+	}
+
+	/**
+	 * Put a parked announcement back into the feed at its original position.
+	 */
+	private static function restore_announcement( int $feed_post_id ): void {
+		if ( 'draft' !== get_post_status( $feed_post_id ) ) {
+			return;
 		}
+
+		wp_update_post( [ 'ID' => $feed_post_id, 'post_status' => 'publish' ] );
 	}
 
 	public function on_feed_post_change( string $new_status, string $old_status, \WP_Post $post ): void {

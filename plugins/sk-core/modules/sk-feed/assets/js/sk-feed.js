@@ -6,6 +6,32 @@
 
     if (typeof skFeed === 'undefined') return;
 
+    // ── Escaping ─────────────────────────────────────────────────────────
+    // jQuery's .text().html() trick leaves quotes alone, which is fine between
+    // tags but breaks out of an attribute. Everything built as an HTML string
+    // goes through these.
+
+    function esc(str) {
+        return String(str == null ? '' : str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    // Only http(s) and protocol-relative URLs land in href/src, never
+    // javascript: or data:.
+    function escUrl(url) {
+        var clean = String(url == null ? '' : url).trim();
+
+        if (!/^(https?:\/\/|\/\/|\/)/i.test(clean)) {
+            return '';
+        }
+
+        return esc(clean);
+    }
+
     // ── Relative Timestamps (auto-update every 60s) ──────────────────────
 
     function formatTimeAgoDE(ts) {
@@ -110,12 +136,12 @@
             }
             var html = '<ul class="sk-feed-likers-list">';
             res.data.users.forEach(function (u) {
-                var name = $('<div>').text(u.name || '').html();
-                var href = u.url || '#';
-                var av   = u.avatar || '';
+                var name = esc(u.name);
+                var href = escUrl(u.url) || '#';
+                var av   = escUrl(u.avatar);
                 html += '<li class="sk-feed-likers-item">' +
                           '<a href="' + href + '" class="sk-feed-likers-link">' +
-                            '<img class="sk-feed-likers-avatar" src="' + av + '" alt="" loading="lazy">' +
+                            (av ? '<img class="sk-feed-likers-avatar" src="' + av + '" alt="" loading="lazy">' : '') +
                             '<span class="sk-feed-likers-name">' + name + '</span>' +
                           '</a>' +
                         '</li>';
@@ -201,8 +227,8 @@
         var $btn = $(this);
         if ($btn.hasClass('reported')) return;
 
-        var reason = prompt('Grund der Meldung (optional):') || '';
-        // User cancelled prompt.
+        var reason = prompt('Grund der Meldung (optional):');
+        // User cancelled the prompt.
         if (reason === null) return;
 
         $.post(skFeed.ajaxurl, {
@@ -373,6 +399,10 @@
                     }
                     // Remove empty state.
                     $('.sk-feed-empty').remove();
+
+                    if (res.data.image_error) {
+                        alert('Beitrag gespeichert, das Bild konnte nicht hochgeladen werden: ' + res.data.image_error);
+                    }
                 } else if (res.data && res.data.message) {
                     alert(res.data.message);
                 }
@@ -492,7 +522,7 @@
                         if ($thumb.length) {
                             $thumb.find('img').attr('src', res.data.thumb_url);
                         } else {
-                            $item.prepend('<div class="sk-feed-dashboard-item-thumb"><img src="' + res.data.thumb_url + '" alt="" /></div>');
+                            $item.prepend('<div class="sk-feed-dashboard-item-thumb"><img src="' + escUrl(res.data.thumb_url) + '" alt="" /></div>');
                         }
                     } else {
                         $thumb.remove();
@@ -500,6 +530,10 @@
 
                     $item.find('.sk-feed-dashboard-item-edit').hide();
                     $item.find('.sk-feed-dashboard-item-content').show();
+
+                    if (res.data.image_error) {
+                        alert('Text gespeichert, das Bild konnte nicht hochgeladen werden: ' + res.data.image_error);
+                    }
                 } else if (res.data && res.data.message) {
                     alert(res.data.message);
                 }
@@ -716,10 +750,12 @@
                     if (!res.success || !res.data.length) { $dd.hide(); return; }
 
                     res.data.forEach(function (store) {
+                        var name   = esc(store.name);
+                        var avatar = escUrl(store.avatar);
                         $dd.append(
-                            '<div class="sk-feed-mention-item" data-name="' + $('<span>').text(store.name).html() + '">' +
-                            '<img src="' + store.avatar + '" alt="" />' +
-                            '<span>' + $('<span>').text(store.name).html() + '</span>' +
+                            '<div class="sk-feed-mention-item" data-name="' + name + '">' +
+                            (avatar ? '<img src="' + avatar + '" alt="" />' : '') +
+                            '<span>' + name + '</span>' +
                             '</div>'
                         );
                     });

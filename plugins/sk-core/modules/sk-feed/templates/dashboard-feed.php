@@ -91,7 +91,7 @@ do_action( 'sk_dashboard_wrap_start' );
 						<?php endif; ?>
 						<div class="sk-feed-dashboard-item-body">
 							<div class="sk-feed-dashboard-item-content" data-full-content="<?php echo esc_attr( $feed_post->post_content ); ?>">
-								<?php echo wp_trim_words( wp_strip_all_tags( $feed_post->post_content ), 30 ); ?>
+								<?php echo esc_html( wp_trim_words( wp_strip_all_tags( $feed_post->post_content ), 30 ) ); ?>
 							</div>
 							<div class="sk-feed-dashboard-item-edit" style="display:none;">
 								<textarea class="sk-form-control sk-feed-edit-textarea" rows="3" maxlength="2000"><?php echo esc_textarea( $feed_post->post_content ); ?></textarea>
