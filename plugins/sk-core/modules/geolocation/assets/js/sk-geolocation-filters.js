@@ -281,21 +281,23 @@
     /* ── Store Lists Filter (simpler version for vendor listing) ── */
     var $storeFilter = $('.store-lists-other-filter-wrap .sk-geolocation-location-filters');
     if ($storeFilter.length) {
-        var query = (window.sk && sk.storeLists) ? sk.storeLists.query : {};
         var $slider = $storeFilter.find('.sk-range-slider');
         var $sliderVal = $slider.prev('.sk-range-slider-value').find('span');
-        var $addrInput = $storeFilter.find('.location-address input');
+        var $addrInput = $storeFilter.find('.location-address input[name="address"]');
+        var $lat = $storeFilter.find('[name="latitude"]');
+        var $lng = $storeFilter.find('[name="longitude"]');
+
+        function setCoords(lat, lng) {
+            $lat.val(lat || '');
+            $lng.val(lng || '');
+        }
 
         $slider.on('input', function () { $sliderVal.html(this.value); });
-        $slider.on('change', function () { query.distance = this.value; });
 
         $addrInput.on('change', function () {
-            var val = this.value;
-            query.address = val;
-            if (!val) {
-                delete query.distance;
-                delete query.longitude;
-                delete query.latitude;
+            // Coordinates belong to the address they were resolved from.
+            if (!this.value) {
+                setCoords('', '');
             }
         });
 
@@ -307,14 +309,8 @@
 
             $addrInput.on('change', function () {
                 if (sugg.selected) {
-                    query.latitude = sugg.selected.geometry.coordinates[1];
-                    query.longitude = sugg.selected.geometry.coordinates[0];
-                    query.address = sugg.selected.place_name;
-                    if (!query.distance) {
-                        var min = parseInt($slider.attr('min'), 10) || 0;
-                        var max = parseInt($slider.attr('max'), 10) || 100;
-                        query.distance = Math.ceil((min + max) / 2);
-                    }
+                    setCoords(sugg.selected.geometry.coordinates[1], sugg.selected.geometry.coordinates[0]);
+                    $addrInput.val(sugg.selected.place_name);
                 }
             });
 
@@ -335,11 +331,9 @@
                 navigator.geolocation.getCurrentPosition(function (pos) {
                     $locate.removeClass('sk-hide');
                     $loader.addClass('sk-hide');
-                    query.latitude = pos.coords.latitude;
-                    query.longitude = pos.coords.longitude;
+                    setCoords(pos.coords.latitude, pos.coords.longitude);
                     mapboxGetPlaces({ lng: pos.coords.longitude, lat: pos.coords.latitude }, function (f) {
                         if (f && f.length) {
-                            query.address = f[0].place_name;
                             $addrInput.val(f[0].place_name);
                         }
                     });
@@ -351,6 +345,23 @@
         }
 
         $('#sk-store-listing-filter-wrap .sk-geolocation-filters-loading').remove();
+
+        // Without coordinates the distance filter has nothing to measure from,
+        // so keep those fields out of the URL entirely.
+        $storeFilter.closest('form').on('submit', function () {
+            var hasLocation = $lat.val() && $lng.val();
+
+            $addrInput.prop('disabled', !$addrInput.val());
+            $lat.prop('disabled', !hasLocation);
+            $lng.prop('disabled', !hasLocation);
+            $slider.prop('disabled', !hasLocation);
+
+            // The form data is serialised before this fires, so the fields can
+            // come back right away and the panel stays usable on back-navigation.
+            setTimeout(function () {
+                $addrInput.add($lat).add($lng).add($slider).prop('disabled', false);
+            }, 0);
+        });
     }
 
     /* ── Simple Dropdown Plugin (for scope switch) ── */
