@@ -57,7 +57,7 @@
 .sk-geolocation-location-filters select {
   width: 100% !important;
   background: #181e27 !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
   border-radius: 6px !important;
   padding: 10px 12px !important;
   font-size: 14px !important;
@@ -69,7 +69,8 @@
 }
 
 .sk-geolocation-location-filters input::placeholder {
-  color: #6b7a8d !important;
+  color: #a3b0c0 !important;
+  opacity: 1 !important;
 }
 
 .sk-geolocation-location-filters input:focus,
@@ -123,7 +124,7 @@
 
 .sk-geolocation-location-filters .sk-input-group-btn {
   background: #252d38;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-left: 0;
   border-radius: 0 6px 6px 0;
   cursor: pointer;
@@ -167,7 +168,7 @@
   text-align: left;
   list-style: none;
   background: #1a2332;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 6px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
@@ -280,7 +281,7 @@
 
 .sk-geolocation-location-filters .suggestions {
   background: #1a2332 !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
   border-radius: 6px !important;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
   font-size: 14px;
@@ -449,7 +450,7 @@
 
 #sk-store-listing-filter-wrap .right .item.sort-by select {
   background: #181e27 !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
   color: #e8ecf0 !important;
   border-radius: 6px !important;
   padding: 8px 12px !important;
@@ -509,7 +510,7 @@
 
 #sk-store-listing-filter-wrap .right .item select {
   background: #181e27;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   color: #e8ecf0;
   border-radius: 6px;
   -webkit-appearance: none;
@@ -585,13 +586,14 @@
   width: 100%;
   padding: 10px 20px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   background: #181e27;
   color: #e8ecf0;
 }
 
 #sk-store-listing-filter-form-wrap .store-search .store-search-input::placeholder {
-  color: #6b7a8d;
+  color: #a3b0c0;
+  opacity: 1;
 }
 
 #sk-store-listing-filter-form-wrap .store-search .store-search-input:focus {
@@ -610,7 +612,7 @@
   border-radius: 6px;
   background: #252d38 !important;
   color: #e8ecf0 !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
   margin-right: 20px;
   display: none;
 }

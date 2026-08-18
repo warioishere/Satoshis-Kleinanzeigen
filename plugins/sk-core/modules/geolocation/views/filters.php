@@ -38,6 +38,22 @@ global $wp_query;
     </div>
 
     <div class="sk-row sk-clearfix sk-hide">
+        <div class="sk-w12 <?php echo ! $scope ? 'sk-hide' : ''; ?>">
+            <div class="range-slider-container sk-clearfix">
+                <span class="sk-range-slider-value sk-left">
+                    <?php esc_html_e( 'Radius', 'sk' ); ?> <span><?php echo esc_html( $distance ); ?></span><?php echo esc_html( $slider['unit'] ); ?>
+                </span>
+
+                <input
+                    class="sk-range-slider sk-left"
+                    type="range"
+                    value="<?php echo esc_attr( $distance ); ?>"
+                    min="<?php echo esc_attr( $slider['min'] ); ?>"
+                    max="<?php echo esc_attr( $slider['max'] ); ?>"
+                >
+            </div>
+        </div>
+
         <div class="sk-geo-filters-column">
             <div class="<?php echo ! $scope ? 'sk-input-group' : ' no-dropdown'; ?>">
                 <?php if ( 'vendor' === $scope ) : ?>
@@ -106,22 +122,6 @@ global $wp_query;
             </button>
         </div>
 
-
-        <div class="sk-w12 <?php echo ! $scope ? 'sk-hide' : ''; ?>">
-            <div class="range-slider-container sk-clearfix">
-                <span class="sk-range-slider-value sk-left">
-                    <?php esc_html_e( 'Radius', 'sk' ); ?> <span><?php echo esc_html( $distance ); ?></span><?php echo esc_html( $slider['unit'] ); ?>
-                </span>
-
-                <input
-                    class="sk-range-slider sk-left"
-                    type="range"
-                    value="<?php echo esc_attr( $distance ); ?>"
-                    min="<?php echo esc_attr( $slider['min'] ); ?>"
-                    max="<?php echo esc_attr( $slider['max'] ); ?>"
-                >
-            </div>
-        </div>
     </div>
 
     <input type="hidden" name="latitude" value="<?php echo esc_attr( $latitude ); ?>">

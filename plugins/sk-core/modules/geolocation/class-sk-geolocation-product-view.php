@@ -106,12 +106,12 @@ class SK_Geolocation_Product_View {
 
         $show_filters = sk_get_option( 'show_filters_before_locations_map', 'sk_geolocation', 'on' );
 
-        if ( 'on' === $show_filters ) {
-            sk_geo_filter_form( 'product' );
-        }
-
         if ( 'top' === $this->map_location ) {
             sk_geo_get_template( 'map', array( 'layout' => 'top' ) );
+        }
+
+        if ( 'on' === $show_filters ) {
+            sk_geo_filter_form( 'product' );
         }
     }
 
