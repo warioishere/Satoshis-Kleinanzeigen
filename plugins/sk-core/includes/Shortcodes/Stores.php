@@ -3,6 +3,7 @@
 namespace SK\Core\Shortcodes;
 
 use SK\Core\Abstracts\SkShortcode;
+use SK\Core\Vendor\StoreListsFilter;
 
 class Stores extends SkShortcode {
 
@@ -48,6 +49,15 @@ class Stores extends SkShortcode {
         if ( isset( $_GET['_store_filter_nonce'] ) && wp_verify_nonce( sanitize_key( wp_unslash( $_GET['_store_filter_nonce'] ) ), 'sk_store_lists_filter_nonce' ) ) {
             $sk_seller_search = isset( $_GET['sk_seller_search'] ) ? sanitize_text_field( wp_unslash( $_GET['sk_seller_search'] ) ) : $sk_seller_search;
             $requested_data = wc_clean( wp_unslash( $_GET ) );
+        }
+
+        // Sorting is a whitelisted public GET param, it works without the filter nonce.
+        if ( isset( $_GET['stores_orderby'] ) ) {
+            $stores_orderby = sanitize_key( wp_unslash( $_GET['stores_orderby'] ) );
+
+            if ( array_key_exists( $stores_orderby, StoreListsFilter::sort_by_options() ) ) {
+                $requested_data['stores_orderby'] = $stores_orderby;
+            }
         }
 
         // Check if store categories exists in the GET request.

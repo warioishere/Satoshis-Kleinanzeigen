@@ -246,8 +246,8 @@ class Assets {
         $bootstrap_deps = [ 'wp-i18n', 'wp-hooks' ];
 
         $scripts = [
-            'sk-store-filter-toggle' => [
-                'src'  => $asset_url . '/js/sk-store-filter-toggle.js',
+            'sk-store-listing'       => [
+                'src'  => $asset_url . '/js/modules/sk-store-listing.js',
                 'deps' => [ 'jquery' ],
             ],
             'sk-tinymce'             => [
@@ -503,7 +503,7 @@ class Assets {
                 wp_enqueue_script( 'sk-select2-js' );
 
                 if ( sk_is_store_listing() ) {
-                    wp_enqueue_script( 'sk-store-filter-toggle' );
+                    wp_enqueue_script( 'sk-store-listing' );
                 }
             }
         }

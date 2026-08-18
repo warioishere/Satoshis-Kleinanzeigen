@@ -526,17 +526,27 @@
 #sk-store-listing-filter-wrap .right .toggle-view {
   margin: 0;
   padding: 0;
-  line-height: 0;
-  height: 0;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 #sk-store-listing-filter-wrap .right .toggle-view .dashicons {
   font-size: 22px;
+  width: 22px;
+  height: 22px;
   cursor: pointer;
   color: #9aa4b2;
+  transition: color 0.15s ease;
 }
 
-#sk-store-listing-filter-wrap .right .toggle-view .active {
+#sk-store-listing-filter-wrap .right .toggle-view .dashicons:hover {
+  color: #e8ecf0;
+}
+
+#sk-store-listing-filter-wrap .right .toggle-view .dashicons.active,
+#sk-store-listing-filter-wrap .right .toggle-view .dashicons.active:hover {
   color: #f7931a;
 }
 

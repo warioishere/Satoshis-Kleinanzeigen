@@ -1,74 +1,91 @@
 /**
- * SK Store Listing — Sort, Filter, Product Search (Grid only, no list view)
+ * SK Store Listing — Filter panel, Sort by, Grid/List view toggle
  */
 (function ($) {
     'use strict';
 
-    var ajaxurl = (window.sk && sk.ajaxurl) ;
+    var STORAGE_KEY = 'sk_store_listing_view';
+
+    function readStoredView() {
+        try {
+            var view = window.localStorage.getItem(STORAGE_KEY);
+            return ('list-view' === view || 'grid-view' === view) ? view : null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function storeView(view) {
+        try {
+            window.localStorage.setItem(STORAGE_KEY, view);
+        } catch (e) {
+            // Storage unavailable (private mode) — view still applies for this page.
+        }
+    }
 
     $(function () {
         var $wrap = $('#sk-store-listing-filter-wrap');
+
+        if (!$wrap.length) {
+            return;
+        }
+
         var $listWrap = $('#sk-seller-listing-wrap');
         var $filterForm = $('#sk-store-listing-filter-form-wrap');
+        var $toggleView = $wrap.find('.toggle-view');
 
-        if (!$wrap.length) return;
+        /* ── Grid / List view ── */
+        function applyView(view) {
+            $listWrap.removeClass('grid-view list-view').addClass(view);
+            $toggleView.find('[data-view]').removeClass('active')
+                .filter('[data-view="' + view + '"]').addClass('active');
+        }
 
-        // Remove loading spinners
-        $('.sk-geolocation-filters-loading').remove();
+        applyView(readStoredView() || ($listWrap.hasClass('list-view') ? 'list-view' : 'grid-view'));
 
-        // Force grid view always
-        $listWrap.removeClass('list-view').addClass('grid-view');
+        $toggleView.on('click', '[data-view]', function () {
+            var view = $(this).data('view');
 
-        // Hide list/grid toggle
-        $wrap.find('.toggle-view').hide();
+            applyView(view);
+            storeView(view);
+        });
 
-        /* ── Sort By ── */
+        /* ── Sort by ── */
         $wrap.on('change', '.sort-by #stores_orderby', function () {
-            var val = $(this).val();
             var url = new URL(window.location.href);
-            url.searchParams.set('stores_orderby', val);
-            window.location = url.toString();
+
+            url.searchParams.set('stores_orderby', $(this).val());
+            url.searchParams.delete('paged');
+            // Drop the pagination segment, the new sort order starts on page one.
+            url.pathname = url.pathname.replace(/\/page\/\d+\/?$/, '/');
+
+            window.location.href = url.toString();
         });
 
-        /* ── Filter Form Toggle ── */
-        $wrap.on('click', '.sk-store-list-filter-button, .sk-icons, #cancel-filter-btn', function (e) {
+        /* ── Filter panel ── */
+        $wrap.on('click', '.sk-store-list-filter-button, .sk-icons', function (e) {
             e.preventDefault();
-            $filterForm.slideToggle('fast');
-        });
-
-        /* ── Apply Filter ── */
-        $filterForm.on('click', '#apply-filter-btn', function (e) {
-            e.preventDefault();
-            $filterForm.closest('form').submit();
-        });
-
-        /* ── Store Search ── */
-        $filterForm.on('keyup', '.store-search-input', function (e) {
-            if (e.keyCode === 13) {
-                $filterForm.closest('form').submit();
-            }
-        });
-
-        /* ── Product Search on Store Page ── */
-        $(document).on('submit', '.sk-store-products-filter-search', function (e) {
-            e.preventDefault();
-            var $form = $(this);
-            var search = $form.find('input[name="product_search_query"]').val();
-            var storeId = $form.data('store_id');
-
-            if (!search) return;
-
-            $.post(ajaxurl, {
-                action: 'sk_store_product_search_action',
-                _wpnonce: window.sk && sk.store_product_search_nonce,
-                search_term: search,
-                store_id: storeId
-            }, function (res) {
-                if (res.success && res.data) {
-                    $form.closest('.sk-store-products-filter-area')
-                        .siblings('.seller-items').html(res.data);
+            $filterForm.slideToggle(300, function () {
+                if ($(this).is(':visible')) {
+                    $(this).find('input[type="text"], input[type="search"]').first().focus();
                 }
             });
+        });
+
+        $filterForm.on('click', '#cancel-filter-btn', function (e) {
+            e.preventDefault();
+            $filterForm.slideUp(300);
+        });
+
+        // Keep the chosen sort order when the filter form is submitted.
+        $filterForm.on('submit', function () {
+            var orderby = $wrap.find('#stores_orderby').val();
+
+            if (!orderby || $filterForm.find('input[name="stores_orderby"]').length) {
+                return;
+            }
+
+            $('<input>', { type: 'hidden', name: 'stores_orderby', value: orderby }).appendTo($filterForm);
         });
     });
 
