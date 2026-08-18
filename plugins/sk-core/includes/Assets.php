@@ -15,6 +15,8 @@ class Assets {
     public function __construct() {
         add_action( 'init', [ $this, 'register_all_scripts' ], 10 );
         add_filter( 'sk_localized_args', [ $this, 'conditional_localized_args' ] );
+        add_filter( 'script_loader_src', [ $this, 'version_asset_src' ] );
+        add_filter( 'style_loader_src', [ $this, 'version_asset_src' ] );
 
         if ( is_admin() ) {
             add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ], 10 );
@@ -152,17 +154,15 @@ class Assets {
     }
 
     /**
-     * Return filemtime-based version when SCRIPT_DEBUG is on, otherwise plugin version.
+     * Version an asset by its modification time so a deploy busts the browser cache.
+     *
+     * Falls back to the plugin version for files that are not on disk.
      *
      * @param string $file Absolute path to the asset file.
      *
      * @return string
      */
-    private static function asset_version( string $file ): string {
-        if ( ! ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) ) {
-            return SK_CORE_VERSION;
-        }
-
+    public static function asset_version( string $file ): string {
         static $cache = [];
 
         if ( ! isset( $cache[ $file ] ) ) {
@@ -170,6 +170,42 @@ class Assets {
         }
 
         return $cache[ $file ];
+    }
+
+    /**
+     * Stamp every asset of this plugin with its file modification time.
+     *
+     * Registrations all over the plugin pass SK_CORE_VERSION, which never changes
+     * between deploys, so browsers keep serving their cached copy for months.
+     *
+     * @param string $src Asset URL as WordPress is about to print it.
+     *
+     * @return string
+     */
+    public function version_asset_src( $src ) {
+        static $base_url = null;
+
+        if ( ! is_string( $src ) || '' === $src ) {
+            return $src;
+        }
+
+        if ( null === $base_url ) {
+            $base_url = untrailingslashit( plugins_url( '', SK_CORE_FILE ) );
+        }
+
+        $path = strtok( $src, '?' );
+
+        if ( 0 !== strpos( $path, $base_url . '/' ) ) {
+            return $src;
+        }
+
+        $file = SK_CORE_DIR . substr( $path, strlen( $base_url ) );
+
+        if ( ! file_exists( $file ) ) {
+            return $src;
+        }
+
+        return add_query_arg( 'ver', self::asset_version( $file ), $src );
     }
 
     /**
