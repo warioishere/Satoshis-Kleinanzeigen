@@ -294,6 +294,14 @@ class Assets {
                 'src'  => $asset_url . '/js/maps/mapbox-with-search.js',
                 'deps' => [ 'jquery' ],
             ],
+            'sk-store-settings-form' => [
+                'src'  => $asset_url . '/js/settings/store-form.js',
+                'deps' => [ 'jquery' ],
+            ],
+            'sk-store-delete-account' => [
+                'src'  => $asset_url . '/js/settings/store-delete-account.js',
+                'deps' => [ 'jquery' ],
+            ],
             'sk-seller-search-form'  => [
                 'src'  => $asset_url . '/js/seller-search-form.js',
                 'deps' => [ 'jquery', 'sk-util-helper' ],
@@ -309,6 +317,10 @@ class Assets {
             'sk-products-listing'    => [
                 'src'  => $asset_url . '/js/products/products-listing.js',
                 'deps' => [],
+            ],
+            'sk-product-variation-dates' => [
+                'src'  => $asset_url . '/js/products/product-variation-dates.js',
+                'deps' => [ 'jquery', 'jquery-ui-datepicker' ],
             ],
             'sk-php-dashboard-modules' => [
                 'src'  => $asset_url . '/js/admin/php-dashboard/modules.js',
