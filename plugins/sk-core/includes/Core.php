@@ -92,13 +92,6 @@ class Core {
 
         if ( is_page( $page_id ) || ( get_query_var( 'edit' ) && is_singular( 'product' ) ) ) {
             $classes[] = 'sk-dashboard';
-
-            // The dashboard is an application surface, not an article: the
-            // theme's reading width left a few hundred pixels unused on each
-            // side. Kadence has its own full-width mode, so use that instead
-            // of fighting its container rules.
-            $classes   = array_values( array_diff( $classes, [ 'content-width-normal', 'content-width-narrow' ] ) );
-            $classes[] = 'content-width-fullwidth';
         }
 
         if ( sk_is_store_page() ) {

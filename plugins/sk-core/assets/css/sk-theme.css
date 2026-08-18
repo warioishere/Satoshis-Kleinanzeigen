@@ -13158,16 +13158,3 @@ div.sk-error { border-left-color: #ef4444; }
 .sk-dashboard .sk-dashboard-content article.dashboard-content-area .dashboard-widget {
   padding: 0 var(--sk-dash-card);
 }
-
-/* Volle Breite: Kadence nimmt mit content-width-fullwidth jeden Rand weg, ein
-   schmaler Steg bleibt aber sinnvoll, damit die Box nicht am Glas klebt. */
-.sk-dashboard .content-container.site-container {
-  padding-left: var(--sk-dash-shell) !important;
-  padding-right: var(--sk-dash-shell) !important;
-}
-
-/* Kadence entfernt mit dem Fullwidth-Modus auch den vertikalen Abstand. */
-.sk-dashboard .content-area {
-  margin-top: var(--sk-dash-card) !important;
-  margin-bottom: var(--sk-dash-card) !important;
-}
