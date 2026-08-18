@@ -13153,3 +13153,23 @@ div.sk-error { border-left-color: #ef4444; }
     --sk-dash-card: 12px;
   }
 }
+
+/* Shop-Sortierung: Kadence setzt select.orderby auf transparent, dadurch war
+   der gewaehlte Eintrag auf dem dunklen Hintergrund nicht mehr zu lesen. */
+.woocommerce-ordering select.orderby {
+  background-color: #181e27 !important;
+  color: #fff !important;
+  border: 1px solid #5c6b81 !important;
+  border-radius: 6px !important;
+  padding: 8px 30px 8px 12px !important;
+}
+
+.woocommerce-ordering select.orderby:focus {
+  border-color: #f7931a !important;
+  outline: none !important;
+}
+
+.woocommerce-ordering select.orderby option {
+  background-color: #1a2332;
+  color: #fff;
+}

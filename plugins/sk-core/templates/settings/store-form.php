@@ -7,7 +7,7 @@
  *
  * Sections (in order):
  *   1. Profil (banner, gravatar)
- *   2. Shop-Informationen (store name, store category, address, map)
+ *   2. Anbieter-Informationen (store name, store category, address, map)
  *   3. Kontaktdaten (email, telegram, twitter, phone, nostr, paywall)
  *   4. Biografie
  *   5. Katalog-Modus (conditional)
@@ -114,11 +114,11 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
     </div>
 
     <!-- ======================================================
-         SECTION 2: Shop-Informationen
+         SECTION 2: Anbieter-Informationen
     ====================================================== -->
     <div class="sk-settings-section">
         <div class="sk-settings-section-title">
-            <i class="fas fa-store"></i> <?php esc_html_e( 'Shop-Informationen', 'sk' ); ?>
+            <i class="fas fa-store"></i> <?php esc_html_e( 'Anbieter Informationen', 'sk' ); ?>
         </div>
 
         <?php
@@ -157,7 +157,7 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
             <label class="sk-settings-label"><?php esc_html_e( 'Kartenposition', 'sk-core' ); ?></label>
             <div class="sk-settings-input">
                 <?php sk_get_template( 'maps/sk-maps-with-search.php', [ 'map_location' => $map_location, 'map_address' => $map_address ] ); ?>
-                <p class="sk-settings-hint">💡 <?php esc_html_e( 'Bitte einfach nur den Ort angeben (z. B. Zürich). Straße & Hausnummer sind nicht nötig.', 'sk-core' ); ?></p>
+                <p class="sk-settings-hint">💡 <?php esc_html_e( 'Gib deinen Standort an, falls du Abholung vor Ort anbietest. Grobe Ortsangaben reichen.', 'sk-core' ); ?></p>
             </div>
         </div>
         <?php endif; ?>

@@ -36,8 +36,68 @@ class SK_Geolocation_Product_Query {
      *
      * @return void
      */
+    /** Value of the extra entry in the shop's sort dropdown. */
+    const WITH_LOCATION = 'sk_has_location';
+
+    /**
+     * Class constructor
+     *
+     *
+     * @return void
+     */
     public function __construct() {
         add_action( 'woocommerce_product_query', array( $this, 'add_query_filters' ) );
+        add_filter( 'woocommerce_catalog_orderby', array( $this, 'add_location_option' ) );
+        add_filter( 'woocommerce_default_catalog_orderby_options', array( $this, 'add_location_option' ) );
+        add_filter( 'woocommerce_get_catalog_ordering_args', array( $this, 'location_ordering_args' ), 10, 2 );
+        add_action( 'woocommerce_product_query', array( $this, 'filter_products_with_location' ) );
+    }
+
+    /**
+     * Offer "only listings with a location" alongside the sort options.
+     */
+    public function add_location_option( $options ) {
+        $options[ self::WITH_LOCATION ] = __( 'Nur mit Ortsangabe', 'sk-core' );
+
+        return $options;
+    }
+
+    /**
+     * WooCommerce does not know this value, so it would fall through to its
+     * default handling. Sorting stays by date, the selection only narrows the
+     * result set.
+     */
+    public function location_ordering_args( $args, $orderby = '' ) {
+        if ( self::WITH_LOCATION !== $orderby ) {
+            return $args;
+        }
+
+        $args['orderby']  = 'date';
+        $args['order']    = 'DESC';
+        $args['meta_key'] = '';
+
+        return $args;
+    }
+
+    /**
+     * Narrow the loop to listings that actually carry a place.
+     *
+     * Listings without one have no sk_geo_address row at all, so EXISTS plus a
+     * non-empty check is enough.
+     */
+    public function filter_products_with_location( $query ) {
+        if ( ! isset( $_GET['orderby'] ) || self::WITH_LOCATION !== sanitize_text_field( wp_unslash( $_GET['orderby'] ) ) ) {
+            return;
+        }
+
+        $meta_query   = (array) $query->get( 'meta_query' );
+        $meta_query[] = [
+            'key'     => 'sk_geo_address',
+            'value'   => '',
+            'compare' => '!=',
+        ];
+
+        $query->set( 'meta_query', $meta_query );
     }
 
     /**
