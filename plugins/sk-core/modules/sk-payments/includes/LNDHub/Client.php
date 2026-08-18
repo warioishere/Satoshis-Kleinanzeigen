@@ -146,6 +146,7 @@ class Client {
                     'settled'      => ! empty( $invoice['ispaid'] ),
                     'preimage'     => $invoice['preimage'] ?? null,
                     'payment_hash' => $payment_hash,
+                    'amount_sats'  => isset( $invoice['amt'] ) ? (int) $invoice['amt'] : 0,
                 ];
             }
         }
@@ -154,6 +155,7 @@ class Client {
             'settled'      => false,
             'preimage'     => null,
             'payment_hash' => $payment_hash,
+            'amount_sats'  => 0,
         ];
     }
 

@@ -52,13 +52,17 @@ class Ajax {
 		update_post_meta( $post_id, '_sk_feed_type', 'posting' );
 
 		// Handle image upload.
+		$image_error = '';
 		if ( ! empty( $_FILES['image'] ) && ! empty( $_FILES['image']['tmp_name'] ) ) {
 			require_once ABSPATH . 'wp-admin/includes/image.php';
 			require_once ABSPATH . 'wp-admin/includes/file.php';
 			require_once ABSPATH . 'wp-admin/includes/media.php';
 
 			$attach_id = media_handle_upload( 'image', $post_id );
-			if ( ! is_wp_error( $attach_id ) ) {
+
+			if ( is_wp_error( $attach_id ) ) {
+				$image_error = $attach_id->get_error_message();
+			} else {
 				set_post_thumbnail( $post_id, $attach_id );
 			}
 		}
@@ -106,7 +110,24 @@ class Ajax {
 			}
 		} );
 
-		wp_send_json_success( [ 'post_id' => $post_id, 'html' => $html ] );
+		wp_send_json_success( [ 'post_id' => $post_id, 'html' => $html, 'image_error' => $image_error ] );
+	}
+
+	/**
+	 * Drop a feed post's image.
+	 *
+	 * Announcement posts reuse the product's own attachment, so the file is
+	 * only deleted when it was uploaded for this post. Otherwise it is merely
+	 * detached and the product keeps its image.
+	 */
+	private static function release_thumbnail( int $post_id ): void {
+		$thumb_id = (int) get_post_thumbnail_id( $post_id );
+
+		delete_post_thumbnail( $post_id );
+
+		if ( $thumb_id && (int) wp_get_post_parent_id( $thumb_id ) === $post_id ) {
+			wp_delete_attachment( $thumb_id, true );
+		}
 	}
 
 	public function edit_post() {
@@ -138,29 +159,24 @@ class Ajax {
 		] );
 
 		// Remove image.
+		$image_error  = '';
 		$remove_image = isset( $_POST['remove_image'] ) && $_POST['remove_image'] === '1';
 		if ( $remove_image ) {
-			$old_thumb = get_post_thumbnail_id( $post_id );
-			if ( $old_thumb ) {
-				wp_delete_attachment( $old_thumb, true );
-			}
-			delete_post_thumbnail( $post_id );
+			self::release_thumbnail( $post_id );
 		}
 
 		// Upload new image.
 		if ( ! $remove_image && ! empty( $_FILES['image'] ) && ! empty( $_FILES['image']['tmp_name'] ) ) {
-			// Remove old thumbnail first.
-			$old_thumb = get_post_thumbnail_id( $post_id );
-			if ( $old_thumb ) {
-				wp_delete_attachment( $old_thumb, true );
-			}
-
 			require_once ABSPATH . 'wp-admin/includes/image.php';
 			require_once ABSPATH . 'wp-admin/includes/file.php';
 			require_once ABSPATH . 'wp-admin/includes/media.php';
 
 			$attach_id = media_handle_upload( 'image', $post_id );
-			if ( ! is_wp_error( $attach_id ) ) {
+
+			if ( is_wp_error( $attach_id ) ) {
+				$image_error = $attach_id->get_error_message();
+			} else {
+				self::release_thumbnail( $post_id );
 				set_post_thumbnail( $post_id, $attach_id );
 			}
 		}
@@ -192,8 +208,9 @@ class Ajax {
 		} );
 
 		wp_send_json_success( [
-			'content'   => wp_kses_post( $content ),
-			'thumb_url' => $thumb_url ?: '',
+			'content'     => wp_kses_post( $content ),
+			'thumb_url'   => $thumb_url ?: '',
+			'image_error' => $image_error,
 		] );
 	}
 
@@ -212,12 +229,14 @@ class Ajax {
 		}
 
 		// NIP-09: Delete the Nostr event before deleting the WP post.
+		// Only the author can sign a valid deletion, an admin removing someone
+		// else's post would produce an event every relay rejects.
 		$nostr_event_id = get_post_meta( $post_id, '_sk_nostr_event_id', true );
-		$nostr_user_id  = get_current_user_id();
+		$nostr_user_id  = (int) $post->post_author;
 
 		wp_delete_post( $post_id, true );
 
-		if ( $nostr_event_id && class_exists( 'SK\Modules\Auth\NostrIdentity' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $nostr_user_id ) ) {
+		if ( $nostr_user_id === get_current_user_id() && $nostr_event_id && class_exists( 'SK\Modules\Auth\NostrIdentity' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $nostr_user_id ) ) {
 			register_shutdown_function( function () use ( $nostr_event_id, $nostr_user_id ) {
 				\SK\Modules\Auth\NostrIdentity::publish( $nostr_user_id, 5, '', [ [ 'e', $nostr_event_id ] ] );
 			} );
@@ -320,7 +339,8 @@ class Ajax {
 		}
 
 		$post_id = (int) ( $_POST['post_id'] ?? 0 );
-		$reason  = sanitize_text_field( $_POST['reason'] ?? '' );
+		// The reason column is VARCHAR(255), cut it here so the insert cannot fail.
+		$reason  = mb_substr( sanitize_text_field( wp_unslash( $_POST['reason'] ?? '' ) ), 0, 255 );
 		$post    = get_post( $post_id );
 
 		if ( ! $post || $post->post_type !== PostType::POST_TYPE ) {
@@ -480,7 +500,28 @@ class Ajax {
 			wp_send_json_error( [ 'message' => __( 'Bitte Kommentar eingeben.', 'sk-core' ) ] );
 		}
 
+		if ( mb_strlen( $text ) > 2000 ) {
+			wp_send_json_error( [ 'message' => __( 'Maximal 2000 Zeichen.', 'sk-core' ) ] );
+		}
+
 		$user = wp_get_current_user();
+
+		// A reply must hang off a comment of this very post.
+		if ( $parent_id ) {
+			$parent = get_comment( $parent_id );
+
+			if ( ! $parent || (int) $parent->comment_post_ID !== $post_id ) {
+				wp_send_json_error( [ 'message' => __( 'Kommentar nicht gefunden.', 'sk-core' ) ] );
+			}
+		}
+
+		if ( ! self::comment_rate_allows( $user->ID ) ) {
+			wp_send_json_error( [ 'message' => __( 'Bitte kurz warten, bevor du wieder kommentierst.', 'sk-core' ) ] );
+		}
+
+		if ( self::is_duplicate_comment( $post_id, $user->ID, $text ) ) {
+			wp_send_json_error( [ 'message' => __( 'Das hast du gerade schon geschrieben.', 'sk-core' ) ] );
+		}
 
 		// Use store name for vendors, display_name for others.
 		$author_name = $user->display_name;
@@ -498,6 +539,9 @@ class Ajax {
 			'user_id'              => $user->ID,
 			'comment_author'       => $author_name,
 			'comment_author_email' => $user->user_email,
+			'comment_author_IP'    => function_exists( 'sk_get_client_ip' ) ? sk_get_client_ip() : '',
+			'comment_agent'        => substr( sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ?? '' ) ), 0, 254 ),
+			'comment_type'         => 'comment',
 			'comment_approved'     => 1,
 		];
 
@@ -536,7 +580,7 @@ class Ajax {
 			<div class="sk-feed-comment-body">
 				<div class="sk-feed-comment-header">
 					<strong class="sk-feed-comment-author">
-						<?php echo esc_html( $user->display_name ); ?>
+						<?php echo esc_html( $author_name ); ?>
 						<?php if ( $is_vendor ) : ?>
 							<span class="sk-feed-comment-badge"><?php esc_html_e( 'Verkäufer', 'sk-core' ); ?></span>
 						<?php endif; ?>
@@ -544,7 +588,7 @@ class Ajax {
 					<span class="sk-feed-comment-time sk-timeago" data-ts="<?php echo esc_attr( $comment_ts ); ?>"><?php printf( esc_html__( 'vor %s', 'sk-core' ), $time_ago ); ?></span>
 				</div>
 				<div class="sk-feed-comment-text">
-					<?php echo wp_kses_post( wpautop( $comment->comment_content ) ); ?>
+					<?php echo FeedPage::render_content( $comment->comment_content ); ?>
 				</div>
 			</div>
 		</div>
@@ -556,6 +600,55 @@ class Ajax {
 			'html'       => $html,
 			'count'      => (int) get_comments_number( $post_id ),
 		] );
+	}
+
+	/**
+	 * At most one comment every 15 seconds and 10 per 10 minutes per user.
+	 */
+	private static function comment_rate_allows( int $user_id ): bool {
+		global $wpdb;
+
+		$sql = "SELECT COUNT(*) FROM {$wpdb->comments} c
+		        INNER JOIN {$wpdb->posts} p ON p.ID = c.comment_post_ID
+		        WHERE c.user_id = %d AND p.post_type = %s AND c.comment_date_gmt > %s";
+
+		$recent = (int) $wpdb->get_var( $wpdb->prepare(
+			$sql,
+			$user_id,
+			PostType::POST_TYPE,
+			gmdate( 'Y-m-d H:i:s', time() - 15 )
+		) );
+
+		if ( $recent > 0 ) {
+			return false;
+		}
+
+		$burst = (int) $wpdb->get_var( $wpdb->prepare(
+			$sql,
+			$user_id,
+			PostType::POST_TYPE,
+			gmdate( 'Y-m-d H:i:s', time() - 600 )
+		) );
+
+		return $burst < 10;
+	}
+
+	/**
+	 * Same user posting the same text on the same post within five minutes.
+	 */
+	private static function is_duplicate_comment( int $post_id, int $user_id, string $text ): bool {
+		global $wpdb;
+
+		return (bool) $wpdb->get_var( $wpdb->prepare(
+			"SELECT 1 FROM {$wpdb->comments}
+			 WHERE comment_post_ID = %d AND user_id = %d AND comment_content = %s
+			   AND comment_date_gmt > %s
+			 LIMIT 1",
+			$post_id,
+			$user_id,
+			$text,
+			gmdate( 'Y-m-d H:i:s', time() - 300 )
+		) );
 	}
 
 	public function toggle_pin() {
@@ -607,15 +700,19 @@ class Ajax {
 			wp_send_json_success( [] );
 		}
 
+		// Match in the database, not on a fixed slice of users — otherwise the
+		// search only ever sees the first handful of vendors.
 		$sellers = get_users( [
 			'role__in'   => [ 'seller', 'administrator' ],
-			'number'     => 8,
-			'orderby'    => 'display_name',
+			'number'     => 6,
+			'orderby'    => 'meta_value',
+			'meta_key'   => 'sk_store_name',
 			'order'      => 'ASC',
 			'meta_query' => [
 				[
-					'key'     => 'sk_profile_settings',
-					'compare' => 'EXISTS',
+					'key'     => 'sk_store_name',
+					'value'   => $term,
+					'compare' => 'LIKE',
 				],
 			],
 		] );
@@ -623,13 +720,8 @@ class Ajax {
 		$results = [];
 		foreach ( $sellers as $user ) {
 			$store_info = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( $user->ID ) : [];
-			$store_name = $store_info['store_name'] ?? $user->display_name;
-
-			if ( mb_stripos( $store_name, $term ) === false ) {
-				continue;
-			}
-
-			$store_url = function_exists( 'sk_get_store_url' ) ? sk_get_store_url( $user->ID ) : '';
+			$store_name = ! empty( $store_info['store_name'] ) ? $store_info['store_name'] : $user->display_name;
+			$store_url  = function_exists( 'sk_get_store_url' ) ? sk_get_store_url( $user->ID ) : '';
 
 			$results[] = [
 				'id'     => $user->ID,
@@ -637,23 +729,27 @@ class Ajax {
 				'url'    => $store_url,
 				'avatar' => get_avatar_url( $user->ID, [ 'size' => 32 ] ),
 			];
-
-			if ( count( $results ) >= 6 ) {
-				break;
-			}
 		}
 
 		wp_send_json_success( $results );
 	}
 
+	/**
+	 * Count a zap against a feed post.
+	 *
+	 * The amount is never taken from the request. The caller supplies the
+	 * payment hash of the invoice, we look it up on the author's wallet and
+	 * read both the settled state and the amount from there. Each invoice is
+	 * counted once.
+	 */
 	public function track_zap() {
 		check_ajax_referer( 'sk_feed', '_nonce' );
 
-		$post_id = (int) ( $_POST['post_id'] ?? 0 );
-		$amount  = (int) ( $_POST['amount'] ?? 0 );
+		$post_id      = (int) ( $_POST['post_id'] ?? 0 );
+		$payment_hash = strtolower( sanitize_text_field( wp_unslash( $_POST['payment_hash'] ?? '' ) ) );
 
-		if ( ! $post_id || ! $amount || $amount < 1 ) {
-			wp_send_json_error();
+		if ( ! $post_id || ! preg_match( '/^[0-9a-f]{64}$/', $payment_hash ) ) {
+			wp_send_json_error( [ 'message' => __( 'Zahlung nicht nachweisbar.', 'sk-core' ) ] );
 		}
 
 		$post = get_post( $post_id );
@@ -661,14 +757,63 @@ class Ajax {
 			wp_send_json_error();
 		}
 
-		// Atomic increment.
-		$current = (int) get_post_meta( $post_id, '_sk_zap_total_sats', true );
-		update_post_meta( $post_id, '_sk_zap_total_sats', $current + $amount );
+		// One meta row per invoice, so a replayed request cannot count twice.
+		if ( ! add_post_meta( $post_id, '_sk_zap_hash_' . $payment_hash, 0, true ) ) {
+			wp_send_json_success( [ 'total' => (int) get_post_meta( $post_id, '_sk_zap_total_sats', true ) ] );
+		}
 
-		$new_total = $current + $amount;
+		// Every accepted call costs the author's wallet a lookup, so cap how
+		// often one user can trigger that.
+		$budget_key = 'sk_feed_zapchk_' . get_current_user_id();
+		$lookups    = (int) get_transient( $budget_key );
 
-		wp_send_json_success( [
-			'total' => $new_total,
-		] );
+		if ( $lookups >= 10 ) {
+			delete_post_meta( $post_id, '_sk_zap_hash_' . $payment_hash );
+			wp_send_json_error( [ 'message' => __( 'Zu viele Anfragen.', 'sk-core' ) ] );
+		}
+
+		set_transient( $budget_key, $lookups + 1, MINUTE_IN_SECONDS );
+
+		$amount = self::verify_settled_zap( (int) $post->post_author, $payment_hash );
+
+		if ( $amount < 1 ) {
+			delete_post_meta( $post_id, '_sk_zap_hash_' . $payment_hash );
+			wp_send_json_error( [ 'message' => __( 'Zahlung nicht bestätigt.', 'sk-core' ) ] );
+		}
+
+		update_post_meta( $post_id, '_sk_zap_hash_' . $payment_hash, $amount );
+
+		$total = (int) get_post_meta( $post_id, '_sk_zap_total_sats', true ) + $amount;
+		update_post_meta( $post_id, '_sk_zap_total_sats', $total );
+
+		wp_send_json_success( [ 'total' => $total ] );
+	}
+
+	/**
+	 * Look the invoice up on the vendor's wallet. Returns the paid amount in
+	 * sats, or 0 when it is unsettled or cannot be checked.
+	 */
+	private static function verify_settled_zap( int $vendor_id, string $payment_hash ): int {
+		if ( ! $vendor_id || ! class_exists( 'SK\Modules\Payments\StoreSettings' ) ) {
+			return 0;
+		}
+
+		$client = \SK\Modules\Payments\StoreSettings::get_nwc_client( $vendor_id );
+
+		if ( ! $client ) {
+			$client = \SK\Modules\Payments\StoreSettings::get_lndhub_client( $vendor_id );
+		}
+
+		if ( ! $client ) {
+			return 0;
+		}
+
+		$result = $client->lookup_invoice( $payment_hash );
+
+		if ( is_wp_error( $result ) || empty( $result['settled'] ) ) {
+			return 0;
+		}
+
+		return max( 0, (int) ( $result['amount_sats'] ?? 0 ) );
 	}
 }

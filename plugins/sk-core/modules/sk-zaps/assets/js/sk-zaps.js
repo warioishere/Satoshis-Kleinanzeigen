@@ -201,7 +201,7 @@
                     await window.webln.enable();
                     await window.webln.sendPayment(invoice);
                     setStatus('&#9889; Zap gesendet!', true);
-                    trackZap(data, amountSats);
+                    trackZap(data, amountSats, invoiceResp && invoiceResp.payment_hash);
                     setTimeout(function () { $('#sk-zap-modal').remove(); }, 2000);
                     return;
                 } catch (weblnErr) {
@@ -383,7 +383,7 @@
                 if (res.success && res.data && res.data.settled) {
                     confirmed = true;
                     clearInterval(interval);
-                    trackZap(data, amountSats);
+                    trackZap(data, amountSats, paymentHash);
                     setStatus('&#9889; Zap bestätigt! ' + amountSats + ' Sats', true);
                     setTimeout(function () { $('#sk-zap-modal').remove(); }, 2500);
                 }
@@ -422,7 +422,8 @@
                 }
             } catch (e) {}
 
-            trackZap(data, amountFromReceipt);
+            // No payment hash on this path (external LN address), so the zap is
+            // shown to the sender but not added to the public counter.
 
             // Update UI
             setStatus('&#9889; Zap bestätigt! ' + amountFromReceipt + ' Sats', true);
@@ -467,14 +468,16 @@
         }, 90000);
     }
 
-    function trackZap(data, amountSats) {
-        if (!data.postId || typeof skFeed === 'undefined') return;
+    // Only zaps we can prove server-side are counted. Without a payment hash
+    // the backend has nothing to look up, so we do not even ask.
+    function trackZap(data, amountSats, paymentHash) {
+        if (!data.postId || !paymentHash || typeof skFeed === 'undefined') return;
 
         $.post(skFeed.ajaxurl, {
             action: 'sk_feed_track_zap',
             _nonce: skFeed.nonce,
             post_id: data.postId,
-            amount: amountSats
+            payment_hash: paymentHash
         }, function (res) {
             if (res.success && data.$btn) {
                 var total = res.data.total;

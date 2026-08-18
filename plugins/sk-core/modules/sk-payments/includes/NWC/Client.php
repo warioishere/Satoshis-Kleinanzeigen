@@ -105,10 +105,14 @@ class Client {
         $settled = ( $result['state'] ?? '' ) === 'settled'
                    || ( $result['settled'] ?? false ) === true;
 
+        // NWC reports amounts in millisats.
+        $amount_msats = isset( $result['amount'] ) ? (int) $result['amount'] : 0;
+
         return [
             'settled'      => $settled,
             'preimage'     => $result['preimage'] ?? null,
             'payment_hash' => $result['payment_hash'] ?? $payment_hash,
+            'amount_sats'  => intdiv( $amount_msats, 1000 ),
         ];
     }
 
