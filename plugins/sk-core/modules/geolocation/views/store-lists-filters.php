@@ -29,6 +29,6 @@
     </div>
 
     <?php if ( isset( $mapbox_access_token ) ): ?>
-        <input type="hidden" name="sk_mapbox_access_token" value="<?php echo esc_attr( $mapbox_access_token ); ?>">
+        <input type="hidden" class="sk-mapbox-access-token" value="<?php echo esc_attr( $mapbox_access_token ); ?>">
     <?php endif; ?>
 </div>

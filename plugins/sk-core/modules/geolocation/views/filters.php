@@ -129,6 +129,6 @@ global $wp_query;
     <input type="hidden" name="wc_shop_page" value="<?php echo esc_attr( $wc_shop_page ); ?>">
     <input type="hidden" name="sk_store_listing_page" value="<?php echo esc_url_raw( $store_listing_page ); ?>">
     <?php if ( isset( $mapbox_access_token ) ) : ?>
-        <input type="hidden" name="sk_mapbox_access_token" value="<?php echo esc_attr( $mapbox_access_token ); ?>">
+        <input type="hidden" class="sk-mapbox-access-token" value="<?php echo esc_attr( $mapbox_access_token ); ?>">
     <?php endif; ?>
 </form>

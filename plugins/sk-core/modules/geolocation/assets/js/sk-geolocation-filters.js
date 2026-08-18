@@ -14,7 +14,7 @@
     }
 
     function mapboxGetPlaces(query, callback) {
-        var token = $('[name="sk_mapbox_access_token"]').val();
+        var token = $('.sk-mapbox-access-token').val();
         if (!token || !query) return;
 
         if (query.lng && query.lat) query = query.lng + '%2C' + query.lat;
@@ -159,7 +159,7 @@
         if (!$input.length) return;
 
         // Mapbox Suggestions
-        if (window.Suggestions && $('[name="sk_mapbox_access_token"]').val()) {
+        if (window.Suggestions && $('.sk-mapbox-access-token').val()) {
             var el = $input.get(0);
             var suggestions = new Suggestions(el, [], { minLength: 3, limit: 3, hideOnBlur: false });
             suggestions.getItemValue = function (item) { return item.place_name; };
@@ -300,7 +300,7 @@
         });
 
         // Mapbox address autocomplete for store lists
-        if (window.Suggestions && $('[name="sk_mapbox_access_token"]').val()) {
+        if (window.Suggestions && $('.sk-mapbox-access-token').val()) {
             var el = $addrInput.get(0);
             var sugg = new Suggestions(el, [], { minLength: 3, limit: 3, hideOnBlur: false });
             sugg.getItemValue = function (item) { return item.place_name; };
