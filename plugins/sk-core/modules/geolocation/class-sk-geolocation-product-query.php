@@ -51,9 +51,10 @@ class SK_Geolocation_Product_Query {
             return;
         }
 
-        $this->latitude  = isset( $_GET['latitude'] ) ? $_GET['latitude'] : null;
-        $this->longitude = isset( $_GET['longitude'] ) ? $_GET['longitude'] : null;
-        $this->distance  = isset( $_GET['distance'] ) ? $_GET['distance'] : 0;
+        // Cast to numbers, the values go straight into the query as SQL literals.
+        $this->latitude  = isset( $_GET['latitude'] ) ? sk_geo_float_val( wp_unslash( $_GET['latitude'] ) ) : null;
+        $this->longitude = isset( $_GET['longitude'] ) ? sk_geo_float_val( wp_unslash( $_GET['longitude'] ) ) : null;
+        $this->distance  = isset( $_GET['distance'] ) ? absint( wp_unslash( $_GET['distance'] ) ) : 0;
 
         if ( empty( $this->latitude ) || empty( $this->longitude ) ) {
             return;
