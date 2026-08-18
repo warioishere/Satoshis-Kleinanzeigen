@@ -334,10 +334,6 @@ class Assets {
                 'src'  => $asset_url . '/js/gesuche/copy-link.js',
                 'deps' => [],
             ],
-            'sk-orders-widget'       => [
-                'src'  => $asset_url . '/js/dashboard/orders-widget.js',
-                'deps' => [ 'jquery' ],
-            ],
             'sk-store-map-mapbox'    => [
                 'src'  => $asset_url . '/js/maps/store-map-mapbox.js',
                 'deps' => [ 'jquery' ],

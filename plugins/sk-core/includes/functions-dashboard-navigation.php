@@ -1,6 +1,5 @@
 <?php
 
-use SK\Core\Dashboard\Templates\Dashboard;
 
 /**
  * Sort navigation menu items by position

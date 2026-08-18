@@ -30,7 +30,6 @@ $user = get_user_by( 'id', get_current_user_id() );
         /**
          *  Added sk_dashboard_content_before hook
          *
-         * @hooked show_seller_dashboard_notice
          *
          */
         do_action( 'sk_dashboard_content_inside_before' );

@@ -2,8 +2,6 @@
 
 namespace SK\Core\Dashboard;
 
-use SK\Core\Cache;
-use SK\Core\Dashboard\Templates\Dashboard as SkDashboard;
 use SK\Core\Utilities\ReportUtil;
 
 /**
@@ -12,7 +10,14 @@ use SK\Core\Utilities\ReportUtil;
  * A template for frontend dashboard rendering items
  *
  */
-class ExtendedDashboard extends SkDashboard {
+class ExtendedDashboard {
+
+    /**
+     * Current seller.
+     *
+     * @var int
+     */
+    protected $user_id;
 
     /**
      * Constructor
@@ -22,9 +27,22 @@ class ExtendedDashboard extends SkDashboard {
     public function __construct() {
         $this->user_id = sk_get_current_user_id();
 
+        add_action( 'sk_dashboard_content_inside_before', [ $this, 'show_seller_dashboard_notice' ], 10 );
+
         if ( ! ( class_exists( ReportUtil::class ) && ReportUtil::is_analytics_enabled() ) ) {
             add_action( 'sk_dashboard_left_widgets', array( $this, 'get_review_widget' ), 16 );
             add_action( 'sk_dashboard_right_widgets', array( $this, 'get_announcement_widget' ), 12 );
+        }
+    }
+
+    /**
+     * Get Seller Dashboard Notice
+     *
+     * @return void
+     */
+    public function show_seller_dashboard_notice() {
+        if ( ! sk_is_seller_enabled( $this->user_id ) ) {
+            sk_seller_not_enabled_notice();
         }
     }
 
@@ -92,5 +110,14 @@ class ExtendedDashboard extends SkDashboard {
 				'announcement_url' => sk_get_navigation_url( 'announcement' ),
 			)
         );
+    }
+
+    /**
+     * Get Comments Count
+     *
+     * @return array
+     */
+    public function get_comment_counts() {
+        return sk_count_comments( 'product', $this->user_id );
     }
 }

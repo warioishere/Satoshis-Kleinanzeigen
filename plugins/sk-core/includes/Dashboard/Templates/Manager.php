@@ -10,7 +10,6 @@ class Manager {
 
     public function __construct() {
         $this->container['main']             = new Main();
-        $this->container['dashboard']        = new Dashboard();
         $this->container['products']         = new Products();
         $this->container['settings']         = new Settings();
         $this->container['product_category'] = new MultiStepCategories();

@@ -2,7 +2,6 @@
 
 namespace SK\Core\Admin;
 
-use SK\Core\Dashboard\Templates\Dashboard;
 use SK\Core\Utilities\ReportUtil;
 use WP_Admin_Bar;
 

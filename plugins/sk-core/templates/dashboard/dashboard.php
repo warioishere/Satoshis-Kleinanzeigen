@@ -28,7 +28,6 @@
         /**
          *  Added sk_dashboard_content_before hook
          *
-         * @hooked show_seller_dashboard_notice
          *
          */
         do_action( 'sk_dashboard_content_inside_before' );
@@ -54,9 +53,7 @@
                 /**
                  *  Added sk_dashboard_left_widgets hook
                  *
-                 * @hooked get_big_counter_widgets
-                 * @hooked get_orders_widgets
-                 * @hooked get_products_widgets
+                 * @hooked get_review_widget
                  *
                  */
                 do_action( 'sk_dashboard_left_widgets' );
@@ -69,7 +66,7 @@
                 /**
                  *  Added sk_dashboard_right_widgets hook
                  *
-                 * @hooked get_sales_report_chart_widget
+                 * @hooked get_announcement_widget
                  *
                  */
                 do_action( 'sk_dashboard_right_widgets' );
