@@ -302,14 +302,6 @@ class Assets {
                 'src'  => $asset_url . '/js/settings/store-delete-account.js',
                 'deps' => [ 'jquery' ],
             ],
-            'sk-seller-search-form'  => [
-                'src'  => $asset_url . '/js/seller-search-form.js',
-                'deps' => [ 'jquery', 'sk-util-helper' ],
-            ],
-            'sk-seller-search-categories' => [
-                'src'  => $asset_url . '/js/seller-search-categories.js',
-                'deps' => [ 'jquery' ],
-            ],
             'sk-announcement'        => [
                 'src'  => $asset_url . '/js/dashboard/announcement.js',
                 'deps' => [ 'jquery', 'sk-util-helper' ],

@@ -29,8 +29,6 @@ class SK_Geolocation_Vendor_View {
         add_action( 'sk_after_seller_listing_loop', array( self::class, 'after_seller_listing_loop' ) );
         add_action( 'sk_seller_listing_footer_content', array( self::class, 'seller_listing_footer_content' ), 11, 1 );
         add_action( 'sk_store_lists_filter_form', array( self::class, 'load_store_lists_filter' ) );
-
-        add_filter( 'sk_show_seller_search', '__return_false' );
     }
 
     /**

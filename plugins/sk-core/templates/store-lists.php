@@ -17,26 +17,6 @@ if ( apply_filters( 'sk_store_lists_filter', true ) ) {
      * @hooked \SK\Core\Vendor\StoreListsFilter::filter_area() - 10
      */
     do_action( 'sk_store_lists_filter_form', $sellers );
-
-    add_filter( 'sk_show_seller_search', '__return_false' );
-}
-
-/**
- * Filter to toggle seller search form
- *
- *
- * @var bool $show_form
- */
-$show_seller_search = apply_filters( 'sk_show_seller_search', true );
-
-if ( $show_seller_search ) {
-    $args = [
-        'search_query'    => $search_query,
-        'pagination_base' => $pagination_base,
-        'per_row'         => $per_row,
-    ];
-
-    sk_get_template_part( 'seller-search-form', false, $args );
 }
 
 /**

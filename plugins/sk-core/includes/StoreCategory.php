@@ -32,7 +32,6 @@ class StoreCategory {
             add_action( 'sk_vendor_to_array', array( $this, 'add_store_categories_vendor_to_array' ), 10, 2 );
             add_action( 'sk_rest_prepare_store_item_for_response', array( $this, 'rest_prepare_store_item_for_response' ), 10, 2 );
             add_action( 'sk_rest_stores_update_store', array( $this, 'rest_stores_update_store_category' ), 10, 2 );
-            add_filter( 'sk_seller_listing_search_args', array( $this, 'add_store_category_query_arg' ), 10, 2 );
             add_filter( 'sk_seller_listing_args', array( $this, 'add_store_category_query_arg' ), 10, 2 );
             add_filter( 'sk_rest_get_stores_args', array( $this, 'add_store_category_query_arg' ), 10, 2 );
             add_action( 'pre_user_query', array( $this, 'add_store_category_query' ) );
@@ -421,23 +420,6 @@ class StoreCategory {
         }
 
         sk_set_store_categories( $store->get_id(), $store_categories );
-    }
-
-    /**
-     * Add store category dropdown in seller search form
-     *
-     *
-     * @return void
-     */
-    public function add_category_dropdown_in_seller_search_form() {
-        $get_data = wp_unslash( $_GET );
-        $category_query = ! empty( $get_data['sk_seller_category'] ) ? sanitize_text_field( $get_data['sk_seller_category'] ) : null;
-
-        $args = array(
-            'category_query' => $category_query,
-        );
-
-        $this->add_store_category_option( 0, $args, 'seller-search-form-categories' );
     }
 
     /**
