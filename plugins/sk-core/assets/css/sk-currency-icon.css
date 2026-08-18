@@ -1,0 +1,41 @@
+/**
+ * Coin icon appended to every price.
+ *
+ * The icon lives in the theme, so its URL arrives as the custom property
+ * --sk-coin-icon via wp_add_inline_style.
+ */
+
+/* WCPS: Price-Span wieder inline erzwingen */
+.wcps-container .woocommerce-Price-amount.amount { display:inline !important; }
+
+/* --- Woo Katalog + Produktseite: nur mit <bdi> --- */
+.products .product .price .amount > bdi::after,
+.single-product .entry-summary .price .amount > bdi::after {
+  content: "";
+  display: inline-block;
+  width: 1.5em;
+  height: 1.5em;
+  margin-left: .35em;
+  vertical-align: -0.275em;
+  background: var(--sk-coin-icon) no-repeat center;
+  background-size: contain;
+}
+
+/* --- SK Dashboard + WCPS: auch ohne <bdi> --- */
+.sk-dashboard .price .woocommerce-Price-amount.amount::after,
+.sk-dashboard td[data-title="Preis"] .woocommerce-Price-amount.amount::after,
+.wcps-container .woocommerce-Price-amount.amount::after,
+.wcps-items .woocommerce-Price-amount.amount::after,
+[class*="wcps"] .woocommerce-Price-amount.amount::after {
+  content: "";
+  display: inline-block;
+  width: 1.5em;
+  height: 1.5em;
+  margin-left: .35em;
+  vertical-align: -0.275em;
+  background: var(--sk-coin-icon) no-repeat center;
+  background-size: contain;
+}
+
+/* Währungssymbol ausblenden */
+.woocommerce-Price-currencySymbol { font-size:0 !important; }

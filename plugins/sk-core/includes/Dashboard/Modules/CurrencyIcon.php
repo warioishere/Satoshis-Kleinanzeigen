@@ -9,50 +9,15 @@ namespace SK\Core\Dashboard\Modules;
 class CurrencyIcon {
 
     public function __construct() {
-        add_action( 'wp_head', [ $this, 'output_currency_icon_css' ], 20 );
+        add_action( 'wp_enqueue_scripts', [ $this, 'output_currency_icon_css' ], 20 );
         add_action( 'wp_enqueue_scripts', [ $this, 'remove_category_count_brackets' ], 20 );
     }
 
     public function output_currency_icon_css(): void {
         $icon = esc_url( get_stylesheet_directory_uri() . '/assets/icons/coin.png' );
-        ?>
-        <style id="yd-currency-icon-all">
-          /* WCPS: Price-Span wieder inline erzwingen */
-          .wcps-container .woocommerce-Price-amount.amount { display:inline !important; }
 
-          /* --- Woo Katalog + Produktseite: nur mit <bdi> --- */
-          .products .product .price .amount > bdi::after,
-          .single-product .entry-summary .price .amount > bdi::after {
-            content: "";
-            display: inline-block;
-            width: 1.5em;
-            height: 1.5em;
-            margin-left: .35em;
-            vertical-align: -0.275em;
-            background: url('<?php echo $icon; ?>') no-repeat center;
-            background-size: contain;
-          }
-
-          /* --- SK Dashboard + WCPS: auch ohne <bdi> --- */
-          .sk-dashboard .price .woocommerce-Price-amount.amount::after,
-          .sk-dashboard td[data-title="Preis"] .woocommerce-Price-amount.amount::after,
-          .wcps-container .woocommerce-Price-amount.amount::after,
-          .wcps-items .woocommerce-Price-amount.amount::after,
-          [class*="wcps"] .woocommerce-Price-amount.amount::after {
-            content: "";
-            display: inline-block;
-            width: 1.5em;
-            height: 1.5em;
-            margin-left: .35em;
-            vertical-align: -0.275em;
-            background: url('<?php echo $icon; ?>') no-repeat center;
-            background-size: contain;
-          }
-
-          /* Währungssymbol ausblenden */
-          .woocommerce-Price-currencySymbol { font-size:0 !important; }
-        </style>
-        <?php
+        wp_enqueue_style( 'sk-currency-icon' );
+        wp_add_inline_style( 'sk-currency-icon', ":root{--sk-coin-icon:url('{$icon}')}" );
     }
 
     public function remove_category_count_brackets(): void {

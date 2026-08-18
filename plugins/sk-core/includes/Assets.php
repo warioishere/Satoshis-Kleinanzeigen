@@ -258,6 +258,10 @@ class Assets {
                 'src'  => SK_CORE_ASSETS . '/css/sk-contact-hint.css',
                 'deps' => [],
             ],
+            'sk-currency-icon'           => [
+                'src'  => SK_CORE_ASSETS . '/css/sk-currency-icon.css',
+                'deps' => [],
+            ],
             'sk-tinymce'                 => [
                 'src'     => site_url( '/wp-includes/css/editor.css' ),
                 'deps'    => [],
