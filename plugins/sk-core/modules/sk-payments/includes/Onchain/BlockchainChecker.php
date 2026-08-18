@@ -37,13 +37,20 @@ class BlockchainChecker {
     /**
      * Check if an address received at least $expected_sats.
      */
-    public static function check_payment( string $address, int $expected_sats, string $since = '' ): array {
+    /**
+     * @param string[] $exclude_txids Transactions already booked against another
+     *                                payment to this address. Without this one
+     *                                transaction could settle several payments,
+     *                                which is exactly what happens when a vendor
+     *                                uses one static address for everything.
+     */
+    public static function check_payment( string $address, int $expected_sats, string $since = '', array $exclude_txids = [] ): array {
         // 1. Fulcrum (Electrum Protocol).
-        $result = self::check_fulcrum( $address, $expected_sats, $since );
+        $result = self::check_fulcrum( $address, $expected_sats, $since, $exclude_txids );
 
         // 2. Fallback: mempool.space.
         if ( is_wp_error( $result ) ) {
-            $result = self::check_mempool( $address, $expected_sats, $since );
+            $result = self::check_mempool( $address, $expected_sats, $since, $exclude_txids );
         }
 
         if ( is_wp_error( $result ) ) {
@@ -65,7 +72,7 @@ class BlockchainChecker {
      * Uses blockchain.scripthash.get_history + blockchain.transaction.get
      * to find incoming payments to the address.
      */
-    private static function check_fulcrum( string $address, int $expected_sats, string $since ) {
+    private static function check_fulcrum( string $address, int $expected_sats, string $since, array $exclude_txids = [] ) {
         $scripthash = self::address_to_scripthash( $address );
         if ( is_wp_error( $scripthash ) ) {
             return $scripthash;
@@ -130,7 +137,7 @@ class BlockchainChecker {
             $txid   = $entry['tx_hash'] ?? '';
             $height = (int) ( $entry['height'] ?? 0 );
 
-            if ( empty( $txid ) ) {
+            if ( empty( $txid ) || in_array( $txid, $exclude_txids, true ) ) {
                 continue;
             }
 
@@ -141,9 +148,10 @@ class BlockchainChecker {
             }
 
             // Check time filter.
-            if ( $since ) {
+            $since_ts = self::to_timestamp( $since );
+            if ( $since_ts ) {
                 $tx_time = $tx_raw['time'] ?? $tx_raw['blocktime'] ?? 0;
-                if ( $tx_time && $tx_time < strtotime( $since ) ) {
+                if ( $tx_time && $tx_time < $since_ts ) {
                     continue;
                 }
             }
@@ -395,9 +403,21 @@ class BlockchainChecker {
     }
 
     /**
+     * Payment timestamps are stored in site time while WordPress runs PHP in
+     * UTC, so strtotime() on them was off by the site's offset.
+     */
+    private static function to_timestamp( string $site_local ): int {
+        if ( $site_local === '' ) {
+            return 0;
+        }
+
+        return (int) strtotime( get_gmt_from_date( $site_local ) . ' UTC' );
+    }
+
+    /**
      * Fallback: mempool.space REST API.
      */
-    private static function check_mempool( string $address, int $expected_sats, string $since ) {
+    private static function check_mempool( string $address, int $expected_sats, string $since, array $exclude_txids = [] ) {
         $response = wp_remote_get( 'https://mempool.space/api/address/' . rawurlencode( $address ) . '/txs', [
             'timeout' => 8,
             'headers' => [ 'Accept' => 'application/json' ],
@@ -417,9 +437,13 @@ class BlockchainChecker {
             return new \WP_Error( 'mempool_parse', 'Ungültige Response von mempool.space' );
         }
 
-        $since_ts = $since ? strtotime( $since ) : 0;
+        $since_ts = self::to_timestamp( $since );
 
         foreach ( $txs as $tx ) {
+            if ( ! empty( $tx['txid'] ) && in_array( $tx['txid'], $exclude_txids, true ) ) {
+                continue;
+            }
+
             $tx_time = $tx['status']['block_time'] ?? ( ! empty( $tx['status']['confirmed'] ) ? time() : 0 );
             if ( $since_ts && $tx_time && $tx_time < $since_ts ) {
                 continue;

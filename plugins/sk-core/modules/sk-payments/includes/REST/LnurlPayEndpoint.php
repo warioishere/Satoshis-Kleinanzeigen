@@ -68,8 +68,10 @@ class LnurlPayEndpoint {
             $this->send_json_error( 'User not found.' );
         }
 
-        // Check vendor has Lightning capability.
-        if ( ! StoreSettings::has_lightning( $vendor_id ) ) {
+        // Only NWC and LNDHub can mint an invoice here. A vendor who merely
+        // stored a Lightning address has their own LNURL server and must not be
+        // advertised through ours — the callback could never deliver.
+        if ( ! StoreSettings::has_nwc( $vendor_id ) && ! StoreSettings::has_lndhub( $vendor_id ) ) {
             $this->send_json_error( 'This user cannot receive Lightning payments.' );
         }
 
@@ -85,22 +87,16 @@ class LnurlPayEndpoint {
      * Step 1: Return LNURL-Pay metadata (LUD-06).
      */
     private function handle_metadata( int $vendor_id, string $store_slug ) {
-        $store_info = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( $vendor_id ) : [];
-        $store_name = $store_info['store_name'] ?? $store_slug;
-        $domain     = wp_parse_url( home_url(), PHP_URL_HOST );
-
         $nostr_pubkey = get_user_meta( $vendor_id, 'nostr_public_key', true );
 
+        // commentAllowed is deliberately absent: comments were advertised but
+        // never passed on to the invoice.
         $response = [
-            'callback'       => home_url( '/.well-known/lnurlp/v/' . $vendor_id ),
-            'maxSendable'    => 100000000000, // 100M msats = 100k sats
-            'minSendable'    => 1000,         // 1 sat
-            'metadata'       => wp_json_encode( [
-                [ 'text/identifier', $store_slug . '@' . $domain ],
-                [ 'text/plain', 'Zap to ' . $store_name ],
-            ] ),
-            'tag'            => 'payRequest',
-            'commentAllowed' => 140,
+            'callback'    => home_url( '/.well-known/lnurlp/v/' . $vendor_id ),
+            'maxSendable' => 100000000000, // 100M msats = 100k sats
+            'minSendable' => 1000,         // 1 sat
+            'metadata'    => self::build_metadata( $vendor_id, $store_slug ),
+            'tag'         => 'payRequest',
         ];
 
         // NIP-57: advertise Nostr support if vendor has pubkey.
@@ -127,16 +123,18 @@ class LnurlPayEndpoint {
             $this->send_json_error( 'Amount too high.' );
         }
 
-        $store_info = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( $vendor_id ) : [];
-        $store_name = $store_info['store_name'] ?? $store_slug;
+        // Every call here reaches into the vendor's wallet to mint an invoice.
+        // The endpoint has to stay open — LNURL wallets are anonymous — so it
+        // is bounded instead, per caller and per vendor.
+        if ( ! $this->rate_allows( $vendor_id ) ) {
+            $this->send_json_error( 'Too many requests, please try again shortly.' );
+        }
 
-        // Build memo from metadata hash (required by LNURL spec).
-        $domain   = wp_parse_url( home_url(), PHP_URL_HOST );
-        $metadata = wp_json_encode( [
-            [ 'text/identifier', $store_slug . '@' . $domain ],
-            [ 'text/plain', 'Zap to ' . $store_name ],
-        ] );
-        $memo = 'Zap ' . $amount_sats . ' sats to ' . $store_name;
+        // LUD-06: the invoice must commit to exactly the metadata advertised in
+        // step 1, via description_hash. The old code built this string and then
+        // used a free-text memo instead, which strict wallets reject.
+        $metadata          = self::build_metadata( $vendor_id, $store_slug );
+        $description_hash  = hash( 'sha256', $metadata );
 
         // Handle NIP-57 zap request if present.
         $nostr_zap_request = isset( $_GET['nostr'] ) ? sanitize_text_field( wp_unslash( $_GET['nostr'] ) ) : '';
@@ -148,7 +146,7 @@ class LnurlPayEndpoint {
 
         $nwc_client = StoreSettings::get_nwc_client( $vendor_id );
         if ( $nwc_client ) {
-            $result = $nwc_client->make_invoice( $amount_sats, $memo );
+            $result = $nwc_client->make_invoice( $amount_sats, '', $description_hash );
             if ( ! is_wp_error( $result ) && ! empty( $result['pr'] ) ) {
                 $invoice      = $result['pr'];
                 $payment_hash = $result['payment_hash'] ?? '';
@@ -159,7 +157,9 @@ class LnurlPayEndpoint {
         if ( ! $invoice ) {
             $lndhub_client = StoreSettings::get_lndhub_client( $vendor_id );
             if ( $lndhub_client ) {
-                $result = $lndhub_client->make_invoice( $amount_sats, $memo );
+                // LNDHub cannot set a description_hash, so the metadata itself
+                // goes in as the memo — the closest a wallet can still verify.
+                $result = $lndhub_client->make_invoice( $amount_sats, $metadata );
                 if ( ! is_wp_error( $result ) && ! empty( $result['pr'] ) ) {
                     $invoice      = $result['pr'];
                     $payment_hash = $result['payment_hash'] ?? '';
@@ -189,6 +189,46 @@ class LnurlPayEndpoint {
         }
 
         $this->send_json( $response );
+    }
+
+    /**
+     * The LNURL metadata. Step 1 advertises it, step 2 commits the invoice to
+     * it — they have to be byte-identical, so both call this.
+     */
+    private static function build_metadata( int $vendor_id, string $store_slug ): string {
+        $store_info = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( $vendor_id ) : [];
+        $store_name = ! empty( $store_info['store_name'] ) ? $store_info['store_name'] : $store_slug;
+        $domain     = wp_parse_url( home_url(), PHP_URL_HOST );
+
+        return wp_json_encode( [
+            [ 'text/identifier', $store_slug . '@' . $domain ],
+            [ 'text/plain', 'Zap to ' . $store_name ],
+        ] );
+    }
+
+    /**
+     * Bounded invoice creation: 10 per caller per minute, 60 per vendor.
+     */
+    private function rate_allows( int $vendor_id ): bool {
+        $ip     = function_exists( 'sk_get_client_ip' ) ? sk_get_client_ip() : '';
+        $ip_key = 'sk_lnurlp_ip_' . md5( $ip !== '' ? $ip : 'unknown' );
+        $by_ip  = (int) get_transient( $ip_key );
+
+        if ( $by_ip >= 10 ) {
+            return false;
+        }
+
+        $vendor_key = 'sk_lnurlp_v_' . $vendor_id;
+        $by_vendor  = (int) get_transient( $vendor_key );
+
+        if ( $by_vendor >= 60 ) {
+            return false;
+        }
+
+        set_transient( $ip_key, $by_ip + 1, MINUTE_IN_SECONDS );
+        set_transient( $vendor_key, $by_vendor + 1, MINUTE_IN_SECONDS );
+
+        return true;
     }
 
     /**

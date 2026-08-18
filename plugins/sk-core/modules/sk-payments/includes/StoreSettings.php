@@ -18,12 +18,36 @@ class StoreSettings {
         add_action( 'wp_ajax_skp_test_lnaddr', [ $this, 'ajax_test_lnaddr' ] );
     }
 
-    public function ajax_test_btcaddr() {
-        check_ajax_referer( 'skp_test_connection', 'nonce' );
-
+    /**
+     * These endpoints exist so a vendor can check their own wallet settings.
+     * Three of them reach out to a host the caller supplies, so they are for
+     * sellers only and bounded — otherwise any account can use the site as an
+     * unmetered request proxy.
+     */
+    private function guard_test_endpoint(): void {
         if ( ! is_user_logged_in() ) {
             wp_send_json_error( [ 'message' => 'Nicht eingeloggt.' ] );
         }
+
+        $user_id = get_current_user_id();
+
+        if ( ! function_exists( 'sk_is_user_seller' ) || ! sk_is_user_seller( $user_id ) ) {
+            wp_send_json_error( [ 'message' => 'Nur für Verkäufer.' ] );
+        }
+
+        $key   = 'sk_pay_test_' . $user_id;
+        $count = (int) get_transient( $key );
+
+        if ( $count >= 10 ) {
+            wp_send_json_error( [ 'message' => 'Zu viele Tests, bitte kurz warten.' ] );
+        }
+
+        set_transient( $key, $count + 1, MINUTE_IN_SECONDS );
+    }
+
+    public function ajax_test_btcaddr() {
+        check_ajax_referer( 'skp_test_connection', 'nonce' );
+        $this->guard_test_endpoint();
 
         $value = sanitize_text_field( wp_unslash( $_POST['value'] ?? '' ) );
         if ( empty( $value ) ) {
@@ -39,10 +63,7 @@ class StoreSettings {
 
     public function ajax_test_xpub() {
         check_ajax_referer( 'skp_test_connection', 'nonce' );
-
-        if ( ! is_user_logged_in() ) {
-            wp_send_json_error( [ 'message' => 'Nicht eingeloggt.' ] );
-        }
+        $this->guard_test_endpoint();
 
         $value = sanitize_text_field( wp_unslash( $_POST['value'] ?? '' ) );
         if ( empty( $value ) ) {
@@ -64,10 +85,7 @@ class StoreSettings {
 
     public function ajax_test_nwc() {
         check_ajax_referer( 'skp_test_connection', 'nonce' );
-
-        if ( ! is_user_logged_in() ) {
-            wp_send_json_error( [ 'message' => 'Nicht eingeloggt.' ] );
-        }
+        $this->guard_test_endpoint();
 
         $value = sanitize_text_field( wp_unslash( $_POST['value'] ?? '' ) );
         if ( empty( $value ) ) {
@@ -89,10 +107,7 @@ class StoreSettings {
 
     public function ajax_test_lndhub() {
         check_ajax_referer( 'skp_test_connection', 'nonce' );
-
-        if ( ! is_user_logged_in() ) {
-            wp_send_json_error( [ 'message' => 'Nicht eingeloggt.' ] );
-        }
+        $this->guard_test_endpoint();
 
         $value = sanitize_text_field( wp_unslash( $_POST['value'] ?? '' ) );
         if ( empty( $value ) ) {
@@ -114,10 +129,7 @@ class StoreSettings {
 
     public function ajax_test_lnaddr() {
         check_ajax_referer( 'skp_test_connection', 'nonce' );
-
-        if ( ! is_user_logged_in() ) {
-            wp_send_json_error( [ 'message' => 'Nicht eingeloggt.' ] );
-        }
+        $this->guard_test_endpoint();
 
         $value = sanitize_text_field( wp_unslash( $_POST['value'] ?? '' ) );
         if ( empty( $value ) ) {
@@ -363,8 +375,13 @@ class StoreSettings {
         return 'Unbekannt';
     }
 
+    /**
+     * Mainnet account keys only. The derivation falls through to P2PKH for
+     * anything that is not zpub or ypub, so a testnet tpub would silently
+     * produce addresses nobody can spend from.
+     */
     public static function is_valid_xpub( string $value ): bool {
-        return (bool) preg_match( '/^[xyz]pub[a-km-zA-HJ-NP-Z1-9]{100,120}$/i', $value );
+        return (bool) preg_match( '/^(xpub|ypub|zpub)[a-km-zA-HJ-NP-Z1-9]{100,120}$/', $value );
     }
 
     public static function get_btc_address( int $vendor_id ): string {

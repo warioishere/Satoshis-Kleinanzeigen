@@ -146,6 +146,26 @@ class LightningController extends WP_REST_Controller {
         return $user_id === (int) $payment->vendor_id || $user_id === (int) $payment->buyer_id;
     }
 
+    /** Upper bound for a single invoice. */
+    const MAX_INVOICE_SATS = 21000000;
+
+    /**
+     * Each invoice costs the vendor's wallet a round trip, so cap how often one
+     * user can ask for one.
+     */
+    private static function invoice_rate_allows( int $user_id ): bool {
+        $key   = 'sk_inv_rate_' . $user_id;
+        $count = (int) get_transient( $key );
+
+        if ( $count >= 15 ) {
+            return false;
+        }
+
+        set_transient( $key, $count + 1, MINUTE_IN_SECONDS );
+
+        return true;
+    }
+
     public function create_invoice( WP_REST_Request $request ) {
         global $wpdb;
 
@@ -168,6 +188,30 @@ class LightningController extends WP_REST_Controller {
 
         if ( $amount_sats < 1 ) {
             return new WP_Error( 'invalid_amount', 'Betrag muss mindestens 1 Sat sein.', [ 'status' => 400 ] );
+        }
+
+        // Sanity ceiling. Nothing on this marketplace costs a fifth of a
+        // bitcoin, and an unbounded amount is only useful for making a wallet
+        // choke on the request.
+        if ( $amount_sats > self::MAX_INVOICE_SATS ) {
+            return new WP_Error( 'invalid_amount', 'Betrag zu hoch.', [ 'status' => 400 ] );
+        }
+
+        // The recipient has to be an actual seller, otherwise this is a way to
+        // mint invoices against any account that ever configured a wallet.
+        if ( ! $vendor_id || ! function_exists( 'sk_is_user_seller' ) || ! sk_is_user_seller( $vendor_id ) ) {
+            return new WP_Error( 'invalid_vendor', 'Kein gültiger Verkäufer.', [ 'status' => 400 ] );
+        }
+
+        // A payment may only reference a listing that belongs to this vendor.
+        // The reputation module trusts product_id for its 24h rule, so pointing
+        // at somebody else's old listing must not be possible.
+        if ( $product_id && (int) get_post_field( 'post_author', $product_id ) !== (int) $vendor_id ) {
+            return new WP_Error( 'invalid_product', 'Produkt gehört nicht zu diesem Verkäufer.', [ 'status' => 400 ] );
+        }
+
+        if ( ! self::invoice_rate_allows( $current_user ) ) {
+            return new WP_Error( 'rate_limited', 'Zu viele Anfragen, bitte kurz warten.', [ 'status' => 429 ] );
         }
 
         $bolt11      = '';
@@ -809,25 +853,51 @@ class LightningController extends WP_REST_Controller {
             ], 200 );
         }
 
+        // Transactions already booked against another payment to this address.
+        // Vendors without an xpub reuse one static address, so without this a
+        // single transaction would settle every open payment sitting on it.
+        $spent_txids = $wpdb->get_col( $wpdb->prepare(
+            "SELECT preimage FROM {$table}
+             WHERE context = 'onchain' AND verify_url = %s
+             AND preimage IS NOT NULL AND preimage != '' AND id != %d",
+            $address,
+            (int) $payment->id
+        ) );
+
         $check = \SK\Modules\Payments\Onchain\BlockchainChecker::check_payment(
             $address,
             (int) $payment->amount_sats,
-            $payment->created_at
+            $payment->created_at,
+            $spent_txids
         );
 
-        if ( $check['confirmed'] && $check['confirmations'] >= 1 ) {
+        if ( $check['confirmed'] && $check['confirmations'] >= 1 && ! empty( $check['txid'] ) ) {
             $now    = current_time( 'mysql' );
             $rep_at = wp_date( 'Y-m-d H:i:s', time() + 7 * DAY_IN_SECONDS );
 
-            $wpdb->query( $wpdb->prepare(
+            // The txid is claimed in the same statement that settles the row, so
+            // two concurrent checks cannot both book the same transaction.
+            $claimed = $wpdb->query( $wpdb->prepare(
                 "UPDATE {$table} SET status = 'confirmed', confirmed_at = %s, reputation_at = %s,
                  preimage = %s, preimage_verified = 1, confirmed_via = 'onchain'
-                 WHERE payment_hash = %s AND status = 'pending'",
+                 WHERE payment_hash = %s AND status = 'pending'
+                 AND NOT EXISTS (
+                     SELECT 1 FROM (SELECT id FROM {$table} WHERE context = 'onchain' AND preimage = %s) AS t
+                 )",
                 $now,
                 $rep_at,
-                $check['txid'] ?? '',
-                $payment_hash
+                $check['txid'],
+                $payment_hash,
+                $check['txid']
             ) );
+
+            if ( ! $claimed ) {
+                return new WP_REST_Response( [
+                    'status'    => $payment->status,
+                    'confirmed' => false,
+                    'error'     => 'Diese Transaktion ist bereits einer anderen Zahlung zugeordnet.',
+                ], 200 );
+            }
 
             return new WP_REST_Response( [
                 'status'        => 'confirmed',

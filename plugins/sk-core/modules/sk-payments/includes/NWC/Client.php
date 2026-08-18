@@ -55,11 +55,18 @@ class Client {
         return $client;
     }
 
-    public function make_invoice( int $amount_sats, string $description = '' ): mixed {
+    /**
+     * @param string $description_hash Hex sha256 of the LNURL metadata. LUD-06
+     *                                 requires it, strict wallets reject an
+     *                                 LNURL invoice that only carries a memo.
+     */
+    public function make_invoice( int $amount_sats, string $description = '', string $description_hash = '' ): mixed {
         $params = [
             'amount' => $amount_sats * 1000,
         ];
-        if ( $description ) {
+        if ( $description_hash ) {
+            $params['description_hash'] = $description_hash;
+        } elseif ( $description ) {
             $params['description'] = $description;
         }
 

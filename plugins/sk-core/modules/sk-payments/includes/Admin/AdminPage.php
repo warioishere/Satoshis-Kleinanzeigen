@@ -47,33 +47,42 @@ class AdminPage {
         global $wpdb;
         $table = $wpdb->prefix . 'sk_lightning_payments';
 
+        $payment = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $payment_id ) );
+
         if ( $action === 'confirm_dispute' ) {
             $wpdb->update(
                 $table,
                 [
                     'reputation_valid' => 0,
                     'reputation_at'    => null,
+                    'reputation_state' => 'rejected',
                 ],
                 [ 'id' => $payment_id ],
-                [ '%d', '%s' ],
+                [ '%d', '%s', '%s' ],
                 [ '%d' ]
             );
         } else {
-            $payment = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $payment_id ) );
-            $rep_at  = $payment && $payment->confirmed_at
+            $rep_at = $payment && $payment->confirmed_at
                 ? wp_date( 'Y-m-d H:i:s', strtotime( $payment->confirmed_at ) + 7 * DAY_IN_SECONDS )
                 : null;
 
             $wpdb->update(
                 $table,
                 [
-                    'status'        => 'confirmed',
-                    'reputation_at' => $rep_at,
+                    'status'           => 'confirmed',
+                    'reputation_at'    => $rep_at,
+                    'reputation_state' => 'pending',
                 ],
                 [ 'id' => $payment_id ],
-                [ '%s', '%s' ],
+                [ '%s', '%s', '%s' ],
                 [ '%d' ]
             );
+        }
+
+        // Zeroing reputation_valid alone left the points standing in the score
+        // table, so a confirmed dispute changed nothing the buyer could see.
+        if ( $payment && class_exists( 'SK\Modules\Reputation\Calculator' ) ) {
+            \SK\Modules\Reputation\Calculator::recalculate_vendor( (int) $payment->vendor_id );
         }
 
         wp_safe_redirect( admin_url( 'admin.php?page=sk-payments&msg=updated' ) );
