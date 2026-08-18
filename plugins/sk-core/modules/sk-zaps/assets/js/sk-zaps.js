@@ -193,6 +193,24 @@
                 return;
             }
 
+            // The invoice comes from the vendor's own LNURL server. It has to
+            // ask for exactly what the dialog showed, otherwise the wallet
+            // would be handed a different amount than the user agreed to.
+            var invoiceMsats = bolt11AmountMsats(invoice);
+
+            if (invoiceMsats === null) {
+                setStatus('Invoice-Betrag konnte nicht geprüft werden.', false);
+                $btn.prop('disabled', false).text('&#9889; Zap senden');
+                return;
+            }
+
+            if (invoiceMsats !== amountMsats) {
+                setStatus('Invoice lautet über ' + Math.round(invoiceMsats / 1000) +
+                          ' Sats statt ' + amountSats + '. Abgebrochen.', false);
+                $btn.prop('disabled', false).text('&#9889; Zap senden');
+                return;
+            }
+
             // Step 4: Pay the invoice.
             // Try WebLN first (Alby Hub exposes window.webln).
             if (window.webln) {
@@ -223,7 +241,7 @@
 
         } catch (err) {
             console.error('[SK Zaps] Error:', err);
-            setStatus('Fehler: ' + err.message, false);
+            setStatus('Fehler: ' + escHtml(err && err.message ? err.message : ''), false);
             $btn.prop('disabled', false).text('&#9889; Zap senden');
         }
     }
@@ -345,6 +363,33 @@
     function setStatus(html, success) {
         var color = success === true ? '#5cb85c' : (success === false ? '#e06c75' : '#5a6a7e');
         $('#sk-zap-status').html('<span style="color:' + color + ';">' + html + '</span>');
+    }
+
+    /**
+     * Amount in millisats from a bolt11 invoice, read out of the human readable
+     * part (lnbc<amount><multiplier>1...). Returns null when the invoice has no
+     * amount or cannot be read.
+     */
+    function bolt11AmountMsats(invoice) {
+        var m = /^lnbc(\d+)([munp]?)1/i.exec(String(invoice || '').trim());
+
+        if (!m) {
+            return null;
+        }
+
+        var value = parseInt(m[1], 10);
+
+        if (!isFinite(value)) {
+            return null;
+        }
+
+        switch (m[2].toLowerCase()) {
+            case 'm': return value * 100000000;   // milli-BTC
+            case 'u': return value * 100000;      // micro-BTC
+            case 'n': return value * 100;         // nano-BTC
+            case 'p': return value / 10;          // pico-BTC
+            default:  return value * 100000000000; // whole BTC
+        }
     }
 
     function escHtml(str) {

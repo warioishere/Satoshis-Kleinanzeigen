@@ -54,6 +54,7 @@ final class Module {
         require_once SK_PAYMENTS_INCLUDES . '/NWC/Client.php';
         require_once SK_PAYMENTS_INCLUDES . '/LNDHub/Client.php';
         require_once SK_PAYMENTS_INCLUDES . '/LNURL/Resolver.php';
+        require_once SK_PAYMENTS_INCLUDES . '/LNURL/ZapRequest.php';
         require_once SK_PAYMENTS_INCLUDES . '/LNURL/Bolt11Parser.php';
         require_once SK_PAYMENTS_INCLUDES . '/LNURL/ExchangeRate.php';
         require_once SK_PAYMENTS_INCLUDES . '/Onchain/XpubDerivation.php';

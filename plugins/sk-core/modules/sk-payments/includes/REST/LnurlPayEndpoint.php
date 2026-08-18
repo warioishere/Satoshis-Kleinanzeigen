@@ -3,6 +3,7 @@
 namespace SK\Modules\Payments\REST;
 
 use SK\Modules\Payments\StoreSettings;
+use SK\Modules\Payments\LNURL\ZapRequest;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -136,8 +137,27 @@ class LnurlPayEndpoint {
         $metadata          = self::build_metadata( $vendor_id, $store_slug );
         $description_hash  = hash( 'sha256', $metadata );
 
-        // Handle NIP-57 zap request if present.
-        $nostr_zap_request = isset( $_GET['nostr'] ) ? sanitize_text_field( wp_unslash( $_GET['nostr'] ) ) : '';
+        // NIP-57 zap request. It is signed JSON, so it must not be run through
+        // a text sanitiser — that would alter the very bytes the zapper signed.
+        // It is validated instead, and only a request that proves itself is
+        // kept for the receipt.
+        $nostr_zap_request = '';
+
+        if ( isset( $_GET['nostr'] ) ) {
+            $raw_zap_request = (string) wp_unslash( $_GET['nostr'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+
+            $nostr_zap_request = ZapRequest::validate(
+                $raw_zap_request,
+                (string) get_user_meta( $vendor_id, 'nostr_public_key', true ),
+                $amount_sats * 1000
+            );
+
+            if ( $nostr_zap_request === '' ) {
+                // Answering with an ordinary invoice would leave the wallet
+                // waiting for a receipt that is never going to come.
+                $this->send_json_error( 'Invalid zap request.' );
+            }
+        }
 
         // Create invoice via vendor's payment method (NWC → LNDHub → Lightning Address).
         $invoice      = null;

@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 class ZapButton {
 
     /** Wallet lookups a single IP may trigger per minute on the public verify endpoint. */
-    const MAX_LOOKUPS_PER_MINUTE = 60;
+    const MAX_LOOKUPS_PER_MINUTE = 20;
 
     public function __construct() {
         // Store page — next to follow button in tab bar.
@@ -27,6 +27,7 @@ class ZapButton {
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_assets' ] );
         add_action( 'wp_ajax_sk_zap_check_payment', [ __CLASS__, 'ajax_check_payment' ] );
         add_action( 'wp_ajax_nopriv_sk_zap_check_payment', [ __CLASS__, 'ajax_check_payment' ] );
+        add_action( 'sk_zaps_fetch_lud16', [ __CLASS__, 'fetch_lud16' ], 10, 2 );
     }
 
     /**
@@ -74,26 +75,31 @@ class ZapButton {
         $lightning_address = $settings['lightning_address'] ?? '';
         $nostr_pubkey     = get_user_meta( $vendor_id, 'nostr_public_key', true );
 
-        // Fallback: generate Lightning Address from our LNURL-Pay endpoint
-        // if vendor has LNDHub/NWC but no explicit Lightning Address.
+        // Fallback: our own LNURL-Pay endpoint, for vendors who connected a
+        // wallet but never typed a Lightning Address. The local part is the
+        // store slug — a slash in there is not a valid address for any wallet
+        // but ours.
         if ( empty( $lightning_address ) && class_exists( 'SK\Modules\Payments\StoreSettings' ) ) {
-            if ( \SK\Modules\Payments\StoreSettings::has_lightning( $vendor_id ) ) {
+            $can_invoice = \SK\Modules\Payments\StoreSettings::has_nwc( $vendor_id )
+                || \SK\Modules\Payments\StoreSettings::has_lndhub( $vendor_id );
+
+            if ( $can_invoice ) {
                 $user = get_user_by( 'ID', $vendor_id );
-                $domain = wp_parse_url( home_url(), PHP_URL_HOST );
-                $lightning_address = 'v/' . $vendor_id . '@' . $domain;
+
+                if ( $user && $user->user_nicename ) {
+                    $lightning_address = $user->user_nicename . '@' . wp_parse_url( home_url(), PHP_URL_HOST );
+                }
             }
         }
 
-        // If still no address but has Nostr pubkey, try fetching lud16 from relay (cached 24h).
+        // Last resort: the address from the vendor's Nostr profile. That lookup
+        // hits a third party, so it never happens while a page is rendering —
+        // it is queued and the button appears once the answer is in.
         if ( empty( $lightning_address ) && ! empty( $nostr_pubkey ) ) {
-            $lightning_address = self::get_cached_lud16( $vendor_id, $nostr_pubkey );
-            if ( ! empty( $lightning_address ) ) {
-                // Persist it so we don't need relay fetch next time.
-                if ( ! is_array( $settings ) ) {
-                    $settings = [];
-                }
-                $settings['lightning_address'] = $lightning_address;
-                update_user_meta( $vendor_id, 'sk_profile_settings', $settings );
+            $lightning_address = (string) get_user_meta( $vendor_id, 'sk_zap_lud16', true );
+
+            if ( $lightning_address === '' ) {
+                self::queue_lud16_lookup( $vendor_id, $nostr_pubkey );
             }
         }
 
@@ -273,16 +279,28 @@ class ZapButton {
     }
 
     /**
-     * Fetch lud16 from Nostr profile via relay HTTP API, cached 24h.
+     * Queue the profile lookup once per day per vendor.
      */
-    private static function get_cached_lud16( int $vendor_id, string $nostr_pubkey ): string {
-        $cache_key = 'sk_lud16_' . $vendor_id;
-        $cached    = get_transient( $cache_key );
+    private static function queue_lud16_lookup( int $vendor_id, string $nostr_pubkey ): void {
+        $marker = 'sk_lud16_asked_' . $vendor_id;
 
-        if ( false !== $cached ) {
-            return $cached; // may be empty string (= checked, no lud16)
+        if ( false !== get_transient( $marker ) ) {
+            return;
         }
 
+        set_transient( $marker, 1, DAY_IN_SECONDS );
+
+        wp_schedule_single_event( time() + 30, 'sk_zaps_fetch_lud16', [ $vendor_id, $nostr_pubkey ] );
+    }
+
+    /**
+     * Fetch lud16 from the vendor's Nostr profile and store it under its own
+     * meta key. Writing into sk_profile_settings from here would race with the
+     * vendor saving their profile and drop whatever they just changed.
+     *
+     * Runs on cron, never during a page render.
+     */
+    public static function fetch_lud16( int $vendor_id, string $nostr_pubkey ): void {
         $lud16 = '';
 
         // Try Primal Cache API (REST, no WebSocket needed).
@@ -309,10 +327,9 @@ class ZapButton {
             }
         }
 
-        // Cache result for 24 hours (even empty = "no lud16 found").
-        set_transient( $cache_key, $lud16, DAY_IN_SECONDS );
-
-        return $lud16;
+        if ( $lud16 !== '' ) {
+            update_user_meta( $vendor_id, 'sk_zap_lud16', $lud16 );
+        }
     }
 
     /**
