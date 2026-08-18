@@ -69,6 +69,9 @@ class UAC_Nostr_Profile_Sync {
 
         if (!empty($display_name) && empty($profile_settings['store_name'])) {
             $profile_settings['store_name'] = sanitize_text_field($display_name);
+            // Vendor search and the store listing query sk_store_name,
+            // so the denormalised copy has to move along.
+            update_user_meta($user_id, 'sk_store_name', $profile_settings['store_name']);
             $updated = true;
         }
 
