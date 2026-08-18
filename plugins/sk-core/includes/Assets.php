@@ -454,7 +454,6 @@ class Assets {
         // load sk style on every pages. requires for shortcodes in other pages
         if ( SK_CORE_LOAD_STYLE ) {
             wp_enqueue_style( 'sk-theme' );
-            wp_enqueue_style( 'sk-theme' );
             wp_enqueue_style( 'sk-modal' );
             if ( 'off' === sk_get_option( 'disable_sk_fontawesome', 'sk_appearance', 'off' ) ) {
                 wp_enqueue_style( 'sk-fontawesome' );
@@ -868,10 +867,6 @@ class Assets {
             $version   = isset( $script['version'] ) ? $script['version'] : SK_CORE_VERSION;
 
             wp_register_script( $handle, $script['src'], $deps, $version, $in_footer );
-
-            // Add this check to avoid translation issues for scripts without a source file.
-            if ( ! empty( $script['src'] ) ) {
-            }
         }
     }
 

@@ -20,12 +20,12 @@ wp_enqueue_script( 'sk-mapbox-with-search' );
 
     <div class="sk-maps-container">
         <div id="sk-geocoder" class="sk-geocoder"></div>
-        <div id="<?php echo esc_attr( $map_id ); ?>"></div>
+        <div id="<?php echo esc_attr( $map_id ); ?>" class="sk-map-canvas"></div>
     </div>
 </div>
 
 <style>
-    #<?php echo esc_js( $map_id ); ?> {
+    .sk-map-canvas {
         width: 100%;
         height: 300px;
     }
