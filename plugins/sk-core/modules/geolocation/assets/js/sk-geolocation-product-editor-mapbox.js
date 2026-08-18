@@ -13,13 +13,31 @@
     var $lat = $('[name="_sk_geolocation_product_sk_geo_latitude"]');
     var $lng = $('[name="_sk_geolocation_product_sk_geo_longitude"]');
     var $addr = $('#_sk_geolocation_product_location');
-    var state = { latitude: $lat.val(), longitude: $lng.val(), address: $addr.val(), zoom: 12 };
+    var $box = $container.find('.sk-geolocation-product-location-container');
+
+    // Where the map opens when nothing has been chosen yet. Deliberately kept
+    // apart from the form values: showing a default is fine, saving one the
+    // vendor never picked is not.
+    var fallback = {
+        lat: parseFloat($box.data('default-lat')) || 52.520008,
+        lng: parseFloat($box.data('default-lng')) || 13.404954
+    };
+
+    var hasLocation = !!($lat.val() && $lng.val());
+    var markerPlaced = false;
+    var state = { latitude: $lat.val(), longitude: $lng.val(), address: $addr.val(), zoom: hasLocation ? 12 : 5 };
 
     function syncState(data) {
         Object.assign(state, data);
         $lat.val(state.latitude);
         $lng.val(state.longitude);
         $addr.val(state.address);
+
+        // First real pick: the marker becomes visible.
+        if (marker && !markerPlaced && state.latitude && state.longitude) {
+            marker.addTo(map);
+            markerPlaced = true;
+        }
     }
 
     function initMap() {
@@ -28,10 +46,12 @@
 
         mapboxgl.accessToken = token;
 
+        var center = hasLocation ? [state.longitude, state.latitude] : [fallback.lng, fallback.lat];
+
         map = new mapboxgl.Map({
             container: 'sk-geolocation-product-location-map',
             style: 'mapbox://styles/mapbox/streets-v12',
-            center: [state.longitude, state.latitude],
+            center: center,
             zoom: state.zoom
         });
 
@@ -79,9 +99,15 @@
         });
 
         marker = new mapboxgl.Marker({ draggable: true })
-            .setLngLat([state.longitude, state.latitude])
-            .addTo(map)
+            .setLngLat(center)
             .on('dragend', onMarkerDrag);
+
+        // Only shown once there is a location — an empty product must not look
+        // as if it already had one.
+        if (hasLocation) {
+            marker.addTo(map);
+            markerPlaced = true;
+        }
     }
 
     function onMarkerDrag() {
@@ -135,6 +161,7 @@
                 var lat = pos.coords.latitude, lng = pos.coords.longitude;
                 marker.setLngLat([lng, lat]);
                 map.setCenter([lng, lat]);
+                map.setZoom(12);
                 syncState({ latitude: lat, longitude: lng });
             });
         });

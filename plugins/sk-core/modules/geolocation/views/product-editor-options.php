@@ -37,7 +37,9 @@
                 <?php _e( 'Product Location', 'sk' ); ?>
             </label>
 
-            <div class="sk-geolocation-product-location-container">
+            <div class="sk-geolocation-product-location-container"
+                data-default-lat="<?php echo esc_attr( $map_center_lat ?? '' ); ?>"
+                data-default-lng="<?php echo esc_attr( $map_center_lng ?? '' ); ?>">
                 <input type="hidden" name="_sk_geolocation_product_sk_geo_latitude" value="<?php echo esc_attr( $sk_geo_latitude ); ?>">
                 <input type="hidden" name="_sk_geolocation_product_sk_geo_longitude" value="<?php echo esc_attr( $sk_geo_longitude ); ?>">
                 <input type="text" name="_sk_geolocation_product_sk_geo_address" value="<?php echo esc_attr( $sk_geo_address ); ?>" class="sk-form-control" id="_sk_geolocation_product_location">

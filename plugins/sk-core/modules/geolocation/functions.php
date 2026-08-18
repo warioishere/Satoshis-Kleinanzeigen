@@ -326,11 +326,10 @@ function sk_geo_get_product_data( $product_id ) {
         $sk_geo_address   = get_post_meta( $product_id, 'sk_geo_address', true );
     }
 
-    if ( ! $sk_geo_latitude || ! $sk_geo_longitude ) {
-        $default_locations   = sk_geo_get_default_location();
-        $sk_geo_latitude  = $default_locations['latitude'];
-        $sk_geo_longitude = $default_locations['longitude'];
-    }
+    // The default is only where the map opens, never a value that gets filled
+    // into the form. Otherwise a vendor who never picked a place would save it
+    // as their location on the next save.
+    $default_location = sk_geo_get_default_location();
 
     return [
         'use_store_settings'  => $use_store_settings ? 'yes' : 'no',
@@ -338,6 +337,8 @@ function sk_geo_get_product_data( $product_id ) {
         'sk_geo_longitude' => $sk_geo_longitude,
         'sk_geo_public'    => $sk_geo_public,
         'sk_geo_address'   => $sk_geo_address,
+        'map_center_lat'   => $default_location['latitude'],
+        'map_center_lng'   => $default_location['longitude'],
         'store_has_settings'  => ! empty( $store_geo_latitude ),
         'store_settings_url'  => sk_get_navigation_url( 'settings/store' ),
     ];

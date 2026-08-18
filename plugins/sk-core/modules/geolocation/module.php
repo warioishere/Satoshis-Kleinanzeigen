@@ -375,12 +375,15 @@ class Module {
         $sk_geo_longitude = get_user_meta( $user_id, 'sk_geo_longitude', true );
         $sk_geo_address   = get_user_meta( $user_id, 'sk_geo_address', true );
 
-        //if vendor geo location is not found, get from default
+        // No coordinates on the vendor means the listing has no location. It
+        // used to inherit the module default here, which put listings on the
+        // map in places nobody had chosen.
         if ( empty( $sk_geo_latitude ) || empty( $sk_geo_longitude ) ) {
-            $default_locations   = sk_geo_get_default_location();
-            $sk_geo_latitude  = $default_locations['latitude'];
-            $sk_geo_longitude = $default_locations['longitude'];
-            $sk_geo_address   = $default_locations['address'];
+            delete_post_meta( $product->get_id(), 'sk_geo_latitude' );
+            delete_post_meta( $product->get_id(), 'sk_geo_longitude' );
+            delete_post_meta( $product->get_id(), 'sk_geo_address' );
+
+            return;
         }
 
         update_post_meta( $product->get_id(), 'sk_geo_latitude', $sk_geo_latitude );

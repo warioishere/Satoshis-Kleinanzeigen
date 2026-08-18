@@ -148,6 +148,17 @@ class SK_Geolocation_Vendor_Dashboard {
                 : $sk_geo_address_post;
         }
 
+        // An empty meta row still matches the INNER JOIN in the distance query
+        // and would put the listing at 0/0, so it is removed instead of stored.
+        if ( empty( $sk_geo_latitude ) || empty( $sk_geo_longitude ) ) {
+            delete_post_meta( $post_id, 'sk_geo_latitude' );
+            delete_post_meta( $post_id, 'sk_geo_longitude' );
+            delete_post_meta( $post_id, 'sk_geo_address' );
+            update_post_meta( $post_id, 'sk_geo_public', $sk_geo_public );
+
+            return;
+        }
+
         update_post_meta( $post_id, 'sk_geo_latitude', $sk_geo_latitude );
         update_post_meta( $post_id, 'sk_geo_longitude', $sk_geo_longitude );
         update_post_meta( $post_id, 'sk_geo_public', $sk_geo_public );
