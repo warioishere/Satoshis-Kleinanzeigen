@@ -22,9 +22,9 @@ class Nostr_Import_Handler {
             "wss://relay.damus.io",
         ];
 
-        // Add custom CSS for imported images
-        add_action('wp_head', array($this, 'add_image_styles'));
-        add_action('admin_head', array($this, 'add_image_styles'));
+        // Styling for media in imported posts, on both sides of the site.
+        add_action('wp_enqueue_scripts', array($this, 'enqueue_content_styles'));
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_content_styles'));
     }
 
     public function init() {
@@ -71,6 +71,13 @@ class Nostr_Import_Handler {
         if ('tools_page_nostr-post-importer' !== $hook) {
             return;
         }
+
+        wp_enqueue_style(
+            'nostr-import',
+            SK_AUTH_ASSETS . '/css/nostr-import.css',
+            array(),
+            SK_AUTH_VERSION
+        );
 
         // Add WordPress media elements
         wp_enqueue_style('wp-mediaelement');
@@ -653,188 +660,13 @@ class Nostr_Import_Handler {
         return $comment_id;
     }
 
-    public function add_image_styles() {
-        ?>
-        <style type="text/css">
-            /* Responsive image styling */
-            .nostr-imported-image {
-                max-width: 100% !important;
-                height: auto !important;
-                display: block !important;
-                margin: 1em auto !important;
-            }
-            
-            /* Container for better scaling */
-            .wp-block-image {
-                max-width: 800px !important; /* Maximum width for large screens */
-                margin-left: auto !important;
-                margin-right: auto !important;
-            }
-            
-            /* Ensure images don't overflow on mobile */
-            @media (max-width: 800px) {
-                .wp-block-image {
-                    width: 100% !important;
-                    padding: 0 10px !important;
-                }
-            }
-            
-            /* Preview Styling */
-            .nostr-preview-container {
-                max-width: 800px;
-                margin: 20px 0;
-            }
-
-            .nostr-preview-item {
-                background: #fff;
-                border: 1px solid #ddd;
-                padding: 15px;
-                margin-bottom: 15px;
-                border-radius: 4px;
-                display: grid;
-                grid-template-columns: auto 1fr;
-                gap: 15px;
-            }
-
-            .nostr-preview-checkbox {
-                align-self: center;
-            }
-
-            .nostr-preview-content {
-                grid-column: 2;
-                margin: 10px 0;
-                white-space: pre-line;
-            }
-
-            .nostr-preview-date,
-            .nostr-preview-comments,
-            .nostr-preview-tags {
-                grid-column: 2;
-                color: #666;
-                font-size: 0.9em;
-            }
-
-            .nostr-tag {
-                display: inline-block;
-                background: #f0f0f1;
-                padding: 2px 8px;
-                border-radius: 3px;
-                margin: 2px;
-                font-size: 0.9em;
-            }
-
-            /* User Metadata Styling */
-            .nostr-user-metadata {
-                background: #fff;
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                margin-bottom: 20px;
-                overflow: hidden;
-            }
-
-            .profile-header {
-                position: relative;
-            }
-
-            .profile-banner img {
-                width: 100%;
-                height: 200px;
-                object-fit: cover;
-            }
-
-            .profile-info {
-                padding: 20px;
-                display: flex;
-                gap: 20px;
-            }
-
-            .profile-picture img {
-                width: 100px;
-                height: 100px;
-                border-radius: 50%;
-                border: 4px solid #fff;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            }
-
-            .profile-details h3 {
-                margin: 0 0 10px 0;
-            }
-
-            .profile-details p {
-                margin: 5px 0;
-                color: #666;
-            }
-
-            /* Pagination Styling */
-            .nostr-pagination {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                gap: 15px;
-                margin: 20px 0;
-            }
-
-            .page-info {
-                color: #666;
-            }
-
-            /* Progress Bar Improvements */
-            .progress-bar {
-                background-color: #f0f0f1;
-                height: 24px;
-                border-radius: 12px;
-                overflow: hidden;
-                border: 1px solid #ddd;
-            }
-
-            .progress-bar-fill {
-                background-color: #2271b1;
-                height: 100%;
-                transition: width 0.3s ease-in-out;
-            }
-
-            /* Loading Indicator */
-            .nostr-loading-indicator {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 10px;
-                padding: 10px;
-                background: #fff;
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                margin: 10px 0;
-            }
-
-            /* Improved video styling */
-            .wp-block-video {
-                max-width: 800px;
-                margin: 2em auto;
-                position: relative;
-                aspect-ratio: 16/9;
-            }
-            
-            .wp-block-video video {
-                width: 100%;
-                height: 100%;
-                display: block;
-                border-radius: 8px;
-                background: #000;
-                object-fit: contain;
-            }
-            
-            /* Ensure controls are visible */
-            .wp-block-video video::-webkit-media-controls {
-                display: flex !important;
-                visibility: visible !important;
-            }
-            
-            .wp-block-video video::-webkit-media-controls-enclosure {
-                display: flex !important;
-                visibility: visible !important;
-            }
-        </style>
-        <?php
+    public function enqueue_content_styles() {
+        wp_enqueue_style(
+            'nostr-content',
+            SK_AUTH_ASSETS . '/css/nostr-content.css',
+            array(),
+            SK_AUTH_VERSION
+        );
     }
 
     private function create_post_with_comments($post_data, $comments) {

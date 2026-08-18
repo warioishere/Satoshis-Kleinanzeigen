@@ -138,28 +138,3 @@ if (!defined('ABSPATH')) {
     </div>
 </div>
 
-<style>
-    .progress-bar {
-        width: 100%;
-        height: 20px;
-        background-color: #f0f0f1;
-        border-radius: 3px;
-        margin: 10px 0;
-    }
-    .progress-bar-fill {
-        height: 100%;
-        background-color: #2271b1;
-        border-radius: 3px;
-        transition: width 0.3s ease-in-out;
-    }
-    .nostr-loading-indicator {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin: 10px 0;
-    }
-    .nostr-loading-indicator .spinner {
-        float: none;
-        margin: 0;
-    }
-</style> 

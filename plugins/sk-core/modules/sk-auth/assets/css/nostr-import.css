@@ -1,0 +1,157 @@
+/**
+ * Nostr post importer screen (Tools > Nostr Post Importer).
+ */
+/* Preview Styling */
+.nostr-preview-container {
+    max-width: 800px;
+    margin: 20px 0;
+}
+
+.nostr-preview-item {
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 15px;
+}
+
+.nostr-preview-checkbox {
+    align-self: center;
+}
+
+.nostr-preview-content {
+    grid-column: 2;
+    margin: 10px 0;
+    white-space: pre-line;
+}
+
+.nostr-preview-date,
+.nostr-preview-comments,
+.nostr-preview-tags {
+    grid-column: 2;
+    color: #666;
+    font-size: 0.9em;
+}
+
+.nostr-tag {
+    display: inline-block;
+    background: #f0f0f1;
+    padding: 2px 8px;
+    border-radius: 3px;
+    margin: 2px;
+    font-size: 0.9em;
+}
+
+/* User Metadata Styling */
+.nostr-user-metadata {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.profile-header {
+    position: relative;
+}
+
+.profile-banner img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.profile-info {
+    padding: 20px;
+    display: flex;
+    gap: 20px;
+}
+
+.profile-picture img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 4px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.profile-details h3 {
+    margin: 0 0 10px 0;
+}
+
+.profile-details p {
+    margin: 5px 0;
+    color: #666;
+}
+
+/* Pagination Styling */
+.nostr-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.page-info {
+    color: #666;
+}
+
+/* Progress Bar Improvements */
+.progress-bar {
+    background-color: #f0f0f1;
+    height: 24px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #ddd;
+}
+
+.progress-bar-fill {
+    background-color: #2271b1;
+    height: 100%;
+    transition: width 0.3s ease-in-out;
+}
+
+/* Loading Indicator */
+.nostr-loading-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+/* ---------------------------------------------------------------------
+ * Overrides from the importer template. These used to sit inline in the
+ * page body and therefore won over the rules above; keep them last.
+ * --------------------------------------------------------------------- */
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background-color: #f0f0f1;
+    border-radius: 3px;
+    margin: 10px 0;
+}
+.progress-bar-fill {
+    height: 100%;
+    background-color: #2271b1;
+    border-radius: 3px;
+    transition: width 0.3s ease-in-out;
+}
+.nostr-loading-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+}
+.nostr-loading-indicator .spinner {
+    float: none;
+    margin: 0;
+}
