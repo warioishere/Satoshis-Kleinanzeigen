@@ -54,7 +54,7 @@
                     $access_token = sk_get_option( 'mapbox_access_token', 'sk_appearance', null );
                     ?>
                         <div id="sk-geolocation-product-location-map" class="sk-maps-mapbox"></div>
-                        <input type="hidden" name="_sk_geolocation_mapbox_access_token" value="<?php echo $access_token; ?>">
+                        <input type="hidden" name="_sk_geolocation_mapbox_access_token" value="<?php echo esc_attr( $access_token ); ?>">
                     <?php
                 } else {
                     ?>

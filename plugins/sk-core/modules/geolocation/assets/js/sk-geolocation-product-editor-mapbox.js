@@ -89,17 +89,25 @@
         map.setCenter([lngLat.lng, lngLat.lat]);
         syncState({ latitude: lngLat.lat, longitude: lngLat.lng });
 
-        // Reverse geocode to get address
-        var url = 'https://api.mapbox.com/geocoding/v5/mapbox.places/' +
-            lngLat.lng + '%2C' + lngLat.lat +
-            '.json?access_token=' + mapboxgl.accessToken +
-            '&cachebuster=' + Date.now() + '&autocomplete=true';
+        // Reverse geocode through our own endpoint, not straight to Mapbox.
+        if (typeof SkGeoGeocode === 'undefined') return;
 
         geocoder._inputEl.disabled = true;
         geocoder._loadingEl.style.display = 'block';
 
-        fetch(url, { credentials: 'omit' })
+        fetch(SkGeoGeocode.url, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                action: 'sk_geo_geocode',
+                nonce: SkGeoGeocode.nonce,
+                lng: lngLat.lng,
+                lat: lngLat.lat
+            }).toString()
+        })
             .then(function (r) { return r.json(); })
+            .then(function (res) { return (res && res.success && res.data) ? res.data : {}; })
             .then(function (data) {
                 if (data.features && geocoder._typeahead) {
                     geocoder._typeahead.update(data.features);

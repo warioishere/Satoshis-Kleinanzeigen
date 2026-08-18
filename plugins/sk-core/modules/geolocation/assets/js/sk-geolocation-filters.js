@@ -13,16 +13,29 @@
         };
     }
 
+    // Resolved on our own server: the Mapbox token never reaches the page for
+    // this, repeated queries come out of the cache, and the visitor's address
+    // and IP are not handed to a third party from the browser.
     function mapboxGetPlaces(query, callback) {
-        var token = $('.sk-mapbox-access-token').val();
-        if (!token || !query) return;
+        if (typeof SkGeoGeocode === 'undefined' || !query) return;
 
-        if (query.lng && query.lat) query = query.lng + '%2C' + query.lat;
+        var payload = { action: 'sk_geo_geocode', nonce: SkGeoGeocode.nonce };
 
-        fetch('https://api.mapbox.com/geocoding/v5/mapbox.places/' + encodeURIComponent(query) +
-            '.json?access_token=' + token + '&cachebuster=' + Date.now() + '&autocomplete=true',
-            { credentials: 'omit' })
+        if (query.lng && query.lat) {
+            payload.lng = query.lng;
+            payload.lat = query.lat;
+        } else {
+            payload.q = query;
+        }
+
+        fetch(SkGeoGeocode.url, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams(payload).toString()
+        })
             .then(function (r) { return r.json(); })
+            .then(function (res) { return (res && res.success && res.data) ? res.data : {}; })
             .then(function (data) { if (data.features && callback) callback(data.features); })
             .catch(function () {});
     }
@@ -160,7 +173,7 @@
         if (!$input.length) return;
 
         // Mapbox Suggestions
-        if (window.Suggestions && $('.sk-mapbox-access-token').val()) {
+        if (window.Suggestions && typeof SkGeoGeocode !== 'undefined') {
             var el = $input.get(0);
             var suggestions = new Suggestions(el, [], { minLength: 3, limit: 3, hideOnBlur: false });
             suggestions.getItemValue = function (item) { return item.place_name; };
@@ -307,7 +320,7 @@
         });
 
         // Mapbox address autocomplete for store lists
-        if (window.Suggestions && $('.sk-mapbox-access-token').val()) {
+        if (window.Suggestions && typeof SkGeoGeocode !== 'undefined') {
             var el = $addrInput.get(0);
             var sugg = new Suggestions(el, [], { minLength: 3, limit: 3, hideOnBlur: false });
             sugg.getItemValue = function (item) { return item.place_name; };

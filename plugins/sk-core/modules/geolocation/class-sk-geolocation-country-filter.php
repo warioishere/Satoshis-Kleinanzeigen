@@ -172,6 +172,16 @@ class SK_Geolocation_Country_Filter {
 
 		$country = isset( $_POST['country'] ) ? sanitize_text_field( wp_unslash( $_POST['country'] ) ) : 'all';
 
+		// The answer is the same for everyone and only changes when a vendor
+		// moves, so it is built once and served from cache. Without this every
+		// call walked all sellers plus two meta reads each, unauthenticated.
+		$cache_key = 'sk_geo_cf_v_' . md5( $country );
+		$cached    = get_transient( $cache_key );
+
+		if ( false !== $cached ) {
+			wp_send_json_success( $cached );
+		}
+
 		if ( ! function_exists( 'sk_get_sellers' ) ) {
 			wp_send_json_error( [ 'message' => 'SK not available' ] );
 		}
@@ -203,11 +213,15 @@ class SK_Geolocation_Country_Filter {
 			];
 		}
 
-		wp_send_json_success( [
+		$payload = [
 			'sellers' => $filtered,
 			'country' => $country,
 			'count'   => count( $filtered ),
-		] );
+		];
+
+		set_transient( $cache_key, $payload, 15 * MINUTE_IN_SECONDS );
+
+		wp_send_json_success( $payload );
 	}
 
 	public function is_location_excluded( $id, $type = 'vendor' ) {
@@ -326,6 +340,16 @@ class SK_Geolocation_Country_Filter {
 		$country     = isset( $_POST['country'] ) ? sanitize_text_field( wp_unslash( $_POST['country'] ) ) : 'all';
 		$product_ids = [];
 
+		// 'all' walked every published product of every vendor with
+		// posts_per_page => -1 and a meta read per product, on an endpoint
+		// anyone can call.
+		$cache_key = 'sk_geo_cf_p_' . md5( $country );
+		$cached    = get_transient( $cache_key );
+
+		if ( false !== $cached ) {
+			wp_send_json_success( $cached );
+		}
+
 		if ( 'all' !== $country ) {
 			$product_ids = $this->get_product_ids_by_country( $country );
 		} else {
@@ -361,10 +385,14 @@ class SK_Geolocation_Country_Filter {
 			}
 		}
 
-		wp_send_json_success( [
+		$payload = [
 			'product_ids' => $product_ids,
 			'country'     => $country,
 			'count'       => count( $product_ids ),
-		] );
+		];
+
+		set_transient( $cache_key, $payload, 15 * MINUTE_IN_SECONDS );
+
+		wp_send_json_success( $payload );
 	}
 }

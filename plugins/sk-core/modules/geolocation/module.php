@@ -93,6 +93,7 @@ class Module {
             require_once SK_GEOLOCATION_PATH . '/class-sk-geolocation-product-import.php';
             require_once SK_GEOLOCATION_PATH . '/class-sk-geolocation-country-filter.php';
             require_once SK_GEOLOCATION_PATH . '/class-sk-geolocation-full-markers.php';
+            require_once SK_GEOLOCATION_PATH . '/class-sk-geolocation-geocode.php';
         }
     }
 
@@ -118,6 +119,7 @@ class Module {
             new BlockData();
             new \SK_Geolocation_Country_Filter();
             \SK_Geolocation_Full_Markers::bootstrap();
+            new \SK_Geolocation_Geocode();
         }
     }
 

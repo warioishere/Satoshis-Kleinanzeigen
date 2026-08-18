@@ -51,6 +51,17 @@ class SK_Geolocation_Scripts {
 
         wp_register_script( 'sk-geo-filters-store-lists', SK_GEOLOCATION_ASSETS . '/js/sk-geolocation-filters' . $this->suffix . '.js', array( 'jquery', 'sk-maps', 'sk-mapbox-suggestions' ), SK_GEOLOCATION_VERSION, true );
         wp_register_script( 'sk-geo-filters', SK_GEOLOCATION_ASSETS . '/js/sk-geolocation-filters' . $this->suffix . '.js', array( 'jquery', 'sk-maps', 'sk-mapbox-suggestions' ), SK_CORE_VERSION, true );
+
+        // Address lookups go through our own endpoint, so the scripts need the
+        // route and a nonce instead of the Mapbox token.
+        $geocode = [
+            'url'   => admin_url( 'admin-ajax.php' ),
+            'nonce' => wp_create_nonce( \SK_Geolocation_Geocode::NONCE ),
+        ];
+
+        wp_localize_script( 'sk-geo-filters-store-lists', 'SkGeoGeocode', $geocode );
+        wp_localize_script( 'sk-geo-filters', 'SkGeoGeocode', $geocode );
+        wp_localize_script( 'sk-geolocation', 'SkGeoGeocode', $geocode );
     }
 
     /**

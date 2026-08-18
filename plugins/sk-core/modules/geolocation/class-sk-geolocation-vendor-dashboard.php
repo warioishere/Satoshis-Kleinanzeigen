@@ -134,9 +134,18 @@ class SK_Geolocation_Vendor_Dashboard {
             $sk_geo_longitude_post = get_post_meta( $post_id, 'sk_geo_longitude', true );
             $sk_geo_address_post   = get_post_meta( $post_id, 'sk_geo_address', true );
 
-            $sk_geo_latitude  = ! empty( $_POST['_sk_geolocation_product_sk_geo_latitude'] ) ? $_POST['_sk_geolocation_product_sk_geo_latitude'] : $sk_geo_latitude_post;
-            $sk_geo_longitude = ! empty( $_POST['_sk_geolocation_product_sk_geo_longitude'] ) ? $_POST['_sk_geolocation_product_sk_geo_longitude'] : $sk_geo_longitude_post;
-            $sk_geo_address   = ! empty( $_POST['_sk_geolocation_product_sk_geo_address'] ) ? $_POST['_sk_geolocation_product_sk_geo_address'] : $sk_geo_address_post;
+            // Coordinates are numbers and the address is text — stored raw they
+            // ended up in map markers, in the country filter response and in
+            // the query layer.
+            $sk_geo_latitude  = ! empty( $_POST['_sk_geolocation_product_sk_geo_latitude'] )
+                ? sk_geo_float_val( wp_unslash( $_POST['_sk_geolocation_product_sk_geo_latitude'] ) )
+                : $sk_geo_latitude_post;
+            $sk_geo_longitude = ! empty( $_POST['_sk_geolocation_product_sk_geo_longitude'] )
+                ? sk_geo_float_val( wp_unslash( $_POST['_sk_geolocation_product_sk_geo_longitude'] ) )
+                : $sk_geo_longitude_post;
+            $sk_geo_address   = ! empty( $_POST['_sk_geolocation_product_sk_geo_address'] )
+                ? sanitize_text_field( wp_unslash( $_POST['_sk_geolocation_product_sk_geo_address'] ) )
+                : $sk_geo_address_post;
         }
 
         update_post_meta( $post_id, 'sk_geo_latitude', $sk_geo_latitude );
