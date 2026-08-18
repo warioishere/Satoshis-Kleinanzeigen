@@ -13088,3 +13088,68 @@ div.sk-message { border-left-color: #22c55e; }
 p.sk-error,
 div.sk-error { border-left-color: #ef4444; }
 
+
+/* =====================================================================
+   Dashboard — NUR Mobile. Desktop bleibt unangetastet.
+   =====================================================================
+   Auf dem Telefon summierten sich drei Lagen Rand: 24px vom Theme zum
+   Bildschirmrand, 16px der Schale, dazu 15-20px jeder Box darin. Von einem
+   390px breiten Display blieben so unter 300px fuer den Inhalt.
+
+   Alles hier steht bewusst in Media Queries. Oberhalb von 991px greift
+   nichts davon.
+   ===================================================================== */
+
+@media (max-width: 991px) {
+  .sk-dashboard {
+    --sk-dash-shell: 10px;
+    --sk-dash-card: 14px;
+  }
+
+  /* Steg zum Bildschirmrand */
+  .sk-dashboard .content-container.site-container {
+    padding-left: var(--sk-dash-shell) !important;
+    padding-right: var(--sk-dash-shell) !important;
+  }
+
+  /* Schale */
+  .sk-dashboard .sk-dashboard-content {
+    padding: var(--sk-dash-shell) !important;
+  }
+
+  /* Boxen innerhalb der Schale */
+  .sk-dashboard .sk-dashboard-content .kontakt-hinweis {
+    padding: var(--sk-dash-card) !important;
+  }
+
+  .sk-dashboard .sk-settings-field,
+  .sk-dashboard .sk-settings-field--bio,
+  .sk-dashboard .sk-settings-section-title,
+  .sk-dashboard .sk-settings-form .sk-form-group {
+    padding-left: var(--sk-dash-card) !important;
+    padding-right: var(--sk-dash-card) !important;
+  }
+
+  /* Die Tabelle darin hat schon eigenen Rand, diese Lage ist doppelt. */
+  .sk-product-listing .sk-product-listing-area {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .sk-dashboard #sk-product-list-table td:not(.col-thumb),
+  .sk-dashboard #sk-product-list-table thead th {
+    padding-left: var(--sk-dash-card);
+    padding-right: var(--sk-dash-card);
+  }
+
+  .sk-dashboard .sk-dashboard-content article.dashboard-content-area .dashboard-widget {
+    padding: 0 var(--sk-dash-card);
+  }
+}
+
+@media (max-width: 480px) {
+  .sk-dashboard {
+    --sk-dash-shell: 8px;
+    --sk-dash-card: 12px;
+  }
+}
