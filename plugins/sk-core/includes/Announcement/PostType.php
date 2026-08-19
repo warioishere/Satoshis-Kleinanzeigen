@@ -38,11 +38,14 @@ class PostType {
         // With the generic `post` capabilities every role holding `edit_posts` could
         // create them and every role holding `edit_others_posts` (Editor) could read,
         // rewrite and delete them, so both the UI and the caps are locked down here.
+        // Only primitive capabilities belong here. Mapping the meta caps
+        // edit_post/read_post/delete_post registers the target as a meta-cap alias
+        // in the global $post_type_meta_caps, which makes every
+        // current_user_can( 'manage_woocommerce' ) recurse into a post check
+        // without a post id and fail. With map_meta_cap => true WordPress derives
+        // the meta caps from the primitives below anyway.
         $capabilities = array_fill_keys(
             array(
-                'edit_post',
-                'read_post',
-                'delete_post',
                 'edit_posts',
                 'edit_others_posts',
                 'delete_posts',

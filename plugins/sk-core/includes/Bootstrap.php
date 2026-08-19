@@ -76,6 +76,8 @@ class Bootstrap {
             new Admin\ExtendedAdmin();
             new Admin\Ajax();
             new Admin\ShortcodesButton();
+
+            add_action( 'admin_init', [ Install\LegacyCleanup::class, 'maybe_run' ] );
         }
 
         $this->container['announcement']         = sk_get_container()->get( Announcement\Announcement::class );
