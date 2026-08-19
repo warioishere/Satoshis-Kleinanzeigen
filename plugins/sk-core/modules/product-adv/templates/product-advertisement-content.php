@@ -23,7 +23,6 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @var string $advertise_active_color
  */
 ?>
-<?php do_action( 'sk_product_edit_before_product_advertisement', $product_id ); ?>
 
 <div class="sk-edit-row sk-proudct-advertisement sk-clearfix">
     <div class="sk-section-heading">
@@ -138,4 +137,3 @@ if ( ! defined( 'ABSPATH' ) ) {
     </div>
 </div>
 
-<?php do_action( 'sk_product_edit_after_product_advertisement', $product_id ); ?>

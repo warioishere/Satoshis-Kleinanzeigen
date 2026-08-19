@@ -744,11 +744,11 @@ class Manager {
         }
 
         // fix orderby param
+        // keep in sync with the whitelist in all()
         $supported_orderby = [
             'product_title',
             'added',
             'expires_at',
-            'views',
             'price',
         ];
 

@@ -193,7 +193,7 @@ final class Module {
         list( $suffix, $version ) = sk_get_script_suffix_and_version();
 
         // register frontend scripts
-        wp_register_script( 'sk-product-adv-purchase', SK_PRODUCT_ADVERTISEMENT_ASSETS . '/js/purchase_advertisement' . $suffix . '.js', [ 'jquery', 'sk-sweetalert2' ], $version, true );
+        wp_register_script( 'sk-product-adv-purchase', SK_PRODUCT_ADVERTISEMENT_ASSETS . '/js/purchase_advertisement' . $suffix . '.js', [ 'jquery', 'wp-util', 'sk-sweetalert2' ], $version, true );
     }
 
     /**

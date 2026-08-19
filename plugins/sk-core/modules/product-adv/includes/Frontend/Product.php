@@ -88,22 +88,26 @@ class Product {
         $title = '';
         $class = '';
         $color  = 'slategrey';
-        if ( $advertisement_data['already_advertised'] ) {
-            $title  = sprintf( __( 'Expires on: %s', 'sk' ), $advertisement_data['expire_date'] );
+        if ( ! empty( $advertisement_data['already_advertised'] ) ) {
+            // translators: 1) advertisement expire date
+            $title  = esc_attr( sprintf( __( 'Expires on: %s', 'sk' ), $advertisement_data['expire_date'] ) );
             $color  = '#F7931A';
             $class  = 'advertised';
         }
 
+        $status     = esc_attr( $product->get_status() );
+        $product_id = absint( $product->get_id() );
+
         echo <<<EOD
-<td class='product-advertisement-td'>
-     <span class='fa-stack fa-xs tips sk-product-advertisement {$class}'
+<td class="product-advertisement-td">
+     <span class="fa-stack fa-xs tips sk-product-advertisement {$class}"
              style="cursor: pointer;"
-             data-title='{$title}'
-             data-already-advertised='{$class}'
-             data-product-status='{$product->get_status()}'
-             data-product-id='{$product->get_id()}'>
+             data-title="{$title}"
+             data-already-advertised="{$class}"
+             data-product-status="{$status}"
+             data-product-id="{$product_id}">
          <i class="fa fa-circle fa-stack-2x adv_icon_1" style="color:{$color}"></i>
-         <i class='fa fa-stack-1x fa-bullhorn fa-inverse adv_icon_2'></i>
+         <i class="fa fa-stack-1x fa-bullhorn fa-inverse adv_icon_2"></i>
      </span>
  </td>
 EOD;
@@ -117,10 +121,10 @@ EOD;
      */
     public function product_listing_table_column() {
         $color  = '#F7931A';
-        $title  = __( 'Advertised Products', 'sk' );
+        $title  = esc_attr__( 'Advertised Products', 'sk' );
         echo <<<EOD
 <th class="product-advertisement-th">
-    <span class="fa-stack fa-xs tips" data-title='{$title}'>
+    <span class="fa-stack fa-xs tips" data-title="{$title}">
         <i class="fa fa-circle fa-stack-2x" style="color: {$color}"></i>
         <i class="fa fa-bullhorn fa-stack-1x fa-inverse" data-fa-transform="shrink-6"></i>
     </span>

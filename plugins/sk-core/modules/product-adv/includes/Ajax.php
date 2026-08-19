@@ -43,7 +43,11 @@ class Ajax {
         $purchased = Helper::purchase_advertisement( $product_id );
 
         if ( is_wp_error( $purchased ) ) {
-            wp_send_json_error( [ 'message' => $purchased->get_error_message() ], $purchased->get_error_code() );
+            // the http status sits in the error data, get_error_code() returns a slug
+            $error_data = $purchased->get_error_data();
+            $status     = is_array( $error_data ) && ! empty( $error_data['status'] ) ? absint( $error_data['status'] ) : 0;
+
+            wp_send_json_error( [ 'message' => $purchased->get_error_message() ], $status ? $status : 400 );
         }
 
         wp_send_json_success( $purchased );

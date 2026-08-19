@@ -184,9 +184,9 @@ class Order {
                 break;
 
             case 'sk_advertisement_product_id':
-                $title         = get_the_title( $display_value );
+                $title         = esc_html( get_the_title( $display_value ) );
                 $permalink     = esc_url( get_the_permalink( $display_value ) );
-                $display_value = "<a href='{$permalink}'>{$title}</a>";
+                $display_value = sprintf( '<a href="%1$s">%2$s</a>', $permalink, $title );
                 break;
         }
 

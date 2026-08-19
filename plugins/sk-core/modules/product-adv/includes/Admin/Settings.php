@@ -142,9 +142,8 @@ class Settings {
             return;
         }
 
-        $total_available_slot = intval( $option_value['total_available_slot'] );
-        $expire_after_days = intval( $option_value['expire_after_days'] );
-        $cost = $option_value['cost'];
+        $total_available_slot = intval( $option_value['total_available_slot'] ?? 0 );
+        $expire_after_days    = intval( $option_value['expire_after_days'] ?? 0 );
 
         $errors = [];
 
@@ -162,7 +161,8 @@ class Settings {
             ];
         }
 
-        if ( ! is_numeric( $cost ) || floatval( $cost ) < 0 ) {
+        // the cost field is hidden while per product purchase is off and is not submitted then
+        if ( isset( $option_value['cost'] ) && ( ! is_numeric( $option_value['cost'] ) || floatval( $option_value['cost'] ) < 0 ) ) {
             $errors[] = [
                 'name' => 'cost',
                 'error' => __( 'Cost can not be empty or less than 0', 'sk' ),

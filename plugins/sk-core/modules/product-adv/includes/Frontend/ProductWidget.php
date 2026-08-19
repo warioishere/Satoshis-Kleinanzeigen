@@ -47,13 +47,13 @@ class ProductWidget extends \WC_Widget {
             ],
             'orderby'     => [
                 'type'    => 'select',
-                'std'     => 'date',
+                'std'     => 'added',
                 'label'   => __( 'Order by', 'sk' ),
                 'options' => [
                     'product_title' => __( 'Title', 'sk' ),
                     'added'         => __( 'Date', 'sk' ),
                     'expires_at'    => __( 'Expire Date', 'sk' ),
-                    'sales'         => __( 'Sales', 'sk' ),
+                    'price'         => __( 'Price', 'sk' ),
                 ],
             ],
             'order'       => [
