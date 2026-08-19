@@ -682,12 +682,12 @@ class DPS_Admin {
                 <td> <?php echo get_the_title( $users_assigned_pack ); ?> </td>
             </tr>
             <tr>
-                <td><?php esc_html_e( 'Start Date :' ); ?></td>
+                <td><?php esc_html_e( 'Start Date :', 'sk-core' ); ?></td>
                 <td><?php echo sk_format_date( get_user_meta( $user->ID, 'product_pack_startdate', true ) ); ?>
                 </td>
             </tr>
             <tr>
-                <td><?php esc_html_e( 'End Date :' ); ?></td>
+                <td><?php esc_html_e( 'End Date :', 'sk-core' ); ?></td>
                 <td>
                     <?php
                     $product_pack_enddate = get_user_meta( $user->ID, 'product_pack_enddate', true );

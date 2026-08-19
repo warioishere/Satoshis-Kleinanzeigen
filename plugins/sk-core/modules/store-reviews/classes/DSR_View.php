@@ -142,8 +142,8 @@ class DSR_View {
             wp_send_json( array(
                 'success' => false,
                 'msg'     => is_user_logged_in()
-                    ?  __( 'Sorry, You must be logged in to leave a review!', 'sk-core' )
-                    : __( 'Sorry, You need to be a verified owner to leave a review.' ),
+                    ? __( 'Sorry, You need to be a verified owner to leave a review.', 'sk-core' )
+                    : __( 'Sorry, You must be logged in to leave a review!', 'sk-core' ),
             ) );
         }
 

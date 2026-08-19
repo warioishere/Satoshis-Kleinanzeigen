@@ -62,8 +62,8 @@ class ProfileAvatar {
         }
 
         echo '<div class="header-profile-icon" aria-hidden="false">';
-        echo '<a href="' . esc_url( $url ) . '" title="' . esc_attr__( 'Mein Konto' ) . '">';
-        echo '<img src="' . esc_url( $avatar_url ) . '" alt="' . esc_attr__( 'Mein Konto' ) . '" loading="eager" decoding="async">';
+        echo '<a href="' . esc_url( $url ) . '" title="' . esc_attr__( 'Mein Konto', 'sk-core' ) . '">';
+        echo '<img src="' . esc_url( $avatar_url ) . '" alt="' . esc_attr__( 'Mein Konto', 'sk-core' ) . '" loading="eager" decoding="async">';
         echo '</a></div>';
     }
 }

@@ -2434,6 +2434,7 @@ msgstr "Währungssymbol."
 msgid "Current page"
 msgstr "Aktuelle Seite"
 
+#: modules/follow-store/includes/class-sk-follow-store-rest-controller.php:511
 #: modules/report-abuse/includes/RestController.php:43
 msgid "Current page of the collection."
 msgstr "Aktuelle Seite der Sammlung."
@@ -3326,6 +3327,10 @@ msgstr "Produktbewertungen aktiviert."
 #: includes/REST/VendorDashboardController.php:361
 msgid "Enabled product stock management."
 msgstr "Ermöglicht die Verwaltung von Produktbeständen."
+
+#: modules/subscription/includes/admin/admin.php:690
+msgid "End Date :"
+msgstr ""
 
 #: includes/REST/ProductController.php:1851
 #: includes/REST/ProductVariationController.php:682
@@ -5333,6 +5338,11 @@ msgstr ""
 
 #: modules/sk-feed/templates/sidebar-participants.php:95
 msgid "Mehr von %s"
+msgstr ""
+
+#: includes/Dashboard/Modules/ProfileAvatar.php:65
+#: includes/Dashboard/Modules/ProfileAvatar.php:66
+msgid "Mein Konto"
 msgstr ""
 
 #: modules/sk-feed/templates/dashboard-feed.php:66
@@ -8903,9 +8913,13 @@ msgstr ""
 msgid "Sorry, you have no permission to do this. Since it's not your product."
 msgstr "Entschuldigung, Sie haben keine Berechtigung dazu, da es nicht Ihr Produkt ist."
 
-#: modules/store-reviews/classes/DSR_View.php:145
+#: modules/store-reviews/classes/DSR_View.php:146
 msgid "Sorry, You must be logged in to leave a review!"
 msgstr "Du musst angemeldet sein, um eine Rezension abgeben zu können!"
+
+#: modules/store-reviews/classes/DSR_View.php:145
+msgid "Sorry, You need to be a verified owner to leave a review."
+msgstr "Du musst ein bestätigter Käufer sein, um eine Rezension abgeben zu können."
 
 #: templates/emails/plain/vendor-disabled.php:25
 #: templates/emails/vendor-disabled.php:20
@@ -8974,6 +8988,10 @@ msgstr "Standard"
 
 #: modules/sk-zaps/includes/ZapSettings.php:52
 msgid "Standard-Betrag (Sats)"
+msgstr ""
+
+#: modules/subscription/includes/admin/admin.php:685
+msgid "Start Date :"
 msgstr ""
 
 #: includes/REST/ProductController.php:1841
@@ -10873,6 +10891,10 @@ msgstr "Anbieter: %s"
 msgid "vendor_id field is required"
 msgstr "vendor_id Feld ist erforderlich"
 
+#: modules/follow-store/includes/class-sk-follow-store-ajax.php:57
+msgid "vendor_id is required."
+msgstr ""
+
 #: includes/Admin/ExtendedAdmin.php:425
 #: includes/Admin/PhpDashboard/VendorsPage.php:12
 #: modules/follow-store/includes/class-sk-follow-store-my-account.php:39
@@ -11648,6 +11670,10 @@ msgstr "Sie haben eine vollständige Bestellung von %s erhalten."
 #, php-format
 msgid "You have successfully created %s product"
 msgstr "Sie haben erfolgreich %s Produkt erstellt"
+
+#: modules/follow-store/includes/class-sk-follow-store-ajax.php:64
+msgid "You have to logged in to get your status."
+msgstr ""
 
 #: modules/subscription/module.php:1123
 msgid "You need to be logged in to manage your subscription."

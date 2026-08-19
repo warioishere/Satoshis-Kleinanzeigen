@@ -508,7 +508,7 @@ class SkFollowStoreRestController extends SkRESTController {
                 'default'           => 'followed_at',
             ],
             'page'      => [
-                'description'       => __( 'Current page of the collection.' ),
+                'description'       => __( 'Current page of the collection.', 'sk-core' ),
                 'type'              => 'integer',
                 'default'           => 1,
                 'sanitize_callback' => 'absint',

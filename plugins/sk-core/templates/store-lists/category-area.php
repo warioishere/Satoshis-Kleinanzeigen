@@ -35,7 +35,7 @@ defined( 'ABSPATH' ) || exit; ?>
                 <ul>
                     <?php foreach ( $categories as $category ) : ?>
                         <li data-slug=<?php echo esc_attr( $category['slug'] ); ?>>
-                            <?php esc_html_e( $category['name'] ); ?>
+                            <?php echo esc_html( $category['name'] ); ?>
                         </li>
                     <?php endforeach; ?>
                 </ul>
