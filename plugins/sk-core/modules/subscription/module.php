@@ -106,7 +106,6 @@ class Module {
         add_action( 'woocommerce_after_checkout_validation', [ $this, 'validate_billing_email' ], 10, 2 );
 
         add_action( 'template_redirect', array( $this, 'maybe_cancel_or_activate_subscription' ) );
-        add_action( 'dps_cancel_recurring_subscription', array( $this, 'cancel_recurring_subscription' ), 10, 2 );
         add_action( 'dps_cancel_non_recurring_subscription', array( $this, 'cancel_non_recurring_subscription' ), 10, 3 );
         add_action( 'dps_activate_recurring_subscription', array( $this, 'activate_recurring_subscription' ), 10, 2 );
         add_action( 'dps_activate_non_recurring_subscription', array( $this, 'activate_non_recurring_subscription' ), 10, 2 );
@@ -322,7 +321,6 @@ class Module {
         }
 
         require_once DPS_PATH . '/includes/classes/Helper.php';
-        require_once DPS_PATH . '/includes/classes/class-dps-paypal-standard-subscriptions.php';
         require_once DPS_PATH . '/includes/classes/Shortcode.php';
         require_once DPS_PATH . '/includes/Abstracts/VendorSubscription.php';
         require_once DPS_PATH . '/includes/classes/SubscriptionPack.php';
@@ -1216,23 +1214,6 @@ class Module {
         }
     }
 
-    /**
-     * Cancel recurrring subscription via paypal
-     *
-     *
-     * @return void
-     **/
-    public function cancel_recurring_subscription( $order_id, $user_id ) {
-        if ( ! $order_id ) {
-            return;
-        }
-
-        $order = wc_get_order( $order_id );
-
-        if ( $order && 'paypal' === $order->get_payment_method() ) {
-            \DPS_PayPal_Standard_Subscriptions::cancel_subscription_with_paypal( $order_id, $user_id );
-        }
-    }
 
     /**
      * Cancel non recurring subscription

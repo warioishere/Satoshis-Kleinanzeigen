@@ -900,7 +900,7 @@ class DPS_Admin {
             return;
         }
 
-        //cancel paypal if current pack is recurring
+        // cancel a running recurring plan before assigning a new pack
         if ( get_user_meta( $user_id, '_customer_recurring_subscription', true ) == 'active' ) {
             $order_id = get_user_meta( $user_id, 'product_order_id', true );
 
@@ -910,11 +910,6 @@ class DPS_Admin {
             do_action( 'dps_cancel_recurring_subscription', $order_id, $user_id, true );
 
             do_action( 'sk_subscription_cancelled_by_admin', $user_id, $order_id );
-            $subscriber_id = get_user_meta( $user_id, '_paypal_subscriber_ID', true );
-
-            if ( $order_id && ! empty( $subscriber_id ) ) {
-                DPS_PayPal_Standard_Subscriptions::cancel_subscription_with_paypal( $order_id, $user_id );
-            }
         }
 
         // create a order for the subscription
