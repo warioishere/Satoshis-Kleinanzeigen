@@ -2700,7 +2700,7 @@ msgid "Dein Produkt \"%s\" überschreitet das Verkaufslimit von %s Sats für neu
 msgstr ""
 
 #: templates/settings/store-form.php:562
-msgid "Dein Shop ist erreichbar unter:"
+msgid "Deine Anbieter-Seite ist erreichbar unter:"
 msgstr ""
 
 #: includes/Dashboard/Modules/UserOnboarding.php:227
@@ -11396,6 +11396,10 @@ msgstr ""
 #: templates/admin/php-dashboard/vendors.php:85
 msgid "Yes"
 msgstr "Ja"
+
+#: modules/subscription/module.php:1598
+msgid "You are not allowed to add more than %s gallery images"
+msgstr "Sie dürfen nicht mehr als %s Galeriebilder hinzufügen"
 
 #: includes/REST/AnnouncementController.php:574
 #: includes/REST/AnnouncementController.php:591

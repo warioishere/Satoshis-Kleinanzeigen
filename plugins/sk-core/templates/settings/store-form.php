@@ -559,7 +559,7 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
         <?php
         $slug_hint = sprintf(
             '%s <strong>%s<span id="store_slug_preview">%s</span></strong>',
-            esc_html__( 'Dein Shop ist erreichbar unter:', 'sk-core' ),
+            esc_html__( 'Deine Anbieter-Seite ist erreichbar unter:', 'sk-core' ),
             esc_url( site_url( '/store/' ) ),
             esc_html( $store_slug )
         );

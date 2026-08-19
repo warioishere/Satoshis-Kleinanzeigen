@@ -1595,7 +1595,7 @@ class Module {
         }
 
         if ( count( $gallery_image ) > $image_count ) {
-            return new \WP_Error( 'not-allowed', __( sprintf( 'You are not allowed to add more than %s gallery images', $image_count ), 'sk-core' ) );
+            return new \WP_Error( 'not-allowed', sprintf( __( 'You are not allowed to add more than %s gallery images', 'sk-core' ), $image_count ) );
         }
 
         return $errors;

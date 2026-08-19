@@ -3,7 +3,8 @@
 namespace SK\Core\Dashboard\Modules;
 
 /**
- * Replaces "Store/Stores" with "Anbieter" in SK-domain strings.
+ * Replaces "Store/Stores" with "Anbieter" in sk-core strings that carry no
+ * translation yet; the catalogue itself already uses "Anbieter".
  * Ported from kadence-child/functions.php.
  */
 class Terminology {
@@ -14,7 +15,7 @@ class Terminology {
     }
 
     public function replace_store_with_anbieter( string $translated, string $text, string $domain ): string {
-        if ( ! in_array( $domain, [ 'sk', 'sk-core', 'sk-pro' ], true ) ) {
+        if ( 'sk-core' !== $domain ) {
             return $translated;
         }
 
