@@ -32,73 +32,10 @@ class Nostr_Login_Handler {
         add_action( 'edit_user_profile', array( $this, 'add_custom_user_profile_fields' ) );
         add_action( 'personal_options_update', array( $this, 'save_custom_user_profile_fields' ) );
         add_action( 'edit_user_profile_update', array( $this, 'save_custom_user_profile_fields' ) );
-        // Settings page removed — now in SK PHP Dashboard (AuthSettings.php).
-        // add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
-        // add_action( 'admin_init', array( $this, 'register_settings' ) );
         add_action( 'wp_ajax_nostr_sync_profile', array( $this, 'ajax_nostr_sync_profile' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 
         nostr_login_debug_log( "Nostr_Login_Handler class initialized" );
-    }
-
-    public function add_admin_menu() {
-        add_options_page( __( 'Nostr Login Settings', 'sk-core' ), __( 'Nostr Login', 'sk-core' ), 'manage_options', 'nostr-login', array( $this, 'options_page' ) );
-    }
-
-    public function register_settings() {
-        register_setting(
-            'nostr_login_options',
-            'nostr_login_redirect',
-            array(
-                'type' => 'string',
-                'sanitize_callback' => array($this, 'sanitize_redirect_setting'),
-                'default' => 'admin'
-            )
-        );
-        register_setting( 'nostr_login_options', 'nostr_login_relays' );
-    }
-
-    public function sanitize_redirect_setting($value) {
-        $allowed_values = array('admin', 'home', 'profile');
-        return in_array($value, $allowed_values) ? $value : 'admin';
-    }
-
-    public function options_page() {
-        ?>
-        <div class="wrap">
-            <h1><?php esc_html_e( 'Nostr Login Settings', 'sk-core' ); ?></h1>
-            <form method="post" action="options.php">
-                <?php settings_fields( 'nostr_login_options' ); ?>
-                <?php do_settings_sections( 'nostr_login_options' ); ?>
-                <table class="form-table">
-                    <tr valign="top">
-                        <th scope="row"><?php esc_html_e( 'Nostr Relays', 'sk-core' ); ?></th>
-                        <td>
-                            <textarea name="nostr_login_relays" rows="5" cols="50"><?php echo esc_textarea( get_option( 'nostr_login_relays', implode( "\n", $this->default_relays ) ) ); ?></textarea>
-                            <p class="description"><?php esc_html_e( 'Enter one relay URL per line.', 'sk-core' ); ?></p>
-                        </td>
-                    </tr>
-                    <tr valign="top">
-                        <th scope="row"><?php esc_html_e( 'Redirect After Login', 'sk-core' ); ?></th>
-                        <td>
-                            <select name="nostr_login_redirect">
-                                <option value="admin" <?php selected( get_option( 'nostr_login_redirect', 'admin' ), 'admin' ); ?>>
-                                    <?php esc_html_e( 'Admin Dashboard', 'sk-core' ); ?>
-                                </option>
-                                <option value="home" <?php selected( get_option( 'nostr_login_redirect', 'admin' ), 'home' ); ?>>
-                                    <?php esc_html_e( 'Home Page', 'sk-core' ); ?>
-                                </option>
-                                <option value="profile" <?php selected( get_option( 'nostr_login_redirect', 'admin' ), 'profile' ); ?>>
-                                    <?php esc_html_e( 'User Profile', 'sk-core' ); ?>
-                                </option>
-                            </select>
-                        </td>
-                    </tr>
-                </table>
-                <?php submit_button(); ?>
-            </form>
-        </div>
-        <?php
     }
 
     public function add_custom_user_profile_fields( $user ) {

@@ -833,10 +833,6 @@ msgstr "Adresse: %s"
 msgid "Admin can earn more by allowing vendors to advertise their products and give them the right exposure."
 msgstr "Administratoren können mehr verdienen, wenn sie den Anbietern erlauben, ihre Produkte zu bewerben und ihnen die richtige Aufmerksamkeit zu geben."
 
-#: modules/sk-auth/includes/NostrLogin.php:86
-msgid "Admin Dashboard"
-msgstr ""
-
 #: includes/Vendor/SettingsApi/Settings/Pages/Store.php:265
 msgid "Advanced"
 msgstr "Erweitert"
@@ -1168,7 +1164,7 @@ msgstr ""
 msgid "AND"
 msgstr "AND"
 
-#: modules/sk-auth/includes/NostrLogin.php:203
+#: modules/sk-auth/includes/NostrLogin.php:140
 msgid "Anfrage von fremder Herkunft."
 msgstr ""
 
@@ -1504,7 +1500,7 @@ msgstr ""
 msgid "Auth Connector aktivieren"
 msgstr ""
 
-#: modules/sk-auth/includes/NostrLogin.php:252
+#: modules/sk-auth/includes/NostrLogin.php:189
 msgid "Auth-Token bereits verwendet. Bitte Seite neu laden."
 msgstr ""
 
@@ -1548,7 +1544,7 @@ msgstr ""
 msgid "Autor"
 msgstr ""
 
-#: modules/sk-auth/includes/NostrLogin.php:244
+#: modules/sk-auth/includes/NostrLogin.php:181
 msgid "Autorisierung ungültig oder abgelaufen."
 msgstr ""
 
@@ -2338,11 +2334,11 @@ msgstr "Neues Passwort bestätigen"
 msgid "Congratulations %s!"
 msgstr "Glückwunsch %s!"
 
-#: modules/sk-auth/includes/NostrLogin.php:111
+#: modules/sk-auth/includes/NostrLogin.php:48
 msgid "Connect Nostr Account"
 msgstr ""
 
-#: modules/sk-auth/includes/NostrLogin.php:118
+#: modules/sk-auth/includes/NostrLogin.php:55
 msgid "Connect your Nostr account to sync your public key, NIP-05, and avatar"
 msgstr ""
 
@@ -3477,7 +3473,6 @@ msgid "Enter no of validity days you want to give this pack "
 msgstr "Geben Sie die Anzahl der Gültigkeitstage ein, die Sie diesem Paket geben möchten "
 
 #: modules/sk-auth/includes/NostrImport.php:151
-#: modules/sk-auth/includes/NostrLogin.php:78
 msgid "Enter one relay URL per line."
 msgstr ""
 
@@ -4365,10 +4360,6 @@ msgstr "Verbergen Sie die Kontaktinformationen des Anbieters auf der einzelnen A
 msgid "Hide Vendor Info"
 msgstr "Anbieter Info verbergen"
 
-#: modules/sk-auth/includes/NostrLogin.php:89
-msgid "Home Page"
-msgstr ""
-
 #: modules/product-adv/includes/REST/AdvertisementController.php:612
 msgid "How data will be returned"
 msgstr "Wie die Daten zurückgegeben werden"
@@ -4737,11 +4728,11 @@ msgstr "Ungültige ID."
 msgid "Invalid JSON data provided."
 msgstr ""
 
-#: modules/sk-auth/includes/NostrLogin.php:494
+#: modules/sk-auth/includes/NostrLogin.php:431
 msgid "Invalid metadata format."
 msgstr ""
 
-#: modules/sk-auth/includes/NostrLogin.php:268
+#: modules/sk-auth/includes/NostrLogin.php:205
 msgid "Invalid metadata: "
 msgstr ""
 
@@ -4777,11 +4768,11 @@ msgstr "Ungültige Produkt ID."
 msgid "Invalid product id. Please check your input."
 msgstr "Ungültige Produkt ID. Bitte überprüfen Sie Ihre Eingabe."
 
-#: modules/sk-auth/includes/NostrLogin.php:260
+#: modules/sk-auth/includes/NostrLogin.php:197
 msgid "Invalid public key format."
 msgstr ""
 
-#: modules/sk-auth/includes/NostrLogin.php:499
+#: modules/sk-auth/includes/NostrLogin.php:436
 msgid "Invalid public key."
 msgstr ""
 
@@ -5279,7 +5270,7 @@ msgstr "Standort, IP Adresse und Browsertyp: Wir verwenden dies zum Zwecke der S
 msgid "Log in"
 msgstr "Login"
 
-#: modules/sk-auth/includes/NostrLogin.php:462
+#: modules/sk-auth/includes/NostrLogin.php:399
 msgid "Log In with Nostr"
 msgstr ""
 
@@ -5291,7 +5282,7 @@ msgstr "Abmelden"
 msgid "Login erforderlich."
 msgstr ""
 
-#: modules/sk-auth/includes/NostrLogin.php:330
+#: modules/sk-auth/includes/NostrLogin.php:267
 msgid "Login failed. Please try again."
 msgstr ""
 
@@ -6028,7 +6019,7 @@ msgstr "Keine Artikel deren Gültigkeit abgelaufen ist gefunden."
 msgid "No matches found"
 msgstr "Keine Übereinstimmung gefunden"
 
-#: modules/sk-auth/includes/NostrLogin.php:486
+#: modules/sk-auth/includes/NostrLogin.php:423
 msgid "No metadata provided."
 msgstr ""
 
@@ -6331,7 +6322,7 @@ msgstr ""
 msgid "Nostr Auto Poster"
 msgstr ""
 
-#: modules/sk-auth/includes/NostrLogin.php:521
+#: modules/sk-auth/includes/NostrLogin.php:458
 msgid "Nostr data successfully synced!"
 msgstr ""
 
@@ -6343,12 +6334,11 @@ msgstr ""
 msgid "Nostr Importer"
 msgstr ""
 
-#: modules/sk-auth/includes/NostrLogin.php:106
+#: modules/sk-auth/includes/NostrLogin.php:43
 msgid "Nostr Information"
 msgstr ""
 
 #: modules/sk-auth/includes/AuthSettings.php:89
-#: modules/sk-auth/includes/NostrLogin.php:45
 msgid "Nostr Login"
 msgstr ""
 
@@ -6360,11 +6350,6 @@ msgstr ""
 msgid "Nostr Login Box Shortcode [nostr_login_box] aktivieren."
 msgstr ""
 
-#: modules/sk-auth/includes/NostrLogin.php:45
-#: modules/sk-auth/includes/NostrLogin.php:69
-msgid "Nostr Login Settings"
-msgstr ""
-
 #: modules/sk-nostr-market/includes/MarketplaceSettings.php:20
 msgid "Nostr Marketplace"
 msgstr ""
@@ -6373,7 +6358,7 @@ msgstr ""
 msgid "Nostr Marketplace aktivieren"
 msgstr ""
 
-#: modules/sk-auth/includes/NostrLogin.php:139
+#: modules/sk-auth/includes/NostrLogin.php:76
 msgid "Nostr NIP-05"
 msgstr ""
 
@@ -6389,11 +6374,11 @@ msgstr ""
 msgid "Nostr Poster aktivieren"
 msgstr ""
 
-#: modules/sk-auth/includes/NostrLogin.php:457
+#: modules/sk-auth/includes/NostrLogin.php:394
 msgid "Nostr Private Key"
 msgstr ""
 
-#: modules/sk-auth/includes/NostrLogin.php:131
+#: modules/sk-auth/includes/NostrLogin.php:68
 msgid "Nostr Public Key"
 msgstr ""
 
@@ -6402,7 +6387,6 @@ msgid "Nostr Public Key (npub...)"
 msgstr ""
 
 #: modules/sk-auth/includes/AuthSettings.php:95
-#: modules/sk-auth/includes/NostrLogin.php:75
 #: modules/sk-notifications/includes/NotificationSettings.php:49
 msgid "Nostr Relays"
 msgstr ""
@@ -7761,10 +7745,6 @@ msgstr "Ordnen Sie die Beiträge und Links des gelöschten User dieser User ID n
 msgid "Recipient(s)"
 msgstr "Empfänger"
 
-#: modules/sk-auth/includes/NostrLogin.php:82
-msgid "Redirect After Login"
-msgstr ""
-
 #: modules/sk-auth/includes/AuthSettings.php:66
 #: modules/sk-auth/includes/AuthSettings.php:103
 msgid "Redirect nach Login"
@@ -7924,7 +7904,7 @@ msgstr "Einschränkung der Produktmissbrauchsfunktion nur für angemeldete Benut
 msgid "Resubscribe Order"
 msgstr ""
 
-#: modules/sk-auth/includes/NostrLogin.php:122
+#: modules/sk-auth/includes/NostrLogin.php:59
 msgid "Resync Nostr Data"
 msgstr ""
 
@@ -9859,7 +9839,7 @@ msgstr ""
 msgid "Sybil-resistentes Reputationssystem basierend auf verifizierten Lightning-Zahlungen. Zeigt Badges und Proof-Pages auf Store-Seiten."
 msgstr ""
 
-#: modules/sk-auth/includes/NostrLogin.php:115
+#: modules/sk-auth/includes/NostrLogin.php:52
 msgid "Sync with Nostr Extension"
 msgstr ""
 
@@ -10258,7 +10238,7 @@ msgstr "Dies ist die URL oder der absolute Pfad zu der Datei, auf die Kunden zug
 msgid "This lets you choose which products are part of this group."
 msgstr "Auf diese Weise können Sie auswählen, welche Produkte zu dieser Gruppe gehören."
 
-#: modules/sk-auth/includes/NostrLogin.php:505
+#: modules/sk-auth/includes/NostrLogin.php:442
 msgid "This Nostr account is already linked to another user."
 msgstr ""
 
@@ -10635,11 +10615,11 @@ msgstr ""
 msgid "Ungültige Produkt-ID"
 msgstr ""
 
-#: modules/sk-auth/includes/NostrLogin.php:214
+#: modules/sk-auth/includes/NostrLogin.php:151
 msgid "Ungültige Signatur."
 msgstr ""
 
-#: modules/sk-auth/includes/NostrLogin.php:220
+#: modules/sk-auth/includes/NostrLogin.php:157
 msgid "Ungültiges Auth-Token."
 msgstr ""
 
@@ -10862,11 +10842,11 @@ msgstr ""
 msgid "URL-Slug"
 msgstr ""
 
-#: modules/sk-auth/includes/NostrLogin.php:461
+#: modules/sk-auth/includes/NostrLogin.php:398
 msgid "Use Nostr Extension"
 msgstr ""
 
-#: modules/sk-auth/includes/NostrLogin.php:452
+#: modules/sk-auth/includes/NostrLogin.php:389
 msgid "Use Nostr Login"
 msgstr ""
 
@@ -10895,10 +10875,6 @@ msgstr ""
 #: includes/REST/StoreController.php:1130
 msgid "User password."
 msgstr "Benutzer Passwort."
-
-#: modules/sk-auth/includes/NostrLogin.php:92
-msgid "User Profile"
-msgstr ""
 
 #: modules/product-adv/includes/Admin/Settings.php:179
 msgid "Validation error"
@@ -11942,7 +11918,7 @@ msgstr "Sie sind nicht berechtigt, diese Aktion auszuführen."
 msgid "You do not have permission to perform this action"
 msgstr "Sie haben nicht die Erlaubnis, diese Aktion durchzuführen"
 
-#: modules/sk-auth/includes/NostrLogin.php:481
+#: modules/sk-auth/includes/NostrLogin.php:418
 msgid "You do not have permission to perform this action."
 msgstr ""
 
@@ -12025,7 +12001,7 @@ msgstr "Sie haben erfolgreich %s Produkt erstellt"
 msgid "You have to logged in to get your status."
 msgstr ""
 
-#: modules/sk-auth/includes/NostrLogin.php:476
+#: modules/sk-auth/includes/NostrLogin.php:413
 msgid "You must be logged in."
 msgstr ""
 
