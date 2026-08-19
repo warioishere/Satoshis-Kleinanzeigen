@@ -694,6 +694,18 @@ class Helper {
         if ( self::check_vendor_has_existing_product( $customer_id ) ) {
             self::make_product_draft( $customer_id );
         }
+
+        /**
+         * Fires once every subscription meta of a vendor has been removed.
+         *
+         * Unlike sk_subscription_cancelled this runs after the cleanup, so a
+         * listener can hand the vendor a replacement pack right away instead of
+         * leaving them without one until their next visit.
+         *
+         * @param int $customer_id
+         * @param int $order_id
+         */
+        do_action( 'sk_subscription_pack_deleted', $customer_id, $order_id );
     }
 
     /**
@@ -778,8 +790,22 @@ class Helper {
             $alert_days = 2;
         }
 
+        if ( empty( $pack_end_date_str ) || ! strtotime( $pack_end_date_str ) ) {
+            return false;
+        }
+
         $current_date = sk_current_datetime();
-        $alert_date   = sk_current_datetime()->modify( $pack_end_date_str )->modify( "- $alert_days days" );
+
+        try {
+            $alert_date = sk_current_datetime()->modify( $pack_end_date_str )->modify( "- $alert_days days" );
+        } catch ( \Exception $e ) {
+            self::log( 'Subscription alert check: could not parse pack end date for user #' . $user_id . ': ' . $e->getMessage() );
+            return false;
+        }
+
+        if ( ! $alert_date ) {
+            return false;
+        }
 
         $current_date = $current_date->format( 'Y-m-d' );
         $alert_date = $alert_date->format( 'Y-m-d' );
@@ -810,14 +836,25 @@ class Helper {
 		    return false;
 	    }
 
-        if ( ! strtotime( $pack_end_date ) ) {
-            // if an invalid date is stored, we need to cancel the subscription plan
-            return true;
+        /*
+         * An unreadable end date must not cancel the plan. Cancelling deletes every
+         * subscription meta and drafts the vendor's products, so an odd value would
+         * silently wipe a paying vendor. Log it and leave the plan alone instead.
+         */
+        if ( empty( $pack_end_date ) || ! strtotime( $pack_end_date ) ) {
+            self::log( 'Subscription validity check: unreadable pack end date for user #' . $vendor_id . ' (' . wp_json_encode( $pack_end_date ) . '), leaving the subscription untouched.' );
+            return false;
         }
 
         $current_date = sk_current_datetime();
 
-        $validation_date = $current_date->modify( $pack_end_date );
+        try {
+            $validation_date = $current_date->modify( $pack_end_date );
+        } catch ( \Exception $e ) {
+            self::log( 'Subscription validity check: could not parse pack end date for user #' . $vendor_id . ': ' . $e->getMessage() );
+            return false;
+        }
+
         if ( ! $validation_date ) {
             return false;
         }

@@ -493,8 +493,16 @@ class Module {
             return $data;
         }
 
+        if ( empty( $data['ID'] ) ) {
+            return $data;
+        }
+
         // if product status was not publish and pending then make it draft
         $product = wc_get_product( $data['ID'] );
+
+        if ( ! $product ) {
+            return $data;
+        }
 
         if ( 'publish' !== $product->get_status() && 'pending' !== $product->get_status() ) {
             $data['post_status'] = 'draft';

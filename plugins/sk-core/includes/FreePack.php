@@ -36,6 +36,10 @@ final class FreePack {
         // Login check.
         add_action( 'wp_login', [ __CLASS__, 'on_login' ], 10, 2 );
 
+        // A pack just expired or was cancelled — hand out the free pack right away
+        // instead of leaving the vendor without one until their next visit.
+        add_action( 'sk_subscription_pack_deleted', [ __CLASS__, 'on_pack_deleted' ], 10, 1 );
+
         // Throttled page-load checks.
         add_action( 'wp',         [ __CLASS__, 'on_pageload_front' ], 1 );
         add_action( 'admin_init', [ __CLASS__, 'on_pageload_admin' ] );
@@ -66,6 +70,14 @@ final class FreePack {
 
     public static function on_new_seller( $user_id ): void {
         self::maybe_assign_onboarding( (int) $user_id );
+    }
+
+    public static function on_pack_deleted( $user_id ): void {
+        $uid = (int) $user_id;
+        if ( ! $uid || ! self::is_vendor( $uid ) ) {
+            return;
+        }
+        self::ensure_free_if_no_active_other( $uid );
     }
 
     public static function on_login( $user_login, $user ): void {
