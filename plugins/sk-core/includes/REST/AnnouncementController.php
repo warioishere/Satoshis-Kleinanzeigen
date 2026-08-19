@@ -149,6 +149,7 @@ class AnnouncementController extends SkRESTController {
                 [
                     'methods'             => WP_REST_Server::EDITABLE,
                     'callback'            => [ $this, 'update_item' ],
+                    'args'                => $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ),
                     'permission_callback' => [ $this, 'update_item_permissions_check' ],
                 ],
 

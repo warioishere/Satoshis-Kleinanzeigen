@@ -7,7 +7,7 @@
 
 use SK\Core\Announcement\Single;
 
-$current_user_id = get_current_user_id();
+$current_user_id = sk_get_current_user_id();
 $manager         = sk_ext()->announcement->manager;
 $pagenum         = isset( $_GET['pagenum'] ) ? absint( $_GET['pagenum'] ) : 1;
 $per_page        = apply_filters( 'sk_announcement_list_number', 20 );
@@ -23,13 +23,30 @@ $args = [
 $announcements   = $manager->all( $args );
 $pagination_data = $manager->get_pagination_data( $args );
 
-// Pre-load first announcement if available
-$first_notice = null;
+if ( is_wp_error( $announcements ) ) {
+	$announcements = [];
+}
+
+// Deep links from the announcement mail carry the notice id, otherwise the
+// newest announcement is the one shown.
+$requested_notice_id = absint( get_query_var( 'single-announcement' ) );
+
+$first_notice     = null;
+$active_notice_id = 0;
+
 if ( ! empty( $announcements ) ) {
-	$first = $announcements[0];
-	$first_notice = $manager->get_notice( $first->get_notice_id() );
+	$active_notice_id = $requested_notice_id ? $requested_notice_id : $announcements[0]->get_notice_id();
+	$first_notice     = $manager->get_notice( $active_notice_id );
+
+	// Fall back to the newest one if the deep link points at a notice that is
+	// gone or belongs to somebody else.
+	if ( ! $first_notice instanceof Single ) {
+		$active_notice_id = $announcements[0]->get_notice_id();
+		$first_notice     = $manager->get_notice( $active_notice_id );
+	}
+
 	if ( $first_notice instanceof Single && 'unread' === $first_notice->get_read_status() ) {
-		$manager->update_read_status( $first->get_notice_id(), 'read' );
+		$manager->update_read_status( $active_notice_id, 'read' );
 		$first_notice = $first_notice->set_read_status( 'read' );
 	}
 }
@@ -64,12 +81,14 @@ wp_localize_script(
 					</div>
 				<?php else : ?>
 					<div class="sk-announcement-list">
-						<?php foreach ( $announcements as $index => $item ) :
-							$is_first  = ( $index === 0 );
-							$is_unread = $item->get_read_status() === 'unread';
+						<?php foreach ( $announcements as $item ) :
+							$is_active = ( $item->get_notice_id() === $active_notice_id );
+							// The list was queried before the active notice was marked
+							// read, so do not badge it as unread here.
+							$is_unread = ! $is_active && $item->get_read_status() === 'unread';
 							?>
 							<a href="#"
-							   class="sk-announcement-list-item <?php echo $is_first ? 'active' : ''; ?> <?php echo $is_unread ? 'unread' : ''; ?>"
+							   class="sk-announcement-list-item <?php echo $is_active ? 'active' : ''; ?> <?php echo $is_unread ? 'unread' : ''; ?>"
 							   data-notice-id="<?php echo esc_attr( $item->get_notice_id() ); ?>">
 								<div class="sk-announcement-list-item-header">
 									<strong><?php echo esc_html( $item->get_title() ); ?></strong>

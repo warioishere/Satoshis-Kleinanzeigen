@@ -20,7 +20,7 @@ do_action( 'woocommerce_email_header', $email_heading, $email ); ?>
 <p>
     <?php
     // translators: %s dashboard url.
-    echo wp_kses_post( sprintf( __( 'You can check this announcement in dashboard by clicking <a href="%s">here<a/>.', 'sk-core' ), $data['{announcement_url}'] ) );
+    echo wp_kses_post( sprintf( __( 'You can check this announcement in dashboard by clicking <a href="%s">here</a>.', 'sk-core' ), $data['{announcement_url}'] ) );
     ?>
 </p>
 <?php

@@ -66,11 +66,19 @@ class Announcement extends WC_Email {
             return;
         }
 
+        $post = get_post( $post_id );
+
+        if ( ! $post ) {
+            return;
+        }
+
         $this->setup_locale();
         $email = $seller_info->get_email();
 
-        $announcement_url = sk_get_navigation_url( 'announcement/single-announcement' ) . "{$notice_id}/";
-        $post = get_post( $post_id );
+        // The rewrite rule for `announcement` swallows everything after it, so a
+        // nested `announcement/single-announcement/{id}` never populates the
+        // single-announcement query var.
+        $announcement_url = sk_get_navigation_url( 'single-announcement' ) . "{$notice_id}/";
 
         $this->placeholders['{announcement_title}'] = $post->post_title;
         $this->placeholders['{announcement_url}']   = $announcement_url;

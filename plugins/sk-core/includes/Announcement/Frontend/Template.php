@@ -37,17 +37,12 @@ class Template extends DashboardModule {
         // Registry dispatches only on the main slug so handle single directly.
         add_action( 'sk_load_custom_template', [ $this, 'load_single_template' ], 10 );
 
-        add_action( 'sk_announcement_content_area_header', [ $this, 'load_header_template' ] );
-        add_action( 'sk_announcement_content', [ $this, 'load_announcement_content' ], 10 );
-        add_action( 'sk_single_announcement_content', [ $this, 'load_single_announcement_content' ], 10 );
-
         // Badge runs AFTER Registry's inject_menus (priority 50).
         add_filter( 'sk_get_dashboard_nav', [ $this, 'add_notification_badge' ], 60 );
         // Mark 'announcement' menu active when viewing a single announcement.
         add_filter( 'sk_dashboard_nav_active', [ $this, 'active_announcement_nav_menu' ], 60, 3 );
 
         // Announcement ajax handling
-        add_action( 'wp_ajax_sk_announcement_remove_row', [ $this, 'remove_announcement' ] );
         add_action( 'wp_ajax_sk_announcement_get_notice', [ $this, 'ajax_get_notice' ] );
     }
 
@@ -68,86 +63,12 @@ class Template extends DashboardModule {
     }
 
     /**
-     * Render Announcement listing template header
-     *
-     *
-     * @return void
-     */
-    public function load_header_template() {
-        sk_get_template_part( 'announcement/header', '', [] );
-    }
-
-    /**
-     * Load announcement Content
-     *
-     *
-     * @return void
-     */
-    public function load_announcement_content() {
-        $pagenum  = isset( $_GET['pagenum'] ) ? absint( $_GET['pagenum'] ) : 1; //phpcs:ignore
-        $per_page = apply_filters( 'sk_announcement_list_number', 10 );
-
-        $args = [
-            'vendor_id' => sk_get_current_user_id(),
-            'page'      => $pagenum,
-            'per_page'  => $per_page,
-            'status'    => 'publish',
-            'return'    => 'all',
-        ];
-
-        $manager         = sk_ext()->announcement->manager;
-        $announcements   = $manager->all( $args );
-        $pagination_data = $manager->get_pagination_data( $args );
-
-        sk_get_template_part(
-            'announcement/listing-announcement', '', array_merge(
-                [
-                    'notices'      => $announcements,
-                    'current_page' => $pagenum,
-                ],
-                $pagination_data
-            )
-        );
-    }
-
-    /**
-     * Load Single announcement content
-     *
-     *
-     * @return void
-     */
-    public function load_single_announcement_content() {
-        $notice_id = get_query_var( 'single-announcement' );
-
-        $manager = new Manager();
-        $notice  = $manager->get_notice( $notice_id );
-
-        if ( ! $notice instanceof Single ) {
-            sk_get_template_part( 'announcement/no-announcement', '', [] );
-
-            return;
-        }
-
-        if ( 'unread' === $notice->get_read_status() ) {
-            $manager->update_read_status( $notice_id, 'read' );
-            $notice = $notice->set_read_status( 'read' );
-        }
-
-        sk_get_template_part(
-            'announcement/single-notice', '', [
-                'notice' => $notice,
-            ]
-        );
-    }
-
-    /**
      * Add announcement page in seller dashboard
      *
      *
      * @param array $urls
      *
      * @return array $urls
-     */
     /**
      * Append unread notification badge to the announcement nav title.
      *
@@ -162,11 +83,17 @@ class Template extends DashboardModule {
 
         $manager = new Manager();
         $unread = $manager->all( [
-            'vendor_id'   => get_current_user_id(),
+            'vendor_id'   => sk_get_current_user_id(),
             'status'      => 'publish',
             'read_status' => 'unread',
             'return'      => 'count',
         ] );
+
+        // This filter runs on every dashboard page, so a query error must not take
+        // the whole navigation down with it.
+        if ( is_wp_error( $unread ) ) {
+            return $nav;
+        }
 
         if ( $unread > 0 ) {
             $nav['announcement']['title'] .= ' <span class="sk-announcement-nav-badge">' . $unread . '</span>';
@@ -191,43 +118,6 @@ class Template extends DashboardModule {
         }
 
         return 'announcement';
-    }
-
-    /**
-     * Remove Announcement ajax
-     *
-     *
-     * @return void
-     */
-    public function remove_announcement() {
-        check_ajax_referer( 'sk_announcement_nonce', 'nonce' );
-
-        if ( ! current_user_can( 'skdar' ) ) {
-            wp_send_json_error();
-        }
-
-        $notice_id = isset( $_POST['row_id'] ) ? absint( $_POST['row_id'] ) : 0;
-        if ( ! $notice_id ) {
-            wp_send_json_error();
-        }
-        $result = sk_ext()->announcement->manager->delete_notice( $notice_id );
-
-        ob_start();
-        ?>
-        <div class="sk-no-announcement">
-            <div class="annoument-no-wrapper">
-                <i class="fas fa-bell sk-announcement-icon"></i>
-                <p><?php esc_html_e( 'No Announcement found', 'sk-core' ); ?></p>
-            </div>
-        </div>
-        <?php
-        $content = ob_get_clean();
-
-        if ( $result ) {
-            wp_send_json_success( $content );
-        } else {
-            wp_send_json_error();
-        }
     }
 
     /**

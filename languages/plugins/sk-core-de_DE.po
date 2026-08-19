@@ -11776,14 +11776,11 @@ msgstr "Sie können unbegrenzt viele Produkte hinzufügen"
 msgid "You can advertise this product for free. Expire after <strong>%1$s</strong>, Remaining slot: <strong>%2$s</strong>"
 msgstr "Du kannst dieses Produkt kostenlos boosten. Läuft ab nach <strong>%1$s</strong>, Verbleibender Slot: <strong>%2$s</strong>"
 
-#  msgid ""
-#  "You can check this announcement in dashboard by clicking <a href=\"%s\">"
-#  "here<a/>"
 #. translators: %s dashboard url.
 #: templates/emails/announcement.php:23
-#, fuzzy, php-format
-msgid "You can check this announcement in dashboard by clicking <a href=\"%s\">here<a/>."
-msgstr "Sie können diese Ankündigung im Dashboard überprüfen, indem Sie hier <a href=\"%s\">hier<a/> klicken"
+#, php-format
+msgid "You can check this announcement in dashboard by clicking <a href=\"%s\">here</a>."
+msgstr "Du kannst diese Ankündigung im Dashboard unter <a href=\"%s\">diesem Link</a> ansehen."
 
 #: templates/emails/plain/announcement.php:29
 msgid "You can check this announcement in your dashboard "

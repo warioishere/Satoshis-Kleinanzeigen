@@ -122,7 +122,12 @@ class Manager {
         }
 
         if ( ! empty( $args['vendor_id'] ) ) {
-            $fields       .= ', a.id as notice_id, a.user_id as vendor_id, a.status AS read_status';
+            // Appending these to a COUNT() would produce an aggregate mixed with
+            // non-aggregated columns, which errors out under ONLY_FULL_GROUP_BY.
+            if ( 'count' !== $args['return'] ) {
+                $fields .= ', a.id as notice_id, a.user_id as vendor_id, a.status AS read_status';
+            }
+
             $join         .= "INNER JOIN $this->announcement_table AS a ON p.ID = a.post_id";
             $where        .= ' AND a.user_id = %d AND a.status != %s';
             $query_args[] = absint( $args['vendor_id'] );
@@ -355,17 +360,38 @@ class Manager {
      * @return int|WP_Error
      */
     public function create_announcement( $args = [], $update = false ) {
-        if ( empty( trim( $args['title'] ) ) ) {
+        $has_title = isset( $args['title'] ) && '' !== trim( (string) $args['title'] );
+
+        // On update every field is optional, but an explicitly emptied title is not.
+        if ( ( ! $update || isset( $args['title'] ) ) && ! $has_title ) {
             return new WP_Error( 'no_title', __( 'Announcement title is required.', 'sk-core' ) );
         }
 
-        $data = [
-            'post_title'   => sanitize_text_field( $args['title'] ),
-            'post_content' => ! empty( $args['content'] ) ? wp_kses_post( $args['content'] ) : '',
-            'post_status'  => ! empty( $args['status'] ) ? $args['status'] : 'draft',
-            'post_type'    => 'sk_announcement',
-            'post_author'  => isset( $args['author'] ) ? absint( $args['author'] ) : get_current_user_id(),
-        ];
+        // Only fields that were actually supplied get written, otherwise an update
+        // that omits them would blank the content or reset the author.
+        $data = [ 'post_type' => 'sk_announcement' ];
+
+        if ( $has_title ) {
+            $data['post_title'] = sanitize_text_field( $args['title'] );
+        }
+
+        if ( isset( $args['content'] ) ) {
+            $data['post_content'] = wp_kses_post( $args['content'] );
+        } elseif ( ! $update ) {
+            $data['post_content'] = '';
+        }
+
+        if ( ! empty( $args['status'] ) ) {
+            $data['post_status'] = $args['status'];
+        } elseif ( ! $update ) {
+            $data['post_status'] = 'draft';
+        }
+
+        if ( isset( $args['author'] ) ) {
+            $data['post_author'] = absint( $args['author'] );
+        } elseif ( ! $update ) {
+            $data['post_author'] = get_current_user_id();
+        }
 
         if ( ! empty( $args['date'] ) ) {
             $data['post_date'] = $args['date'];
@@ -380,7 +406,7 @@ class Manager {
         if ( ! $update ) {
             $post_id = wp_insert_post( $data );
         } else {
-            $data['ID'] = $args['id'];
+            $data['ID'] = absint( $args['id'] );
             $post_id    = wp_update_post( $data );
         }
 
@@ -388,8 +414,17 @@ class Manager {
             return $post_id;
         }
 
-        $announcement_type = ! empty( $args['announcement_type'] ) ? $args['announcement_type'] : 'all_seller';
-        $sender_ids        = ! empty( $args['sender_ids'] ) ? $args['sender_ids'] : [];
+        // An update that omits the type must not silently re-target the announcement
+        // at every seller.
+        $announcement_type = ! empty( $args['announcement_type'] ) ? $args['announcement_type'] : '';
+
+        if ( '' === $announcement_type && $update ) {
+            $announcement_type = (string) get_post_meta( $post_id, '_announcement_type', true );
+        }
+
+        if ( '' === $announcement_type ) {
+            $announcement_type = 'all_seller';
+        }
 
         $assigned_sellers   = ! empty( $args['sender_ids'] ) ? $args['sender_ids'] : [];
         $announcement_types = apply_filters( 'sk_announcement_seller_types', [ 'all_seller', 'enabled_seller', 'disabled_seller', 'featured_seller' ] );
@@ -418,11 +453,20 @@ class Manager {
             }
 
             $assigned_sellers = sk()->vendor->all( $seller_args );
+        } elseif ( empty( $assigned_sellers ) && $update ) {
+            // Keep the stored selection when an update does not carry one.
+            $assigned_sellers = get_post_meta( $post_id, '_announcement_selected_user', true );
         }
+
+        // Vendor ids arrive as strings from the database and as integers from the
+        // REST schema. Without one type the strict comparison in
+        // process_seller_announcement_data() treats every recipient as new and
+        // re-creates all rows, resetting read status and notice ids.
+        $assigned_sellers = array_values( array_unique( array_map( 'absint', array_filter( (array) $assigned_sellers, 'is_numeric' ) ) ) );
 
         // Remove excluded sellers ids
         if ( ! empty( $args['exclude_seller_ids'] ) && is_array( $args['exclude_seller_ids'] ) ) {
-            $assigned_sellers = array_diff( $assigned_sellers, $args['exclude_seller_ids'] );
+            $assigned_sellers = array_values( array_diff( $assigned_sellers, array_map( 'absint', $args['exclude_seller_ids'] ) ) );
         }
 
         $this->process_seller_announcement_data( $assigned_sellers, $post_id );
@@ -489,13 +533,16 @@ class Manager {
         $status_where = $exclude_trash ? " AND status != 'trash'" : '';
 
         // @codingStandardsIgnoreStart
-        return $wpdb->get_col(
+        $user_ids = $wpdb->get_col(
             $wpdb->prepare(
                 "SELECT user_id FROM {$this->announcement_table} WHERE `post_id`= %d $status_where",
                 $announcment_id
             )
         );
         // @codingStandardsIgnoreEnd
+
+        // get_col() returns strings; callers compare these strictly against ids.
+        return array_map( 'absint', $user_ids );
     }
 
     /**
