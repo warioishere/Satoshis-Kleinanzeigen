@@ -18,6 +18,7 @@ class UserOnboarding {
 		add_action( 'wp_ajax_uob_complete_onboarding', [ $this, 'ajax_complete' ] );
 		add_action( 'wp_ajax_sk_create_nostr_identity', [ $this, 'ajax_create_nostr_identity' ] );
 		add_action( 'wp_ajax_sk_delete_nostr_identity', [ $this, 'ajax_delete_nostr_identity' ] );
+		add_action( 'wp_ajax_sk_get_nostr_nsec', [ $this, 'ajax_get_nostr_nsec' ] );
 		add_action( 'deleted_user', [ $this, 'cleanup' ] );
 		add_action( 'admin_menu', [ $this, 'add_admin_page' ] );
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
@@ -340,6 +341,32 @@ class UserOnboarding {
 	 * AJAX: Delete the generated Nostr identity for current user, so they
 	 * can re-link with their own browser-extension key via the auth-connector.
 	 */
+	/**
+	 * Hand the Nostr private key to its owner, on request only.
+	 *
+	 * The key used to be embedded in the page via wp_localize_script, which put it
+	 * into the HTML of every visit to the connector page — readable by any other
+	 * script on that page and by anything that caches markup. It is now fetched
+	 * here, and only ever for the logged in user themselves: the id comes from the
+	 * session, never from the request, so there is nothing to tamper with.
+	 */
+	public function ajax_get_nostr_nsec(): void {
+		check_ajax_referer( 'uob_ajax_nonce', 'nonce' );
+
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error( [ 'message' => __( 'Du musst angemeldet sein.', 'sk-core' ) ], 401 );
+		}
+
+		$nsec = \SK\Modules\Auth\NostrIdentity::get_nsec( get_current_user_id() );
+
+		if ( empty( $nsec ) ) {
+			wp_send_json_error( [ 'message' => __( 'Fuer diesen Account ist kein Nostr-Schluessel hinterlegt.', 'sk-core' ) ], 404 );
+		}
+
+		nocache_headers();
+		wp_send_json_success( [ 'nsec' => $nsec ] );
+	}
+
 	public function ajax_delete_nostr_identity(): void {
 		check_ajax_referer( 'uob_ajax_nonce', 'nonce' );
 

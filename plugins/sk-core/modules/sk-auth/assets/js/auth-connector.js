@@ -3,13 +3,26 @@
  */
 jQuery(function($){
     var config = window.skAuthConnector || {};
-    var nsecRevealed = false;
+    // The nsec is not in the page. It is fetched here, only when the user asks.
     $('#uac-reveal-nsec').on('click', function(){
-        if (!nsecRevealed && !confirm('Bist du sicher? Zeige deinen Private Key nur, wenn du ihn exportieren möchtest.')) return;
-        nsecRevealed = true;
-        $('#uac-nsec-value').css({filter:'none',userSelect:'text'}).text(config.nsec);
-        $(this).hide();
-        $('#uac-copy-nsec').show();
+        if (!confirm('Bist du sicher? Zeige deinen Private Key nur, wenn du ihn exportieren möchtest.')) return;
+        var $btn = $(this).prop('disabled', true).text('Lade...');
+        $.post(config.ajaxUrl, {
+            action: 'sk_get_nostr_nsec',
+            nonce:  config.nonce
+        }, function(res){
+            if (res.success && res.data && res.data.nsec) {
+                $('#uac-nsec-value').css({filter:'none',userSelect:'text'}).text(res.data.nsec);
+                $btn.hide();
+                $('#uac-copy-nsec').show();
+            } else {
+                $btn.prop('disabled', false).text('Anzeigen');
+                alert((res.data && res.data.message) || 'Fehler');
+            }
+        }).fail(function(){
+            $btn.prop('disabled', false).text('Anzeigen');
+            alert('Fehler beim Laden des Schlüssels.');
+        });
     });
     $('#uac-copy-nsec').on('click', function(){
         navigator.clipboard.writeText($('#uac-nsec-value').text());

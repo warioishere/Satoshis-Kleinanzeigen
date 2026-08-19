@@ -53,7 +53,8 @@ class SK_Auth_Dashboard extends \SK\Core\Dashboard\DashboardModule {
             'sk-auth-connector',
             'skAuthConnector',
             array(
-                'nsec'    => \SK\Modules\Auth\NostrIdentity::get_nsec( $user_id ),
+                // the nsec is deliberately NOT shipped here — it is fetched over
+                // admin-ajax when the user asks to see it, see sk_get_nostr_nsec
                 'ajaxUrl' => admin_url( 'admin-ajax.php' ),
                 'nonce'   => wp_create_nonce( 'uob_ajax_nonce' ),
             )
