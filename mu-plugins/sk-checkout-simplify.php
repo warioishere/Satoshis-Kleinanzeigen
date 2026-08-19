@@ -1,14 +1,14 @@
 <?php
 /**
- * Plugin Name: Dokan Checkout Simplify
- * Description: Makes checkout fields optional for Dokan Product Advertisements and Subscription Packs - only first name required
+ * Plugin Name: SK Checkout Simplify
+ * Description: Makes checkout fields optional for SK product advertisements and subscription packs - only first name required
  * Version: 1.0.0
  * Author: Satoshi's Kleinanzeigen
  */
 
 if (!defined('ABSPATH')) exit;
 
-class Dokan_Checkout_Simplify {
+class SK_Checkout_Simplify {
 
     /**
      * Initialize the plugin
@@ -31,7 +31,7 @@ class Dokan_Checkout_Simplify {
     }
 
     /**
-     * Check if cart contains Dokan Product Advertisement
+     * Check if cart contains an SK product advertisement
      *
      * @return bool
      */
@@ -40,9 +40,9 @@ class Dokan_Checkout_Simplify {
             return false;
         }
 
-        // Check for product advertisement using Dokan helper if available
-        if (class_exists('\SK\Pro\Modules\ProductAdvertisement\Helper')) {
-            return \SK\Pro\Modules\ProductAdvertisement\Helper::has_product_advertisement_in_cart();
+        // Check for product advertisement using the SK helper if available
+        if (class_exists('\SK\Modules\ProductAdvertisement\Helper')) {
+            return \SK\Modules\ProductAdvertisement\Helper::has_product_advertisement_in_cart();
         }
 
         // Fallback: Check cart items manually
@@ -56,7 +56,7 @@ class Dokan_Checkout_Simplify {
     }
 
     /**
-     * Check if cart contains Dokan Subscription Pack
+     * Check if cart contains an SK subscription pack
      *
      * @return bool
      */
@@ -68,7 +68,7 @@ class Dokan_Checkout_Simplify {
         foreach (WC()->cart->get_cart() as $item) {
             $product = $item['data'];
 
-            // Check if product type is 'product_pack' (Dokan Subscription)
+            // Check if product type is 'product_pack' (SK subscription)
             if ($product && method_exists($product, 'get_type') && $product->get_type() === 'product_pack') {
                 return true;
             }
@@ -156,7 +156,7 @@ class Dokan_Checkout_Simplify {
     }
 
     /**
-     * Make billing fields optional except first name for Dokan products
+     * Make billing fields optional except first name for SK products
      *
      * @param array $args Field arguments
      * @param string $key Field key
@@ -164,7 +164,7 @@ class Dokan_Checkout_Simplify {
      * @return array
      */
     public function make_fields_optional($args, $key, $value) {
-        // Only apply to checkout page for Dokan products
+        // Only apply to checkout page for SK products
         if (!is_checkout() || !$this->should_simplify_checkout()) {
             return $args;
         }
@@ -187,7 +187,7 @@ class Dokan_Checkout_Simplify {
      * @return array
      */
     public function autofill_optional_fields($data) {
-        // Only apply for Dokan products
+        // Only apply for SK products
         if (!$this->should_simplify_checkout()) {
             return $data;
         }
@@ -224,7 +224,7 @@ class Dokan_Checkout_Simplify {
      * @return string
      */
     public function remove_required_class($field_html, $field_key, $field_data, $checkout) {
-        // Only apply to checkout page for Dokan products
+        // Only apply to checkout page for SK products
         if (!is_checkout() || !$this->should_simplify_checkout()) {
             return $field_html;
         }
@@ -271,4 +271,4 @@ class Dokan_Checkout_Simplify {
 }
 
 // Initialize the plugin
-new Dokan_Checkout_Simplify();
+new SK_Checkout_Simplify();

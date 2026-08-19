@@ -676,7 +676,7 @@ nav.woocommerce-pagination ul li span.current {
 /* Mobile Feinheiten */
 
 /* ----------------------------------------------------------
- * Dokan: Produktfilter auf Smartphone verbreitern
+ * Produktfilter auf Smartphone verbreitern
  * ---------------------------------------------------------- */
 @media (max-width: 767px) {
   #product-filter.sk-form-inline {
@@ -1223,7 +1223,7 @@ body.post-type-archive-gesuch .hero-section-overlay {
     background-color: transparent !important;
 }
 
-/* Dokan Vendorpage Pagination */
+/* Vendorpage Pagination */
 
 .pagination .page-numbers:last-child {
   margin-right: 0;
@@ -1285,7 +1285,7 @@ ul.products li.product .price {
     font-size: 1rem;
 }
 
-/* ───────────────🔹 DOKAN DASHBOARD STYLES ─────────────── */
+/* ───────────────🔹 DASHBOARD STYLES ─────────────── */
 
 
 /* Ankündigungstitel in Schwarz */
@@ -1337,7 +1337,7 @@ h3.text-2xl.font-semibold {
 }
 
 /* Aktiver Tab weiß */
-.dokan_tabs li.active a {
+.sk-store-tabs li.active a {
     color: #ffffff !important;
 }
 

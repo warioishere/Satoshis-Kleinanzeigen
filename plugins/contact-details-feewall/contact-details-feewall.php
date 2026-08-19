@@ -63,7 +63,7 @@ class Contact_Details_Feewall {
     }
 
     /**
-     * Add feewall setting to Dokan store settings form
+     * Add feewall setting to the SK store settings form
      */
     public function add_feewall_setting($current_user, $profile_info) {
         if (!is_array($profile_info)) {
@@ -637,7 +637,7 @@ class Contact_Details_Feewall {
 
                         <div class="cdf-info-card">
                             <h3><i class="dashicons dashicons-admin-users"></i> <?php _e('Verkäufer-Kontrolle', 'contact-details-feewall'); ?></h3>
-                            <p><?php _e('Verkäufer können die Paywall in ihren Dokan-Einstellungen unter "Shop" aktivieren oder deaktivieren.', 'contact-details-feewall'); ?></p>
+                            <p><?php _e('Verkäufer können die Paywall in ihren Shop-Einstellungen aktivieren oder deaktivieren.', 'contact-details-feewall'); ?></p>
                         </div>
                     </div>
                 </div>
