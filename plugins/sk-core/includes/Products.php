@@ -28,8 +28,6 @@ class Products {
      */
     public function __construct() {
         add_action( 'sk_product_edit_after_inventory_variants', array( $this, 'load_linked_product_content' ), 15, 2 );
-        add_action( 'sk_product_edit_after_inventory_variants', array( $this, 'load_variations_content' ), 20, 2 );
-        add_action( 'sk_dashboard_wrap_after', array( $this, 'load_variations_js_template' ), 10, 2 );
         add_action( 'sk_render_new_product_template', array( $this, 'render_new_product_template' ), 10 );
         add_action( 'sk_new_product_added', array( $this, 'set_product_tags' ), 10, 2 );
         add_action( 'sk_product_updated', array( $this, 'set_product_tags' ) );
@@ -79,54 +77,6 @@ class Products {
         }
     }
 
-    /**
-     * Load Variation Content
-     *
-     *
-     * @param  object $post
-     * @param  integer $post_id
-     *
-     * @return void
-     */
-    public function load_variations_content( $post, $post_id ) {
-        $_has_attribute       = get_post_meta( $post_id, '_has_attribute', true );
-        $_create_variations   = get_post_meta( $post_id, '_create_variation', true );
-        $product_attributes   = get_post_meta( $post_id, '_product_attributes', true );
-        $attribute_taxonomies = wc_get_attribute_taxonomies();
-
-        sk_get_template_part(
-            'products/product-variation',
-            '',
-            array(
-                'pro'                  => true,
-                'post_id'              => $post_id,
-                '_has_attribute'       => $_has_attribute,
-                '_create_variations'   => $_create_variations,
-                'product_attributes'   => $product_attributes,
-                'attribute_taxonomies' => $attribute_taxonomies,
-            )
-        );
-    }
-
-    /**
-     * Load Variation popup content when edit product
-     *
-     *
-     * @param  object $post
-     * @param  integer $post_id
-     *
-     * @return void
-     */
-    public function load_variations_js_template( $post, $post_id ) {
-        sk_get_template_part(
-            'products/edit/tmpl-add-attribute',
-            '',
-            array(
-                'pro' => true,
-                'post_id' => $post_id,
-            )
-        );
-    }
 
     /**
      * Render linked product content
@@ -497,9 +447,10 @@ class Products {
      * @return array
      */
     public function set_default_product_types( $product_types ) {
+        // No 'variable': variable products need the attribute and variation editor,
+        // which this dashboard no longer offers.
         $product_types = array(
             'simple'   => __( 'Simple', 'sk-core' ),
-            'variable' => __( 'Variable', 'sk-core' ),
             'external' => __( 'External/Affiliate product', 'sk-core' ),
         );
         $product_types['grouped'] = __( 'Group Product', 'sk-core' );
