@@ -762,7 +762,7 @@ class Module {
 
             if ( Helper::maybe_cancel_subscription( $user->ID ) ) {
                 if ( Helper::check_vendor_has_existing_product( $user->ID ) ) {
-                    Helper::make_product_draft( $user->ID );
+                    Helper::apply_product_status_after_end( $user->ID );
                 }
 
                 $order_id = get_user_meta( $user->ID, 'product_order_id', true );

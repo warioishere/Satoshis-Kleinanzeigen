@@ -202,7 +202,7 @@ class ProductStatusChanger {
      */
     public function change_product_status( $vendor_id ) {
         if ( ! Helper::get_vendor_remaining_products( $vendor_id ) ) {
-            Helper::make_product_draft( $vendor_id );
+            Helper::apply_product_status_after_end( $vendor_id );
         }
 
         if ( Helper::vendor_can_publish_unlimited_products( $vendor_id ) ) {

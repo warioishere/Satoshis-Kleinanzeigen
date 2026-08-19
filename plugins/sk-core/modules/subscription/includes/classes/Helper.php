@@ -692,7 +692,7 @@ class Helper {
 
         // make product status draft after subscriptions is got cancelled.
         if ( self::check_vendor_has_existing_product( $customer_id ) ) {
-            self::make_product_draft( $customer_id );
+            self::apply_product_status_after_end( $customer_id );
         }
 
         /**
@@ -749,14 +749,21 @@ class Helper {
     }
 
     /**
-     * Upadate Product Status
+     * Apply the configured product status for vendors whose pack has ended.
+     *
+     * Despite what the old name (make_product_draft) suggested this does not
+     * necessarily draft anything. It queues a background job that moves the
+     * vendor's published and pending products to whatever the admin configured
+     * under "product_status_after_end". On a site that keeps listings online
+     * after expiry that setting is 'publish' and the job is a no-op. Drafts are
+     * never touched, the queue only selects publish and pending products.
      *
      *
      * @param int $vendor_id
      *
      * @return void
      */
-    public static function make_product_draft( $vendor_id ) {
+    public static function apply_product_status_after_end( $vendor_id ) {
         $product_status_changer = self::get_product_status_changer_bg_class();
         if ( null === $product_status_changer ) {
             return;
