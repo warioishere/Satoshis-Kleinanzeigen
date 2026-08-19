@@ -146,7 +146,7 @@ class NostrLoginBox {
             'skNostrLogin',
             array(
                 'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
-                'dashboardUrl' => function_exists( 'sk_get_navigation_url' ) ? sk_get_navigation_url( 'dashboard' ) : home_url( '/dashboard/' ),
+                'dashboardUrl' => function_exists( 'sk_get_navigation_url' ) ? sk_get_navigation_url() : home_url( '/dashboard/' ),
                 'nonce'        => wp_create_nonce( 'nostr-login-nonce' ),
                 'noExtension'  => __( 'Nostr-kompatible Browsererweiterung nicht gefunden. Bitte z.B. Alby installieren.', 'sk-core' ),
             )

@@ -41,6 +41,23 @@ class SK_Auth_Dashboard extends \SK\Core\Dashboard\DashboardModule {
      */
     public function render_auth_page() {
         $user_id = get_current_user_id();
+
+        wp_enqueue_script(
+            'sk-auth-connector',
+            SK_AUTH_ASSETS . '/js/auth-connector.js',
+            array( 'jquery' ),
+            SK_AUTH_VERSION,
+            true
+        );
+        wp_localize_script(
+            'sk-auth-connector',
+            'skAuthConnector',
+            array(
+                'nsec'    => \SK\Modules\Auth\NostrIdentity::get_nsec( $user_id ),
+                'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+                'nonce'   => wp_create_nonce( 'uob_ajax_nonce' ),
+            )
+        );
         $linked_methods = $this->account_linker->get_linked_methods($user_id);
 
         // Both LNURL + Nostr login are bundled in the sk_auth module — if this
@@ -291,34 +308,6 @@ class SK_Auth_Dashboard extends \SK\Core\Dashboard\DashboardModule {
                                     </div>
                                 </div>
                             </div>
-                            <script>
-                            jQuery(function($){
-                                var nsecRevealed = false;
-                                $('#uac-reveal-nsec').on('click', function(){
-                                    if (!nsecRevealed && !confirm('Bist du sicher? Zeige deinen Private Key nur, wenn du ihn exportieren möchtest.')) return;
-                                    nsecRevealed = true;
-                                    $('#uac-nsec-value').css({filter:'none',userSelect:'text'}).text(<?php echo wp_json_encode( \SK\Modules\Auth\NostrIdentity::get_nsec( $user_id ) ); ?>);
-                                    $(this).hide();
-                                    $('#uac-copy-nsec').show();
-                                });
-                                $('#uac-copy-nsec').on('click', function(){
-                                    navigator.clipboard.writeText($('#uac-nsec-value').text());
-                                    $(this).text('Kopiert!');
-                                    setTimeout(function(){ $('#uac-copy-nsec').text('Kopieren'); }, 2000);
-                                });
-                                $('#uac-delete-nostr-identity').on('click', function(){
-                                    if (!confirm('Wirklich löschen? Du verlierst den Zugriff auf deinen aktuellen nsec — stelle sicher, dass du ihn vorher exportiert hast, falls du den Account weiter nutzen möchtest.')) return;
-                                    var $btn = $(this).prop('disabled', true).text('Lösche...');
-                                    $.post(<?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>, {
-                                        action: 'sk_delete_nostr_identity',
-                                        nonce:  <?php echo wp_json_encode( wp_create_nonce( 'uob_ajax_nonce' ) ); ?>
-                                    }, function(res){
-                                        if (res.success) { location.reload(); }
-                                        else { $btn.prop('disabled', false).text('Identität löschen'); alert((res.data && res.data.message) || 'Fehler'); }
-                                    });
-                                });
-                            });
-                            </script>
                             <?php endif; ?>
 
                         </div>

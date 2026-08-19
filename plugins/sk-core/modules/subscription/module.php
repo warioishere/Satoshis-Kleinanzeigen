@@ -1490,11 +1490,10 @@ class Module {
     }
 
     /**
-     * Renders the JavaScript code to enforce gallery image restrictions.
+     * Enqueues the script that enforces gallery image restrictions.
      *
-     * This method outputs a <script> tag with JavaScript code that handles the UI updates
-     * for gallery image restrictions, including updating button states, showing/hiding elements,
-     * and displaying warning messages.
+     * The script handles the UI updates for gallery image restrictions, including
+     * updating button states, showing/hiding elements and displaying warning messages.
      *
      *
      * @param int $image_count The maximum number of images allowed.
@@ -1504,75 +1503,21 @@ class Module {
      * @return void
      */
     private function render_gallery_restriction_script( int $image_count, int $current_image_count, string $warning_message ) {
-        ?>
-        <script type="text/javascript">
-            ( function () {
-                const IMAGE_COUNT_LIMIT = <?php echo json_encode( $image_count, JSON_HEX_TAG ); ?>;
-                const WARNING_MESSAGE = <?php echo json_encode( $warning_message ); ?>;
-
-                function updateUI() {
-                    const addedImages = document.querySelectorAll("#product_images_container .image").length;
-                    const selectedImages = document.querySelectorAll("[aria-checked='true']").length;
-                    const submitButton = document.querySelector('.media-toolbar button');
-                    const addImageButton = document.querySelector("#product_images_container .add-image");
-
-                    // Update submit button state
-                    if (submitButton && !['Set featured image', 'Set variation image'].includes(submitButton.innerText)) {
-                        submitButton.disabled = (selectedImages + addedImages > IMAGE_COUNT_LIMIT) || (selectedImages < 1);
-                    }
-
-                    // Update add image button visibility
-                    if (addImageButton) {
-                        addImageButton.style.display = addedImages >= IMAGE_COUNT_LIMIT ? 'none' : '';
-                    }
-
-                    // Show or remove warning message based on current image count
-                    const warningMessage = document.getElementById('sk-image-limit-warning');
-                    if (addedImages > IMAGE_COUNT_LIMIT && WARNING_MESSAGE) {
-                        if (!warningMessage) {
-                            const container = document.querySelector("#product_images_container");
-                            const warning = document.createElement('div');
-                            warning.id = 'sk-image-limit-warning';
-                            warning.className = 'sk-alert sk-alert-warning';
-                            warning.innerHTML = WARNING_MESSAGE;
-                            container.appendChild(warning);
-                        }
-                    } else if (warningMessage) {
-                        warningMessage.remove();
-                    }
-                }
-
-                function initializeMutationObserver() {
-                    const observer = new MutationObserver(() => {
-                        if (document.querySelector('.attachments-browser ul')) {
-                            updateUI();
-                        }
-                    });
-
-                    observer.observe(document.body, { childList: true, subtree: true });
-                }
-
-                function setupImageDeletionListener() {
-                    const imageContainer = document.querySelector("#product_images_container");
-                    if (imageContainer) {
-                        imageContainer.addEventListener('click', (event) => {
-                            if (event.target.matches('.image a.action-delete')) {
-                                setTimeout(updateUI, 100);
-                            }
-                        });
-                    }
-                }
-
-                function initializeProductImageLimitation() {
-                    updateUI();
-                    initializeMutationObserver();
-                    setupImageDeletionListener();
-                }
-
-                document.addEventListener('DOMContentLoaded', initializeProductImageLimitation);
-            } )();
-        </script>
-        <?php
+        wp_enqueue_script(
+            'sk-gallery-restriction',
+            DPS_URL . '/assets/js/gallery-restriction.js',
+            array(),
+            SK_CORE_VERSION,
+            true
+        );
+        wp_localize_script(
+            'sk-gallery-restriction',
+            'skGalleryLimit',
+            array(
+                'imageCountLimit' => $image_count,
+                'warningMessage'  => $warning_message,
+            )
+        );
     }
 
     /**
