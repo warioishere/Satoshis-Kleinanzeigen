@@ -29,8 +29,6 @@ class Performance {
         // Cache bust on POST
         add_action( 'init', [ $this, 'maybe_bust_cache_on_post' ] );
 
-        // Asset trimmer
-        add_action( 'sk_enqueue_scripts', [ $this, 'trim_assets' ], 999 );
     }
 
     /* ---- Helpers ---- */
@@ -245,66 +243,6 @@ class Performance {
 
         if ( '' !== $user_hash ) {
             wp_cache_set( 'sk_dcv_' . $user_hash, time(), PageCache::GROUP, HOUR_IN_SECONDS );
-        }
-    }
-
-    /* ---- Asset trimmer ---- */
-
-    public function trim_assets(): void {
-        if ( ! function_exists( 'sk_is_seller_dashboard' ) || ! sk_is_seller_dashboard() ) {
-            return;
-        }
-        global $wp;
-        $query_vars = isset( $wp, $wp->query_vars ) && is_array( $wp->query_vars ) ? $wp->query_vars : [];
-        if ( array_key_exists( 'page', $query_vars ) ) {
-            return;
-        }
-        $page_map = [
-            'settings'          => 'settings',
-            'products'          => 'products',
-            'orders'            => 'orders',
-            'announcement'      => 'announcement',
-        ];
-        $current_page = 'home';
-        foreach ( $page_map as $key => $page ) {
-            if ( array_key_exists( $key, $query_vars ) ) {
-                $current_page = $page;
-                break;
-            }
-        }
-        $groups = [
-            [ 'scripts' => [ 'sk-pro-frontend-shipping' ],     'styles' => [ 'sk-pro-frontend-shipping' ],     'needed_on' => [ 'settings' ] ],
-            [ 'scripts' => [ 'sk-pro-store-seo' ],              'styles' => [ 'sk-pro-store-seo' ],              'needed_on' => [ 'settings' ] ],
-            [ 'scripts' => [ 'sk-date-range-picker' ], 'styles' => [ 'sk-date-range-picker' ], 'needed_on' => [ 'settings', 'products' ] ],
-            [ 'scripts' => [ 'sk-maps' ],                       'styles' => [ 'sk-mapbox-gl', 'sk-mapbox-gl-geocoder' ], 'needed_on' => [ 'settings' ] ],
-            [ 'scripts' => [ 'wc-password-strength-meter' ],    'styles' => [],                                  'needed_on' => [ 'settings' ] ],
-        ];
-        $scripts = wp_scripts();
-        $styles  = wp_styles();
-        $has_script_deps = static function ( $handle ) use ( $scripts ) {
-            if ( ! $scripts instanceof \WP_Scripts ) return false;
-            foreach ( (array) $scripts->queue as $q ) {
-                if ( $q === $handle || ! isset( $scripts->registered[ $q ] ) ) continue;
-                if ( in_array( $handle, (array) $scripts->registered[ $q ]->deps, true ) ) return true;
-            }
-            return false;
-        };
-        $has_style_deps = static function ( $handle ) use ( $styles ) {
-            if ( ! $styles instanceof \WP_Styles ) return false;
-            foreach ( (array) $styles->queue as $q ) {
-                if ( $q === $handle || ! isset( $styles->registered[ $q ] ) ) continue;
-                if ( in_array( $handle, (array) $styles->registered[ $q ]->deps, true ) ) return true;
-            }
-            return false;
-        };
-        foreach ( $groups as $g ) {
-            if ( in_array( $current_page, $g['needed_on'], true ) ) continue;
-            foreach ( $g['scripts'] as $h ) {
-                if ( ! $has_script_deps( $h ) ) { wp_dequeue_script( $h ); wp_deregister_script( $h ); }
-            }
-            foreach ( $g['styles'] as $h ) {
-                if ( ! $has_style_deps( $h ) ) { wp_dequeue_style( $h ); wp_deregister_style( $h ); }
-            }
         }
     }
 }

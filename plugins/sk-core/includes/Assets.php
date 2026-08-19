@@ -743,7 +743,18 @@ class Assets {
             wp_enqueue_script( 'jquery-ui-datepicker' );
             wp_enqueue_script( 'underscore' );
             wp_enqueue_script( 'post' );
-            wp_enqueue_script( 'sk-date-range-picker' );
+
+            // Same pages as the matching style above — only these show a date range.
+            if (
+                isset( $wp->query_vars['products'] ) ||
+                isset( $wp->query_vars['orders'] ) ||
+                isset( $wp->query_vars['coupons'] ) ||
+                isset( $wp->query_vars['reports'] ) ||
+                ( isset( $wp->query_vars['settings'] ) && $wp->query_vars['settings'] === 'store' )
+            ) {
+                wp_enqueue_script( 'sk-date-range-picker' );
+            }
+
             wp_enqueue_script( 'sk-select2-js' );
             // Provides sk_show_delete_prompt / sk_bulk_delete_prompt used by delete/trash links
             // on products list, orders, coupons etc. — depends on sk-util-helper (sk_sweetalert).
