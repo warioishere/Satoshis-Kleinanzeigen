@@ -669,12 +669,12 @@ class Helper {
         }
 
         /**
-         * 1. both per product and subscription are enabled
+         * 1. per product purchase is enabled, with or without subscription on top
          * 2. only subscription is enabled
-         * 3. only per product is enabled
+         * 3. neither is enabled, global defaults apply
          */
-        if ( static::is_per_product_advertisement_enabled() && static::is_enabled_for_vendor_subscription() ) {
-            // check if user can advertise this product for free
+        if ( static::is_per_product_advertisement_enabled() ) {
+            // an advertisement cost of 0 means vendors advertise at no cost
             if ( empty( $listing_price ) ) {
                 $can_advertise_for_free = true;
             }
