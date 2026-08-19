@@ -2,12 +2,9 @@
     <div class="sk-product-attribute-heading">
         <span><i class="fas fa-bars" aria-hidden="true"></i>&nbsp;&nbsp;<strong><?php echo ! empty( $attribute_label ) ? esc_html( $attribute_label ) : esc_html__( 'Attribute Name', 'sk-core' ); ?></strong></span>
         <a href="#" class="sk-product-remove-attribute"><?php esc_html_e( 'Remove', 'sk-core' ); ?></a>
-        <a href="#" class="sk-product-toggle-attribute">
-            <i class="fas fa-sort-down fa-flip-horizontal" aria-hidden="true"></i>
-        </a>
     </div>
 
-    <div class="sk-product-attribute-item sk-clearfix sk-hide">
+    <div class="sk-product-attribute-item sk-clearfix">
         <div class="content-half-part">
             <label class="form-label" for=""><?php esc_html_e( 'Name', 'sk-core' ); ?></label>
             <?php if ( $attribute['is_taxonomy'] ) : ?>
