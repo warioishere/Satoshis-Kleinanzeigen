@@ -34,9 +34,6 @@ if ( ! defined( 'ABSPATH' ) ) {
             <?php esc_html_e( 'Advertise Product', 'sk-core' ); ?>
         </h2>
         <p><?php esc_html_e( 'Manage Advertisement for this product', 'sk-core' ); ?></p>
-        <a href="#" class="sk-section-toggle">
-            <i class="fas fa-sort-down fa-flip-vertical" aria-hidden="true"></i>
-        </a>
         <div class="sk-clearfix"></div>
     </div>
 

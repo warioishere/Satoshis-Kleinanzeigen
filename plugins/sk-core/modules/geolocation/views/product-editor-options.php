@@ -2,10 +2,6 @@
     <div class="sk-section-heading" data-togglehandler="sk_geolocation_options">
         <h2><i class="fas fa-map-marker-alt" aria-hidden="true"></i> Produkt Standort</h2>
 
-        <a href="#" class="sk-section-toggle">
-            <i class="fas fa-sort-down fa-flip-vertical" aria-hidden="true"></i>
-        </a>
-
         <div class="sk-clearfix"></div>
     </div>
 
