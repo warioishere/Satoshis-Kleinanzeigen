@@ -149,6 +149,15 @@ final class BuyNow {
         $order->set_customer_id( get_current_user_id() );
         $order->save();
 
+        /*
+         * WC_Checkout::process_checkout() fires this right after create_order().
+         * Modules use it to freeze what was bought onto the order — the subscription
+         * module stores pack validity and the allowed number of products there. Without
+         * it the order carries no terms and later falls back to whatever the pack says
+         * at that moment.
+         */
+        do_action( 'woocommerce_checkout_order_processed', $order_id, $checkout_data, $order );
+
         $gateways = WC()->payment_gateways()->payment_gateways();
         if ( ! isset( $gateways['btcpaygf_default'] ) ) {
             wp_send_json_error( [ 'message' => 'BTCPay Gateway nicht gefunden.' ], 500 );
