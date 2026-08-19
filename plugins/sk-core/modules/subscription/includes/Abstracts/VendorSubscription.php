@@ -81,39 +81,6 @@ abstract class VendorSubscription {
     }
 
 
-    /**
-     * Check package validity for seller
-     *
-     * @param int $pack_id
-     *
-     * @throws \Exception
-     * @return boolean
-     */
-    public function check_pack_validity_for_vendor( $pack_id ) {
-        $current_date         = sk_current_datetime();
-        $product_pack_enddate = $this->get_pack_end_date();
-        $product_package_id   = $this->get_id();
-
-        // if product_id is not same as current purchased package id, return false
-        if ( (int) $product_package_id !== (int) $pack_id ) {
-            return false;
-        }
-
-        if ( empty( $product_pack_enddate ) ) {
-            return false;
-        }
-
-        if ( $product_pack_enddate === 'unlimited' ) {
-            return true;
-        }
-
-        $validation_date = $current_date->modify( $product_pack_enddate );
-        if ( $current_date < $validation_date ) {
-            return true;
-        }
-
-        return false;
-    }
 
     /**
      * Get number of product has publisedh by seller

@@ -70,38 +70,68 @@ class Helper {
     }
 
     /**
+     * Work out how the given pack relates to the vendor's current subscription.
+     *
+     * Returns one of:
+     *   'other'     the pack is not the one the vendor currently holds
+     *   'unlimited' it is their pack and it never expires
+     *   'active'    it is their pack and it is still within its validity
+     *   'expired'   it is their pack but the validity has passed
+     *
+     *
+     * @param int $pack_id
+     * @param int $vendor_id Defaults to the current vendor.
+     *
+     * @return string
+     */
+    public static function get_pack_state( $pack_id, $vendor_id = 0 ) {
+        // sk_get_current_user_id resolves to the vendor when a staff account is logged in
+        $vendor_id = $vendor_id ? absint( $vendor_id ) : sk_get_current_user_id();
+
+        if ( ! $vendor_id ) {
+            return 'other';
+        }
+
+        if ( (int) get_user_meta( $vendor_id, 'product_package_id', true ) !== (int) $pack_id ) {
+            return 'other';
+        }
+
+        $pack_end_date = self::get_pack_end_date( $vendor_id );
+
+        if ( empty( $pack_end_date ) ) {
+            return 'other';
+        }
+
+        if ( 'unlimited' === $pack_end_date ) {
+            return 'unlimited';
+        }
+
+        $current_date = sk_current_datetime();
+
+        try {
+            $validation_date = $current_date->modify( $pack_end_date );
+        } catch ( \Exception $e ) {
+            // an unreadable date must not look like an expired pack
+            self::log( 'Pack state check: unreadable pack end date for user #' . $vendor_id . ': ' . $e->getMessage() );
+            return 'active';
+        }
+
+        if ( ! $validation_date ) {
+            return 'active';
+        }
+
+        return $current_date > $validation_date ? 'expired' : 'active';
+    }
+
+    /**
      * Check if its vendor subscribed pack
      *
      * @param integer $product_id
      *
-     * @throws \Exception
      * @return boolean
      */
     public static function is_vendor_subscribed_pack( $product_id ) {
-        $user_id              = get_current_user_id();
-        $current_date         = sk_current_datetime();
-        $product_pack_enddate = self::get_pack_end_date( $user_id );
-        $product_package_id   = get_user_meta( $user_id, 'product_package_id', true );
-
-        // if product_id is not same as current purchased package id, return false
-        if ( (int) $product_package_id !== (int) $product_id ) {
-            return false;
-        }
-
-        if ( empty( $product_pack_enddate ) ) {
-            return false;
-        }
-
-        if ( $product_pack_enddate === 'unlimited' ) {
-            return true;
-        }
-
-        $validation_date = $current_date->modify( $product_pack_enddate );
-        if ( $current_date < $validation_date ) {
-            return true;
-        }
-
-        return false;
+        return in_array( self::get_pack_state( $product_id ), [ 'unlimited', 'active' ], true );
     }
 
     /**
@@ -109,36 +139,12 @@ class Helper {
      *
      * @param integer $product_id
      *
-     * @throws \Exception
      * @return boolean
      */
     public static function pack_renew_seller( $product_id ) {
-        $user_id              = sk_get_current_user_id(); // in case user is vendor staff, we need vendor user id
-        $current_date         = sk_current_datetime();
-        $product_pack_enddate = self::get_pack_end_date( $user_id );
-        $product_package_id   = get_user_meta( $user_id, 'product_package_id', true );
-
-        // if product_id is not same as current purchased package id, return false
-        if ( (int) $product_package_id !== (int) $product_id ) {
-            return false;
-        }
-
-        if ( empty( $product_pack_enddate ) ) {
-            return false;
-        }
-
-        // if product pack end date is unlimited, user does not need to renew their package
-        if ( $product_pack_enddate === 'unlimited' ) {
-            return false;
-        }
-
-        $validation_date = $current_date->modify( $product_pack_enddate );
-        if ( $current_date > $validation_date ) {
-            return true;
-        }
-
-        return false;
+        return 'expired' === self::get_pack_state( $product_id );
     }
+
 
 
 
