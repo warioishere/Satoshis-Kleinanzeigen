@@ -574,8 +574,8 @@ class Manager {
             // @codingStandardsIgnoreStart
             $unique_product_ids = $wpdb->get_col(
                 $wpdb->prepare(
-                    "SELECT DISTINCT featured.product_id FROM {$this->get_table()} AS featured WHERE featured.status = %d AND featured.expires_at < %d",
-                    [ 1, $timestamp ]
+                    "SELECT DISTINCT featured.product_id FROM {$this->get_table()} AS featured WHERE featured.status = %d AND featured.expires_at != %d AND featured.expires_at < %d",
+                    [ 1, 0, $timestamp ]
                 )
             );
             // @codingStandardsIgnoreEnd
@@ -591,8 +591,8 @@ class Manager {
             $wpdb->prepare(
                 "UPDATE {$this->get_table()} as featured
                     SET featured.status = %d
-                    WHERE featured.status = 1 AND featured.expires_at < %d",
-                [ 2, $timestamp ]
+                    WHERE featured.status = 1 AND featured.expires_at != %d AND featured.expires_at < %d",
+                [ 2, 0, $timestamp ]
             )
         );
         // @codingStandardsIgnoreEnd

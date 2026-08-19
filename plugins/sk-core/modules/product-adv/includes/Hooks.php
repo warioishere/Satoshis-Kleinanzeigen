@@ -121,8 +121,9 @@ class Hooks {
         $manager     = new Manager();
         $product_ids = $manager->all(
             [
-                'id'     => $ids,
-                'return' => 'product_ids',
+                'id'       => $ids,
+                'per_page' => -1,
+                'return'   => 'product_ids',
             ]
         );
 
@@ -149,8 +150,9 @@ class Hooks {
         $manager  = new Manager();
         $items    = $manager->all(
             [
-                'id'     => $ids,
-                'return' => 'all',
+                'id'       => $ids,
+                'per_page' => -1,
+                'return'   => 'all',
             ]
         );
 

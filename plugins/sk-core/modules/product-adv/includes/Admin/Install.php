@@ -79,15 +79,17 @@ class Install {
      * @return bool
      */
     public function schedule_cron() {
-        if ( ! wp_next_scheduled( 'sk_product_advertisement_daily_at_midnight_cron' ) ) {
-            // schedule cron at midnight local time
-            $timestamp = sk_current_datetime()->modify( 'midnight' )->getTimestamp();
-            wp_schedule_event(
-                $timestamp,
-                'daily',
-                'sk_product_advertisement_daily_at_midnight_cron'
-            );
+        if ( wp_next_scheduled( 'sk_product_advertisement_daily_at_midnight_cron' ) ) {
+            return false;
         }
-        return true;
+
+        // schedule cron at next midnight local time
+        $timestamp = sk_current_datetime()->modify( 'tomorrow midnight' )->getTimestamp();
+
+        return false !== wp_schedule_event(
+            $timestamp,
+            'daily',
+            'sk_product_advertisement_daily_at_midnight_cron'
+        );
     }
 }
