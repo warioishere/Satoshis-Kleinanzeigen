@@ -339,6 +339,27 @@ class Manager {
             return new WP_Error( 'insert_advertisement_invalid_product', __( 'Invalid advertisement product id.', 'sk' ) );
         }
 
+        /*
+         * Every caller checks for a running advertisement before getting here, but each
+         * of them reads through the cache. Re-check uncached so two requests arriving at
+         * the same time can't both book a slot for the same product.
+         */
+        if ( 1 === (int) $args['status'] ) {
+            // @codingStandardsIgnoreStart
+            $running = (int) $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT COUNT(id) FROM {$this->get_table()} WHERE product_id = %d AND status = %d",
+                    $args['product_id'],
+                    1
+                )
+            );
+            // @codingStandardsIgnoreEnd
+
+            if ( $running > 0 ) {
+                return new WP_Error( 'insert_advertisement_duplicate', __( 'Advertisement for this product is already going on. Please select another product.', 'sk' ) );
+            }
+        }
+
         // fix expire after days
         if ( isset( $args['expires_after_days'] ) ) {
             $expires_after_days = $args['expires_after_days'];

@@ -122,6 +122,18 @@ final class BuyNow {
             'ship_to_different_address' => false,
         ];
 
+        /*
+         * create_order() skips WC_Checkout::process_checkout(), so the modules that
+         * hook into the checkout never get to re-validate the cart. Run their
+         * validation here, before an order is created and money is taken.
+         */
+        $validation_errors = new \WP_Error();
+        do_action( 'woocommerce_after_checkout_validation', $checkout_data, $validation_errors );
+
+        if ( $validation_errors->has_errors() ) {
+            wp_send_json_error( [ 'message' => wp_strip_all_tags( $validation_errors->get_error_message() ) ], 400 );
+        }
+
         $order_id = WC()->checkout()->create_order( $checkout_data );
 
         if ( is_wp_error( $order_id ) ) {
