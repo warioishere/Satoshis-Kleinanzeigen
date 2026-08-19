@@ -41,7 +41,7 @@ class SaleLimits {
             set_transient(
                 'sk_sale_limit_error_' . $vendor_id,
                 sprintf(
-                    __( 'Dein Produkt "%s" überschreitet das Verkaufslimit von %s Sats für neue Verkäufer. Nach %d bestätigten Lieferungen wird das Limit aufgehoben.', 'sk-core' ),
+                    __( 'Dein Produkt "%s" überschreitet das Verkaufslimit von %s Sats für neue Anbieter. Nach %d bestätigten Lieferungen wird das Limit aufgehoben.', 'sk-core' ),
                     $product->get_name(),
                     number_format( $max_sats ),
                     (int) sk_get_option( 'sk_antifraud_sale_limit_threshold', 'sk_antifraud', '5' )
@@ -76,7 +76,7 @@ class SaleLimits {
             echo '<div class="sk-alert sk-alert-info" style="margin-bottom:16px;font-size:13px;">';
             echo '<i class="fas fa-info-circle"></i> ';
             printf(
-                esc_html__( 'Als neuer Verkäufer kannst du Produkte bis max. %s Sats listen. Nach %d bestätigten Lieferungen wird das Limit aufgehoben.', 'sk-core' ),
+                esc_html__( 'Als neuer Anbieter kannst du Produkte bis max. %s Sats listen. Nach %d bestätigten Lieferungen wird das Limit aufgehoben.', 'sk-core' ),
                 number_format( $max_sats ),
                 $threshold
             );

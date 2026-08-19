@@ -201,7 +201,7 @@ get_header( 'shop' );
                         <p style="margin:0 0 12px;"><strong style="color:#e8ecf0;">2. Was du prüfen kannst</strong></p>
                         <ul style="margin:0 0 12px;padding-left:20px;">
                             <li>Stimmt der <strong>Betrag</strong> mit dem angezeigten überein?</li>
-                            <li>Geht die Invoice an die <strong>Lightning-Adresse</strong> des Verkäufers?</li>
+                            <li>Geht die Invoice an die <strong>Lightning-Adresse</strong> des Anbieters?</li>
                             <li>Stimmt der <strong>Payment-Hash</strong> überein?</li>
                         </ul>
 

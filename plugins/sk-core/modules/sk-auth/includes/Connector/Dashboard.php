@@ -615,7 +615,7 @@ class SK_Auth_Dashboard extends \SK\Core\Dashboard\DashboardModule {
 
         // Check if user is a vendor
         if (!sk_is_user_seller($user_id)) {
-            wp_send_json_error(array('message' => 'Du musst ein Verkäufer sein.'));
+            wp_send_json_error(array('message' => 'Du musst ein Anbieter sein.'));
         }
 
         $profile_sync = new UAC_Nostr_Profile_Sync();

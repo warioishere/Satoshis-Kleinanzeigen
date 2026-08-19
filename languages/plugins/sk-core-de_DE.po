@@ -1088,7 +1088,7 @@ msgid "Allowed Product Types"
 msgstr "Erlaubte Produkttypen"
 
 #: modules/sk-anti-fraud/includes/SaleLimits.php:79
-msgid "Als neuer Verkäufer kannst du Produkte bis max. %s Sats listen. Nach %d bestätigten Lieferungen wird das Limit aufgehoben."
+msgid "Als neuer Anbieter kannst du Produkte bis max. %s Sats listen. Nach %d bestätigten Lieferungen wird das Limit aufgehoben."
 msgstr ""
 
 #: templates/admin/php-dashboard/vendors.php:121
@@ -1112,6 +1112,9 @@ msgstr "Anzahl der Verkäufe."
 msgid "An error has occurred, which probably means the feed is down. Try again later."
 msgstr "Ein Fehler ist aufgetreten, was wahrscheinlich bedeutet, dass der Feed nicht verfügbar ist. Versuchen Sie es später noch einmal."
 
+#: modules/sk-feed/includes/Ajax.php:585
+#: modules/sk-feed/templates/comment-thread.php:34
+#: modules/sk-feed/templates/sidebar-participants.php:70
 #: templates/admin/php-dashboard/antifraud.php:90
 #: templates/admin/php-dashboard/antifraud.php:293
 msgid "Anbieter"
@@ -1137,6 +1140,14 @@ msgstr ""
 
 #: templates/settings/store-form.php:152
 msgid "Anbieter Informationen"
+msgstr ""
+
+#: includes/Dashboard/Modules/UserOnboarding.php:123
+msgid "Anbieter kontaktieren"
+msgstr ""
+
+#: includes/Dashboard/Modules/UserOnboarding.php:169
+msgid "Anbieter können verschiedene Kontaktmethoden anbieten:"
 msgstr ""
 
 #: modules/sk-anti-fraud/includes/BanWatcher.php:138
@@ -2132,7 +2143,7 @@ msgstr ""
 
 #: includes/Admin/Settings.php:406
 msgid "Checking this will enable sellers to change the order status. If unchecked, only admin can change the order status."
-msgstr "Wenn diese Option markiert ist, können Verkäufer den Bestellstatus ändern. Wenn es nicht markiert ist, kann nur der Administrator den Bestellstatus ändern."
+msgstr "Wenn diese Option markiert ist, können Anbieter den Bestellstatus ändern. Wenn es nicht markiert ist, kann nur der Administrator den Bestellstatus ändern."
 
 #: includes/Assets.php:794
 msgid "Choose a file"
@@ -2743,7 +2754,7 @@ msgid "Dein Konto ist derzeit gesperrt — Inserate können nicht veröffentlich
 msgstr ""
 
 #: modules/sk-anti-fraud/includes/SaleLimits.php:44
-msgid "Dein Produkt \"%s\" überschreitet das Verkaufslimit von %s Sats für neue Verkäufer. Nach %d bestätigten Lieferungen wird das Limit aufgehoben."
+msgid "Dein Produkt \"%s\" überschreitet das Verkaufslimit von %s Sats für neue Anbieter. Nach %d bestätigten Lieferungen wird das Limit aufgehoben."
 msgstr ""
 
 #: templates/settings/store-form.php:562
@@ -3285,11 +3296,11 @@ msgstr "Aktivieren Sie die Anzeige der Anbieter-Seitenleiste in Ihrem Theme."
 
 #: includes/Admin/ExtendedAdmin.php:114
 msgid "Enable Single Seller Mode"
-msgstr "Einzel Verkäufer Modus aktivieren"
+msgstr "Einzelanbieter-Modus aktivieren"
 
 #: includes/Admin/ExtendedAdmin.php:115
 msgid "Enable single seller mode"
-msgstr "Einzel Verkäufer Modus aktivieren"
+msgstr "Einzelanbieter-Modus aktivieren"
 
 #: templates/products/edit/inventory.php:31
 msgid "Enable stock management at product level"
@@ -3693,7 +3704,7 @@ msgstr "Überall sonst"
 
 #: includes/REST/AnnouncementController.php:986
 msgid "Exclude seller ids"
-msgstr "Verkäufer IDs ausschließen"
+msgstr "Anbieter-IDs ausschließen"
 
 #: includes/REST/ExtendedProductController.php:91
 msgid "Excluded product id"
@@ -5781,7 +5792,7 @@ msgid "Neue Vendoren können nur Produkte bis zum Limit listen."
 msgstr ""
 
 #: modules/sk-anti-fraud/templates/buyer-warning.php:3
-msgid "Neuer Verkäufer"
+msgid "Neuer Anbieter"
 msgstr ""
 
 #: templates/products/downloadable.php:64
@@ -6504,6 +6515,10 @@ msgstr "Anzahl der angezeigten Produkte"
 msgid "Number of times downloadable files can be downloaded after purchase."
 msgstr "Wie oft die herunterladbaren Dateien nach dem Kauf heruntergeladen werden können."
 
+#: modules/sk-feed/includes/Ajax.php:29
+msgid "Nur Anbieter können Beiträge erstellen."
+msgstr ""
+
 #: templates/admin/php-dashboard/feedback.php:71
 msgid "Nur eingeloggte Nutzer"
 msgstr ""
@@ -6522,10 +6537,6 @@ msgstr ""
 
 #: templates/settings/store-form.php:242
 msgid "Nur nötig, wenn du die E-Mail-Adresse änderst."
-msgstr ""
-
-#: modules/sk-feed/includes/Ajax.php:29
-msgid "Nur Verkäufer können Beiträge erstellen."
 msgstr ""
 
 #: modules/sk-auth/includes/AuthSettings.php:53
@@ -10312,7 +10323,7 @@ msgid "Tipp: Folge uns auf <a href=\"%s\" target=\"_blank\" rel=\"noopener\">Nos
 msgstr ""
 
 #: includes/Dashboard/Modules/UserOnboarding.php:197
-msgid "Tipp: Kontaktiere Verkäufer direkt über deren bevorzugte Kommunikationswege"
+msgid "Tipp: Kontaktiere Anbieter direkt über deren bevorzugte Kommunikationswege"
 msgstr ""
 
 #: templates/admin/php-dashboard/feedback.php:54
@@ -10605,7 +10616,7 @@ msgid "Unauthorized operation"
 msgstr "Unzulässige Operation"
 
 #: templates/dashboard/merkliste/dashboard-merkliste.php:67
-msgid "Unbekannter Verkäufer"
+msgid "Unbekannter Anbieter"
 msgstr ""
 
 #: includes/Dashboard/Modules/VendorChat.php:377
@@ -11269,20 +11280,6 @@ msgstr ""
 msgid "Verknüpft LNURL-Auth und Nostr Login mit einem einzigen WordPress-Account."
 msgstr ""
 
-#: modules/sk-feed/includes/Ajax.php:585
-#: modules/sk-feed/templates/comment-thread.php:34
-#: modules/sk-feed/templates/sidebar-participants.php:70
-msgid "Verkäufer"
-msgstr ""
-
-#: includes/Dashboard/Modules/UserOnboarding.php:123
-msgid "Verkäufer kontaktieren"
-msgstr ""
-
-#: includes/Dashboard/Modules/UserOnboarding.php:169
-msgid "Verkäufer können verschiedene Kontaktmethoden anbieten:"
-msgstr ""
-
 #: includes/Dashboard/Modules/UserOnboarding.php:274
 msgid "Verstanden!"
 msgstr ""
@@ -11604,7 +11601,7 @@ msgid "Welche Login-Methode auf der Login-Seite bevorzugt wird."
 msgstr ""
 
 #: modules/sk-feed/templates/sidebar-cta.php:23
-msgid "Werde Verkäufer"
+msgid "Werde Anbieter"
 msgstr ""
 
 #: templates/admin/php-dashboard/antifraud.php:186

@@ -46,7 +46,7 @@ class ProductPublisher {
         $permalink = get_permalink( $post_id );
         $content   = $description;
         if ( $store_name ) {
-            $content .= "\n\nVerkäufer: {$store_name}";
+            $content .= "\n\nAnbieter: {$store_name}";
         }
         if ( $permalink ) {
             $content .= "\n\nInserat: {$permalink}";
@@ -182,7 +182,7 @@ class ProductPublisher {
 
         $content = $description;
         if ( $store_name ) {
-            $content .= "\n\nVerkäufer: {$store_name}";
+            $content .= "\n\nAnbieter: {$store_name}";
         }
         if ( $permalink ) {
             $content .= "\n\nInserat: {$permalink}";

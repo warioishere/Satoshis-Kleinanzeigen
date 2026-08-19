@@ -67,7 +67,7 @@ if ( empty( $participants ) ) {
 					<?php if ( $p['role'] === 'author' ) : ?>
 						<span class="sk-feed-participant-badge"><?php esc_html_e( 'Autor', 'sk-core' ); ?></span>
 					<?php elseif ( $is_vendor ) : ?>
-						<span class="sk-feed-participant-badge sk-feed-participant-badge--seller"><?php esc_html_e( 'Verkäufer', 'sk-core' ); ?></span>
+						<span class="sk-feed-participant-badge sk-feed-participant-badge--seller"><?php esc_html_e( 'Anbieter', 'sk-core' ); ?></span>
 					<?php endif; ?>
 				</div>
 			</a>

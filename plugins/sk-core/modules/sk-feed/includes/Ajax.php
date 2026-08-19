@@ -26,7 +26,7 @@ class Ajax {
 		check_ajax_referer( 'sk_feed', '_nonce' );
 
 		if ( ! is_user_logged_in() || ! function_exists( 'sk_is_user_seller' ) || ! sk_is_user_seller( get_current_user_id() ) ) {
-			wp_send_json_error( [ 'message' => __( 'Nur Verkäufer können Beiträge erstellen.', 'sk-core' ) ] );
+			wp_send_json_error( [ 'message' => __( 'Nur Anbieter können Beiträge erstellen.', 'sk-core' ) ] );
 		}
 
 		$content = sanitize_textarea_field( wp_unslash( $_POST['content'] ?? '' ) );
@@ -582,7 +582,7 @@ class Ajax {
 					<strong class="sk-feed-comment-author">
 						<?php echo esc_html( $author_name ); ?>
 						<?php if ( $is_vendor ) : ?>
-							<span class="sk-feed-comment-badge"><?php esc_html_e( 'Verkäufer', 'sk-core' ); ?></span>
+							<span class="sk-feed-comment-badge"><?php esc_html_e( 'Anbieter', 'sk-core' ); ?></span>
 						<?php endif; ?>
 					</strong>
 					<span class="sk-feed-comment-time sk-timeago" data-ts="<?php echo esc_attr( $comment_ts ); ?>"><?php printf( esc_html__( 'vor %s', 'sk-core' ), $time_ago ); ?></span>

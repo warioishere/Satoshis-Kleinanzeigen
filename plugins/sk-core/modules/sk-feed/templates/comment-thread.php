@@ -31,7 +31,7 @@ if ( ! function_exists( 'sk_feed_render_comments' ) ) {
 						<strong class="sk-feed-comment-author">
 							<?php echo esc_html( $author_name ); ?>
 							<?php if ( $is_vendor ) : ?>
-								<span class="sk-feed-comment-badge"><?php esc_html_e( 'Verkäufer', 'sk-core' ); ?></span>
+								<span class="sk-feed-comment-badge"><?php esc_html_e( 'Anbieter', 'sk-core' ); ?></span>
 							<?php endif; ?>
 						</strong>
 						<span class="sk-feed-comment-time sk-timeago" data-ts="<?php echo esc_attr( $comment_ts ); ?>"><?php printf( esc_html__( 'vor %s', 'sk-core' ), $time_ago ); ?></span>

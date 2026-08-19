@@ -20,7 +20,7 @@ $is_logged_in = is_user_logged_in();
 <?php else : ?>
 	<div class="sk-feed-sidebar-card sk-feed-cta-card">
 		<div class="sk-feed-cta-icon"><i class="fas fa-store"></i></div>
-		<h3 class="sk-feed-cta-title"><?php esc_html_e( 'Werde Verkäufer', 'sk-core' ); ?></h3>
+		<h3 class="sk-feed-cta-title"><?php esc_html_e( 'Werde Anbieter', 'sk-core' ); ?></h3>
 		<p class="sk-feed-cta-text"><?php esc_html_e( 'Erstelle deinen eigenen Store, poste Inserate und werde Teil der Community.', 'sk-core' ); ?></p>
 		<a href="<?php echo esc_url( home_url( '/mein-konto/' ) ); ?>" class="sk-feed-cta-btn">
 			<i class="fas fa-rocket"></i> <?php esc_html_e( 'Jetzt starten', 'sk-core' ); ?>

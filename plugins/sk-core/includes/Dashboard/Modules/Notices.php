@@ -30,7 +30,7 @@ class Notices {
         $feedback_url = 'https://new.satoshiskleinanzeigen.space/feedback/';
         ?>
         <div id="welcome-box">
-            <h2>Willkommen im Verkäufer-Dashboard!</h2>
+            <h2>Willkommen im Anbieter-Dashboard!</h2>
             <p>Hier kannst du deine Inserate verwalten, neue Gesuche einstellen und deine Angebote organisieren.</p>
             <p>Standardmäßig kannst du bis zu <strong>6 Inserate kostenlos</strong> einstellen und bearbeiten.
                Wenn du mehr Inserate gleichzeitig online haben möchtest, kannst du uns mit einem

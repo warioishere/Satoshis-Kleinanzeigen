@@ -120,7 +120,7 @@ class UserOnboarding {
 						<li>
 							<i class="fas fa-comments"></i>
 							<div>
-								<strong><?php _e( 'Verkäufer kontaktieren', 'sk-core' ); ?></strong>
+								<strong><?php _e( 'Anbieter kontaktieren', 'sk-core' ); ?></strong>
 								<span><?php echo $chat_enabled ? __( 'Per Chat, Telegram, Email oder Telefon', 'sk-core' ) : __( 'Per Telegram, Email, Telefon oder Nostr', 'sk-core' ); ?></span>
 							</div>
 						</li>
@@ -166,7 +166,7 @@ class UserOnboarding {
 				<div class="uob-slide" data-slide="3">
 					<div class="uob-slide-icon"><i class="fas fa-comments"></i></div>
 					<h2><?php _e( 'Kommunikation', 'sk-core' ); ?></h2>
-					<p><?php _e( 'Verkäufer können verschiedene Kontaktmethoden anbieten:', 'sk-core' ); ?></p>
+					<p><?php _e( 'Anbieter können verschiedene Kontaktmethoden anbieten:', 'sk-core' ); ?></p>
 					<div class="uob-contact-icons">
 						<?php if ( $chat_enabled ) : ?>
 						<div class="uob-contact-method">
@@ -194,7 +194,7 @@ class UserOnboarding {
 					<?php if ( $chat_enabled ) : ?>
 					<p class="uob-tip"><i class="fas fa-lightbulb"></i> <?php _e( 'Tipp: Deine Chats findest du im Dashboard unter "Nachrichten"', 'sk-core' ); ?></p>
 					<?php else : ?>
-					<p class="uob-tip"><i class="fas fa-lightbulb"></i> <?php _e( 'Tipp: Kontaktiere Verkäufer direkt über deren bevorzugte Kommunikationswege', 'sk-core' ); ?></p>
+					<p class="uob-tip"><i class="fas fa-lightbulb"></i> <?php _e( 'Tipp: Kontaktiere Anbieter direkt über deren bevorzugte Kommunikationswege', 'sk-core' ); ?></p>
 					<?php endif; ?>
 					<p class="uob-tip"><i class="fas fa-lightbulb"></i> <?php printf( __( 'Tipp: Folge uns auf <a href="%s" target="_blank" rel="noopener">Nostr</a> oder tritt dem offiziellen <a href="%s" target="_blank" rel="noopener">Telegram Kanal</a> bei', 'sk-core' ), 'https://primal.net/p/nprofile1qqsg3fglunsprjgg0z2efc0qpcshrjkvyksfk9lracjawpuzs0quy8cqxrg92', 'https://t.me/satoshiskleinanzeige' ); ?></p>
 				</div>

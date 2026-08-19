@@ -103,9 +103,9 @@ class AiCategorizer {
 						<td>
 							<label>
 								<input type="checkbox" name="skai_auto_apply" value="1" <?php checked( get_option( 'skai_auto_apply', 0 ), 1 ); ?>>
-								Kategorie direkt eintragen (ohne Bestätigung durch Verkäufer)
+								Kategorie direkt eintragen (ohne Bestätigung durch Anbieter)
 							</label>
-							<p class="description">Wenn deaktiviert, wird nur ein Vorschlag angezeigt — der Verkäufer muss ihn manuell übernehmen.</p>
+							<p class="description">Wenn deaktiviert, wird nur ein Vorschlag angezeigt — der Anbieter muss ihn manuell übernehmen.</p>
 						</td>
 					</tr>
 				</table>
