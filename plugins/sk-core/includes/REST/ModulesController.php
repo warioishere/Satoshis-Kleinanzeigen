@@ -64,7 +64,7 @@ class ModulesController extends SkRESTAdminController {
     public function module_toggle_request_args() {
         return [
             'module' => [
-                'description'       => __( 'Basename of the module as array', 'sk' ),
+                'description'       => __( 'Basename of the module as array', 'sk-core' ),
                 'required'          => true,
                 'type'              => 'array',
                 'validate_callback' => [ $this, 'validate_modules' ],
@@ -85,7 +85,7 @@ class ModulesController extends SkRESTAdminController {
      */
     public function validate_modules( $modules ) {
         if ( ! is_array( $modules ) ) {
-            return new WP_Error( 'sk_pro_rest_error', __( 'module parameter must be an array of id of SK Pro modules.', 'sk' ) );
+            return new WP_Error( 'sk_pro_rest_error', __( 'module parameter must be an array of id of SK Pro modules.', 'sk-core' ) );
         }
 
         if ( empty( $modules ) ) {
@@ -97,7 +97,7 @@ class ModulesController extends SkRESTAdminController {
         foreach ( $modules as $module ) {
             if ( ! in_array( $module, $available_modules, true ) ) {
                 /* Translators: %s: module name */
-                return new WP_Error( 'sk_pro_rest_error', sprintf( __( '%s module is not available in your system.', 'sk' ), $module ) );
+                return new WP_Error( 'sk_pro_rest_error', sprintf( __( '%s module is not available in your system.', 'sk-core' ), $module ) );
             }
         }
 

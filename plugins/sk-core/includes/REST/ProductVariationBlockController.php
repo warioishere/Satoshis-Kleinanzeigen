@@ -32,7 +32,7 @@ class ProductVariationBlockController extends ProductBlockController {
             $this->namespace, '/' . $this->base . '/(?P<id>[\d]+)/', [
                 'args' => [
                     'id' => [
-                        'description' => __( 'Unique identifier for the object.', 'sk' ),
+                        'description' => __( 'Unique identifier for the object.', 'sk-core' ),
                         'type'        => 'integer',
                     ],
                 ],
@@ -59,7 +59,7 @@ class ProductVariationBlockController extends ProductBlockController {
         $product    = wc_get_product( $product_id );
 
         if ( ! $product ) {
-            return new WP_Error( 'product_not_found', __( 'Product variation not found', 'sk' ), array( 'status' => 404 ) );
+            return new WP_Error( 'product_not_found', __( 'Product variation not found', 'sk-core' ), array( 'status' => 404 ) );
         }
 
         $context = ! empty( $request['context'] ) ? $request['context'] : 'view';

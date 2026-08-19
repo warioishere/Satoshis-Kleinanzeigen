@@ -18,7 +18,7 @@ defined( 'ABSPATH' ) || exit;
 
 <div class="featured item">
     <label for="featured">
-        <?php esc_html_e( 'Featured', 'sk' ); ?>:
+        <?php esc_html_e( 'Featured', 'sk-core' ); ?>:
     </label>
     <input type="checkbox" class="sk-toogle-checkbox" id="featured" name="featured">
 </div>

@@ -28,7 +28,7 @@ class ExtendedProductController extends ProductControllerV2 {
             $this->namespace, '/' . $this->base . '/(?P<id>[\d]+)/duplicate', [
                 'args' => [
                     'id' => [
-                        'description' => __( 'Unique identifier for the object.', 'sk' ),
+                        'description' => __( 'Unique identifier for the object.', 'sk-core' ),
                         'type'        => 'integer',
                     ],
                 ],
@@ -50,7 +50,7 @@ class ExtendedProductController extends ProductControllerV2 {
                     'permission_callback' => [ $this, 'get_product_permissions_check' ],
 					'args'                => [
 						'term' => [
-							'description' => __( 'Product name', 'sk' ),
+							'description' => __( 'Product name', 'sk-core' ),
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_text_field',
 							'validate_callback' => 'rest_validate_request_arg',
@@ -68,12 +68,12 @@ class ExtendedProductController extends ProductControllerV2 {
 								if ( is_array( $param ) && ! empty( $param ) ) {
 									foreach ( $param as $value ) {
 										if ( ! is_numeric( $value ) ) {
-											return new WP_Error( 400, __( 'Accepted parameter type are boolean, number or array of numbers.', 'sk' ) );
+											return new WP_Error( 400, __( 'Accepted parameter type are boolean, number or array of numbers.', 'sk-core' ) );
 										}
 									}
 									return true;
 								}
-								return new WP_Error( 400, __( 'Accepted parameter type are boolean, number or array of numbers.', 'sk' ) );
+								return new WP_Error( 400, __( 'Accepted parameter type are boolean, number or array of numbers.', 'sk-core' ) );
 							},
 							'sanitize_callback' => function ( $param ) {
 								if ( is_array( $param ) ) {
@@ -88,7 +88,7 @@ class ExtendedProductController extends ProductControllerV2 {
 						],
 
 						'exclude' => [
-							'description' => __( 'Excluded product id', 'sk' ),
+							'description' => __( 'Excluded product id', 'sk-core' ),
 							'type'              => 'number',
 							'sanitize_callback' => 'sanitize_text_field',
 							'validate_callback' => 'rest_validate_request_arg',
@@ -96,7 +96,7 @@ class ExtendedProductController extends ProductControllerV2 {
 						],
 
 						'include' => [
-							'description' => __( 'Included product id', 'sk' ),
+							'description' => __( 'Included product id', 'sk-core' ),
 							'type'              => 'number',
 							'sanitize_callback' => 'sanitize_text_field',
 							'validate_callback' => 'rest_validate_request_arg',
@@ -104,7 +104,7 @@ class ExtendedProductController extends ProductControllerV2 {
 						],
 
 						'limit' => [
-							'description' => __( 'Included product id', 'sk' ),
+							'description' => __( 'Included product id', 'sk-core' ),
 							'type'              => 'number',
 							'sanitize_callback' => 'sanitize_text_field',
 							'validate_callback' => 'rest_validate_request_arg',

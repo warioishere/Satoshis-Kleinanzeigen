@@ -16,9 +16,9 @@ do_action( 'woocommerce_email_header', $email_heading, $email ); ?>
     <h1 id="sk-follow-store-title">
         <?php
         if ( 'following' === $data['status'] ) {
-            esc_html_e( 'You have got a new store follower!', 'sk' );
+            esc_html_e( 'You have got a new store follower!', 'sk-core' );
         } else {
-            esc_html_e( 'Someone just unfollowed your store!', 'sk' );
+            esc_html_e( 'Someone just unfollowed your store!', 'sk-core' );
         }
         ?>
     </h1>
@@ -27,10 +27,10 @@ do_action( 'woocommerce_email_header', $email_heading, $email ); ?>
         <?php
         if ( 'following' === $data['status'] ) {
             // translators: Follower Name.
-            printf( __( '%s has just followed your store.', 'sk' ), $data['follower']->display_name );
+            printf( __( '%s has just followed your store.', 'sk-core' ), $data['follower']->display_name );
         } else {
             // translators: Follower Name.
-            printf( __( '%s has just unfollowed your store.', 'sk' ), $data['follower']->display_name );
+            printf( __( '%s has just unfollowed your store.', 'sk-core' ), $data['follower']->display_name );
         }
         ?>
     </p>

@@ -49,7 +49,7 @@ class SK_REST_Vendor_Subscription_Packages_Controller extends SK_REST_Vendor_Sub
                     'permission_callback' => [ $this, 'check_permission' ],
                     'args'                => [
                         'id' => [
-                            'description' => __( 'Unique identifier for the subscription package.', 'sk' ),
+                            'description' => __( 'Unique identifier for the subscription package.', 'sk-core' ),
                             'type'        => 'integer',
                             'required'    => true,
                         ],
@@ -117,13 +117,13 @@ class SK_REST_Vendor_Subscription_Packages_Controller extends SK_REST_Vendor_Sub
         $id = (int) $request->get_param( 'id' );
 
         if ( ! $id ) {
-            return new WP_Error( 'sk_rest_invalid_package_id', __( 'Invalid package ID.', 'sk' ), [ 'status' => 404 ] );
+            return new WP_Error( 'sk_rest_invalid_package_id', __( 'Invalid package ID.', 'sk-core' ), [ 'status' => 404 ] );
         }
 
         $product = wc_get_product( $id );
 
         if ( ! $product || ! $product->is_type( 'product_pack' ) ) {
-            return new WP_Error( 'sk_rest_package_not_found', __( 'Package not found.', 'sk' ), [ 'status' => 404 ] );
+            return new WP_Error( 'sk_rest_package_not_found', __( 'Package not found.', 'sk-core' ), [ 'status' => 404 ] );
         }
 
         $data = $this->prepare_item_for_response( $product, $request );
@@ -227,80 +227,80 @@ class SK_REST_Vendor_Subscription_Packages_Controller extends SK_REST_Vendor_Sub
             'type'       => 'object',
             'properties' => [
                 'id'                       => [
-                    'description' => __( 'The unique identifier of the item.', 'sk' ),
+                    'description' => __( 'The unique identifier of the item.', 'sk-core' ),
                     'type'        => 'integer',
                     'context'     => [ 'view' ],
                     'readonly'    => true,
                     'required'    => true,
                 ],
                 'title'                    => [
-                    'description' => __( 'Title of the item.', 'sk' ),
+                    'description' => __( 'Title of the item.', 'sk-core' ),
                     'type'        => 'string',
                     'context'     => [ 'view' ],
                     'readonly'    => true,
                 ],
                 'price'                    => [
-                    'description' => __( 'Current price of the item.', 'sk' ),
+                    'description' => __( 'Current price of the item.', 'sk-core' ),
                     'type'        => 'string',
                     'context'     => [ 'view' ],
                     'readonly'    => true,
                 ],
                 'regular_price'            => [
-                    'description' => __( 'Regular price of the item.', 'sk' ),
+                    'description' => __( 'Regular price of the item.', 'sk-core' ),
                     'type'        => 'string',
                     'context'     => [ 'view' ],
                     'readonly'    => true,
                 ],
                 'sale_price'               => [
-                    'description' => __( 'Sale price of the item.', 'sk' ),
+                    'description' => __( 'Sale price of the item.', 'sk-core' ),
                     'type'        => 'string',
                     'context'     => [ 'view' ],
                     'readonly'    => true,
                 ],
                 'short_description'        => [
-                    'description' => __( 'Short description of the item.', 'sk' ),
+                    'description' => __( 'Short description of the item.', 'sk-core' ),
                     'type'        => 'string',
                     'context'     => [ 'view' ],
                     'readonly'    => true,
                 ],
                 'description'              => [
-                    'description' => __( 'Description of the item.', 'sk' ),
+                    'description' => __( 'Description of the item.', 'sk-core' ),
                     'type'        => 'string',
                     'context'     => [ 'view' ],
                     'readonly'    => true,
                 ],
                 'no_of_product'            => [
-                    'description' => __( 'Number of products included.', 'sk' ),
+                    'description' => __( 'Number of products included.', 'sk-core' ),
                     'type'        => 'string',
                     'context'     => [ 'view' ],
                     'readonly'    => true,
                 ],
                 'pack_validity'            => [
-                    'description' => __( 'Validity period of the pack.', 'sk' ),
+                    'description' => __( 'Validity period of the pack.', 'sk-core' ),
                     'type'        => 'string',
                     'context'     => [ 'view' ],
                     'readonly'    => true,
                 ],
                 'gallery_restriction'      => [
-                    'description' => __( 'Whether gallery restriction is enabled.', 'sk' ),
+                    'description' => __( 'Whether gallery restriction is enabled.', 'sk-core' ),
                     'type'        => 'string',
                     'context'     => [ 'view' ],
                     'readonly'    => true,
                 ],
                 'gallery_restriction_count' => [
-                    'description' => __( 'Maximum number of gallery images allowed.', 'sk' ),
+                    'description' => __( 'Maximum number of gallery images allowed.', 'sk-core' ),
                     'type'        => 'string',
                     'context'     => [ 'view' ],
                     'readonly'    => true,
                 ],
                 'advertisement_slot_count' => [
-                    'description' => __( 'Number of advertisement slots.', 'sk' ),
+                    'description' => __( 'Number of advertisement slots.', 'sk-core' ),
                     'type'        => 'string',
                     'context'     => [ 'view' ],
                     'readonly'    => true,
                 ],
                 'advertisement_validity'   => [
-                    'description' => __( 'Validity period of advertisements.', 'sk' ),
+                    'description' => __( 'Validity period of advertisements.', 'sk-core' ),
                     'type'        => 'string',
                     'context'     => [ 'view' ],
                     'readonly'    => true,

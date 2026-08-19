@@ -64,7 +64,7 @@ do_action('sk_dashboard_wrap_start');
                             if (!$product) continue;
 
                             $vendor = sk_get_vendor_by_product($product);
-                            $vendor_name = $vendor ? $vendor->get_shop_name() : __('Unbekannter Verkäufer', 'sk');
+                            $vendor_name = $vendor ? $vendor->get_shop_name() : __('Unbekannter Verkäufer', 'sk-core');
                             $vendor_url = $vendor ? sk_get_store_url($vendor->get_id()) : '#';
 
                             $product_title = $product->get_name();

@@ -12,7 +12,7 @@
         <div class="sk-product-attribute-heading">
             <span><i class="fas fa-bars" aria-hidden="true"></i> <strong>Title</strong></span>
             <input type="hidden" name="attribute_position[]" value="">
-            <a href="#" class="sk-product-remove-attribute"><?php _e( 'Remove', 'sk' ); ?></a>
+            <a href="#" class="sk-product-remove-attribute"><?php _e( 'Remove', 'sk-core' ); ?></a>
             <a href="#" class="sk-product-toggle-attribute">
                 <i class="fas fa-sort-down fa-flip-horizointal" aria-hidden="true"></i>
             </a>

@@ -15,7 +15,7 @@
 			$display_rating = $rating['rating'];
 
 			if ( ! $rating['count'] ) {
-				$display_rating = __( 'No ratings found yet!', 'sk' );
+				$display_rating = __( 'No ratings found yet!', 'sk-core' );
 			}
 			?>
                 <li>
@@ -31,5 +31,5 @@
         ?>
     </ul>
 <?php else : ?>
-    <p><?php esc_html_e( 'No vendor found', 'sk' ); ?></p>
+    <p><?php esc_html_e( 'No vendor found', 'sk-core' ); ?></p>
 <?php endif; ?>

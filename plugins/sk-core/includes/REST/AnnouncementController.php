@@ -84,7 +84,7 @@ class AnnouncementController extends SkRESTController {
                     'args'                => array_merge(
                         $this->get_collection_params(), [
                             'vendor_id'   => [
-                                'description'       => __( 'If set, specified vendor announcement will be returned.', 'sk' ),
+                                'description'       => __( 'If set, specified vendor announcement will be returned.', 'sk-core' ),
                                 'type'              => 'integer',
                                 'sanitize_callback' => 'absint',
                                 'validate_callback' => 'sk_rest_validate_store_id',
@@ -92,14 +92,14 @@ class AnnouncementController extends SkRESTController {
                             ],
                             'status'      => [
                                 'type'        => 'string',
-                                'description' => __( 'Announcement status, this is a admin only feature', 'sk' ),
+                                'description' => __( 'Announcement status, this is a admin only feature', 'sk-core' ),
                                 'required'    => false,
                                 'enum'        => [ 'all', 'publish', 'pending', 'draft', 'future', 'trash' ],
                                 'default'     => 'all',
                             ],
                             'read_status' => [
                                 'type'        => 'string',
-                                'description' => __( 'Announcement read status, this is a vendor only feature', 'sk' ),
+                                'description' => __( 'Announcement read status, this is a vendor only feature', 'sk-core' ),
                                 'required'    => false,
                                 'enum'        => [ 'read', 'trash', 'unread', 'all' ],
                                 'default'     => 'all',
@@ -107,13 +107,13 @@ class AnnouncementController extends SkRESTController {
                             'from'        => [
                                 'type'        => 'string',
                                 'format'      => 'date-time',
-                                'description' => __( 'Announcement date time from', 'sk' ),
+                                'description' => __( 'Announcement date time from', 'sk-core' ),
                                 'required'    => false,
                             ],
                             'to'          => [
                                 'type'        => 'string',
                                 'format'      => 'date-time',
-                                'description' => __( 'Announcement date time to', 'sk' ),
+                                'description' => __( 'Announcement date time to', 'sk-core' ),
                                 'required'    => false,
                             ],
                         ]
@@ -134,7 +134,7 @@ class AnnouncementController extends SkRESTController {
             $this->namespace, '/' . $this->rest_base . '/(?P<id>[\d]+)/', [
                 'args'   => [
                     'id' => [
-                        'description'       => __( 'Unique identifier for the object.', 'sk' ),
+                        'description'       => __( 'Unique identifier for the object.', 'sk-core' ),
                         'type'              => 'integer',
                         'sanitize_callback' => 'absint',
                         'validate_callback' => [ $this, 'rest_validate_announcement_id' ],
@@ -157,7 +157,7 @@ class AnnouncementController extends SkRESTController {
                     'callback'            => [ $this, 'delete_announcement' ],
                     'args'                => [
                         'force' => [
-                            'description' => __( 'Force delete announcement.', 'sk' ),
+                            'description' => __( 'Force delete announcement.', 'sk-core' ),
                             'type'        => 'boolean',
                             'default'     => false,
                         ],
@@ -172,7 +172,7 @@ class AnnouncementController extends SkRESTController {
             $this->namespace, '/' . $this->rest_base . '/(?P<id>[\d]+)/restore', [
                 'args'   => [
                     'id' => [
-                        'description'       => __( 'Unique identifier for the object.', 'sk' ),
+                        'description'       => __( 'Unique identifier for the object.', 'sk-core' ),
                         'type'              => 'integer',
                         'sanitize_callback' => 'absint',
                         'validate_callback' => [ $this, 'rest_validate_announcement_id' ],
@@ -195,7 +195,7 @@ class AnnouncementController extends SkRESTController {
                     'permission_callback' => [ $this, 'batch_items_permissions_check' ],
                     'args'                => [
                         'trash'   => [
-                            'description' => __( 'Batch trash announcements.', 'sk' ),
+                            'description' => __( 'Batch trash announcements.', 'sk-core' ),
                             'type'        => 'array',
                             'required'    => false,
                             'context'     => [ 'edit' ],
@@ -206,7 +206,7 @@ class AnnouncementController extends SkRESTController {
                             ],
                         ],
                         'delete'  => [
-                            'description' => __( 'Batch delete announcements.', 'sk' ),
+                            'description' => __( 'Batch delete announcements.', 'sk-core' ),
                             'type'        => 'array',
                             'required'    => false,
                             'context'     => [ 'edit' ],
@@ -217,7 +217,7 @@ class AnnouncementController extends SkRESTController {
                             ],
                         ],
                         'restore' => [
-                            'description' => __( 'Batch untrash announcements.', 'sk' ),
+                            'description' => __( 'Batch untrash announcements.', 'sk-core' ),
                             'type'        => 'array',
                             'required'    => false,
                             'context'     => [ 'edit' ],
@@ -239,7 +239,7 @@ class AnnouncementController extends SkRESTController {
             [
                 'args'   => [
                     'id' => [
-                        'description'       => __( 'Unique identifier for the object.', 'sk' ),
+                        'description'       => __( 'Unique identifier for the object.', 'sk-core' ),
                         'type'              => 'integer',
                         'sanitize_callback' => 'absint',
                         'validate_callback' => [ $this, 'rest_validate_notice_id' ],
@@ -256,7 +256,7 @@ class AnnouncementController extends SkRESTController {
                     'permission_callback' => [ $this, 'update_read_status_permissions_check' ],
                     'args'                => [
                         'read_status' => [
-                            'description' => __( 'Announcement read status', 'sk' ),
+                            'description' => __( 'Announcement read status', 'sk-core' ),
                             'type'        => 'string',
                             'required'    => true,
                             'enum'        => [ 'read', 'unread' ],
@@ -457,7 +457,7 @@ class AnnouncementController extends SkRESTController {
 
         if ( empty( $params ) ) {
             return rest_ensure_response(
-                new WP_Error( 'no_item_found', __( 'No items found for bulk actions.', 'sk' ), [ 'status' => 404 ] )
+                new WP_Error( 'no_item_found', __( 'No items found for bulk actions.', 'sk-core' ), [ 'status' => 404 ] )
             );
         }
 
@@ -571,7 +571,7 @@ class AnnouncementController extends SkRESTController {
             return true;
         }
 
-        return new WP_Error( 'sk_pro_permission_failure', esc_html__( 'You are not allowed to do this action.', 'sk' ) );
+        return new WP_Error( 'sk_pro_permission_failure', esc_html__( 'You are not allowed to do this action.', 'sk-core' ) );
     }
 
     /**
@@ -588,7 +588,7 @@ class AnnouncementController extends SkRESTController {
             return true;
         }
 
-        return new WP_Error( 'sk_pro_permission_failure', esc_html__( 'You are not allowed to do this action.', 'sk' ) );
+        return new WP_Error( 'sk_pro_permission_failure', esc_html__( 'You are not allowed to do this action.', 'sk-core' ) );
     }
 
     /**
@@ -661,7 +661,7 @@ class AnnouncementController extends SkRESTController {
             return true;
         }
 
-        return new WP_Error( 'sk_pro_permission_failure', esc_html__( 'You are not allowed to do this action.', 'sk' ) );
+        return new WP_Error( 'sk_pro_permission_failure', esc_html__( 'You are not allowed to do this action.', 'sk-core' ) );
     }
 
     /**
@@ -777,7 +777,7 @@ class AnnouncementController extends SkRESTController {
         // permission check
         $check_permission = $this->get_item_permissions_check( $request );
         if ( ! is_user_logged_in() || is_wp_error( $check_permission) ) {
-            return new WP_Error( 'rest_invalid_param', __( 'You do not have permission to do this action.', 'sk' ), [ 'status' => 400 ] );
+            return new WP_Error( 'rest_invalid_param', __( 'You do not have permission to do this action.', 'sk-core' ), [ 'status' => 400 ] );
         }
 
         $attributes = $request->get_attributes();
@@ -787,13 +787,13 @@ class AnnouncementController extends SkRESTController {
             // Check to make sure our argument is an int.
             if ( 'integer' === $argument['type'] && ! is_numeric( $value ) ) {
                 // translators: 1) argument name, 2) argument value
-                return new WP_Error( 'rest_invalid_param', sprintf( esc_html__( '%1$s is not of type %2$s', 'sk' ), $key, 'integer' ), [ 'status' => 400 ] );
+                return new WP_Error( 'rest_invalid_param', sprintf( esc_html__( '%1$s is not of type %2$s', 'sk-core' ), $key, 'integer' ), [ 'status' => 400 ] );
             }
         } else {
             // this code won't execute because we have specified this argument as required.
             // if we reused this validation callback and did not have required args then this would fire.
             // translators: 1) argument name
-            return new WP_Error( 'rest_invalid_param', sprintf( esc_html__( '%s was not registered as a request argument.', 'sk' ), $key ), [ 'status' => 400 ] );
+            return new WP_Error( 'rest_invalid_param', sprintf( esc_html__( '%s was not registered as a request argument.', 'sk-core' ), $key ), [ 'status' => 400 ] );
         }
 
         $announcement = $this->manager->get_single_announcement( intval( $value ) );
@@ -802,7 +802,7 @@ class AnnouncementController extends SkRESTController {
         }
 
         // translators: 1) rest api endpoint key name
-        return new WP_Error( 'rest_invalid_param', sprintf( esc_html__( 'No announcement found with given id.', 'sk' ), $key ), [ 'status' => 400 ] );
+        return new WP_Error( 'rest_invalid_param', sprintf( esc_html__( 'No announcement found with given id.', 'sk-core' ), $key ), [ 'status' => 400 ] );
     }
 
     /**
@@ -817,7 +817,7 @@ class AnnouncementController extends SkRESTController {
      */
     public function rest_validate_notice_id( $value, $request, $key ) {
         if ( ! is_user_logged_in() ) {
-            return new WP_Error( 'rest_invalid_param', __( 'You do not have permission to do this action.', 'sk' ), [ 'status' => 400 ] );
+            return new WP_Error( 'rest_invalid_param', __( 'You do not have permission to do this action.', 'sk-core' ), [ 'status' => 400 ] );
         }
 
         $attributes = $request->get_attributes();
@@ -827,13 +827,13 @@ class AnnouncementController extends SkRESTController {
             // Check to make sure our argument is an int.
             if ( 'integer' === $argument['type'] && ! is_numeric( $value ) ) {
                 // translators: 1) argument name, 2) argument value
-                return new WP_Error( 'rest_invalid_param', sprintf( esc_html__( '%1$s is not of type %2$s', 'sk' ), $key, 'integer' ), [ 'status' => 400 ] );
+                return new WP_Error( 'rest_invalid_param', sprintf( esc_html__( '%1$s is not of type %2$s', 'sk-core' ), $key, 'integer' ), [ 'status' => 400 ] );
             }
         } else {
             // this code won't execute because we have specified this argument as required.
             // if we reused this validation callback and did not have required args then this would fire.
             // translators: 1) argument name
-            return new WP_Error( 'rest_invalid_param', sprintf( esc_html__( '%s was not registered as a request argument.', 'sk' ), $key ), [ 'status' => 400 ] );
+            return new WP_Error( 'rest_invalid_param', sprintf( esc_html__( '%s was not registered as a request argument.', 'sk-core' ), $key ), [ 'status' => 400 ] );
         }
 
         $notice = $this->manager->get_notice( intval( $value ) );
@@ -842,7 +842,7 @@ class AnnouncementController extends SkRESTController {
         }
 
         // translators: 1) rest api endpoint key name
-        return new WP_Error( 'rest_invalid_param', sprintf( esc_html__( 'No notice found with given id.', 'sk' ), $key ), [ 'status' => 400 ] );
+        return new WP_Error( 'rest_invalid_param', sprintf( esc_html__( 'No notice found with given id.', 'sk-core' ), $key ), [ 'status' => 400 ] );
     }
 
     /**
@@ -863,37 +863,37 @@ class AnnouncementController extends SkRESTController {
             'type'       => 'object',
             'properties' => [
                 'id'                   => [
-                    'description' => esc_html__( 'Unique identifier for the object.', 'sk' ),
+                    'description' => esc_html__( 'Unique identifier for the object.', 'sk-core' ),
                     'type'        => 'integer',
                     'context'     => [ 'view', 'edit', 'embed' ],
                     'readonly'    => true,
                 ],
                 'notice_id'            => [
-                    'description' => esc_html__( 'If returning a single notice, notice id will be available .', 'sk' ),
+                    'description' => esc_html__( 'If returning a single notice, notice id will be available .', 'sk-core' ),
                     'type'        => 'integer',
                     'context'     => [ 'view', 'embed' ],
                 ],
                 'vendor_id'            => [
-                    'description' => esc_html__( 'If returning a single notice, vendor id will be available .', 'sk' ),
+                    'description' => esc_html__( 'If returning a single notice, vendor id will be available .', 'sk-core' ),
                     'type'        => 'integer',
                     'context'     => [ 'view' ],
                     'readonly'    => true,
                 ],
                 'title'                => [
-                    'description' => __( 'Title of the Announcement', 'sk' ),
+                    'description' => __( 'Title of the Announcement', 'sk-core' ),
                     'type'        => 'string',
                     'readonly'    => true,
                     'context'     => [ 'view', 'edit' ],
                 ],
                 'content'              => [
-                    'description' => __( 'Content of the Announcement', 'sk' ),
+                    'description' => __( 'Content of the Announcement', 'sk-core' ),
                     'type'        => 'string',
                     'format'      => 'text-area',
                     'readonly'    => true,
                     'context'     => [ 'view', 'edit' ],
                 ],
                 'status'               => [
-                    'description' => __( 'Status of the announcement', 'sk' ),
+                    'description' => __( 'Status of the announcement', 'sk-core' ),
                     'type'        => 'string',
                     'required'    => false,
                     'context'     => [ 'view', 'edit' ],
@@ -905,25 +905,25 @@ class AnnouncementController extends SkRESTController {
                     ],
                 ],
                 'date'                 => [
-                    'description' => __( 'Created date of the Announcement', 'sk' ),
+                    'description' => __( 'Created date of the Announcement', 'sk-core' ),
                     'type'        => 'string',
                     'readonly'    => true,
                     'context'     => [ 'view', 'edit' ],
                 ],
                 'date_gmt'             => [
-                    'description' => __( 'Created date of the Announcement in GMT', 'sk' ),
+                    'description' => __( 'Created date of the Announcement in GMT', 'sk-core' ),
                     'type'        => 'string',
                     'readonly'    => true,
                     'context'     => [ 'view', 'edit' ],
                 ],
                 'human_readable_date'  => [
-                    'description' => __( 'Human readable Created time', 'sk' ),
+                    'description' => __( 'Human readable Created time', 'sk-core' ),
                     'type'        => 'string',
                     'readonly'    => true,
                     'context'     => [ 'view' ],
                 ],
                 'read_status'          => [
-                    'description' => __( 'Vendor read status of the single notice', 'sk' ),
+                    'description' => __( 'Vendor read status of the single notice', 'sk-core' ),
                     'type'        => 'string',
                     'required'    => false,
                     'context'     => [ 'view', 'edit' ],
@@ -934,7 +934,7 @@ class AnnouncementController extends SkRESTController {
                     ],
                 ],
                 'announcement_type'    => [
-                    'description' => __( 'Send announcement to: this is a admin only field', 'sk' ),
+                    'description' => __( 'Send announcement to: this is a admin only field', 'sk-core' ),
                     'type'        => 'string',
                     'required'    => false,
                     'context'     => [ 'view' ],
@@ -947,7 +947,7 @@ class AnnouncementController extends SkRESTController {
                     ],
                 ],
                 'announcement_sellers' => [
-                    'description' => __( 'Send announcement to: this is a admin only field', 'sk' ),
+                    'description' => __( 'Send announcement to: this is a admin only field', 'sk-core' ),
                     'type'        => 'array',
                     'required'    => false,
                     'context'     => [ 'view' ],
@@ -955,26 +955,26 @@ class AnnouncementController extends SkRESTController {
                         'type'       => 'object',
                         'properties' => [
                             'id'        => [
-                                'description' => __( 'Vendor id', 'sk' ),
+                                'description' => __( 'Vendor id', 'sk-core' ),
                                 'type'        => 'integer',
                             ],
                             'name'      => [
-                                'description' => __( 'Vendor name', 'sk' ),
+                                'description' => __( 'Vendor name', 'sk-core' ),
                                 'type'        => 'string',
                             ],
                             'shop_name' => [
-                                'description' => __( 'Vendor shop name', 'sk' ),
+                                'description' => __( 'Vendor shop name', 'sk-core' ),
                                 'type'        => 'string',
                             ],
                             'email'     => [
-                                'description' => __( 'Vendor email address', 'sk' ),
+                                'description' => __( 'Vendor email address', 'sk-core' ),
                                 'type'        => 'string',
                             ],
                         ],
                     ],
                 ],
                 'sender_ids'           => [
-                    'description' => __( 'Send announcement to: this is a admin only field', 'sk' ),
+                    'description' => __( 'Send announcement to: this is a admin only field', 'sk-core' ),
                     'type'        => 'array',
                     'required'    => false,
                     'context'     => [ 'edit' ],
@@ -983,7 +983,7 @@ class AnnouncementController extends SkRESTController {
                     ],
                 ],
                 'exclude_seller_ids'   => [
-                    'description' => __( 'Exclude seller ids', 'sk' ),
+                    'description' => __( 'Exclude seller ids', 'sk-core' ),
                     'type'        => 'array',
                     'required'    => false,
                     'context'     => [ 'edit' ],

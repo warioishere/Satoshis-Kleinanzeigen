@@ -23,18 +23,18 @@ class SK_Follow_Store_Ajax {
      */
     public function toggle_follow_status() {
         if ( empty( $_POST ) || ! isset( $_POST['_nonce'] ) || ! wp_verify_nonce( $_POST['_nonce'], 'sk_follow_store' ) ) {
-            wp_send_json_error( new WP_Error( 'invalid_nonce', __( 'Nonce is invalid', 'sk' ) ), 403 );
+            wp_send_json_error( new WP_Error( 'invalid_nonce', __( 'Nonce is invalid', 'sk-core' ) ), 403 );
         }
 
         if ( empty( $_POST['vendor_id'] ) ) {
-            wp_send_json_error( new WP_Error( 'missing_required_field', __( 'vendor_id field is required', 'sk' ) ), 422 );
+            wp_send_json_error( new WP_Error( 'missing_required_field', __( 'vendor_id field is required', 'sk-core' ) ), 422 );
         }
 
         $customer_id = get_current_user_id();
         $vendor      = sk()->vendor->get( $_POST['vendor_id'] );
 
         if ( ! $vendor->id ) {
-            wp_send_json_error( new WP_Error( 'invalid_vendor', __( 'Invalid vendor_id', 'sk' ) ), 422 );
+            wp_send_json_error( new WP_Error( 'invalid_vendor', __( 'Invalid vendor_id', 'sk-core' ) ), 422 );
         }
 
         $status = sk_follow_store_toggle_status( $vendor->id, $customer_id );

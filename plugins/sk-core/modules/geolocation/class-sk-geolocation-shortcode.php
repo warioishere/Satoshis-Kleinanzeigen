@@ -48,7 +48,7 @@ class SK_Geolocation_Shortcode {
      */
     public function add_to_sk_shortcode_menu( $shortcodes ) {
         $shortcodes['sk-geolocation-filter-form'] = array(
-            'title'   => __( 'Geolocation Filter Form', 'sk' ),
+            'title'   => __( 'Geolocation Filter Form', 'sk-core' ),
             'content' => '[sk-geolocation-filter-form]'
         );
 

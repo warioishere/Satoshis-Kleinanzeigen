@@ -48,7 +48,7 @@ class Ajax {
         wp_send_json_success(
             [
                 'html'  => $popup_html,
-                'title' => esc_html__( 'Report Abuse', 'sk' ),
+                'title' => esc_html__( 'Report Abuse', 'sk-core' ),
             ]
         );
     }
@@ -83,7 +83,7 @@ class Ajax {
 
         if ( empty( $_POST['form_data'] ) ) {
             wp_send_json_error( [
-                'message' => esc_html__( 'Missing form_data.', 'sk' ),
+                'message' => esc_html__( 'Missing form_data.', 'sk-core' ),
             ], 400 );
         }
 
@@ -116,7 +116,7 @@ class Ajax {
         // Only accept reasons that are actually configured in the settings.
         if ( ! empty( $args['reason'] ) && ! self::is_valid_reason( $args['reason'] ) ) {
             wp_send_json_error( [
-                'message' => esc_html__( 'Invalid reason.', 'sk' ),
+                'message' => esc_html__( 'Invalid reason.', 'sk-core' ),
             ], 400 );
         }
 
@@ -140,7 +140,7 @@ class Ajax {
         do_action( 'sk_report_abuse_send_admin_email', $report );
 
         $response = [
-            'message' => esc_html__( 'Your report has been submitted. Thank you for your response.', 'sk' ),
+            'message' => esc_html__( 'Your report has been submitted. Thank you for your response.', 'sk-core' ),
             'report'  => $report,
         ];
 

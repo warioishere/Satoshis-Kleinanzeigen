@@ -86,8 +86,8 @@ class FeatureSeller extends WP_Widget {
     public function form( $instance ) {
         $instance = wp_parse_args(
             (array) $instance, array(
-				'title' => __( 'Featured Vendor', 'sk' ),
-				'count' => __( '3', 'sk' ),
+				'title' => __( 'Featured Vendor', 'sk-core' ),
+				'count' => __( '3', 'sk-core' ),
             )
         );
 
@@ -95,11 +95,11 @@ class FeatureSeller extends WP_Widget {
         $count = $instance['count'];
         ?>
         <p>
-            <label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php esc_html_e( 'Title:', 'sk' ); ?></label>
+            <label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php esc_html_e( 'Title:', 'sk-core' ); ?></label>
             <input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>" />
         </p>
         <p>
-            <label for="<?php echo $this->get_field_id( 'count' ); ?>"><?php esc_html_e( 'No of Vendor:', 'sk' ); ?></label>
+            <label for="<?php echo $this->get_field_id( 'count' ); ?>"><?php esc_html_e( 'No of Vendor:', 'sk-core' ); ?></label>
             <input class="widefat" id="<?php echo $this->get_field_id( 'count' ); ?>" name="<?php echo $this->get_field_name( 'count' ); ?>" type="text" value="<?php echo esc_attr( $count ); ?>" />
         </p>
         <?php

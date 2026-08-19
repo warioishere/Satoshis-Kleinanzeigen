@@ -15,11 +15,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<table>
 		<thead>
 			<tr>
-				<th><?php esc_html_e( 'Order Number', 'sk' ); ?></th>
-				<th><?php esc_html_e( 'Relationship', 'sk' ); ?></th>
-				<th><?php esc_html_e( 'Date', 'sk' ); ?></th>
-				<th><?php esc_html_e( 'Status', 'sk' ); ?></th>
-				<th><?php echo esc_html_x( 'Total', 'table heading', 'sk' ); ?></th>
+				<th><?php esc_html_e( 'Order Number', 'sk-core' ); ?></th>
+				<th><?php esc_html_e( 'Relationship', 'sk-core' ); ?></th>
+				<th><?php esc_html_e( 'Date', 'sk-core' ); ?></th>
+				<th><?php esc_html_e( 'Status', 'sk-core' ); ?></th>
+				<th><?php echo esc_html_x( 'Total', 'table heading', 'sk-core' ); ?></th>
 			</tr>
 		</thead>
 		<tbody>

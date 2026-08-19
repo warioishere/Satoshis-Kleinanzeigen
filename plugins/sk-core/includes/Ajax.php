@@ -110,7 +110,7 @@ class Ajax {
         // Get tax classes
         $tax_classes           = WC_Tax::get_tax_classes();
         $tax_class_options     = [];
-        $tax_class_options[''] = __( 'Standard', 'sk' );
+        $tax_class_options[''] = __( 'Standard', 'sk-core' );
 
         if ( ! empty( $tax_classes ) ) {
             foreach ( $tax_classes as $class ) {
@@ -120,16 +120,16 @@ class Ajax {
 
         // Set backorder options
         $backorder_options = [
-            'no'     => __( 'Do not allow', 'sk' ),
-            'notify' => __( 'Allow, but notify customer', 'sk' ),
-            'yes'    => __( 'Allow', 'sk' ),
+            'no'     => __( 'Do not allow', 'sk-core' ),
+            'notify' => __( 'Allow, but notify customer', 'sk-core' ),
+            'yes'    => __( 'Allow', 'sk-core' ),
         ];
 
         // set stock status options
         $stock_status_options = [
-            'instock'     => __( 'In stock', 'sk' ),
-            'outofstock'  => __( 'Out of stock', 'sk' ),
-            'onbackorder' => __( 'On backorder', 'sk' ),
+            'instock'     => __( 'In stock', 'sk-core' ),
+            'outofstock'  => __( 'Out of stock', 'sk-core' ),
+            'onbackorder' => __( 'On backorder', 'sk-core' ),
         ];
 
         $parent_data = [
@@ -986,7 +986,7 @@ class Ajax {
             // Get tax classes
             $tax_classes           = WC_Tax::get_tax_classes();
             $tax_class_options     = [];
-            $tax_class_options[''] = __( 'Standard', 'sk' );
+            $tax_class_options[''] = __( 'Standard', 'sk-core' );
 
             if ( ! empty( $tax_classes ) ) {
                 foreach ( $tax_classes as $class ) {
@@ -996,16 +996,16 @@ class Ajax {
 
             // Set backorder options
             $backorder_options = [
-                'no'     => __( 'Do not allow', 'sk' ),
-                'notify' => __( 'Allow, but notify customer', 'sk' ),
-                'yes'    => __( 'Allow', 'sk' ),
+                'no'     => __( 'Do not allow', 'sk-core' ),
+                'notify' => __( 'Allow, but notify customer', 'sk-core' ),
+                'yes'    => __( 'Allow', 'sk-core' ),
             ];
 
             // set stock status options
             $stock_status_options = [
-                'instock'     => __( 'In stock', 'sk' ),
-                'outofstock'  => __( 'Out of stock', 'sk' ),
-                'onbackorder' => __( 'On backorder', 'sk' ),
+                'instock'     => __( 'In stock', 'sk-core' ),
+                'outofstock'  => __( 'Out of stock', 'sk-core' ),
+                'onbackorder' => __( 'On backorder', 'sk-core' ),
             ];
 
             // Get attributes
@@ -1189,7 +1189,7 @@ class Ajax {
                 <input type="hidden" name="attribute_is_taxonomy[<?php echo $i; ?>]" value="1">
                 <input type="hidden" name="attribute_position[<?php echo $i; ?>]" class="attribute_position" value="<?php echo esc_attr( $i ); ?>" />
                 <span class="actions">
-                    <button class="row-remove btn pull-right btn-danger btn-sm"><?php _e( 'Remove', 'sk' ); ?></button>
+                    <button class="row-remove btn pull-right btn-danger btn-sm"><?php _e( 'Remove', 'sk-core' ); ?></button>
                 </span>
             </div>
             <div class="box-inside clearfix">
@@ -1202,7 +1202,7 @@ class Ajax {
                                     $tax = '';
                                     checked( apply_filters( 'default_attribute_visibility', false, $tax ), true );
                                     ?>
-                                       name="attribute_visibility[<?php echo $i; ?>]" value="1" /> <?php _e( 'Visible on the product page', 'sk' ); ?>
+                                       name="attribute_visibility[<?php echo $i; ?>]" value="1" /> <?php _e( 'Visible on the product page', 'sk-core' ); ?>
                             </label>
                         </li>
                         <li class="enable_variation" <?php echo ( $_POST['type'] === 'simple' ) ? 'style="display:none;"' : ''; ?>>
@@ -1211,7 +1211,7 @@ class Ajax {
                                     <?php
                                     checked( apply_filters( 'default_attribute_variation', false, $tax ), true );
                                     ?>
-                                       name="attribute_variation[<?php echo $i; ?>]" value="1" /> <?php _e( 'Used for variations', 'sk' ); ?></label>
+                                       name="attribute_variation[<?php echo $i; ?>]" value="1" /> <?php _e( 'Used for variations', 'sk-core' ); ?></label>
                         </li>
                     </ul>
                 </div>
@@ -1222,7 +1222,7 @@ class Ajax {
                             foreach ( $options as $count => $option ) {
                                 ?>
                                 <li>
-                                    <input type="text" class="option" placeholder="<?php _e( 'Option...', 'sk' ); ?>" name="attribute_values[<?php echo $i; ?>][<?php echo $count; ?>]" value="<?php echo esc_attr( $option->name ); ?>">
+                                    <input type="text" class="option" placeholder="<?php _e( 'Option...', 'sk-core' ); ?>" name="attribute_values[<?php echo $i; ?>][<?php echo $count; ?>]" value="<?php echo esc_attr( $option->name ); ?>">
                                     <span class="item-action actions">
                                         <a href="#" class="row-add">+</a>
                                         <a href="#" class="row-remove">-</a>
@@ -1233,7 +1233,7 @@ class Ajax {
                         } else {
                             ?>
                             <li>
-                                <input type="text" class="option" name="attribute_values[<?php echo $i; ?>][0]" placeholder="<?php _e( 'Option...', 'sk' ); ?>">
+                                <input type="text" class="option" name="attribute_values[<?php echo $i; ?>][0]" placeholder="<?php _e( 'Option...', 'sk-core' ); ?>">
                                 <span class="item-action actions">
                                     <a href="#" class="row-add">+</a>
                                     <a href="#" class="row-remove">-</a>

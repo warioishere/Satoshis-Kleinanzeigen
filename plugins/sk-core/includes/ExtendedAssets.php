@@ -29,11 +29,11 @@ class ExtendedAssets {
 
     public function add_i18_localized_data( $default_script ) {
         $localize_script = [
-            'i18n_location_name'  => __( 'Please provide a location name!', 'sk' ),
-            'i18n_location_state' => __( 'Please provide', 'sk' ),
-            'i18n_country_name'   => __( 'Please provide a country!', 'sk' ),
-            'i18n_invalid'        => __( 'Failed! Something went wrong', 'sk' ),
-            'i18n_gravater'       => __( 'Upload a Photo', 'sk' ),
+            'i18n_location_name'  => __( 'Please provide a location name!', 'sk-core' ),
+            'i18n_location_state' => __( 'Please provide', 'sk-core' ),
+            'i18n_country_name'   => __( 'Please provide a country!', 'sk-core' ),
+            'i18n_invalid'        => __( 'Failed! Something went wrong', 'sk-core' ),
+            'i18n_gravater'       => __( 'Upload a Photo', 'sk-core' ),
         ];
         return array_merge( $default_script, $localize_script );
     }

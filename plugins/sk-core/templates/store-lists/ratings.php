@@ -18,7 +18,7 @@ defined( 'ABSPATH' ) || exit;
 
 <div class="ratings item">
     <label for="ratings">
-        <?php esc_html_e( 'Open Now:', 'sk' ); ?>
+        <?php esc_html_e( 'Open Now:', 'sk-core' ); ?>
     </label>
     <input id="ratings" type="checkbox" name="ratings">
 </div>

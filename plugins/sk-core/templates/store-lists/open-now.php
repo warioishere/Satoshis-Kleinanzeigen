@@ -18,7 +18,7 @@ defined( 'ABSPATH' ) || exit;
 
 <div class="open-now item">
     <label for="open-now">
-        <?php esc_html_e( 'Open Now', 'sk' ); ?>:
+        <?php esc_html_e( 'Open Now', 'sk-core' ); ?>:
     </label>
     <input type="checkbox" class="sk-toogle-checkbox" id="open-now" name="open_now">
 </div>

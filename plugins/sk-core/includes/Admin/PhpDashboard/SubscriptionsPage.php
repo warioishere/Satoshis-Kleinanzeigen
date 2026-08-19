@@ -9,7 +9,7 @@ class SubscriptionsPage extends AbstractPage {
     }
 
     public function get_title(): string {
-        return __( 'Subscriptions', 'sk' );
+        return __( 'Subscriptions', 'sk-core' );
     }
 
     public function is_pro(): bool {

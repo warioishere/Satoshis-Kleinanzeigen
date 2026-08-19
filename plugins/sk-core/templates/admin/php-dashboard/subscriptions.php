@@ -16,22 +16,22 @@ $base_url = admin_url( 'admin.php?page=sk&tab=subscriptions' );
 ?>
 
 <div class="sk-subscriptions-wrap">
-    <h2><?php esc_html_e( 'Subscription Packages', 'sk' ); ?></h2>
+    <h2><?php esc_html_e( 'Subscription Packages', 'sk-core' ); ?></h2>
 
     <table class="wp-list-table widefat fixed striped">
         <thead>
             <tr>
-                <th scope="col"><?php esc_html_e( 'Package Name', 'sk' ); ?></th>
-                <th scope="col"><?php esc_html_e( 'Price', 'sk' ); ?></th>
-                <th scope="col"><?php esc_html_e( 'Validity (Days)', 'sk' ); ?></th>
-                <th scope="col"><?php esc_html_e( 'Status', 'sk' ); ?></th>
-                <th scope="col"><?php esc_html_e( 'Actions', 'sk' ); ?></th>
+                <th scope="col"><?php esc_html_e( 'Package Name', 'sk-core' ); ?></th>
+                <th scope="col"><?php esc_html_e( 'Price', 'sk-core' ); ?></th>
+                <th scope="col"><?php esc_html_e( 'Validity (Days)', 'sk-core' ); ?></th>
+                <th scope="col"><?php esc_html_e( 'Status', 'sk-core' ); ?></th>
+                <th scope="col"><?php esc_html_e( 'Actions', 'sk-core' ); ?></th>
             </tr>
         </thead>
         <tbody>
             <?php if ( empty( $products ) ) : ?>
                 <tr>
-                    <td colspan="5"><?php esc_html_e( 'No subscription packages found.', 'sk' ); ?></td>
+                    <td colspan="5"><?php esc_html_e( 'No subscription packages found.', 'sk-core' ); ?></td>
                 </tr>
             <?php else : ?>
                 <?php foreach ( $products as $product ) :
@@ -40,11 +40,11 @@ $base_url = admin_url( 'admin.php?page=sk&tab=subscriptions' );
                     <tr>
                         <td><strong><?php echo esc_html( $product->get_name() ); ?></strong></td>
                         <td><?php echo wp_kses_post( wc_price( $product->get_price() ) ); ?></td>
-                        <td><?php echo esc_html( $validity ? $validity : __( 'Unlimited', 'sk' ) ); ?></td>
+                        <td><?php echo esc_html( $validity ? $validity : __( 'Unlimited', 'sk-core' ) ); ?></td>
                         <td><?php echo esc_html( ucfirst( $product->get_status() ) ); ?></td>
                         <td>
                             <a href="<?php echo esc_url( get_edit_post_link( $product->get_id() ) ); ?>" class="button button-small">
-                                <?php esc_html_e( 'Edit', 'sk' ); ?>
+                                <?php esc_html_e( 'Edit', 'sk-core' ); ?>
                             </a>
                         </td>
                     </tr>

@@ -216,8 +216,8 @@ class ProductForm {
     public function seo_autofill_admin_menu(): void {
         add_submenu_page(
             'edit.php?post_type=product',
-            __( 'Focus Keyword Audit', 'sk' ),
-            __( 'Focus Keyword Audit', 'sk' ),
+            __( 'Focus Keyword Audit', 'sk-core' ),
+            __( 'Focus Keyword Audit', 'sk-core' ),
             'edit_products',
             'sk-seo-focuskw-audit',
             [ $this, 'seo_autofill_audit_page' ]
@@ -226,7 +226,7 @@ class ProductForm {
 
     public function seo_autofill_audit_page(): void {
         if ( ! current_user_can( 'edit_products' ) ) {
-            wp_die( __( 'You do not have permission to access this page.', 'sk' ) );
+            wp_die( __( 'You do not have permission to access this page.', 'sk-core' ) );
         }
 
         wp_enqueue_style( 'sk-seo-audit' );
@@ -243,7 +243,7 @@ class ProductForm {
             if ( $product_id && $nonce && wp_verify_nonce( $nonce, 'sk_seo_sync_' . $product_id ) ) {
                 $messages[] = self::sync_focuskw( $product_id );
             } else {
-                $messages[] = [ 'type' => 'error', 'message' => __( 'Security check failed.', 'sk' ) ];
+                $messages[] = [ 'type' => 'error', 'message' => __( 'Security check failed.', 'sk-core' ) ];
             }
         }
 
@@ -260,7 +260,7 @@ class ProductForm {
                 }
                 $messages[] = [ 'type' => 'updated', 'message' => sprintf( '%d focus keyword(s) updated.', $updated ) ];
             } else {
-                $messages[] = [ 'type' => 'error', 'message' => __( 'No products selected.', 'sk' ) ];
+                $messages[] = [ 'type' => 'error', 'message' => __( 'No products selected.', 'sk-core' ) ];
             }
         }
 

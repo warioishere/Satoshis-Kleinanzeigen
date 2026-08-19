@@ -14,11 +14,11 @@ class MarketplaceSettings {
     public function add_section( $sections ) {
         $sections[] = [
             'id'                   => 'sk_nostr_market',
-            'title'                => __( 'SK Nostr Market', 'sk' ),
+            'title'                => __( 'SK Nostr Market', 'sk-core' ),
             'icon_url'             => '',
-            'description'          => __( 'NIP-15 Nostr Marketplace', 'sk' ),
-            'settings_title'       => __( 'Nostr Marketplace', 'sk' ),
-            'settings_description' => __( 'Produkte als NIP-99 Classified Listings auf Nostr publishen. Sichtbar auf Amethyst, Shopstr, Coracle, Plebeian Market und jedem NIP-99 Client.', 'sk' ),
+            'description'          => __( 'NIP-15 Nostr Marketplace', 'sk-core' ),
+            'settings_title'       => __( 'Nostr Marketplace', 'sk-core' ),
+            'settings_description' => __( 'Produkte als NIP-99 Classified Listings auf Nostr publishen. Sichtbar auf Amethyst, Shopstr, Coracle, Plebeian Market und jedem NIP-99 Client.', 'sk-core' ),
         ];
 
         return $sections;

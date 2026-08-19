@@ -17,18 +17,18 @@ wp_localize_script(
     [
         'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
         'nonce'         => wp_create_nonce( 'sk_php_toggle_module' ),
-        'activeLabel'   => __( 'Active', 'sk' ),
-        'inactiveLabel' => __( 'Inactive', 'sk' ),
-        'errorMessage'  => __( 'Failed to toggle module.', 'sk' ),
+        'activeLabel'   => __( 'Active', 'sk-core' ),
+        'inactiveLabel' => __( 'Inactive', 'sk-core' ),
+        'errorMessage'  => __( 'Failed to toggle module.', 'sk-core' ),
     ]
 );
 ?>
 
 <div class="sk-modules-wrap">
-    <h2><?php esc_html_e( 'Modules', 'sk' ); ?></h2>
+    <h2><?php esc_html_e( 'Modules', 'sk-core' ); ?></h2>
 
     <?php if ( empty( $all_modules ) ) : ?>
-        <p><?php esc_html_e( 'No modules available.', 'sk' ); ?></p>
+        <p><?php esc_html_e( 'No modules available.', 'sk-core' ); ?></p>
     <?php else : ?>
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 15px;">
             <?php foreach ( $all_modules as $module_id => $module ) :
@@ -46,7 +46,7 @@ wp_localize_script(
                                class="sk-module-toggle"
                                data-module-id="<?php echo esc_attr( $module_id ); ?>"
                                <?php checked( $is_active ); ?>>
-                        <span><?php echo $is_active ? esc_html__( 'Active', 'sk' ) : esc_html__( 'Inactive', 'sk' ); ?></span>
+                        <span><?php echo $is_active ? esc_html__( 'Active', 'sk-core' ) : esc_html__( 'Inactive', 'sk-core' ); ?></span>
                     </label>
                 </div>
             <?php endforeach; ?>

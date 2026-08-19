@@ -70,7 +70,7 @@ class Store {
     public function add_review_tab_in_store( $tabs, $store_id ) {
         if ( 'yes' === get_option( 'woocommerce_enable_reviews' ) ) {
             $tabs['reviews'] = array(
-                'title' => __( 'Reviews', 'sk' ),
+                'title' => __( 'Reviews', 'sk-core' ),
                 'url'   => sk_get_review_url( $store_id ),
             );
         }
@@ -115,7 +115,7 @@ class Store {
         }
 
         $tabs['vendor_biography'] = [
-            'title' => apply_filters( 'sk_vendor_biography_title', __( 'Vendor Biography', 'sk' ) ),
+            'title' => apply_filters( 'sk_vendor_biography_title', __( 'Vendor Biography', 'sk-core' ) ),
             'url'   => sk_get_store_url( $store_id, 'biography' ),
         ];
 

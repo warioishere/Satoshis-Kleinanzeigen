@@ -2,9 +2,9 @@
     <table class="wp-list-table widefat fixed striped">
         <thead>
             <tr>
-                <th><?php esc_html_e( 'Reason', 'sk' ); ?></th>
-                <th><?php esc_html_e( 'Reported by', 'sk' ); ?></th>
-                <th><?php esc_html_e( 'Reported at', 'sk' ); ?></th>
+                <th><?php esc_html_e( 'Reason', 'sk-core' ); ?></th>
+                <th><?php esc_html_e( 'Reported by', 'sk-core' ); ?></th>
+                <th><?php esc_html_e( 'Reported at', 'sk-core' ); ?></th>
                 <th class="action-column"></th>
             </tr>
         </thead>
@@ -13,7 +13,7 @@
             <?php if ( empty( $reports ) ): ?>
                 <tr>
                     <td colspan="4">
-                        <?php esc_html_e( 'This product has no abuse report', 'sk' ); ?>
+                        <?php esc_html_e( 'This product has no abuse report', 'sk-core' ); ?>
                     </td>
                 </tr>
             <?php else: ?>
@@ -41,7 +41,7 @@
                         </td>
                         <td>
                             <button type="button" class="button button-small sk-report-abuse-admin-single-product-delete-item" data-id="<?php echo esc_attr( $report['id'] ); ?>">
-                                <i class="far fa-trash-alt"></i> <?php esc_html_e( 'Delete', 'sk' ); ?>
+                                <i class="far fa-trash-alt"></i> <?php esc_html_e( 'Delete', 'sk-core' ); ?>
                             </button>
                         </td>
                     </tr>
@@ -51,9 +51,9 @@
 
         <tfoot>
             <tr>
-                <th><?php esc_html_e( 'Reason', 'sk' ); ?></th>
-                <th><?php esc_html_e( 'Reported by', 'sk' ); ?></th>
-                <th><?php esc_html_e( 'Reported at', 'sk' ); ?></th>
+                <th><?php esc_html_e( 'Reason', 'sk-core' ); ?></th>
+                <th><?php esc_html_e( 'Reported by', 'sk-core' ); ?></th>
+                <th><?php esc_html_e( 'Reported at', 'sk-core' ); ?></th>
                 <th class="action-column"></th>
             </tr>
         </tfoot>

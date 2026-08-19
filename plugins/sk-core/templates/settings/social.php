@@ -33,7 +33,7 @@ do_action( 'sk_profile_settings_before_form', $current_user, $profile_info );
 
 	<div class="sk-form-group">
 		<div class="sk-w4 ajax_prev sk-text-left" style="margin-left:24%;">
-			<input type="submit" name="sk_update_profile_settings" class="sk-btn sk-btn-danger sk-btn-theme" value="<?php esc_attr_e( 'Update Settings', 'sk' ); ?>">
+			<input type="submit" name="sk_update_profile_settings" class="sk-btn sk-btn-danger sk-btn-theme" value="<?php esc_attr_e( 'Update Settings', 'sk-core' ); ?>">
 		</div>
 	</div>
 </form>

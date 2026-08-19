@@ -16,16 +16,16 @@ do_action( 'woocommerce_email_header', $email_heading, $email ); ?>
     <p>
         <?php
         // translators: %s, Vendor Name.
-        printf( __( 'Congratulations %s!', 'sk' ), $data['{display_name}'] );
+        printf( __( 'Congratulations %s!', 'sk-core' ), $data['{display_name}'] );
         ?>
     </p>
     <p>
-        <?php esc_html_e( 'Your vendor account is activated', 'sk' ); ?>
+        <?php esc_html_e( 'Your vendor account is activated', 'sk-core' ); ?>
     </p>
     <p>
         <?php
         // translators: %s, WooCommerce my account page URL.
-        printf( __( 'You can <a href="%s" target="_blank">login here</a> ', 'sk' ), wc_get_page_permalink( 'myaccount' ) );
+        printf( __( 'You can <a href="%s" target="_blank">login here</a> ', 'sk-core' ), wc_get_page_permalink( 'myaccount' ) );
         ?>
     </p>
 <?php

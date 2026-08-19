@@ -22,10 +22,10 @@ defined( 'ABSPATH' ) || exit; ?>
         <div class="store-lists-category item">
             <div class="category-input">
                 <span class="category-label">
-                    <?php esc_html_e( 'Category:', 'sk' ); ?>
+                    <?php esc_html_e( 'Category:', 'sk-core' ); ?>
                 </span>
                 <span class="category-items">
-                    <?php esc_html_e( 'All Categories', 'sk' ) ?>
+                    <?php esc_html_e( 'All Categories', 'sk-core' ) ?>
                 </span>
 
                 <span class="sk-icon dashicons dashicons-arrow-down-alt2"></span>

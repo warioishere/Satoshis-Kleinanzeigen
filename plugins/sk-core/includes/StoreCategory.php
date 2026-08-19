@@ -52,7 +52,7 @@ class StoreCategory {
             'sk_seller',
             array(
                 'hierarchical' => false,
-                'label'        => __( 'Store Categories', 'sk' ),
+                'label'        => __( 'Store Categories', 'sk-core' ),
                 'show_ui'      => false,
                 'query_var'    => sk_is_store_categories_feature_on(),
                 'capabilities' => array(
@@ -82,15 +82,15 @@ class StoreCategory {
     public function add_admin_settings( $sk_settings_fields ) {
         $sk_settings_fields['store_category_type'] = [
             'name'    => 'store_category_type',
-            'label'   => __( 'Store Category', 'sk' ),
+            'label'   => __( 'Store Category', 'sk-core' ),
             'type'    => 'radio',
             'options' => [
-                'none'     => __( 'None', 'sk' ),
-                'single'   => __( 'Single', 'sk' ),
-                'multiple' => __( 'Multiple', 'sk' ),
+                'none'     => __( 'None', 'sk-core' ),
+                'single'   => __( 'Single', 'sk-core' ),
+                'multiple' => __( 'Multiple', 'sk-core' ),
             ],
             'default' => 'none',
-            'tooltip' => __( 'Only admin can create store categories from Dashboard -> Vendors -> Store Categories to assign categories from vendor listing page. If you select single, vendor will only have one category available during store setup or when navigating to vendor Dashboard -> Store -> Store categories. If you select multiple, multiple categories will be available. Select none if you don\'t want either.', 'sk' ),
+            'tooltip' => __( 'Only admin can create store categories from Dashboard -> Vendors -> Store Categories to assign categories from vendor listing page. If you select single, vendor will only have one category available during store setup or when navigating to vendor Dashboard -> Store -> Store categories. If you select multiple, multiple categories will be available. Select none if you don\'t want either.', 'sk-core' ),
             'is_lite' => false,
         ];
 
@@ -136,7 +136,7 @@ class StoreCategory {
      * @return array
      */
     public function set_localized_data( $data ) {
-        $data['all_categories'] = __( 'All Categories', 'sk' );
+        $data['all_categories'] = __( 'All Categories', 'sk-core' );
 
         return $data;
     }
@@ -172,7 +172,7 @@ class StoreCategory {
             'categories'       => $categories,
             'store_categories' => $store_categories,
             'is_multiple'      => $is_multiple,
-            'label'            => $is_multiple ? __( 'Store Categories', 'sk' ) : __( 'Store Category', 'sk' ),
+            'label'            => $is_multiple ? __( 'Store Categories', 'sk-core' ) : __( 'Store Category', 'sk-core' ),
         );
 
         $args = wp_parse_args( $args, $defaults );
@@ -475,7 +475,7 @@ class StoreCategory {
      */
     public function add_store_category_rest_collection_param( $params ) {
         $params['store_categories'] = array(
-            'description'       => __( 'Store categories', 'sk' ),
+            'description'       => __( 'Store categories', 'sk-core' ),
             'type'              => array( 'string', 'array' ),
             'sanitize_callback' => 'sanitize_text_field',
             'validate_callback' => 'rest_validate_request_arg',

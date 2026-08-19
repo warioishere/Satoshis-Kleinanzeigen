@@ -81,7 +81,7 @@ $status_colors = [
     <?php else : ?>
         <div class="sk-sub-empty">
             <i class="fas fa-receipt"></i>
-            <p><?php esc_html_e( 'Keine Bestellungen gefunden.', 'sk' ); ?></p>
+            <p><?php esc_html_e( 'Keine Bestellungen gefunden.', 'sk-core' ); ?></p>
         </div>
     <?php endif; ?>
 

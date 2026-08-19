@@ -20,14 +20,14 @@ $order_count = ! empty( $orders_data['total'] ) ? intval( $orders_data['total'] 
 <div class="sk-dashboard-subscription-wrap">
 
     <div class="sk-sub-page-header">
-        <h2><i class="fas fa-layer-group"></i> <?php esc_html_e( 'Abonnements', 'sk' ); ?></h2>
+        <h2><i class="fas fa-layer-group"></i> <?php esc_html_e( 'Abonnements', 'sk-core' ); ?></h2>
     </div>
 
     <div class="sk-sub-tab-filter">
         <a href="<?php echo esc_url( add_query_arg( [ 'tab' => 'subscription_packs' ], $link ) ); ?>"
            class="sk-sub-tab<?php echo 'subscription_orders' !== $active_tab ? ' active' : ''; ?>">
             <i class="fas fa-box"></i>
-            <?php esc_html_e( 'Pakete', 'sk' ); ?>
+            <?php esc_html_e( 'Pakete', 'sk-core' ); ?>
             <?php if ( $pack_count > 0 ) : ?>
                 <span class="sk-sub-tab-count"><?php echo $pack_count; ?></span>
             <?php endif; ?>
@@ -35,7 +35,7 @@ $order_count = ! empty( $orders_data['total'] ) ? intval( $orders_data['total'] 
         <a href="<?php echo esc_url( add_query_arg( [ 'tab' => 'subscription_orders' ], $link ) ); ?>"
            class="sk-sub-tab<?php echo 'subscription_orders' === $active_tab ? ' active' : ''; ?>">
             <i class="fas fa-receipt"></i>
-            <?php esc_html_e( 'Bestellungen', 'sk' ); ?>
+            <?php esc_html_e( 'Bestellungen', 'sk-core' ); ?>
             <?php if ( $order_count > 0 ) : ?>
                 <span class="sk-sub-tab-count"><?php echo $order_count; ?></span>
             <?php endif; ?>

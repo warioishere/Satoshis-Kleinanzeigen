@@ -21,8 +21,8 @@ class AdminEmail extends WC_Email {
      */
     public function __construct() {
         $this->id             = 'sk_report_abuse_admin_email';
-        $this->title          = esc_html__( 'SK Report Abuse', 'sk' );
-        $this->description    = esc_html__( 'Send abuse report notification to admin.', 'sk' );
+        $this->title          = esc_html__( 'SK Report Abuse', 'sk-core' );
+        $this->description    = esc_html__( 'Send abuse report notification to admin.', 'sk-core' );
         $this->template_html  = 'emails/report-abuse-admin-email-html.php';
         $this->template_plain = 'emails/plain/report-abuse-admin-email-html.php';
         $this->template_base  = trailingslashit( SK_REPORT_ABUSE_VIEWS );
@@ -45,25 +45,25 @@ class AdminEmail extends WC_Email {
      */
     public function init_form_fields() {
         /* translators: %s: list of placeholders */
-        $placeholder_text  = sprintf( __( 'Available placeholders: %s', 'sk' ), '<code>' . implode( '</code>, <code>', array_keys( $this->placeholders ) ) . '</code>' );
+        $placeholder_text  = sprintf( __( 'Available placeholders: %s', 'sk-core' ), '<code>' . implode( '</code>, <code>', array_keys( $this->placeholders ) ) . '</code>' );
         $this->form_fields = [
             'enabled'            => [
-                'title'   => esc_html__( 'Enable/Disable', 'sk' ),
+                'title'   => esc_html__( 'Enable/Disable', 'sk-core' ),
                 'type'    => 'checkbox',
-                'label'   => esc_html__( 'Enable this email', 'sk' ),
+                'label'   => esc_html__( 'Enable this email', 'sk-core' ),
                 'default' => 'yes',
             ],
             'recipient' => [
-                'title'         => __( 'Recipient(s)', 'sk' ),
+                'title'         => __( 'Recipient(s)', 'sk-core' ),
                 'type'          => 'text',
                 // translators: 1) Email recipients
-                'description'   => sprintf( __( 'Enter recipients (comma separated) for this email. Defaults to %s.', 'sk' ), '<code>' . esc_attr( get_option( 'admin_email' ) ) . '</code>' ),
+                'description'   => sprintf( __( 'Enter recipients (comma separated) for this email. Defaults to %s.', 'sk-core' ), '<code>' . esc_attr( get_option( 'admin_email' ) ) . '</code>' ),
                 'placeholder'   => '',
                 'default'       => '',
                 'desc_tip'      => true,
             ],
             'subject'            => [
-                'title'       => esc_html__( 'Subject', 'sk' ),
+                'title'       => esc_html__( 'Subject', 'sk-core' ),
                 'type'        => 'text',
                 'desc_tip'    => true,
                 'description' => $placeholder_text,
@@ -71,7 +71,7 @@ class AdminEmail extends WC_Email {
                 'default'     => $this->get_default_subject(),
             ],
             'heading'            => [
-                'title'       => esc_html__( 'Email heading', 'sk' ),
+                'title'       => esc_html__( 'Email heading', 'sk-core' ),
                 'type'        => 'text',
                 'desc_tip'    => true,
                 'description' => $placeholder_text,
@@ -79,18 +79,18 @@ class AdminEmail extends WC_Email {
                 'default'     => $this->get_default_heading(),
             ],
             'additional_content' => [
-                'title'       => __( 'Additional content', 'sk' ),
-                'description' => __( 'Text to appear below the main email content.', 'sk' ) . ' ' . $placeholder_text,
+                'title'       => __( 'Additional content', 'sk-core' ),
+                'description' => __( 'Text to appear below the main email content.', 'sk-core' ) . ' ' . $placeholder_text,
                 'css'         => 'width:400px; height: 75px;',
-                'placeholder' => __( 'N/A', 'sk' ),
+                'placeholder' => __( 'N/A', 'sk-core' ),
                 'type'        => 'textarea',
                 'default'     => $this->get_default_additional_content(),
                 'desc_tip'    => true,
             ],
             'email_type'         => [
-                'title'       => __( 'Email type', 'sk' ),
+                'title'       => __( 'Email type', 'sk-core' ),
                 'type'        => 'select',
-                'description' => __( 'Choose which format of email to send.', 'sk' ),
+                'description' => __( 'Choose which format of email to send.', 'sk-core' ),
                 'default'     => 'html',
                 'class'       => 'email_type wc-enhanced-select',
                 'options'     => $this->get_email_type_options(),
@@ -106,7 +106,7 @@ class AdminEmail extends WC_Email {
      * @return string
      */
     public function get_default_subject() {
-        return esc_html__( '[{site_title}] A new abuse report has been submitted', 'sk' );
+        return esc_html__( '[{site_title}] A new abuse report has been submitted', 'sk-core' );
     }
 
     /**
@@ -116,7 +116,7 @@ class AdminEmail extends WC_Email {
      * @return string
      */
     public function get_default_heading() {
-        return esc_html__( 'Product Abuse Report', 'sk' );
+        return esc_html__( 'Product Abuse Report', 'sk-core' );
     }
 
     /**

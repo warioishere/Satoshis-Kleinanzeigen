@@ -145,15 +145,15 @@ class Order {
     public function hide_order_item_meta_key( $display_key, $meta, $item ) {
         switch ( $display_key ) {
             case 'sk_advertisement_cost':
-                $display_key = __( 'Advertisement Listing Price', 'sk' );
+                $display_key = __( 'Advertisement Listing Price', 'sk-core' );
                 break;
 
             case 'sk_advertisement_expire_after_days':
-                $display_key = __( 'Expires In Days', 'sk' );
+                $display_key = __( 'Expires In Days', 'sk-core' );
                 break;
 
             case 'sk_advertisement_product_id':
-                $display_key = __( 'Product Name', 'sk' );
+                $display_key = __( 'Product Name', 'sk-core' );
                 break;
         }
 

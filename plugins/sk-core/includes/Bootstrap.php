@@ -152,8 +152,8 @@ class Bootstrap {
             'sk_admin_localize_param', [
                 'ajaxurl'                 => admin_url( 'admin-ajax.php' ),
                 'nonce'                   => wp_create_nonce( 'sk-admin-nonce' ),
-                'activating'              => __( 'Activating', 'sk' ),
-                'deactivating'            => __( 'Deactivating', 'sk' ),
+                'activating'              => __( 'Activating', 'sk-core' ),
+                'deactivating'            => __( 'Deactivating', 'sk-core' ),
             ]
         );
         wp_localize_script( 'sk_pro_admin', 'sk_admin', $sk_admin );

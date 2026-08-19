@@ -23,7 +23,7 @@ class SingleProduct {
      * @return void
      */
     public static function add_report_button() {
-        $label = apply_filters( 'sk_report_abuse_button_label', esc_html__( 'Report Abuse', 'sk' ) );
+        $label = apply_filters( 'sk_report_abuse_button_label', esc_html__( 'Report Abuse', 'sk-core' ) );
 
         $args = [
             'label' => $label,

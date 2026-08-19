@@ -64,7 +64,7 @@ class SubscriptionInvoice {
      * @return string
      */
     public function get_vat_number_label(): string {
-        return esc_attr__( 'VAT / TAX ID', 'sk' );
+        return esc_attr__( 'VAT / TAX ID', 'sk-core' );
     }
 
     /**
@@ -74,7 +74,7 @@ class SubscriptionInvoice {
      * @return string
      */
     public function get_bank_iban_label(): string {
-        return esc_attr__( 'Account / IBAN', 'sk' );
+        return esc_attr__( 'Account / IBAN', 'sk-core' );
     }
 
     /**
@@ -98,13 +98,13 @@ class SubscriptionInvoice {
 
         $interval_count  = $order->get_meta( '_sk_subscription_pack_renewal_interval_count', true );
         $interval_period = $order->get_meta( '_sk_subscription_pack_renewal_interval_period', true );
-        $pack_validity   = 'unlimited' === $order->get_meta( '_pack_validity' ) ? esc_html__( 'Unlimited', 'sk' ) : sk_format_datetime( $order->get_meta( '_pack_validity' ) );
+        $pack_validity   = 'unlimited' === $order->get_meta( '_pack_validity' ) ? esc_html__( 'Unlimited', 'sk-core' ) : sk_format_datetime( $order->get_meta( '_pack_validity' ) );
 
         if ( $interval_count && $interval_period ) {
-            printf( esc_html__( 'Subscription Period: %d %s <br>', 'sk' ), $interval_count, $interval_period );
-            printf( esc_html__( 'Next Renewal: %s', 'sk' ), $pack_validity );
+            printf( esc_html__( 'Subscription Period: %d %s <br>', 'sk-core' ), $interval_count, $interval_period );
+            printf( esc_html__( 'Next Renewal: %s', 'sk-core' ), $pack_validity );
         } else {
-            printf( esc_html__( 'Subscription Validity: %s', 'sk' ), $pack_validity );
+            printf( esc_html__( 'Subscription Validity: %s', 'sk-core' ), $pack_validity );
         }
     }
 
@@ -126,6 +126,6 @@ class SubscriptionInvoice {
             return;
         }
 
-        esc_html_e( 'Payment must be received within the payment period specified in agreement. Late payments may result in the suspension or cancellation of your subscription service without prior notice.<br>VAT is charged in accordance with the applicable tax laws. If you are VAT-registered within the EU, please provide your VAT number to claim reverse charge relief.', 'sk' );
+        esc_html_e( 'Payment must be received within the payment period specified in agreement. Late payments may result in the suspension or cancellation of your subscription service without prior notice.<br>VAT is charged in accordance with the applicable tax laws. If you are VAT-registered within the EU, please provide your VAT number to claim reverse charge relief.', 'sk-core' );
     }
 }

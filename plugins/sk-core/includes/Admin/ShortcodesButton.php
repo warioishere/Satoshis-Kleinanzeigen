@@ -27,23 +27,23 @@ class ShortcodesButton {
 
         $shortcodes = array(
             'sk-dashboard'            => array(
-                'title'   => __( 'Vendor Dasboard', 'sk' ),
+                'title'   => __( 'Vendor Dasboard', 'sk-core' ),
                 'content' => '[sk-dashboard]',
             ),
             'sk-stores'               => array(
-                'title'   => __( 'Stores List', 'sk' ),
+                'title'   => __( 'Stores List', 'sk-core' ),
                 'content' => '[sk-stores]',
             ),
             'sk-best-selling-product' => array(
-                'title'   => __( 'Best Selling Product', 'sk' ),
+                'title'   => __( 'Best Selling Product', 'sk-core' ),
                 'content' => '[sk-best-selling-product no_of_product="5" seller_id="" ]',
             ),
             'sk-top-rated-product'    => array(
-                'title'   => __( 'Top Rated Products', 'sk' ),
+                'title'   => __( 'Top Rated Products', 'sk-core' ),
                 'content' => '[sk-top-rated-product]',
             ),
             'sk-my-orders' => array(
-                'title'   => __( 'SK My Orders', 'sk' ),
+                'title'   => __( 'SK My Orders', 'sk-core' ),
                 'content' => '[sk-my-orders]',
             ),
         );

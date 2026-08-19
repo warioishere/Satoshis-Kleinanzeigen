@@ -60,7 +60,7 @@ class Module {
 
         // _wpnonce check for an extra layer of security, the function will exit if it fails
         if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['_wpnonce'] ) ), 'sk_suggestion_search_nonce' ) ) {
-            wp_send_json_error( __( 'Error: Nonce verification failed', 'sk' ) );
+            wp_send_json_error( __( 'Error: Nonce verification failed', 'sk-core' ) );
         }
 
         if ( ! empty( $_POST['textfield'] ) ) {
@@ -130,7 +130,7 @@ class Module {
                     }
 
                     if ( ! empty( $sku ) ) {
-                        $output .= '<div class="sk-ls-product-sku">' . esc_html__( 'SKU:', 'sk' ) . ' ' . $sku . '</div>';
+                        $output .= '<div class="sk-ls-product-sku">' . esc_html__( 'SKU:', 'sk-core' ) . ' ' . $sku . '</div>';
                     }
 
                     $output .= '</div>';
@@ -160,12 +160,12 @@ class Module {
     public function render_live_search_section( $sections ) {
         $sections[] = [
             'id'                   => 'sk_live_search_setting',
-            'title'                => __( 'Live Search', 'sk' ),
+            'title'                => __( 'Live Search', 'sk-core' ),
             'icon_url'             => plugins_url( 'assets/images/search.svg', __FILE__ ),
-            'description'          => __( 'Ajax Live Search Control', 'sk' ),
+            'description'          => __( 'Ajax Live Search Control', 'sk-core' ),
             'document_link'        => 'https://sk.co/docs/wordpress/modules/how-to-install-configure-use-sk-live-search/',
-            'settings_title'       => __( 'Live Search Settings', 'sk' ),
-            'settings_description' => __( 'You can configure your site settings for customers to utilize when navigating stores for specific products.', 'sk' ),
+            'settings_title'       => __( 'Live Search Settings', 'sk-core' ),
+            'settings_description' => __( 'You can configure your site settings for customers to utilize when navigating stores for specific products.', 'sk-core' ),
         ];
 
         return $sections;
@@ -183,15 +183,15 @@ class Module {
         $settings_fields['sk_live_search_setting'] = [
             'live_search_option' => [
                 'name'    => 'live_search_option',
-                'label'   => __( 'Live Search Options', 'sk' ),
-                'desc'    => __( 'Select one option which one will apply on search box', 'sk' ),
+                'label'   => __( 'Live Search Options', 'sk-core' ),
+                'desc'    => __( 'Select one option which one will apply on search box', 'sk-core' ),
                 'type'    => 'select',
                 'default' => 'suggestion_box',
                 'options' => [
-                    'suggestion_box'  => __( 'Search with Suggestion Box', 'sk' ),
-                    'old_live_search' => __( 'Autoload Replace Current Content', 'sk' ),
+                    'suggestion_box'  => __( 'Search with Suggestion Box', 'sk-core' ),
+                    'old_live_search' => __( 'Autoload Replace Current Content', 'sk-core' ),
                 ],
-                'tooltip' => __( 'Select one option which one will apply on search box.', 'sk' ),
+                'tooltip' => __( 'Select one option which one will apply on search box.', 'sk-core' ),
             ],
         ];
 

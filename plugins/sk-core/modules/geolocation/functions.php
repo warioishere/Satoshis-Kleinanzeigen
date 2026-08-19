@@ -161,10 +161,10 @@ function sk_geo_filter_form( $scope = '', $display = 'inline' ) {
         'address'    => $address,
         'distance'   => absint( $distance ),
         'placeholders' => array(
-            'search_all'      => sk_get_option( 'placeholder_search_all', 'sk_geolocation', __( 'Search Vendors or Products', 'sk' ) ),
-            'search_vendors'  => sk_get_option( 'placeholder_search_vendors', 'sk_geolocation', __( 'Search Vendors', 'sk' ) ),
-            'search_products' => sk_get_option( 'placeholder_search_product', 'sk_geolocation', __( 'Search Products', 'sk' ) ),
-            'location'        => sk_get_option( 'placeholder_location', 'sk_geolocation', __( 'Location', 'sk' ) ),
+            'search_all'      => sk_get_option( 'placeholder_search_all', 'sk_geolocation', __( 'Search Vendors or Products', 'sk-core' ) ),
+            'search_vendors'  => sk_get_option( 'placeholder_search_vendors', 'sk_geolocation', __( 'Search Vendors', 'sk-core' ) ),
+            'search_products' => sk_get_option( 'placeholder_search_product', 'sk_geolocation', __( 'Search Products', 'sk-core' ) ),
+            'location'        => sk_get_option( 'placeholder_location', 'sk_geolocation', __( 'Location', 'sk-core' ) ),
         ),
         'slider' => array(
             'min'      => $distance_min,
@@ -270,8 +270,8 @@ function sk_geo_store_lists_filter_form() {
         'address'   => $address,
         'distance'  => absint( $distance ),
         'placeholders' => [
-            'location'       => sk_get_option( 'placeholder_location', 'sk_geolocation', __( 'Location', 'sk' ) ),
-            'search_vendors' => sk_get_option( 'placeholder_search_vendors', 'sk_geolocation', __( 'Search Vendors', 'sk' ) ),
+            'location'       => sk_get_option( 'placeholder_location', 'sk_geolocation', __( 'Location', 'sk-core' ) ),
+            'search_vendors' => sk_get_option( 'placeholder_search_vendors', 'sk_geolocation', __( 'Search Vendors', 'sk-core' ) ),
         ],
         'slider' => [
             'min'  => $distance_min,

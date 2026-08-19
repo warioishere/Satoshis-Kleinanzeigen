@@ -6,9 +6,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 <div class="woocommerce_variation wc-metabox closed">
     <h3>
         <button type="button" class="remove_variation btn btn-sm btn-danger"
-                rel="<?php echo absint( $variation_id ); ?>"><?php esc_html_e( 'Remove', 'sk' ); ?>
+                rel="<?php echo absint( $variation_id ); ?>"><?php esc_html_e( 'Remove', 'sk-core' ); ?>
         </button>
-        <div class="handlediv" title="<?php esc_attr_e( 'Click to toggle', 'sk' ); ?>"></div>
+        <div class="handlediv" title="<?php esc_attr_e( 'Click to toggle', 'sk-core' ); ?>"></div>
         <strong>#<?php echo esc_html( $variation_id ); ?> &mdash; </strong>
         <?php
         foreach ( $parent_data['attributes'] as $attribute ) {
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
             $variation_selected_value = isset( $variation_data[ 'attribute_' . sanitize_title( $attribute['name'] ) ][0] ) ? $variation_data[ 'attribute_' . sanitize_title( $attribute['name'] ) ][0] : '';
 
             // Name will be something like attribute_pa_color
-            echo '<select name="attribute_' . sanitize_title( $attribute['name'] ) . '[' . $loop . ']"><option value="">' . __( 'Any', 'sk' ) . ' ' . esc_html( wc_attribute_label( $attribute['name'] ) ) . '&hellip;</option>';
+            echo '<select name="attribute_' . sanitize_title( $attribute['name'] ) . '[' . $loop . ']"><option value="">' . __( 'Any', 'sk-core' ) . ' ' . esc_html( wc_attribute_label( $attribute['name'] ) ) . '&hellip;</option>';
 
             // Get terms for attribute taxonomy or value if its a custom attribute
             if ( $attribute['is_taxonomy'] ) {
@@ -53,8 +53,8 @@ if ( ! defined( 'ABSPATH' ) ) {
                     <input type="text" size="5" name="variable_sku[<?php echo $loop; ?>]"
                             value="<?php echo isset( $_sku ) ? esc_attr( $_sku ) : ''; ?>"
                             placeholder="<?php echo esc_attr( $parent_data['sku'] ); ?>"/>
-                    <label><?php esc_html_e( 'SKU', 'sk' ); ?>:
-                        <a class="tips" title="<?php esc_attr_e( 'Enter a SKU for this variation or leave blank to use the parent product SKU.', 'sk' ); ?>" href="#">
+                    <label><?php esc_html_e( 'SKU', 'sk-core' ); ?>:
+                        <a class="tips" title="<?php esc_attr_e( 'Enter a SKU for this variation or leave blank to use the parent product SKU.', 'sk-core' ); ?>" href="#">
                             <span class="dashicons dashicons-editor-help"></span>
                         </a>
                     </label>
@@ -67,33 +67,33 @@ if ( ! defined( 'ABSPATH' ) ) {
                     <?php if ( get_option( 'woocommerce_manage_stock' ) === 'yes' ) : ?>
                         <tr class="show_if_variation_manage_stock">
                             <td>
-                                <label><?php esc_html_e( 'Stock Qty:', 'sk' ); ?>
-                                    <a class="tips" title="<?php esc_attr_e( 'Enter a quantity to enable stock management at variation level, or leave blank to use the parent product\'s options.', 'sk' ); ?>" href="#">
+                                <label><?php esc_html_e( 'Stock Qty:', 'sk-core' ); ?>
+                                    <a class="tips" title="<?php esc_attr_e( 'Enter a quantity to enable stock management at variation level, or leave blank to use the parent product\'s options.', 'sk-core' ); ?>" href="#">
                                         <span class="dashicons dashicons-editor-help"></span>
                                     </a>
                                 </label>
                                 <input type="number" size="5" name="variable_stock[<?php echo $loop; ?>]" value="<?php echo isset( $_stock ) ? wc_stock_amount( $_stock ) : ''; ?>" step="any"/>
                             </td>
                             <td>
-                                <label><?php esc_html_e( 'Allow Backorders?', 'sk' ); ?></label>
+                                <label><?php esc_html_e( 'Allow Backorders?', 'sk-core' ); ?></label>
                                 <select name="variable_backorders[<?php echo $loop; ?>]">
                                     <option
-                                        value="no" <?php selected( $_backorders, 'no' ); ?>><?php esc_html_e( 'Do not allow', 'sk' ); ?></option>
+                                        value="no" <?php selected( $_backorders, 'no' ); ?>><?php esc_html_e( 'Do not allow', 'sk-core' ); ?></option>
                                     <option
-                                        value="notify" <?php selected( $_backorders, 'notify' ); ?>><?php esc_html_e( 'Allow but notify customer', 'sk' ); ?></option>
+                                        value="notify" <?php selected( $_backorders, 'notify' ); ?>><?php esc_html_e( 'Allow but notify customer', 'sk-core' ); ?></option>
                                     <option
-                                        value="yes" <?php selected( $_backorders, 'yes' ); ?>><?php esc_html_e( 'Allow', 'sk' ); ?></option>
+                                        value="yes" <?php selected( $_backorders, 'yes' ); ?>><?php esc_html_e( 'Allow', 'sk-core' ); ?></option>
                                 </select>
                             </td>
                         </tr>
                         <tr>
                             <td colspan="2">
-                                <label><?php esc_html_e( 'Stock status', 'sk' ); ?> <a href="#" class="tips" title="<?php esc_attr_e( 'Controls whether or not the product is listed as "in stock" or "out of stock" on the frontend.', 'sk' ); ?>"><span class="dashicons dashicons-editor-help"></span></a></label>
+                                <label><?php esc_html_e( 'Stock status', 'sk-core' ); ?> <a href="#" class="tips" title="<?php esc_attr_e( 'Controls whether or not the product is listed as "in stock" or "out of stock" on the frontend.', 'sk-core' ); ?>"><span class="dashicons dashicons-editor-help"></span></a></label>
                                 <select name="variable_stock_status[<?php echo $loop; ?>]">
                                     <option
-                                        value="instock" <?php selected( $_stock_status, 'instock' ); ?>><?php esc_html_e( 'In stock', 'sk' ); ?></option>
+                                        value="instock" <?php selected( $_stock_status, 'instock' ); ?>><?php esc_html_e( 'In stock', 'sk-core' ); ?></option>
                                     <option
-                                        value="outofstock" <?php selected( $_stock_status, 'outofstock' ); ?>><?php esc_html_e( 'Out of stock', 'sk' ); ?></option>
+                                        value="outofstock" <?php selected( $_stock_status, 'outofstock' ); ?>><?php esc_html_e( 'Out of stock', 'sk-core' ); ?></option>
                                 </select>
                             </td>
                         </tr>
@@ -101,15 +101,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 
                     <tr class="variable_pricing">
                         <td>
-                            <label><?php echo __( 'Regular Price:', 'sk' ) . ' (' . get_woocommerce_currency_symbol() . ')'; ?></label>
+                            <label><?php echo __( 'Regular Price:', 'sk-core' ) . ' (' . get_woocommerce_currency_symbol() . ')'; ?></label>
                             <input type="text" size="5" name="variable_regular_price[<?php echo $loop; ?>]" value="<?php echo isset( $_regular_price ) ? esc_attr( $_regular_price ) : ''; ?>
                                 " class="wc_input_price"
-                                    placeholder="<?php esc_attr_e( 'Variation price (required)', 'sk' ); ?>"/>
+                                    placeholder="<?php esc_attr_e( 'Variation price (required)', 'sk-core' ); ?>"/>
                         </td>
                         <td>
-                            <label><?php esc_html_e( 'Sale Price:', 'sk' ) . ' (' . get_woocommerce_currency_symbol() . ')'; ?>
-                                <a href="#" class="sale_schedule"><?php esc_html_e( 'Schedule', 'sk' ); ?></a>
-                                <a href="#" class="cancel_sale_schedule" style="display:none"><?php esc_html_e( 'Cancel schedule', 'sk' ); ?></a>
+                            <label><?php esc_html_e( 'Sale Price:', 'sk-core' ) . ' (' . get_woocommerce_currency_symbol() . ')'; ?>
+                                <a href="#" class="sale_schedule"><?php esc_html_e( 'Schedule', 'sk-core' ); ?></a>
+                                <a href="#" class="cancel_sale_schedule" style="display:none"><?php esc_html_e( 'Cancel schedule', 'sk-core' ); ?></a>
                             </label>
                             <input type="text" size="5" name="variable_sale_price[<?php echo $loop; ?>]" value="<?php echo isset( $_sale_price ) ? esc_attr( $_sale_price ) : ''; ?>" class="wc_input_price"/>
                         </td>
@@ -117,18 +117,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 
                     <tr class="sale_price_dates_fields" style="display:none">
                         <td>
-                            <label><?php esc_html_e( 'Sale start date:', 'sk' ); ?></label>
+                            <label><?php esc_html_e( 'Sale start date:', 'sk-core' ); ?></label>
                             <input type="text" class="sale_price_dates_from"
                                     name="variable_sale_price_dates_from[<?php echo $loop; ?>]"
                                     value="<?php echo ! empty( $_sale_price_dates_from ) ? date_i18n( 'Y-m-d', $_sale_price_dates_from ) : ''; ?>"
-                                    placeholder="<?php echo _x( 'From&hellip; YYYY-MM-DD', 'placeholder', 'sk' ); ?>"
+                                    placeholder="<?php echo _x( 'From&hellip; YYYY-MM-DD', 'placeholder', 'sk-core' ); ?>"
                                     maxlength="10" pattern="[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[01])"/>
                         </td>
                         <td>
-                            <label><?php esc_html_e( 'Sale end date:', 'sk' ); ?></label>
+                            <label><?php esc_html_e( 'Sale end date:', 'sk-core' ); ?></label>
                             <input type="text" name="variable_sale_price_dates_to[<?php echo $loop; ?>]"
                                     value="<?php echo ! empty( $_sale_price_dates_to ) ? date_i18n( 'Y-m-d', $_sale_price_dates_to ) : ''; ?>"
-                                    placeholder="<?php echo _x( 'To&hellip; YYYY-MM-DD', 'placeholder', 'sk' ); ?>"
+                                    placeholder="<?php echo _x( 'To&hellip; YYYY-MM-DD', 'placeholder', 'sk-core' ); ?>"
                                     maxlength="10" pattern="[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[01])"/>
                         </td>
                     </tr>
@@ -137,9 +137,9 @@ if ( ! defined( 'ABSPATH' ) ) {
                         <tr>
                             <?php if ( wc_product_weight_enabled() ) : ?>
                                 <td class="hide_if_variation_virtual">
-                                    <label><?php echo esc_html__( 'Weight', 'sk' ) . ' (' . esc_html( get_option( 'woocommerce_weight_unit' ) ) . '):'; ?>
+                                    <label><?php echo esc_html__( 'Weight', 'sk-core' ) . ' (' . esc_html( get_option( 'woocommerce_weight_unit' ) ) . '):'; ?>
                                         <a class="tips"
-                                            title="<?php esc_attr_e( 'Enter a weight for this variation or leave blank to use the parent product weight.', 'sk' ); ?>" href="#">
+                                            title="<?php esc_attr_e( 'Enter a weight for this variation or leave blank to use the parent product weight.', 'sk-core' ); ?>" href="#">
                                             <span class="dashicons dashicons-editor-help"></span>
                                         </a>
                                     </label>
@@ -150,7 +150,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                             <?php endif; ?>
                             <?php if ( wc_product_dimensions_enabled() ) : ?>
                                 <td class="dimensions_field hide_if_variation_virtual">
-                                    <label for="product_length"><?php echo __( 'Dimensions (L&times;W&times;H)', 'sk' ) . ' (' . esc_html( get_option( 'woocommerce_dimension_unit' ) ) . '):'; ?></label>
+                                    <label for="product_length"><?php echo __( 'Dimensions (L&times;W&times;H)', 'sk-core' ) . ' (' . esc_html( get_option( 'woocommerce_dimension_unit' ) ) . '):'; ?></label>
                                     <input id="product_length" class="input-text wc_input_decimal" size="6" type="text" name="variable_length[<?php echo $loop; ?>]" value="<?php echo isset( $_length ) ? esc_attr( $_length ) : ''; ?>" placeholder="<?php echo esc_attr( $parent_data['length'] ); ?>"/>
                                     <input class="input-text wc_input_decimal" size="6" type="text" name="variable_width[<?php echo $loop; ?>]" value="<?php echo isset( $_width ) ? esc_attr( $_width ) : ''; ?>" placeholder="<?php echo esc_attr( $parent_data['width'] ); ?>"/>
                                     <input class="input-text wc_input_decimal last" size="6" type="text" name="variable_height[<?php echo $loop; ?>]" value="<?php echo isset( $_height ) ? esc_attr( $_height ) : ''; ?>" placeholder="<?php echo esc_attr( $parent_data['height'] ); ?>"/>
@@ -163,10 +163,10 @@ if ( ! defined( 'ABSPATH' ) ) {
                     <tr>
                         <td>
                             <?php if ( get_option( 'woocommerce_calc_taxes' ) === 'yes' ) : ?>
-                                <label><?php esc_html_e( 'Tax class:', 'sk' ); ?></label>
+                                <label><?php esc_html_e( 'Tax class:', 'sk-core' ); ?></label>
                                 <select name="variable_tax_class[<?php echo $loop; ?>]">
                                     <option
-                                        value="parent" <?php selected( is_null( $_tax_class ), true ); ?>><?php esc_html_e( 'Same as parent', 'sk' ); ?></option>
+                                        value="parent" <?php selected( is_null( $_tax_class ), true ); ?>><?php esc_html_e( 'Same as parent', 'sk-core' ); ?></option>
                                     <?php
                                     foreach ( $parent_data['tax_class_options'] as $key => $value ) {
                                         echo '<option value="' . esc_attr( $key ) . '" ' . selected( $key === $_tax_class, true, false ) . '>' . esc_html( $value ) . '</option>';
@@ -179,19 +179,19 @@ if ( ! defined( 'ABSPATH' ) ) {
                     <tr class="show_if_variation_downloadable" style="display:none">
                         <td colspan="2">
                             <div class="form-field downloadable_files">
-                                <label><?php esc_html_e( 'Downloadable Files', 'sk' ); ?>:</label>
+                                <label><?php esc_html_e( 'Downloadable Files', 'sk-core' ); ?>:</label>
                                 <table class="widefat">
                                     <thead>
                                     <tr>
                                         <td>
-                                            <?php esc_html_e( 'Name', 'sk' ); ?>
+                                            <?php esc_html_e( 'Name', 'sk-core' ); ?>
                                             <span
                                                 class="tips"
-                                                title="<?php esc_attr_e( 'This is the name of the download shown to the customer.', 'sk' ); ?>">
+                                                title="<?php esc_attr_e( 'This is the name of the download shown to the customer.', 'sk-core' ); ?>">
                                                 <span class="dashicons dashicons-editor-help"></span>
                                             </span>
                                         </td>
-                                        <td colspan="2"><?php esc_html_e( 'File URL', 'sk' ); ?> <span class="tips" title="<?php esc_attr_e( 'This is the URL or absolute path to the file which customers will get access to.', 'sk' ); ?>"><span class="dashicons dashicons-editor-help"></span></span></td>
+                                        <td colspan="2"><?php esc_html_e( 'File URL', 'sk-core' ); ?> <span class="tips" title="<?php esc_attr_e( 'This is the URL or absolute path to the file which customers will get access to.', 'sk-core' ); ?>"><span class="dashicons dashicons-editor-help"></span></span></td>
                                         <td>&nbsp;</td>
                                     </tr>
                                     </thead>
@@ -208,7 +208,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 													require 'html-product-variation-download.php';
 													echo esc_attr( ob_get_clean() );
 													?>
-                                                    "><?php esc_html_e( 'Add File', 'sk' ); ?>
+                                                    "><?php esc_html_e( 'Add File', 'sk-core' ); ?>
                                             </a>
                                         </th>
                                     </tr>
@@ -235,15 +235,15 @@ if ( ! defined( 'ABSPATH' ) ) {
                     <tr class="show_if_variation_downloadable">
                         <td>
                             <div>
-                                <label><?php esc_html_e( 'Download Limit:', 'sk' ); ?> <a class="tips" title="<?php esc_attr_e( 'Leave blank for unlimited re-downloads.', 'sk' ); ?>" href="#"><span class="dashicons dashicons-editor-help"></span></a></label>
-                                <input type="text" size="5" name="variable_download_limit[<?php echo $loop; ?>]" value="<?php echo isset( $_download_limit ) ? esc_attr( $_download_limit ) : ''; ?>" placeholder="<?php esc_attr_e( 'Unlimited', 'sk' ); ?>"/>
+                                <label><?php esc_html_e( 'Download Limit:', 'sk-core' ); ?> <a class="tips" title="<?php esc_attr_e( 'Leave blank for unlimited re-downloads.', 'sk-core' ); ?>" href="#"><span class="dashicons dashicons-editor-help"></span></a></label>
+                                <input type="text" size="5" name="variable_download_limit[<?php echo $loop; ?>]" value="<?php echo isset( $_download_limit ) ? esc_attr( $_download_limit ) : ''; ?>" placeholder="<?php esc_attr_e( 'Unlimited', 'sk-core' ); ?>"/>
                             </div>
                         </td>
                         <td>
                             <div>
-                                <label><?php esc_html_e( 'Download Expiry:', 'sk' ); ?> <a class="tips" title="<?php esc_attr_e( 'Enter the number of days before a download link expires, or leave blank.', 'sk' ); ?>" href="#"><span class="dashicons dashicons-editor-help"></span></a></label>
+                                <label><?php esc_html_e( 'Download Expiry:', 'sk-core' ); ?> <a class="tips" title="<?php esc_attr_e( 'Enter the number of days before a download link expires, or leave blank.', 'sk-core' ); ?>" href="#"><span class="dashicons dashicons-editor-help"></span></a></label>
                                 <input type="text" size="5" name="variable_download_expiry[<?php echo $loop; ?>]"
-                                        value="<?php echo isset( $_download_expiry ) ? esc_attr( $_download_expiry ) : ''; ?>" placeholder="<?php esc_attr_e( 'Unlimited', 'sk' ); ?>"/>
+                                        value="<?php echo isset( $_download_expiry ) ? esc_attr( $_download_expiry ) : ''; ?>" placeholder="<?php esc_attr_e( 'Unlimited', 'sk-core' ); ?>"/>
                             </div>
                         </td>
                     </tr>
@@ -251,7 +251,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                         <td colspan="2">
                             <div>
                                 <p class="sk-form-group">
-                                    <label><?php esc_html_e( 'Variation description', 'sk' ); ?></label>
+                                    <label><?php esc_html_e( 'Variation description', 'sk-core' ); ?></label>
                                     <textarea class="sk-form-control" name="variable_description[<?php echo $loop; ?>]" rows="3" style="width:100%;"><?php echo isset( $_variation_description ) ? esc_textarea( $_variation_description ) : ''; ?></textarea>
                                 </p>
                             </div>
@@ -270,24 +270,24 @@ if ( ! defined( 'ABSPATH' ) ) {
                 </a>
             </td>
             <td class="options">
-                <label class="checkbox"><input type="checkbox" class="checkbox" name="variable_enabled[<?php echo $loop; ?>]" <?php checked( $variation_post_status, 'publish' ); ?> /> <?php esc_html_e( 'Enabled', 'sk' ); ?></label>
+                <label class="checkbox"><input type="checkbox" class="checkbox" name="variable_enabled[<?php echo $loop; ?>]" <?php checked( $variation_post_status, 'publish' ); ?> /> <?php esc_html_e( 'Enabled', 'sk-core' ); ?></label>
 
-                <label class="checkbox"><input type="checkbox" class="checkbox variable_is_downloadable" name="variable_is_downloadable[<?php echo $loop; ?>]" <?php checked( isset( $_downloadable ) ? $_downloadable : '', 'yes' ); ?> /> <?php esc_html_e( 'Downloadable', 'sk' ); ?>
+                <label class="checkbox"><input type="checkbox" class="checkbox variable_is_downloadable" name="variable_is_downloadable[<?php echo $loop; ?>]" <?php checked( isset( $_downloadable ) ? $_downloadable : '', 'yes' ); ?> /> <?php esc_html_e( 'Downloadable', 'sk-core' ); ?>
                     <a class="tips"
-                        title="<?php esc_attr_e( 'Enable this option if access will be given to a downloadable file upon the purchase of a product', 'sk' ); ?>"
+                        title="<?php esc_attr_e( 'Enable this option if access will be given to a downloadable file upon the purchase of a product', 'sk-core' ); ?>"
                         href="#"><span class="dashicons dashicons-editor-help"></span></a>
                 </label>
 
-                <label class="checkbox"><input type="checkbox" class="checkbox variable_is_virtual" name="variable_is_virtual[<?php echo $loop; ?>]" <?php checked( isset( $_virtual ) ? $_virtual : '', 'yes' ); ?> /> <?php esc_html_e( 'Virtual', 'sk' ); ?>
+                <label class="checkbox"><input type="checkbox" class="checkbox variable_is_virtual" name="variable_is_virtual[<?php echo $loop; ?>]" <?php checked( isset( $_virtual ) ? $_virtual : '', 'yes' ); ?> /> <?php esc_html_e( 'Virtual', 'sk-core' ); ?>
                     <a class="tips"
-                        title="<?php esc_attr_e( 'Enable this option if a product is not shipped or there is no shipping cost', 'sk' ); ?>" href="#">
+                        title="<?php esc_attr_e( 'Enable this option if a product is not shipped or there is no shipping cost', 'sk-core' ); ?>" href="#">
                         <span class="dashicons dashicons-editor-help"></span>
                     </a>
                 </label>
 
-                <label class="checkbox"><input type="checkbox" class="checkbox variable_manage_stock" name="variable_manage_stock[<?php echo $loop; ?>]" <?php checked( isset( $_manage_stock ) ? $_manage_stock : '', 'yes' ); ?> /> <?php esc_html_e( 'Manage Stock?', 'sk' ); ?>
+                <label class="checkbox"><input type="checkbox" class="checkbox variable_manage_stock" name="variable_manage_stock[<?php echo $loop; ?>]" <?php checked( isset( $_manage_stock ) ? $_manage_stock : '', 'yes' ); ?> /> <?php esc_html_e( 'Manage Stock?', 'sk-core' ); ?>
                     <a class="tips"
-                        title="<?php esc_attr_e( 'Enable this option to enable stock management at variation level', 'sk' ); ?>" href="#">
+                        title="<?php esc_attr_e( 'Enable this option to enable stock management at variation level', 'sk-core' ); ?>" href="#">
                         <span class="dashicons dashicons-editor-help"></span>
                     </a>
                 </label>

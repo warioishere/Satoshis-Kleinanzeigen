@@ -20,7 +20,7 @@ class Review extends DashboardModule {
         }
         return [
             'slug'       => 'reviews',
-            'title'      => __( 'Reviews', 'sk' ),
+            'title'      => __( 'Reviews', 'sk-core' ),
             'icon'       => '<i class="far fa-comments"></i>',
             'icon_name'  => 'Star',
             'pos'        => 65,
@@ -102,8 +102,8 @@ class Review extends DashboardModule {
 				'icon'     => 'Star',
 				'current'  => (int) $reviews_current,
 				'previous' => (int) $reviews_previous,
-				'title'    => esc_html__( 'Reviews', 'sk' ),
-				'tooltip'  => esc_html__( 'Total new reviews in the time period', 'sk' ),
+				'title'    => esc_html__( 'Reviews', 'sk-core' ),
+				'tooltip'  => esc_html__( 'Total new reviews in the time period', 'sk-core' ),
                 'position' => 70,
 			]
 		);
@@ -125,7 +125,7 @@ class Review extends DashboardModule {
                 sk_get_template_part(
                     'global/sk-error', '', array(
 						'deleted' => false,
-						'message' => __( 'You have no permission to view review page', 'sk' ),
+						'message' => __( 'You have no permission to view review page', 'sk-core' ),
                     )
                 );
                 return;
@@ -133,7 +133,7 @@ class Review extends DashboardModule {
                 sk_get_template_part(
                     'global/sk-error', '', array(
 						'deleted' => false,
-						'message' => __( 'Review disabled.', 'sk' ),
+						'message' => __( 'Review disabled.', 'sk-core' ),
                     )
                 );
                 return;
@@ -200,7 +200,7 @@ class Review extends DashboardModule {
         }
 
         if ( ! current_user_can( 'sk_manage_reviews' ) ) {
-            wp_send_json_error( __( 'You have no permission to manage this review', 'sk' ) );
+            wp_send_json_error( __( 'You have no permission to manage this review', 'sk-core' ) );
             return;
         }
 
@@ -397,8 +397,8 @@ class Review extends DashboardModule {
 				'base'      => $base_url . '%_%',
 				'format'    => '?pagenum=%#%',
 				'add_args'  => false,
-				'prev_text' => __( '&laquo;', 'sk' ),
-				'next_text' => __( '&raquo;', 'sk' ),
+				'prev_text' => __( '&laquo;', 'sk-core' ),
+				'next_text' => __( '&raquo;', 'sk-core' ),
 				'total'     => $num_of_pages,
 				'type'      => 'array',
 				'current'   => $pagenum,
@@ -509,8 +509,8 @@ class Review extends DashboardModule {
             array(
                 'base'      => sk_get_store_url( $id ) . 'reviews/%_%',
                 'format'    => '?pagenum=%#%',
-                'prev_text' => __( '&laquo;', 'sk' ),
-                'next_text' => __( '&raquo;', 'sk' ),
+                'prev_text' => __( '&laquo;', 'sk-core' ),
+                'next_text' => __( '&raquo;', 'sk-core' ),
                 'total'     => $num_of_pages,
                 'type'      => 'array',
                 'current'   => $pagenum,
@@ -684,7 +684,7 @@ class Review extends DashboardModule {
      */
     public function ajax_update_comment() {
         if ( ! $this->quick_edit ) {
-            wp_send_json_error( __( 'You can not edit reviews!', 'sk' ) );
+            wp_send_json_error( __( 'You can not edit reviews!', 'sk-core' ) );
         }
 
         if ( ! wp_verify_nonce( $_POST['nonce'], 'sk_reviews' ) ) {
@@ -820,7 +820,7 @@ class Review extends DashboardModule {
 
         ob_start();
         if ( count( $comments ) === 0 ) {
-            echo '<span colspan="5">' . __( 'No Reviews Found', 'sk' ) . '</span>';
+            echo '<span colspan="5">' . __( 'No Reviews Found', 'sk-core' ) . '</span>';
         } else {
             foreach ( $comments as $single_comment ) {
                 if ( $single_comment->comment_approved ) {
@@ -840,15 +840,15 @@ class Review extends DashboardModule {
                                         $rating = intval( get_comment_meta( $single_comment->comment_ID, 'rating', true ) );
 										?>
                                         <div class="sk-rating">
-                                            <div itemprop="reviewRating" itemscope itemtype="http://schema.org/Rating" class="star-rating" title="<?php printf( __( 'Rated %d out of 5', 'sk' ), $rating ); ?>">
-                                                <span style="width:<?php echo ( intval( get_comment_meta( $single_comment->comment_ID, 'rating', true ) ) / 5 ) * 100; ?>%"><strong itemprop="ratingValue"><?php echo $rating; ?></strong> <?php _e( 'out of 5', 'sk' ); ?></span>
+                                            <div itemprop="reviewRating" itemscope itemtype="http://schema.org/Rating" class="star-rating" title="<?php printf( __( 'Rated %d out of 5', 'sk-core' ), $rating ); ?>">
+                                                <span style="width:<?php echo ( intval( get_comment_meta( $single_comment->comment_ID, 'rating', true ) ) / 5 ) * 100; ?>%"><strong itemprop="ratingValue"><?php echo $rating; ?></strong> <?php _e( 'out of 5', 'sk-core' ); ?></span>
                                             </div>
                                         </div>
                                     <?php endif; ?>
                                 </a>
                                 <p>
                                     <strong itemprop="author"><?php echo $single_comment->comment_author; ?></strong>
-                                    <em class="verified"><?php echo $single_comment->user_id === 0 ? sprintf( '(%s)', __( 'Guest', 'sk' ) ) : ''; ?></em>
+                                    <em class="verified"><?php echo $single_comment->user_id === 0 ? sprintf( '(%s)', __( 'Guest', 'sk-core' ) ) : ''; ?></em>
                                     –
                                     <a href="<?php echo $permalink; ?>">
                                         <time datetime="<?php echo date( 'c', strtotime( $comment_date ) ); ?>" itemprop="datePublished"><?php echo $comment_date; ?></time>

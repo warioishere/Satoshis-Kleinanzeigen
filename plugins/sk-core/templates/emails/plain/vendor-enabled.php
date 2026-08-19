@@ -18,16 +18,16 @@ echo '= ' . esc_html( wp_strip_all_tags( $email_heading ) ) . " =\n\n";
 
 <?php
 // translators: %s, Vendor Name
-printf( __( 'Congratulations %s!', 'sk' ), $data['{display_name}'] );
+printf( __( 'Congratulations %s!', 'sk-core' ), $data['{display_name}'] );
 echo " \n\n";
 ?>
 
     ------------------------------------------------------------
 
 <?php
-esc_html_e( 'Your vendor account is activated', 'sk' );
+esc_html_e( 'Your vendor account is activated', 'sk-core' );
 echo " \n\n";
-esc_html_e( 'You can login by using the URL below.', 'sk' );
+esc_html_e( 'You can login by using the URL below.', 'sk-core' );
 echo " \n\n";
 echo esc_url( wc_get_page_permalink( 'myaccount' ) );
 echo " \n\n";

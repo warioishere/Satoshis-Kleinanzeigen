@@ -31,9 +31,9 @@ if ( ! defined( 'ABSPATH' ) ) {
             <i class="fa fa-circle fa-stack-2x" style="color: <?php echo esc_html( $advertise_active_color ); ?>; font-size: 2em;"></i>
             <i class="fa fa-bullhorn fa-stack-1x fa-inverse" data-fa-transform="shrink-6"></i>
         </span>
-            <?php esc_html_e( 'Advertise Product', 'sk' ); ?>
+            <?php esc_html_e( 'Advertise Product', 'sk-core' ); ?>
         </h2>
-        <p><?php esc_html_e( 'Manage Advertisement for this product', 'sk' ); ?></p>
+        <p><?php esc_html_e( 'Manage Advertisement for this product', 'sk-core' ); ?></p>
         <a href="#" class="sk-section-toggle">
             <i class="fas fa-sort-down fa-flip-vertical" aria-hidden="true"></i>
         </a>
@@ -54,7 +54,7 @@ if ( ! defined( 'ABSPATH' ) ) {
         if ( 'publish' !== $post_status && true !== $already_advertised ) :
             ?>
             <p>
-                <?php esc_html_e( 'You can not advertise this product. Product needs to be published before you can advertise.', 'sk' ); ?>
+                <?php esc_html_e( 'You can not advertise this product. Product needs to be published before you can advertise.', 'sk-core' ); ?>
             </p>
 
             <?php
@@ -65,7 +65,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                 <input type="checkbox" id="sk_advertise_single_product" name="sk_advertise_single_product" value="on" checked="checked" disabled="disabled" />
                 <?php
                 // translators: %s: expiration date
-                printf( __( 'Product advertisement is currently ongoing. Advertisement will end on: <strong>%s</strong>', 'sk' ), $expire_date );
+                printf( __( 'Product advertisement is currently ongoing. Advertisement will end on: <strong>%s</strong>', 'sk-core' ), $expire_date );
                 ?>
             </label>
 
@@ -76,9 +76,9 @@ if ( ! defined( 'ABSPATH' ) ) {
             <p>
                 <?php
                 if ( false !== $subscription_status && 0 === $subscription_remaining_slot ) {
-                    esc_html_e( 'Your subscription plan does not include product advertisement slots. Please upgrade your subscription or contact the admin for more information.', 'sk' );
+                    esc_html_e( 'Your subscription plan does not include product advertisement slots. Please upgrade your subscription or contact the admin for more information.', 'sk-core' );
                 } else {
-                    esc_html_e('No advertisement slots are currently available. Please contact the site administrator to request additional slots or check back later.', 'sk');
+                    esc_html_e('No advertisement slots are currently available. Please contact the site administrator to request additional slots or check back later.', 'sk-core');
                 }
                 ?>
             </p>
@@ -96,7 +96,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                 <?php
                 printf(
                 // translators: 1) expiration period, 2) remaining slots
-                    __( 'You can advertise this product for free. Expire after <strong>%1$s</strong>, Remaining slot: <strong>%2$s</strong>', 'sk' ),
+                    __( 'You can advertise this product for free. Expire after <strong>%1$s</strong>, Remaining slot: <strong>%2$s</strong>', 'sk-core' ),
                     Helper::format_expire_after_days_text( $expires_after_days ),
                     Helper::get_formatted_remaining_slot_count( $remaining_slot )
                 );
@@ -116,7 +116,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                 <?php
                 printf(
                 // translators: 1) expiration period, 2) cost, 3) remaining slots
-                    __( 'Advertise this product for: <strong>%1$s</strong>, Advertisement Cost: <strong>%2$s</strong>, Remaining slot: <strong>%3$s</strong>', 'sk' ),
+                    __( 'Advertise this product for: <strong>%1$s</strong>, Advertisement Cost: <strong>%2$s</strong>, Remaining slot: <strong>%3$s</strong>', 'sk-core' ),
                     Helper::format_expire_after_days_text( $expires_after_days ),
                     wc_price( $listing_price ),
                     Helper::get_formatted_remaining_slot_count( $remaining_slot )
@@ -129,7 +129,7 @@ if ( ! defined( 'ABSPATH' ) ) {
         else :
             ?>
             <p class="sk-error">
-                <?php esc_html_e( 'There was an error determining your advertisement eligibility. Please refresh the page or contact support.', 'sk' ); ?>
+                <?php esc_html_e( 'There was an error determining your advertisement eligibility. Please refresh the page or contact support.', 'sk-core' ); ?>
             </p>
         <?php endif; ?>
 

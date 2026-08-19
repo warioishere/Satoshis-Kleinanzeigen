@@ -12,8 +12,8 @@ class VendorEnable extends WC_Email {
      */
     public function __construct() {
         $this->id             = 'sk_email_vendor_enable';
-        $this->title          = __( 'SK Vendor Enable', 'sk' );
-        $this->description    = __( 'This email is set to a vendor when he enabled from admin settings', 'sk' );
+        $this->title          = __( 'SK Vendor Enable', 'sk-core' );
+        $this->description    = __( 'This email is set to a vendor when he enabled from admin settings', 'sk-core' );
         $this->template_html  = 'emails/vendor-enabled.php';
         $this->template_plain = 'emails/plain/vendor-enabled.php';
         $this->template_base  = SK_CORE_DIR . '/templates/';
@@ -40,7 +40,7 @@ class VendorEnable extends WC_Email {
      * @return string
      */
     public function get_default_subject() {
-        return __( '[{site_title}] Your account is activated', 'sk' );
+        return __( '[{site_title}] Your account is activated', 'sk-core' );
     }
 
     /**
@@ -49,7 +49,7 @@ class VendorEnable extends WC_Email {
      * @return string
      */
     public function get_default_heading() {
-        return __( 'Your vendor account is activated', 'sk' );
+        return __( 'Your vendor account is activated', 'sk-core' );
     }
 
     /**
@@ -123,17 +123,17 @@ class VendorEnable extends WC_Email {
         $placeholders = $this->placeholders;
         unset( $placeholders['{site_name}'] );
         /* translators: %s: list of placeholders */
-        $placeholder_text  = sprintf( __( 'Available placeholders: %s', 'sk' ), '<code>' . implode( '</code>, <code>', array_keys( $placeholders ) ) . '</code>' );
+        $placeholder_text  = sprintf( __( 'Available placeholders: %s', 'sk-core' ), '<code>' . implode( '</code>, <code>', array_keys( $placeholders ) ) . '</code>' );
         $this->form_fields = [
             'enabled' => [
-                'title'   => __( 'Enable/Disable', 'sk' ),
+                'title'   => __( 'Enable/Disable', 'sk-core' ),
                 'type'    => 'checkbox',
-                'label'   => __( 'Enable this email notification', 'sk' ),
+                'label'   => __( 'Enable this email notification', 'sk-core' ),
                 'default' => 'yes',
             ],
 
             'subject'    => [
-                'title'       => __( 'Subject', 'sk' ),
+                'title'       => __( 'Subject', 'sk-core' ),
                 'type'        => 'text',
                 'desc_tip'    => true,
                 'description' => $placeholder_text,
@@ -141,7 +141,7 @@ class VendorEnable extends WC_Email {
                 'default'     => '',
             ],
             'heading'    => [
-                'title'       => __( 'Email heading', 'sk' ),
+                'title'       => __( 'Email heading', 'sk-core' ),
                 'type'        => 'text',
                 'desc_tip'    => true,
                 'description' => $placeholder_text,
@@ -149,18 +149,18 @@ class VendorEnable extends WC_Email {
                 'default'     => '',
             ],
             'additional_content' => array(
-                'title'       => __( 'Additional content', 'sk' ),
-                'description' => __( 'Text to appear below the main email content.', 'sk' ) . ' ' . $placeholder_text,
+                'title'       => __( 'Additional content', 'sk-core' ),
+                'description' => __( 'Text to appear below the main email content.', 'sk-core' ) . ' ' . $placeholder_text,
                 'css'         => 'width:400px; height: 75px;',
-                'placeholder' => __( 'N/A', 'sk' ),
+                'placeholder' => __( 'N/A', 'sk-core' ),
                 'type'        => 'textarea',
                 'default'     => $this->get_default_additional_content(),
                 'desc_tip'    => true,
             ),
             'email_type' => [
-                'title'       => __( 'Email type', 'sk' ),
+                'title'       => __( 'Email type', 'sk-core' ),
                 'type'        => 'select',
-                'description' => __( 'Choose which format of email to send.', 'sk' ),
+                'description' => __( 'Choose which format of email to send.', 'sk-core' ),
                 'default'     => 'html',
                 'class'       => 'email_type wc-enhanced-select',
                 'options'     => $this->get_email_type_options(),

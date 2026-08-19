@@ -17,15 +17,15 @@ echo '= ' . esc_html( wp_strip_all_tags( $email_heading ) ) . " =\n\n";
 
 ------------------------------------------------------------
 
-<?php printf( __( 'Hello %s', 'sk' ), $data['{display_name}'] ); echo " \n\n";  ?>
+<?php printf( __( 'Hello %s', 'sk-core' ), $data['{display_name}'] ); echo " \n\n";  ?>
 
 ------------------------------------------------------------
 
 <p>
-    <?php esc_html_e( 'Sorry, your vendor account is deactivated.', 'sk' ); ?>
+    <?php esc_html_e( 'Sorry, your vendor account is deactivated.', 'sk-core' ); ?>
 </p>
 <p>
-    <?php esc_html_e( 'You can\'t sell or upload product. To activate your account please contact with the admin.', 'sk' ); ?>
+    <?php esc_html_e( 'You can\'t sell or upload product. To activate your account please contact with the admin.', 'sk-core' ); ?>
 </p>
 
 <?php

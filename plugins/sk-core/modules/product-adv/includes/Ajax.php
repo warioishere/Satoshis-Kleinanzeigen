@@ -31,13 +31,13 @@ class Ajax {
     public function purchase_advertisement() {
         // Nonce check.
         if ( ! isset( $_POST['advertise_product_nonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['advertise_product_nonce'] ) ), 'sk_advertise_product_nonce' ) ) {
-            wp_send_json_error( [ 'message' => __( 'Invalid nonce', 'sk' ) ], 400 );
+            wp_send_json_error( [ 'message' => __( 'Invalid nonce', 'sk-core' ) ], 400 );
         }
 
         $product_id = isset( $_REQUEST['product_id'] ) ? absint( wp_unslash( $_REQUEST['product_id'] ) ) : 0;
 
         if ( ! $product_id ) {
-            wp_send_json_error( [ 'message' => __( 'Invalid product id. Please check your input.', 'sk' ) ], 400 );
+            wp_send_json_error( [ 'message' => __( 'Invalid product id. Please check your input.', 'sk-core' ) ], 400 );
         }
 
         $purchased = Helper::purchase_advertisement( $product_id );
@@ -62,17 +62,17 @@ class Ajax {
     public function get_advertisement_data() {
         // nonce check
         if ( ! isset( $_POST['advertise_product_nonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['advertise_product_nonce'] ) ), 'sk_advertise_product_nonce' ) ) {
-            wp_send_json_error( [ 'message' => __( 'Invalid nonce', 'sk' ) ], 400 );
+            wp_send_json_error( [ 'message' => __( 'Invalid nonce', 'sk-core' ) ], 400 );
         }
 
         // check permission, don't let vendor staff view this section
         if ( ! current_user_can( 'skdar' ) ) {
-            wp_send_json_error( [ 'message' => __( 'You do not have permission to use this action.', 'sk' ) ], 400 );
+            wp_send_json_error( [ 'message' => __( 'You do not have permission to use this action.', 'sk-core' ) ], 400 );
         }
 
         // check if product advertisement is enabled or not for vendors
         if ( ! Helper::is_per_product_advertisement_enabled() && ! Helper::is_enabled_for_vendor_subscription() ) {
-            wp_send_json_error( [ 'message' => __( 'Purchasing advertisement is restricted by admin.', 'sk' ) ], 400 );
+            wp_send_json_error( [ 'message' => __( 'Purchasing advertisement is restricted by admin.', 'sk-core' ) ], 400 );
         }
 
         // now get required data from
@@ -81,7 +81,7 @@ class Ajax {
         // now check for data validation
         // check if we found a valid product id
         if ( ! $product_id ) {
-            wp_send_json_error( [ 'message' => __( 'Invalid product id. Please check your input.', 'sk' ) ], 400 );
+            wp_send_json_error( [ 'message' => __( 'Invalid product id. Please check your input.', 'sk-core' ) ], 400 );
         }
 
         $advertisement_data = Helper::get_advertisement_data_for_insert( $product_id, sk_get_current_user_id() );
@@ -94,15 +94,15 @@ class Ajax {
         if ( false !== $advertisement_data['can_advertise_for_free'] ) {
             $advertisement_text = sprintf(
                 // translators: 1) remaining advertisement slot
-                __( 'You can advertise this product for free. Expire after <strong>%1$s</strong>, Remaining slot: <strong>%2$s</strong>', 'sk' ),
+                __( 'You can advertise this product for free. Expire after <strong>%1$s</strong>, Remaining slot: <strong>%2$s</strong>', 'sk-core' ),
                 Helper::format_expire_after_days_text( $advertisement_data['expires_after_days'] ), Helper::get_formatted_remaining_slot_count( $advertisement_data['remaining_slot'] )
             );
         } else {
             $subscription_empty_slot_message = false !== $advertisement_data['subscription_status'] && empty( $advertisement_data['subscription_remaining_slot'] ) ?
-                                                    __( 'No advertisement slot is available with your subscription. However you can purchase this advertisement.', 'sk' ) . ' ' : '';
+                                                    __( 'No advertisement slot is available with your subscription. However you can purchase this advertisement.', 'sk-core' ) . ' ' : '';
             $advertisement_text = sprintf(
                 // translators: 1) advertisement expires after days 2) advertisement listing price html
-                __( '%4$sAdvertise this product for: <strong>%1$s</strong>, Advertisement Cost: <strong>%2$s</strong>, Remaining slot: <strong>%3$s</strong>', 'sk' ),
+                __( '%4$sAdvertise this product for: <strong>%1$s</strong>, Advertisement Cost: <strong>%2$s</strong>, Remaining slot: <strong>%3$s</strong>', 'sk-core' ),
                 Helper::format_expire_after_days_text( $advertisement_data['expires_after_days'] ), wc_price( $advertisement_data['listing_price'] ),
                 Helper::get_formatted_remaining_slot_count( $advertisement_data['remaining_slot'] ), $subscription_empty_slot_message
             );

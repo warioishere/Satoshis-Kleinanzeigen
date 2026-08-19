@@ -9,7 +9,7 @@ class ModulesPage extends AbstractPage {
     }
 
     public function get_title(): string {
-        return __( 'Modules', 'sk' );
+        return __( 'Modules', 'sk-core' );
     }
 
     public function is_pro(): bool {

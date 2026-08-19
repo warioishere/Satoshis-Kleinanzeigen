@@ -6,11 +6,11 @@
         <fieldset>
             <div class="sk-clearfix">
                 <div class="sk-w6 sk-inline-edit-column">
-                    <strong class="sk-inline-edit-section-title"><?php esc_html_e( 'Quick Edit', 'sk' ); ?></strong>
+                    <strong class="sk-inline-edit-section-title"><?php esc_html_e( 'Quick Edit', 'sk-core' ); ?></strong>
 
                     <div class="inline-edit-col sk-clearfix">
                         <label class="sk-w3">
-                            <?php esc_html_e( 'Title', 'sk' ); ?>
+                            <?php esc_html_e( 'Title', 'sk-core' ); ?>
                         </label>
                         <div class="sk-w9">
                             <input type="text" class="sk-form-control" data-field-name="post_title" value="<?php echo esc_html( $post_title ); ?>">
@@ -18,7 +18,7 @@
                     </div>
 
                     <label>
-                        <?php esc_html_e( 'Product categories', 'sk' ); ?>
+                        <?php esc_html_e( 'Product categories', 'sk-core' ); ?>
                     </label>
                     <?php
                         $data = Helper::get_saved_products_category( $product_id );
@@ -38,10 +38,10 @@
                 </div>
                 <div class="sk-w6 sk-inline-edit-column">
                     <label>
-                        <?php esc_html_e( 'Product Tags', 'sk' ); ?>
+                        <?php esc_html_e( 'Product Tags', 'sk-core' ); ?>
                     </label>
 
-                    <select multiple="multiple" data-field-name="product_tag" class="product_tag_search product_tags sk-form-control sk-select2" data-placeholder="<?php esc_attr_e( 'Select tags', 'sk' ); ?>">
+                    <select multiple="multiple" data-field-name="product_tag" class="product_tag_search product_tags sk-form-control sk-select2" data-placeholder="<?php esc_attr_e( 'Select tags', 'sk-core' ); ?>">
                         <?php if ( ! empty( $product_tag ) ) { ?>
                             <?php foreach ( $product_tag as $tax_term ) { ?>
                                 <option value="<?php echo esc_attr( $tax_term->term_id ); ?>" selected="selected" ><?php echo esc_html( $tax_term->name ); ?></option>
@@ -51,15 +51,15 @@
 
                     <label>
                         <input type="checkbox" data-field-name="reviews_allowed" value="open" <?php checked( $reviews_allowed, true ); ?>> &nbsp;
-                        <?php esc_html_e( 'Enable Reviews', 'sk' ); ?>
+                        <?php esc_html_e( 'Enable Reviews', 'sk-core' ); ?>
                     </label>
 
                     <label>
-                        <?php esc_html_e( 'Status', 'sk' ); ?>
+                        <?php esc_html_e( 'Status', 'sk-core' ); ?>
 
                         <?php if ( 'pending' === $post_status ) { ?>
                             <span class="sk-label sk-label-danger">
-                                <?php esc_html_e( 'Pending Review', 'sk' ); ?>
+                                <?php esc_html_e( 'Pending Review', 'sk-core' ); ?>
                                 <input type="hidden" data-field-name="post_status" value="<?php echo esc_attr( 'pending' ); ?>">
                             </span>
                         <?php } else { ?>
@@ -75,12 +75,12 @@
 
                     <hr>
 
-                    <strong class="sk-inline-edit-section-title"><?php esc_html_e( 'Product Data', 'sk' ); ?></strong>
+                    <strong class="sk-inline-edit-section-title"><?php esc_html_e( 'Product Data', 'sk-core' ); ?></strong>
 
                     <?php if ( $options['is_sku_enabled'] ) { ?>
                         <div class="sk-inline-edit-field-row sk-clearfix">
                             <label class="sk-w3">
-                                <?php esc_html_e( 'SKU', 'sk' ); ?>
+                                <?php esc_html_e( 'SKU', 'sk-core' ); ?>
                             </label>
                             <div class="sk-w9">
                                 <input type="text" class="sk-form-control" data-field-name="sku" value="<?php echo esc_html( $sku ); ?>">
@@ -91,7 +91,7 @@
                     <?php if ( 'simple' === $product_type || 'external' === $product_type || 'subscription' === $product_type ) { ?>
                         <div class="sk-inline-edit-field-row sk-clearfix">
                             <label class="sk-w3">
-                                <?php esc_html_e( 'Price', 'sk' ); ?>
+                                <?php esc_html_e( 'Price', 'sk-core' ); ?>
                             </label>
                             <div class="sk-w9">
                                 <input type="text" class="sk-form-control" data-field-name="_regular_price" value="<?php echo esc_html( $_regular_price ); ?>">
@@ -100,7 +100,7 @@
 
                         <div class="sk-inline-edit-field-row sk-clearfix">
                             <label class="sk-w3">
-                                <?php esc_html_e( 'Sale', 'sk' ); ?>
+                                <?php esc_html_e( 'Sale', 'sk-core' ); ?>
                             </label>
                             <div class="sk-w9">
                                 <input type="text" class="sk-form-control" data-field-name="_sale_price" value="<?php echo esc_html( $_sale_price ); ?>">
@@ -111,7 +111,7 @@
                     <?php if ( $options['is_weight_enabled'] ) { ?>
                         <div class="sk-inline-edit-field-row sk-clearfix">
                             <label class="sk-w3">
-                                <?php esc_html_e( 'Weight', 'sk' ); ?>
+                                <?php esc_html_e( 'Weight', 'sk-core' ); ?>
                             </label>
                             <div class="sk-w9">
                                 <input type="text" class="sk-form-control" data-field-name="weight" value="<?php echo esc_html( $weight ); ?>">
@@ -122,17 +122,17 @@
                     <?php if ( $options['is_dimensions_enabled'] ) { ?>
                         <div class="sk-inline-edit-field-row sk-clearfix">
                             <label class="sk-w3">
-                                <?php esc_html_e( 'L/W/H', 'sk' ); ?>
+                                <?php esc_html_e( 'L/W/H', 'sk-core' ); ?>
                             </label>
                             <div class="sk-w9 sk-clearfix">
                                 <div class="sk-w4">
-                                    <input type="text" class="sk-form-control" data-field-name="length" value="<?php echo esc_html( $length ); ?>" placeholder="<?php esc_html_e( 'Length', 'sk' ); ?>">
+                                    <input type="text" class="sk-form-control" data-field-name="length" value="<?php echo esc_html( $length ); ?>" placeholder="<?php esc_html_e( 'Length', 'sk-core' ); ?>">
                                 </div>
                                 <div class="sk-w4">
-                                    <input type="text" class="sk-form-control" data-field-name="width" value="<?php echo esc_html( $width ); ?>" placeholder="<?php esc_html_e( 'Width', 'sk' ); ?>">
+                                    <input type="text" class="sk-form-control" data-field-name="width" value="<?php echo esc_html( $width ); ?>" placeholder="<?php esc_html_e( 'Width', 'sk-core' ); ?>">
                                 </div>
                                 <div class="sk-w4">
-                                    <input type="text" class="sk-form-control" data-field-name="height" value="<?php echo esc_html( $height ); ?>" placeholder="<?php esc_html_e( 'Height', 'sk' ); ?>">
+                                    <input type="text" class="sk-form-control" data-field-name="height" value="<?php echo esc_html( $height ); ?>" placeholder="<?php esc_html_e( 'Height', 'sk-core' ); ?>">
                                 </div>
                             </div>
                         </div>
@@ -140,7 +140,7 @@
 
                     <div class="sk-inline-edit-field-row sk-clearfix">
                         <label class="sk-w3">
-                            <?php esc_html_e( 'Visibility', 'sk' ); ?>
+                            <?php esc_html_e( 'Visibility', 'sk-core' ); ?>
                         </label>
                         <div class="sk-w9">
                             <select data-field-name="_visibility" class="sk-form-control">
@@ -158,12 +158,12 @@
                     <?php if ( ( 'simple' === $product_type || 'variable' === $product_type ) && $options['can_manage_stock'] ) { ?>
                         <label>
                             <input type="checkbox" data-field-name="manage_stock" value="open" data-field-toggler <?php checked( $manage_stock, true ); ?>> &nbsp;
-                            <?php esc_html_e( 'Manage Stock', 'sk' ); ?>
+                            <?php esc_html_e( 'Manage Stock', 'sk-core' ); ?>
                         </label>
 
                         <div class="sk-inline-edit-field-row sk-clearfix<?php echo $manage_stock ? '' : ' sk-hide'; ?>" data-field-toggle="manage_stock" data-field-show-on="true">
                             <label class="sk-w3">
-                                <?php esc_html_e( 'Stock Qty', 'sk' ); ?>
+                                <?php esc_html_e( 'Stock Qty', 'sk-core' ); ?>
                             </label>
                             <div class="sk-w9">
                                 <input type="text" class="sk-form-control" data-field-name="stock_quantity" value="<?php echo esc_html( $stock_quantity ); ?>">
@@ -172,7 +172,7 @@
 
                         <div class="sk-inline-edit-field-row sk-clearfix<?php echo $manage_stock ? ' sk-hide' : ''; ?>" data-field-toggle="manage_stock" data-field-show-on="false">
                             <label class="sk-w3">
-                                <?php esc_html_e( 'In Stock?', 'sk' ); ?>
+                                <?php esc_html_e( 'In Stock?', 'sk-core' ); ?>
                             </label>
                             <div class="sk-w9">
                                 <select data-field-name="stock_status" class="sk-form-control">
@@ -187,7 +187,7 @@
 
                         <div class="sk-inline-edit-field-row sk-clearfix<?php echo $manage_stock ? '' : ' sk-hide'; ?>" data-field-toggle="manage_stock" data-field-show-on="true">
                             <label class="sk-w3">
-                                <?php esc_html_e( 'Backorders?', 'sk' ); ?>
+                                <?php esc_html_e( 'Backorders?', 'sk-core' ); ?>
                             </label>
                             <div class="sk-w9">
                                 <select data-field-name="backorders" class="sk-form-control" style="width: 100%;">
@@ -202,7 +202,7 @@
                     <?php } elseif ( 'grouped' === $product_type ) { ?>
                         <div class="sk-inline-edit-field-row sk-clearfix">
                             <label class="sk-w3">
-                                <?php esc_html_e( 'In Stock?', 'sk' ); ?>
+                                <?php esc_html_e( 'In Stock?', 'sk-core' ); ?>
                             </label>
                             <div class="sk-w9">
                                 <select data-field-name="stock_status" class="sk-form-control">
@@ -245,13 +245,13 @@
 
             <div class="sk-clearfix quick-edit-submit-wrap">
                 <button type="button" class="sk-btn sk-btn-default inline-edit-cancel">
-                    <?php esc_html_e( 'Cancel', 'sk' ); ?>
+                    <?php esc_html_e( 'Cancel', 'sk-core' ); ?>
                 </button>
 
                 <div class="sk-right inline-edit-submit-button">
                     <div class="sk-spinner"></div>
                     <button type="button" class="sk-btn sk-btn-default sk-btn-theme sk-right inline-edit-update">
-                        <?php esc_html_e( 'Update', 'sk' ); ?>
+                        <?php esc_html_e( 'Update', 'sk-core' ); ?>
                     </button>
                 </div>
             </div>

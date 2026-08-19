@@ -16,14 +16,14 @@ if ( ! $vendor ) {
 
 do_action( 'woocommerce_email_header', $email_heading, $email );
 
-printf( '<p>%s</p>', __( 'Dear subscriber, Your subscription will be ending soon. Please renew your package in a timely manner for continued usage.', 'sk' ) );
+printf( '<p>%s</p>', __( 'Dear subscriber, Your subscription will be ending soon. Please renew your package in a timely manner for continued usage.', 'sk-core' ) );
 
 if ( $subscription ) {
-    printf( '<p>%s</p>', __( 'Here are your subscription pack details:', 'sk' ) );
+    printf( '<p>%s</p>', __( 'Here are your subscription pack details:', 'sk-core' ) );
     // translators: %s is the subscription package title
-    printf( '<p>%s</p>', sprintf( __( 'Subscription Pack: %s', 'sk' ), $subscription->get_package_title() ) );
+    printf( '<p>%s</p>', sprintf( __( 'Subscription Pack: %s', 'sk-core' ), $subscription->get_package_title() ) );
     // translators: %s is the subscription package price
-    printf( '<p>%s</p>', sprintf( __( 'Price: %s', 'sk' ), wc_price( $subscription->get_price() ) ) );
+    printf( '<p>%s</p>', sprintf( __( 'Price: %s', 'sk-core' ), wc_price( $subscription->get_price() ) ) );
 }
 
 /**

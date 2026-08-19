@@ -39,7 +39,7 @@ class ProductSection extends AbstractProductSection {
      */
     public function get_section_title() {
         $sections_appearance = sk_get_option( 'product_sections', 'sk_appearance' );
-        $section_title       = isset( $sections_appearance[ $this->get_section_id() . '_title' ] ) ? $sections_appearance[ $this->get_section_id() . '_title' ] : __( 'Popular Products', 'sk' );
+        $section_title       = isset( $sections_appearance[ $this->get_section_id() . '_title' ] ) ? $sections_appearance[ $this->get_section_id() . '_title' ] : __( 'Popular Products', 'sk-core' );
 
         return apply_filters( "sk_{$this->get_section_id()}_product_section_title", $section_title );
     }
@@ -51,7 +51,7 @@ class ProductSection extends AbstractProductSection {
      * @return string
      */
     public function get_section_label() {
-        return __( 'Advertising Products', 'sk' );
+        return __( 'Advertising Products', 'sk-core' );
     }
 
     /**

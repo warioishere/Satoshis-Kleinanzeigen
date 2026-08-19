@@ -26,7 +26,7 @@ echo " \n\n";
 ------------------------------------------------------------
 
 
-<?php esc_attr_e( 'You can check this announcement in your dashboard ', 'sk' );  echo " \n";?>
+<?php esc_attr_e( 'You can check this announcement in your dashboard ', 'sk-core' );  echo " \n";?>
 
 <?php
 echo $data['{announcement_url}'] . "\n";

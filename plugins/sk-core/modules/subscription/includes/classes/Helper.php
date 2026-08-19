@@ -390,7 +390,7 @@ class Helper {
      * @param string $message
      */
     public static function log( $message ) {
-        $message = sprintf( '[%s] %s: %s', date( 'd.m.Y h:i:s' ), __( 'SK Vendor Subscription: ', 'sk' ), $message );
+        $message = sprintf( '[%s] %s: %s', date( 'd.m.Y h:i:s' ), __( 'SK Vendor Subscription: ', 'sk-core' ), $message );
         sk_log( $message );
     }
 
@@ -647,7 +647,7 @@ class Helper {
 
         // Early return if customer info is not found
         if ( ! $parent_order || ! $parent_order->get_customer_id() ) {
-            return new \WP_Error( 'invalid_order', __( 'Invalid order or customer information not found.', 'sk' ) );
+            return new \WP_Error( 'invalid_order', __( 'Invalid order or customer information not found.', 'sk-core' ) );
         }
 
         global $wpdb;

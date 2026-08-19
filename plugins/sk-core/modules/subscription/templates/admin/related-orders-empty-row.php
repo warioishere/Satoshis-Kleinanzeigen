@@ -7,4 +7,4 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit; // Exit if accessed directly
 }
 ?>
-<tr><td colspan="5"><?php esc_html_e( 'No related orders found.', 'sk' ); ?></td></tr>
+<tr><td colspan="5"><?php esc_html_e( 'No related orders found.', 'sk-core' ); ?></td></tr>

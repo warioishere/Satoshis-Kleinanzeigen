@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 echo '= ' . esc_html( wp_strip_all_tags( $email_heading ) ) . " =\n\n";
 echo "\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\n";
 
-esc_html_e( 'Updates from your favorite stores', 'sk' );
+esc_html_e( 'Updates from your favorite stores', 'sk-core' );
 echo " \n\n";
 
 foreach ( $data['vendors'] as $vendor ) :
@@ -22,13 +22,13 @@ foreach ( $data['vendors'] as $vendor ) :
         echo " \n\n";
         echo "\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\n";
         // translators: Vendor Store Name.
-        echo esc_html( wptexturize( sprintf( __( 'Vendor: %s', 'sk' ), $vendor->get_shop_name() ) ) );
+        echo esc_html( wptexturize( sprintf( __( 'Vendor: %s', 'sk-core' ), $vendor->get_shop_name() ) ) );
         echo esc_url( $vendor->get_shop_url() );
         echo " \n\n";
 
         if ( $vendor->products->have_posts() ) :
             $products = $vendor->products->posts;
-            esc_html_e( 'New Products', 'sk' );
+            esc_html_e( 'New Products', 'sk-core' );
             echo " \n\n";
             echo "\n-------------------------------------------------------\n";
             foreach ( $products as $i => $product ) :
@@ -39,7 +39,7 @@ foreach ( $data['vendors'] as $vendor ) :
                 echo " \n\n";
 
             endforeach;
-            esc_html_e( 'See all', 'sk' );
+            esc_html_e( 'See all', 'sk-core' );
             echo " \n";
             echo esc_url( $vendor->get_shop_url() );
             echo "\n-------------------------------------------------------\n";
@@ -50,7 +50,7 @@ foreach ( $data['vendors'] as $vendor ) :
             $coupons = $vendor->coupons;
             $coupons_count = count( $coupons );
             echo "\n-------------------------------------------------------\n";
-            esc_html_e( 'Coupons', 'sk' );
+            esc_html_e( 'Coupons', 'sk-core' );
             echo "\n-------------------------------------------------------\n";
             echo " \n\n";
 

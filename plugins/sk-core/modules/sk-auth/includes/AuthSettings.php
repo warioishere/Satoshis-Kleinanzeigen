@@ -21,11 +21,11 @@ class AuthSettings {
     public function add_section( $sections ) {
         $sections[] = [
             'id'                   => 'sk_auth',
-            'title'                => __( 'SK Auth', 'sk' ),
+            'title'                => __( 'SK Auth', 'sk-core' ),
             'icon_url'             => '',
-            'description'          => __( 'Bitcoin, Lightning und Nostr Login', 'sk' ),
-            'settings_title'       => __( 'Authentifizierung', 'sk' ),
-            'settings_description' => __( 'Login-Methoden konfigurieren: BTC Login, LNURL Auth (Lightning), Nostr Login.', 'sk' ),
+            'description'          => __( 'Bitcoin, Lightning und Nostr Login', 'sk-core' ),
+            'settings_title'       => __( 'Authentifizierung', 'sk-core' ),
+            'settings_description' => __( 'Login-Methoden konfigurieren: BTC Login, LNURL Auth (Lightning), Nostr Login.', 'sk-core' ),
         ];
 
         return $sections;

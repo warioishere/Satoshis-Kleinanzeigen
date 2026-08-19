@@ -236,7 +236,7 @@ function sk_save_variations( $post_id ) {
 
                     if ( ! $unique_sku ) {
                         /* translators: %s: variation id  */
-                        $woocommerce_errors[] = sprintf( __( '#%s &ndash; Variation SKU must be unique.', 'sk' ), $variation_id );
+                        $woocommerce_errors[] = sprintf( __( '#%s &ndash; Variation SKU must be unique.', 'sk-core' ), $variation_id );
                     } else {
                         update_post_meta( $variation_id, '_sku', $new_sku );
                     }
@@ -536,7 +536,7 @@ function sk_validate_cart_for_single_seller_mode( $valid, $product_id ) {
     }
 
     if ( count( $vendors ) > 1 ) {
-        wc_add_notice( __( 'Sorry, you can\'t add more than one vendor\'s product in the cart.', 'sk' ), 'error' );
+        wc_add_notice( __( 'Sorry, you can\'t add more than one vendor\'s product in the cart.', 'sk-core' ), 'error' );
         $valid = false;
     }
 
@@ -568,7 +568,7 @@ function sk_rest_validate_single_seller_mode( $order, $request, $creating ) {
         return rest_ensure_response(
             new WP_Error(
                 'sk_single_seller_mode',
-                __( 'Sorry, you can\'t purchase from multiple vendors at once.', 'sk' ),
+                __( 'Sorry, you can\'t purchase from multiple vendors at once.', 'sk-core' ),
                 [
                     'status' => 403,
                 ]

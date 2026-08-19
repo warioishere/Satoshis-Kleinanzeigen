@@ -10,9 +10,9 @@ wp_enqueue_script( 'sk-product-variation-dates' );
 
 <div class="sk-attribute-variation-options sk-edit-row sk-clearfix hide_if_external">
     <div class="sk-section-heading" data-togglehandler="sk_attribute_variation_options">
-        <h2><i class="far fa-list-alt" aria-hidden="true"></i> <?php esc_html_e( 'Attribute', 'sk' ); ?><span class="show_if_variable show_if_variable-subscription"><?php esc_html_e( ' and Variation', 'sk' ); ?></span></h2>
-        <p class="show_if_variable show_if_variable-subscription"><?php esc_html_e( 'Manage attributes and variations for this variable product.', 'sk' ); ?></p>
-        <p class="show_if_simple show_if_subscription show_if_grouped"><?php esc_html_e( 'Manage attributes for this simple product.', 'sk' ); ?></p>
+        <h2><i class="far fa-list-alt" aria-hidden="true"></i> <?php esc_html_e( 'Attribute', 'sk-core' ); ?><span class="show_if_variable show_if_variable-subscription"><?php esc_html_e( ' and Variation', 'sk-core' ); ?></span></h2>
+        <p class="show_if_variable show_if_variable-subscription"><?php esc_html_e( 'Manage attributes and variations for this variable product.', 'sk-core' ); ?></p>
+        <p class="show_if_simple show_if_subscription show_if_grouped"><?php esc_html_e( 'Manage attributes for this simple product.', 'sk-core' ); ?></p>
 
         <a href="#" class="sk-section-toggle">
             <i class="fas fa-sort-down fa-flip-vertical" aria-hidden="true"></i>
@@ -76,7 +76,7 @@ wp_enqueue_script( 'sk-product-variation-dates' );
 
             <div class="sk-attribute-type">
                 <select name="predefined_attribute" id="predefined_attribute" class="sk-w5 sk-form-control sk_attribute_taxonomy" data-predefined_attr='<?php echo wp_json_encode( $attribute_taxonomies ); ?>'>
-                    <option value=""><?php esc_html_e( 'Custom Attribute', 'sk' ); ?></option>
+                    <option value=""><?php esc_html_e( 'Custom Attribute', 'sk-core' ); ?></option>
                     <?php
                     if ( ! empty( $attribute_taxonomies ) ) {
                         foreach ( $attribute_taxonomies as $attribute_taxonomy ) {
@@ -87,8 +87,8 @@ wp_enqueue_script( 'sk-product-variation-dates' );
                     }
                     ?>
                 </select>
-                <a href="#" class="sk-btn sk-btn-default add_new_attribute"><?php esc_html_e( 'Add attribute', 'sk' ); ?></a>
-                <a href="#" class="sk-btn sk-btn-default sk-btn-theme sk-save-attribute"><?php esc_html_e( 'Save attribute', 'sk' ); ?></a>
+                <a href="#" class="sk-btn sk-btn-default add_new_attribute"><?php esc_html_e( 'Add attribute', 'sk-core' ); ?></a>
+                <a href="#" class="sk-btn sk-btn-default sk-btn-theme sk-save-attribute"><?php esc_html_e( 'Save attribute', 'sk-core' ); ?></a>
                 <span class="sk-spinner sk-attribute-spinner sk-hide"></span>
             </div>
         </div>

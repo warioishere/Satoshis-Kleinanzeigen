@@ -274,7 +274,7 @@ class Single {
 
         $this->data['human_readable_date'] = sprintf(
         // translators: %s, Time elapsed from announcement creation.
-            __( '%s ago', 'sk' ),
+            __( '%s ago', 'sk-core' ),
             human_time_diff(
                 sk_current_datetime()->modify( $this->get_date() )->getTimestamp(),
                 sk_current_datetime()->getTimestamp()

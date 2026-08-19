@@ -40,25 +40,25 @@ class RestController extends WP_REST_Controller {
                     'permission_callback' => [ $this, 'is_skdar' ],
                     'args'                => [
                         'page' => [
-                            'description' => __( 'Current page of the collection.', 'sk' ),
+                            'description' => __( 'Current page of the collection.', 'sk-core' ),
                             'type'        => 'integer',
                             'default'     => 1,
                             'minimum'     => 1,
                             'required'    => false,
                         ],
                         'reason' => [
-                            'description' => __( 'Filter reports by reason.', 'sk' ),
+                            'description' => __( 'Filter reports by reason.', 'sk-core' ),
                             'type'        => 'string',
                             'required'    => false,
                         ],
                         'product_id' => [
-                            'description' => __( 'Filter reports by product ID.', 'sk' ),
+                            'description' => __( 'Filter reports by product ID.', 'sk-core' ),
                             'type'        => 'integer',
                             'minimum'     => 0,
                             'required'    => false,
                         ],
                         'vendor_id' => [
-                            'description' => __( 'Filter reports by vendor ID.', 'sk' ),
+                            'description' => __( 'Filter reports by vendor ID.', 'sk-core' ),
                             'type'        => 'integer',
                             'minimum'     => 0,
                             'required'    => false,
@@ -74,7 +74,7 @@ class RestController extends WP_REST_Controller {
             [
                 'args' => [
                     'id' => [
-                        'description' => __( 'Abuse report id', 'sk' ),
+                        'description' => __( 'Abuse report id', 'sk-core' ),
                         'type'        => 'integer',
                     ],
                 ],
@@ -96,7 +96,7 @@ class RestController extends WP_REST_Controller {
                     'permission_callback' => [ $this, 'is_skdar' ],
                     'args'                => [
                         'items' => [
-                            'description'       => __( 'Array of report IDs to delete.', 'sk' ),
+                            'description'       => __( 'Array of report IDs to delete.', 'sk-core' ),
                             'type'             => 'array',
                             'required'         => true,
                             'minItems'         => 1,
@@ -201,7 +201,7 @@ class RestController extends WP_REST_Controller {
         $report = sk_report_abuse_get_reports( [ 'id' => $request['id'] ] );
 
         if ( empty( $report ) ) {
-            return new \WP_Error( 'report_not_found', __( 'Report not found', 'sk' ) );
+            return new \WP_Error( 'report_not_found', __( 'Report not found', 'sk-core' ) );
         }
 
         sk_report_abuse_delete_reports( [ $report['id'] ] );
@@ -221,12 +221,12 @@ class RestController extends WP_REST_Controller {
         $ids = array_filter( (array) $request['items'], 'is_numeric' );
 
         if ( ! is_array( $ids ) || empty( $ids ) || ! count( array_filter( $ids ) ) == count( $ids ) ) {
-            return new WP_Error( 'invalid_data', __( 'Items must be an array of report ids', 'sk' ), [ 'status' => 404 ] );
+            return new WP_Error( 'invalid_data', __( 'Items must be an array of report ids', 'sk-core' ), [ 'status' => 404 ] );
         }
 
         $reports = sk_report_abuse_get_reports( [ 'ids' => $ids ] );
         if ( empty( $reports ) ) {
-            return new \WP_Error( 'reports_not_found', __( 'No reports not found with given ids. Please check your input.', 'sk' ) );
+            return new \WP_Error( 'reports_not_found', __( 'No reports not found with given ids. Please check your input.', 'sk-core' ) );
         }
 
         $ids = array_map(

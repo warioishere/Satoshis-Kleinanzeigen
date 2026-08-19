@@ -59,7 +59,7 @@ class PaymentCard {
 
 		$stripped = self::strip_markers( $text );
 
-		return $stripped !== '' ? $stripped : __( '⚡ Zahlungsnachricht', 'sk' );
+		return $stripped !== '' ? $stripped : __( '⚡ Zahlungsnachricht', 'sk-core' );
 	}
 
 	/**

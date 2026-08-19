@@ -13,30 +13,30 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 echo '= ' . esc_html( wp_strip_all_tags( $email_heading ) ) . " =\n\n";
 
-esc_html_e( 'Hello there,', 'sk' );
+esc_html_e( 'Hello there,', 'sk-core' );
 echo " \n\n";
 
-esc_html_e( 'A product has been updated in your site.', 'sk' );
+esc_html_e( 'A product has been updated in your site.', 'sk-core' );
 echo " \n\n";
 
-esc_html_e( 'Summary of the product:', 'sk' );
+esc_html_e( 'Summary of the product:', 'sk-core' );
 
 echo "\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\n";
 
 // translators: 1: Product Title.
-echo esc_html( sprintf( __( 'Title: %1$s', 'sk' ), wptexturize( $data['{product_title}'] ) ) );
+echo esc_html( sprintf( __( 'Title: %1$s', 'sk-core' ), wptexturize( $data['{product_title}'] ) ) );
 echo " \n";
 // translators: 1: Price.
-echo esc_html( sprintf( __( 'Price: %1$s', 'sk' ), wptexturize( $data['{price}'] ) ) );
+echo esc_html( sprintf( __( 'Price: %1$s', 'sk-core' ), wptexturize( $data['{price}'] ) ) );
 echo " \n";
 // translators: 1: Vendor.
-echo esc_html( sprintf( __( 'Vendor: %1$s', 'sk' ), wptexturize( $data['{seller_name}'] ) ) );
+echo esc_html( sprintf( __( 'Vendor: %1$s', 'sk-core' ), wptexturize( $data['{seller_name}'] ) ) );
 echo " \n";
 // translators: 1: Category.
-echo esc_html( sprintf( __( 'Category: %1$s', 'sk' ), wptexturize( $data['{category}'] ) ) );
+echo esc_html( sprintf( __( 'Category: %1$s', 'sk-core' ), wptexturize( $data['{category}'] ) ) );
 echo " \n";
 
-esc_html_e( 'The product is currently in "pending" state.', 'sk' );
+esc_html_e( 'The product is currently in "pending" state.', 'sk-core' );
 echo " \n";
 
 echo "\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\n";

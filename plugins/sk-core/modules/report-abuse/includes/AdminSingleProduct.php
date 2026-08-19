@@ -22,7 +22,7 @@ class AdminSingleProduct {
      * @return void
      */
     public static function add_abuse_report_meta_box() {
-        add_meta_box( 'sk_report_abuse_reports', __( 'Abuse Reports', 'sk' ), [ self::class, 'meta_box' ], 'product', 'normal', 'core' );
+        add_meta_box( 'sk_report_abuse_reports', __( 'Abuse Reports', 'sk-core' ), [ self::class, 'meta_box' ], 'product', 'normal', 'core' );
     }
 
     /**

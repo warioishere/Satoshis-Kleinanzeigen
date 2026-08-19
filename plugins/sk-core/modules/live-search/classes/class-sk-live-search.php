@@ -30,8 +30,8 @@ class SK_Live_Search_Widget extends WP_Widget {
     public function __construct() {
         parent::__construct(
             'dokna_product_search',
-            __( 'SK Live Search', 'sk' ),
-            array( 'description' => __( 'Search products live', 'sk' ) )
+            __( 'SK Live Search', 'sk-core' ),
+            array( 'description' => __( 'Search products live', 'sk-core' ) )
         );
     }
 
@@ -68,13 +68,13 @@ class SK_Live_Search_Widget extends WP_Widget {
         <div class="sk-product-search">
             <form role="search" method="get" class="ajaxsearchform ajaxsearchform-sk" action="<?php echo esc_url( home_url( '/' ) ); ?>">
                 <div class="input-group">
-                    <input type="text" autocomplete="off" class="form-control sk-ajax-search-textfield <?php echo $live_search_option_class; ?>" value="<?php echo get_search_query(); ?>" name="s" placeholder="<?php echo __( 'Just type ...', 'sk' ); ?>" />
+                    <input type="text" autocomplete="off" class="form-control sk-ajax-search-textfield <?php echo $live_search_option_class; ?>" value="<?php echo get_search_query(); ?>" name="s" placeholder="<?php echo __( 'Just type ...', 'sk-core' ); ?>" />
                     <span class="input-group-addon" id="sk-ls-ajax-cat-dropdown">
                         <?php
                         wp_dropdown_categories(
                             array(
                                 'taxonomy' => 'product_cat',
-                                'show_option_all' => __( 'All', 'sk' ),
+                                'show_option_all' => __( 'All', 'sk-core' ),
                                 'hierarchical' => true,
                                 'hide_empty' => false,
                                 'orderby' => 'name',
@@ -109,11 +109,11 @@ class SK_Live_Search_Widget extends WP_Widget {
         if ( isset( $instance['title'] ) ) {
             $title = $instance['title'];
         } else {
-            $title = __( 'Live Search', 'sk' );
+            $title = __( 'Live Search', 'sk-core' );
         }
         ?>
         <p>
-            <label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php esc_html_e( 'Title:', 'sk' ); ?></label>
+            <label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php esc_html_e( 'Title:', 'sk-core' ); ?></label>
             <input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>">
         </p>
         <?php

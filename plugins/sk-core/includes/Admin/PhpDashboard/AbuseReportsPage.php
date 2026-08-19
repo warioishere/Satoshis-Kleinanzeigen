@@ -9,7 +9,7 @@ class AbuseReportsPage extends AbstractPage {
     }
 
     public function get_title(): string {
-        return __( 'Abuse Reports', 'sk' );
+        return __( 'Abuse Reports', 'sk-core' );
     }
 
     public function is_pro(): bool {
@@ -58,7 +58,7 @@ class AbuseReportsPage extends AbstractPage {
         }
 
         if ( ! wp_verify_nonce( $_POST['sk_abuse_report_nonce'], 'sk_abuse_report_action' ) ) {
-            wp_die( __( 'Security check failed.', 'sk' ) );
+            wp_die( __( 'Security check failed.', 'sk-core' ) );
         }
 
         if ( ! current_user_can( 'manage_woocommerce' ) ) {

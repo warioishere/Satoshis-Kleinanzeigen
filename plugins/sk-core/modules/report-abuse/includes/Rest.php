@@ -96,8 +96,8 @@ class Rest {
 				'icon'     => 'MessageSquareWarning',
 				'current'  => (int) $abuse_reports_current,
 				'previous' => (int) $abuse_reports_previous,
-				'title'    => esc_html__( 'Abuse Reports', 'sk' ),
-				'tooltip'  => esc_html__( 'Total vendors who got reported in the time period', 'sk' ),
+				'title'    => esc_html__( 'Abuse Reports', 'sk-core' ),
+				'tooltip'  => esc_html__( 'Total vendors who got reported in the time period', 'sk-core' ),
                 'position' => 100,
 			]
 		);

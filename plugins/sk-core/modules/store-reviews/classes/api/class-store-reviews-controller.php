@@ -43,7 +43,7 @@ class SK_REST_Store_Review_Controller extends SkRESTController {
                 'args'                => array_merge( $this->get_collection_params(),  array(
                     'vendor_id' => array(
                         'type'        => 'string',
-                        'description' => __( 'Vendor ID', 'sk' ),
+                        'description' => __( 'Vendor ID', 'sk-core' ),
                         'required'    => false,
                     ),
                 ) ),
@@ -54,7 +54,7 @@ class SK_REST_Store_Review_Controller extends SkRESTController {
         register_rest_route( $this->namespace, '/' . $this->base . '/(?P<id>[\d]+)/', array(
             'args' => array(
                 'id' => array(
-                    'description' => __( 'Unique identifier for the object.', 'sk' ),
+                    'description' => __( 'Unique identifier for the object.', 'sk-core' ),
                     'type'        => 'integer',
                     'required'    => true,
                 ),
@@ -78,7 +78,7 @@ class SK_REST_Store_Review_Controller extends SkRESTController {
                 'args'                => array(
                     'force' => array(
                         'type'        => 'boolean',
-                        'description' => __( 'Trash or permanenet delete', 'sk' ),
+                        'description' => __( 'Trash or permanenet delete', 'sk-core' ),
                         'required'    => false,
                     )
                 ),
@@ -90,7 +90,7 @@ class SK_REST_Store_Review_Controller extends SkRESTController {
         register_rest_route( $this->namespace, '/' . $this->base . '/(?P<id>[\d]+)/restore', array(
             'args' => array(
                 'id' => array(
-                    'description' => __( 'Unique identifier for the object.', 'sk' ),
+                    'description' => __( 'Unique identifier for the object.', 'sk-core' ),
                     'type'        => 'integer',
                 ),
             ),
@@ -187,13 +187,13 @@ class SK_REST_Store_Review_Controller extends SkRESTController {
         $store_review_id = $request['id'];
 
         if ( empty( $store_review_id ) ) {
-            return new WP_Error( 'no_review_found', __( 'No review found', 'sk' ), array( 'status' => 404 ) );
+            return new WP_Error( 'no_review_found', __( 'No review found', 'sk-core' ), array( 'status' => 404 ) );
         }
 
         $store_review_object = $this->get_object( $store_review_id );
 
         if ( ! $store_review_object ) {
-            return new WP_Error( 'no_review_found', __( 'No review found', 'sk' ), array( 'status' => 404 ) );
+            return new WP_Error( 'no_review_found', __( 'No review found', 'sk-core' ), array( 'status' => 404 ) );
         }
 
         $data     = $this->prepare_response_for_object( $store_review_object, $request );
@@ -210,15 +210,15 @@ class SK_REST_Store_Review_Controller extends SkRESTController {
      */
     public function update_review( $request ) {
         if ( empty( trim( $request['id'] ) ) ) {
-            return new WP_Error( 'no_id', __( 'No review id found', 'sk' ), array( 'status' => 404 ) );
+            return new WP_Error( 'no_id', __( 'No review id found', 'sk-core' ), array( 'status' => 404 ) );
         }
 
         if ( isset( $request['title'] ) && empty( trim( $request['title'] ) ) ) {
-            return new WP_Error( 'no_title', __( 'Review title must be required', 'sk' ), array( 'status' => 404 ) );
+            return new WP_Error( 'no_title', __( 'Review title must be required', 'sk-core' ), array( 'status' => 404 ) );
         }
 
         if ( isset( $request['content'] ) && empty( trim( $request['content'] ) ) ) {
-            return new WP_Error( 'no_content', __( 'Review content must be required', 'sk' ), array( 'status' => 404 ) );
+            return new WP_Error( 'no_content', __( 'Review content must be required', 'sk-core' ), array( 'status' => 404 ) );
         }
 
         $status    = ! empty( $request['status'] ) ? $request['status'] : '';
@@ -277,12 +277,12 @@ class SK_REST_Store_Review_Controller extends SkRESTController {
             // If we don't support trashing for this type, error out.
             if ( ! $supports_trash ) {
                 /* translators: %s: force=true */
-                return new WP_Error( 'rest_trash_not_supported', sprintf( __( "The post does not support trashing. Set '%s' to delete.", "sk" ), 'force=true' ), array( 'status' => 501 ) );
+                return new WP_Error( 'rest_trash_not_supported', sprintf( __( "The post does not support trashing. Set '%s' to delete.", "sk-core" ), 'force=true' ), array( 'status' => 501 ) );
             }
 
             // Otherwise, only trash if we haven't already.
             if ( 'trash' === $post->post_status ) {
-                return new WP_Error( 'rest_already_trashed', __( 'The post has already been deleted.', 'sk' ), array( 'status' => 410 ) );
+                return new WP_Error( 'rest_already_trashed', __( 'The post has already been deleted.', 'sk-core' ), array( 'status' => 410 ) );
             }
 
             // (Note that internally this falls through to `wp_delete_post` if
@@ -293,7 +293,7 @@ class SK_REST_Store_Review_Controller extends SkRESTController {
         }
 
         if ( ! $result ) {
-            return new WP_Error( 'sk_rest_cannot_delete', __( 'The review cannot be deleted.', 'sk' ), array( 'status' => 500 ) );
+            return new WP_Error( 'sk_rest_cannot_delete', __( 'The review cannot be deleted.', 'sk-core' ), array( 'status' => 500 ) );
         }
 
         Cache::invalidate_group( 'store_reviews' );
@@ -311,13 +311,13 @@ class SK_REST_Store_Review_Controller extends SkRESTController {
         $post = $this->get_object( $request['id'] );
 
         if ( empty( $post ) ) {
-            return new WP_Error( 'no_review_found', __( 'No review found', 'sk' ), array( 'status' => 404 ) );
+            return new WP_Error( 'no_review_found', __( 'No review found', 'sk-core' ), array( 'status' => 404 ) );
         }
 
         $post = wp_untrash_post( $post->ID );
 
         if ( empty( $post ) ) {
-            return new WP_Error( 'could_not_restore', __( 'Could not restore this review', 'sk' ), array( 'status' => 404 ) );
+            return new WP_Error( 'could_not_restore', __( 'Could not restore this review', 'sk-core' ), array( 'status' => 404 ) );
         }
 
         // Update the post status from `draft` to `publish` as by default `wp_untrash_post` makes post `draft`
@@ -358,7 +358,7 @@ class SK_REST_Store_Review_Controller extends SkRESTController {
         $params = $request->get_params();
 
         if ( empty( $params ) ) {
-            return new WP_Error( 'no_item_found', __( 'No items found for bulk updating', 'sk' ), array( 'status' => 404 ) );
+            return new WP_Error( 'no_item_found', __( 'No items found for bulk updating', 'sk-core' ), array( 'status' => 404 ) );
         }
 
         $allowed_status = array( 'trash', 'delete', 'restore' );

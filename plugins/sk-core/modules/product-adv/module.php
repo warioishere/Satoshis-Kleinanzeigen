@@ -31,7 +31,7 @@ final class Module {
      */
     public function __clone() {
         $message = ' Backtrace: ' . wp_debug_backtrace_summary();
-        _doing_it_wrong( __METHOD__, $message . __( 'Cloning is forbidden.', 'sk' ), SK_CORE_VERSION );
+        _doing_it_wrong( __METHOD__, $message . __( 'Cloning is forbidden.', 'sk-core' ), SK_CORE_VERSION );
     }
 
     /**
@@ -40,7 +40,7 @@ final class Module {
      */
     public function __wakeup() {
         $message = ' Backtrace: ' . wp_debug_backtrace_summary();
-        _doing_it_wrong( __METHOD__, $message . __( 'Unserializing instances of this class is forbidden.', 'sk' ), SK_CORE_VERSION );
+        _doing_it_wrong( __METHOD__, $message . __( 'Unserializing instances of this class is forbidden.', 'sk-core' ), SK_CORE_VERSION );
     }
 
     /**
@@ -135,7 +135,7 @@ final class Module {
      */
     public function add_product_advertisement_shortcode_to_block_list( $shortcodes ) {
         $shortcodes['sk_product_advertisement'] = [
-            'title'   => __( 'Product Advertisement', 'sk' ),
+            'title'   => __( 'Product Advertisement', 'sk-core' ),
             'content' => '[sk_product_advertisement title="" count="" vendor_id="" order="ASC" orderby="product_title"]',
         ];
 

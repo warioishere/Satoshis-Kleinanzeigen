@@ -116,26 +116,26 @@ class Module {
      */
     public function register_sk_store_review_type() {
         $labels = array(
-            'name'               => _x( 'Store Reviews', 'Post Type General Name', 'sk' ),
-            'singular_name'      => _x( 'Store Review', 'Post Type Singular Name', 'sk' ),
-            'menu_name'          => __( 'Store Reviews', 'sk' ),
-            'name_admin_bar'     => __( 'Store Reviews', 'sk' ),
-            'parent_item_colon'  => __( 'Parent Item', 'sk' ),
-            'all_items'          => __( 'All Reviews', 'sk' ),
-            'add_new_item'       => __( 'Add New review', 'sk' ),
-            'add_new'            => __( 'Add New', 'sk' ),
-            'new_item'           => __( 'New review', 'sk' ),
-            'edit_item'          => __( 'Edit review', 'sk' ),
-            'update_item'        => __( 'Update review', 'sk' ),
-            'view_item'          => __( 'View review', 'sk' ),
-            'search_items'       => __( 'Search review', 'sk' ),
-            'not_found'          => __( 'Not found', 'sk' ),
-            'not_found_in_trash' => __( 'Not found in Trash', 'sk' ),
+            'name'               => _x( 'Store Reviews', 'Post Type General Name', 'sk-core' ),
+            'singular_name'      => _x( 'Store Review', 'Post Type Singular Name', 'sk-core' ),
+            'menu_name'          => __( 'Store Reviews', 'sk-core' ),
+            'name_admin_bar'     => __( 'Store Reviews', 'sk-core' ),
+            'parent_item_colon'  => __( 'Parent Item', 'sk-core' ),
+            'all_items'          => __( 'All Reviews', 'sk-core' ),
+            'add_new_item'       => __( 'Add New review', 'sk-core' ),
+            'add_new'            => __( 'Add New', 'sk-core' ),
+            'new_item'           => __( 'New review', 'sk-core' ),
+            'edit_item'          => __( 'Edit review', 'sk-core' ),
+            'update_item'        => __( 'Update review', 'sk-core' ),
+            'view_item'          => __( 'View review', 'sk-core' ),
+            'search_items'       => __( 'Search review', 'sk-core' ),
+            'not_found'          => __( 'Not found', 'sk-core' ),
+            'not_found_in_trash' => __( 'Not found in Trash', 'sk-core' ),
         );
 
         $args = array(
-            'label'             => __( 'Store Reviews', 'sk' ),
-            'description'       => __( 'Store Reviews by customer', 'sk' ),
+            'label'             => __( 'Store Reviews', 'sk-core' ),
+            'description'       => __( 'Store Reviews by customer', 'sk-core' ),
             'labels'            => $labels,
             'supports'          => array( 'title', 'author', 'editor' ),
             'hierarchical'      => false,
@@ -178,7 +178,7 @@ class Module {
 
             $rating = number_format( $rating / count( $reviews ), 2 );
         } else {
-            $rating = __( 'No Ratings found yet', 'sk' );
+            $rating = __( 'No Ratings found yet', 'sk-core' );
         }
 
         return array(
@@ -207,7 +207,7 @@ class Module {
 
         $namager = new StoreReviewsManager();
         $posts = $namager->get_user_review( $args );
-        $no_review_msg = apply_filters( 'dsr_no_review_found_msg', __( 'No Reviews found', 'sk' ), $posts );
+        $no_review_msg = apply_filters( 'dsr_no_review_found_msg', __( 'No Reviews found', 'sk-core' ), $posts );
         ob_start();
 
         \DSR_View::init()->print_store_reviews( $posts, $no_review_msg );

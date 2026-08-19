@@ -32,9 +32,9 @@ class VendorSubscription {
         woocommerce_wp_text_input(
             array(
                 'id'                => '_sk_advertisement_slot_count',
-                'label'             => __( 'Advertisement Slot', 'sk' ),
-                'placeholder'       => __( 'Enter -1 for unlimited product advertisement, 0 for no advertisement.', 'sk' ),
-                'description'       => __( 'Enter no of advertisement slot for this package. Enter -1 for unlimited advertisement, 0 for no advertisement slots.', 'sk' ),
+                'label'             => __( 'Advertisement Slot', 'sk-core' ),
+                'placeholder'       => __( 'Enter -1 for unlimited product advertisement, 0 for no advertisement.', 'sk-core' ),
+                'description'       => __( 'Enter no of advertisement slot for this package. Enter -1 for unlimited advertisement, 0 for no advertisement slots.', 'sk-core' ),
                 'desc_tip'          => true,
                 'type'              => 'number',
                 'custom_attributes' => array(
@@ -47,9 +47,9 @@ class VendorSubscription {
         woocommerce_wp_text_input(
             array(
                 'id'                => '_sk_advertisement_validity',
-                'label'             => __( 'Expire After Days', 'sk' ),
-                'placeholder'       => __( 'Enter -1 for no advertisement expiration.', 'sk' ),
-                'description'       => __( 'Enter how many days product will be featured, enter -1 if you don\'t want to set any expiration period.', 'sk' ),
+                'label'             => __( 'Expire After Days', 'sk-core' ),
+                'placeholder'       => __( 'Enter -1 for no advertisement expiration.', 'sk-core' ),
+                'description'       => __( 'Enter how many days product will be featured, enter -1 if you don\'t want to set any expiration period.', 'sk-core' ),
                 'desc_tip'          => true,
                 'type'              => 'number',
                 'custom_attributes' => array(

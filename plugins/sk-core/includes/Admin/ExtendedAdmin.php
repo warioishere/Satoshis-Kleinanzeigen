@@ -55,7 +55,7 @@ class ExtendedAdmin {
         remove_submenu_page( 'sk', 'sk-pro-features' );
 
         // Submenu items are now registered by PhpDashboard via the sk_php_dashboard_pages filter.
-        add_submenu_page( '', __( 'Whats New', 'sk' ), __( 'Whats New', 'sk' ), $capability, 'whats-new-sk', array( $this, 'whats_new_page' ) );
+        add_submenu_page( '', __( 'Whats New', 'sk-core' ), __( 'Whats New', 'sk-core' ), $capability, 'whats-new-sk', array( $this, 'whats_new_page' ) );
     }
 
     /**
@@ -102,20 +102,20 @@ class ExtendedAdmin {
     public function add_settings_general_vendor_store_options( $settings_fields ) {
         $settings_fields['enable_tc_on_reg'] = [
             'name'    => 'enable_tc_on_reg',
-            'label'   => __( 'Enable Terms and Condition', 'sk' ),
-            'desc'    => __( 'Enable the terms & conditions checkbox on vendor registration form.', 'sk' ),
+            'label'   => __( 'Enable Terms and Condition', 'sk-core' ),
+            'desc'    => __( 'Enable the terms & conditions checkbox on vendor registration form.', 'sk-core' ),
             'type'    => 'switcher',
             'default' => 'on',
-            'tooltip' => __( 'Prompt terms and condition check for vendors when creating store on your site', 'sk' ),
+            'tooltip' => __( 'Prompt terms and condition check for vendors when creating store on your site', 'sk-core' ),
             'is_lite' => false,
         ];
         $settings_fields['enable_single_seller_mode'] = [
             'name'    => 'enable_single_seller_mode',
-            'label'   => __( 'Enable Single Seller Mode', 'sk' ),
-            'desc'    => __( 'Enable single seller mode', 'sk' ),
+            'label'   => __( 'Enable Single Seller Mode', 'sk-core' ),
+            'desc'    => __( 'Enable single seller mode', 'sk-core' ),
             'type'    => 'switcher',
             'default' => 'off',
-            'tooltip' => __( 'Restrict customers from buying from multiple vendors at a time.', 'sk' ),
+            'tooltip' => __( 'Restrict customers from buying from multiple vendors at a time.', 'sk-core' ),
             'is_lite' => false,
         ];
 
@@ -133,22 +133,22 @@ class ExtendedAdmin {
     public function add_settings_selling_option_vendor_capability( $settings_fields ) {
         $settings_fields['product_status'] = [
             'name'    => 'product_status',
-            'label'   => __( 'Product Status', 'sk' ),
-            'desc'    => __( 'The status of a product when a vendor creates or updates it.', 'sk' ),
+            'label'   => __( 'Product Status', 'sk-core' ),
+            'desc'    => __( 'The status of a product when a vendor creates or updates it.', 'sk-core' ),
             'type'    => 'radio',
             'default' => 'pending',
-            'tooltip' => __( 'The status of a product when a vendor creates or updates it.', 'sk' ),
+            'tooltip' => __( 'The status of a product when a vendor creates or updates it.', 'sk-core' ),
             'options' => [
-                'publish' => __( 'Published', 'sk' ),
-                'pending' => __( 'Pending Review', 'sk' ),
+                'publish' => __( 'Published', 'sk-core' ),
+                'pending' => __( 'Pending Review', 'sk-core' ),
             ],
             'is_lite' => false,
         ];
 
         $settings_fields['vendor_duplicate_product'] = array(
             'name'    => 'vendor_duplicate_product',
-            'label'   => __( 'Duplicate Product', 'sk' ),
-            'desc'    => __( 'Allow vendor to duplicate their product', 'sk' ),
+            'label'   => __( 'Duplicate Product', 'sk-core' ),
+            'desc'    => __( 'Allow vendor to duplicate their product', 'sk-core' ),
             'type'    => 'switcher',
             'default' => 'on',
             'is_lite' => false,
@@ -156,21 +156,21 @@ class ExtendedAdmin {
 
         $settings_fields['product_category_style'] = array(
             'name'    => 'product_category_style',
-            'label'   => __( 'Product Category Selection', 'sk' ),
-            'desc'    => __( 'Select a category type for products', 'sk' ),
+            'label'   => __( 'Product Category Selection', 'sk-core' ),
+            'desc'    => __( 'Select a category type for products', 'sk-core' ),
             'type'    => 'radio',
             'default' => 'single',
             'options' => [
-                'single'   => __( 'Single', 'sk' ),
-                'multiple' => __( 'Multiple', 'sk' ),
+                'single'   => __( 'Single', 'sk-core' ),
+                'multiple' => __( 'Multiple', 'sk-core' ),
             ],
             'is_lite' => false,
         );
 
         $settings_fields['product_vendors_can_create_tags'] = array(
             'name'    => 'product_vendors_can_create_tags',
-            'label'   => __( 'Vendors Can Create Tags', 'sk' ),
-            'desc'    => __( 'Allow vendors to create new product tags from vendor dashboard.', 'sk' ),
+            'label'   => __( 'Vendors Can Create Tags', 'sk-core' ),
+            'desc'    => __( 'Allow vendors to create new product tags from vendor dashboard.', 'sk-core' ),
             'type'    => 'switcher',
             'default' => 'off',
             'is_lite' => false,
@@ -178,8 +178,8 @@ class ExtendedAdmin {
 
         $settings_fields['add_new_attribute'] = array(
             'name'    => 'add_new_attribute',
-            'label'   => __( 'Add New Attribute Values', 'sk' ),
-            'desc'    => __( 'Allow vendors to add new values to predefined attribute', 'sk' ),
+            'label'   => __( 'Add New Attribute Values', 'sk-core' ),
+            'desc'    => __( 'Allow vendors to add new values to predefined attribute', 'sk-core' ),
             'type'    => 'switcher',
             'default' => 'off',
             'is_lite' => false,
@@ -187,18 +187,18 @@ class ExtendedAdmin {
 
         $settings_fields['hide_customer_info'] = [
             'name'    => 'hide_customer_info',
-            'label'   => __( 'Hide Customer Info', 'sk' ),
-            'desc'    => __( 'Hide customer information from order details of vendors', 'sk' ),
+            'label'   => __( 'Hide Customer Info', 'sk-core' ),
+            'desc'    => __( 'Hide customer information from order details of vendors', 'sk-core' ),
             'type'    => 'switcher',
             'default' => 'off',
-            'tooltip' => __( 'It will hide customer information from the "General Details" section of the single order details page.', 'sk' ),
+            'tooltip' => __( 'It will hide customer information from the "General Details" section of the single order details page.', 'sk-core' ),
             'is_lite' => false,
         ];
 
         $settings_fields['seller_review_manage'] = array(
             'name'    => 'seller_review_manage',
-            'label'   => __( 'Vendor Product Review Status Change', 'sk' ),
-            'desc'    => __( 'Vendor can change product review status from vendor dashboard', 'sk' ),
+            'label'   => __( 'Vendor Product Review Status Change', 'sk-core' ),
+            'desc'    => __( 'Vendor can change product review status from vendor dashboard', 'sk-core' ),
             'type'    => 'switcher',
             'default' => 'on',
             'is_lite' => false,
@@ -237,17 +237,17 @@ class ExtendedAdmin {
         $appearence_settings = array(
             'store_banner_width' => [
                 'name'    => 'store_banner_width',
-                'label'   => __( 'Store Banner Width', 'sk' ),
+                'label'   => __( 'Store Banner Width', 'sk-core' ),
                 'type'    => 'text',
                 'default' => 625,
-                'tooltip' => __( 'Choose the width for your Vendor\'s banner image to be displayed on Vendor store page.', 'sk' ),
+                'tooltip' => __( 'Choose the width for your Vendor\'s banner image to be displayed on Vendor store page.', 'sk-core' ),
             ],
             'store_banner_height' => [
                 'name'    => 'store_banner_height',
-                'label'   => __( 'Store Banner Height', 'sk' ),
+                'label'   => __( 'Store Banner Height', 'sk-core' ),
                 'type'    => 'text',
                 'default' => 300,
-                'tooltip' => __( 'Choose the height for your Vendor\'s banner image which is displayed on Vendor store page', 'sk' ),
+                'tooltip' => __( 'Choose the height for your Vendor\'s banner image which is displayed on Vendor store page', 'sk-core' ),
             ],
         );
 
@@ -292,29 +292,29 @@ class ExtendedAdmin {
      */
     public function create_default_pages() {
         if ( ! isset( $_POST['action'] ) || $_POST['action'] !== 'create_pages' ) {
-            return wp_send_json_error( __( 'You don\'t have enough permission', 'sk', '403' ) );
+            return wp_send_json_error( __( 'You don\'t have enough permission', 'sk-core', '403' ) );
         }
 
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
-            return wp_send_json_error( __( 'You don\'t have enough permission', 'sk', '403' ) );
+            return wp_send_json_error( __( 'You don\'t have enough permission', 'sk-core', '403' ) );
         }
 
         $page_created = get_option( 'sk_pages_created', false );
         $pages = array(
             array(
-                'post_title' => __( 'Dashboard', 'sk' ),
+                'post_title' => __( 'Dashboard', 'sk-core' ),
                 'slug'       => 'dashboard',
                 'page_id'    => 'dashboard',
                 'content'    => '[sk-dashboard]',
             ),
             array(
-                'post_title' => __( 'Store List', 'sk' ),
+                'post_title' => __( 'Store List', 'sk-core' ),
                 'slug'       => 'store-listing',
                 'page_id'    => 'store_listing',
                 'content'    => '[sk-stores]',
             ),
             array(
-                'post_title' => __( 'My Orders', 'sk' ),
+                'post_title' => __( 'My Orders', 'sk-core' ),
                 'slug'       => 'my-orders',
                 'page_id'    => 'my_orders',
                 'content'    => '[sk-my-orders]',
@@ -371,7 +371,7 @@ class ExtendedAdmin {
         update_option( 'sk_pages_created', 1 );
         wp_send_json_success(
             array(
-                'message' => __( 'All the default pages has been created!', 'sk' ),
+                'message' => __( 'All the default pages has been created!', 'sk-core' ),
             ), 201
         );
         exit;
@@ -422,7 +422,7 @@ class ExtendedAdmin {
             array(
                 'id'     => 'sk-sellers',
                 'parent' => 'sk',
-                'title'  => __( 'Vendors', 'sk' ),
+                'title'  => __( 'Vendors', 'sk-core' ),
                 'href'   => admin_url( 'admin.php?page=sk&tab=vendors' ),
             )
         );
@@ -431,7 +431,7 @@ class ExtendedAdmin {
             array(
                 'id'     => 'sk-settings',
                 'parent' => 'sk',
-                'title'  => __( 'Settings', 'sk' ),
+                'title'  => __( 'Settings', 'sk-core' ),
                 'href'   => admin_url( 'admin.php?page=sk&tab=settings' ),
             )
         );
@@ -473,11 +473,11 @@ class ExtendedAdmin {
      */
     public function check_all_sk_pages_exists() {
         if ( ! isset( $_POST['action'] ) || $_POST['action'] !== 'check_all_sk_pages_exists' ) {
-            return wp_send_json_error( __( 'You don\'t have enough permission', 'sk', '403' ) );
+            return wp_send_json_error( __( 'You don\'t have enough permission', 'sk-core', '403' ) );
         }
 
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
-            return wp_send_json_error( __( 'You don\'t have enough permission', 'sk', '403' ) );
+            return wp_send_json_error( __( 'You don\'t have enough permission', 'sk-core', '403' ) );
         }
 
         $all_pages_created = get_option( 'sk_pages_created', false );

@@ -22,7 +22,7 @@ class VendorChat extends DashboardModule {
 		}
 		return [
 			'slug'       => 'vendor-chat',
-			'title'      => __( 'Nachrichten', 'sk' ),
+			'title'      => __( 'Nachrichten', 'sk-core' ),
 			'icon'       => '<i class="fas fa-comment-dots"></i>',
 			'pos'        => 56,
 			'permission' => 'sk_view_overview_menu',
@@ -63,16 +63,16 @@ class VendorChat extends DashboardModule {
 	public function register_cpt() {
 		register_post_type( 'vendor_chat', [
 			'labels'              => [
-				'name'               => __( 'Vendor Chats', 'sk' ),
-				'singular_name'      => __( 'Vendor Chat', 'sk' ),
-				'add_new'            => __( 'Add New Chat', 'sk' ),
-				'add_new_item'       => __( 'Add New Chat', 'sk' ),
-				'edit_item'          => __( 'Edit Chat', 'sk' ),
-				'new_item'           => __( 'New Chat', 'sk' ),
-				'view_item'          => __( 'View Chat', 'sk' ),
-				'search_items'       => __( 'Search Chats', 'sk' ),
-				'not_found'          => __( 'No chats found', 'sk' ),
-				'not_found_in_trash' => __( 'No chats found in trash', 'sk' ),
+				'name'               => __( 'Vendor Chats', 'sk-core' ),
+				'singular_name'      => __( 'Vendor Chat', 'sk-core' ),
+				'add_new'            => __( 'Add New Chat', 'sk-core' ),
+				'add_new_item'       => __( 'Add New Chat', 'sk-core' ),
+				'edit_item'          => __( 'Edit Chat', 'sk-core' ),
+				'new_item'           => __( 'New Chat', 'sk-core' ),
+				'view_item'          => __( 'View Chat', 'sk-core' ),
+				'search_items'       => __( 'Search Chats', 'sk-core' ),
+				'not_found'          => __( 'No chats found', 'sk-core' ),
+				'not_found_in_trash' => __( 'No chats found in trash', 'sk-core' ),
 			],
 			'public'              => false,
 			'has_archive'         => false,
@@ -164,21 +164,21 @@ class VendorChat extends DashboardModule {
 		<div id="dvc-login-required-modal" class="dvc-modal" style="display: none;">
 			<div class="dvc-modal-content">
 				<div class="dvc-modal-header">
-					<h3><?php _e( 'Anmeldung erforderlich', 'sk' ); ?></h3>
-					<button type="button" class="dvc-modal-close" aria-label="<?php esc_attr_e( 'Schließen', 'sk' ); ?>">
+					<h3><?php _e( 'Anmeldung erforderlich', 'sk-core' ); ?></h3>
+					<button type="button" class="dvc-modal-close" aria-label="<?php esc_attr_e( 'Schließen', 'sk-core' ); ?>">
 						<i class="fas fa-times"></i>
 					</button>
 				</div>
 				<div class="dvc-modal-body">
 					<div class="dvc-message-info" style="margin: 0;">
 						<p style="margin: 0;">
-							<?php _e( 'Um den Chat nutzen zu können, musst du angemeldet sein.', 'sk' ); ?>
+							<?php _e( 'Um den Chat nutzen zu können, musst du angemeldet sein.', 'sk-core' ); ?>
 						</p>
 					</div>
 					<div class="dvc-modal-actions" style="margin-top: 1.5rem;">
 						<a href="<?php echo esc_url( home_url( '/dashboard/' ) ); ?>" class="dvc-btn-primary">
 							<i class="fas fa-sign-in-alt"></i>
-							<?php _e( 'Anmelden', 'sk' ); ?>
+							<?php _e( 'Anmelden', 'sk-core' ); ?>
 						</a>
 					</div>
 				</div>
@@ -189,8 +189,8 @@ class VendorChat extends DashboardModule {
 		<div id="dvc-chat-modal" class="dvc-modal" style="display: none;">
 			<div class="dvc-modal-content">
 				<div class="dvc-modal-header">
-					<h3><?php _e( 'Chat starten', 'sk' ); ?></h3>
-					<button type="button" class="dvc-modal-close" aria-label="<?php esc_attr_e( 'Schließen', 'sk' ); ?>">
+					<h3><?php _e( 'Chat starten', 'sk-core' ); ?></h3>
+					<button type="button" class="dvc-modal-close" aria-label="<?php esc_attr_e( 'Schließen', 'sk-core' ); ?>">
 						<i class="fas fa-times"></i>
 					</button>
 				</div>
@@ -199,19 +199,19 @@ class VendorChat extends DashboardModule {
 						<input type="hidden" id="dvc-vendor-id"  name="vendor_id">
 						<input type="hidden" id="dvc-product-id" name="product_id">
 						<div class="dvc-form-group">
-							<label for="dvc-chat-message"><?php _e( 'Nachricht', 'sk' ); ?></label>
+							<label for="dvc-chat-message"><?php _e( 'Nachricht', 'sk-core' ); ?></label>
 							<textarea
 								id="dvc-chat-message"
 								name="message"
 								rows="5"
-								placeholder="<?php esc_attr_e( 'Schreibe deine Nachricht...', 'sk' ); ?>"
+								placeholder="<?php esc_attr_e( 'Schreibe deine Nachricht...', 'sk-core' ); ?>"
 								required
 							></textarea>
 						</div>
 						<div class="dvc-modal-actions">
 							<button type="submit" class="dvc-btn-primary">
 								<i class="fas fa-paper-plane"></i>
-								<?php _e( 'Senden', 'sk' ); ?>
+								<?php _e( 'Senden', 'sk-core' ); ?>
 							</button>
 						</div>
 					</form>
@@ -232,8 +232,8 @@ class VendorChat extends DashboardModule {
 	 */
 	public function add_admin_menu() {
 		add_options_page(
-			__( 'SK Vendor Chat Einstellungen', 'sk' ),
-			__( 'Vendor Chat', 'sk' ),
+			__( 'SK Vendor Chat Einstellungen', 'sk-core' ),
+			__( 'Vendor Chat', 'sk-core' ),
 			'manage_options',
 			'sk-vendor-chat-settings',
 			[ $this, 'render_settings_page' ]
@@ -258,7 +258,7 @@ class VendorChat extends DashboardModule {
 		if ( isset( $_POST['dvc_save_settings'] ) && check_admin_referer( 'dvc_settings_nonce' ) ) {
 			$enabled = isset( $_POST['dvc_enabled'] ) ? 'yes' : 'no';
 			update_option( 'dvc_enabled', $enabled );
-			echo '<div class="notice notice-success is-dismissible"><p>' . __( 'Einstellungen gespeichert.', 'sk' ) . '</p></div>';
+			echo '<div class="notice notice-success is-dismissible"><p>' . __( 'Einstellungen gespeichert.', 'sk-core' ) . '</p></div>';
 		}
 
 		$enabled      = get_option( 'dvc_enabled', 'no' ) === 'yes';
@@ -273,7 +273,7 @@ class VendorChat extends DashboardModule {
 					<table class="form-table">
 						<tr>
 							<th scope="row">
-								<label for="dvc_enabled"><?php _e( 'Chat-System Status', 'sk' ); ?></label>
+								<label for="dvc_enabled"><?php _e( 'Chat-System Status', 'sk-core' ); ?></label>
 							</th>
 							<td>
 								<label class="dvc-toggle-switch">
@@ -282,11 +282,11 @@ class VendorChat extends DashboardModule {
 								</label>
 								<p class="description">
 									<?php if ( $enabled ) : ?>
-										<strong style="color:#46b450;">✓ <?php _e( 'Chat-System ist aktiviert', 'sk' ); ?></strong><br>
-										<?php _e( 'Das Chat-Icon wird bei allen Produkten angezeigt (für eingeloggte Nutzer).', 'sk' ); ?>
+										<strong style="color:#46b450;">✓ <?php _e( 'Chat-System ist aktiviert', 'sk-core' ); ?></strong><br>
+										<?php _e( 'Das Chat-Icon wird bei allen Produkten angezeigt (für eingeloggte Nutzer).', 'sk-core' ); ?>
 									<?php else : ?>
-										<strong style="color:#dc3232;">✗ <?php _e( 'Chat-System ist deaktiviert', 'sk' ); ?></strong><br>
-										<?php _e( 'Das Chat-Icon wird nicht angezeigt. Bestehende Chats bleiben erhalten.', 'sk' ); ?>
+										<strong style="color:#dc3232;">✗ <?php _e( 'Chat-System ist deaktiviert', 'sk-core' ); ?></strong><br>
+										<?php _e( 'Das Chat-Icon wird nicht angezeigt. Bestehende Chats bleiben erhalten.', 'sk-core' ); ?>
 									<?php endif; ?>
 								</p>
 							</td>
@@ -294,15 +294,15 @@ class VendorChat extends DashboardModule {
 					</table>
 					<p class="submit">
 						<button type="submit" name="dvc_save_settings" class="button button-primary button-large">
-							<?php _e( 'Einstellungen speichern', 'sk' ); ?>
+							<?php _e( 'Einstellungen speichern', 'sk-core' ); ?>
 						</button>
 					</p>
 				</form>
 				<hr>
 				<div style="background:#fff;padding:20px;border:1px solid #ccd0d4;border-radius:4px;margin-top:20px;">
-					<h2><?php _e( 'Statistiken', 'sk' ); ?></h2>
-					<p><strong><?php _e( 'Aktive Chats:', 'sk' ); ?></strong> <?php echo esc_html( $active_chats ); ?></p>
-					<p><strong><?php _e( 'Plugin Version:', 'sk' ); ?></strong> <?php echo esc_html( SK_CORE_VERSION ); ?></p>
+					<h2><?php _e( 'Statistiken', 'sk-core' ); ?></h2>
+					<p><strong><?php _e( 'Aktive Chats:', 'sk-core' ); ?></strong> <?php echo esc_html( $active_chats ); ?></p>
+					<p><strong><?php _e( 'Plugin Version:', 'sk-core' ); ?></strong> <?php echo esc_html( SK_CORE_VERSION ); ?></p>
 				</div>
 			</div>
 		</div>
@@ -338,7 +338,7 @@ class VendorChat extends DashboardModule {
 
 		$icons[] = [
 			'href'  => '#',
-			'title' => __( 'Chat starten', 'sk' ),
+			'title' => __( 'Chat starten', 'sk-core' ),
 			'class' => 'fa-solid fa-comments dvc-start-chat-icon',
 			'key'   => 'chat',
 			'data'  => [
@@ -363,7 +363,7 @@ class VendorChat extends DashboardModule {
 		check_ajax_referer( 'dvc_ajax_nonce', 'nonce' );
 
 		if ( ! is_user_logged_in() ) {
-			wp_send_json_error( [ 'message' => __( 'Du musst angemeldet sein.', 'sk' ) ] );
+			wp_send_json_error( [ 'message' => __( 'Du musst angemeldet sein.', 'sk-core' ) ] );
 		}
 
 		$current_user_id = get_current_user_id();
@@ -374,11 +374,11 @@ class VendorChat extends DashboardModule {
 			: '';
 
 		if ( ! $vendor_id || ! $product_id ) {
-			wp_send_json_error( [ 'message' => __( 'Ungültige Anfrage.', 'sk' ) ] );
+			wp_send_json_error( [ 'message' => __( 'Ungültige Anfrage.', 'sk-core' ) ] );
 		}
 
 		if ( empty( $message ) ) {
-			wp_send_json_error( [ 'message' => __( 'Bitte gib eine Nachricht ein.', 'sk' ) ] );
+			wp_send_json_error( [ 'message' => __( 'Bitte gib eine Nachricht ein.', 'sk-core' ) ] );
 		}
 
 		$existing_chat = $this->get_chat_between_users( $current_user_id, $vendor_id, $product_id );
@@ -386,11 +386,11 @@ class VendorChat extends DashboardModule {
 		if ( $existing_chat ) {
 			$this->add_message_to_chat( $existing_chat->ID, $current_user_id, $message );
 			wp_send_json_success( [
-				'message' => __( 'Nachricht gesendet!', 'sk' ),
+				'message' => __( 'Nachricht gesendet!', 'sk-core' ),
 				'chat_id' => $existing_chat->ID,
 			] );
 		} else {
-			$chat_title = sprintf( __( 'Chat über: %s', 'sk' ), get_the_title( $product_id ) );
+			$chat_title = sprintf( __( 'Chat über: %s', 'sk-core' ), get_the_title( $product_id ) );
 			$chat_id    = wp_insert_post( [
 				'post_type'   => 'vendor_chat',
 				'post_title'  => $chat_title,
@@ -399,7 +399,7 @@ class VendorChat extends DashboardModule {
 			] );
 
 			if ( is_wp_error( $chat_id ) ) {
-				wp_send_json_error( [ 'message' => __( 'Fehler beim Erstellen des Chats.', 'sk' ) ] );
+				wp_send_json_error( [ 'message' => __( 'Fehler beim Erstellen des Chats.', 'sk-core' ) ] );
 			}
 
 			update_post_meta( $chat_id, '_dvc_participant_1', $current_user_id );
@@ -410,7 +410,7 @@ class VendorChat extends DashboardModule {
 			$this->add_message_to_chat( $chat_id, $current_user_id, $message );
 
 			wp_send_json_success( [
-				'message' => __( 'Chat erstellt und Nachricht gesendet!', 'sk' ),
+				'message' => __( 'Chat erstellt und Nachricht gesendet!', 'sk-core' ),
 				'chat_id' => $chat_id,
 			] );
 		}
@@ -424,7 +424,7 @@ class VendorChat extends DashboardModule {
 		check_ajax_referer( 'dvc_ajax_nonce', 'nonce' );
 
 		if ( ! is_user_logged_in() ) {
-			wp_send_json_error( [ 'message' => __( 'Du musst angemeldet sein.', 'sk' ) ] );
+			wp_send_json_error( [ 'message' => __( 'Du musst angemeldet sein.', 'sk-core' ) ] );
 		}
 
 		$current_user_id = get_current_user_id();
@@ -434,11 +434,11 @@ class VendorChat extends DashboardModule {
 			: '';
 
 		if ( ! $chat_id || empty( $message ) ) {
-			wp_send_json_error( [ 'message' => __( 'Ungültige Anfrage.', 'sk' ) ] );
+			wp_send_json_error( [ 'message' => __( 'Ungültige Anfrage.', 'sk-core' ) ] );
 		}
 
 		if ( ! $this->is_participant( $chat_id, $current_user_id ) ) {
-			wp_send_json_error( [ 'message' => __( 'Du bist kein Teilnehmer dieses Chats.', 'sk' ) ] );
+			wp_send_json_error( [ 'message' => __( 'Du bist kein Teilnehmer dieses Chats.', 'sk-core' ) ] );
 		}
 
 		$this->add_message_to_chat( $chat_id, $current_user_id, $message );
@@ -457,7 +457,7 @@ class VendorChat extends DashboardModule {
 			}
 		}
 
-		wp_send_json_success( [ 'message' => __( 'Nachricht gesendet!', 'sk' ) ] );
+		wp_send_json_success( [ 'message' => __( 'Nachricht gesendet!', 'sk-core' ) ] );
 	}
 
 	/**
@@ -468,18 +468,18 @@ class VendorChat extends DashboardModule {
 		check_ajax_referer( 'dvc_ajax_nonce', 'nonce' );
 
 		if ( ! is_user_logged_in() ) {
-			wp_send_json_error( [ 'message' => __( 'Du musst angemeldet sein.', 'sk' ) ] );
+			wp_send_json_error( [ 'message' => __( 'Du musst angemeldet sein.', 'sk-core' ) ] );
 		}
 
 		$current_user_id = get_current_user_id();
 		$chat_id         = isset( $_POST['chat_id'] ) ? intval( $_POST['chat_id'] ) : 0;
 
 		if ( ! $chat_id ) {
-			wp_send_json_error( [ 'message' => __( 'Ungültige Anfrage.', 'sk' ) ] );
+			wp_send_json_error( [ 'message' => __( 'Ungültige Anfrage.', 'sk-core' ) ] );
 		}
 
 		if ( ! $this->is_participant( $chat_id, $current_user_id ) ) {
-			wp_send_json_error( [ 'message' => __( 'Du bist kein Teilnehmer dieses Chats.', 'sk' ) ] );
+			wp_send_json_error( [ 'message' => __( 'Du bist kein Teilnehmer dieses Chats.', 'sk-core' ) ] );
 		}
 
 		$this->mark_as_read( $chat_id, $current_user_id );
@@ -512,23 +512,23 @@ class VendorChat extends DashboardModule {
 		check_ajax_referer( 'dvc_ajax_nonce', 'nonce' );
 
 		if ( ! is_user_logged_in() ) {
-			wp_send_json_error( [ 'message' => __( 'Du musst angemeldet sein.', 'sk' ) ] );
+			wp_send_json_error( [ 'message' => __( 'Du musst angemeldet sein.', 'sk-core' ) ] );
 		}
 
 		$current_user_id = get_current_user_id();
 		$chat_id         = isset( $_POST['chat_id'] ) ? intval( $_POST['chat_id'] ) : 0;
 
 		if ( ! $chat_id ) {
-			wp_send_json_error( [ 'message' => __( 'Ungültige Anfrage.', 'sk' ) ] );
+			wp_send_json_error( [ 'message' => __( 'Ungültige Anfrage.', 'sk-core' ) ] );
 		}
 
 		if ( ! $this->is_participant( $chat_id, $current_user_id ) ) {
-			wp_send_json_error( [ 'message' => __( 'Du bist kein Teilnehmer dieses Chats.', 'sk' ) ] );
+			wp_send_json_error( [ 'message' => __( 'Du bist kein Teilnehmer dieses Chats.', 'sk-core' ) ] );
 		}
 
 		$this->delete_chat_for_user( $chat_id, $current_user_id );
 
-		wp_send_json_success( [ 'message' => __( 'Chat gelöscht.', 'sk' ) ] );
+		wp_send_json_success( [ 'message' => __( 'Chat gelöscht.', 'sk-core' ) ] );
 	}
 
 	/**
@@ -539,22 +539,22 @@ class VendorChat extends DashboardModule {
 		check_ajax_referer( 'dvc_ajax_nonce', 'nonce' );
 
 		if ( ! is_user_logged_in() ) {
-			wp_send_json_error( [ 'message' => __( 'Du musst angemeldet sein.', 'sk' ) ] );
+			wp_send_json_error( [ 'message' => __( 'Du musst angemeldet sein.', 'sk-core' ) ] );
 		}
 
 		$current_user_id = get_current_user_id();
 		$chat_id         = isset( $_POST['chat_id'] ) ? intval( $_POST['chat_id'] ) : 0;
 
 		if ( ! $chat_id ) {
-			wp_send_json_error( [ 'message' => __( 'Ungültige Anfrage.', 'sk' ) ] );
+			wp_send_json_error( [ 'message' => __( 'Ungültige Anfrage.', 'sk-core' ) ] );
 		}
 
 		if ( ! $this->is_participant( $chat_id, $current_user_id ) ) {
-			wp_send_json_error( [ 'message' => __( 'Du bist kein Teilnehmer dieses Chats.', 'sk' ) ] );
+			wp_send_json_error( [ 'message' => __( 'Du bist kein Teilnehmer dieses Chats.', 'sk-core' ) ] );
 		}
 
 		$this->archive_chat( $chat_id, $current_user_id );
-		wp_send_json_success( [ 'message' => __( 'Chat archiviert.', 'sk' ) ] );
+		wp_send_json_success( [ 'message' => __( 'Chat archiviert.', 'sk-core' ) ] );
 	}
 
 	/**
@@ -565,22 +565,22 @@ class VendorChat extends DashboardModule {
 		check_ajax_referer( 'dvc_ajax_nonce', 'nonce' );
 
 		if ( ! is_user_logged_in() ) {
-			wp_send_json_error( [ 'message' => __( 'Du musst angemeldet sein.', 'sk' ) ] );
+			wp_send_json_error( [ 'message' => __( 'Du musst angemeldet sein.', 'sk-core' ) ] );
 		}
 
 		$current_user_id = get_current_user_id();
 		$chat_id         = isset( $_POST['chat_id'] ) ? intval( $_POST['chat_id'] ) : 0;
 
 		if ( ! $chat_id ) {
-			wp_send_json_error( [ 'message' => __( 'Ungültige Anfrage.', 'sk' ) ] );
+			wp_send_json_error( [ 'message' => __( 'Ungültige Anfrage.', 'sk-core' ) ] );
 		}
 
 		if ( ! $this->is_participant( $chat_id, $current_user_id ) ) {
-			wp_send_json_error( [ 'message' => __( 'Du bist kein Teilnehmer dieses Chats.', 'sk' ) ] );
+			wp_send_json_error( [ 'message' => __( 'Du bist kein Teilnehmer dieses Chats.', 'sk-core' ) ] );
 		}
 
 		$this->unarchive_chat( $chat_id, $current_user_id );
-		wp_send_json_success( [ 'message' => __( 'Chat wiederhergestellt.', 'sk' ) ] );
+		wp_send_json_success( [ 'message' => __( 'Chat wiederhergestellt.', 'sk-core' ) ] );
 	}
 
 	// =========================================================================
@@ -649,7 +649,7 @@ class VendorChat extends DashboardModule {
 		if ( ! class_exists( '\SK\Modules\Payments\Chat\PaymentCard' ) ) {
 			$stripped = self::sanitize_user_message( $text );
 			return [
-				'text' => $stripped !== '' ? $stripped : __( '⚡ Zahlungsnachricht', 'sk' ),
+				'text' => $stripped !== '' ? $stripped : __( '⚡ Zahlungsnachricht', 'sk-core' ),
 				'card' => null,
 			];
 		}
@@ -658,7 +658,7 @@ class VendorChat extends DashboardModule {
 
 		return [
 			'text' => $card
-				? __( '⚡ Zahlungsnachricht', 'sk' )
+				? __( '⚡ Zahlungsnachricht', 'sk-core' )
 				: \SK\Modules\Payments\Chat\PaymentCard::to_display_text( $text ),
 			'card' => $card,
 		];

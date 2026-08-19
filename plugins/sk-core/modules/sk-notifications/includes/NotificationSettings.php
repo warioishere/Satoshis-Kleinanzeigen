@@ -15,11 +15,11 @@ class NotificationSettings {
     public function add_section( $sections ) {
         $sections[] = [
             'id'                   => 'sk_notifications',
-            'title'                => __( 'SK Notifications', 'sk' ),
+            'title'                => __( 'SK Notifications', 'sk-core' ),
             'icon_url'             => '',
-            'description'          => __( 'Produkte auf Nostr und Telegram posten', 'sk' ),
-            'settings_title'       => __( 'Benachrichtigungen', 'sk' ),
-            'settings_description' => __( 'Konfiguriere automatische Benachrichtigungen wenn Produkte veröffentlicht werden.', 'sk' ),
+            'description'          => __( 'Produkte auf Nostr und Telegram posten', 'sk-core' ),
+            'settings_title'       => __( 'Benachrichtigungen', 'sk-core' ),
+            'settings_description' => __( 'Konfiguriere automatische Benachrichtigungen wenn Produkte veröffentlicht werden.', 'sk-core' ),
         ];
 
         return $sections;

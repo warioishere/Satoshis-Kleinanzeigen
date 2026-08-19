@@ -41,7 +41,7 @@ global $wp_query;
         <div class="sk-w12 <?php echo ! $scope ? 'sk-hide' : ''; ?>">
             <div class="range-slider-container sk-clearfix">
                 <span class="sk-range-slider-value sk-left">
-                    <?php esc_html_e( 'Radius', 'sk' ); ?> <span><?php echo esc_html( $distance ); ?></span><?php echo esc_html( $slider['unit'] ); ?>
+                    <?php esc_html_e( 'Radius', 'sk-core' ); ?> <span><?php echo esc_html( $distance ); ?></span><?php echo esc_html( $slider['unit'] ); ?>
                 </span>
 
                 <input
@@ -68,12 +68,12 @@ global $wp_query;
                 <?php if ( ! $scope ) : ?>
                     <div class="sk-input-group-btn">
                         <span class="sk-geo-input-group-btn" data-toggle="sk-geo-dropdown">
-                            <span class="sk-geo-filter-scope"><?php esc_html_e( 'Product', 'sk' ); ?></span> <span class="sk-geo-caret"></span>
+                            <span class="sk-geo-filter-scope"><?php esc_html_e( 'Product', 'sk-core' ); ?></span> <span class="sk-geo-caret"></span>
                         </span>
 
                         <ul class="sk-geo-dropdown-menu dropdown-menu-right sk-geo-filter-scope-switch">
-                            <li><a href="#" data-switch-scope="product"><?php esc_html_e( 'Product', 'sk' ); ?></a></li>
-                            <li><a href="#" data-switch-scope="vendor"><?php esc_html_e( 'Vendor', 'sk' ); ?></a></li>
+                            <li><a href="#" data-switch-scope="product"><?php esc_html_e( 'Product', 'sk-core' ); ?></a></li>
+                            <li><a href="#" data-switch-scope="vendor"><?php esc_html_e( 'Vendor', 'sk-core' ); ?></a></li>
                         </ul>
                     </div>
                 <?php endif; ?>
@@ -105,7 +105,7 @@ global $wp_query;
         <?php if ( 'product' !== $scope && sk_is_store_categories_feature_on() ) : ?>
             <div class="sk-geo-filters-column sk-geo-store-categories">
                 <select class="dropdown_product_cat" name="store_categories" id="store-category-dropdown">
-                    <option value=""><?php echo esc_html( __( 'Select a store category', 'sk' ) ); ?></option>
+                    <option value=""><?php echo esc_html( __( 'Select a store category', 'sk-core' ) ); ?></option>
                     <?php foreach ( $categories as $category ) : ?>
                         <option value="<?php echo esc_attr( $category->slug ); ?>" <?php echo ( $category->slug === $store_category ) ? 'selected' : ''; ?>>
                             <?php echo esc_html( $category->name ); ?>
@@ -118,7 +118,7 @@ global $wp_query;
 
         <div class="sk-geo-filters-column">
             <button type="button" class="sk-btn <?php echo esc_attr( 'product' === $scope ? 'sk-geo-product-search-btn' : 'sk-geo-filters-search-btn' ); ?>">
-                <?php esc_html_e( 'Search', 'sk' ); ?>
+                <?php esc_html_e( 'Search', 'sk-core' ); ?>
             </button>
         </div>
 

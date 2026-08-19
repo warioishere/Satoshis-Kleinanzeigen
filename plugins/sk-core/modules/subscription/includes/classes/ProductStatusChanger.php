@@ -49,7 +49,7 @@ class ProductStatusChanger {
             return $statuses;
         }
 
-        $statuses['publish'] = __( 'Publish Products', 'sk' );
+        $statuses['publish'] = __( 'Publish Products', 'sk-core' );
 
         return $statuses;
     }
@@ -116,17 +116,17 @@ class ProductStatusChanger {
         $filters  = apply_filters(
             'sk_get_other_product_filters',
             [
-                'featured'     => esc_html__( 'Featured', 'sk' ),
-                'top_rated'    => esc_html__( 'Top Rated', 'sk' ),
-                'best_selling' => esc_html__( 'Best Selling', 'sk' ),
-                'low_stock'    => esc_html__( 'Low on Stock', 'sk' ),
-                'out_of_stock' => esc_html__( 'Out of Stock', 'sk' ),
+                'featured'     => esc_html__( 'Featured', 'sk-core' ),
+                'top_rated'    => esc_html__( 'Top Rated', 'sk-core' ),
+                'best_selling' => esc_html__( 'Best Selling', 'sk-core' ),
+                'low_stock'    => esc_html__( 'Low on Stock', 'sk-core' ),
+                'out_of_stock' => esc_html__( 'Out of Stock', 'sk-core' ),
             ]
         );
         ?>
         <div class="sk-form-group">
             <select name="filter_by_other" class="sk-form-control">
-                <option selected="selected" value="-1"><?php esc_attr_e( '- Select Filter -', 'sk' ); ?></option>
+                <option selected="selected" value="-1"><?php esc_attr_e( '- Select Filter -', 'sk-core' ); ?></option>
                 <?php foreach ( $filters as $key => $filter ) : ?>
                     <option value="<?php echo esc_attr( $key ); ?>" <?php selected( $selected, $key ); ?>>
                         <?php echo esc_attr( $filter ); ?>

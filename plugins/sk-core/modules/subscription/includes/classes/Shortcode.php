@@ -79,7 +79,7 @@ class Shortcode {
      */
     public function add_to_sk_shortcode_menu( $shortcodes ) {
         $shortcodes['dps_product_pack'] = array(
-            'title'   => __( 'Create product subscription pack shortcode', 'sk' ),
+            'title'   => __( 'Create product subscription pack shortcode', 'sk-core' ),
             'content' => '[dps_product_pack]'
         );
 

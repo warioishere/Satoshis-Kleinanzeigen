@@ -21,7 +21,7 @@ use SK\Modules\Subscription\Helper;
             <i class="fas fa-exclamation-triangle"></i>
             <?php
             printf(
-                __( 'Das Abo <strong>%1$s</strong> ist wegen Zahlungsfehler inaktiv. <a href="?add-to-cart=%2$s">Jetzt bezahlen</a>.', 'sk' ),
+                __( 'Das Abo <strong>%1$s</strong> ist wegen Zahlungsfehler inaktiv. <a href="?add-to-cart=%2$s">Jetzt bezahlen</a>.', 'sk-core' ),
                 $subscription->get_package_title(),
                 $subscription->get_id()
             );
@@ -99,9 +99,9 @@ use SK\Modules\Subscription\Helper;
                 if ( $subscription && $subscription->has_active_cancelled_subscription() ) {
                     $date = sk_format_date( $subscription->get_pack_end_date() );
                     // translators: Package validity date.
-                    $notice = sprintf( __( 'Your subscription has been cancelled! However the it\'s is still active till %s', 'sk' ), $date );
+                    $notice = sprintf( __( 'Your subscription has been cancelled! However the it\'s is still active till %s', 'sk-core' ), $date );
                 } else {
-                    $notice = __( 'Your subscription has been cancelled!', 'sk' );
+                    $notice = __( 'Your subscription has been cancelled!', 'sk-core' );
                 }
                 ?>
 
@@ -112,7 +112,7 @@ use SK\Modules\Subscription\Helper;
         <?php if ( isset( $_GET['msg'] ) && 'dps_sub_activated' === sanitize_text_field( wp_unslash( $_GET['msg'] ) ) ) : //phpcs:ignore ?>
             <div class="sk-message">
                 <?php
-                esc_html_e( 'Your subscription has been re-activated!', 'sk' );
+                esc_html_e( 'Your subscription has been re-activated!', 'sk-core' );
                 ?>
             </div>
         <?php endif; ?>
@@ -149,17 +149,17 @@ use SK\Modules\Subscription\Helper;
                             $no_of_product = $sub_pack->get_number_of_products();
 
                             if ( '-1' === $no_of_product ) {
-                                echo sprintf( '<strong>%s</strong> %s <br />', __( 'Unlimited', 'sk' ), __( 'Products', 'sk' ) );
+                                echo sprintf( '<strong>%s</strong> %s <br />', __( 'Unlimited', 'sk-core' ), __( 'Products', 'sk-core' ) );
                             } else {
-                                echo sprintf( '<strong>%d</strong> %s <br />', $no_of_product, __( 'Products', 'sk' ) );
+                                echo sprintf( '<strong>%d</strong> %s <br />', $no_of_product, __( 'Products', 'sk-core' ) );
                             }
                             ?>
                             <?php
                             if ( empty( $sub_pack->get_pack_valid_days() ) ) {
-                                echo sprintf( '%1$s<br /><strong>%2$s</strong> %3$s', __( 'For', 'sk' ), __( 'Unlimited', 'sk' ), __( 'Days', 'sk' ) );
+                                echo sprintf( '%1$s<br /><strong>%2$s</strong> %3$s', __( 'For', 'sk-core' ), __( 'Unlimited', 'sk-core' ), __( 'Days', 'sk-core' ) );
                             } else {
                                 $pack_validity = $sub_pack->get_pack_valid_days();
-                                echo sprintf( '%1$s<br /><strong>%2$s</strong> %3$s', __( 'For', 'sk' ), $pack_validity, __( 'Days', 'sk' ) );
+                                echo sprintf( '%1$s<br /><strong>%2$s</strong> %3$s', __( 'For', 'sk-core' ), $pack_validity, __( 'Days', 'sk-core' ) );
                             }
                             ?>
                         </div><!-- .pack_data_option -->
@@ -168,19 +168,19 @@ use SK\Modules\Subscription\Helper;
                     <div class="buy_pack_button">
                         <?php if ( Helper::is_vendor_subscribed_pack( $pack_id ) ) : ?>
 
-                            <a href="<?php echo get_permalink( get_the_ID() ); ?>" class="sk-btn sk-btn-theme buy_product_pack"><?php esc_html_e( 'Your Pack', 'sk' ); ?></a>
+                            <a href="<?php echo get_permalink( get_the_ID() ); ?>" class="sk-btn sk-btn-theme buy_product_pack"><?php esc_html_e( 'Your Pack', 'sk-core' ); ?></a>
 
                         <?php elseif ( Helper::pack_renew_seller( $pack_id ) ) : ?>
 
-                            <a href="<?php echo do_shortcode( '[add_to_cart_url id="' . $pack_id . '"]' ); ?>" class="sk-btn sk-btn-theme buy_product_pack"><?php esc_html_e( 'Renew', 'sk' ); ?></a>
+                            <a href="<?php echo do_shortcode( '[add_to_cart_url id="' . $pack_id . '"]' ); ?>" class="sk-btn sk-btn-theme buy_product_pack"><?php esc_html_e( 'Renew', 'sk-core' ); ?></a>
 
                         <?php elseif ( ! Helper::vendor_has_subscription( sk_get_current_user_id() ) ) : ?>
 
-                            <a href="<?php echo do_shortcode( '[add_to_cart_url id="' . get_the_ID() . '"]' ); ?>" class="sk-btn sk-btn-theme buy_product_pack"><?php esc_html_e( 'Buy Now', 'sk' ); ?></a>
+                            <a href="<?php echo do_shortcode( '[add_to_cart_url id="' . get_the_ID() . '"]' ); ?>" class="sk-btn sk-btn-theme buy_product_pack"><?php esc_html_e( 'Buy Now', 'sk-core' ); ?></a>
 
                         <?php else : ?>
 
-                            <a href="<?php echo do_shortcode( '[add_to_cart_url id="' . get_the_ID() . '"]' ); ?>" class="sk-btn sk-btn-theme buy_product_pack"><?php esc_html_e( 'Switch Plan', 'sk' ); ?></a>
+                            <a href="<?php echo do_shortcode( '[add_to_cart_url id="' . get_the_ID() . '"]' ); ?>" class="sk-btn sk-btn-theme buy_product_pack"><?php esc_html_e( 'Switch Plan', 'sk-core' ); ?></a>
 
                         <?php endif; ?>
                     </div><!-- .buy_pack_button -->
@@ -191,7 +191,7 @@ use SK\Modules\Subscription\Helper;
         </div><!-- .sk-subscription-content -->
         <?php
     } else {
-        echo '<h3>' . __( 'No subscription pack has been found!', 'sk' ) . '</h3>';
+        echo '<h3>' . __( 'No subscription pack has been found!', 'sk-core' ) . '</h3>';
     }
 
     wp_reset_postdata();

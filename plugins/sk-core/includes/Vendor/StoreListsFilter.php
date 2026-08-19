@@ -82,8 +82,8 @@ class StoreListsFilter {
         return apply_filters( 'sk_store_lists_sort_by_options', [
             'most_recent'   => __( 'Most Recent', 'sk-core' ),
             'random'        => __( 'Random', 'sk-core' ),
-            'top_rated'     => __( 'Top Rated', 'sk' ),
-            'most_reviewed' => __( 'Most Reviewed', 'sk' ),
+            'top_rated'     => __( 'Top Rated', 'sk-core' ),
+            'most_reviewed' => __( 'Most Reviewed', 'sk-core' ),
         ] );
     }
 

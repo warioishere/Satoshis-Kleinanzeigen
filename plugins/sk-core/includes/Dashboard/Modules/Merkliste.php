@@ -13,7 +13,7 @@ class Merkliste extends DashboardModule {
     public function config(): ?array {
         return [
             'slug'       => 'merkliste',
-            'title'      => __( 'Merkliste', 'sk' ),
+            'title'      => __( 'Merkliste', 'sk-core' ),
             'icon'       => '<i class="fas fa-thumbtack"></i>',
             'pos'        => 56,
             'permission' => 'sk_view_overview_menu',
@@ -50,10 +50,10 @@ class Merkliste extends DashboardModule {
         wp_localize_script( 'sk-merkliste-js', 'merklisteAjax', [
             'ajaxurl'      => admin_url( 'admin-ajax.php' ),
             'nonce'        => wp_create_nonce( 'merkliste_nonce' ),
-            'addedText'    => __( 'Zur Merkliste hinzugefügt', 'sk' ),
-            'removedText'  => __( 'Von Merkliste entfernt', 'sk' ),
-            'errorText'    => __( 'Fehler beim Speichern', 'sk' ),
-            'loginRequired'=> __( 'Du musst eingeloggt sein, um die Merkliste zu nutzen.', 'sk' ),
+            'addedText'    => __( 'Zur Merkliste hinzugefügt', 'sk-core' ),
+            'removedText'  => __( 'Von Merkliste entfernt', 'sk-core' ),
+            'errorText'    => __( 'Fehler beim Speichern', 'sk-core' ),
+            'loginRequired'=> __( 'Du musst eingeloggt sein, um die Merkliste zu nutzen.', 'sk-core' ),
             'loginUrl'     => wp_login_url( get_permalink() ),
             'isLoggedIn'   => is_user_logged_in(),
         ] );
@@ -64,45 +64,45 @@ class Merkliste extends DashboardModule {
     public function ajax_add(): void {
         check_ajax_referer( 'merkliste_nonce', 'nonce' );
         if ( ! is_user_logged_in() ) {
-            wp_send_json_error( [ 'message' => __( 'Bitte einloggen', 'sk' ) ] );
+            wp_send_json_error( [ 'message' => __( 'Bitte einloggen', 'sk-core' ) ] );
         }
         $product_id = isset( $_POST['product_id'] ) ? absint( $_POST['product_id'] ) : 0;
         if ( ! $product_id ) {
-            wp_send_json_error( [ 'message' => __( 'Ungültige Produkt-ID', 'sk' ) ] );
+            wp_send_json_error( [ 'message' => __( 'Ungültige Produkt-ID', 'sk-core' ) ] );
         }
         if ( $this->add( $product_id ) ) {
             $this->purge_merkliste_cache();
-            wp_send_json_success( [ 'message' => __( 'Zur Merkliste hinzugefügt', 'sk' ), 'count' => $this->count() ] );
+            wp_send_json_success( [ 'message' => __( 'Zur Merkliste hinzugefügt', 'sk-core' ), 'count' => $this->count() ] );
         } else {
-            wp_send_json_error( [ 'message' => __( 'Fehler beim Hinzufügen', 'sk' ) ] );
+            wp_send_json_error( [ 'message' => __( 'Fehler beim Hinzufügen', 'sk-core' ) ] );
         }
     }
 
     public function ajax_remove(): void {
         check_ajax_referer( 'merkliste_nonce', 'nonce' );
         if ( ! is_user_logged_in() ) {
-            wp_send_json_error( [ 'message' => __( 'Bitte einloggen', 'sk' ) ] );
+            wp_send_json_error( [ 'message' => __( 'Bitte einloggen', 'sk-core' ) ] );
         }
         $product_id = isset( $_POST['product_id'] ) ? absint( $_POST['product_id'] ) : 0;
         if ( ! $product_id ) {
-            wp_send_json_error( [ 'message' => __( 'Ungültige Produkt-ID', 'sk' ) ] );
+            wp_send_json_error( [ 'message' => __( 'Ungültige Produkt-ID', 'sk-core' ) ] );
         }
         if ( $this->remove( $product_id ) ) {
             $this->purge_merkliste_cache();
-            wp_send_json_success( [ 'message' => __( 'Von Merkliste entfernt', 'sk' ), 'count' => $this->count() ] );
+            wp_send_json_success( [ 'message' => __( 'Von Merkliste entfernt', 'sk-core' ), 'count' => $this->count() ] );
         } else {
-            wp_send_json_error( [ 'message' => __( 'Fehler beim Entfernen', 'sk' ) ] );
+            wp_send_json_error( [ 'message' => __( 'Fehler beim Entfernen', 'sk-core' ) ] );
         }
     }
 
     public function ajax_toggle(): void {
         check_ajax_referer( 'merkliste_nonce', 'nonce' );
         if ( ! is_user_logged_in() ) {
-            wp_send_json_error( [ 'message' => __( 'Bitte einloggen', 'sk' ) ] );
+            wp_send_json_error( [ 'message' => __( 'Bitte einloggen', 'sk-core' ) ] );
         }
         $product_id = isset( $_POST['product_id'] ) ? absint( $_POST['product_id'] ) : 0;
         if ( ! $product_id ) {
-            wp_send_json_error( [ 'message' => __( 'Ungültige Produkt-ID', 'sk' ) ] );
+            wp_send_json_error( [ 'message' => __( 'Ungültige Produkt-ID', 'sk-core' ) ] );
         }
         $is_in_list = $this->is_in_list( $product_id );
         $result     = $is_in_list ? $this->remove( $product_id ) : $this->add( $product_id );
@@ -111,12 +111,12 @@ class Merkliste extends DashboardModule {
             $this->purge_merkliste_cache();
             wp_send_json_success( [
                 'action'     => $action,
-                'message'    => $action === 'added' ? __( 'Zur Merkliste hinzugefügt', 'sk' ) : __( 'Von Merkliste entfernt', 'sk' ),
+                'message'    => $action === 'added' ? __( 'Zur Merkliste hinzugefügt', 'sk-core' ) : __( 'Von Merkliste entfernt', 'sk-core' ),
                 'count'      => $this->count(),
                 'is_in_list' => ! $is_in_list,
             ] );
         } else {
-            wp_send_json_error( [ 'message' => __( 'Fehler beim Speichern', 'sk' ) ] );
+            wp_send_json_error( [ 'message' => __( 'Fehler beim Speichern', 'sk-core' ) ] );
         }
     }
 
@@ -153,7 +153,7 @@ class Merkliste extends DashboardModule {
         $is_logged_in = is_user_logged_in();
         $is_in_list   = $is_logged_in ? $this->is_in_list( $product_id ) : false;
         $link_class   = 'dm-pin-icon' . ( $is_in_list ? ' active' : '' ) . ( ! $is_logged_in ? ' dm-pin-icon-disabled' : '' );
-        $title        = $is_in_list ? __( 'Von Merkliste entfernen', 'sk' ) : __( 'Zur Merkliste hinzufügen', 'sk' );
+        $title        = $is_in_list ? __( 'Von Merkliste entfernen', 'sk-core' ) : __( 'Zur Merkliste hinzufügen', 'sk-core' );
 
         echo '<div class="dm-pin-icon-wrapper">';
         echo '<a href="#" class="' . esc_attr( $link_class ) . '" data-product-id="' . esc_attr( $product_id ) . '" title="' . esc_attr( $title ) . '">';
@@ -169,7 +169,7 @@ class Merkliste extends DashboardModule {
         $product_id   = $product->get_id();
         $is_logged_in = is_user_logged_in();
         $is_in_list   = $is_logged_in ? $this->is_in_list( $product_id ) : false;
-        $button_text  = $is_in_list ? __( 'Von Merkliste entfernen', 'sk' ) : __( 'Zur Merkliste hinzufügen', 'sk' );
+        $button_text  = $is_in_list ? __( 'Von Merkliste entfernen', 'sk-core' ) : __( 'Zur Merkliste hinzufügen', 'sk-core' );
         $button_class = 'dm-merkliste-btn' . ( $is_in_list ? ' dm-in-list' : '' ) . ( ! $is_logged_in ? ' dm-merkliste-btn-disabled' : '' );
 
         echo '<div class="dm-merkliste-button-wrapper">';

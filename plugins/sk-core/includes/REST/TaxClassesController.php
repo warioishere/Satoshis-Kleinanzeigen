@@ -32,7 +32,7 @@ class TaxClassesController extends WC_REST_Tax_Classes_Controller {
         if ( ! $this->check_permission() ) {
             return new WP_Error(
                 'sk_rest_cannot_view',
-                esc_html__( 'Sorry, you cannot list resources.', 'sk' ),
+                esc_html__( 'Sorry, you cannot list resources.', 'sk-core' ),
                 array( 'status' => rest_authorization_required_code() )
             );
         }
@@ -49,7 +49,7 @@ class TaxClassesController extends WC_REST_Tax_Classes_Controller {
         if ( ! $this->check_permission() ) {
             return new WP_Error(
                 'sk_rest_cannot_delete',
-                esc_html__( 'Sorry, you are not allowed to delete this resource.', 'sk' ),
+                esc_html__( 'Sorry, you are not allowed to delete this resource.', 'sk-core' ),
                 array( 'status' => rest_authorization_required_code() )
             );
         }

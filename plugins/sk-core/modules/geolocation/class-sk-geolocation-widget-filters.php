@@ -23,10 +23,10 @@ class SK_Geolocation_Widget_Filters extends WP_Widget {
     public function __construct() {
         $widget_ops = array(
             'classname'   => 'sk-geolocation-widget-filters',
-            'description' => __( 'Show SK Geolocation Filter Form', 'sk' ),
+            'description' => __( 'Show SK Geolocation Filter Form', 'sk-core' ),
         );
 
-        parent::__construct( 'sk-geolocation-widget-filters', __( 'SK: Geolocation Filter Form', 'sk' ), $widget_ops );
+        parent::__construct( 'sk-geolocation-widget-filters', __( 'SK: Geolocation Filter Form', 'sk-core' ), $widget_ops );
     }
 
     /**

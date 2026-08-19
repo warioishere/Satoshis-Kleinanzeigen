@@ -334,7 +334,7 @@ class Hooks {
      * @return array
      */
     public function add_product_advertisement_filter_option( $filter_options ) {
-        $filter_options['product_advertisement'] = esc_html__( 'Product Advertisement', 'sk' );
+        $filter_options['product_advertisement'] = esc_html__( 'Product Advertisement', 'sk-core' );
         return $filter_options;
     }
 

@@ -14,18 +14,18 @@
 
         <?php if ( ! is_user_logged_in() && 'off' === $reported_by_logged_in_users_only ): ?>
             <div class="sk-form-group">
-                <label><?php esc_html_e( 'Your Name', 'sk' ); ?></label>
+                <label><?php esc_html_e( 'Your Name', 'sk-core' ); ?></label>
                 <input type="text" required class="sk-form-control" name="customer_name">
             </div>
 
             <div class="sk-form-group">
-                <label><?php esc_html_e( 'Your Email', 'sk' ); ?></label>
+                <label><?php esc_html_e( 'Your Email', 'sk-core' ); ?></label>
                 <input type="email" required class="sk-form-control" name="customer_email">
             </div>
         <?php endif; ?>
 
         <div class="sk-form-group">
-            <label><?php esc_html_e( 'Description', 'sk' ); ?></label>
+            <label><?php esc_html_e( 'Description', 'sk-core' ); ?></label>
             <textarea name="description" class="sk-form-control" rows="4"></textarea>
         </div>
 
@@ -33,11 +33,11 @@
             <p class="sk-popup-error"></p>
 
             <button type="submit" class="sk-w4 sk-btn sk-btn-theme" id="sk-report-abuse-form-submit-btn">
-                <?php esc_html_e( 'Report Abuse', 'sk' ); ?>
+                <?php esc_html_e( 'Report Abuse', 'sk-core' ); ?>
             </button>
 
             <button type="button" class="sk-w4 sk-btn sk-btn-theme sk-hide" id="sk-report-abuse-form-working-btn">
-                <i class="fas fa-sync-alt fa-spin"></i>&nbsp;&nbsp;<?php esc_html_e( 'Reporting', 'sk' ); ?>...
+                <i class="fas fa-sync-alt fa-spin"></i>&nbsp;&nbsp;<?php esc_html_e( 'Reporting', 'sk-core' ); ?>...
             </button>
         </div>
     </fieldset>

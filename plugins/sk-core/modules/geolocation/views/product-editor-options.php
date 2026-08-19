@@ -34,7 +34,7 @@
 
         <div class="sk-form-group<?php echo ( 'yes' === $use_store_settings ) ? ' sk-hide' : '' ?>" id="sk-geolocation-product-location">
             <label for="_sk_geolocation_product_location" class="form-label">
-                <?php _e( 'Product Location', 'sk' ); ?>
+                <?php _e( 'Product Location', 'sk-core' ); ?>
             </label>
 
             <div class="sk-geolocation-product-location-container"

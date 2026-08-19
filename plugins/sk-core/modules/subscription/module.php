@@ -206,7 +206,7 @@ class Module {
 
             $post_id = wp_insert_post(
                 [
-                    'post_title'   => wp_strip_all_tags( __( 'Product Subscription', 'sk' ) ),
+                    'post_title'   => wp_strip_all_tags( __( 'Product Subscription', 'sk-core' ) ),
                     'post_content' => '[dps_product_pack]',
                     'post_status'  => 'auto-draft',
                     'post_parent'  => $dashboard_page_id,
@@ -337,8 +337,8 @@ class Module {
         wp_register_style( 'dps-custom-style', DPS_URL . '/assets/css/style' . $suffix . '.css', [], $version );
         wp_register_script( 'dps-custom-js', DPS_URL . '/assets/js/script' . $suffix . '.js', array( 'jquery' ), $version, true );
         $sub_data = array(
-            'cancel_string'   => __( 'Do you really want to cancel the subscription?', 'sk' ),
-            'activate_string' => __( 'Want to activate the subscription again?', 'sk' ),
+            'cancel_string'   => __( 'Do you really want to cancel the subscription?', 'sk-core' ),
+            'activate_string' => __( 'Want to activate the subscription again?', 'sk-core' ),
         );
         wp_localize_script( 'dps-custom-js', 'skSubscription', $sub_data );
 
@@ -383,7 +383,7 @@ class Module {
 
             // if remaining product is true, it means vendor can add unlimited products
             if ( true === $remaining_product && self::can_post_product() ) {
-                return printf( '<p class="sk-info">%s</p>', __( 'You can add unlimited products', 'sk' ) );
+                return printf( '<p class="sk-info">%s</p>', __( 'You can add unlimited products', 'sk-core' ) );
             }
 
             if ( $remaining_product == 0 || ! self::can_post_product() ) {
@@ -394,11 +394,11 @@ class Module {
                     $permalink = get_permalink( $page_id );
                 }
                 // $page_id = sk_get_option( 'subscription_pack', 'sk_product_subscription' );
-                $info = sprintf( __( 'Sorry! You can not add or publish any more product. Please <a href="%s">update your package</a>.', 'sk' ), $permalink );
+                $info = sprintf( __( 'Sorry! You can not add or publish any more product. Please <a href="%s">update your package</a>.', 'sk-core' ), $permalink );
                 echo "<p class='sk-alert sk-alert-info'>" . $info . '</p>';
                 echo '<style>.sk-add-product-link{display : none !important}</style>';
             } else {
-                echo "<p class='sk-alert sk-alert-info'>" . sprintf( __( 'You can add %d more product(s).', 'sk' ), $remaining_product ) . '</p>';
+                echo "<p class='sk-alert sk-alert-info'>" . sprintf( __( 'You can add %d more product(s).', 'sk-core' ), $remaining_product ) . '</p>';
             }
         }
     }
@@ -449,7 +449,7 @@ class Module {
         }
 
         if ( $remaining_product <= 0 ) {
-            $errors[] = __( 'Sorry your subscription exceeds your package limits please update your package subscription', 'sk' );
+            $errors[] = __( 'Sorry your subscription exceeds your package limits please update your package subscription', 'sk-core' );
         }
 
         return $errors;
@@ -579,7 +579,7 @@ class Module {
         }
 
         if ( $remaining_product <= 0 ) {
-            $errors = new \WP_Error( 'no-subscription', __( 'Sorry your subscription exceeds your package limits please update your package subscription', 'sk' ) );
+            $errors = new \WP_Error( 'no-subscription', __( 'Sorry your subscription exceeds your package limits please update your package subscription', 'sk-core' ) );
         }
 
         return $errors;
@@ -808,8 +808,8 @@ class Module {
             $order_id = get_user_meta( $user->ID, 'product_order_id', true );
 
             if ( $order_id ) {
-                $subject = ( sk_get_option( 'cancelling_email_subject', 'sk_product_subscription' ) ) ? sk_get_option( 'cancelling_email_subject', 'sk_product_subscription' ) : __( 'Subscription Package Cancel notification', 'sk' );
-                $message = ( sk_get_option( 'cancelling_email_body', 'sk_product_subscription' ) ) ? sk_get_option( 'cancelling_email_body', 'sk_product_subscription' ) : __( 'Dear subscriber, Your subscription has expired. Please renew your package to continue using it.', 'sk' );
+                $subject = ( sk_get_option( 'cancelling_email_subject', 'sk_product_subscription' ) ) ? sk_get_option( 'cancelling_email_subject', 'sk_product_subscription' ) : __( 'Subscription Package Cancel notification', 'sk-core' );
+                $message = ( sk_get_option( 'cancelling_email_body', 'sk_product_subscription' ) ) ? sk_get_option( 'cancelling_email_body', 'sk_product_subscription' ) : __( 'Dear subscriber, Your subscription has expired. Please renew your package to continue using it.', 'sk-core' );
                 $headers = 'From: ' . get_option( 'blogname' ) . ' <' . get_option( 'admin_email' ) . '>' . "\r\n";
 
                 wp_mail( $user->user_email, $subject, $message, $headers );
@@ -1029,7 +1029,7 @@ class Module {
         if ( $user ) {
             $errors->add(
                 'sk-duplicate-email',
-                __( 'A user already exists associated with the billing email. If this email belongs to you, please log in to your account first. Otherwise try using another email.', 'sk' )
+                __( 'A user already exists associated with the billing email. If this email belongs to you, please log in to your account first. Otherwise try using another email.', 'sk-core' )
             );
         }
     }
@@ -1072,7 +1072,7 @@ class Module {
         if ( Helper::cart_contains_subscription() ) {
             Helper::remove_subscriptions_from_cart();
 
-            wc_add_notice( __( 'A subscription has been removed from your cart. Due to payment gateway restrictions, products and subscriptions can not be purchased at the same time.', 'sk' ) );
+            wc_add_notice( __( 'A subscription has been removed from your cart. Due to payment gateway restrictions, products and subscriptions can not be purchased at the same time.', 'sk-core' ) );
         }
 
         return $valid;
@@ -1120,11 +1120,11 @@ class Module {
         }
 
         if ( ! is_user_logged_in() ) {
-            wp_die( esc_html__( 'You need to be logged in to manage your subscription.', 'sk' ) );
+            wp_die( esc_html__( 'You need to be logged in to manage your subscription.', 'sk-core' ) );
         }
 
         if ( empty( $posted_data['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( $posted_data['_wpnonce'] ), $nonce ) ) {
-            wp_die( esc_html__( 'Nonce failure', 'sk' ) );
+            wp_die( esc_html__( 'Nonce failure', 'sk-core' ) );
         }
 
         $user_id  = get_current_user_id();
@@ -1181,7 +1181,7 @@ class Module {
 
         if ( ! $subscription ) {
             /* translators: 1) vendor id */
-            sk_log( sprintf( __( 'Unable to find subscription to be reactivated for vendor id# %s', 'sk' ), $vendor_id ) );
+            sk_log( sprintf( __( 'Unable to find subscription to be reactivated for vendor id# %s', 'sk-core' ), $vendor_id ) );
             return;
         }
 
@@ -1220,7 +1220,7 @@ class Module {
 
         if ( ! $subscription ) {
             /* translators: 1) vendor id */
-            sk_log( sprintf( __( 'Unable to find subscription to be cancelled for vendor id# %s', 'sk' ), $vendor_id ) );
+            sk_log( sprintf( __( 'Unable to find subscription to be cancelled for vendor id# %s', 'sk-core' ), $vendor_id ) );
             return;
         }
 
@@ -1509,7 +1509,7 @@ class Module {
 
         return sprintf(
         // translators: 1) image limit 2) current image count
-            esc_html__( 'Warning: Your image limit is %1$d, but you have %2$d images. Please remove excess images or they will be automatically deleted when saving.', 'sk' ),
+            esc_html__( 'Warning: Your image limit is %1$d, but you have %2$d images. Please remove excess images or they will be automatically deleted when saving.', 'sk-core' ),
             $image_count,
             $current_image_count
         );
@@ -1595,7 +1595,7 @@ class Module {
         }
 
         if ( count( $gallery_image ) > $image_count ) {
-            return new \WP_Error( 'not-allowed', __( sprintf( 'You are not allowed to add more than %s gallery images', $image_count ), 'sk' ) );
+            return new \WP_Error( 'not-allowed', __( sprintf( 'You are not allowed to add more than %s gallery images', $image_count ), 'sk-core' ) );
         }
 
         return $errors;
@@ -1622,7 +1622,7 @@ class Module {
             wc_add_notice(
                 esc_html(
                     sprintf(
-                        __( 'Due to your current subscription limit, %1$d images were automatically removed from the product gallery. The remaining %2$d images have been saved.', 'sk' ),
+                        __( 'Due to your current subscription limit, %1$d images were automatically removed from the product gallery. The remaining %2$d images have been saved.', 'sk-core' ),
                         $removed_count,
                         $image_count
                     )
@@ -1704,7 +1704,7 @@ class Module {
         if ( ! empty( $allowed_categories ) ) {
             foreach ( $categories as $category ) {
                 if ( ! in_array( $category, $allowed_categories ) ) {
-                    throw new \Exception( __( 'Current subscription does not allow this', 'sk' ) . get_term_field( 'name', $category ) );
+                    throw new \Exception( __( 'Current subscription does not allow this', 'sk-core' ) . get_term_field( 'name', $category ) );
                 }
             }
         }
@@ -1865,7 +1865,7 @@ class Module {
         if ( ! $users_assigned_pack ) {
             $shop_data['current_subscription']       = array(
                 'name'  => 0,
-                'label' => __( '-- Select a package --', 'sk' ),
+                'label' => __( '-- Select a package --', 'sk-core' ),
             );
             $shop_data['assigned_subscription']      = 0;
             $shop_data['assigned_subscription_info'] = array(
@@ -1902,7 +1902,7 @@ class Module {
         $response_array = array(
             array(
                 'name' => 0,
-                'label' => __( '-- Select a package --', 'sk' ),
+                'label' => __( '-- Select a package --', 'sk-core' ),
             ),
         );
         foreach ( $subscriptions_packs as $subscriptions_pack ) {
@@ -1945,7 +1945,7 @@ class Module {
                 $order->set_total( 0.00 );
                 $order->set_status( 'completed' );
                 $order->save();
-                $order->add_order_note( __( 'Manually assigned Vendor Subscription by Admin', 'sk' ), 0, get_current_user_id() );
+                $order->add_order_note( __( 'Manually assigned Vendor Subscription by Admin', 'sk-core' ), 0, get_current_user_id() );
             } catch ( \Exception $exception ) {
                 Helper::log( 'Subscription manually assign error from admin of User #' . $vendor_id . ' Message: ' . $exception->getMessage() );
                 return;
@@ -2041,7 +2041,7 @@ class Module {
      */
     public function add_params_to_store_collection( $args ) {
         $args['subscription_enabled'] = [
-                'description'       => __( 'Is vendor subscription enabled', 'sk' ),
+                'description'       => __( 'Is vendor subscription enabled', 'sk-core' ),
                 'type'              => 'string',
                 'require'           => false,
                 'sanitize_callback' => 'sanitize_text_field',
@@ -2049,7 +2049,7 @@ class Module {
         ];
 
         $args['subscription_package_id'] = [
-                'description'       => __( 'Vendor subscription package id', 'sk' ),
+                'description'       => __( 'Vendor subscription package id', 'sk-core' ),
                 'type'              => 'integer',
                 'require'           => false,
                 'sanitize_callback' => 'absint',
@@ -2160,8 +2160,8 @@ class Module {
         $data['subscribed_vendors'] = [
             'icon'     => 'SquareUserRound',
             'count'    => Helper::get_subscribed_vendor_count(),
-            'title'    => esc_html__( 'Subscribed Vendors', 'sk' ),
-            'tooltip'  => esc_html__( 'Total vendors who have subscriptions', 'sk' ),
+            'title'    => esc_html__( 'Subscribed Vendors', 'sk-core' ),
+            'tooltip'  => esc_html__( 'Total vendors who have subscriptions', 'sk-core' ),
             'position' => 3,
         ];
 
@@ -2238,14 +2238,14 @@ class Module {
 
         try {
             // Determine status: Active or Expired.
-            $status = esc_html__( 'Active', 'sk' );
+            $status = esc_html__( 'Active', 'sk-core' );
 
             if ( $pack_end_date && 'unlimited' !== $pack_end_date ) {
                 $now = sk_current_datetime();
                 $end = sk_current_datetime()->modify( $pack_end_date );
 
                 if ( $end && $now > $end ) {
-                    $status = esc_html__( 'Expired', 'sk' );
+                    $status = esc_html__( 'Expired', 'sk-core' );
                 }
             }
 
@@ -2260,7 +2260,7 @@ class Module {
             sk_log(
                 sprintf(
                     /* translators: 1) vendor id */
-                    esc_html__( 'Unable to find subscription info for: #%s', 'sk' ),
+                    esc_html__( 'Unable to find subscription info for: #%s', 'sk-core' ),
                     $e
                 )
             );

@@ -59,12 +59,12 @@ class StoreSettings extends SkSettings {
             'slug'       => 'settings-social',
             'parent'     => 'settings',
             'url_key'    => 'social',
-            'title'      => __( 'Social Profile', 'sk' ),
+            'title'      => __( 'Social Profile', 'sk-core' ),
             'icon'       => '<i class="fas fa-share-alt-square"></i>',
             'pos'        => 90,
             'permission' => 'sk_view_store_social_menu',
-            'heading'    => __( 'Social Profiles', 'sk' ),
-            'helper'     => __( 'Social profiles help you to gain more trust. Consider adding your social profile links for better user interaction.', 'sk' ),
+            'heading'    => __( 'Social Profiles', 'sk-core' ),
+            'helper'     => __( 'Social profiles help you to gain more trust. Consider adding your social profile links for better user interaction.', 'sk-core' ),
             'template'   => [ $this, 'load_social_content' ],
         ] );
     }
@@ -171,7 +171,7 @@ class StoreSettings extends SkSettings {
      */
     public function update_store_rest_params( $params ) {
         $params['vendor_biography'] = [
-            'description'       => esc_html__( 'Vendor biography.', 'sk' ),
+            'description'       => esc_html__( 'Vendor biography.', 'sk-core' ),
             'type'              => 'string',
             'sanitize_callback' => 'wp_kses_post',
         ];

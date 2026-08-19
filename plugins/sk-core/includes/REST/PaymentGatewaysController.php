@@ -32,7 +32,7 @@ class PaymentGatewaysController extends WC_REST_Payment_Gateways_Controller {
         if ( ! $this->check_permission() ) {
             return new WP_Error(
                 'sk_rest_cannot_view',
-                esc_html__( 'Sorry, you cannot list resources.', 'sk' ),
+                esc_html__( 'Sorry, you cannot list resources.', 'sk-core' ),
                 array( 'status' => rest_authorization_required_code() )
             );
         }
@@ -49,7 +49,7 @@ class PaymentGatewaysController extends WC_REST_Payment_Gateways_Controller {
         if ( ! $this->check_permission() ) {
             return new WP_Error(
                 'sk_rest_cannot_view',
-                esc_html__( 'Sorry, you cannot view this resource.', 'sk' ),
+                esc_html__( 'Sorry, you cannot view this resource.', 'sk-core' ),
                 array( 'status' => rest_authorization_required_code() )
             );
         }

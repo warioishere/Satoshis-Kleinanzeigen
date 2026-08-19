@@ -34,7 +34,7 @@ class SK_REST_Vendor_Subscription_Controller extends SK_REST_Subscription_Contro
             $this->namespace, '/' . $this->base . '/vendor/(?P<id>[\d]+)', [
                 'args' => [
                     'id' => [
-                        'description' => __( 'Vendor id', 'sk' ),
+                        'description' => __( 'Vendor id', 'sk-core' ),
                         'type'        => 'integer',
                     ],
                 ],
@@ -50,7 +50,7 @@ class SK_REST_Vendor_Subscription_Controller extends SK_REST_Subscription_Contro
             $this->namespace, '/' . $this->base . '/update/(?P<id>[\d]+)/', [
                 'args' => [
                     'id' => [
-                        'description' => __( 'Vendor id', 'sk' ),
+                        'description' => __( 'Vendor id', 'sk-core' ),
                         'type'        => 'integer',
                     ],
                 ],
@@ -60,7 +60,7 @@ class SK_REST_Vendor_Subscription_Controller extends SK_REST_Subscription_Contro
                     'permission_callback' => [ $this, 'check_permission' ],
                     'args'                => [
                         'action' => [
-                            'description'       => __( 'Action to update.', 'sk' ),
+                            'description'       => __( 'Action to update.', 'sk-core' ),
                             'type'              => 'string',
                             'required'          => true,
                             'sanitize_callback' => 'sanitize_text_field',
@@ -81,7 +81,7 @@ class SK_REST_Vendor_Subscription_Controller extends SK_REST_Subscription_Contro
         if ( ! current_user_can( 'skdar' ) ) {
             return new WP_Error(
                 'sk_pro_permission_failure',
-                __( 'Sorry! You are not permitted to do current action.', 'sk' ),
+                __( 'Sorry! You are not permitted to do current action.', 'sk-core' ),
                 [ 'status' => 403 ]
             );
         }
@@ -127,7 +127,7 @@ class SK_REST_Vendor_Subscription_Controller extends SK_REST_Subscription_Contro
         if ( ! $order_id || ! $subscription ) {
             return new WP_Error(
                 'no_subscription',
-                __( 'No subscription is found to be updated.', 'sk' ),
+                __( 'No subscription is found to be updated.', 'sk-core' ),
                 [ 'status' => 404 ]
             );
         }

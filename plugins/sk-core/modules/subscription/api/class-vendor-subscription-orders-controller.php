@@ -34,7 +34,7 @@ class SK_REST_Vendor_Subscription_Orders_Controller extends SK_REST_Vendor_Subsc
             $this->namespace, '/' . $this->base . '/(?P<id>[\d]+)/', [
                 'args' => [
                     'id' => [
-                        'description' => __( 'Vendor id', 'sk' ),
+                        'description' => __( 'Vendor id', 'sk-core' ),
                         'type'        => 'integer',
                     ],
                 ],
@@ -64,7 +64,7 @@ class SK_REST_Vendor_Subscription_Orders_Controller extends SK_REST_Vendor_Subsc
         $orders = Helper::get_paginated_subscription_orders_by_vendor_id( $vendor_id, $params['page'], $params['per_page'] );
 
         if ( empty( $orders ) || ! isset( $orders['orders'] ) ) {
-            return new WP_Error( 'no_orders', __( 'No subscription orders found.', 'sk' ), [ 'status' => 404 ] );
+            return new WP_Error( 'no_orders', __( 'No subscription orders found.', 'sk-core' ), [ 'status' => 404 ] );
         }
 
         $data = [];
@@ -149,14 +149,14 @@ class SK_REST_Vendor_Subscription_Orders_Controller extends SK_REST_Vendor_Subsc
             'type'       => 'object',
             'properties' => [
                 'id'               => [
-                    'description' => __( 'The unique identifier of the item.', 'sk' ),
+                    'description' => __( 'The unique identifier of the item.', 'sk-core' ),
                     'type'        => 'integer',
                     'context'     => [ 'view' ],
                     'readonly'    => true,
                     'required'    => true,
                 ],
                 'status'           => [
-                    'description' => __( 'The status of the item.', 'sk' ),
+                    'description' => __( 'The status of the item.', 'sk-core' ),
                     'type'        => 'string',
                     'format'      => 'text',
                     'enum'        => [ 'pending', 'processing', 'on-hold', 'completed', 'cancelled', 'refunded', 'failed' ],
@@ -165,14 +165,14 @@ class SK_REST_Vendor_Subscription_Orders_Controller extends SK_REST_Vendor_Subsc
                     'required'    => true,
                 ],
                 'total'            => [
-                    'description' => __( 'The total amount of the item.', 'sk' ),
+                    'description' => __( 'The total amount of the item.', 'sk-core' ),
                     'type'        => 'number',
                     'context'     => [ 'view', 'edit' ],
                     'readonly'    => false,
                     'required'    => true,
                 ],
                 'date_created'     => [
-                    'description' => __( 'Creation date of the item.', 'sk' ),
+                    'description' => __( 'Creation date of the item.', 'sk-core' ),
                     'type'        => 'string',
                     'format'      => 'date-time',
                     'context'     => [ 'view' ],
@@ -180,7 +180,7 @@ class SK_REST_Vendor_Subscription_Orders_Controller extends SK_REST_Vendor_Subsc
                     'required'    => true,
                 ],
                 'date_created_gmt' => [
-                    'description' => __( 'Creation date in GMT of the item.', 'sk' ),
+                    'description' => __( 'Creation date in GMT of the item.', 'sk-core' ),
                     'type'        => 'string',
                     'format'      => 'date-time',
                     'context'     => [ 'view' ],
@@ -188,25 +188,25 @@ class SK_REST_Vendor_Subscription_Orders_Controller extends SK_REST_Vendor_Subsc
                     'required'    => true,
                 ],
                 'actions'          => [
-                    'description'          => __( 'Available actions for the item.', 'sk' ),
+                    'description'          => __( 'Available actions for the item.', 'sk-core' ),
                     'type'                 => 'object',
                     'context'              => [ 'view' ],
                     'additionalProperties' => [
                         'type'       => 'object',
                         'properties' => [
                             'url' => [
-                                'description' => __( 'URL for the action.', 'sk' ),
+                                'description' => __( 'URL for the action.', 'sk-core' ),
                                 'type'        => 'string',
                                 'format'      => 'uri',
                                 'context'     => [ 'view' ],
                             ],
                             'name' => [
-                                'description' => __( 'Name of the action.', 'sk' ),
+                                'description' => __( 'Name of the action.', 'sk-core' ),
                                 'type'        => 'string',
                                 'context'     => [ 'view' ],
                             ],
                             'aria-label' => [
-                                'description' => __( 'ARIA label for accessibility.', 'sk' ),
+                                'description' => __( 'ARIA label for accessibility.', 'sk-core' ),
                                 'type'        => 'string',
                                 'context'     => [ 'view' ],
                             ],

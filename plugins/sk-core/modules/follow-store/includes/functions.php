@@ -146,7 +146,7 @@ function sk_follow_store_is_following_store( $vendor_id, $follower_id ) {
 
 	if ( ! empty( $wpdb->last_error ) ) {
 		// translators: 1) query error
-		return new WP_Error( 'follow_store_is_following_store_db_error', sprintf( __( 'Database Error: %s', 'sk' ), $wpdb->last_error ) );
+		return new WP_Error( 'follow_store_is_following_store_db_error', sprintf( __( 'Database Error: %s', 'sk-core' ), $wpdb->last_error ) );
 	}
 
     return ! empty( $following );

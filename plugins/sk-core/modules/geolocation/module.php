@@ -254,13 +254,13 @@ class Module {
     public function admin_notices( $notices ) {
         $notices[] = [
             'type'        => 'alert',
-            'title'       => __( 'SK Geolocation module is almost ready!', 'sk' ),
-            'description' => __( 'SK <strong> Geolocation Module</strong> requires Google Map API Key or Mapbox Access Token. Please set your API Key or Token in <strong>SK Admin Settings > Appearance</strong>.', 'sk' ),
+            'title'       => __( 'SK Geolocation module is almost ready!', 'sk-core' ),
+            'description' => __( 'SK <strong> Geolocation Module</strong> requires Google Map API Key or Mapbox Access Token. Please set your API Key or Token in <strong>SK Admin Settings > Appearance</strong>.', 'sk-core' ),
             'priority'    => 10,
             'actions'     => [
                 [
                     'type'   => 'primary',
-                    'text'   => __( 'Go to Settings', 'sk' ),
+                    'text'   => __( 'Go to Settings', 'sk-core' ),
                     'action'  => add_query_arg( array( 'page' => 'sk#/settings' ), admin_url( 'admin.php' ) ),
                 ],
             ],

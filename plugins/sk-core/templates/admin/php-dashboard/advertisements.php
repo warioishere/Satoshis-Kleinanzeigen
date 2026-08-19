@@ -16,30 +16,30 @@ $base_url = admin_url( 'admin.php?page=sk&tab=advertisements' );
 ?>
 
 <div class="sk-advertisements-wrap">
-    <h2><?php esc_html_e( 'Advertisements', 'sk' ); ?></h2>
+    <h2><?php esc_html_e( 'Advertisements', 'sk-core' ); ?></h2>
 
     <table class="wp-list-table widefat fixed striped">
         <thead>
             <tr>
-                <th scope="col"><?php esc_html_e( 'Product', 'sk' ); ?></th>
-                <th scope="col"><?php esc_html_e( 'Vendor', 'sk' ); ?></th>
-                <th scope="col"><?php esc_html_e( 'Created Via', 'sk' ); ?></th>
-                <th scope="col"><?php esc_html_e( 'Price', 'sk' ); ?></th>
-                <th scope="col"><?php esc_html_e( 'Status', 'sk' ); ?></th>
-                <th scope="col"><?php esc_html_e( 'Expires At', 'sk' ); ?></th>
-                <th scope="col"><?php esc_html_e( 'Added', 'sk' ); ?></th>
+                <th scope="col"><?php esc_html_e( 'Product', 'sk-core' ); ?></th>
+                <th scope="col"><?php esc_html_e( 'Vendor', 'sk-core' ); ?></th>
+                <th scope="col"><?php esc_html_e( 'Created Via', 'sk-core' ); ?></th>
+                <th scope="col"><?php esc_html_e( 'Price', 'sk-core' ); ?></th>
+                <th scope="col"><?php esc_html_e( 'Status', 'sk-core' ); ?></th>
+                <th scope="col"><?php esc_html_e( 'Expires At', 'sk-core' ); ?></th>
+                <th scope="col"><?php esc_html_e( 'Added', 'sk-core' ); ?></th>
             </tr>
         </thead>
         <tbody>
             <?php if ( empty( $advertisements ) ) : ?>
                 <tr>
-                    <td colspan="7"><?php esc_html_e( 'No advertisements found.', 'sk' ); ?></td>
+                    <td colspan="7"><?php esc_html_e( 'No advertisements found.', 'sk-core' ); ?></td>
                 </tr>
             <?php else : ?>
                 <?php
                 $status_labels = [
-                    1 => __( 'Active', 'sk' ),
-                    2 => __( 'Expired', 'sk' ),
+                    1 => __( 'Active', 'sk-core' ),
+                    2 => __( 'Expired', 'sk-core' ),
                 ];
                 ?>
                 <?php foreach ( $advertisements as $ad ) :
@@ -57,12 +57,12 @@ $base_url = admin_url( 'admin.php?page=sk&tab=advertisements' );
                     $added   = (int) ( $ad->added ?? 0 );
                     ?>
                     <tr>
-                        <td><?php echo esc_html( $ad->product_title ?? __( '(deleted)', 'sk' ) ); ?></td>
+                        <td><?php echo esc_html( $ad->product_title ?? __( '(deleted)', 'sk-core' ) ); ?></td>
                         <td><?php echo esc_html( $vendor_name ); ?></td>
                         <td><?php echo esc_html( $ad->created_via ?? '' ); ?></td>
                         <td><?php echo wp_kses_post( wc_price( (float) ( $ad->price ?? 0 ) ) ); ?></td>
                         <td><?php echo esc_html( $status_labels[ $status ] ?? (string) $status ); ?></td>
-                        <td><?php echo esc_html( $expires > 0 ? sk_format_date( $expires ) : __( 'Unlimited', 'sk' ) ); ?></td>
+                        <td><?php echo esc_html( $expires > 0 ? sk_format_date( $expires ) : __( 'Unlimited', 'sk-core' ) ); ?></td>
                         <td><?php echo esc_html( $added > 0 ? sk_format_date( $added ) : '' ); ?></td>
                     </tr>
                 <?php endforeach; ?>

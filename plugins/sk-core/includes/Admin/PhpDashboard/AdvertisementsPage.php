@@ -9,7 +9,7 @@ class AdvertisementsPage extends AbstractPage {
     }
 
     public function get_title(): string {
-        return __( 'Advertisements', 'sk' );
+        return __( 'Advertisements', 'sk-core' );
     }
 
     public function is_pro(): bool {

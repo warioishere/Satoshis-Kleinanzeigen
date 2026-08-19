@@ -21,11 +21,11 @@ class AdminSettings {
     public function add_settings_section( $sections ) {
         $sections[] = [
             'id'                   => 'sk_lightning',
-            'title'                => __( 'SK Payments', 'sk' ),
+            'title'                => __( 'SK Payments', 'sk-core' ),
             'icon_url'             => '',
-            'description'          => __( 'Non-custodial Lightning-Zahlungen', 'sk' ),
-            'settings_title'       => __( 'SK Payments Settings', 'sk' ),
-            'settings_description' => __( 'Einstellungen für Lightning-Zahlungen und Reputation.', 'sk' ),
+            'description'          => __( 'Non-custodial Lightning-Zahlungen', 'sk-core' ),
+            'settings_title'       => __( 'SK Payments Settings', 'sk-core' ),
+            'settings_description' => __( 'Einstellungen für Lightning-Zahlungen und Reputation.', 'sk-core' ),
         ];
 
         return $sections;

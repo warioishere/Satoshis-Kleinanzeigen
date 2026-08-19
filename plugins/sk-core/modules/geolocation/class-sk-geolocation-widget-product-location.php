@@ -23,10 +23,10 @@ class SK_Geolocation_Widget_Product_Location extends WP_Widget {
     public function __construct() {
         $widget_ops = array(
             'classname'   => 'sk-geolocation-widget-product-location',
-            'description' => __( 'Show product geolocation informations in single page', 'sk' ),
+            'description' => __( 'Show product geolocation informations in single page', 'sk-core' ),
         );
 
-        parent::__construct( 'sk-geolocation-widget-product-location', __( 'SK: Product Location', 'sk' ), $widget_ops );
+        parent::__construct( 'sk-geolocation-widget-product-location', __( 'SK: Product Location', 'sk-core' ), $widget_ops );
     }
 
     /**
@@ -39,7 +39,7 @@ class SK_Geolocation_Widget_Product_Location extends WP_Widget {
      */
     public function form( $instance ) {
         $instance = wp_parse_args( (array) $instance, array(
-            'title' => __( 'Product Location', 'sk' ),
+            'title' => __( 'Product Location', 'sk-core' ),
         ) );
 
         $args = array(
@@ -61,7 +61,7 @@ class SK_Geolocation_Widget_Product_Location extends WP_Widget {
      * @return array
      */
     public function update( $new_instance, $old_instance ) {
-        $title = empty( $new_instance['title'] ) ? __( 'Product Location', 'sk' ) : $new_instance['title'];
+        $title = empty( $new_instance['title'] ) ? __( 'Product Location', 'sk-core' ) : $new_instance['title'];
 
         return array(
             'title' => $title,
@@ -93,7 +93,7 @@ class SK_Geolocation_Widget_Product_Location extends WP_Widget {
         echo $before_widget;
 
         $title = isset( $instance['title'] ) ? apply_filters( 'widget_title', $instance['title'] ) : '';
-        $title = empty( $title ) ? __( 'Product Location', 'sk' ) : $title;
+        $title = empty( $title ) ? __( 'Product Location', 'sk-core' ) : $title;
 
         echo $args['before_title'] . $title . $args['after_title'];
 

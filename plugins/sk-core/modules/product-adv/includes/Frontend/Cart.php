@@ -132,14 +132,14 @@ class Cart {
         if ( isset( $cart_item['sk_advertisement_product_id'] ) ) {
             $formatted_title = sprintf( '<a href="%1$s">%2$s</a>', esc_url( get_the_permalink( $cart_item['sk_advertisement_product_id'] ) ), get_the_title( $cart_item['sk_advertisement_product_id'] ) );
             $item_data[] = array(
-                'name'  => __( 'Product Name', 'sk' ),
+                'name'  => __( 'Product Name', 'sk-core' ),
                 'value' => $formatted_title,
             );
         }
 
         if ( isset( $cart_item['sk_advertisement_expire_after_days'] ) ) {
             $item_data[] = array(
-                'name'  => __( 'Expires In Days', 'sk' ),
+                'name'  => __( 'Expires In Days', 'sk-core' ),
                 'value' => Helper::format_expire_after_days_text( $cart_item['sk_advertisement_expire_after_days'] ),
             );
         }
@@ -185,7 +185,7 @@ class Cart {
         $message = wp_kses(
             sprintf(
             // translators: 1) Product title
-                __( '<strong>Error!</strong> Could not add product <strong>%1$s</strong> to cart. Purchasing Product advertisement feature is restricted by admin.', 'sk' ),
+                __( '<strong>Error!</strong> Could not add product <strong>%1$s</strong> to cart. Purchasing Product advertisement feature is restricted by admin.', 'sk-core' ),
                 get_the_title( $product_id )
             ),
             [
@@ -213,7 +213,7 @@ class Cart {
         $message = wp_kses(
             sprintf(
             // translators: 1) Product title
-                __( '<strong>Error!</strong> Could not add product <strong>%1$s</strong> to cart. Product advertisement can not be purchased along with other products.', 'sk' ),
+                __( '<strong>Error!</strong> Could not add product <strong>%1$s</strong> to cart. Product advertisement can not be purchased along with other products.', 'sk-core' ),
                 get_the_title( $product_id )
             ),
             [
@@ -254,7 +254,7 @@ class Cart {
                     wp_kses(
                         sprintf(
                         // translators: 1) and 2) Payment Gateway Title
-                            __( '<strong>Error!</strong> Purchasing Product advertisement feature is restricted by admin. Kindly remove <strong>%1$s</strong> from cart.', 'sk' ),
+                            __( '<strong>Error!</strong> Purchasing Product advertisement feature is restricted by admin. Kindly remove <strong>%1$s</strong> from cart.', 'sk-core' ),
                             get_the_title( $item['data']->get_id() )
                         ),
                         [
@@ -272,7 +272,7 @@ class Cart {
                     wp_kses(
                         sprintf(
                         // translators: 1) and 2) Payment Gateway Title
-                            __( '<strong>Error!</strong> Required data to purchase this advertisement is not found. Kindly remove <strong>%1$s</strong> from cart.', 'sk' ),
+                            __( '<strong>Error!</strong> Required data to purchase this advertisement is not found. Kindly remove <strong>%1$s</strong> from cart.', 'sk-core' ),
                             get_the_title( $item['data']->get_id() )
                         ),
                         [
@@ -309,7 +309,7 @@ class Cart {
                 wp_kses(
                     sprintf(
                     // translators: 1) and 2) Payment Gateway Title
-                        __( '<strong>Error!</strong> Advertisement cost does not match with listing price. Kindly remove <strong>%1$s</strong> from cart.', 'sk' ),
+                        __( '<strong>Error!</strong> Advertisement cost does not match with listing price. Kindly remove <strong>%1$s</strong> from cart.', 'sk-core' ),
                         get_the_title( $product_id )
                     ),
                     [
@@ -327,7 +327,7 @@ class Cart {
                 wp_kses(
                     sprintf(
                     // translators: 1) and 2) Payment Gateway Title
-                        __( '<strong>Error!</strong> Advertisement validity does not match with listing expire after days. Kindly remove <strong>%1$s</strong> from cart.', 'sk' ),
+                        __( '<strong>Error!</strong> Advertisement validity does not match with listing expire after days. Kindly remove <strong>%1$s</strong> from cart.', 'sk-core' ),
                         get_the_title( $product_id )
                     ),
                     [

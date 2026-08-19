@@ -51,7 +51,7 @@ wp_localize_script(
 		<?php do_action( 'sk_dashboard_content_inside_before' ); ?>
 
 		<div class="sk-review-page-header">
-			<h2><i class="fas fa-bell"></i> <?php esc_html_e( 'Ankündigungen', 'sk' ); ?></h2>
+			<h2><i class="fas fa-bell"></i> <?php esc_html_e( 'Ankündigungen', 'sk-core' ); ?></h2>
 		</div>
 
 		<div class="sk-announcement-container">
@@ -60,7 +60,7 @@ wp_localize_script(
 				<?php if ( empty( $announcements ) ) : ?>
 					<div class="sk-announcement-empty">
 						<i class="fas fa-bell"></i>
-						<p><?php esc_html_e( 'Keine Ankündigungen', 'sk' ); ?></p>
+						<p><?php esc_html_e( 'Keine Ankündigungen', 'sk-core' ); ?></p>
 					</div>
 				<?php else : ?>
 					<div class="sk-announcement-list">
@@ -131,7 +131,7 @@ wp_localize_script(
 				<?php elseif ( ! empty( $announcements ) ) : ?>
 					<div class="sk-announcement-empty-detail">
 						<i class="fas fa-bell"></i>
-						<p><?php esc_html_e( 'Wähle eine Ankündigung aus', 'sk' ); ?></p>
+						<p><?php esc_html_e( 'Wähle eine Ankündigung aus', 'sk-core' ); ?></p>
 					</div>
 				<?php endif; ?>
 			</div>

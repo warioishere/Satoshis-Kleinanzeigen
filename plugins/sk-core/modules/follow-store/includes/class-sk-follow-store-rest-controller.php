@@ -90,7 +90,7 @@ class SkFollowStoreRestController extends SkRESTController {
             return rest_ensure_response(
                 new WP_Error(
                     'sk_rest_no_vendor_found',
-                    __( 'No vendor found', 'sk' ),
+                    __( 'No vendor found', 'sk-core' ),
                     [ 'status' => 404 ]
                 )
             );
@@ -185,7 +185,7 @@ class SkFollowStoreRestController extends SkRESTController {
         $first_name  = get_user_meta( $customer_id, 'first_name', true );
         $last_name   = get_user_meta( $customer_id, 'last_name', true );
         $full_name   = trim( $first_name . ' ' . $last_name );
-        $full_name   = ! empty( $full_name ) ? $full_name : sprintf( '(%s)', __( 'no name', 'sk' ) );
+        $full_name   = ! empty( $full_name ) ? $full_name : sprintf( '(%s)', __( 'no name', 'sk-core' ) );
         $followed_at = sk_current_datetime()->modify( $item->followed_at );
         $followed_at = $followed_at ?? sk_current_datetime();
 
@@ -227,7 +227,7 @@ class SkFollowStoreRestController extends SkRESTController {
         $args = wp_parse_args( $args, $defaults );
 
         if ( empty( $args['vendor_id'] ) ) {
-            return new WP_Error( 'invalid-vendor-id', __( 'Please provide a valid vendor id.', 'sk' ) );
+            return new WP_Error( 'invalid-vendor-id', __( 'Please provide a valid vendor id.', 'sk-core' ) );
         }
 
         global $wpdb;
@@ -316,7 +316,7 @@ class SkFollowStoreRestController extends SkRESTController {
 
             if ( ! empty( $wpdb->last_error ) ) {
                 // translators: 1) query error
-                return new WP_Error( 'get_store_follower_db_error', sprintf( __( 'Database Error: %s', 'sk' ), $wpdb->last_error ) );
+                return new WP_Error( 'get_store_follower_db_error', sprintf( __( 'Database Error: %s', 'sk-core' ), $wpdb->last_error ) );
             }
 
             Cache::set( $cache_key, $results, $cache_group );
@@ -331,7 +331,7 @@ class SkFollowStoreRestController extends SkRESTController {
             // @codingStandardsIgnoreEnd
             if ( ! empty( $wpdb->last_error ) ) {
                 // translators: 1) query error
-                return new WP_Error( 'get_store_follower_db_error', sprintf( __( 'Database Error: %s', 'sk' ), $wpdb->last_error ) );
+                return new WP_Error( 'get_store_follower_db_error', sprintf( __( 'Database Error: %s', 'sk-core' ), $wpdb->last_error ) );
             }
 
             if ( ! empty( $results ) ) {
@@ -369,7 +369,7 @@ class SkFollowStoreRestController extends SkRESTController {
         if ( ! $vendor->id ) {
             return new WP_Error(
                 'sk_rest_no_vendor_found',
-                __( 'No vendor found with given vendor id.', 'sk' ),
+                __( 'No vendor found with given vendor id.', 'sk-core' ),
                 [ 'status' => 404 ]
             );
         }
@@ -378,7 +378,7 @@ class SkFollowStoreRestController extends SkRESTController {
         if ( is_wp_error( $is_following ) ) {
             return new WP_Error(
                 'sk_rest_vendor_follow_status',
-                __( 'Database Error: Please contact with site admin.', 'sk' ),
+                __( 'Database Error: Please contact with site admin.', 'sk-core' ),
                 [ 'status' => 422 ]
             );
         }
@@ -404,13 +404,13 @@ class SkFollowStoreRestController extends SkRESTController {
             // Check to make sure our argument is an int.
             if ( 'integer' === $argument['type'] && ! is_numeric( $value ) ) {
                 // translators: 1) argument name, 2) argument value
-                return new WP_Error( 'rest_invalid_param', sprintf( esc_html__( '%1$s is not of type %2$s', 'sk' ), $key, 'integer' ), [ 'status' => 400 ] );
+                return new WP_Error( 'rest_invalid_param', sprintf( esc_html__( '%1$s is not of type %2$s', 'sk-core' ), $key, 'integer' ), [ 'status' => 400 ] );
             }
         } else {
             // This code won't execute because we have specified this argument as required.
             // If we reused this validation callback and did not have required args then this would fire.
             // translators: 1) argument name
-            return new WP_Error( 'rest_invalid_param', sprintf( esc_html__( '%s was not registered as a request argument.', 'sk' ), $key ), [ 'status' => 400 ] );
+            return new WP_Error( 'rest_invalid_param', sprintf( esc_html__( '%s was not registered as a request argument.', 'sk-core' ), $key ), [ 'status' => 400 ] );
         }
 
         if ( -1 === intval( $value ) || $value > 0 ) {
@@ -418,7 +418,7 @@ class SkFollowStoreRestController extends SkRESTController {
         }
 
         // translators: 1) rest api endpoint key name
-        return new WP_Error( 'rest_invalid_param', sprintf( esc_html__( 'Accepted value for %1$s is -1 or non-zero positive integer', 'sk' ), $key ), [ 'status' => 400 ] );
+        return new WP_Error( 'rest_invalid_param', sprintf( esc_html__( 'Accepted value for %1$s is -1 or non-zero positive integer', 'sk-core' ), $key ), [ 'status' => 400 ] );
     }
 
     /**
@@ -434,7 +434,7 @@ class SkFollowStoreRestController extends SkRESTController {
         return [
             'context'   => $context,
             'vendor_id' => [
-                'description'       => __( 'Vendor id to check if user is following that vendor', 'sk' ),
+                'description'       => __( 'Vendor id to check if user is following that vendor', 'sk-core' ),
                 'type'              => 'integer',
                 'required'          => true,
                 'sanitize_callback' => 'absint',
@@ -457,7 +457,7 @@ class SkFollowStoreRestController extends SkRESTController {
         return [
             'context'   => $context,
             'vendor_id' => [
-                'description'       => __( 'Vendor id to follow or unfollow', 'sk' ),
+                'description'       => __( 'Vendor id to follow or unfollow', 'sk-core' ),
                 'type'              => 'integer',
                 'context'           => [ 'edit' ],
                 'required'          => true,
@@ -481,7 +481,7 @@ class SkFollowStoreRestController extends SkRESTController {
         return [
             'context'   => $context,
             'vendor_id' => [
-                'description'       => __( 'Vendor id follow/unfollow', 'sk' ),
+                'description'       => __( 'Vendor id follow/unfollow', 'sk-core' ),
                 'type'              => 'integer',
                 'context'           => [ 'view', 'edit' ],
                 'sanitize_callback' => 'absint',
@@ -489,19 +489,19 @@ class SkFollowStoreRestController extends SkRESTController {
                 'validate_callback' => 'rest_validate_request_arg',
             ],
             'search'    => [
-                'description'       => __( 'search followers', 'sk' ),
+                'description'       => __( 'search followers', 'sk-core' ),
                 'type'              => 'string',
                 'validate_callback' => 'rest_validate_request_arg',
             ],
             'order'     => [
-                'description'       => __( 'order parameter', 'sk' ),
+                'description'       => __( 'order parameter', 'sk-core' ),
                 'type'              => 'string',
                 'enum'              => [ 'asc', 'ASC', 'desc', 'DESC' ],
                 'default'           => 'asc',
                 'validate_callback' => 'rest_validate_request_arg',
             ],
             'orderby'   => [
-                'description'       => __( 'order by parameter', 'sk' ),
+                'description'       => __( 'order by parameter', 'sk-core' ),
                 'type'              => 'string',
                 'enum'              => [ 'follower_id', 'followed_at' ],
                 'validate_callback' => 'rest_validate_request_arg',
@@ -516,7 +516,7 @@ class SkFollowStoreRestController extends SkRESTController {
                 'minimum'           => 1,
             ],
             'per_page'  => [
-                'description'       => __( 'Maximum number of items to be returned in result set.', 'sk' ),
+                'description'       => __( 'Maximum number of items to be returned in result set.', 'sk-core' ),
                 'type'              => 'integer',
                 'default'           => 10,
                 'minimum'           => -1,
@@ -535,11 +535,11 @@ class SkFollowStoreRestController extends SkRESTController {
     public function get_item_schema() {
         $schema = [
             '$schema'    => 'http://json-schema.org/draft-04/schema#',
-            'title'      => __( 'Get Follow Store Item Schema.', 'sk' ),
+            'title'      => __( 'Get Follow Store Item Schema.', 'sk-core' ),
             'type'       => 'object',
             'properties' => [
                 'vendor_id' => [
-                    'description'       => __( 'Vendor id to follow or unfollow', 'sk' ),
+                    'description'       => __( 'Vendor id to follow or unfollow', 'sk-core' ),
                     'type'              => 'integer',
                     'context'           => [ 'view', 'edit' ],
                     'sanitize_callback' => 'absint',
@@ -547,7 +547,7 @@ class SkFollowStoreRestController extends SkRESTController {
                     'validate_callback' => 'rest_validate_request_arg',
                 ],
                 'status'    => [
-                    'description'       => __( 'status of the corresponding operation', 'sk' ),
+                    'description'       => __( 'status of the corresponding operation', 'sk-core' ),
                     'type'              => 'boolean',
                     'context'           => [ 'view' ],
                     'required'          => false,
@@ -561,7 +561,7 @@ class SkFollowStoreRestController extends SkRESTController {
                         'type'       => 'object',
                         'properties' => [
                             'id'                    => [
-                                'description'       => __( 'Unique identifier for the object', 'sk' ),
+                                'description'       => __( 'Unique identifier for the object', 'sk-core' ),
                                 'type'              => 'integer',
                                 'context'           => [ 'view', 'edit' ],
                                 'readonly'          => true,
@@ -569,7 +569,7 @@ class SkFollowStoreRestController extends SkRESTController {
                                 'sanitize_callback' => 'absint',
                             ],
                             'first_name'            => [
-                                'description'       => __( 'Follower First Name', 'sk' ),
+                                'description'       => __( 'Follower First Name', 'sk-core' ),
                                 'type'              => 'string',
                                 'default'           => '',
                                 'context'           => [ 'view' ],
@@ -577,7 +577,7 @@ class SkFollowStoreRestController extends SkRESTController {
                                 'validate_callback' => 'rest_validate_request_arg',
                             ],
                             'last_name'             => [
-                                'description'       => __( 'Follower Last Name', 'sk' ),
+                                'description'       => __( 'Follower Last Name', 'sk-core' ),
                                 'type'              => 'string',
                                 'default'           => '',
                                 'context'           => [ 'view' ],
@@ -585,7 +585,7 @@ class SkFollowStoreRestController extends SkRESTController {
                                 'validate_callback' => 'rest_validate_request_arg',
                             ],
                             'full_name'             => [
-                                'description'       => __( 'Follower Full Name', 'sk' ),
+                                'description'       => __( 'Follower Full Name', 'sk-core' ),
                                 'type'              => 'string',
                                 'default'           => '',
                                 'context'           => [ 'view' ],
@@ -593,7 +593,7 @@ class SkFollowStoreRestController extends SkRESTController {
                                 'validate_callback' => 'rest_validate_request_arg',
                             ],
                             'avatar_url'            => [
-                                'description'       => __( 'Follower Avatar URL', 'sk' ),
+                                'description'       => __( 'Follower Avatar URL', 'sk-core' ),
                                 'type'              => 'string',
                                 'default'           => '',
                                 'context'           => [ 'view' ],
@@ -601,7 +601,7 @@ class SkFollowStoreRestController extends SkRESTController {
                                 'validate_callback' => 'rest_validate_request_arg',
                             ],
                             'avatar_url_2x'         => [
-                                'description'       => __( 'Follower Avatar URL 2x', 'sk' ),
+                                'description'       => __( 'Follower Avatar URL 2x', 'sk-core' ),
                                 'type'              => 'string',
                                 'default'           => '',
                                 'context'           => [ 'view' ],
@@ -609,7 +609,7 @@ class SkFollowStoreRestController extends SkRESTController {
                                 'validate_callback' => 'rest_validate_request_arg',
                             ],
                             'followed_at'           => [
-                                'description'       => __( 'Followed at mysql timestamp', 'sk' ),
+                                'description'       => __( 'Followed at mysql timestamp', 'sk-core' ),
                                 'type'              => 'string',
                                 'format'            => 'date-time',
                                 'default'           => '',
@@ -618,7 +618,7 @@ class SkFollowStoreRestController extends SkRESTController {
                                 'validate_callback' => 'rest_validate_request_arg',
                             ],
                             'formatted_followed_at' => [
-                                'description'       => __( 'Human readable followed at time', 'sk' ),
+                                'description'       => __( 'Human readable followed at time', 'sk-core' ),
                                 'type'              => 'string',
                                 'default'           => '',
                                 'context'           => [ 'view' ],

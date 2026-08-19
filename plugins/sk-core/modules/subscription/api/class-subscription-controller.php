@@ -42,7 +42,7 @@ class SK_REST_Subscription_Controller extends SkRESTController {
                     'args'                => array_merge(
                         $this->get_collection_params(), array(
                             'vendor_id' => array(
-                                'description'       => __( 'Vendor ID', 'sk' ),
+                                'description'       => __( 'Vendor ID', 'sk-core' ),
                                 'type'              => 'integer',
                                 'default'           => null,
                                 'sanitize_callback' => 'absint',
@@ -50,7 +50,7 @@ class SK_REST_Subscription_Controller extends SkRESTController {
                                 'required'          => false,
                             ),
                             'pack_id' => array(
-                                'description'       => __( 'Package ID', 'sk' ),
+                                'description'       => __( 'Package ID', 'sk-core' ),
                                 'type'              => 'integer',
                                 'default'           => null,
                                 'sanitize_callback' => 'absint',
@@ -205,7 +205,7 @@ class SK_REST_Subscription_Controller extends SkRESTController {
         $total_users = $user_query->get_total();
 
         if ( ! $users ) {
-            return new WP_Error( 'no_subscription', __( 'No subscription found.', 'sk' ), [ 'status' => 200 ] );
+            return new WP_Error( 'no_subscription', __( 'No subscription found.', 'sk-core' ), [ 'status' => 200 ] );
         }
 
         $data = [];
@@ -252,7 +252,7 @@ class SK_REST_Subscription_Controller extends SkRESTController {
         $packages              = array();
 
         if ( ! $total_packages ) {
-            return new WP_Error( 'no_subscription_pack', __( 'No subscription package found.', 'sk' ), [ 'status' => 200 ] );
+            return new WP_Error( 'no_subscription_pack', __( 'No subscription package found.', 'sk-core' ), [ 'status' => 200 ] );
         }
 
         foreach ( $query->get_posts() as $package ) {
@@ -283,7 +283,7 @@ class SK_REST_Subscription_Controller extends SkRESTController {
         $packages              = array();
 
         if ( ! $total_packages ) {
-            return new WP_Error( 'no_subscription_pack', __( 'No subscription package found.', 'sk' ), [ 'status' => 200 ] );
+            return new WP_Error( 'no_subscription_pack', __( 'No subscription package found.', 'sk-core' ), [ 'status' => 200 ] );
         }
 
         foreach ( $subscription_packages as $package ) {
@@ -317,7 +317,7 @@ class SK_REST_Subscription_Controller extends SkRESTController {
         if ( ! $users_assigned_pack ) {
             $response = array(
                 'name'  => 0,
-                'label' => __( '-- Select a package --', 'sk' ),
+                'label' => __( '-- Select a package --', 'sk-core' ),
             );
         } else {
             $response = array(
@@ -346,7 +346,7 @@ class SK_REST_Subscription_Controller extends SkRESTController {
         $subscription   = $seller->subscription;
 
         if ( ! $order_id || ! $subscription ) {
-            return new WP_Error( 'no_subscription', __( 'No subscription is found to be updated.', 'sk' ), [ 'status' => 200 ] );
+            return new WP_Error( 'no_subscription', __( 'No subscription is found to be updated.', 'sk-core' ), [ 'status' => 200 ] );
         }
 
         if ( 'activate' === $action ) {
@@ -377,14 +377,14 @@ class SK_REST_Subscription_Controller extends SkRESTController {
         $user_ids = ! empty( $request['user_ids'] ) ? $request['user_ids'] : '';
 
         if ( ! $user_ids ) {
-            return new WP_Error( 'no_subscription', __( 'No subscription is found to be updated.', 'sk' ), [ 'status' => 200 ] );
+            return new WP_Error( 'no_subscription', __( 'No subscription is found to be updated.', 'sk-core' ), [ 'status' => 200 ] );
         }
 
         foreach ( $user_ids as $user_id ) {
             $order_id = get_user_meta( $user_id, 'product_order_id', true );
 
             if ( ! $order_id ) {
-                return new WP_Error( 'no_subscription', __( 'No subscription is found to be updated.', 'sk' ), [ 'status' => 200 ] );
+                return new WP_Error( 'no_subscription', __( 'No subscription is found to be updated.', 'sk-core' ), [ 'status' => 200 ] );
             }
 
             $vendor = sk()->vendor->get( $user_id )->subscription;
@@ -420,7 +420,7 @@ class SK_REST_Subscription_Controller extends SkRESTController {
         $subscription = $seller->subscription;
 
         if ( ! $subscription ) {
-            return new WP_Error( 'no_subscription', __( 'No subscription is found.', 'sk' ), [ 'status' => 404 ] );
+            return new WP_Error( 'no_subscription', __( 'No subscription is found.', 'sk-core' ), [ 'status' => 404 ] );
         }
 
         $end_date   = $subscription->get_pack_end_date();
@@ -436,11 +436,11 @@ class SK_REST_Subscription_Controller extends SkRESTController {
             'subscription_title'       => $subscription->get_package_title(),
             'has_pending_subscription' => (bool) $subscription->has_pending_subscription(),
             'can_post_product'         => (bool) $subscription->can_post_product(),
-            'no_of_allowed_products'   => '-1' !== $subscription->get_number_of_products() ? $subscription->get_number_of_products() : __( 'unlimited', 'sk' ),
+            'no_of_allowed_products'   => '-1' !== $subscription->get_number_of_products() ? $subscription->get_number_of_products() : __( 'unlimited', 'sk-core' ),
             'pack_validity_days'       => $subscription->get_pack_valid_days(),
             'start_date'               => sk_format_date( $subscription->get_pack_start_date() ),
-            'end_date'                 => 'unlimited' === $end_date ? __( 'Unlimited', 'sk' ) : sk_format_date( $end_date ),
-            'subscription_end_date'    => 'unlimited' === $subscription_end_date ? __( 'Unlimited', 'sk' ) : sk_format_date( $subscription_end_date ),
+            'end_date'                 => 'unlimited' === $end_date ? __( 'Unlimited', 'sk-core' ) : sk_format_date( $end_date ),
+            'subscription_end_date'    => 'unlimited' === $subscription_end_date ? __( 'Unlimited', 'sk-core' ) : sk_format_date( $subscription_end_date ),
             'current_date'             => sk_format_date(),
             'status'                   => $subscription->has_subscription(),
             'has_active_cancelled_sub' => $subscription->has_active_cancelled_subscription(),

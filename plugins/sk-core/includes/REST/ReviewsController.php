@@ -65,7 +65,7 @@ class ReviewsController extends SkRESTController {
             $this->namespace, '/' . $this->base . '/(?P<id>[\d]+)', [
                 'args' => [
                     'id' => [
-                        'description' => __( 'Unique identifier for the object.', 'sk' ),
+                        'description' => __( 'Unique identifier for the object.', 'sk-core' ),
                         'type'        => 'integer',
                     ],
                 ],
@@ -75,7 +75,7 @@ class ReviewsController extends SkRESTController {
                     'permission_callback' => [ $this, 'manage_reviews_permission_check' ],
                     'args'                => [
                         'status' => [
-                            'description' => __( 'Review Status', 'sk' ),
+                            'description' => __( 'Review Status', 'sk-core' ),
                             'required'    => true,
                             'type'        => 'string',
                         ],
@@ -88,7 +88,7 @@ class ReviewsController extends SkRESTController {
             $this->namespace, '/stores/(?P<id>[\d]+)/reviews', [
                 'args' => [
                     'id' => [
-                        'description'       => __( 'Unique identifier for the object.', 'sk' ),
+                        'description'       => __( 'Unique identifier for the object.', 'sk-core' ),
                         'type'              => 'integer',
                         'validate_callback' => [ $this, 'is_valid_store' ],
                     ],
@@ -101,17 +101,17 @@ class ReviewsController extends SkRESTController {
                         'title'   => [
                             'required'    => true,
                             'type'        => 'string',
-                            'description' => __( 'Review title.', 'sk' ),
+                            'description' => __( 'Review title.', 'sk-core' ),
                         ],
                         'content' => [
                             'required'    => true,
                             'type'        => 'string',
-                            'description' => __( 'Review content.', 'sk' ),
+                            'description' => __( 'Review content.', 'sk-core' ),
                         ],
                         'rating'  => [
                             'required'          => false,
                             'type'              => 'integer',
-                            'description'       => __( 'Review rating', 'sk' ),
+                            'description'       => __( 'Review rating', 'sk-core' ),
                             'validate_callback' => [ $this, 'is_valid_rating' ],
                             'default'           => 0,
                         ],
@@ -132,16 +132,16 @@ class ReviewsController extends SkRESTController {
                         'reviews' => [
                             'required'    => true,
                             'type'        => 'array',
-                            'description' => __( 'Array of reviews to update', 'sk' ),
+                            'description' => __( 'Array of reviews to update', 'sk-core' ),
                             'items'       => [
                                 'type'       => 'object',
                                 'properties' => [
                                     'id'     => [
-                                        'description' => __( 'Unique identifier for the object.', 'sk' ),
+                                        'description' => __( 'Unique identifier for the object.', 'sk-core' ),
                                         'type'        => 'integer',
                                     ],
                                     'status' => [
-                                        'description' => __( 'Review Status', 'sk' ),
+                                        'description' => __( 'Review Status', 'sk-core' ),
                                         'required'    => true,
                                         'type'        => 'string',
                                     ],
@@ -158,7 +158,7 @@ class ReviewsController extends SkRESTController {
             $this->namespace, '/' . $this->base . '/(?P<id>[\d]+)', [
                 'args' => [
                     'id' => [
-                        'description' => __( 'Unique identifier for the object.', 'sk' ),
+                        'description' => __( 'Unique identifier for the object.', 'sk-core' ),
                         'type'        => 'integer',
                     ],
                 ],
@@ -180,12 +180,12 @@ class ReviewsController extends SkRESTController {
                         'reviews' => [
                             'required'    => true,
                             'type'        => 'array',
-                            'description' => __( 'Array of reviews to delete', 'sk' ),
+                            'description' => __( 'Array of reviews to delete', 'sk-core' ),
                             'items'       => [
                                 'type'       => 'object',
                                 'properties' => [
                                     'id' => [
-                                        'description' => __( 'Unique identifier for the object.', 'sk' ),
+                                        'description' => __( 'Unique identifier for the object.', 'sk-core' ),
                                         'type'        => 'integer',
                                     ],
                                 ],
@@ -214,7 +214,7 @@ class ReviewsController extends SkRESTController {
             return true;
         }
 
-        return new WP_Error( 'rest_sk_store_review_invalid_store', __( 'Invalid store id. Store not exists.', 'sk' ) );
+        return new WP_Error( 'rest_sk_store_review_invalid_store', __( 'Invalid store id. Store not exists.', 'sk-core' ) );
     }
 
     /**
@@ -266,7 +266,7 @@ class ReviewsController extends SkRESTController {
         $review_class = sk_ext()->review;
 
         if ( empty( $store_id ) ) {
-            return new WP_Error( 'no_store_found', __( 'No seller found', 'sk' ), [ 'status' => 404 ] );
+            return new WP_Error( 'no_store_found', __( 'No seller found', 'sk-core' ), [ 'status' => 404 ] );
         }
 
         $limit  = $request['per_page'];
@@ -389,20 +389,20 @@ class ReviewsController extends SkRESTController {
         $review_class = sk_ext()->review;
 
         if ( empty( $store_id ) ) {
-            return new WP_Error( 'no_store_found', __( 'No seller found', 'sk' ), [ 'status' => 404 ] );
+            return new WP_Error( 'no_store_found', __( 'No seller found', 'sk-core' ), [ 'status' => 404 ] );
         }
 
         if ( empty( $request['id'] ) ) {
-            return new WP_Error( 'no_reivew_found', __( 'No review id found', 'sk' ), [ 'status' => 404 ] );
+            return new WP_Error( 'no_reivew_found', __( 'No review id found', 'sk-core' ), [ 'status' => 404 ] );
         }
 
         if ( empty( $request['status'] ) ) {
-            return new WP_Error( 'no_reivew_status_found', __( 'No review status found for updating review', 'sk' ), [ 'status' => 404 ] );
+            return new WP_Error( 'no_reivew_status_found', __( 'No review status found for updating review', 'sk-core' ), [ 'status' => 404 ] );
         }
 
         // check invalid status
         if ( ! in_array( $request['status'], [ 'hold', 'spam', 'trash','approve' ], true ) ) {
-            return new WP_Error( 'invalid_status', __( 'Invalid status', 'sk' ), [ 'status' => 400 ] );
+            return new WP_Error( 'invalid_status', __( 'Invalid status', 'sk-core' ), [ 'status' => 400 ] );
         }
 
         $status = $this->get_status( $request );
@@ -412,7 +412,7 @@ class ReviewsController extends SkRESTController {
         // check if the comment is valid
         $comment = get_comment( $comment_id );
         if ( ! $comment ) {
-            return new WP_Error( 'no_reivew_found', __( 'No review found', 'sk' ), [ 'status' => 404 ] );
+            return new WP_Error( 'no_reivew_found', __( 'No review found', 'sk-core' ), [ 'status' => 404 ] );
         }
 
         wp_set_comment_status( $comment_id, $status );
@@ -523,43 +523,43 @@ class ReviewsController extends SkRESTController {
             'type'       => 'object',
             'properties' => [
                 'id'               => [
-                    'description' => __( 'Unique identifier for the resource.', 'sk' ),
+                    'description' => __( 'Unique identifier for the resource.', 'sk-core' ),
                     'type'        => 'integer',
                     'context'     => [ 'view', 'edit' ],
                     'readonly'    => true,
                 ],
                 'review'           => [
-                    'description' => __( 'The content of the review.', 'sk' ),
+                    'description' => __( 'The content of the review.', 'sk-core' ),
                     'type'        => 'string',
                     'context'     => [ 'view', 'edit' ],
                 ],
                 'date_created'     => [
-                    'description' => __( "The date the review was created, in the site's timezone.", 'sk' ),
+                    'description' => __( "The date the review was created, in the site's timezone.", 'sk-core' ),
                     'type'        => 'date-time',
                     'context'     => [ 'view', 'edit' ],
                 ],
                 'date_created_gmt' => [
-                    'description' => __( 'The date the review was created, as GMT.', 'sk' ),
+                    'description' => __( 'The date the review was created, as GMT.', 'sk-core' ),
                     'type'        => 'date-time',
                     'context'     => [ 'view', 'edit' ],
                 ],
                 'rating'           => [
-                    'description' => __( 'Review rating (0 to 5).', 'sk' ),
+                    'description' => __( 'Review rating (0 to 5).', 'sk-core' ),
                     'type'        => 'integer',
                     'context'     => [ 'view', 'edit' ],
                 ],
                 'name'             => [
-                    'description' => __( 'Reviewer name.', 'sk' ),
+                    'description' => __( 'Reviewer name.', 'sk-core' ),
                     'type'        => 'string',
                     'context'     => [ 'view', 'edit' ],
                 ],
                 'email'            => [
-                    'description' => __( 'Reviewer email.', 'sk' ),
+                    'description' => __( 'Reviewer email.', 'sk-core' ),
                     'type'        => 'string',
                     'context'     => [ 'view', 'edit' ],
                 ],
                 'verified'         => [
-                    'description' => __( 'Shows if the reviewer bought the product or not.', 'sk' ),
+                    'description' => __( 'Shows if the reviewer bought the product or not.', 'sk-core' ),
                     'type'        => 'boolean',
                     'context'     => [ 'view', 'edit' ],
                     'readonly'    => true,
@@ -585,11 +585,11 @@ class ReviewsController extends SkRESTController {
             $store_id = sk_get_current_user_id();
 
             if ( empty( $store_id ) ) {
-                return new WP_Error( 'no_store_found', __( 'No seller found', 'sk' ), [ 'status' => 404 ] );
+                return new WP_Error( 'no_store_found', __( 'No seller found', 'sk-core' ), [ 'status' => 404 ] );
             }
 
             if ( empty( $request['id'] ) ) {
-                return new WP_Error( 'no_reivew_found', __( 'No review id found', 'sk' ), [ 'status' => 404 ] );
+                return new WP_Error( 'no_reivew_found', __( 'No review id found', 'sk-core' ), [ 'status' => 404 ] );
             }
 
             $review_id = $request['id'];
@@ -601,7 +601,7 @@ class ReviewsController extends SkRESTController {
 
             return new WP_HTTP_Response(
                 [
-                    'message' => __( 'Review deleted successfully', 'sk' ),
+                    'message' => __( 'Review deleted successfully', 'sk-core' ),
                     'status'  => 200,
                     'id'      => $review_id,
                 ]
@@ -617,11 +617,11 @@ class ReviewsController extends SkRESTController {
         $review_class = sk_ext()->review;
 
         if ( empty( $store_id ) ) {
-            return new WP_Error( 'no_store_found', __( 'No seller found', 'sk' ), [ 'status' => 404 ] );
+            return new WP_Error( 'no_store_found', __( 'No seller found', 'sk-core' ), [ 'status' => 404 ] );
         }
 
         if ( empty( $request['reviews'] ) ) {
-            return new WP_Error( 'no_reivew_found', __( 'No review id found', 'sk' ), [ 'status' => 404 ] );
+            return new WP_Error( 'no_reivew_found', __( 'No review id found', 'sk-core' ), [ 'status' => 404 ] );
         }
 
         $reviews = $request['reviews'];
@@ -678,11 +678,11 @@ class ReviewsController extends SkRESTController {
         $store_id = sk_get_current_user_id();
 
         if ( empty( $store_id ) ) {
-            return new WP_Error( 'no_store_found', __( 'No seller found', 'sk' ), [ 'status' => 404 ] );
+            return new WP_Error( 'no_store_found', __( 'No seller found', 'sk-core' ), [ 'status' => 404 ] );
         }
 
         if ( empty( $request['reviews'] ) ) {
-            return new WP_Error( 'no_reivew_found', __( 'No review id found', 'sk' ), [ 'status' => 404 ] );
+            return new WP_Error( 'no_reivew_found', __( 'No review id found', 'sk-core' ), [ 'status' => 404 ] );
         }
 
         $reviews = $request['reviews'];
@@ -743,12 +743,12 @@ class ReviewsController extends SkRESTController {
         // check if the comment is valid
         $comment = get_comment( $review_id );
         if ( ! $comment ) {
-            return new WP_Error( 'no_review_found', __( 'No review found', 'sk' ), [ 'status' => 404 ] );
+            return new WP_Error( 'no_review_found', __( 'No review found', 'sk-core' ), [ 'status' => 404 ] );
         }
 
         // check if the comment status is not trash then can't delete
         if ( 'trash' !== $comment->comment_approved ) {
-            return new WP_Error( 'cannot_delete_review', __( 'Can not delete review', 'sk' ), [ 'status' => 404 ] );
+            return new WP_Error( 'cannot_delete_review', __( 'Can not delete review', 'sk-core' ), [ 'status' => 404 ] );
         }
 
         /**
@@ -764,7 +764,7 @@ class ReviewsController extends SkRESTController {
         $deleted = wp_delete_comment( $review_id );
 
         if ( ! $deleted ) {
-            return new WP_Error( 'error', __( 'Error deleting review', 'sk' ), [ 'status' => 400 ] );
+            return new WP_Error( 'error', __( 'Error deleting review', 'sk-core' ), [ 'status' => 400 ] );
         }
 
         /**

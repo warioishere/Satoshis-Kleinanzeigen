@@ -60,7 +60,7 @@ class AdvertisementController extends WP_REST_Controller {
             $this->namespace, '/' . $this->base . '/(?P<id>[\d]+)/expire', [
                 'args' => [
                     'id' => [
-                        'description'       => __( 'Unique identifier for the object.', 'sk' ),
+                        'description'       => __( 'Unique identifier for the object.', 'sk-core' ),
                         'type'              => 'integer',
                         'required'          => true,
                         'arg_options' => [
@@ -80,7 +80,7 @@ class AdvertisementController extends WP_REST_Controller {
             $this->namespace, '/' . $this->base . '/(?P<id>[\d]+)', [
                 'args' => [
                     'id' => [
-                        'description'       => __( 'Unique identifier for the object.', 'sk' ),
+                        'description'       => __( 'Unique identifier for the object.', 'sk-core' ),
                         'type'              => 'integer',
                         'required'          => true,
                         'arg_options' => [
@@ -130,13 +130,13 @@ class AdvertisementController extends WP_REST_Controller {
                 'args' => [
                     'product_id'               => [
                         'type'              => 'integer',
-                        'description'       => __('To be advertise product id.', 'sk'),
+                        'description'       => __('To be advertise product id.', 'sk-core'),
                         'required'          => true,
                         'sanitize_callback' => 'absint',
                         'minimum'           => 1,
                     ],
                     'vendor_id'                => [
-                        'description'       => __('Vendor of the product.', 'sk'),
+                        'description'       => __('Vendor of the product.', 'sk-core'),
                         'type'              => 'integer',
                         'required'          => true,
                         'sanitize_callback' => 'absint',
@@ -176,27 +176,27 @@ class AdvertisementController extends WP_REST_Controller {
         $advertisement_data = Helper::get_advertisement_data_by_product( $query_param['product_id'] );
 
         if ( empty( $advertisement_data ) ) {
-            return rest_ensure_response( new WP_Error( 'invalid_product', __( 'No product found with given product ID. Please check your input.', 'sk' ), [ 'status' => 401 ] ) );
+            return rest_ensure_response( new WP_Error( 'invalid_product', __( 'No product found with given product ID. Please check your input.', 'sk-core' ), [ 'status' => 401 ] ) );
         }
 
         // check if product status is publish
         if ( 'publish' !== $advertisement_data['post_status'] ) {
-            return rest_ensure_response( new WP_Error( 'invalid_product', __( 'You can not advertise this product. Products need to be published before you can advertise.', 'sk' ), [ 'status' => 401 ] ) );
+            return rest_ensure_response( new WP_Error( 'invalid_product', __( 'You can not advertise this product. Products need to be published before you can advertise.', 'sk-core' ), [ 'status' => 401 ] ) );
         }
 
         // check if product is belong to given vendor id
         if ( ! $advertisement_data['vendor_id'] || intval( $query_param['vendor_id'] ) !== $advertisement_data['vendor_id'] ) {
-            return rest_ensure_response( new WP_Error( 'invalid_vendor', __( 'Product id does not belong to given vendor. Please check your input', 'sk' ), [ 'status' => 401 ] ) );
+            return rest_ensure_response( new WP_Error( 'invalid_vendor', __( 'Product id does not belong to given vendor. Please check your input', 'sk-core' ), [ 'status' => 401 ] ) );
         }
 
         // check advertisement already exists in database, this is to prevent duplicate entry
         if ( $advertisement_data['already_advertised'] ) {
-            return rest_ensure_response( new WP_Error( 'invalid_product', __( 'Advertisement for this product is already going on. Please select another product.', 'sk' ), [ 'status' => 401 ] ) );
+            return rest_ensure_response( new WP_Error( 'invalid_product', __( 'Advertisement for this product is already going on. Please select another product.', 'sk-core' ), [ 'status' => 401 ] ) );
         }
 
         // check we've got slot left for advertisement
         if ( empty( $advertisement_data['global_remaining_slot'] ) ) {
-            return rest_ensure_response( new WP_Error( 'empty_slot', __( 'There are no advertisement slots available at this moment.', 'sk' ), [ 'status' => 401 ] ) );
+            return rest_ensure_response( new WP_Error( 'empty_slot', __( 'There are no advertisement slots available at this moment.', 'sk-core' ), [ 'status' => 401 ] ) );
         }
 
         $manager = new Manager();
@@ -521,13 +521,13 @@ class AdvertisementController extends WP_REST_Controller {
             // Check to make sure our argument is a int.
             if ( 'int' === $argument['type'] && ! is_int( $value ) ) {
                 // translators: 1) name of the key 2) data type
-                return new WP_Error( 'rest_invalid_param', sprintf( esc_html__( '%1$s is not of type %2$s', 'sk' ), $key, 'int' ), [ 'status' => 400 ] );
+                return new WP_Error( 'rest_invalid_param', sprintf( esc_html__( '%1$s is not of type %2$s', 'sk-core' ), $key, 'int' ), [ 'status' => 400 ] );
             }
         } else {
             // This code won't execute because we have specified this argument as required.
             // If we reused this validation callback and did not have required args then this would fire.
             // translators: 1) name of the key
-            return new WP_Error( 'rest_invalid_param', sprintf( esc_html__( '%s was not registered as a request argument.', 'sk' ), $key ), [ 'status' => 400 ] );
+            return new WP_Error( 'rest_invalid_param', sprintf( esc_html__( '%s was not registered as a request argument.', 'sk-core' ), $key ), [ 'status' => 400 ] );
         }
 
         $manager = new Manager();
@@ -548,7 +548,7 @@ class AdvertisementController extends WP_REST_Controller {
     public function get_advertisement_params() {
         return [
             'vendor_id' => [
-                'description'       => __( 'Vendor IDs to filter form', 'sk' ),
+                'description'       => __( 'Vendor IDs to filter form', 'sk-core' ),
                 'type'              => 'array',
                 'default'           => [],
                 'validate_callback' => 'rest_validate_request_arg',
@@ -558,7 +558,7 @@ class AdvertisementController extends WP_REST_Controller {
                 ],
             ],
             'product_id' => [
-                'description'       => __( 'Product IDs to filter form', 'sk' ),
+                'description'       => __( 'Product IDs to filter form', 'sk-core' ),
                 'type'              => 'array',
                 'default'           => [],
                 'validate_callback' => 'rest_validate_request_arg',
@@ -568,7 +568,7 @@ class AdvertisementController extends WP_REST_Controller {
                 ],
             ],
             'order_id' => [
-                'description'       => __( 'Order IDs to filter form', 'sk' ),
+                'description'       => __( 'Order IDs to filter form', 'sk-core' ),
                 'type'              => 'array',
                 'default'           => [],
                 'validate_callback' => 'rest_validate_request_arg',
@@ -578,14 +578,14 @@ class AdvertisementController extends WP_REST_Controller {
                 ],
             ],
             'status' => [
-                'description' => __( 'Advertised product status, 0 to get all status, 1 for active advertisements and 2 for inactive advertisements', 'sk' ),
+                'description' => __( 'Advertised product status, 0 to get all status, 1 for active advertisements and 2 for inactive advertisements', 'sk-core' ),
                 'required'    => false,
                 'type'        => 'integer',
                 'enum'        => [ 0, 1, 2 ],
                 'default'     => 0,
             ],
             'expires_at'  => [
-                'description' => __( 'Get advertised products by their expire date', 'sk' ),
+                'description' => __( 'Get advertised products by their expire date', 'sk-core' ),
                 'required'    => false,
                 'type'        => 'object',
                 'properties' => [
@@ -602,14 +602,14 @@ class AdvertisementController extends WP_REST_Controller {
                 ],
             ],
             'created_via' => [
-                'description' => __( 'Filter how advertisement was created', 'sk' ),
+                'description' => __( 'Filter how advertisement was created', 'sk-core' ),
                 'required'    => false,
                 'type'        => 'string',
                 'enum'        => [ '', 'order', 'admin', 'subscription', 'free' ],
                 'default'     => '',
             ],
             'return' => [
-                'description' => __( 'How data will be returned', 'sk' ),
+                'description' => __( 'How data will be returned', 'sk-core' ),
                 'type'        => 'string',
                 'enum'        => [ 'all', 'ids', 'count', 'individual_count' ],
                 'context'     => [ 'view' ],
@@ -629,14 +629,14 @@ class AdvertisementController extends WP_REST_Controller {
             'context'  => $this->get_context_param(),
             'action'  => [
                 'required'    => true,
-                'description' => __( 'Batch action name to process', 'sk' ),
+                'description' => __( 'Batch action name to process', 'sk-core' ),
                 'type'        => 'string',
                 'enum'        => [ 'expire', 'delete' ],
                 'context'     => [ 'edit' ],
             ],
             'ids' => [
                 'required'    => true,
-                'description' => __( 'Batch action to carry on advertisement items', 'sk' ),
+                'description' => __( 'Batch action to carry on advertisement items', 'sk-core' ),
                 'type'        => 'array',
                 'context'     => [ 'edit' ],
                 'items'       => [
@@ -659,7 +659,7 @@ class AdvertisementController extends WP_REST_Controller {
             'type'       => 'object',
             'properties' => [
                 'id' => [
-                    'description' => __( 'Unique identifier for the object.', 'sk' ),
+                    'description' => __( 'Unique identifier for the object.', 'sk-core' ),
                     'type'        => 'integer',
                     'minimum'     => 1,
                     'context'     => [ 'view', 'edit' ],
@@ -669,65 +669,65 @@ class AdvertisementController extends WP_REST_Controller {
                     ],
                 ],
                 'product_id' => [
-                    'description' => __( 'ID of the advertised product', 'sk' ),
+                    'description' => __( 'ID of the advertised product', 'sk-core' ),
                     'type'        => 'integer',
                     'context'     => [ 'view', 'edit' ],
                     'required'    => true,
                 ],
                 'product_title' => [
-                    'description' => __( 'Title of the advertised product', 'sk' ),
+                    'description' => __( 'Title of the advertised product', 'sk-core' ),
                     'type'        => 'string',
                     'context'     => [ 'view' ],
                     'readonly'    => true,
                 ],
                 'vendor_id' => [
-                    'description' => __( 'ID of the product owner', 'sk' ),
+                    'description' => __( 'ID of the product owner', 'sk-core' ),
                     'type'        => 'integer',
                     'context'     => [ 'view' ],
                     'readonly'    => true,
                 ],
                 'store_name' => [
-                    'description' => __( 'Store name of the advertised product', 'sk' ),
+                    'description' => __( 'Store name of the advertised product', 'sk-core' ),
                     'type'        => 'string',
                     'context'     => [ 'view' ],
                     'readonly'    => true,
                 ],
                 'created_via' => [
-                    'description' => __( 'How this advertisement was created, possible values are order or admin', 'sk' ),
+                    'description' => __( 'How this advertisement was created, possible values are order or admin', 'sk-core' ),
                     'type'        => 'string',
                     'context'     => [ 'view', 'edit' ],
                     'enum'        => [ 'order', 'admin', 'subscription', 'free' ],
                     'default'     => 'admin',
                 ],
                 'order_id' => [
-                    'description' => __( 'Order id of the advertised product', 'sk' ),
+                    'description' => __( 'Order id of the advertised product', 'sk-core' ),
                     'type'        => 'integer',
                     'minimum'     => 0,
                     'context'     => [ 'view', 'edit' ],
                     'default'     => 0,
                 ],
                 'price' => [
-                    'description' => __( 'What was the price of this advertised products', 'sk' ),
+                    'description' => __( 'What was the price of this advertised products', 'sk-core' ),
                     'type'        => 'number',
                     'context'     => [ 'view', 'edit' ],
                     'minimum'     => 0,
                     'default'    => 0.0000,
                 ],
                 'expires_at' => [
-                    'description' => __( 'Advertisement expire date for this product', 'sk' ),
+                    'description' => __( 'Advertisement expire date for this product', 'sk-core' ),
                     'type'        => 'string',
                     'context'     => [ 'view', 'edit' ],
                     'default'     => '',
                 ],
                 'status'     => [
-                    'description' => __( 'Status of the advertise product, 1 for active and 2 for to get inactive advertisement', 'sk' ),
+                    'description' => __( 'Status of the advertise product, 1 for active and 2 for to get inactive advertisement', 'sk-core' ),
                     'type'        => 'integer',
                     'enum'        => [ 0, 1, 2 ],
                     'default'     => 0,
                     'context'     => [ 'view', 'edit' ],
                 ],
                 'added' => [
-                    'description' => __( 'When this advertisement was created', 'sk' ),
+                    'description' => __( 'When this advertisement was created', 'sk-core' ),
                     'type'        => 'string',
                     'context'     => [ 'view' ],
                     'default'     => '',
@@ -751,13 +751,13 @@ class AdvertisementController extends WP_REST_Controller {
             'type'       => 'object',
             'properties' => [
                 'vendor_id' => [
-                    'description' => __( 'ID of the product owner', 'sk' ),
+                    'description' => __( 'ID of the product owner', 'sk-core' ),
                     'type'        => 'integer',
                     'context'     => [ 'view' ],
                     'readonly'    => true,
                 ],
                 'store_name' => [
-                    'description' => __( 'Store name of the advertised product', 'sk' ),
+                    'description' => __( 'Store name of the advertised product', 'sk-core' ),
                     'type'        => 'string',
                     'context'     => [ 'view' ],
                     'readonly'    => true,

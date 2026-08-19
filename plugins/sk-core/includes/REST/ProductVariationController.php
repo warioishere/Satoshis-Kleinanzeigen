@@ -47,7 +47,7 @@ class ProductVariationController extends ProductController {
             $this->namespace, '/' . $this->rest_base, array(
                 'args' => array(
                     'product_id' => array(
-                        'description' => __( 'Unique identifier for the variable product.', 'sk' ),
+                        'description' => __( 'Unique identifier for the variable product.', 'sk-core' ),
                         'type'        => 'integer',
                     ),
                 ),
@@ -70,11 +70,11 @@ class ProductVariationController extends ProductController {
             $this->namespace, '/' . $this->rest_base . '/(?P<id>[\d]+)', array(
                 'args' => array(
                     'product_id' => array(
-                        'description' => __( 'Unique identifier for the variable product.', 'sk' ),
+                        'description' => __( 'Unique identifier for the variable product.', 'sk-core' ),
                         'type'        => 'integer',
                     ),
                     'id' => array(
-                        'description' => __( 'Unique identifier for the variation.', 'sk' ),
+                        'description' => __( 'Unique identifier for the variation.', 'sk-core' ),
                         'type'        => 'integer',
                     ),
                 ),
@@ -103,7 +103,7 @@ class ProductVariationController extends ProductController {
             $this->namespace, '/' . $this->rest_base . '/batch', array(
                 'args'   => array(
                     'product_id' => array(
-                        'description' => __( 'Product ID for which variations will be managed.', 'sk' ),
+                        'description' => __( 'Product ID for which variations will be managed.', 'sk-core' ),
                         'type'        => 'integer',
                     ),
                 ),
@@ -206,7 +206,7 @@ class ProductVariationController extends ProductController {
         if ( ! $variable_product ) {
             return new WP_Error(
                 'invalid_product_id',
-                __( 'Invalid product id to create variations.', 'sk' ),
+                __( 'Invalid product id to create variations.', 'sk-core' ),
                 [ 'status' => 404 ]
             );
         }
@@ -231,7 +231,7 @@ class ProductVariationController extends ProductController {
                     return new WP_Error(
                         'invalid_param',
                         /* translators: %d: decimal */
-                        sprintf( __( 'Param update[%d][regular_price] is not of type number or an empty value', 'sk' ), $key ),
+                        sprintf( __( 'Param update[%d][regular_price] is not of type number or an empty value', 'sk-core' ), $key ),
                         [
                             'status' => 400,
                         ]
@@ -543,7 +543,7 @@ class ProductVariationController extends ProductController {
 
         if ( ! $object || 0 === $object->get_id() ) {
             return new WP_Error(
-                "sk_rest_{$this->post_type}_invalid_id", __( 'Invalid ID.', 'sk' ), array(
+                "sk_rest_{$this->post_type}_invalid_id", __( 'Invalid ID.', 'sk-core' ), array(
                     'status' => 404,
                 )
             );
@@ -558,7 +558,7 @@ class ProductVariationController extends ProductController {
         if ( ! $result ) {
             return new WP_Error(
                 /* translators: %s: post type */
-                'sk_rest_cannot_delete', sprintf( __( 'The %s cannot be deleted.', 'sk' ), $this->post_type ), array(
+                'sk_rest_cannot_delete', sprintf( __( 'The %s cannot be deleted.', 'sk-core' ), $this->post_type ), array(
                     'status' => 500,
                 )
             );
@@ -613,126 +613,126 @@ class ProductVariationController extends ProductController {
             'type'       => 'object',
             'properties' => array(
                 'id'                    => array(
-                    'description' => __( 'Unique identifier for the resource.', 'sk' ),
+                    'description' => __( 'Unique identifier for the resource.', 'sk-core' ),
                     'type'        => 'integer',
                     'context'     => array( 'view', 'edit' ),
                     'readonly'    => true,
                 ),
                 'date_created'          => array(
-                    'description' => __( "The date the variation was created, in the site's timezone.", 'sk' ),
+                    'description' => __( "The date the variation was created, in the site's timezone.", 'sk-core' ),
                     'type'        => 'date-time',
                     'context'     => array( 'view', 'edit' ),
                     'readonly'    => true,
                 ),
                 'date_modified'         => array(
-                    'description' => __( "The date the variation was last modified, in the site's timezone.", 'sk' ),
+                    'description' => __( "The date the variation was last modified, in the site's timezone.", 'sk-core' ),
                     'type'        => 'date-time',
                     'context'     => array( 'view', 'edit' ),
                     'readonly'    => true,
                 ),
                 'description'           => array(
-                    'description' => __( 'Variation description.', 'sk' ),
+                    'description' => __( 'Variation description.', 'sk-core' ),
                     'type'        => 'string',
                     'context'     => array( 'view', 'edit' ),
                 ),
                 'permalink'             => array(
-                    'description' => __( 'Variation URL.', 'sk' ),
+                    'description' => __( 'Variation URL.', 'sk-core' ),
                     'type'        => 'string',
                     'format'      => 'uri',
                     'context'     => array( 'view', 'edit' ),
                     'readonly'    => true,
                 ),
                 'sku'                   => array(
-                    'description' => __( 'Unique identifier.', 'sk' ),
+                    'description' => __( 'Unique identifier.', 'sk-core' ),
                     'type'        => 'string',
                     'context'     => array( 'view', 'edit' ),
                 ),
                 'price'                 => array(
-                    'description' => __( 'Current variation price.', 'sk' ),
+                    'description' => __( 'Current variation price.', 'sk-core' ),
                     'type'        => 'number',
                     'context'     => array( 'view', 'edit' ),
                     'readonly'    => true,
                 ),
                 'regular_price'         => array(
-                    'description' => __( 'Variation regular price.', 'sk' ),
+                    'description' => __( 'Variation regular price.', 'sk-core' ),
                     'type'        => array( 'number', 'string' ),
                     'context'     => array( 'view', 'edit' ),
                 ),
                 'sale_price'            => array(
-                    'description' => __( 'Variation sale price.', 'sk' ),
+                    'description' => __( 'Variation sale price.', 'sk-core' ),
                     'type'        => 'number',
                     'context'     => array( 'view', 'edit' ),
                 ),
                 'date_on_sale_from'     => array(
-                    'description' => __( "Start date of sale price, in the site's timezone.", 'sk' ),
+                    'description' => __( "Start date of sale price, in the site's timezone.", 'sk-core' ),
                     'type'        => 'date-time',
                     'context'     => array( 'view', 'edit' ),
                 ),
                 'date_on_sale_from_gmt' => array(
-                    'description' => __( 'Start date of sale price, as GMT.', 'sk' ),
+                    'description' => __( 'Start date of sale price, as GMT.', 'sk-core' ),
                     'type'        => 'date-time',
                     'context'     => array( 'view', 'edit' ),
                 ),
                 'date_on_sale_to'       => array(
-                    'description' => __( "End date of sale price, in the site's timezone.", 'sk' ),
+                    'description' => __( "End date of sale price, in the site's timezone.", 'sk-core' ),
                     'type'        => 'date-time',
                     'context'     => array( 'view', 'edit' ),
                 ),
                 'date_on_sale_to_gmt'   => array(
-                    'description' => __( 'End date of sale price, as GMT.', 'sk' ),
+                    'description' => __( 'End date of sale price, as GMT.', 'sk-core' ),
                     'type'        => 'date-time',
                     'context'     => array( 'view', 'edit' ),
                 ),
                 'on_sale'               => array(
-                    'description' => __( 'Shows if the variation is on sale.', 'sk' ),
+                    'description' => __( 'Shows if the variation is on sale.', 'sk-core' ),
                     'type'        => 'boolean',
                     'context'     => array( 'view', 'edit' ),
                     'readonly'    => true,
                 ),
                 'visible'               => array(
-                    'description' => __( "Define if the variation is visible on the product's page.", 'sk' ),
+                    'description' => __( "Define if the variation is visible on the product's page.", 'sk-core' ),
                     'type'        => 'boolean',
                     'default'     => true,
                     'context'     => array( 'view', 'edit' ),
                 ),
                 'purchasable'           => array(
-                    'description' => __( 'Shows if the variation can be bought.', 'sk' ),
+                    'description' => __( 'Shows if the variation can be bought.', 'sk-core' ),
                     'type'        => 'boolean',
                     'context'     => array( 'view', 'edit' ),
                     'readonly'    => true,
                 ),
                 'virtual'               => array(
-                    'description' => __( 'If the variation is virtual.', 'sk' ),
+                    'description' => __( 'If the variation is virtual.', 'sk-core' ),
                     'type'        => 'boolean',
                     'default'     => false,
                     'context'     => array( 'view', 'edit' ),
                 ),
                 'downloadable'          => array(
-                    'description' => __( 'If the variation is downloadable.', 'sk' ),
+                    'description' => __( 'If the variation is downloadable.', 'sk-core' ),
                     'type'        => 'boolean',
                     'default'     => false,
                     'context'     => array( 'view', 'edit' ),
                 ),
                 'downloads'             => array(
-                    'description' => __( 'List of downloadable files.', 'sk' ),
+                    'description' => __( 'List of downloadable files.', 'sk-core' ),
                     'type'        => 'array',
                     'context'     => array( 'view', 'edit' ),
                     'items'       => array(
                         'type'       => 'object',
                         'properties' => array(
                             'id'   => array(
-                                'description' => __( 'File MD5 hash.', 'sk' ),
+                                'description' => __( 'File MD5 hash.', 'sk-core' ),
                                 'type'        => 'string',
                                 'context'     => array( 'view', 'edit' ),
                                 'readonly'    => true,
                             ),
                             'name' => array(
-                                'description' => __( 'File name.', 'sk' ),
+                                'description' => __( 'File name.', 'sk-core' ),
                                 'type'        => 'string',
                                 'context'     => array( 'view', 'edit' ),
                             ),
                             'file' => array(
-                                'description' => __( 'File URL.', 'sk' ),
+                                'description' => __( 'File URL.', 'sk-core' ),
                                 'type'        => 'string',
                                 'context'     => array( 'view', 'edit' ),
                             ),
@@ -740,183 +740,183 @@ class ProductVariationController extends ProductController {
                     ),
                 ),
                 'download_limit'        => array(
-                    'description' => __( 'Number of times downloadable files can be downloaded after purchase.', 'sk' ),
+                    'description' => __( 'Number of times downloadable files can be downloaded after purchase.', 'sk-core' ),
                     'type'        => 'integer',
                     'default'     => -1,
                     'context'     => array( 'view', 'edit' ),
                 ),
                 'download_expiry'       => array(
-                    'description' => __( 'Number of days until access to downloadable files expires.', 'sk' ),
+                    'description' => __( 'Number of days until access to downloadable files expires.', 'sk-core' ),
                     'type'        => 'integer',
                     'default'     => -1,
                     'context'     => array( 'view', 'edit' ),
                 ),
                 'tax_status'            => array(
-                    'description' => __( 'Tax status.', 'sk' ),
+                    'description' => __( 'Tax status.', 'sk-core' ),
                     'type'        => 'string',
                     'default'     => 'taxable',
                     'enum'        => array( 'taxable', 'shipping', 'none' ),
                     'context'     => array( 'view', 'edit' ),
                 ),
                 'tax_class'             => array(
-                    'description' => __( 'Tax class.', 'sk' ),
+                    'description' => __( 'Tax class.', 'sk-core' ),
                     'type'        => 'string',
                     'context'     => array( 'view', 'edit' ),
                 ),
                 'manage_stock'          => array(
-                    'description' => __( 'Stock management at variation level.', 'sk' ),
+                    'description' => __( 'Stock management at variation level.', 'sk-core' ),
                     'type'        => 'mixed',
                     'default'     => false,
                     'context'     => array( 'view', 'edit' ),
                 ),
                 'stock_quantity'        => array(
-                    'description' => __( 'Stock quantity.', 'sk' ),
+                    'description' => __( 'Stock quantity.', 'sk-core' ),
                     'type'        => 'integer',
                     'context'     => array( 'view', 'edit' ),
                 ),
                 'in_stock'              => array(
-                    'description' => __( 'Controls whether or not the variation is listed as "in stock" or "out of stock" on the frontend.', 'sk' ),
+                    'description' => __( 'Controls whether or not the variation is listed as "in stock" or "out of stock" on the frontend.', 'sk-core' ),
                     'type'        => 'boolean',
                     'default'     => true,
                     'context'     => array( 'view', 'edit' ),
                 ),
                 'backorders'            => array(
-                    'description' => __( 'If managing stock, this controls if backorders are allowed.', 'sk' ),
+                    'description' => __( 'If managing stock, this controls if backorders are allowed.', 'sk-core' ),
                     'type'        => 'string',
                     'default'     => 'no',
                     'enum'        => array( 'no', 'notify', 'yes' ),
                     'context'     => array( 'view', 'edit' ),
                 ),
                 'backorders_allowed'    => array(
-                    'description' => __( 'Shows if backorders are allowed.', 'sk' ),
+                    'description' => __( 'Shows if backorders are allowed.', 'sk-core' ),
                     'type'        => 'boolean',
                     'context'     => array( 'view', 'edit' ),
                     'readonly'    => true,
                 ),
                 'backordered'           => array(
-                    'description' => __( 'Shows if the variation is on backordered.', 'sk' ),
+                    'description' => __( 'Shows if the variation is on backordered.', 'sk-core' ),
                     'type'        => 'boolean',
                     'context'     => array( 'view', 'edit' ),
                     'readonly'    => true,
                 ),
                 'weight'                => array(
                     /* translators: %s: weight unit */
-                    'description' => sprintf( __( 'Variation weight (%s).', 'sk' ), $weight_unit ),
+                    'description' => sprintf( __( 'Variation weight (%s).', 'sk-core' ), $weight_unit ),
                     'type'        => 'string',
                     'context'     => array( 'view', 'edit' ),
                 ),
                 'dimensions'            => array(
-                    'description' => __( 'Variation dimensions.', 'sk' ),
+                    'description' => __( 'Variation dimensions.', 'sk-core' ),
                     'type'        => 'object',
                     'context'     => array( 'view', 'edit' ),
                     'properties'  => array(
                         'length' => array(
                             /* translators: %s: dimension unit */
-                            'description' => sprintf( __( 'Variation length (%s).', 'sk' ), $dimension_unit ),
+                            'description' => sprintf( __( 'Variation length (%s).', 'sk-core' ), $dimension_unit ),
                             'type'        => 'string',
                             'context'     => array( 'view', 'edit' ),
                         ),
                         'width'  => array(
                             /* translators: %s: dimension unit */
-                            'description' => sprintf( __( 'Variation width (%s).', 'sk' ), $dimension_unit ),
+                            'description' => sprintf( __( 'Variation width (%s).', 'sk-core' ), $dimension_unit ),
                             'type'        => 'string',
                             'context'     => array( 'view', 'edit' ),
                         ),
                         'height' => array(
                             /* translators: %s: dimension unit */
-                            'description' => sprintf( __( 'Variation height (%s).', 'sk' ), $dimension_unit ),
+                            'description' => sprintf( __( 'Variation height (%s).', 'sk-core' ), $dimension_unit ),
                             'type'        => 'string',
                             'context'     => array( 'view', 'edit' ),
                         ),
                     ),
                 ),
                 'shipping_class'        => array(
-                    'description' => __( 'Shipping class slug.', 'sk' ),
+                    'description' => __( 'Shipping class slug.', 'sk-core' ),
                     'type'        => 'string',
                     'context'     => array( 'view', 'edit' ),
                 ),
                 'shipping_class_id'     => array(
-                    'description' => __( 'Shipping class ID.', 'sk' ),
+                    'description' => __( 'Shipping class ID.', 'sk-core' ),
                     'type'        => 'string',
                     'context'     => array( 'view', 'edit' ),
                     'readonly'    => true,
                 ),
                 'image'                 => array(
-                    'description' => __( 'Variation image data.', 'sk' ),
+                    'description' => __( 'Variation image data.', 'sk-core' ),
                     'type'        => 'object',
                     'context'     => array( 'view', 'edit' ),
                     'properties'  => array(
                         'id'                => array(
-                            'description' => __( 'Image ID.', 'sk' ),
+                            'description' => __( 'Image ID.', 'sk-core' ),
                             'type'        => 'integer',
                             'context'     => array( 'view', 'edit' ),
                         ),
                         'date_created'      => array(
-                            'description' => __( "The date the image was created, in the site's timezone.", 'sk' ),
+                            'description' => __( "The date the image was created, in the site's timezone.", 'sk-core' ),
                             'type'        => 'date-time',
                             'context'     => array( 'view', 'edit' ),
                             'readonly'    => true,
                         ),
                         'date_created_gmt'  => array(
-                            'description' => __( 'The date the image was created, as GMT.', 'sk' ),
+                            'description' => __( 'The date the image was created, as GMT.', 'sk-core' ),
                             'type'        => 'date-time',
                             'context'     => array( 'view', 'edit' ),
                             'readonly'    => true,
                         ),
                         'date_modified'     => array(
-                            'description' => __( "The date the image was last modified, in the site's timezone.", 'sk' ),
+                            'description' => __( "The date the image was last modified, in the site's timezone.", 'sk-core' ),
                             'type'        => 'date-time',
                             'context'     => array( 'view', 'edit' ),
                             'readonly'    => true,
                         ),
                         'date_modified_gmt' => array(
-                            'description' => __( 'The date the image was last modified, as GMT.', 'sk' ),
+                            'description' => __( 'The date the image was last modified, as GMT.', 'sk-core' ),
                             'type'        => 'date-time',
                             'context'     => array( 'view', 'edit' ),
                             'readonly'    => true,
                         ),
                         'src'               => array(
-                            'description' => __( 'Image URL.', 'sk' ),
+                            'description' => __( 'Image URL.', 'sk-core' ),
                             'type'        => 'string',
                             'format'      => 'uri',
                             'context'     => array( 'view', 'edit' ),
                         ),
                         'name'              => array(
-                            'description' => __( 'Image name.', 'sk' ),
+                            'description' => __( 'Image name.', 'sk-core' ),
                             'type'        => 'string',
                             'context'     => array( 'view', 'edit' ),
                         ),
                         'alt'               => array(
-                            'description' => __( 'Image alternative text.', 'sk' ),
+                            'description' => __( 'Image alternative text.', 'sk-core' ),
                             'type'        => 'string',
                             'context'     => array( 'view', 'edit' ),
                         ),
                         'position'          => array(
-                            'description' => __( 'Image position. 0 means that the image is featured.', 'sk' ),
+                            'description' => __( 'Image position. 0 means that the image is featured.', 'sk-core' ),
                             'type'        => 'integer',
                             'context'     => array( 'view', 'edit' ),
                         ),
                     ),
                 ),
                 'attributes'            => array(
-                    'description' => __( 'List of attributes.', 'sk' ),
+                    'description' => __( 'List of attributes.', 'sk-core' ),
                     'type'        => 'array',
                     'context'     => array( 'view', 'edit' ),
                     'items'       => array(
                         'type'       => 'object',
                         'properties' => array(
                             'id'     => array(
-                                'description' => __( 'Attribute ID.', 'sk' ),
+                                'description' => __( 'Attribute ID.', 'sk-core' ),
                                 'type'        => 'integer',
                                 'context'     => array( 'view', 'edit' ),
                             ),
                             'name'   => array(
-                                'description' => __( 'Attribute name.', 'sk' ),
+                                'description' => __( 'Attribute name.', 'sk-core' ),
                                 'type'        => 'string',
                                 'context'     => array( 'view', 'edit' ),
                             ),
                             'option' => array(
-                                'description' => __( 'Selected attribute term name.', 'sk' ),
+                                'description' => __( 'Selected attribute term name.', 'sk-core' ),
                                 'type'        => 'string',
                                 'context'     => array( 'view', 'edit' ),
                             ),
@@ -924,30 +924,30 @@ class ProductVariationController extends ProductController {
                     ),
                 ),
                 'menu_order'            => array(
-                    'description' => __( 'Menu order, used to custom sort products.', 'sk' ),
+                    'description' => __( 'Menu order, used to custom sort products.', 'sk-core' ),
                     'type'        => 'integer',
                     'context'     => array( 'view', 'edit' ),
                 ),
                 'meta_data'             => array(
-                    'description' => __( 'Meta data.', 'sk' ),
+                    'description' => __( 'Meta data.', 'sk-core' ),
                     'type'        => 'array',
                     'context'     => array( 'view', 'edit' ),
                     'items'       => array(
                         'type'       => 'object',
                         'properties' => array(
                             'id'    => array(
-                                'description' => __( 'Meta ID.', 'sk' ),
+                                'description' => __( 'Meta ID.', 'sk-core' ),
                                 'type'        => 'integer',
                                 'context'     => array( 'view', 'edit' ),
                                 'readonly'    => true,
                             ),
                             'key'   => array(
-                                'description' => __( 'Meta key.', 'sk' ),
+                                'description' => __( 'Meta key.', 'sk-core' ),
                                 'type'        => 'string',
                                 'context'     => array( 'view', 'edit' ),
                             ),
                             'value' => array(
-                                'description' => __( 'Meta value.', 'sk' ),
+                                'description' => __( 'Meta value.', 'sk-core' ),
                                 'type'        => 'mixed',
                                 'context'     => array( 'view', 'edit' ),
                             ),
@@ -1061,7 +1061,7 @@ class ProductVariationController extends ProductController {
 
         if ( $total > $limit ) {
             /* translators: %s: items limit */
-            return new WP_Error( 'sk_rest_request_entity_too_large', sprintf( __( 'Unable to accept more than %s items for this request.', 'sk' ), $limit ), array( 'status' => 413 ) );
+            return new WP_Error( 'sk_rest_request_entity_too_large', sprintf( __( 'Unable to accept more than %s items for this request.', 'sk-core' ), $limit ), array( 'status' => 413 ) );
         }
 
         return true;
@@ -1080,7 +1080,7 @@ class ProductVariationController extends ProductController {
             'type'       => 'object',
             'properties' => array(
                 'update' => array(
-                    'description' => __( 'List of updated resources.', 'sk' ),
+                    'description' => __( 'List of updated resources.', 'sk-core' ),
                     'type'        => 'array',
                     'context'     => array( 'edit' ),
                     'items'       => array(

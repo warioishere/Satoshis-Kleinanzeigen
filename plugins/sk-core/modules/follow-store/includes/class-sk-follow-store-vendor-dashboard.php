@@ -5,7 +5,7 @@ class SK_Follow_Store_Vendor_Dashboard extends \SK\Core\Dashboard\DashboardModul
     public function config(): ?array {
         return [
             'slug'       => 'followers',
-            'title'      => __( 'Followers', 'sk' ),
+            'title'      => __( 'Followers', 'sk-core' ),
             'icon'       => '<i class="fas fa-heart"></i>',
             'icon_name'  => 'UserStar',
             'pos'        => 175,

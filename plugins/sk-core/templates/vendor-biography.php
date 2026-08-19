@@ -39,7 +39,7 @@ get_header( 'shop' );
             <div id="comments">
             <?php do_action( 'sk_vendor_biography_tab_before', $store_user, $store_info ); ?>
 
-            <h2 class="headline"><?php echo apply_filters( 'sk_vendor_biography_title', __( 'Vendor Biography', 'sk' ) ); ?></h2>
+            <h2 class="headline"><?php echo apply_filters( 'sk_vendor_biography_title', __( 'Vendor Biography', 'sk-core' ) ); ?></h2>
 
             <?php
             if ( ! empty( $store_info['vendor_biography'] ) ) {

@@ -14,11 +14,11 @@ class ZapSettings {
     public function add_section( $sections ) {
         $sections[] = [
             'id'                   => 'sk_zaps',
-            'title'                => __( 'SK Zaps', 'sk' ),
+            'title'                => __( 'SK Zaps', 'sk-core' ),
             'icon_url'             => '',
-            'description'          => __( 'Lightning Zaps für Vendors', 'sk' ),
-            'settings_title'       => __( 'Zap Button', 'sk' ),
-            'settings_description' => __( 'Lightning Zap Buttons auf Store- und Produktseiten. Vendors mit Lightning Address und Nostr Key können Zaps empfangen.', 'sk' ),
+            'description'          => __( 'Lightning Zaps für Vendors', 'sk-core' ),
+            'settings_title'       => __( 'Zap Button', 'sk-core' ),
+            'settings_description' => __( 'Lightning Zap Buttons auf Store- und Produktseiten. Vendors mit Lightning Address und Nostr Key können Zaps empfangen.', 'sk-core' ),
         ];
 
         return $sections;

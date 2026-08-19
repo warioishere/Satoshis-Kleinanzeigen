@@ -40,7 +40,7 @@ class DSR_SPMV {
     public function add_show_order_option( $options ) {
         $options[] = array(
             'name'  => 'top_rated_vendor',
-            'label' => __( 'Top rated vendor', 'sk' ),
+            'label' => __( 'Top rated vendor', 'sk-core' ),
         );
 
         return $options;

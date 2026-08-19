@@ -9,7 +9,7 @@ class StoreReviewsPage extends AbstractPage {
     }
 
     public function get_title(): string {
-        return __( 'Store Reviews', 'sk' );
+        return __( 'Store Reviews', 'sk-core' );
     }
 
     public function is_pro(): bool {
@@ -46,7 +46,7 @@ class StoreReviewsPage extends AbstractPage {
         }
 
         if ( ! wp_verify_nonce( $_POST['sk_review_nonce'], 'sk_review_action' ) ) {
-            wp_die( __( 'Security check failed.', 'sk' ) );
+            wp_die( __( 'Security check failed.', 'sk-core' ) );
         }
 
         if ( ! current_user_can( 'manage_woocommerce' ) ) {

@@ -94,7 +94,7 @@ class DSR_View {
     function render_add_review_button( $seller_id ) {
         ?>
         <div class="sk-review-wrapper" style="margin-bottom: 25px;">
-            <button class='sk-btn sk-btn-sm sk-btn-theme add-review-btn' data-store_id ='<?php echo $seller_id ?>' ><?php _e(' Write a Review ', 'sk' ) ?></button>
+            <button class='sk-btn sk-btn-sm sk-btn-theme add-review-btn' data-store_id ='<?php echo $seller_id ?>' ><?php _e(' Write a Review ', 'sk-core' ) ?></button>
         </div>
         <div class="sk-clearfix"></div>
 
@@ -113,7 +113,7 @@ class DSR_View {
     function render_edit_review_button( $seller_id, $post_id ) {
         ?>
         <div class="sk-review-wrapper" style="margin-bottom: 25px;">
-            <button class='sk-btn sk-btn-sm sk-btn-theme edit-review-btn' data-post_id='<?php echo esc_attr( $post_id ); ?>' data-store_id ='<?php echo esc_attr( $seller_id ); ?>' ><?php _e(' Edit', 'sk' ) ?></button>
+            <button class='sk-btn sk-btn-sm sk-btn-theme edit-review-btn' data-post_id='<?php echo esc_attr( $post_id ); ?>' data-store_id ='<?php echo esc_attr( $seller_id ); ?>' ><?php _e(' Edit', 'sk-core' ) ?></button>
         </div>
         <div class="sk-clearfix"></div>
 
@@ -133,7 +133,7 @@ class DSR_View {
         if ( !wp_verify_nonce( $postdata['sk-seller-rating-form-nonce'], 'sk-seller-rating-form-action' ) ) {
             wp_send_json( array(
                 'success' => false,
-                'msg'     => __( 'Nonce verification failed, please refresh current page and try again!.', 'sk' ),
+                'msg'     => __( 'Nonce verification failed, please refresh current page and try again!.', 'sk-core' ),
             ) );
         }
 
@@ -142,7 +142,7 @@ class DSR_View {
             wp_send_json( array(
                 'success' => false,
                 'msg'     => is_user_logged_in()
-                    ?  __( 'Sorry, You must be logged in to leave a review!', 'sk' )
+                    ?  __( 'Sorry, You must be logged in to leave a review!', 'sk-core' )
                     : __( 'Sorry, You need to be a verified owner to leave a review.' ),
             ) );
         }
@@ -191,12 +191,12 @@ class DSR_View {
 
             wp_send_json( array(
                 'success' => true,
-                'msg'     => __( 'Thank you for your review.', 'sk' ),
+                'msg'     => __( 'Thank you for your review.', 'sk-core' ),
             ) );
         } else {
             wp_send_json( array(
                 'success' => false,
-                'msg'     => __( 'Sorry, something went wrong!', 'sk' ),
+                'msg'     => __( 'Sorry, something went wrong!', 'sk-core' ),
             ) );
         }
     }
@@ -250,8 +250,8 @@ class DSR_View {
                             <div class="comment-text">
                                 <a href="<?php echo $permalink; ?>">
                                         <div class="sk-rating">
-                                            <div itemprop="reviewRating" itemscope itemtype="http://schema.org/Rating" class="star-rating" title="<?php echo sprintf( __( 'Rated %d out of 5', 'sk' ), $rating ) ?>">
-                                                <span style="width:<?php echo ( intval( $rating ) / 5 ) * 100; ?>%"><strong itemprop="ratingValue"><?php echo $rating; ?></strong> <?php _e( 'out of 5', 'sk' ); ?></span>
+                                            <div itemprop="reviewRating" itemscope itemtype="http://schema.org/Rating" class="star-rating" title="<?php echo sprintf( __( 'Rated %d out of 5', 'sk-core' ), $rating ) ?>">
+                                                <span style="width:<?php echo ( intval( $rating ) / 5 ) * 100; ?>%"><strong itemprop="ratingValue"><?php echo $rating; ?></strong> <?php _e( 'out of 5', 'sk-core' ); ?></span>
                                             </div>
                                         </div>
                                 </a>

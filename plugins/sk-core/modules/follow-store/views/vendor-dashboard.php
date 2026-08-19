@@ -18,7 +18,7 @@ do_action( 'sk_dashboard_wrap_start' );
         <div class="sk-followers-page-header">
             <h2>
                 <i class="fas fa-heart"></i>
-                <?php esc_html_e( 'Follower', 'sk' ); ?>
+                <?php esc_html_e( 'Follower', 'sk-core' ); ?>
                 <?php if ( ! empty( $customers ) ) : ?>
                     <span class="sk-followers-total"><?php echo count( $customers ); ?></span>
                 <?php endif; ?>
@@ -29,7 +29,7 @@ do_action( 'sk_dashboard_wrap_start' );
 
             <div class="sk-followers-empty">
                 <i class="fas fa-heart-broken"></i>
-                <p><?php esc_html_e( 'Noch keine Follower vorhanden.', 'sk' ); ?></p>
+                <p><?php esc_html_e( 'Noch keine Follower vorhanden.', 'sk-core' ); ?></p>
             </div>
 
         <?php else : ?>
@@ -44,7 +44,7 @@ do_action( 'sk_dashboard_wrap_start' );
                         $name = $user ? $user->display_name : '';
                     }
                     if ( ! $name ) {
-                        $name = sprintf( '(%s)', __( 'kein Name', 'sk' ) );
+                        $name = sprintf( '(%s)', __( 'kein Name', 'sk-core' ) );
                     }
 
                     $follower    = $followers[ $customer_id ];
@@ -60,7 +60,7 @@ do_action( 'sk_dashboard_wrap_start' );
                             <a href="<?php echo esc_url( $store_url ); ?>" class="sk-follower-card__name"><strong><?php echo esc_html( $name ); ?></strong></a>
                             <span class="sk-follower-card__since">
                                 <i class="fas fa-clock"></i>
-                                <?php echo esc_html( sprintf( __( 'vor %s', 'sk' ), $diff ) ); ?>
+                                <?php echo esc_html( sprintf( __( 'vor %s', 'sk-core' ), $diff ) ); ?>
                             </span>
                         </div>
                     </div>

@@ -29,7 +29,7 @@ class DashboardMenu extends DashboardModule {
 
         return [
             'slug'       => 'subscription',
-            'title'      => __( 'Subscription', 'sk' ),
+            'title'      => __( 'Subscription', 'sk-core' ),
             'icon'       => '<i class="fas fa-book"></i>',
             'url'        => $permalink,
             'pos'        => 180,

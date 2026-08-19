@@ -9,7 +9,7 @@ class AnnouncementsPage extends AbstractPage {
     }
 
     public function get_title(): string {
-        return __( 'Announcements', 'sk' );
+        return __( 'Announcements', 'sk-core' );
     }
 
     public function is_pro(): bool {
@@ -61,7 +61,7 @@ class AnnouncementsPage extends AbstractPage {
         }
 
         if ( ! wp_verify_nonce( $_POST['sk_announcement_nonce'], 'sk_announcement_save' ) ) {
-            wp_die( __( 'Security check failed.', 'sk' ) );
+            wp_die( __( 'Security check failed.', 'sk-core' ) );
         }
 
         if ( ! current_user_can( 'manage_woocommerce' ) ) {

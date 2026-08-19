@@ -165,7 +165,7 @@ class Products {
         }
 
         $classes_options     = [];
-        $classes_options[''] = __( 'Standard', 'sk' );
+        $classes_options[''] = __( 'Standard', 'sk-core' );
 
         if ( $tax_classes ) {
             foreach ( $tax_classes as $class ) {
@@ -303,7 +303,7 @@ class Products {
 
         if ( current_user_can( 'sk_edit_product' ) ) {
             $row_action['quick-edit'] = array(
-                'title' => __( 'Quick Edit', 'sk' ),
+                'title' => __( 'Quick Edit', 'sk-core' ),
                 'url'   => '#quick-edit',
                 'class' => 'item-inline-edit editline',
                 'other' => 'data-product-id="' . $post->ID . '"',
@@ -315,7 +315,7 @@ class Products {
 
         if ( $can_duplicate_product && 'on' === $vendor_can_duplicate_product ) {
             $row_action['duplicate'] = array(
-                'title' => __( 'Duplicate', 'sk' ),
+                'title' => __( 'Duplicate', 'sk-core' ),
                 'url'   => wp_nonce_url( add_query_arg( array( 'action' => 'sk-duplicate-product', 'product_id' => $post->ID, ), sk_get_navigation_url('products') ), 'sk-duplicate-product' ), // phpcs:ignore
                 'class' => 'duplicate',
             );
@@ -381,7 +381,7 @@ class Products {
     public function duplicate_product( $product_id ) {
         $no_permission_error = new WP_Error(
             'sk-no-permission',
-            __( 'You do not have permission to perform this action', 'sk' )
+            __( 'You do not have permission to perform this action', 'sk-core' )
         );
 
         $user_id = sk_get_current_user_id();
@@ -403,7 +403,7 @@ class Products {
         if ( ! $product ) {
             return new WP_Error(
                 'sk-no-such-product',
-                __( 'No such product found!', 'sk' )
+                __( 'No such product found!', 'sk-core' )
             );
         }
 
@@ -437,7 +437,7 @@ class Products {
                 '',
                 array(
                     'deleted' => true,
-                    'message' => __( 'Product succesfully duplicated', 'sk' ),
+                    'message' => __( 'Product succesfully duplicated', 'sk-core' ),
                 )
             );
         }
@@ -498,11 +498,11 @@ class Products {
      */
     public function set_default_product_types( $product_types ) {
         $product_types = array(
-            'simple'   => __( 'Simple', 'sk' ),
-            'variable' => __( 'Variable', 'sk' ),
-            'external' => __( 'External/Affiliate product', 'sk' ),
+            'simple'   => __( 'Simple', 'sk-core' ),
+            'variable' => __( 'Variable', 'sk-core' ),
+            'external' => __( 'External/Affiliate product', 'sk-core' ),
         );
-        $product_types['grouped'] = __( 'Group Product', 'sk' );
+        $product_types['grouped'] = __( 'Group Product', 'sk-core' );
         return $product_types;
     }
 
@@ -610,7 +610,7 @@ class Products {
             'product_vendors_can_create_tags' => sk_get_option( 'product_vendors_can_create_tags', 'sk_selling' ),
             'product_inline_edit_nonce'       => wp_create_nonce( 'product-inline-edit' ),
             'is_vendor_enabled'               => sk_is_seller_enabled( sk_get_current_user_id() ),
-            'not_enable_message'              => __( 'Error! Your account is not enabled for selling, please contact the admin', 'sk' ),
+            'not_enable_message'              => __( 'Error! Your account is not enabled for selling, please contact the admin', 'sk-core' ),
         );
 
         return array_merge( $args, $sk_pro_args );
@@ -716,13 +716,13 @@ class Products {
             'visibilities' => sk_get_product_visibility_options(),
             'can_manage_stock' => get_option( 'woocommerce_manage_stock' ),
             'stock_statuses' => array(
-                'instock'    => __( 'In Stock', 'sk' ),
-                'outofstock' => __( 'Out of Stock', 'sk' ),
+                'instock'    => __( 'In Stock', 'sk-core' ),
+                'outofstock' => __( 'Out of Stock', 'sk-core' ),
             ),
             'backorder_options' => array(
-                'no'     => __( 'Do not allow', 'sk' ),
-                'notify' => __( 'Allow but notify customer', 'sk' ),
-                'yes'    => __( 'Allow', 'sk' ),
+                'no'     => __( 'Do not allow', 'sk-core' ),
+                'notify' => __( 'Allow but notify customer', 'sk-core' ),
+                'yes'    => __( 'Allow', 'sk-core' ),
             ),
         );
 
@@ -737,12 +737,12 @@ class Products {
      */
     public function product_inline_edit() {
         if ( ! isset( $_POST['security'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['security'] ) ), 'product-inline-edit' ) ) {
-            wp_send_json_error( __( 'Invalid nonce', 'sk' ) );
+            wp_send_json_error( __( 'Invalid nonce', 'sk-core' ) );
         }
 
         try {
             if ( empty( $_POST['data'] ) ) {
-                throw new \RuntimeException( esc_html__( 'No data found', 'sk' ) );
+                throw new \RuntimeException( esc_html__( 'No data found', 'sk-core' ) );
             }
 
             /**
@@ -754,11 +754,11 @@ class Products {
             $product_data = apply_filters( 'sk_update_product_post_data', wc_clean( wp_unslash( $_POST['data'] ) ) );
 
             if ( empty( $product_data['ID'] ) ) {
-                throw new \RuntimeException( esc_html__( 'Product ID field is required', 'sk' ) );
+                throw new \RuntimeException( esc_html__( 'Product ID field is required', 'sk-core' ) );
             }
 
             if ( empty( $product_data['chosen_product_cat'] ) ) {
-                throw new \RuntimeException( esc_html__( 'Please select a category', 'sk' ) );
+                throw new \RuntimeException( esc_html__( 'Please select a category', 'sk-core' ) );
             }
 
             if ( isset( $product_data['chosen_product_cat'] ) ) {
@@ -769,11 +769,11 @@ class Products {
             $chosen_cat    = $is_single_cat ? array( absint( reset( $product_data['chosen_product_cat'] ) ) ) : $product_data['chosen_product_cat'];
 
             if ( $is_single_cat && $chosen_cat[0] === 0 ) {
-                throw new \RuntimeException( esc_html__( 'Please select a category', 'sk' ) );
+                throw new \RuntimeException( esc_html__( 'Please select a category', 'sk-core' ) );
             }
 
             if ( ! empty( $product_data['sku'] ) && ! wc_product_has_unique_sku( $product_data['ID'], $product_data['sku'] ) ) {
-                throw new \RuntimeException( esc_html__( 'Invalid or duplicated SKU.', 'sk' ) );
+                throw new \RuntimeException( esc_html__( 'Invalid or duplicated SKU.', 'sk-core' ) );
             }
 
             $data = array(
@@ -812,7 +812,7 @@ class Products {
                 // Setting limitation for how many product tags that vendor can input.
                 if ( $maximum_tags_select_length !== -1 && count( $product_data['product_tag'] ) > $maximum_tags_select_length ) {
                     /* translators: %s: maximum tag length */
-                    throw new \RuntimeException( sprintf( __( 'You can only select %s tags', 'sk' ), number_format_i18n( $maximum_tags_select_length ) ) );
+                    throw new \RuntimeException( sprintf( __( 'You can only select %s tags', 'sk-core' ), number_format_i18n( $maximum_tags_select_length ) ) );
                 }
 
                 $tags = [];
@@ -846,7 +846,7 @@ class Products {
             }
 
             if ( ! $product instanceof \WC_Product ) {
-                throw new \RuntimeException( esc_html__( 'Error updating product data', 'sk' ) );
+                throw new \RuntimeException( esc_html__( 'Error updating product data', 'sk-core' ) );
             }
 
             Helper::set_object_terms_from_chosen_categories( $product->get_id(), $chosen_cat );
@@ -877,7 +877,7 @@ class Products {
 
             wp_send_json_success(
                 array(
-					'message' => esc_html__( 'Product updated successfully', 'sk' ),
+					'message' => esc_html__( 'Product updated successfully', 'sk-core' ),
 					'row' => $html,
                 )
             );

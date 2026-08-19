@@ -468,10 +468,10 @@ class Helper {
      */
     public static function format_expire_after_days_text( $expire_after_days ) {
         if ( in_array( intval( $expire_after_days ), [ -1, 0 ], true ) ) {
-            return __( 'Unlimited days', 'sk' );
+            return __( 'Unlimited days', 'sk-core' );
         }
         // translators: 1) expire after day count
-        return sprintf( _n( '%s day', '%s days', $expire_after_days, 'sk' ), number_format_i18n( $expire_after_days ) );
+        return sprintf( _n( '%s day', '%s days', $expire_after_days, 'sk-core' ), number_format_i18n( $expire_after_days ) );
     }
 
     /**
@@ -484,7 +484,7 @@ class Helper {
      */
     public static function get_formatted_expire_date( $expires_at ) {
         if ( 0 === intval( $expires_at ) ) {
-            return __( 'Unlimited', 'sk' );
+            return __( 'Unlimited', 'sk-core' );
         }
         return sk_format_date( $expires_at );
     }
@@ -499,7 +499,7 @@ class Helper {
      */
     public static function get_formatted_remaining_slot_count( $remaining_slot ) {
         if ( -1 === intval( $remaining_slot ) ) {
-            return __( 'Unlimited', 'sk' );
+            return __( 'Unlimited', 'sk-core' );
         }
         return $remaining_slot;
     }
@@ -727,27 +727,27 @@ class Helper {
         $advertisement_data = static::get_advertisement_data_by_product( $product_id );
 
         if ( empty( $advertisement_data ) ) {
-            return new WP_Error( 'invalid_product', __( 'No product found with given product ID. Please check your input.', 'sk' ) );
+            return new WP_Error( 'invalid_product', __( 'No product found with given product ID. Please check your input.', 'sk-core' ) );
         }
 
         // check if product status is publish
         if ( 'publish' !== $advertisement_data['post_status'] ) {
-            return new WP_Error( 'invalid_product', __( 'You can not advertise this product. Products need to be published before you can advertise.', 'sk' ) );
+            return new WP_Error( 'invalid_product', __( 'You can not advertise this product. Products need to be published before you can advertise.', 'sk-core' ) );
         }
 
         // check if product is belong to given vendor id
         if ( ! $advertisement_data['vendor_id'] || intval( $vendor_id ) !== $advertisement_data['vendor_id'] ) {
-            return new WP_Error( 'invalid_vendor', __( 'Product id does not belong to given vendor. Please check your input', 'sk' ) );
+            return new WP_Error( 'invalid_vendor', __( 'Product id does not belong to given vendor. Please check your input', 'sk-core' ) );
         }
 
         // check advertisement already exists in database, this is to prevent duplicate entry
         if ( $advertisement_data['already_advertised'] ) {
-            return new WP_Error( 'invalid_product', __( 'Advertisement for this product is already going on. Please select another product.', 'sk' ) );
+            return new WP_Error( 'invalid_product', __( 'Advertisement for this product is already going on. Please select another product.', 'sk-core' ) );
         }
 
         // check we've got slot left for advertisement
         if ( empty( $advertisement_data['remaining_slot'] ) ) {
-            return new WP_Error( 'empty_slot', __( 'There are no advertisement slots available at this moment.', 'sk' ) );
+            return new WP_Error( 'empty_slot', __( 'There are no advertisement slots available at this moment.', 'sk-core' ) );
         }
 
         return $advertisement_data;
@@ -828,12 +828,12 @@ class Helper {
         try {
             // check permission, don't let vendor staff view this section
             if ( ! current_user_can( 'skdar' ) ) {
-                throw new Exception( __( 'You do not have permission to use this action.', 'sk' ), 400 );
+                throw new Exception( __( 'You do not have permission to use this action.', 'sk-core' ), 400 );
             }
 
             // check if purchasing advertisement settings is enabled
             if ( ! static::is_per_product_advertisement_enabled() && ! static::is_enabled_for_vendor_subscription() ) {
-                throw new Exception( __( 'Purchasing advertisement is restricted by admin.', 'sk' ), 403 );
+                throw new Exception( __( 'Purchasing advertisement is restricted by admin.', 'sk-core' ), 403 );
             }
 
             // get advertisement data
@@ -862,7 +862,7 @@ class Helper {
                 }
 
                 return [
-                    'message'       => __( 'Product has been successfully advertised.', 'sk' ),
+                    'message'       => __( 'Product has been successfully advertised.', 'sk-core' ),
                     'free_purchase' => true,
                 ];
             }
@@ -870,16 +870,16 @@ class Helper {
             // Add advertisement product to cart
             $advertisement_product_id = static::get_advertisement_base_product();
             if ( ! is_numeric( $advertisement_product_id ) ) {
-                throw new Exception( __( 'Invalid base advertisement product id. Please contact with site admin.', 'sk' ), 400 );
+                throw new Exception( __( 'Invalid base advertisement product id. Please contact with site admin.', 'sk-core' ), 400 );
             }
 
             $advertisement_product = wc_get_product( $advertisement_product_id );
             if ( ! $advertisement_product ) {
-                throw new Exception( __( 'Invalid base advertisement product found. Please contact with site admin.', 'sk' ), 400 );
+                throw new Exception( __( 'Invalid base advertisement product found. Please contact with site admin.', 'sk-core' ), 400 );
             }
 
             if ( $advertisement_product->get_status() !== 'publish' ) {
-                throw new Exception( __( 'Base advertisement product status is not published. Please contact with site admin.', 'sk' ), 400 );
+                throw new Exception( __( 'Base advertisement product status is not published. Please contact with site admin.', 'sk-core' ), 400 );
             }
 
             /*
@@ -904,12 +904,12 @@ class Helper {
 
             if ( $added ) {
                 return [
-                    'message'       => __( 'Product has been added to your cart.', 'sk' ),
+                    'message'       => __( 'Product has been added to your cart.', 'sk-core' ),
                     'free_purchase' => false,
                 ];
             }
 
-            throw new Exception( __( 'Something went wrong.', 'sk' ), 400 );
+            throw new Exception( __( 'Something went wrong.', 'sk-core' ), 400 );
         } catch ( Exception $e ) {
             return new WP_Error( 'sk-error-purchase-product-advertisement', $e->getMessage(), [ 'status' => $e->getCode() ] );
         }

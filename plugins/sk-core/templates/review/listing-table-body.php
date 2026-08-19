@@ -8,7 +8,7 @@ if ( count( $comments ) === 0 ) {
     ?>
     <div class="sk-reviews-empty">
         <i class="fas fa-star-half-alt"></i>
-        <p><?php esc_html_e( 'Keine Bewertungen gefunden.', 'sk' ); ?></p>
+        <p><?php esc_html_e( 'Keine Bewertungen gefunden.', 'sk-core' ); ?></p>
     </div>
     <?php
 } else {

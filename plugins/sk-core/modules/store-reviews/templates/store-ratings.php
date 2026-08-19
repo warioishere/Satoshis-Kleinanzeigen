@@ -1,6 +1,6 @@
 <div class="store-ratings item">
     <label>
-        <?php esc_html_e( 'Rating:', 'sk' ); ?>
+        <?php esc_html_e( 'Rating:', 'sk-core' ); ?>
     </label>
 
     <p class="sk-stars">
@@ -10,6 +10,6 @@
             }
         ?>
 
-        <span class="up">& <?php esc_html_e( 'Up', 'sk' ); ?></span>
+        <span class="up">& <?php esc_html_e( 'Up', 'sk-core' ); ?></span>
     </p>
 </div>

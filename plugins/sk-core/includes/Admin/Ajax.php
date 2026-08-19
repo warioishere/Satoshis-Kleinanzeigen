@@ -17,11 +17,11 @@ class Ajax {
      */
     public function rewrite_product_variations_author() {
         if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'sk_admin' ) ) {
-            wp_send_json_error( __( 'Nonce verification failed', 'sk' ), 403 );
+            wp_send_json_error( __( 'Nonce verification failed', 'sk-core' ), 403 );
         }
 
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
-            wp_send_json_error( __( 'You don\'t have enough permission', 'sk' ), 403 );
+            wp_send_json_error( __( 'You don\'t have enough permission', 'sk-core' ), 403 );
         }
 
         $page         = ! empty( $_POST['page'] ) ? absint( $_POST['page'] ) : 1;
@@ -37,7 +37,7 @@ class Ajax {
         wp_send_json_success(
             [
                 'process' => 'running',
-                'message' => __( 'Variable product variations author ids rewriting queued successfully', 'sk' ),
+                'message' => __( 'Variable product variations author ids rewriting queued successfully', 'sk-core' ),
             ]
         );
     }

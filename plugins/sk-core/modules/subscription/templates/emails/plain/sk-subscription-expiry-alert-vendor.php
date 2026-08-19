@@ -16,20 +16,20 @@ if ( ! $vendor ) {
 echo '= ' . esc_html( wp_strip_all_tags( wptexturize( $email_heading ) ) ) . " =\n\n";
 
 
-esc_html_e( 'Dear subscriber, Your subscription will be ending soon. Please renew your package in a timely manner for continued usage.', 'sk' );
+esc_html_e( 'Dear subscriber, Your subscription will be ending soon. Please renew your package in a timely manner for continued usage.', 'sk-core' );
 echo " \n\n";
 
 if ( $subscription ) {
-    printf( __( 'Here are your subscription pack details:', 'sk' ) );
+    printf( __( 'Here are your subscription pack details:', 'sk-core' ) );
     echo " \n";
     echo "\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\n";
 
     // translators: %s Subscription Pack.
-    printf( '<p>%s</p>', sprintf( __( 'Subscription Pack: %s', 'sk' ), $subscription->get_package_title() ) );
+    printf( '<p>%s</p>', sprintf( __( 'Subscription Pack: %s', 'sk-core' ), $subscription->get_package_title() ) );
     echo " \n";
 
     // translators: %s Price.
-    printf( '<p>%s</p>', sprintf( __( 'Price: %s', 'sk' ), esc_html( wp_strip_all_tags( wptexturize( sk()->email->currency_symbol( $subscription->get_price() ) ) ) ) ) );
+    printf( '<p>%s</p>', sprintf( __( 'Price: %s', 'sk-core' ), esc_html( wp_strip_all_tags( wptexturize( sk()->email->currency_symbol( $subscription->get_price() ) ) ) ) ) );
     echo " \n";
 }
 

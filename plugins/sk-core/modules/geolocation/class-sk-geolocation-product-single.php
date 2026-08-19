@@ -42,7 +42,7 @@ class SK_Geolocation_Product_Single {
         }
 
         $tabs['geolocation'] = array(
-            'title'    => __( 'Location', 'sk' ),
+            'title'    => __( 'Location', 'sk-core' ),
             'priority' => 90,
             'callback' => array( $this, 'location_tab' )
         );
@@ -59,7 +59,7 @@ class SK_Geolocation_Product_Single {
      * @return void
      */
     public function location_tab() {
-        printf( '<h2>%s</h2>', __( 'Product Location', 'sk' ) );
+        printf( '<h2>%s</h2>', __( 'Product Location', 'sk-core' ) );
 
         sk_geo_product_location();
 

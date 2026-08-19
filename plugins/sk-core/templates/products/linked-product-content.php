@@ -1,7 +1,7 @@
 <div class="sk-linked-product-options sk-edit-row sk-clearfix hide_if_external">
     <div class="sk-section-heading" data-togglehandler="sk_linked_product_options">
-        <h2><i class="fas fa-link" aria-hidden="true"></i> <?php _e( 'Linked Products', 'sk' ); ?></h2>
-        <p><?php _e( 'Set your linked products for upsell and cross-sells', 'sk' ); ?></p>
+        <h2><i class="fas fa-link" aria-hidden="true"></i> <?php _e( 'Linked Products', 'sk-core' ); ?></h2>
+        <p><?php _e( 'Set your linked products for upsell and cross-sells', 'sk-core' ); ?></p>
         <a href="#" class="sk-section-toggle">
             <i class="fas fa-sort-down fa-flip-vertical" aria-hidden="true"></i>
         </a>
@@ -10,8 +10,8 @@
 
     <div class="sk-section-content">
         <div class="content-half-part sk-form-group hide_if_variation">
-            <label for="upsell_ids" class="form-label"><?php _e( 'Upsells', 'sk' ); ?> <i class="fas fa-question-circle tips" aria-hidden="true" data-title="<?php _e( 'Upsells are products which you recommend instead of the currently viewed product, for example, products that are more profitable or better quality or more expensive.', 'sk' ); ?>"></i></label>
-            <select class="sk-form-control sk-product-search" multiple="multiple" style="width: 100%;" id="upsell_ids" name="upsell_ids[]" data-placeholder="<?php esc_attr_e( 'Search for a product&hellip;', 'sk' ); ?>" data-action="sk_json_search_products_and_variations" data-exclude="<?php echo intval( $post->ID ); ?>" data-user_ids="<?php echo sk_get_current_user_id(); ?>">
+            <label for="upsell_ids" class="form-label"><?php _e( 'Upsells', 'sk-core' ); ?> <i class="fas fa-question-circle tips" aria-hidden="true" data-title="<?php _e( 'Upsells are products which you recommend instead of the currently viewed product, for example, products that are more profitable or better quality or more expensive.', 'sk-core' ); ?>"></i></label>
+            <select class="sk-form-control sk-product-search" multiple="multiple" style="width: 100%;" id="upsell_ids" name="upsell_ids[]" data-placeholder="<?php esc_attr_e( 'Search for a product&hellip;', 'sk-core' ); ?>" data-action="sk_json_search_products_and_variations" data-exclude="<?php echo intval( $post->ID ); ?>" data-user_ids="<?php echo sk_get_current_user_id(); ?>">
                 <?php
                     if ( !empty( $upsells_ids ) ) {
                         foreach ( $upsells_ids as $product_id ) {
@@ -26,8 +26,8 @@
         </div>
 
         <div class="content-half-part">
-            <label for="crosssell_ids" class="form-label"><?php _e( 'Cross-sells', 'sk' ); ?> <i class="fas fa-question-circle tips" aria-hidden="true" data-title="<?php _e( 'Cross-sells are products which you promote in the cart, based on the current product.', 'sk' ); ?>"></i></label>
-            <select class="sk-form-control sk-product-search" multiple="multiple" style="width: 100%;" id="crosssell_ids" name="crosssell_ids[]" data-placeholder="<?php esc_attr_e( 'Search for a product&hellip;', 'sk' ); ?>" data-action="sk_json_search_products_and_variations" data-exclude="<?php echo intval( $post->ID ); ?>" data-user_ids="<?php echo sk_get_current_user_id(); ?>">
+            <label for="crosssell_ids" class="form-label"><?php _e( 'Cross-sells', 'sk-core' ); ?> <i class="fas fa-question-circle tips" aria-hidden="true" data-title="<?php _e( 'Cross-sells are products which you promote in the cart, based on the current product.', 'sk-core' ); ?>"></i></label>
+            <select class="sk-form-control sk-product-search" multiple="multiple" style="width: 100%;" id="crosssell_ids" name="crosssell_ids[]" data-placeholder="<?php esc_attr_e( 'Search for a product&hellip;', 'sk-core' ); ?>" data-action="sk_json_search_products_and_variations" data-exclude="<?php echo intval( $post->ID ); ?>" data-user_ids="<?php echo sk_get_current_user_id(); ?>">
                 <?php
                     if ( ! empty( $crosssells_ids ) ) {
                         foreach ( $crosssells_ids as $product_id ) {

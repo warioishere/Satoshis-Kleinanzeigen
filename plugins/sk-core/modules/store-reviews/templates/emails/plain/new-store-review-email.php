@@ -13,11 +13,11 @@ echo '= ' . esc_html( wp_strip_all_tags( $email_heading ) ) . " =\n";
 ?>
 <?php echo "\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n"; ?>
 
-<?php esc_html_e( 'Store Name: ', 'sk' ); ?><?php echo esc_html( $store_name ) . "\n"; ?>
-<?php esc_html_e( 'Reviewed by: ', 'sk' ); ?><?php echo esc_html( $reviewer_name ) . "\n"; ?>
-<?php esc_html_e( 'Rating: ', 'sk' ); ?><?php echo esc_html( $rating ) . "\n"; ?>
-<?php esc_html_e( 'Title: ', 'sk' ); ?><?php echo esc_html( $post_title ) . "\n"; ?>
-<?php esc_html_e( 'Details: ', 'sk' ); ?><?php echo esc_html( $post_details ) . "\n"; ?>
+<?php esc_html_e( 'Store Name: ', 'sk-core' ); ?><?php echo esc_html( $store_name ) . "\n"; ?>
+<?php esc_html_e( 'Reviewed by: ', 'sk-core' ); ?><?php echo esc_html( $reviewer_name ) . "\n"; ?>
+<?php esc_html_e( 'Rating: ', 'sk-core' ); ?><?php echo esc_html( $rating ) . "\n"; ?>
+<?php esc_html_e( 'Title: ', 'sk-core' ); ?><?php echo esc_html( $post_title ) . "\n"; ?>
+<?php esc_html_e( 'Details: ', 'sk-core' ); ?><?php echo esc_html( $post_details ) . "\n"; ?>
 <?php echo "\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\n"; ?>
 
 <?php

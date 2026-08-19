@@ -17,15 +17,15 @@ echo "\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\n";
 
 printf(
     "%s \n %s \n %s",
-    esc_html__( 'You have got a new abuse report for the product', 'sk' ),
+    esc_html__( 'You have got a new abuse report for the product', 'sk-core' ),
     esc_html( wptexturize( $data['product_title'] ) ),
     esc_url( $data['product_link'] )
 );
 echo " \n\n";
-printf( '%s: %s', esc_html__( 'Reason', 'sk' ), esc_html( wp_strip_all_tags( wptexturize( $data['reason'] ) ) ) );
+printf( '%s: %s', esc_html__( 'Reason', 'sk-core' ), esc_html( wp_strip_all_tags( wptexturize( $data['reason'] ) ) ) );
 echo " \n\n";
 if ( $data['description'] ) {
-    printf( '%s: %s', esc_html__( 'Description', 'sk' ), esc_html( wp_strip_all_tags( wptexturize( $data['description'] ) ) ) );
+    printf( '%s: %s', esc_html__( 'Description', 'sk-core' ), esc_html( wp_strip_all_tags( wptexturize( $data['description'] ) ) ) );
 }
 echo " \n\n";
 if ( $data['customer'] ) {
@@ -33,34 +33,34 @@ if ( $data['customer'] ) {
     $customer_link = admin_url( sprintf( 'user-edit.php?user_id=%d', $customer->get_id() ) );
     printf(
         "%s: %s \n %s \n\n",
-        esc_html__( 'Reported by', 'sk' ),
+        esc_html__( 'Reported by', 'sk-core' ),
         esc_html( $customer->get_username() ),
         $customer_link
     );
 } else {
     printf(
         "%s: %s, %s: %s \n\n",
-        esc_html__( 'Reported by', 'sk' ),
+        esc_html__( 'Reported by', 'sk-core' ),
         esc_html( wptexturize( $data['customer_name'] ) ),
-        esc_html__( 'Email', 'sk' ),
+        esc_html__( 'Email', 'sk-core' ),
         esc_html( $data['customer_email'] )
     );
 }
 
 printf(
     '%s: %s',
-    esc_html__( 'Reported At', 'sk' ),
+    esc_html__( 'Reported At', 'sk-core' ),
     sk_current_datetime()->modify( $data['reported_at'] )->format( wc_date_format() . ' ' . wc_time_format() )
 );
 
 printf(
     "%s: %s\n %s \n\n",
-    esc_html__( 'Product Vendor', 'sk' ),
+    esc_html__( 'Product Vendor', 'sk-core' ),
     esc_html( wptexturize( $data['vendor_name'] ) ),
     esc_url( $data['vendor_link'] )
 );
 
-esc_html_e( 'You can draft or remove the product or you can ignore this email if you think the product is OK.', 'sk' );
+esc_html_e( 'You can draft or remove the product or you can ignore this email if you think the product is OK.', 'sk-core' );
 
 echo "\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\n";
 

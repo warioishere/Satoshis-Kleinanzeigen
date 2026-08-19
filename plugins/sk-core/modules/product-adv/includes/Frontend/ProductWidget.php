@@ -28,14 +28,14 @@ class ProductWidget extends \WC_Widget {
      */
     public function __construct() {
         $this->widget_cssclass    = 'woocommerce widget_products sk_product_advertisement_widget';
-        $this->widget_description = __( 'A list of advertised products.', 'sk' );
+        $this->widget_description = __( 'A list of advertised products.', 'sk-core' );
         $this->widget_id          = 'sk_product_advertisement_widget';
-        $this->widget_name        = __( 'SK: Advertised Products', 'sk' );
+        $this->widget_name        = __( 'SK: Advertised Products', 'sk-core' );
         $this->settings           = [
             'title'       => [
                 'type'  => 'text',
-                'std'   => __( 'Products', 'sk' ),
-                'label' => __( 'Title', 'sk' ),
+                'std'   => __( 'Products', 'sk-core' ),
+                'label' => __( 'Title', 'sk-core' ),
             ],
             'count'      => [
                 'type'  => 'number',
@@ -43,37 +43,37 @@ class ProductWidget extends \WC_Widget {
                 'min'   => 1,
                 'max'   => '',
                 'std'   => get_option( 'woocommerce_catalog_columns', 3 ),
-                'label' => __( 'Number of products to show', 'sk' ),
+                'label' => __( 'Number of products to show', 'sk-core' ),
             ],
             'orderby'     => [
                 'type'    => 'select',
                 'std'     => 'added',
-                'label'   => __( 'Order by', 'sk' ),
+                'label'   => __( 'Order by', 'sk-core' ),
                 'options' => [
-                    'product_title' => __( 'Title', 'sk' ),
-                    'added'         => __( 'Date', 'sk' ),
-                    'expires_at'    => __( 'Expire Date', 'sk' ),
-                    'price'         => __( 'Price', 'sk' ),
+                    'product_title' => __( 'Title', 'sk-core' ),
+                    'added'         => __( 'Date', 'sk-core' ),
+                    'expires_at'    => __( 'Expire Date', 'sk-core' ),
+                    'price'         => __( 'Price', 'sk-core' ),
                 ],
             ],
             'order'       => [
                 'type'    => 'select',
                 'std'     => 'desc',
-                'label'   => _x( 'Order', 'Sorting order', 'sk' ),
+                'label'   => _x( 'Order', 'Sorting order', 'sk-core' ),
                 'options' => [
-                    'asc'  => __( 'ASC', 'sk' ),
-                    'desc' => __( 'DESC', 'sk' ),
+                    'asc'  => __( 'ASC', 'sk-core' ),
+                    'desc' => __( 'DESC', 'sk-core' ),
                 ],
             ],
             'vendor_id'       => [
                 'type'  => 'text',
                 'std'   => '',
-                'label' => __( 'Vendor(s)', 'sk' ),
+                'label' => __( 'Vendor(s)', 'sk-core' ),
             ],
             'vendor_only_advertisement' => [
                 'type'  => 'checkbox',
                 'std'   => 0,
-                'label' => __( 'Display vendor only advertisements on single store page.', 'sk' ),
+                'label' => __( 'Display vendor only advertisements on single store page.', 'sk-core' ),
             ],
         ];
 

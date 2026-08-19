@@ -21,7 +21,7 @@ use SK\Core\Announcement\Single;
         <div class="sk-no-announcement">
             <div class="annoument-no-wrapper">
                 <i class="fas fa-bell sk-announcement-icon"></i>
-                <p><?php esc_html_e( 'No announcement found.', 'sk' ); ?></p>
+                <p><?php esc_html_e( 'No announcement found.', 'sk-core' ); ?></p>
             </div>
         </div>
         <?php
@@ -47,7 +47,7 @@ use SK\Core\Announcement\Single;
                 </div>
 
                 <div class="sk-announcement-content">
-                    <?php echo wp_trim_words( $notice->get_content(), '15', sprintf( '<p><a href="%1$s">%2$s</a></p>', esc_url( $notice_url ), __( ' See More', 'sk' ) ) ); ?>
+                    <?php echo wp_trim_words( $notice->get_content(), '15', sprintf( '<p><a href="%1$s">%2$s</a></p>', esc_url( $notice_url ), __( ' See More', 'sk-core' ) ) ); ?>
                 </div>
             </div>
             <div class="sk-clearfix"></div>
@@ -68,8 +68,8 @@ use SK\Core\Announcement\Single;
             'format'    => '?pagenum=%#%',
             'add_args'  => false,
             'type'      => 'array',
-            'prev_text' => __( '&laquo; Previous', 'sk' ),
-            'next_text' => __( 'Next &raquo;', 'sk' ),
+            'prev_text' => __( '&laquo; Previous', 'sk-core' ),
+            'next_text' => __( 'Next &raquo;', 'sk-core' ),
         ]
     );
 

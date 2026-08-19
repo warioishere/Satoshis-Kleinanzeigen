@@ -29,7 +29,7 @@ class Admin {
         if ( current_user_can( $capability ) ) {
             global $submenu;
 
-            $title = esc_html__( 'Abuse Reports', 'sk' );
+            $title = esc_html__( 'Abuse Reports', 'sk-core' );
             $slug  = 'sk';
 
             $submenu[ $slug ][] = [ $title, $capability, 'admin.php?page=' . $slug . '&tab=abuse-reports' ];

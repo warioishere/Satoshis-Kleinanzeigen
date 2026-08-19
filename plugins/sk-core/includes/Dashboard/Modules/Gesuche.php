@@ -13,7 +13,7 @@ class Gesuche extends DashboardModule {
     public function config(): ?array {
         return [
             'slug'       => 'gesuche',
-            'title'      => __( 'Gesuche', 'sk' ),
+            'title'      => __( 'Gesuche', 'sk-core' ),
             'icon'       => '<i class="fas fa-search"></i>',
             'pos'        => 55,
             'permission' => 'sk_view_overview_menu',

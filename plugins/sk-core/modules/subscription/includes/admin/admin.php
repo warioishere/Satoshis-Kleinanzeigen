@@ -106,7 +106,7 @@ class DPS_Admin {
             return $columns;
         }
 
-        $column_header = '<span class="subscription_head tips" data-tip="' . esc_attr__( 'Vendor Subscription Relationship', 'sk' ) . '">' . esc_attr__( 'Subscription Relationship', 'sk' ) . '</span>';
+        $column_header = '<span class="subscription_head tips" data-tip="' . esc_attr__( 'Vendor Subscription Relationship', 'sk-core' ) . '">' . esc_attr__( 'Subscription Relationship', 'sk-core' ) . '</span>';
 
         $new_columns = Helper::array_insert_after( 'shipping_address', $columns, 'subscription_relationship', $column_header );
 
@@ -175,7 +175,7 @@ class DPS_Admin {
 
         // renewal orders are children of the original order
         if ( 0 !== $order->get_parent_id() ) {
-            echo '<span class="sk_vs_renew_order tips" data-tip="' . esc_attr__( 'Vendor Subscription Renewal Order', 'sk' ) . '"></span>';
+            echo '<span class="sk_vs_renew_order tips" data-tip="' . esc_attr__( 'Vendor Subscription Renewal Order', 'sk-core' ) . '"></span>';
             return;
         }
 
@@ -187,7 +187,7 @@ class DPS_Admin {
             return;
         }
 
-        echo '<span class="sk_vs_non_recurring_order tips" data-tip="' . esc_attr__( 'Vendor Subscription Order', 'sk' ) . '"></span>';
+        echo '<span class="sk_vs_non_recurring_order tips" data-tip="' . esc_attr__( 'Vendor Subscription Order', 'sk-core' ) . '"></span>';
     }
 
     /**
@@ -222,7 +222,7 @@ class DPS_Admin {
         remove_meta_box( 'sk_delivery_time_fields', $screen, 'side' );
 
         // add subscription metabox
-        add_meta_box( 'sk_vendor_subscription_renewal_orders', __( 'Vendor Subscriptions Related Orders', 'sk' ), [ $this, 'subscription_metabox_content' ], $screen, 'normal', 'high' );
+        add_meta_box( 'sk_vendor_subscription_renewal_orders', __( 'Vendor Subscriptions Related Orders', 'sk-core' ), [ $this, 'subscription_metabox_content' ], $screen, 'normal', 'high' );
     }
 
     /**
@@ -365,7 +365,7 @@ class DPS_Admin {
             return $types;
         }
 
-        $types['product_pack'] = __( 'SK Subscription', 'sk' );
+        $types['product_pack'] = __( 'SK Subscription', 'sk-core' );
 
         return $types;
     }
@@ -385,9 +385,9 @@ class DPS_Admin {
         woocommerce_wp_text_input(
             array(
                 'id'                => '_no_of_product',
-                'label'             => __( 'Number of Products', 'sk' ),
-                'placeholder'       => __( 'Put -1 for unlimited products', 'sk' ),
-                'description'       => __( 'Enter the no of product you want to give this package.', 'sk' ),
+                'label'             => __( 'Number of Products', 'sk-core' ),
+                'placeholder'       => __( 'Put -1 for unlimited products', 'sk-core' ),
+                'description'       => __( 'Enter the no of product you want to give this package.', 'sk-core' ),
                 'type'              => 'number',
                 'custom_attributes' => array(
                     'step' => 'any',
@@ -399,9 +399,9 @@ class DPS_Admin {
         woocommerce_wp_text_input(
             array(
                 'id'                => '_pack_validity',
-                'label'             => __( 'Pack Validity', 'sk' ),
+                'label'             => __( 'Pack Validity', 'sk-core' ),
                 'placeholder'       => 'Put 0 for unlimited days',
-                'description'       => __( 'Enter no of validity days you want to give this pack ', 'sk' ),
+                'description'       => __( 'Enter no of validity days you want to give this pack ', 'sk-core' ),
                 'type'              => 'number',
                 'custom_attributes' => array(
                     'step' => 'any',
@@ -414,25 +414,25 @@ class DPS_Admin {
         woocommerce_wp_checkbox(
             array(
                 'id'          => '_exclusive_for_admin_only',
-                'label'       => __( 'Exclusive for Admins only', 'sk' ),
-                'description' => __( 'This subscription is exclusive for Admins only and will be only visible to Admin', 'sk' ),
+                'label'       => __( 'Exclusive for Admins only', 'sk-core' ),
+                'description' => __( 'This subscription is exclusive for Admins only and will be only visible to Admin', 'sk-core' ),
             )
         );
 
         // vendor allowed product types
         echo '<p class="form-field sk_subscription_allowed_product_types">';
-        echo '<label for="sk_subscription_allowed_product_types">' . __( 'Allowed Product Types', 'sk' ) . '</label>';
-        echo '<select multiple="multiple" data-placeholder=" ' . __( 'Any product types', 'sk' ) . '" class="wc-enhanced-select" id="_vendor_allowed_product_type" name="sk_subscription_allowed_product_types[]" style="width: 350px;">';
+        echo '<label for="sk_subscription_allowed_product_types">' . __( 'Allowed Product Types', 'sk-core' ) . '</label>';
+        echo '<select multiple="multiple" data-placeholder=" ' . __( 'Any product types', 'sk-core' ) . '" class="wc-enhanced-select" id="_vendor_allowed_product_type" name="sk_subscription_allowed_product_types[]" style="width: 350px;">';
         Helper::get_product_types_options();
         echo '</select>';
-        echo '<span class="description">' . __( 'Select product type for this package. Leave empty to allow any product type.', 'sk' ) . '</span>';
+        echo '<span class="description">' . __( 'Select product type for this package. Leave empty to allow any product type.', 'sk-core' ) . '</span>';
         echo '</p>';
 
         // vendor allowed categories
         echo '<p class="form-field _vendor_allowed_categories">';
         $selected_cat = get_post_meta( $post->ID, '_vendor_allowed_categories', true );
-        echo '<label for="_vendor_allowed_categories">' . __( 'Allowed categories', 'sk' ) . '</label>';
-        echo '<select multiple="multiple" data-placeholder=" ' . __( 'Any categories', 'sk' ) . '" class="wc-enhanced-select" id="_vendor_allowed_categories" name="_vendor_allowed_categories[]" style="width: 350px;">';
+        echo '<label for="_vendor_allowed_categories">' . __( 'Allowed categories', 'sk-core' ) . '</label>';
+        echo '<select multiple="multiple" data-placeholder=" ' . __( 'Any categories', 'sk-core' ) . '" class="wc-enhanced-select" id="_vendor_allowed_categories" name="_vendor_allowed_categories[]" style="width: 350px;">';
         $r = array();
         $r['pad_counts']    = 1;
         $r['hierarchical']  = 1;
@@ -446,24 +446,24 @@ class DPS_Admin {
 
         echo wc_walk_category_dropdown_tree( $categories, 0, $r );
         echo '</select>';
-        echo '<span class="description">' . __( 'Select specific product category for this package. Leave empty to select all categories.', 'sk' ) . '</span>';
+        echo '<span class="description">' . __( 'Select specific product category for this package. Leave empty to select all categories.', 'sk-core' ) . '</span>';
 
         echo '</p>';
 
         woocommerce_wp_checkbox(
             array(
                 'id'          => '_enable_gallery_restriction',
-                'label'       => __( 'Restrict Gallery Image Upload', 'sk' ),
-                'description' => __( 'Please check this if you want to restrict gallery image uploading.', 'sk' ),
+                'label'       => __( 'Restrict Gallery Image Upload', 'sk-core' ),
+                'description' => __( 'Please check this if you want to restrict gallery image uploading.', 'sk-core' ),
             )
         );
 
         woocommerce_wp_text_input(
             array(
                 'id'                => '_gallery_image_restriction_count',
-                'label'             => __( 'Maximum Image', 'sk' ),
+                'label'             => __( 'Maximum Image', 'sk-core' ),
                 'placeholder'       => 'Put -1 for unlimited image',
-                'description'       => __( 'Max Image vendor can upload', 'sk' ),
+                'description'       => __( 'Max Image vendor can upload', 'sk-core' ),
                 'type'              => 'number',
                 'custom_attributes' => array(
                     'step' => 'any',
@@ -553,12 +553,12 @@ class DPS_Admin {
     public static function add_new_section_admin_panael( $sections ) {
         $sections['sk_product_subscription'] = [
             'id'                   => 'sk_product_subscription',
-            'title'                => __( 'Vendor Subscription', 'sk' ),
+            'title'                => __( 'Vendor Subscription', 'sk-core' ),
             'icon_url'             => DPS_URL . '/assets/images/subscription.svg',
-            'description'          => __( 'Manage Subscription Plans', 'sk' ),
+            'description'          => __( 'Manage Subscription Plans', 'sk-core' ),
             'document_link'        => 'https://sk.co/docs/wordpress/modules/how-to-install-use-sk-subscription/',
-            'settings_title'       => __( 'Vendor Subscription Settings', 'sk' ),
-            'settings_description' => __( 'Configure marketplace settings to authorize vendors to create subscription products for their stores.', 'sk' ),
+            'settings_title'       => __( 'Vendor Subscription Settings', 'sk-core' ),
+            'settings_description' => __( 'Configure marketplace settings to authorize vendors to create subscription products for their stores.', 'sk-core' ),
         ];
 
         return $sections;
@@ -571,7 +571,7 @@ class DPS_Admin {
      * @return array
      */
     public static function get_post_type( $post_type ) {
-        $pages_array = array( '-1' => __( '- select -', 'sk' ) );
+        $pages_array = array( '-1' => __( '- select -', 'sk-core' ) );
         $pages = get_posts(
             array(
                 'post_type' => $post_type,
@@ -601,43 +601,43 @@ class DPS_Admin {
         $settings_fields['sk_product_subscription'] = array(
             'subscription_pack' => array(
                 'name'    => 'subscription_pack',
-                'label'   => __( 'Subscription', 'sk' ),
+                'label'   => __( 'Subscription', 'sk-core' ),
                 'type'    => 'select',
                 'options' => $pages_array,
-                'tooltip' => __( 'Select the page in which you want to show subscription packages.', 'sk' ),
+                'tooltip' => __( 'Select the page in which you want to show subscription packages.', 'sk-core' ),
             ),
             'enable_pricing' => array(
                 'name'  => 'enable_pricing',
-                'label' => __( 'Enable Vendor Subscription', 'sk' ),
-                'desc'  => __( 'Enable subscription for vendor', 'sk' ),
+                'label' => __( 'Enable Vendor Subscription', 'sk-core' ),
+                'desc'  => __( 'Enable subscription for vendor', 'sk-core' ),
                 'type'  => 'switcher',
             ),
             'enable_subscription_pack_in_reg' => [
                 'name'    => 'enable_subscription_pack_in_reg',
-                'label'   => __( 'Enable Subscription in Registration Form', 'sk' ),
-                'desc'    => __( 'Enable subscription pack in registration form for new vendor', 'sk' ),
+                'label'   => __( 'Enable Subscription in Registration Form', 'sk-core' ),
+                'desc'    => __( 'Enable subscription pack in registration form for new vendor', 'sk-core' ),
                 'type'    => 'switcher',
                 'default' => 'on',
-                'tooltip' => __( 'If checked, vendor completes registration only after subscribing to a pack', 'sk' ),
+                'tooltip' => __( 'If checked, vendor completes registration only after subscribing to a pack', 'sk-core' ),
             ],
             'no_of_days_before_mail' => array(
                 'name'    => 'no_of_days_before_mail',
-                'label'   => __( 'No. of Days', 'sk' ),
-                'desc'    => __( 'Before an email will be sent to the vendor', 'sk' ),
+                'label'   => __( 'No. of Days', 'sk-core' ),
+                'desc'    => __( 'Before an email will be sent to the vendor', 'sk-core' ),
                 'type'    => 'text',
                 'size'    => 'midium',
                 'default' => '2',
             ),
             'product_status_after_end' => array(
                 'name'    => 'product_status_after_end',
-                'label'   => __( 'Product Status', 'sk' ),
-                'desc'    => __( 'Product status when vendor pack validity will expire', 'sk' ),
+                'label'   => __( 'Product Status', 'sk-core' ),
+                'desc'    => __( 'Product status when vendor pack validity will expire', 'sk-core' ),
                 'type'    => 'select',
                 'default' => 'draft',
                 'options' => array(
-                    'publish' => __( 'Published', 'sk' ),
-                    'pending' => __( 'Pending Review', 'sk' ),
-                    'draft'   => __( 'Draft', 'sk' ),
+                    'publish' => __( 'Published', 'sk-core' ),
+                    'pending' => __( 'Pending Review', 'sk-core' ),
+                    'draft'   => __( 'Draft', 'sk-core' ),
                 ),
             ),
         );
@@ -672,13 +672,13 @@ class DPS_Admin {
         ?>
         <tr>
             <td>
-                <h3><?php esc_html_e( 'SK Subscription', 'sk' ); ?> </h3>
+                <h3><?php esc_html_e( 'SK Subscription', 'sk-core' ); ?> </h3>
             </td>
         </tr>
 
         <?php if ( $users_assigned_pack ) : ?>
             <tr>
-                <td><?php esc_html_e( 'Currently Activated Pack', 'sk' ); ?></td>
+                <td><?php esc_html_e( 'Currently Activated Pack', 'sk-core' ); ?></td>
                 <td> <?php echo get_the_title( $users_assigned_pack ); ?> </td>
             </tr>
             <tr>
@@ -692,7 +692,7 @@ class DPS_Admin {
                     <?php
                     $product_pack_enddate = get_user_meta( $user->ID, 'product_pack_enddate', true );
                     if ( 'unlimited' === $product_pack_enddate ) {
-                        printf( __( 'Lifetime package.', 'sk' ) );
+                        printf( __( 'Lifetime package.', 'sk-core' ) );
                     } else {
                         echo sk_format_date( $product_pack_enddate );
                     }
@@ -702,11 +702,11 @@ class DPS_Admin {
         <?php endif; ?>
 
         <tr>
-            <td><?php esc_html_e( 'Allowed categories', 'sk' ); ?></td>
+            <td><?php esc_html_e( 'Allowed categories', 'sk-core' ); ?></td>
             <td>
                 <?php
                 $selected_cat = ! empty( $vendor_allowed_categories ) ? $vendor_allowed_categories : get_post_meta( $users_assigned_pack, '_vendor_allowed_categories', true );
-                echo '<select multiple="multiple" data-placeholder=" ' . __( 'Select categories&hellip;', 'sk' ) . '" class="wc-enhanced-select" id="vendor_allowed_categories" name="vendor_allowed_categories[]" style="width: 350px;">';
+                echo '<select multiple="multiple" data-placeholder=" ' . __( 'Select categories&hellip;', 'sk-core' ) . '" class="wc-enhanced-select" id="vendor_allowed_categories" name="vendor_allowed_categories[]" style="width: 350px;">';
                 $r = array();
                 $r['pad_counts']    = 1;
                 $r['hierarchical']  = 1;
@@ -723,15 +723,15 @@ class DPS_Admin {
                 echo wc_walk_category_dropdown_tree( $categories, 0, $r );
                 echo '</select>';
                 ?>
-                <p class="description"><?php esc_html_e( 'You can override allowed categories for this user. If empty then the predefined category for this pack will be selected', 'sk' ); ?></p>
+                <p class="description"><?php esc_html_e( 'You can override allowed categories for this user. If empty then the predefined category for this pack will be selected', 'sk-core' ); ?></p>
             </td>
         </tr>
 
         <tr class="dps_assign_pack">
-            <td><?php esc_html_e( 'Assign Subscription Pack', 'sk' ); ?></td>
+            <td><?php esc_html_e( 'Assign Subscription Pack', 'sk-core' ); ?></td>
             <td>
                 <select name="_sk_user_assigned_sub_pack">
-                    <option value="" <?php selected( $users_assigned_pack, '' ); ?>><?php esc_html_e( '-- Select a pack --', 'sk' ); ?></option>
+                    <option value="" <?php selected( $users_assigned_pack, '' ); ?>><?php esc_html_e( '-- Select a pack --', 'sk-core' ); ?></option>
                     <?php foreach ( $sub_packs as $pack ) : ?>
                         <option value="<?php echo $pack->ID; ?>" <?php selected( $users_assigned_pack, $pack->ID ); ?>><?php echo $pack->post_title; ?></option>
                     <?php endforeach; ?>
@@ -818,7 +818,7 @@ class DPS_Admin {
      * @return array
      */
     public function add_vendor_subscription_filter_option( $filter_options ) {
-        $filter_options['vendor_subscription'] = esc_html__( 'Vendor Subscription', 'sk' );
+        $filter_options['vendor_subscription'] = esc_html__( 'Vendor Subscription', 'sk-core' );
         return $filter_options;
     }
 

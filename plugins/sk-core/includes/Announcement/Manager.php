@@ -182,7 +182,7 @@ class Manager {
                 $db_error      = $wpdb->last_error;
                 $error_message = sprintf(
                     '%1$s %2$s',
-                    __( 'Announcement: Something went wrong while querying data.', 'sk' ),
+                    __( 'Announcement: Something went wrong while querying data.', 'sk-core' ),
                     current_user_can( 'manage_options' ) ? ': ' . $db_error : ''
                 );
 
@@ -205,7 +205,7 @@ class Manager {
                 $db_error      = $wpdb->last_error;
                 $error_message = sprintf(
                     '%1$s %2$s',
-                    __( 'Announcement: Something went wrong while querying data.', 'sk' ),
+                    __( 'Announcement: Something went wrong while querying data.', 'sk-core' ),
                     current_user_can( 'manage_options' ) ? ': ' . $db_error : ''
                 );
 
@@ -229,7 +229,7 @@ class Manager {
                 $db_error      = $wpdb->last_error;
                 $error_message = sprintf(
                     '%1$s %2$s',
-                    __( 'Announcement: Something went wrong while querying data.', 'sk' ),
+                    __( 'Announcement: Something went wrong while querying data.', 'sk-core' ),
                     current_user_can( 'manage_options' ) ? ': ' . $db_error : ''
                 );
 
@@ -274,7 +274,7 @@ class Manager {
         }
 
         if ( empty( $result ) ) {
-            return new WP_Error( 'no_announcement', __( 'No announcement found with given id.', 'sk' ) );
+            return new WP_Error( 'no_announcement', __( 'No announcement found with given id.', 'sk-core' ) );
         }
 
         return $result;
@@ -322,7 +322,7 @@ class Manager {
      */
     public function create_announcement( $args = [], $update = false ) {
         if ( empty( trim( $args['title'] ) ) ) {
-            return new WP_Error( 'no_title', __( 'Announcement title is required.', 'sk' ) );
+            return new WP_Error( 'no_title', __( 'Announcement title is required.', 'sk-core' ) );
         }
 
         $data = [
@@ -549,7 +549,7 @@ class Manager {
             if ( $result ) {
                 $this->delete_announcement_data( $id );
             } else {
-                $result = new WP_Error( 'delete_announcement_error', __( 'Error while deleting announcement.', 'sk' ) );
+                $result = new WP_Error( 'delete_announcement_error', __( 'Error while deleting announcement.', 'sk-core' ) );
             }
 
             return $result;
@@ -558,19 +558,19 @@ class Manager {
         // If we don't support trashing for this type, error out.
         if ( ! $supports_trash ) {
             /* translators: %s: force=true */
-            return new WP_Error( 'announcement_trash_not_supported', sprintf( __( "The post does not support trashing. Set '%s' to delete.", 'sk' ), 'force=true' ), [ 'status' => 501 ] );
+            return new WP_Error( 'announcement_trash_not_supported', sprintf( __( "The post does not support trashing. Set '%s' to delete.", 'sk-core' ), 'force=true' ), [ 'status' => 501 ] );
         }
 
         // Otherwise, only trash if we haven't already.
         if ( 'trash' === $announcement->get_status() ) {
-            return new WP_Error( 'announcement_already_trashed', __( 'The announcement has already been trashed.', 'sk' ), [ 'status' => 410 ] );
+            return new WP_Error( 'announcement_already_trashed', __( 'The announcement has already been trashed.', 'sk-core' ), [ 'status' => 410 ] );
         }
 
         // (Note that internally this falls through to `wp_delete_post` if
         // the trash is disabled.)
         $result = wp_trash_post( $id );
         if ( ! $result ) {
-            return new WP_Error( 'delete_announcement_error', __( 'Error while adding announcement to trash.', 'sk' ) );
+            return new WP_Error( 'delete_announcement_error', __( 'Error while adding announcement to trash.', 'sk-core' ) );
         }
 
         return $result;
@@ -599,7 +599,7 @@ class Manager {
     public function untrash_announcement( $announcement_id ) {
         $result = wp_untrash_post( $announcement_id );
         if ( ! $result ) {
-            return new WP_Error( 'untrash_announcement_error', __( 'Error in untrashing announcement.', 'sk' ) );
+            return new WP_Error( 'untrash_announcement_error', __( 'Error in untrashing announcement.', 'sk-core' ) );
         }
 
         // delete individual announcement cache
@@ -631,7 +631,7 @@ class Manager {
         }
 
         if ( empty( $notice ) ) {
-            return new WP_Error( 'no_notice', __( 'No notice found with given id.', 'sk' ) );
+            return new WP_Error( 'no_notice', __( 'No notice found with given id.', 'sk-core' ) );
         }
 
         return $notice;
@@ -672,7 +672,7 @@ class Manager {
         );
 
         if ( false === $updated ) {
-            return new WP_Error( 'update_notice_error', __( 'Error while updating notice status.', 'sk' ) );
+            return new WP_Error( 'update_notice_error', __( 'Error while updating notice status.', 'sk-core' ) );
         }
 
         // clear cache
@@ -707,7 +707,7 @@ class Manager {
         );
 
         if ( false === $result ) {
-            return new WP_Error( 'update_notice_error', __( 'Error while deleting notice status.', 'sk' ) );
+            return new WP_Error( 'update_notice_error', __( 'Error while deleting notice status.', 'sk-core' ) );
         }
 
         // clear cache

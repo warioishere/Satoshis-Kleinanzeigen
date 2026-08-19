@@ -42,17 +42,17 @@ class DigitalProduct {
     public function add_admin_setting_digital_mode( $settings_fields ) {
         $settings_fields['global_digital_mode'] = array(
             'name'    => 'global_digital_mode',
-            'label'   => __( 'Selling Product Types', 'sk' ),
-            'desc'    => __( 'Select a type for vendors what type of product they can sell only', 'sk' ),
+            'label'   => __( 'Selling Product Types', 'sk-core' ),
+            'desc'    => __( 'Select a type for vendors what type of product they can sell only', 'sk-core' ),
             'type'    => 'radio',
             'default' => 'sell_both',
-            'tooltip' => __( 'Select the type of products vendor can sell.', 'sk' ),
+            'tooltip' => __( 'Select the type of products vendor can sell.', 'sk-core' ),
             'options' => apply_filters(
                 'sk_digital_product_types',
                 [
-                    'sell_physical' => __( 'Physical', 'sk' ),
-                    'sell_digital'  => __( 'Digital', 'sk' ),
-                    'sell_both'     => __( 'Both', 'sk' ),
+                    'sell_physical' => __( 'Physical', 'sk-core' ),
+                    'sell_digital'  => __( 'Digital', 'sk-core' ),
+                    'sell_both'     => __( 'Both', 'sk-core' ),
                 ]
             ),
             'is_lite' => false,
@@ -80,14 +80,14 @@ class DigitalProduct {
     public function admin_wizard_store_setup_field( $wizard ) {
         $args = array(
             'pro'          => true,
-            'label'        => __( 'Selling Product Types', 'sk' ),
+            'label'        => __( 'Selling Product Types', 'sk-core' ),
             'digital_mode' => $this->get_selling_product_type(),
             'plans' => apply_filters(
                 'sk_digital_product_types',
                 [
-                    'sell_physical' => __( 'Physical', 'sk' ),
-                    'sell_digital'  => __( 'Digital', 'sk' ),
-                    'sell_both'     => __( 'Both', 'sk' ),
+                    'sell_physical' => __( 'Physical', 'sk-core' ),
+                    'sell_digital'  => __( 'Digital', 'sk-core' ),
+                    'sell_both'     => __( 'Both', 'sk-core' ),
                 ]
             ),
         );

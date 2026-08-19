@@ -36,8 +36,8 @@ class SK_Follow_Store_My_Account {
     public function add_wc_account_menu_items( $items ) {
         unset( $items['customer-logout'] );
 
-        $items['following']       = __( 'Vendors', 'sk' );
-        $items['customer-logout'] = __( 'Logout', 'sk' );
+        $items['following']       = __( 'Vendors', 'sk-core' );
+        $items['customer-logout'] = __( 'Logout', 'sk-core' );
 
         return $items;
     }

@@ -23,6 +23,6 @@ use SK\Core\Announcement\Single;
     </div>
 
     <div class="sk-announcement-link">
-        <a href="<?php echo esc_url( sk_get_navigation_url( 'announcement' ) ); ?>" class="sk-btn sk-btn-theme"><?php esc_html_e( 'Back to all Notice', 'sk' ); ?></a>
+        <a href="<?php echo esc_url( sk_get_navigation_url( 'announcement' ) ); ?>" class="sk-btn sk-btn-theme"><?php esc_html_e( 'Back to all Notice', 'sk-core' ); ?></a>
     </div>
 </article>

@@ -8,7 +8,7 @@ require_once ABSPATH . WPINC . '/formatting.php';
 do_action( 'woocommerce_email_header', $email_heading, $email ); ?>
 <div id="sk-follow-store">
     <h1 id="sk-follow-store-title">
-        <?php esc_html_e( 'Updates from your favorite stores', 'sk' ); ?>
+        <?php esc_html_e( 'Updates from your favorite stores', 'sk-core' ); ?>
     </h1>
 
     <table style="width: 100%; border-collapse: collapse;">
@@ -28,7 +28,7 @@ do_action( 'woocommerce_email_header', $email_heading, $email ); ?>
                                 if ( $vendor->products->have_posts() ) :
                                     $products = $vendor->products->posts;
                                     ?>
-                                    <p class="section-title"><strong><?php esc_html_e( 'New Products', 'sk' ); ?></strong></p>
+                                    <p class="section-title"><strong><?php esc_html_e( 'New Products', 'sk-core' ); ?></strong></p>
 
                                     <table class="vendor-products">
                                         <tbody>
@@ -49,7 +49,7 @@ do_action( 'woocommerce_email_header', $email_heading, $email ); ?>
                                                 <?php endforeach; ?>
                                                 <td class="show-all-products">
                                                     <a href="<?php echo esc_url( $vendor->get_shop_url() ); ?>">
-                                                        <?php esc_html_e( 'See all', 'sk' ); ?>
+                                                        <?php esc_html_e( 'See all', 'sk-core' ); ?>
                                                     </a>
                                                 </td>
 
@@ -70,7 +70,7 @@ do_action( 'woocommerce_email_header', $email_heading, $email ); ?>
                                 if ( ! empty( $vendor->coupons ) ) :
                                     $coupons = $vendor->coupons;
                                     ?>
-                                    <p class="section-title"><strong><?php esc_html_e( 'Coupons', 'sk' ); ?></strong></p>
+                                    <p class="section-title"><strong><?php esc_html_e( 'Coupons', 'sk-core' ); ?></strong></p>
 
                                     <ul class="vendor-coupons">
                                         <?php

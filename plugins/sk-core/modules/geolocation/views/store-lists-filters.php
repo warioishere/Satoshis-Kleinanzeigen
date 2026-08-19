@@ -16,7 +16,7 @@
 
     <div class="range-slider-container">
         <span class="sk-range-slider-value sk-left">
-            <?php _e( 'Radius', 'sk' ); ?> <span><?php echo $distance; ?></span><?php echo $slider['unit']; ?>
+            <?php _e( 'Radius', 'sk-core' ); ?> <span><?php echo $distance; ?></span><?php echo $slider['unit']; ?>
         </span>
 
         <input

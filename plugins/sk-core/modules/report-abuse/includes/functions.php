@@ -63,7 +63,7 @@ function sk_report_abuse_create_report( $args ) {
     $placeholders = [];
 
     if ( empty( $args['reason'] ) ) {
-        return new WP_Error( 'missing_reason', esc_html__( 'Missing reason param.', 'sk' ) );
+        return new WP_Error( 'missing_reason', esc_html__( 'Missing reason param.', 'sk-core' ) );
     }
 
     $args['reason'] = wp_trim_words( $args['reason'], 191 );
@@ -72,13 +72,13 @@ function sk_report_abuse_create_report( $args ) {
     $placeholders[]   = '%s';
 
     if ( empty( $args['product_id'] ) ) {
-        return new WP_Error( 'missing_product_id', esc_html__( 'Missing product_id param.', 'sk' ) );
+        return new WP_Error( 'missing_product_id', esc_html__( 'Missing product_id param.', 'sk-core' ) );
     }
 
     $product = wc_get_product( $args['product_id'] );
 
     if ( ! $product instanceof WC_Product ) {
-        return new WP_Error( 'invalid_product_id', esc_html__( 'Product not found.', 'sk' ) );
+        return new WP_Error( 'invalid_product_id', esc_html__( 'Product not found.', 'sk-core' ) );
     }
 
     $report['product_id'] = $args['product_id'];
@@ -96,7 +96,7 @@ function sk_report_abuse_create_report( $args ) {
         $customer_id = $customer->get_id();
 
         if ( ! $customer_id ) {
-            return new WP_Error( 'invalid_customer_id', esc_html__( 'Customer not found.', 'sk' ) );
+            return new WP_Error( 'invalid_customer_id', esc_html__( 'Customer not found.', 'sk-core' ) );
         }
     }
 
@@ -104,7 +104,7 @@ function sk_report_abuse_create_report( $args ) {
 
     if ( isset( $option['reported_by_logged_in_users_only'] ) && 'on' === $option['reported_by_logged_in_users_only'] ) {
         if ( empty( $customer ) ) {
-            return new WP_Error( 'user_must_logged_in', esc_html__( 'User must login to report an abuse.', 'sk' ) );
+            return new WP_Error( 'user_must_logged_in', esc_html__( 'User must login to report an abuse.', 'sk-core' ) );
         }
 
         $report['customer_id'] = $customer_id;
@@ -114,11 +114,11 @@ function sk_report_abuse_create_report( $args ) {
         $placeholders[]        = '%d';
     } else {
         if ( empty( $args['customer_name'] ) ) {
-            return new WP_Error( 'missing_field', esc_html__( 'customer_name is required.', 'sk' ) );
+            return new WP_Error( 'missing_field', esc_html__( 'customer_name is required.', 'sk-core' ) );
         } else if ( empty( $args['customer_email'] ) ) {
-            return new WP_Error( 'missing_field', esc_html__( 'customer_email is required.', 'sk' ) );
+            return new WP_Error( 'missing_field', esc_html__( 'customer_email is required.', 'sk-core' ) );
         } else if ( ! is_email( $args['customer_email'] ) ) {
-            return new WP_Error( 'missing_field', esc_html__( 'Invalid customer_email.', 'sk' ) );
+            return new WP_Error( 'missing_field', esc_html__( 'Invalid customer_email.', 'sk-core' ) );
         }
 
         $report['customer_name'] = wp_trim_words( $args['customer_name'], 191 );
@@ -143,7 +143,7 @@ function sk_report_abuse_create_report( $args ) {
     );
 
     if ( ! $inserted ) {
-        return new WP_Error( 'unable_to_create_report', esc_html__( 'Unable to create abuse report.', 'sk' ) );
+        return new WP_Error( 'unable_to_create_report', esc_html__( 'Unable to create abuse report.', 'sk-core' ) );
     }
 
     $report = $wpdb->get_row(
@@ -182,7 +182,7 @@ function sk_report_abuse_get_option() {
 
         $option['abuse_reasons'][] = [
             'id'    => 'other',
-            'value' => esc_html__( 'Other', 'sk' ),
+            'value' => esc_html__( 'Other', 'sk-core' ),
         ];
     }
 
@@ -204,7 +204,7 @@ function sk_report_abuse_get_option() {
  */
 function sk_report_abuse_report_form( $args = [], $echo = false ) {
     $defaults = [
-        'text'                 => esc_html__( 'Why are you reporting this?', 'sk' ),
+        'text'                 => esc_html__( 'Why are you reporting this?', 'sk-core' ),
         'id'                   => 'sk-report-abuse-form',
         'option_list_classes'  => '',
         'option_label_classes' => '',

@@ -18,9 +18,9 @@ $post_id = $is_edit ? $announcement->ID : 0;
 
 <div class="sk-announcement-edit-wrap">
     <h2>
-        <?php echo $is_edit ? esc_html__( 'Edit Announcement', 'sk' ) : esc_html__( 'New Announcement', 'sk' ); ?>
+        <?php echo $is_edit ? esc_html__( 'Edit Announcement', 'sk-core' ) : esc_html__( 'New Announcement', 'sk-core' ); ?>
         <a href="<?php echo esc_url( admin_url( 'admin.php?page=sk&tab=announcements' ) ); ?>" class="page-title-action">
-            <?php esc_html_e( 'Back to List', 'sk' ); ?>
+            <?php esc_html_e( 'Back to List', 'sk-core' ); ?>
         </a>
     </h2>
 
@@ -31,14 +31,14 @@ $post_id = $is_edit ? $announcement->ID : 0;
 
         <table class="form-table">
             <tr>
-                <th scope="row"><label for="announcement_title"><?php esc_html_e( 'Title', 'sk' ); ?></label></th>
+                <th scope="row"><label for="announcement_title"><?php esc_html_e( 'Title', 'sk-core' ); ?></label></th>
                 <td>
                     <input type="text" id="announcement_title" name="announcement_title"
                            value="<?php echo esc_attr( $title ); ?>" class="regular-text" required>
                 </td>
             </tr>
             <tr>
-                <th scope="row"><label><?php esc_html_e( 'Content', 'sk' ); ?></label></th>
+                <th scope="row"><label><?php esc_html_e( 'Content', 'sk-core' ); ?></label></th>
                 <td>
                     <?php wp_editor( $content, 'announcement_content', [
                         'textarea_name' => 'announcement_content',
@@ -48,16 +48,16 @@ $post_id = $is_edit ? $announcement->ID : 0;
                 </td>
             </tr>
             <tr>
-                <th scope="row"><label for="announcement_status"><?php esc_html_e( 'Status', 'sk' ); ?></label></th>
+                <th scope="row"><label for="announcement_status"><?php esc_html_e( 'Status', 'sk-core' ); ?></label></th>
                 <td>
                     <select id="announcement_status" name="announcement_status">
-                        <option value="publish" <?php selected( $status, 'publish' ); ?>><?php esc_html_e( 'Published', 'sk' ); ?></option>
-                        <option value="draft" <?php selected( $status, 'draft' ); ?>><?php esc_html_e( 'Draft', 'sk' ); ?></option>
+                        <option value="publish" <?php selected( $status, 'publish' ); ?>><?php esc_html_e( 'Published', 'sk-core' ); ?></option>
+                        <option value="draft" <?php selected( $status, 'draft' ); ?>><?php esc_html_e( 'Draft', 'sk-core' ); ?></option>
                     </select>
                 </td>
             </tr>
         </table>
 
-        <?php submit_button( $is_edit ? __( 'Update Announcement', 'sk' ) : __( 'Create Announcement', 'sk' ) ); ?>
+        <?php submit_button( $is_edit ? __( 'Update Announcement', 'sk-core' ) : __( 'Create Announcement', 'sk-core' ) ); ?>
     </form>
 </div>

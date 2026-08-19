@@ -36,7 +36,7 @@ class PostType {
     public function register_post_type() {
         register_post_type(
             $this->post_type, array(
-                'label'           => __( 'Announcement', 'sk' ),
+                'label'           => __( 'Announcement', 'sk-core' ),
                 'description'     => '',
                 'public'          => false,
                 'show_ui'         => true,
@@ -47,20 +47,20 @@ class PostType {
                 'query_var'       => false,
                 'supports'        => array( 'title', 'editor' ),
                 'labels'          => array(
-                    'name'               => __( 'Announcement', 'sk' ),
-                    'singular_name'      => __( 'Announcement', 'sk' ),
-                    'menu_name'          => __( 'SK Announcement', 'sk' ),
-                    'add_new'            => __( 'Add Announcement', 'sk' ),
-                    'add_new_item'       => __( 'Add New Announcement', 'sk' ),
-                    'edit'               => __( 'Edit', 'sk' ),
-                    'edit_item'          => __( 'Edit Announcement', 'sk' ),
-                    'new_item'           => __( 'New Announcement', 'sk' ),
-                    'view'               => __( 'View Announcement', 'sk' ),
-                    'view_item'          => __( 'View Announcement', 'sk' ),
-                    'search_items'       => __( 'Search Announcement', 'sk' ),
-                    'not_found'          => __( 'No Announcement Found', 'sk' ),
-                    'not_found_in_trash' => __( 'No Announcement found in trash', 'sk' ),
-                    'parent'             => __( 'Parent Announcement', 'sk' ),
+                    'name'               => __( 'Announcement', 'sk-core' ),
+                    'singular_name'      => __( 'Announcement', 'sk-core' ),
+                    'menu_name'          => __( 'SK Announcement', 'sk-core' ),
+                    'add_new'            => __( 'Add Announcement', 'sk-core' ),
+                    'add_new_item'       => __( 'Add New Announcement', 'sk-core' ),
+                    'edit'               => __( 'Edit', 'sk-core' ),
+                    'edit_item'          => __( 'Edit Announcement', 'sk-core' ),
+                    'new_item'           => __( 'New Announcement', 'sk-core' ),
+                    'view'               => __( 'View Announcement', 'sk-core' ),
+                    'view_item'          => __( 'View Announcement', 'sk-core' ),
+                    'search_items'       => __( 'Search Announcement', 'sk-core' ),
+                    'not_found'          => __( 'No Announcement Found', 'sk-core' ),
+                    'not_found_in_trash' => __( 'No Announcement found in trash', 'sk-core' ),
+                    'parent'             => __( 'Parent Announcement', 'sk-core' ),
                 ),
             )
         );

@@ -16,24 +16,24 @@ $base_url = admin_url( 'admin.php?page=sk&tab=store-reviews' );
 ?>
 
 <div class="sk-store-reviews-wrap">
-    <h2><?php esc_html_e( 'Store Reviews', 'sk' ); ?></h2>
+    <h2><?php esc_html_e( 'Store Reviews', 'sk-core' ); ?></h2>
 
     <table class="wp-list-table widefat fixed striped">
         <thead>
             <tr>
-                <th scope="col"><?php esc_html_e( 'Reviewer', 'sk' ); ?></th>
-                <th scope="col"><?php esc_html_e( 'Store', 'sk' ); ?></th>
-                <th scope="col"><?php esc_html_e( 'Rating', 'sk' ); ?></th>
-                <th scope="col"><?php esc_html_e( 'Content', 'sk' ); ?></th>
-                <th scope="col"><?php esc_html_e( 'Status', 'sk' ); ?></th>
-                <th scope="col"><?php esc_html_e( 'Date', 'sk' ); ?></th>
-                <th scope="col"><?php esc_html_e( 'Actions', 'sk' ); ?></th>
+                <th scope="col"><?php esc_html_e( 'Reviewer', 'sk-core' ); ?></th>
+                <th scope="col"><?php esc_html_e( 'Store', 'sk-core' ); ?></th>
+                <th scope="col"><?php esc_html_e( 'Rating', 'sk-core' ); ?></th>
+                <th scope="col"><?php esc_html_e( 'Content', 'sk-core' ); ?></th>
+                <th scope="col"><?php esc_html_e( 'Status', 'sk-core' ); ?></th>
+                <th scope="col"><?php esc_html_e( 'Date', 'sk-core' ); ?></th>
+                <th scope="col"><?php esc_html_e( 'Actions', 'sk-core' ); ?></th>
             </tr>
         </thead>
         <tbody>
             <?php if ( empty( $reviews ) ) : ?>
                 <tr>
-                    <td colspan="7"><?php esc_html_e( 'No store reviews found.', 'sk' ); ?></td>
+                    <td colspan="7"><?php esc_html_e( 'No store reviews found.', 'sk-core' ); ?></td>
                 </tr>
             <?php else : ?>
                 <?php foreach ( $reviews as $review ) :
@@ -50,7 +50,7 @@ $base_url = admin_url( 'admin.php?page=sk&tab=store-reviews' );
                     }
                     ?>
                     <tr>
-                        <td><?php echo esc_html( $author ? $author->display_name : __( 'Unknown', 'sk' ) ); ?></td>
+                        <td><?php echo esc_html( $author ? $author->display_name : __( 'Unknown', 'sk-core' ) ); ?></td>
                         <td><?php echo esc_html( $store_name ); ?></td>
                         <td><?php echo esc_html( $rating ); ?></td>
                         <td><?php echo esc_html( wp_trim_words( $review->post_content, 15 ) ); ?></td>
@@ -62,14 +62,14 @@ $base_url = admin_url( 'admin.php?page=sk&tab=store-reviews' );
                                     <?php wp_nonce_field( 'sk_review_action', 'sk_review_nonce' ); ?>
                                     <input type="hidden" name="review_action" value="approve">
                                     <input type="hidden" name="post_id" value="<?php echo esc_attr( $review->ID ); ?>">
-                                    <button type="submit" class="button button-small button-primary"><?php esc_html_e( 'Approve', 'sk' ); ?></button>
+                                    <button type="submit" class="button button-small button-primary"><?php esc_html_e( 'Approve', 'sk-core' ); ?></button>
                                 </form>
                             <?php endif; ?>
                             <form method="post" style="display: inline;">
                                 <?php wp_nonce_field( 'sk_review_action', 'sk_review_nonce' ); ?>
                                 <input type="hidden" name="review_action" value="trash">
                                 <input type="hidden" name="post_id" value="<?php echo esc_attr( $review->ID ); ?>">
-                                <button type="submit" class="button button-small" style="color: #a00;"><?php esc_html_e( 'Trash', 'sk' ); ?></button>
+                                <button type="submit" class="button button-small" style="color: #a00;"><?php esc_html_e( 'Trash', 'sk-core' ); ?></button>
                             </form>
                         </td>
                     </tr>

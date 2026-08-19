@@ -216,7 +216,7 @@ class ContactDetails {
                 update_user_meta( $store_id, 'sk_password_set', 1 );
             } else {
                 if ( function_exists( 'sk_add_notice' ) ) {
-                    sk_add_notice( __( 'Das aktuelle Passwort ist falsch.', 'sk' ), 'error' );
+                    sk_add_notice( __( 'Das aktuelle Passwort ist falsch.', 'sk-core' ), 'error' );
                 }
             }
         }
@@ -227,7 +227,7 @@ class ContactDetails {
             $user_with_slug = get_user_by( 'slug', $new_slug );
             if ( $user_with_slug && $user_with_slug->ID !== $store_id ) {
                 if ( function_exists( 'sk_add_notice' ) ) {
-                    sk_add_notice( __( 'Dieser Store-Link ist bereits vergeben.', 'sk' ), 'error' );
+                    sk_add_notice( __( 'Dieser Store-Link ist bereits vergeben.', 'sk-core' ), 'error' );
                 }
             } else {
                 $update['user_nicename'] = $new_slug;
@@ -356,7 +356,7 @@ class ContactDetails {
     private function render_icons( array $icons, string $context = '' ): string {
         if ( empty( $icons ) ) return '';
         $classes = 'dkp-contact-icons' . ( $context !== '' ? ' dkp-contact-icons--' . sanitize_html_class( $context ) : '' );
-        $html    = '<div class="' . esc_attr( $classes ) . '" aria-label="' . esc_attr__( 'Kontakt', 'sk' ) . '">';
+        $html    = '<div class="' . esc_attr( $classes ) . '" aria-label="' . esc_attr__( 'Kontakt', 'sk-core' ) . '">';
         foreach ( $icons as $ic ) {
             $data_attrs = '';
             if ( isset( $ic['data'] ) && is_array( $ic['data'] ) ) {
@@ -410,7 +410,7 @@ class ContactDetails {
         $email_san   = $email_field !== '' ? sanitize_email( $email_field ) : '';
 
         $errors = [];
-        if ( $email_field !== '' && $email_san === '' ) $errors[] = __( 'Bitte gib eine gültige E-Mail-Adresse ein.', 'sk' );
+        if ( $email_field !== '' && $email_san === '' ) $errors[] = __( 'Bitte gib eine gültige E-Mail-Adresse ein.', 'sk-core' );
         $has_contact = $telegram !== '' || $twitter !== '' || $phone !== '' || $nostr !== '' || ( $email_san !== '' && ! $this->is_placeholder_email( $email_san ) );
 
         $stored = sk_get_store_info( $user_id );
@@ -421,8 +421,8 @@ class ContactDetails {
             $val = is_array( $val ) ? reset( $val ) : $val;
             if ( (string) $val !== '' && (string) $val !== '0' ) { $has_picture = true; break; }
         }
-        if ( ! $has_picture ) $errors[] = __( 'Bitte lade ein Profilbild hoch, bevor du speicherst.', 'sk' );
-        if ( ! $has_contact ) $errors[] = __( 'Bitte gib mindestens eine Kontaktmethode an (Telegram, Twitter/X, Telefonnummer, Nostr oder E-Mail).', 'sk' );
+        if ( ! $has_picture ) $errors[] = __( 'Bitte lade ein Profilbild hoch, bevor du speicherst.', 'sk-core' );
+        if ( ! $has_contact ) $errors[] = __( 'Bitte gib mindestens eine Kontaktmethode an (Telegram, Twitter/X, Telefonnummer, Nostr oder E-Mail).', 'sk-core' );
 
         if ( ! empty( $errors ) ) {
             if ( function_exists( 'sk_add_notice' ) ) foreach ( $errors as $msg ) sk_add_notice( $msg, 'error' );
@@ -484,7 +484,7 @@ class ContactDetails {
         static $notice_added = false;
         if ( $notice_added ) return;
         $url = esc_url( site_url( '/dashboard/settings/store/' ) );
-        $message = sprintf( __( 'Veröffentlichung blockiert: Bitte hinterlege in deinem <a href="%s">Shop-Profil</a> mindestens eine Kontaktmethode (z. B. Telegram, Telefonnummer oder eine öffentliche E-Mail-Adresse). Adressen mit @satoshiskleinanzeigen.space zählen nicht.', 'sk' ), $url );
+        $message = sprintf( __( 'Veröffentlichung blockiert: Bitte hinterlege in deinem <a href="%s">Shop-Profil</a> mindestens eine Kontaktmethode (z. B. Telegram, Telefonnummer oder eine öffentliche E-Mail-Adresse). Adressen mit @satoshiskleinanzeigen.space zählen nicht.', 'sk-core' ), $url );
         sk_add_notice( wp_kses_post( $message ), 'error' );
         $notice_added = true;
     }

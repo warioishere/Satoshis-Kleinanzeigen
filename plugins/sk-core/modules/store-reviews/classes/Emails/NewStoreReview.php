@@ -66,8 +66,8 @@ class NewStoreReview extends WC_Email {
      */
     public function __construct() {
         $this->id             = 'sk_new_store_review';
-        $this->title          = __( 'SK New Store Review', 'sk' );
-        $this->description    = __( 'New emails are sent to chosen recipient(s) when a new store review is submitted.', 'sk' );
+        $this->title          = __( 'SK New Store Review', 'sk-core' );
+        $this->description    = __( 'New emails are sent to chosen recipient(s) when a new store review is submitted.', 'sk-core' );
         $this->template_html  = 'emails/new-store-review-email.php';
         $this->template_plain = 'emails/plain/new-store-review-email.php';
         $this->template_base  = SK_SELLER_RATINGS_DIR . '/templates/';
@@ -93,7 +93,7 @@ class NewStoreReview extends WC_Email {
      * @return string
      */
     public function get_default_subject() {
-        return __( 'New review on #{store_name}', 'sk' );
+        return __( 'New review on #{store_name}', 'sk-core' );
     }
 
     /**
@@ -113,7 +113,7 @@ class NewStoreReview extends WC_Email {
      * @return string
      */
     public function get_default_heading() {
-        return __( 'New review on #{store_name}', 'sk' );
+        return __( 'New review on #{store_name}', 'sk-core' );
     }
 
     /**
@@ -207,25 +207,25 @@ class NewStoreReview extends WC_Email {
      */
     public function init_form_fields() {
         /* translators: %s: list of placeholders */
-        $placeholder_text  = sprintf( __( 'Available placeholders: %s', 'sk' ), '<code>' . implode( '</code>, <code>', array_keys( $this->placeholders ) ) . '</code>' );
+        $placeholder_text  = sprintf( __( 'Available placeholders: %s', 'sk-core' ), '<code>' . implode( '</code>, <code>', array_keys( $this->placeholders ) ) . '</code>' );
         $this->form_fields = [
             'enabled'    => [
-                'title'   => __( 'Enable/Disable', 'sk' ),
+                'title'   => __( 'Enable/Disable', 'sk-core' ),
                 'type'    => 'checkbox',
-                'label'   => __( 'Enable this email notification', 'sk' ),
+                'label'   => __( 'Enable this email notification', 'sk-core' ),
                 'default' => 'yes',
             ],
             'recipient'  => [
-                'title'       => __( 'Recipient(s)', 'sk' ),
+                'title'       => __( 'Recipient(s)', 'sk-core' ),
                 'type'        => 'text',
                 /* translators: %s: list of recipient */
-                'description' => sprintf( __( 'Enter recipients (comma separated) for this email. Defaults to %s.', 'sk' ), '<code>' . esc_attr( get_option( 'admin_email' ) ) . '</code>' ),
+                'description' => sprintf( __( 'Enter recipients (comma separated) for this email. Defaults to %s.', 'sk-core' ), '<code>' . esc_attr( get_option( 'admin_email' ) ) . '</code>' ),
                 'placeholder' => $this->get_default_recipient(),
                 'default'     => '',
                 'desc_tip'    => true,
             ],
             'subject'    => [
-                'title'       => __( 'Subject', 'sk' ),
+                'title'       => __( 'Subject', 'sk-core' ),
                 'type'        => 'text',
                 'desc_tip'    => true,
                 'description' => $placeholder_text,
@@ -233,7 +233,7 @@ class NewStoreReview extends WC_Email {
                 'default'     => '',
             ],
             'heading'    => [
-                'title'       => __( 'Email heading', 'sk' ),
+                'title'       => __( 'Email heading', 'sk-core' ),
                 'type'        => 'text',
                 'desc_tip'    => true,
                 'description' => $placeholder_text,
@@ -241,18 +241,18 @@ class NewStoreReview extends WC_Email {
                 'default'     => '',
             ],
             'additional_content' => [
-                'title'       => __( 'Additional content', 'sk' ),
-                'description' => __( 'Text to appear below the main email content.', 'sk' ) . ' ' . $placeholder_text,
+                'title'       => __( 'Additional content', 'sk-core' ),
+                'description' => __( 'Text to appear below the main email content.', 'sk-core' ) . ' ' . $placeholder_text,
                 'css'         => 'width:400px; height: 75px;',
-                'placeholder' => __( 'N/A', 'sk' ),
+                'placeholder' => __( 'N/A', 'sk-core' ),
                 'type'        => 'textarea',
                 'default'     => $this->get_default_additional_content(),
                 'desc_tip'    => true,
             ],
             'email_type' => [
-                'title'       => __( 'Email type', 'sk' ),
+                'title'       => __( 'Email type', 'sk-core' ),
                 'type'        => 'select',
-                'description' => __( 'Choose which format of email to send.', 'sk' ),
+                'description' => __( 'Choose which format of email to send.', 'sk-core' ),
                 'default'     => 'html',
                 'class'       => 'email_type wc-enhanced-select',
                 'options'     => $this->get_email_type_options(),

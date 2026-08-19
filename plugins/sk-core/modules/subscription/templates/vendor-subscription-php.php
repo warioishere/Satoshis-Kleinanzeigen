@@ -44,14 +44,14 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
         <?php do_action( 'sk_subscription_content_inside_before' ); ?>
 
         <div class="sk-sub-page-header">
-            <h2><i class="fas fa-layer-group"></i> <?php esc_html_e( 'Abonnements', 'sk' ); ?></h2>
+            <h2><i class="fas fa-layer-group"></i> <?php esc_html_e( 'Abonnements', 'sk-core' ); ?></h2>
         </div>
 
         <div class="sk-sub-tab-filter">
             <a href="<?php echo esc_url( add_query_arg( [ 'tab' => 'subscription_packs' ], $link ) ); ?>"
                class="sk-sub-tab<?php echo 'subscription_orders' !== $active_tab ? ' active' : ''; ?>">
                 <i class="fas fa-box"></i>
-                <?php esc_html_e( 'Pakete', 'sk' ); ?>
+                <?php esc_html_e( 'Pakete', 'sk-core' ); ?>
                 <?php if ( $pack_count > 0 ) : ?>
                     <span class="sk-sub-tab-count"><?php echo (int) $pack_count; ?></span>
                 <?php endif; ?>
@@ -59,7 +59,7 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
             <a href="<?php echo esc_url( add_query_arg( [ 'tab' => 'subscription_orders' ], $link ) ); ?>"
                class="sk-sub-tab<?php echo 'subscription_orders' === $active_tab ? ' active' : ''; ?>">
                 <i class="fas fa-receipt"></i>
-                <?php esc_html_e( 'Bestellungen', 'sk' ); ?>
+                <?php esc_html_e( 'Bestellungen', 'sk-core' ); ?>
                 <?php if ( $order_count > 0 ) : ?>
                     <span class="sk-sub-tab-count"><?php echo (int) $order_count; ?></span>
                 <?php endif; ?>
@@ -97,15 +97,15 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
                 if ( 'dps_sub_cancelled' === $msg ) :
                     if ( $subscription && $subscription->has_active_cancelled_subscription() ) {
                         $date   = sk_format_date( $subscription->get_pack_end_date() );
-                        $notice = sprintf( __( 'Your subscription has been cancelled! However it\'s is still active till %s', 'sk' ), $date );
+                        $notice = sprintf( __( 'Your subscription has been cancelled! However it\'s is still active till %s', 'sk-core' ), $date );
                     } else {
-                        $notice = __( 'Your subscription has been cancelled!', 'sk' );
+                        $notice = __( 'Your subscription has been cancelled!', 'sk-core' );
                     }
                     ?>
                     <div class="sk-message"><p><?php echo esc_html( $notice ); ?></p></div>
                 <?php endif;
                 if ( 'dps_sub_activated' === $msg ) : ?>
-                    <div class="sk-message"><?php esc_html_e( 'Your subscription has been re-activated!', 'sk' ); ?></div>
+                    <div class="sk-message"><?php esc_html_e( 'Your subscription has been re-activated!', 'sk-core' ); ?></div>
                 <?php endif;
             endif; ?>
 
@@ -245,16 +245,16 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
                                     <?php
                                     $no_of_product = $sub_pack->get_number_of_products();
                                     if ( '-1' === $no_of_product ) {
-                                        echo sprintf( '<strong>%s</strong> %s <br />', esc_html__( 'Unlimited', 'sk' ), esc_html__( 'Products', 'sk' ) );
+                                        echo sprintf( '<strong>%s</strong> %s <br />', esc_html__( 'Unlimited', 'sk-core' ), esc_html__( 'Products', 'sk-core' ) );
                                     } else {
-                                        echo sprintf( '<strong>%d</strong> %s <br />', (int) $no_of_product, esc_html__( 'Products', 'sk' ) );
+                                        echo sprintf( '<strong>%d</strong> %s <br />', (int) $no_of_product, esc_html__( 'Products', 'sk-core' ) );
                                     }
                                     ?>
                                     <?php
                                     if ( empty( $sub_pack->get_pack_valid_days() ) ) {
-                                        echo sprintf( '%1$s<br /><strong>%2$s</strong> %3$s', esc_html__( 'For', 'sk' ), esc_html__( 'Unlimited', 'sk' ), esc_html__( 'Days', 'sk' ) );
+                                        echo sprintf( '%1$s<br /><strong>%2$s</strong> %3$s', esc_html__( 'For', 'sk-core' ), esc_html__( 'Unlimited', 'sk-core' ), esc_html__( 'Days', 'sk-core' ) );
                                     } else {
-                                        echo sprintf( '%1$s<br /><strong>%2$s</strong> %3$s', esc_html__( 'For', 'sk' ), esc_html( $sub_pack->get_pack_valid_days() ), esc_html__( 'Days', 'sk' ) );
+                                        echo sprintf( '%1$s<br /><strong>%2$s</strong> %3$s', esc_html__( 'For', 'sk-core' ), esc_html( $sub_pack->get_pack_valid_days() ), esc_html__( 'Days', 'sk-core' ) );
                                     }
                                     ?>
                                 </div>
@@ -263,22 +263,22 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
                             <div class="buy_pack_button">
                                 <?php if ( Helper::is_vendor_subscribed_pack( $pack_id ) ) : ?>
                                     <a href="<?php echo esc_url( get_permalink( get_the_ID() ) ); ?>" class="sk-btn sk-btn-theme buy_product_pack">
-                                        <?php esc_html_e( 'Your Pack', 'sk' ); ?>
+                                        <?php esc_html_e( 'Your Pack', 'sk-core' ); ?>
                                     </a>
 
                                 <?php elseif ( Helper::pack_renew_seller( $pack_id ) ) : ?>
                                     <a href="<?php echo esc_url( do_shortcode( '[add_to_cart_url id="' . $pack_id . '"]' ) ); ?>" class="sk-btn sk-btn-theme buy_product_pack">
-                                        <?php esc_html_e( 'Renew', 'sk' ); ?>
+                                        <?php esc_html_e( 'Renew', 'sk-core' ); ?>
                                     </a>
 
                                 <?php elseif ( ! Helper::vendor_has_subscription( sk_get_current_user_id() ) ) : ?>
                                     <a href="<?php echo esc_url( do_shortcode( '[add_to_cart_url id="' . get_the_ID() . '"]' ) ); ?>" class="sk-btn sk-btn-theme buy_product_pack">
-                                        <?php esc_html_e( 'Buy Now', 'sk' ); ?>
+                                        <?php esc_html_e( 'Buy Now', 'sk-core' ); ?>
                                     </a>
 
                                 <?php else : ?>
                                     <a href="<?php echo esc_url( do_shortcode( '[add_to_cart_url id="' . get_the_ID() . '"]' ) ); ?>" class="sk-btn sk-btn-theme buy_product_pack">
-                                        <?php esc_html_e( 'Switch Plan', 'sk' ); ?>
+                                        <?php esc_html_e( 'Switch Plan', 'sk-core' ); ?>
                                     </a>
 
                                 <?php endif; ?>
@@ -291,7 +291,7 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
                 </div>
 
             <?php else : ?>
-                <h3><?php esc_html_e( 'No subscription pack has been found!', 'sk' ); ?></h3>
+                <h3><?php esc_html_e( 'No subscription pack has been found!', 'sk-core' ); ?></h3>
             <?php endif; ?>
 
         </div><!-- .sk-subscription-content -->

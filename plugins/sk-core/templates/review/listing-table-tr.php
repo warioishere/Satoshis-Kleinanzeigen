@@ -46,32 +46,32 @@ $rating     = intval( get_comment_meta( $comment->comment_ID, 'rating', true ) )
 
         <div class="sk-review-card__footer">
             <a href="<?php echo esc_url( $permalink ); ?>" class="sk-review-card__view-link" target="_blank">
-                <i class="fas fa-external-link-alt"></i> <?php esc_html_e( 'Bewertung ansehen', 'sk' ); ?>
+                <i class="fas fa-external-link-alt"></i> <?php esc_html_e( 'Bewertung ansehen', 'sk-core' ); ?>
             </a>
 
             <?php if ( $can_manage ) : ?>
                 <div class="sk-review-card__actions">
                     <?php if ( $page_status === '0' ) : ?>
-                        <a href="#" class="sk-cmt-action sk-review-action approve" data-curr_page="<?php echo esc_attr( $page_status ); ?>" data-post_type="<?php echo esc_attr( $post_type ); ?>" data-page_status="0" data-comment_id="<?php echo intval( $comment->comment_ID ); ?>" data-cmt_status="1"><?php esc_html_e( 'Genehmigen', 'sk' ); ?></a>
-                        <a href="#" class="sk-cmt-action sk-review-action spam"    data-curr_page="<?php echo esc_attr( $page_status ); ?>" data-post_type="<?php echo esc_attr( $post_type ); ?>" data-page_status="0" data-comment_id="<?php echo intval( $comment->comment_ID ); ?>" data-cmt_status="spam"><?php esc_html_e( 'Spam', 'sk' ); ?></a>
-                        <a href="#" class="sk-cmt-action sk-review-action trash"   data-curr_page="<?php echo esc_attr( $page_status ); ?>" data-post_type="<?php echo esc_attr( $post_type ); ?>" data-page_status="0" data-comment_id="<?php echo intval( $comment->comment_ID ); ?>" data-cmt_status="trash"><?php esc_html_e( 'Papierkorb', 'sk' ); ?></a>
+                        <a href="#" class="sk-cmt-action sk-review-action approve" data-curr_page="<?php echo esc_attr( $page_status ); ?>" data-post_type="<?php echo esc_attr( $post_type ); ?>" data-page_status="0" data-comment_id="<?php echo intval( $comment->comment_ID ); ?>" data-cmt_status="1"><?php esc_html_e( 'Genehmigen', 'sk-core' ); ?></a>
+                        <a href="#" class="sk-cmt-action sk-review-action spam"    data-curr_page="<?php echo esc_attr( $page_status ); ?>" data-post_type="<?php echo esc_attr( $post_type ); ?>" data-page_status="0" data-comment_id="<?php echo intval( $comment->comment_ID ); ?>" data-cmt_status="spam"><?php esc_html_e( 'Spam', 'sk-core' ); ?></a>
+                        <a href="#" class="sk-cmt-action sk-review-action trash"   data-curr_page="<?php echo esc_attr( $page_status ); ?>" data-post_type="<?php echo esc_attr( $post_type ); ?>" data-page_status="0" data-comment_id="<?php echo intval( $comment->comment_ID ); ?>" data-cmt_status="trash"><?php esc_html_e( 'Papierkorb', 'sk-core' ); ?></a>
 
                     <?php elseif ( $page_status === 'spam' ) : ?>
-                        <a href="#" class="sk-cmt-action sk-review-action approve" data-curr_page="<?php echo esc_attr( $page_status ); ?>" data-post_type="<?php echo esc_attr( $post_type ); ?>" data-page_status="spam" data-comment_id="<?php echo intval( $comment->comment_ID ); ?>" data-cmt_status="1"><?php esc_html_e( 'Kein Spam', 'sk' ); ?></a>
-                        <a href="#" class="sk-cmt-action sk-review-action delete"  data-curr_page="<?php echo esc_attr( $page_status ); ?>" data-post_type="<?php echo esc_attr( $post_type ); ?>" data-page_status="spam" data-comment_id="<?php echo intval( $comment->comment_ID ); ?>" data-cmt_status="delete"><?php esc_html_e( 'Dauerhaft löschen', 'sk' ); ?></a>
+                        <a href="#" class="sk-cmt-action sk-review-action approve" data-curr_page="<?php echo esc_attr( $page_status ); ?>" data-post_type="<?php echo esc_attr( $post_type ); ?>" data-page_status="spam" data-comment_id="<?php echo intval( $comment->comment_ID ); ?>" data-cmt_status="1"><?php esc_html_e( 'Kein Spam', 'sk-core' ); ?></a>
+                        <a href="#" class="sk-cmt-action sk-review-action delete"  data-curr_page="<?php echo esc_attr( $page_status ); ?>" data-post_type="<?php echo esc_attr( $post_type ); ?>" data-page_status="spam" data-comment_id="<?php echo intval( $comment->comment_ID ); ?>" data-cmt_status="delete"><?php esc_html_e( 'Dauerhaft löschen', 'sk-core' ); ?></a>
 
                     <?php elseif ( $page_status === 'trash' ) : ?>
-                        <a href="#" class="sk-cmt-action sk-review-action approve" data-curr_page="<?php echo esc_attr( $page_status ); ?>" data-post_type="<?php echo esc_attr( $post_type ); ?>" data-page_status="trash" data-comment_id="<?php echo intval( $comment->comment_ID ); ?>" data-cmt_status="1"><?php esc_html_e( 'Wiederherstellen', 'sk' ); ?></a>
-                        <a href="#" class="sk-cmt-action sk-review-action delete"  data-curr_page="<?php echo esc_attr( $page_status ); ?>" data-post_type="<?php echo esc_attr( $post_type ); ?>" data-page_status="trash" data-comment_id="<?php echo intval( $comment->comment_ID ); ?>" data-cmt_status="delete"><?php esc_html_e( 'Dauerhaft löschen', 'sk' ); ?></a>
+                        <a href="#" class="sk-cmt-action sk-review-action approve" data-curr_page="<?php echo esc_attr( $page_status ); ?>" data-post_type="<?php echo esc_attr( $post_type ); ?>" data-page_status="trash" data-comment_id="<?php echo intval( $comment->comment_ID ); ?>" data-cmt_status="1"><?php esc_html_e( 'Wiederherstellen', 'sk-core' ); ?></a>
+                        <a href="#" class="sk-cmt-action sk-review-action delete"  data-curr_page="<?php echo esc_attr( $page_status ); ?>" data-post_type="<?php echo esc_attr( $post_type ); ?>" data-page_status="trash" data-comment_id="<?php echo intval( $comment->comment_ID ); ?>" data-cmt_status="delete"><?php esc_html_e( 'Dauerhaft löschen', 'sk-core' ); ?></a>
 
                     <?php else : ?>
                         <?php if ( $comment_status === 'approved' ) : ?>
-                            <a href="#" class="sk-cmt-action sk-review-action unapprove" data-curr_page="<?php echo esc_attr( $page_status ); ?>" data-post_type="<?php echo esc_attr( $post_type ); ?>" data-page_status="1" data-comment_id="<?php echo intval( $comment->comment_ID ); ?>" data-cmt_status="0"><?php esc_html_e( 'Ablehnen', 'sk' ); ?></a>
+                            <a href="#" class="sk-cmt-action sk-review-action unapprove" data-curr_page="<?php echo esc_attr( $page_status ); ?>" data-post_type="<?php echo esc_attr( $post_type ); ?>" data-page_status="1" data-comment_id="<?php echo intval( $comment->comment_ID ); ?>" data-cmt_status="0"><?php esc_html_e( 'Ablehnen', 'sk-core' ); ?></a>
                         <?php else : ?>
-                            <a href="#" class="sk-cmt-action sk-review-action approve" data-curr_page="<?php echo esc_attr( $page_status ); ?>" data-post_type="<?php echo esc_attr( $post_type ); ?>" data-page_status="1" data-comment_id="<?php echo intval( $comment->comment_ID ); ?>" data-cmt_status="1"><?php esc_html_e( 'Genehmigen', 'sk' ); ?></a>
+                            <a href="#" class="sk-cmt-action sk-review-action approve" data-curr_page="<?php echo esc_attr( $page_status ); ?>" data-post_type="<?php echo esc_attr( $post_type ); ?>" data-page_status="1" data-comment_id="<?php echo intval( $comment->comment_ID ); ?>" data-cmt_status="1"><?php esc_html_e( 'Genehmigen', 'sk-core' ); ?></a>
                         <?php endif; ?>
-                        <a href="#" class="sk-cmt-action sk-review-action spam"  data-curr_page="<?php echo esc_attr( $page_status ); ?>" data-post_type="<?php echo esc_attr( $post_type ); ?>" data-page_status="1" data-comment_id="<?php echo intval( $comment->comment_ID ); ?>" data-cmt_status="spam"><?php esc_html_e( 'Spam', 'sk' ); ?></a>
-                        <a href="#" class="sk-cmt-action sk-review-action trash" data-curr_page="<?php echo esc_attr( $page_status ); ?>" data-post_type="<?php echo esc_attr( $post_type ); ?>" data-page_status="1" data-comment_id="<?php echo intval( $comment->comment_ID ); ?>" data-cmt_status="trash"><?php esc_html_e( 'Papierkorb', 'sk' ); ?></a>
+                        <a href="#" class="sk-cmt-action sk-review-action spam"  data-curr_page="<?php echo esc_attr( $page_status ); ?>" data-post_type="<?php echo esc_attr( $post_type ); ?>" data-page_status="1" data-comment_id="<?php echo intval( $comment->comment_ID ); ?>" data-cmt_status="spam"><?php esc_html_e( 'Spam', 'sk-core' ); ?></a>
+                        <a href="#" class="sk-cmt-action sk-review-action trash" data-curr_page="<?php echo esc_attr( $page_status ); ?>" data-post_type="<?php echo esc_attr( $post_type ); ?>" data-page_status="1" data-comment_id="<?php echo intval( $comment->comment_ID ); ?>" data-cmt_status="trash"><?php esc_html_e( 'Papierkorb', 'sk-core' ); ?></a>
                     <?php endif; ?>
                 </div>
 

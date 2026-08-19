@@ -29,14 +29,14 @@ class ExtendedStoreController extends StoreControllerLite {
             [
                 'args' => [
                     'id'     => [
-                        'description'       => __( 'Unique identifier for the object.', 'sk' ),
+                        'description'       => __( 'Unique identifier for the object.', 'sk-core' ),
                         'type'              => 'integer',
                         'required'          => true,
                         'sanitize_callback' => 'absint',
                         'validate_callback' => 'sk_rest_validate_store_id',
                     ],
                     'status' => [
-                        'description' => __( 'Status for the store object.', 'sk' ),
+                        'description' => __( 'Status for the store object.', 'sk-core' ),
                         'type'        => 'string',
                         'required'    => true,
                     ],
@@ -67,7 +67,7 @@ class ExtendedStoreController extends StoreControllerLite {
             [
                 'args' => [
                     'id' => [
-                        'description'       => __( 'Unique identifier for the object.', 'sk' ),
+                        'description'       => __( 'Unique identifier for the object.', 'sk-core' ),
                         'type'              => 'integer',
                         'sanitize_callback' => 'absint',
                         'validate_callback' => 'sk_rest_validate_store_id',
@@ -88,18 +88,18 @@ class ExtendedStoreController extends StoreControllerLite {
             [
                 'args' => [
                     'id'      => [
-                        'description'       => __( 'Unique identifier for the object.', 'sk' ),
+                        'description'       => __( 'Unique identifier for the object.', 'sk-core' ),
                         'type'              => 'integer',
                         'sanitize_callback' => 'absint',
                         'validate_callback' => 'sk_rest_validate_store_id',
                     ],
                     'subject' => [
-                        'description' => __( 'Subject of the email.', 'sk' ),
+                        'description' => __( 'Subject of the email.', 'sk-core' ),
                         'type'        => 'string',
                         'required'    => true,
                     ],
                     'body'    => [
-                        'description' => __( 'Body of the email.', 'sk' ),
+                        'description' => __( 'Body of the email.', 'sk-core' ),
                         'type'        => 'string',
                         'required'    => true,
                     ],
@@ -138,7 +138,7 @@ class ExtendedStoreController extends StoreControllerLite {
     public function update_vendor_status( $request ) {
         if ( ! in_array( $request['status'], [ 'active', 'inactive' ], true ) ) {
             return rest_ensure_response(
-                new WP_Error( 'no_valid_status', __( 'Status parameter must be active or inactive', 'sk' ), [ 'status' => 400 ] )
+                new WP_Error( 'no_valid_status', __( 'Status parameter must be active or inactive', 'sk-core' ), [ 'status' => 400 ] )
             );
         }
 
@@ -146,7 +146,7 @@ class ExtendedStoreController extends StoreControllerLite {
 
         if ( empty( $store_id ) ) {
             return rest_ensure_response(
-                new WP_Error( 'no_vendor_found', __( 'No vendor found for updating status', 'sk' ), [ 'status' => 400 ] )
+                new WP_Error( 'no_vendor_found', __( 'No vendor found for updating status', 'sk-core' ), [ 'status' => 400 ] )
             );
         }
 
@@ -175,7 +175,7 @@ class ExtendedStoreController extends StoreControllerLite {
 
         if ( empty( $params ) ) {
             return rest_ensure_response(
-                new WP_Error( 'no_item_found', __( 'No items found for bulk updating', 'sk' ), [ 'status' => 404 ] )
+                new WP_Error( 'no_item_found', __( 'No items found for bulk updating', 'sk-core' ), [ 'status' => 404 ] )
             );
         }
 

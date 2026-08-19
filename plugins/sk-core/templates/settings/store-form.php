@@ -103,7 +103,7 @@ if ( $store_categories_on ) {
     $sc_store_categories = wp_get_object_terms( $current_user, 'store_category', [ 'fields' => 'ids' ] );
     $sc_category_type   = sk_get_option( 'store_category_type', 'sk_general', 'none' );
     $sc_is_multiple     = ( 'multiple' === $sc_category_type );
-    $sc_label           = $sc_is_multiple ? __( 'Store Categories', 'sk' ) : __( 'Store Category', 'sk' );
+    $sc_label           = $sc_is_multiple ? __( 'Store Categories', 'sk-core' ) : __( 'Store Category', 'sk-core' );
 }
 
 /* --- Store slug --- */
@@ -119,7 +119,7 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
     ====================================================== -->
     <div class="sk-settings-section">
         <div class="sk-settings-section-title">
-            <i class="fas fa-image"></i> <?php esc_html_e( 'Profil', 'sk' ); ?>
+            <i class="fas fa-image"></i> <?php esc_html_e( 'Profil', 'sk-core' ); ?>
         </div>
 
         <?php
@@ -149,7 +149,7 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
     ====================================================== -->
     <div class="sk-settings-section">
         <div class="sk-settings-section-title">
-            <i class="fas fa-store"></i> <?php esc_html_e( 'Anbieter Informationen', 'sk' ); ?>
+            <i class="fas fa-store"></i> <?php esc_html_e( 'Anbieter Informationen', 'sk-core' ); ?>
         </div>
 
         <?php
@@ -199,7 +199,7 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
     ====================================================== -->
     <div class="sk-settings-section">
         <div class="sk-settings-section-title">
-            <i class="fas fa-address-card"></i> <?php esc_html_e( 'Kontaktdaten', 'sk' ); ?>
+            <i class="fas fa-address-card"></i> <?php esc_html_e( 'Kontaktdaten', 'sk-core' ); ?>
         </div>
 
         <?php
@@ -539,7 +539,7 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
     <?php if ( function_exists( 'sk_ext' ) ) : ?>
     <div class="sk-settings-section">
         <div class="sk-settings-section-title">
-            <i class="fas fa-pen"></i> <?php esc_html_e( 'Biografie', 'sk' ); ?>
+            <i class="fas fa-pen"></i> <?php esc_html_e( 'Biografie', 'sk-core' ); ?>
         </div>
         <div class="sk-settings-field sk-settings-field--bio">
             <div class="sk-settings-input">

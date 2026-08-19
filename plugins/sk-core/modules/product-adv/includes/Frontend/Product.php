@@ -90,7 +90,7 @@ class Product {
         $color  = 'slategrey';
         if ( ! empty( $advertisement_data['already_advertised'] ) ) {
             // translators: 1) advertisement expire date
-            $title  = esc_attr( sprintf( __( 'Expires on: %s', 'sk' ), $advertisement_data['expire_date'] ) );
+            $title  = esc_attr( sprintf( __( 'Expires on: %s', 'sk-core' ), $advertisement_data['expire_date'] ) );
             $color  = '#F7931A';
             $class  = 'advertised';
         }
@@ -121,7 +121,7 @@ EOD;
      */
     public function product_listing_table_column() {
         $color  = '#F7931A';
-        $title  = esc_attr__( 'Advertised Products', 'sk' );
+        $title  = esc_attr__( 'Advertised Products', 'sk-core' );
         echo <<<EOD
 <th class="product-advertisement-th">
     <span class="fa-stack fa-xs tips" data-title="{$title}">
@@ -156,13 +156,13 @@ EOD;
 
         // localize scripts
         $localized_data = [
-            'advertise_alert'              => esc_html__( 'Are you sure you want to advertise this product?', 'sk' ),
+            'advertise_alert'              => esc_html__( 'Are you sure you want to advertise this product?', 'sk-core' ),
             'advertise_active'             => '#F7931A',
             'advertise_product_nonce'      => wp_create_nonce( 'sk_advertise_product_nonce' ),
-            'on_error_message'             => esc_html__( 'Something went wrong.', 'sk' ),
-            'on_success_message'           => esc_html__( 'Success.', 'sk' ),
-            'product_not_published'        => esc_html__( 'You can not advertise this product. Products needs to be published before you can advertise.', 'sk' ),
-            'on_load_advertisement_status' => esc_html__( 'Loading advertisement data. Please wait...', 'sk' ),
+            'on_error_message'             => esc_html__( 'Something went wrong.', 'sk-core' ),
+            'on_success_message'           => esc_html__( 'Success.', 'sk-core' ),
+            'product_not_published'        => esc_html__( 'You can not advertise this product. Products needs to be published before you can advertise.', 'sk-core' ),
+            'on_load_advertisement_status' => esc_html__( 'Loading advertisement data. Please wait...', 'sk-core' ),
             'checkout_url'                 => wc_get_checkout_url(),
             'ajaxurl'                      => admin_url( 'admin-ajax.php' ),
 

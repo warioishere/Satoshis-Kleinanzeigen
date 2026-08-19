@@ -304,7 +304,7 @@ class Manager {
         $data = $this->all( $args );
 
         if ( empty( $data ) ) {
-            return new WP_Error( 'no_advertisement_found', __( 'No advertisement data found with given advertisement id.', 'sk' ) );
+            return new WP_Error( 'no_advertisement_found', __( 'No advertisement data found with given advertisement id.', 'sk-core' ) );
         }
 
         return $data;
@@ -336,7 +336,7 @@ class Manager {
 
         // validate required fields
         if ( empty( $args['product_id'] ) ) {
-            return new WP_Error( 'insert_advertisement_invalid_product', __( 'Invalid advertisement product id.', 'sk' ) );
+            return new WP_Error( 'insert_advertisement_invalid_product', __( 'Invalid advertisement product id.', 'sk-core' ) );
         }
 
         /*
@@ -356,7 +356,7 @@ class Manager {
             // @codingStandardsIgnoreEnd
 
             if ( $running > 0 ) {
-                return new WP_Error( 'insert_advertisement_duplicate', __( 'Advertisement for this product is already going on. Please select another product.', 'sk' ) );
+                return new WP_Error( 'insert_advertisement_duplicate', __( 'Advertisement for this product is already going on. Please select another product.', 'sk-core' ) );
             }
         }
 
@@ -400,7 +400,7 @@ class Manager {
 
         if ( false === $inserted ) {
             sk_log( '[SK Product Advertisement] Error while inserting advertisement data: <strong>' . $wpdb->last_error . '</strong>, Data: ' . print_r( $data, true ) );
-            return new WP_Error( 'insert_advertisement_error', __( 'Something went wrong while inserting advertisement data. Please contact admin.', 'sk' ) );
+            return new WP_Error( 'insert_advertisement_error', __( 'Something went wrong while inserting advertisement data. Please contact admin.', 'sk-core' ) );
         }
 
         do_action( 'sk_after_product_advertisement_created', $insert_id, $data, $args );
@@ -428,7 +428,7 @@ class Manager {
 
         if ( false === $deleted || ( 0 === $deleted && ! empty( $wpdb->last_error ) ) ) {
             // translators: 1) MySql error
-            return new WP_Error( 'item_delete_error', sprintf( __( 'Error while deleting advertisement data. Error: %s', 'sk' ), $wpdb->last_error ), [ 'status' => 400 ] );
+            return new WP_Error( 'item_delete_error', sprintf( __( 'Error while deleting advertisement data. Error: %s', 'sk-core' ), $wpdb->last_error ), [ 'status' => 400 ] );
         }
 
         return $deleted;
@@ -446,7 +446,7 @@ class Manager {
         global $wpdb;
 
         if ( ! is_array( $ids ) || empty( $ids ) ) {
-            return new WP_Error( 'batch_delete_invalid_arg', __( 'No items found to delete.', 'sk' ), [ 'status' => 400 ] );
+            return new WP_Error( 'batch_delete_invalid_arg', __( 'No items found to delete.', 'sk-core' ), [ 'status' => 400 ] );
         }
 
         // run absint on array elements
@@ -460,7 +460,7 @@ class Manager {
 
         if ( $deleted === 0 && ! empty( $wpdb->last_error ) ) {
             // translators: 1) MySql error
-            return new WP_Error( 'batch_delete_error', sprintf( __( 'Error while deleting advertisement data. Error: %s', 'sk' ), $wpdb->last_error ), [ 'status' => 400 ] );
+            return new WP_Error( 'batch_delete_error', sprintf( __( 'Error while deleting advertisement data. Error: %s', 'sk-core' ), $wpdb->last_error ), [ 'status' => 400 ] );
         }
 
         return $deleted;
@@ -513,7 +513,7 @@ class Manager {
         global $wpdb;
 
         if ( ! is_array( $ids ) || empty( $ids ) ) {
-            return new WP_Error( 'batch_expire_invalid_arg', __( 'No items found to expire.', 'sk' ), [ 'status' => 400 ] );
+            return new WP_Error( 'batch_expire_invalid_arg', __( 'No items found to expire.', 'sk-core' ), [ 'status' => 400 ] );
         }
 
         // run absint on array elements and implode into comma separated string
@@ -530,7 +530,7 @@ class Manager {
 
         if ( $updated === 0 && ! empty( $wpdb->last_error ) ) {
             // translators: 1) mySql error
-            return new WP_Error( 'batch_expire_error', sprintf( __( 'Error while updating advertisement data. Error: %s', 'sk' ), $wpdb->last_error ), [ 'status' => 400 ] );
+            return new WP_Error( 'batch_expire_error', sprintf( __( 'Error while updating advertisement data. Error: %s', 'sk-core' ), $wpdb->last_error ), [ 'status' => 400 ] );
         }
 
         do_action( 'sk_after_batch_expire_product_advertisement', $ids );

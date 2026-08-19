@@ -81,35 +81,35 @@ final class Module {
             $option['abuse_reasons'] = [
                 [
                     'id'    => 'report_as_spam',
-                    'value' => esc_html__( 'This content is spam', 'sk' ),
+                    'value' => esc_html__( 'This content is spam', 'sk-core' ),
                 ],
                 [
                     'id'    => 'report_as_adult',
-                    'value' => esc_html__( 'This content should marked as adult', 'sk' ),
+                    'value' => esc_html__( 'This content should marked as adult', 'sk-core' ),
                 ],
                 [
                     'id'    => 'report_as_abusive',
-                    'value' => esc_html__( 'This content is abusive', 'sk' ),
+                    'value' => esc_html__( 'This content is abusive', 'sk-core' ),
                 ],
                 [
                     'id'    => 'report_as_violent',
-                    'value' => esc_html__( 'This content is violent', 'sk' ),
+                    'value' => esc_html__( 'This content is violent', 'sk-core' ),
                 ],
                 [
                     'id'    => 'report_as_risk_of_hurting',
-                    'value' => esc_html__( 'This content suggests the author might be risk of hurting themselves', 'sk' ),
+                    'value' => esc_html__( 'This content suggests the author might be risk of hurting themselves', 'sk-core' ),
                 ],
                 [
                     'id'    => 'report_as_infringes_copyright',
-                    'value' => esc_html__( 'This content infringes upon my copyright', 'sk' ),
+                    'value' => esc_html__( 'This content infringes upon my copyright', 'sk-core' ),
                 ],
                 [
                     'id'    => 'report_as_contains_private_info',
-                    'value' => esc_html__( 'This content contains my private information', 'sk' ),
+                    'value' => esc_html__( 'This content contains my private information', 'sk-core' ),
                 ],
                 [
                     'id' => 'other',
-                    'value' => esc_html__( 'Other', 'sk' )
+                    'value' => esc_html__( 'Other', 'sk-core' )
                 ],
             ];
 

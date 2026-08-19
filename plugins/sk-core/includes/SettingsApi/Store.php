@@ -35,8 +35,8 @@ class Store {
         $biography   = [];
         $biography[] = [
             'id'        => 'biography_card',
-            'title'     => __( 'About Your Store', 'sk' ),
-            'desc'      => __( 'Give visitors detailed information about what your store is all about', 'sk' ),
+            'title'     => __( 'About Your Store', 'sk-core' ),
+            'desc'      => __( 'Give visitors detailed information about what your store is all about', 'sk-core' ),
             'info'      => [],
             'icon'      => 'sk-icon-doc-2',
             'type'      => 'card',
@@ -48,7 +48,7 @@ class Store {
             'id'          => 'vendor_biography',
             'title'       => '',
             'desc'        => '',
-            'placeholder' => __( 'Write about your business, product offerings and more', 'sk' ),
+            'placeholder' => __( 'Write about your business, product offerings and more', 'sk-core' ),
             'info'        => [],
             'icon'        => '',
             'type'        => 'textarea',
@@ -74,11 +74,11 @@ class Store {
         $category_type        = sk_get_option( 'store_category_type', 'sk_general', 'none' );
         $business_info_card[] = [
             'id'          => 'categories',
-            'title'       => __( 'Category', 'sk' ),
+            'title'       => __( 'Category', 'sk-core' ),
             'desc'        => '',
             'info'        => [],
             'icon'        => '',
-            'placeholder' => __( 'Select Your Store Categories', 'sk' ),
+            'placeholder' => __( 'Select Your Store Categories', 'sk-core' ),
             'type'        => 'select',
             'multiple'    => 'multiple' === $category_type,
             'parent_id'   => 'store',
@@ -111,11 +111,11 @@ class Store {
         $support_card   = [];
         $support_card[] = [
             'id'        => 'support_card',
-            'title'     => __( 'Display Support Option', 'sk' ),
-            'desc'      => __( 'Choose where to display support button for customers to utilize', 'sk' ),
+            'title'     => __( 'Display Support Option', 'sk-core' ),
+            'desc'      => __( 'Choose where to display support button for customers to utilize', 'sk-core' ),
             'info'      => [
                 [
-                    'text' => __( 'Docs', 'sk' ),
+                    'text' => __( 'Docs', 'sk-core' ),
                     'url'  => 'https://sk.co/docs/wordpress/modules/how-to-install-and-use-store-support/',
                     'icon' => 'sk-icon-doc',
                 ],

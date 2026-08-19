@@ -121,7 +121,7 @@ class StoreCategoryController extends WP_REST_Terms_Controller {
         $term_id = $request->get_param( 'id' );
 
         if ( empty( $term_id ) ) {
-            return new WP_Error( 'missing_param', __( 'Missing param id', 'sk' ), array( 'status' => 400 ) );
+            return new WP_Error( 'missing_param', __( 'Missing param id', 'sk-core' ), array( 'status' => 400 ) );
         }
 
         $term = $this->get_term( $term_id );

@@ -26,12 +26,12 @@ class AdminSettings {
     public function add_settings_section( $sections ) {
         $sections['sk_report_abuse'] = [
             'id'                   => 'sk_report_abuse',
-            'title'                => __( 'Product Report Abuse', 'sk' ),
+            'title'                => __( 'Product Report Abuse', 'sk-core' ),
             'icon_url'             => SK_REPORT_ABUSE_ASSETS . '/images/report.svg',
-            'description'          => __( 'Configure Product Abusal Reports', 'sk' ),
+            'description'          => __( 'Configure Product Abusal Reports', 'sk-core' ),
             'document_link'        => 'https://sk.co/docs/wordpress/modules/sk-report-abuse/',
-            'settings_title'       => __( 'Product Report Abuse Settings', 'sk' ),
-            'settings_description' => __( 'Configure your marketplace to ensure safety and honesty by allowing customers to report fraudulent products.', 'sk' ),
+            'settings_title'       => __( 'Product Report Abuse Settings', 'sk-core' ),
+            'settings_description' => __( 'Configure your marketplace to ensure safety and honesty by allowing customers to report fraudulent products.', 'sk-core' ),
         ];
 
         return $sections;
@@ -49,19 +49,19 @@ class AdminSettings {
         $settings_fields['sk_report_abuse'] = [
             'reported_by_logged_in_users_only' => [
                 'name'    => 'reported_by_logged_in_users_only',
-                'label'   => __( 'Reported by', 'sk' ),
-                'desc'    => __( 'Only logged-in users can report', 'sk' ),
+                'label'   => __( 'Reported by', 'sk-core' ),
+                'desc'    => __( 'Only logged-in users can report', 'sk-core' ),
                 'type'    => 'switcher',
                 'default' => 'off',
-                'tooltip' => __( 'Restrict Product Abuse feature for logged-In users only', 'sk' ),
+                'tooltip' => __( 'Restrict Product Abuse feature for logged-In users only', 'sk-core' ),
             ],
 
             'abuse_reasons' => [
                 'name'    => 'abuse_reasons',
-                'label'   => __( 'Reasons for Abuse Report', 'sk' ),
+                'label'   => __( 'Reasons for Abuse Report', 'sk-core' ),
                 'type'    => 'repeatable',
-                'desc'    => __( 'Add multiple customized reasons.', 'sk' ),
-                'tooltip' => __( 'Add multiple customized reasons.', 'sk' ),
+                'desc'    => __( 'Add multiple customized reasons.', 'sk-core' ),
+                'tooltip' => __( 'Add multiple customized reasons.', 'sk-core' ),
             ],
         ];
 

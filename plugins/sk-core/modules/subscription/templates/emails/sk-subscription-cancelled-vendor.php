@@ -16,17 +16,17 @@ if ( ! $vendor ) {
 
 do_action( 'woocommerce_email_header', $email_heading, $email );
 
-printf( '<p>%s</p>', __( 'Hello there', 'sk' ) );
+printf( '<p>%s</p>', __( 'Hello there', 'sk-core' ) );
 
-printf( '<p>%s</p>', __( 'Your Subscription has been cancelled.', 'sk' ) );
+printf( '<p>%s</p>', __( 'Your Subscription has been cancelled.', 'sk-core' ) );
 
 if ( $subscription ) {
-    printf( '<p>%s</p>', __( 'Here is your Subscription pack details:', 'sk' ) );
+    printf( '<p>%s</p>', __( 'Here is your Subscription pack details:', 'sk-core' ) );
 
     /* translators: %s is the subscription package title */
-    printf( '<p>%s</p>', sprintf( __( 'Subscription Pack: %s', 'sk' ), $subscription->get_package_title() ) );
+    printf( '<p>%s</p>', sprintf( __( 'Subscription Pack: %s', 'sk-core' ), $subscription->get_package_title() ) );
     /* translators: %s is the subscription package price */
-    printf( '<p>%s</p>', sprintf( __( 'Price: %s', 'sk' ), wc_price( $subscription->get_price() ) ) );
+    printf( '<p>%s</p>', sprintf( __( 'Price: %s', 'sk-core' ), wc_price( $subscription->get_price() ) ) );
 }
 
 /**

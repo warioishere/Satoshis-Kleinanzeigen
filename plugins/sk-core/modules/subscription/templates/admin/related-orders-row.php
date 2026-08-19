@@ -14,15 +14,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<a href="<?php echo esc_url( get_edit_post_link( $order->get_id() ) ); ?>">
 			<?php
 			// translators: placeholder is an order number.
-			echo sprintf( esc_html_x( '#%s', 'hash before order number', 'sk' ), esc_html( $order->get_order_number() ) );
+			echo sprintf( esc_html_x( '#%s', 'hash before order number', 'sk-core' ), esc_html( $order->get_order_number() ) );
 			?>
 		</a>
 	</td>
 	<td>
 		<?php
         echo ( $order->get_parent_id() > 0 )
-            ? esc_html_x( 'Renewal Order', 'vendor subscription admin related order list', 'sk' )
-            : esc_html_x( 'Parent Order', 'vendor subscription admin related order list', 'sk' );
+            ? esc_html_x( 'Renewal Order', 'vendor subscription admin related order list', 'sk-core' )
+            : esc_html_x( 'Parent Order', 'vendor subscription admin related order list', 'sk-core' );
 		?>
 	</td>
 	<td>
@@ -33,7 +33,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			$t_time          = sk_format_datetime( $timestamp_gmt );
 			$date_to_display = human_time_diff( $timestamp_gmt, time() );
 		} else {
-			$t_time = $date_to_display = __( 'Unpublished', 'sk' ); //phpcs:ignore
+			$t_time = $date_to_display = __( 'Unpublished', 'sk-core' ); //phpcs:ignore
 		}
         ?>
 		<abbr title="<?php echo esc_attr( $t_time ); ?>">

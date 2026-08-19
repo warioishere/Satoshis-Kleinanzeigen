@@ -23,7 +23,7 @@ class Template extends DashboardModule {
         }
         return [
             'slug'       => 'announcement',
-            'title'      => __( 'Announcements', 'sk' ),
+            'title'      => __( 'Announcements', 'sk-core' ),
             'icon'       => '<i class="fas fa-bell"></i>',
             'icon_name'  => 'Megaphone',
             'pos'        => 181,
@@ -213,7 +213,7 @@ class Template extends DashboardModule {
         <div class="sk-no-announcement">
             <div class="annoument-no-wrapper">
                 <i class="fas fa-bell sk-announcement-icon"></i>
-                <p><?php esc_html_e( 'No Announcement found', 'sk' ); ?></p>
+                <p><?php esc_html_e( 'No Announcement found', 'sk-core' ); ?></p>
             </div>
         </div>
         <?php
@@ -242,7 +242,7 @@ class Template extends DashboardModule {
         $notice  = $manager->get_notice( $notice_id );
 
         if ( ! $notice instanceof Single ) {
-            wp_send_json_error( [ 'message' => __( 'Ankündigung nicht gefunden', 'sk' ) ] );
+            wp_send_json_error( [ 'message' => __( 'Ankündigung nicht gefunden', 'sk-core' ) ] );
         }
 
         // Mark as read

@@ -21,15 +21,15 @@ do_action( 'woocommerce_email_header', $email_heading, $email );
     <div>
         <table cellspacing='0'>
             <tr>
-                <th class='store-name'><?php esc_html_e( 'Store Name', 'sk' ); ?></th>
+                <th class='store-name'><?php esc_html_e( 'Store Name', 'sk-core' ); ?></th>
                 <td class="store-name"><?php echo esc_html( $store_name ); ?> </td>
             </tr>
             <tr>
-                <th class='store-name'><?php esc_html_e( 'Reviewed by', 'sk' ); ?></th>
+                <th class='store-name'><?php esc_html_e( 'Reviewed by', 'sk-core' ); ?></th>
                 <td class="store-name"><?php echo esc_html( $reviewer_name ); ?> </td>
             </tr>
             <tr>
-                <th class="quote-date"><?php esc_html_e( 'Rating', 'sk' ); ?></th>
+                <th class="quote-date"><?php esc_html_e( 'Rating', 'sk-core' ); ?></th>
                 <td class="quote-date">
                     <p class='sk-stars'>
                         <?php
@@ -41,11 +41,11 @@ do_action( 'woocommerce_email_header', $email_heading, $email );
                 </td>
             </tr>
             <tr>
-                <th class='store-name'><?php esc_html_e( 'Title', 'sk' ); ?></th>
+                <th class='store-name'><?php esc_html_e( 'Title', 'sk-core' ); ?></th>
                 <td class="store-name"><?php echo esc_html( $post_title ); ?> </td>
             </tr>
             <tr>
-                <th class='store-name'><?php esc_html_e( 'Details', 'sk' ); ?></th>
+                <th class='store-name'><?php esc_html_e( 'Details', 'sk-core' ); ?></th>
                 <td class="store-name"><?php echo wp_kses_post( $post_details ); ?> </td>
             </tr>
         </table>

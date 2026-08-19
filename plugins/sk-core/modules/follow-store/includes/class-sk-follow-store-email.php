@@ -20,8 +20,8 @@ class SK_Follow_Store_Email extends WC_Email {
 
     public function __construct() {
         $this->id             = 'updates_for_store_followers';
-        $this->title          = __( 'SK Updates for Store Followers', 'sk' );
-        $this->description    = __( 'Send store updates to followers.', 'sk' );
+        $this->title          = __( 'SK Updates for Store Followers', 'sk-core' );
+        $this->description    = __( 'Send store updates to followers.', 'sk-core' );
         $this->template_html  = 'emails/follow-store-updates-email-html.php';
         $this->template_plain = 'emails/plain/follow-store-updates-email-html.php';
         $this->template_base  = trailingslashit( SK_FOLLOW_STORE_VIEWS );
@@ -43,17 +43,17 @@ class SK_Follow_Store_Email extends WC_Email {
      */
     public function init_form_fields() {
         /* translators: %s: list of placeholders */
-        $placeholder_text  = sprintf( __( 'Available placeholders: %s', 'sk' ), '<code>' . implode( '</code>, <code>', array_keys( $this->placeholders ) ) . '</code>' );
+        $placeholder_text  = sprintf( __( 'Available placeholders: %s', 'sk-core' ), '<code>' . implode( '</code>, <code>', array_keys( $this->placeholders ) ) . '</code>' );
         $this->form_fields = array(
             'enabled' => array(
-                'title'         => __( 'Enable/Disable', 'sk' ),
+                'title'         => __( 'Enable/Disable', 'sk-core' ),
                 'type'          => 'checkbox',
-                'label'         => __( 'Enable this email', 'sk' ),
+                'label'         => __( 'Enable this email', 'sk-core' ),
                 'default'       => 'yes',
             ),
 
             'subject' => array(
-                'title'         => __( 'Subject', 'sk' ),
+                'title'         => __( 'Subject', 'sk-core' ),
                 'type'          => 'text',
                 'desc_tip'      => true,
                 'description'   => $placeholder_text,
@@ -62,7 +62,7 @@ class SK_Follow_Store_Email extends WC_Email {
             ),
 
             'heading' => array(
-                'title'         => __( 'Email heading', 'sk' ),
+                'title'         => __( 'Email heading', 'sk-core' ),
                 'type'          => 'text',
                 'desc_tip'      => true,
                 'description'   => $placeholder_text,
@@ -70,29 +70,29 @@ class SK_Follow_Store_Email extends WC_Email {
                 'default'       => $this->get_default_heading(),
             ),
             'additional_content' => array(
-                'title'       => __( 'Additional content', 'sk' ),
-                'description' => __( 'Text to appear below the main email content.', 'sk' ) . ' ' . $placeholder_text,
+                'title'       => __( 'Additional content', 'sk-core' ),
+                'description' => __( 'Text to appear below the main email content.', 'sk-core' ) . ' ' . $placeholder_text,
                 'css'         => 'width:400px; height: 75px;',
-                'placeholder' => __( 'N/A', 'sk' ),
+                'placeholder' => __( 'N/A', 'sk-core' ),
                 'type'        => 'textarea',
                 'default'     => $this->get_default_additional_content(),
                 'desc_tip'    => true,
             ),
             'frequency' => array(
-                'title'       => __( 'Frequency', 'sk' ),
+                'title'       => __( 'Frequency', 'sk-core' ),
                 'type'        => 'select',
-                'description' => __( 'Choose the delivery schedule for this notification.', 'sk' ),
+                'description' => __( 'Choose the delivery schedule for this notification.', 'sk-core' ),
                 'default'     => 'daily',
                 'options' => array(
-                    'daily'  => __( 'Daily', 'sk' ),
-                    'weekly' => __( 'Weekly', 'sk' ),
+                    'daily'  => __( 'Daily', 'sk-core' ),
+                    'weekly' => __( 'Weekly', 'sk-core' ),
                 ),
             'desc_tip'    => true,
             ),
             'email_type' => array(
-                'title'       => __( 'Email type', 'sk' ),
+                'title'       => __( 'Email type', 'sk-core' ),
                 'type'        => 'select',
-                'description' => __( 'Choose which format of email to send.', 'sk' ),
+                'description' => __( 'Choose which format of email to send.', 'sk-core' ),
                 'default'     => 'html',
                 'class'       => 'email_type wc-enhanced-select',
                 'options'     => $this->get_email_type_options(),
@@ -123,7 +123,7 @@ class SK_Follow_Store_Email extends WC_Email {
      * @return string
      */
     public function get_default_subject() {
-        return __( '{follower_name}, see new updates from {site_title}', 'sk' );
+        return __( '{follower_name}, see new updates from {site_title}', 'sk-core' );
     }
 
     /**
@@ -133,7 +133,7 @@ class SK_Follow_Store_Email extends WC_Email {
      * @return string
      */
     public function get_default_heading() {
-        return __( 'Latest updates from {site_title}', 'sk' );
+        return __( 'Latest updates from {site_title}', 'sk-core' );
     }
 
     /**
