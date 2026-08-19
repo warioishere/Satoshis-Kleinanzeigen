@@ -17,67 +17,7 @@ class Admin {
      * Admin constructor.
      */
     public function __construct() {
-        //enqueue required scripts
-        add_action( 'admin_enqueue_scripts', [ $this, 'admin_enqueue_scripts' ], 10, 1 );
-        // register admin menu
-        add_action( 'sk_admin_menu', [ $this, 'add_submenu' ], '16.1' );
-        add_filter( 'sk-admin-routes', [ $this, 'admin_routes' ] );
-
         add_action( 'wp_trash_post', array( $this, 'delete_base_product' ) );
-    }
-
-    /**
-     * Enqueue Admin Scripts
-     *
-     * @param string $hook
-     *
-     *
-     * @return void
-     */
-    public function admin_enqueue_scripts( $hook ) {
-        if ( 'toplevel_page_sk' !== $hook ) {
-            return;
-        }
-
-    }
-
-    /**
-     * Add submenu page in sk Dashboard
-     *
-     * @param string $capability
-     *
-     *
-     * @return void
-     */
-    public function add_submenu( $capability ) {
-        if ( ! current_user_can( $capability ) ) {
-            return;
-        }
-
-        global $submenu;
-
-        $title = esc_html__( 'Advertising', 'sk' );
-        $slug  = 'sk';
-
-        $submenu[ $slug ][] = [ $title, $capability, 'admin.php?page=' . $slug . '#/product-advertising' ]; // phpcs:ignore
-    }
-
-    /**
-     * Add subscripton route
-     *
-     * @param  array $routes
-     *
-     *
-     * @return array
-     */
-    public function admin_routes( $routes ) {
-        $routes[] = [
-            'path'      => '/product-advertising',
-            'name'      => 'ProductAdvertisement',
-            'component' => 'ProductAdvertisement',
-        ];
-
-        return $routes;
     }
 
     /**

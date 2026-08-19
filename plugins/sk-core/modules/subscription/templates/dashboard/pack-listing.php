@@ -77,23 +77,22 @@ use SK\Modules\Subscription\Helper;
                 </p>
             <?php endif; ?>
 
-            <?php if ( ! ( ! $is_recurring && $is_cancelled ) ) :
-                $maybe_reactivate = $is_recurring && $is_cancelled;
-                $nonce      = $maybe_reactivate ? 'dps-sub-activate' : 'dps-sub-cancel';
-                $input_name = $maybe_reactivate ? 'dps_activate_subscription' : 'dps_cancel_subscription';
-                $btn_class  = $maybe_reactivate ? 'sk-btn-success' : 'sk-btn-sm-danger';
-                $btn_label  = $maybe_reactivate ? 'Abo reaktivieren' : 'Abo kündigen';
+            <?php
+            // a cancelled pack can be reactivated, a running one can be cancelled
+            $nonce      = $is_cancelled ? 'dps-sub-activate' : 'dps-sub-cancel';
+            $input_name = $is_cancelled ? 'dps_activate_subscription' : 'dps_cancel_subscription';
+            $btn_class  = $is_cancelled ? 'sk-btn-success' : 'sk-btn-sm-danger';
+            $btn_label  = $is_cancelled ? 'Abo reaktivieren' : 'Abo kündigen';
             ?>
-                <div class="sk-sub-active-info__action">
-                    <form id="dps_submit_form" action="" method="post">
-                        <?php wp_nonce_field( $nonce ); ?>
-                        <input type="hidden" name="<?php echo esc_attr( $input_name ); ?>" value="1">
-                        <input type="submit" name="dps_submit"
-                               class="<?php echo esc_attr( "sk-sub-cancel-btn {$btn_class}" ); ?>"
-                               value="<?php echo esc_attr( $btn_label ); ?>">
-                    </form>
-                </div>
-            <?php endif; ?>
+            <div class="sk-sub-active-info__action">
+                <form id="dps_submit_form" action="" method="post">
+                    <?php wp_nonce_field( $nonce ); ?>
+                    <input type="hidden" name="<?php echo esc_attr( $input_name ); ?>" value="1">
+                    <input type="submit" name="dps_submit"
+                           class="<?php echo esc_attr( "sk-sub-cancel-btn {$btn_class}" ); ?>"
+                           value="<?php echo esc_attr( $btn_label ); ?>">
+                </form>
+            </div>
         </div>
     <?php endif; ?>
 
