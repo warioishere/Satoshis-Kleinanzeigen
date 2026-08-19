@@ -72,7 +72,7 @@ class SK_Follow_Store_Install {
         }
 
         $table_schema = array(
-            "CREATE TABLE IF NOT EXISTS `{$wpdb->prefix}sk_follow_store_followers` (
+            "CREATE TABLE `{$wpdb->prefix}sk_follow_store_followers` (
               `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
               `vendor_id` bigint(20) unsigned NOT NULL,
               `follower_id` bigint(20) unsigned NOT NULL,

@@ -50,12 +50,11 @@ class ModuleLoader {
 
         ChatMessages::maybe_install();
 
-        $already_exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table_name ) ) === $table_name;
-        if ( $already_exists ) {
-            return;
-        }
-
-        $sql = "CREATE TABLE IF NOT EXISTS {$table_name} (
+        // No early return on an existing table and no `IF NOT EXISTS`: dbDelta reads
+        // the table name with `|CREATE TABLE ([^ ]*)|`, so `IF NOT EXISTS` makes it
+        // parse the name as "IF", never match the existing table and never emit the
+        // ALTERs for missing columns or keys.
+        $sql = "CREATE TABLE {$table_name} (
             id bigint(20) NOT NULL AUTO_INCREMENT,
             user_id bigint(20) NOT NULL,
             product_id bigint(20) NOT NULL,

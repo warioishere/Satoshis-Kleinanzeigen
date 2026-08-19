@@ -38,7 +38,7 @@ class Install {
     private function create_table() {
         global $wpdb;
 
-        $sql = "CREATE TABLE IF NOT EXISTS `{$wpdb->prefix}sk_advertised_products` (
+        $sql = "CREATE TABLE `{$wpdb->prefix}sk_advertised_products` (
                     `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
                     `product_id` bigint(20) UNSIGNED NOT NULL,
                     `created_via` ENUM('order','admin','subscription','free') NOT NULL DEFAULT 'admin',

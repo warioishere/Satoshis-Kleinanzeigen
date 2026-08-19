@@ -140,7 +140,7 @@ class SkFollowStoreRestController extends SkRESTController {
         }
 
         // validate vendor_id, admin can check any vendor's followers, but vendor only can view their own followers
-        if ( intval( $request_args['vendor_id'] ) !== sk_get_current_user_id() && ! current_user_can( ska_admin_menu_capability() ) ) {
+        if ( intval( $request_args['vendor_id'] ) !== sk_get_current_user_id() && ! current_user_can( sk_admin_menu_capability() ) ) {
             $request_args['vendor_id'] = sk_get_current_user_id();
         }
 

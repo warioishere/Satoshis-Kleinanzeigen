@@ -267,7 +267,7 @@ class ProductControllerV2 extends ProductController {
         $product_types  = apply_filters( 'sk_product_types', [ 'simple' => __( 'Simple', 'sk-core' ) ] );
 
         // If any vendor it trying to access other products then we need to replace author id by current user id.
-        if ( ! current_user_can( ska_admin_menu_capability() ) ) {
+        if ( ! current_user_can( sk_admin_menu_capability() ) ) {
             $args['author'] = sk_get_current_user_id();
         } elseif ( $request->get_param( 'author' ) ) {
             $args['author'] = $request->get_param( 'author' );

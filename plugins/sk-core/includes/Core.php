@@ -37,10 +37,19 @@ class Core {
         }
 
         $valid_pages = [ 'admin-ajax.php', 'admin-post.php', 'async-upload.php', 'media-upload.php' ];
-        $user_role   = reset( $current_user->roles );
+
+        // All roles, not just the first one: a seller who also carries a second
+        // role slipped past a reset() check and reached wp-admin.
+        $blocked_roles = [ 'seller', 'customer', 'vendor_staff' ];
+        $user_roles    = ( $current_user instanceof \WP_User ) ? (array) $current_user->roles : [];
+
+        // Anyone who may actually run the shop keeps access, whatever else they are.
+        if ( current_user_can( sk_admin_menu_capability() ) ) {
+            return;
+        }
 
         if ( ! in_array( $pagenow, $valid_pages, true )
-             && in_array( $user_role, [ 'seller', 'customer', 'vendor_staff' ], true ) ) {
+             && array_intersect( $user_roles, $blocked_roles ) ) {
             wp_safe_redirect( home_url() );
             exit;
         }

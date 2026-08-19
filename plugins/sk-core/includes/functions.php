@@ -13,16 +13,6 @@ function sk_admin_menu_position() {
     return apply_filters( 'sk_menu_position', '55.4' );
 }
 
-/**
- * SK Admin menu capability
- *
- *
- * @return string
- */
-function ska_admin_menu_capability() {
-    return sk_admin_menu_capability();
-}
-
 if ( ! function_exists( 'sk_admin_menu_capability' ) ) {
     /**
      * SK Admin menu capability

@@ -62,7 +62,7 @@ class PhpDashboard implements Hookable {
     public function register_submenu_items(): void {
         global $submenu;
 
-        $capability = ska_admin_menu_capability();
+        $capability = sk_admin_menu_capability();
         if ( ! current_user_can( $capability ) ) {
             return;
         }

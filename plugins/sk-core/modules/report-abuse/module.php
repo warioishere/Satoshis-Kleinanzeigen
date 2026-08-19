@@ -146,7 +146,7 @@ final class Module {
 
         include_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-        $request_table = "CREATE TABLE IF NOT EXISTS `{$wpdb->prefix}sk_report_abuse_reports` (
+        $request_table = "CREATE TABLE `{$wpdb->prefix}sk_report_abuse_reports` (
           `id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
           `reason` VARCHAR(191) NOT NULL,
           `product_id` BIGINT(20) NOT NULL,

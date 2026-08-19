@@ -24,7 +24,7 @@ class Menu {
     public function add_admin_menu() {
         global $submenu;
 
-        $capability = ska_admin_menu_capability();
+        $capability = sk_admin_menu_capability();
         if ( ! current_user_can( $capability ) ) {
             return;
         }

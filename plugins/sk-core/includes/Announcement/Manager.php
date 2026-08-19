@@ -225,17 +225,27 @@ class Manager {
             $where  .= $wpdb->prepare( ' AND ( p.post_title LIKE %s OR p.post_content LIKE %s )', $like, $like );
         }
 
+        // Since PHP 8.3 modify() throws on an unparseable string instead of
+        // returning false, so the falsy check alone no longer catches bad input.
         $now       = sk_current_datetime();
         $from_date = '';
         if ( ! empty( $args['from'] ) ) {
-            $from_date = $now->modify( $args['from'] );
-            $from_date = $from_date ? $from_date->setTimezone( new DateTimeZone( 'UTC' ) )->setTime( 0, 0, 0 )->format( 'Y-m-d H:i:s' ) : '';
+            try {
+                $from_date = $now->modify( $args['from'] );
+                $from_date = $from_date ? $from_date->setTimezone( new DateTimeZone( 'UTC' ) )->setTime( 0, 0, 0 )->format( 'Y-m-d H:i:s' ) : '';
+            } catch ( \Exception $e ) {
+                $from_date = '';
+            }
         }
 
         $to_date = '';
         if ( ! empty( $args['to'] ) ) {
-            $to_date = $now->modify( $args['to'] );
-            $to_date = $to_date ? $to_date->setTimezone( new DateTimeZone( 'UTC' ) )->setTime( 23, 59, 59 )->format( 'Y-m-d H:i:s' ) : '';
+            try {
+                $to_date = $now->modify( $args['to'] );
+                $to_date = $to_date ? $to_date->setTimezone( new DateTimeZone( 'UTC' ) )->setTime( 23, 59, 59 )->format( 'Y-m-d H:i:s' ) : '';
+            } catch ( \Exception $e ) {
+                $to_date = '';
+            }
         }
 
         if ( ! empty( $from_date ) && ! empty( $to_date ) ) {
@@ -269,82 +279,55 @@ class Manager {
         $cache_key = 'get_announcement_' . md5( wp_json_encode( $args ) );
         $results   = Cache::get( $cache_key, $cache_group );
 
-        if ( false === $results && 'count' === $args['return'] ) {
-            // @codingStandardsIgnoreStart
-            $results = (int) $wpdb->get_var(
-                $wpdb->prepare(
-                    "SELECT $fields FROM $from $join WHERE %d=%d $where",
-                    $query_args
-                )
-            );
-            // @codingStandardsIgnoreEnd
-            if ( $wpdb->last_error ) {
-                // database query error
-                $db_error      = $wpdb->last_error;
-                $error_message = sprintf(
-                    '%1$s %2$s',
-                    __( 'Announcement: Something went wrong while querying data.', 'sk-core' ),
-                    current_user_can( 'manage_options' ) ? ': ' . $db_error : ''
-                );
+        if ( false === $results ) {
+            $sql = "SELECT $fields FROM $from $join WHERE %d=%d $where";
 
-                return new WP_Error( 'announcement_count_db_error', $error_message );
+            if ( 'count' !== $args['return'] ) {
+                $sql .= " $groupby ORDER BY $orderby $limits";
             }
 
-            // store on cache
-            Cache::set( $cache_key, $results, $cache_group );
-        } elseif ( false === $results && 'ids' === $args['return'] ) {
             // @codingStandardsIgnoreStart
-            $results = $wpdb->get_col(
-                $wpdb->prepare(
-                    "SELECT $fields FROM $from $join WHERE %d=%d $where $groupby ORDER BY $orderby $limits",
-                    $query_args
-                )
-            );
+            $prepared = $wpdb->prepare( $sql, $query_args );
+
+            switch ( $args['return'] ) {
+                case 'count':
+                    $data = (int) $wpdb->get_var( $prepared );
+                    break;
+
+                case 'ids':
+                    // get_col returns an empty array both on error and on no result,
+                    // so last_error below is what tells the two apart.
+                    $data = $wpdb->get_col( $prepared );
+                    break;
+
+                default:
+                    $data = $wpdb->get_results( $prepared, ARRAY_A );
+                    break;
+            }
             // @codingStandardsIgnoreEnd
-            if ( $wpdb->last_error ) { // get_col returns empty array in case of error or no result
-                // database query error
-                $db_error      = $wpdb->last_error;
+
+            if ( $wpdb->last_error ) {
                 $error_message = sprintf(
                     '%1$s %2$s',
                     __( 'Announcement: Something went wrong while querying data.', 'sk-core' ),
-                    current_user_can( 'manage_options' ) ? ': ' . $db_error : ''
+                    current_user_can( 'manage_options' ) ? ': ' . $wpdb->last_error : ''
                 );
 
                 return new WP_Error( 'announcement_db_error', $error_message );
             }
 
-            // store on cache
-            Cache::set( $cache_key, $results, $cache_group );
-        } elseif ( false === $results ) {
-            // @codingStandardsIgnoreStart
-            $data = $wpdb->get_results(
-                $wpdb->prepare(
-                    "SELECT $fields FROM $from $join WHERE %d=%d $where $groupby ORDER BY $orderby $limits",
-                    $query_args
-                ),
-                ARRAY_A
-            );
-            // @codingStandardsIgnoreEnd
-            if ( $wpdb->last_error ) {
-                // database query error
-                $db_error      = $wpdb->last_error;
-                $error_message = sprintf(
-                    '%1$s %2$s',
-                    __( 'Announcement: Something went wrong while querying data.', 'sk-core' ),
-                    current_user_can( 'manage_options' ) ? ': ' . $db_error : ''
-                );
+            if ( 'count' === $args['return'] || 'ids' === $args['return'] ) {
+                $results = $data;
+            } else {
+                $results = [];
 
-                return new WP_Error( 'announcement_count_db_error', $error_message );
-            }
-
-            $results = [];
-            if ( ! empty( $data ) && 1 === (int) $args['per_page'] ) {
-                // we need to return a single object
-                $data    = reset( $data );
-                $results = new Single( $data );
-            } elseif ( ! empty( $data ) ) {
-                foreach ( $data as $single ) {
-                    $results[] = new Single( $single );
+                if ( ! empty( $data ) && 1 === (int) $args['per_page'] ) {
+                    // we need to return a single object
+                    $results = new Single( reset( $data ) );
+                } elseif ( ! empty( $data ) ) {
+                    foreach ( $data as $single ) {
+                        $results[] = new Single( $single );
+                    }
                 }
             }
 
@@ -392,17 +375,18 @@ class Manager {
     public function get_pagination_data( $args = [] ) {
         $args['return'] = 'count';
 
+        $per_page = isset( $args['per_page'] ) ? (int) $args['per_page'] : 10;
+        $per_page = $per_page > 0 ? $per_page : 10;
+
         $total = $this->all( $args );
         if ( is_wp_error( $total ) ) {
             return [
                 'total_count' => 0,
-                'per_page'    => $args['per_page'],
+                'per_page'    => $per_page,
                 'total_pages' => 0,
             ];
         }
 
-        $per_page   = $args['per_page'];
-        $per_page   = $per_page > 0 ? $per_page : 10;
         $total_page = ceil( $total / $per_page );
 
         return [
