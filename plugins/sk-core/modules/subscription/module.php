@@ -1110,8 +1110,12 @@ class Module {
             return;
         }
 
-        if ( ! wp_verify_nonce( $posted_data['_wpnonce'], $nonce ) ) {
-            wp_die( __( 'Nonce failure', 'sk' ) );
+        if ( ! is_user_logged_in() ) {
+            wp_die( esc_html__( 'You need to be logged in to manage your subscription.', 'sk' ) );
+        }
+
+        if ( empty( $posted_data['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( $posted_data['_wpnonce'] ), $nonce ) ) {
+            wp_die( esc_html__( 'Nonce failure', 'sk' ) );
         }
 
         $user_id  = get_current_user_id();

@@ -76,6 +76,13 @@ class ProductStatusChanger {
         }
 
         foreach ( $product_ids as $product_id ) {
+            $product_id = absint( $product_id );
+
+            // only ever touch the current vendor's own products
+            if ( ! $product_id || ! sk_is_product_author( $product_id ) ) {
+                continue;
+            }
+
             $product = wc_get_product( $product_id );
 
             if ( ! $product || $product->get_status() === $new_status || 'publish' === $product->get_status() ) {

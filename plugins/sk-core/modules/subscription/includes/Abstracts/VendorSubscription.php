@@ -147,8 +147,19 @@ abstract class VendorSubscription {
         global $wpdb;
 
         $allowed_status = apply_filters( 'dps_get_product_by_seller_allowed_statuses', array( 'publish', 'pending' ) );
+        $allowed_status = array_values( array_filter( array_map( 'sanitize_key', (array) $allowed_status ) ) );
 
-        $query = "SELECT COUNT(*) FROM $wpdb->posts WHERE post_author = {$this->get_vendor()} AND post_type = 'product' AND post_status IN ( '" . implode( "','", $allowed_status ). "' )";
+        if ( empty( $allowed_status ) ) {
+            return 0;
+        }
+
+        $placeholders = implode( ',', array_fill( 0, count( $allowed_status ), '%s' ) );
+
+        $query = $wpdb->prepare(
+            "SELECT COUNT(*) FROM $wpdb->posts WHERE post_author = %d AND post_type = 'product' AND post_status IN ( $placeholders )", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            array_merge( [ absint( $this->get_vendor() ) ], $allowed_status )
+        );
+
         $query = apply_filters( 'sk_vendor_subscription_product_count_query', $query, $this->get_vendor(), $allowed_status );
         $count = $wpdb->get_var( $query ); //phpcs:ignore
 
