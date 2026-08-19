@@ -328,7 +328,7 @@
             if (attempts > 120) { // 30 min
                 clearInterval(onchainChatPolls[paymentHash]);
                 delete onchainChatPolls[paymentHash];
-                updatePaymentStatus(paymentHash, 'Timeout — Verkäufer kann manuell bestätigen.', false);
+                updatePaymentStatus(paymentHash, 'Timeout — Anbieter kann manuell bestätigen.', false);
                 return;
             }
 
@@ -406,7 +406,7 @@
             attempts++;
             if (attempts > maxAttempts) {
                 stopPaymentPolling(paymentHash);
-                updatePaymentStatus(paymentHash, 'Zeitüberschreitung — Verkäufer kann manuell bestätigen.', false);
+                updatePaymentStatus(paymentHash, 'Zeitüberschreitung — Anbieter kann manuell bestätigen.', false);
                 return;
             }
 

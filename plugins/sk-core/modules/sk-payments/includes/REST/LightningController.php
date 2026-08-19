@@ -191,14 +191,14 @@ class LightningController extends WP_REST_Controller {
         // The recipient has to be an actual seller, otherwise this is a way to
         // mint invoices against any account that ever configured a wallet.
         if ( ! $vendor_id || ! function_exists( 'sk_is_user_seller' ) || ! sk_is_user_seller( $vendor_id ) ) {
-            return new WP_Error( 'invalid_vendor', 'Kein gültiger Verkäufer.', [ 'status' => 400 ] );
+            return new WP_Error( 'invalid_vendor', 'Kein gültiger Anbieter.', [ 'status' => 400 ] );
         }
 
         // A payment may only reference a listing that belongs to this vendor.
         // The reputation module trusts product_id for its 24h rule, so pointing
         // at somebody else's old listing must not be possible.
         if ( $product_id && (int) get_post_field( 'post_author', $product_id ) !== (int) $vendor_id ) {
-            return new WP_Error( 'invalid_product', 'Produkt gehört nicht zu diesem Verkäufer.', [ 'status' => 400 ] );
+            return new WP_Error( 'invalid_product', 'Produkt gehört nicht zu diesem Anbieter.', [ 'status' => 400 ] );
         }
 
         if ( ! self::invoice_rate_allows( $current_user ) ) {
@@ -259,7 +259,7 @@ class LightningController extends WP_REST_Controller {
         if ( empty( $bolt11 ) ) {
             $address = StoreSettings::get_lightning_address( $vendor_id );
             if ( empty( $address ) ) {
-                return new WP_Error( 'no_lightning', 'Verkäufer hat weder NWC noch Lightning-Adresse.', [ 'status' => 404 ] );
+                return new WP_Error( 'no_lightning', 'Anbieter hat weder NWC noch Lightning-Adresse.', [ 'status' => 404 ] );
             }
 
             $lnurl_data = Resolver::resolve( $address );
@@ -376,7 +376,7 @@ class LightningController extends WP_REST_Controller {
         }
 
         if ( (int) $payment->vendor_id !== $user_id ) {
-            return new WP_Error( 'forbidden', 'Nur der Verkäufer kann die Zahlung bestätigen.', [ 'status' => 403 ] );
+            return new WP_Error( 'forbidden', 'Nur der Anbieter kann die Zahlung bestätigen.', [ 'status' => 403 ] );
         }
 
         $now    = current_time( 'mysql' );
@@ -581,7 +581,7 @@ class LightningController extends WP_REST_Controller {
         }
 
         if ( $payment->status !== 'confirmed' ) {
-            return new WP_Error( 'invalid_status', 'Zahlung muss zuerst vom Verkäufer bestätigt sein.', [ 'status' => 400 ] );
+            return new WP_Error( 'invalid_status', 'Zahlung muss zuerst vom Anbieter bestätigt sein.', [ 'status' => 400 ] );
         }
 
         $now   = current_time( 'mysql' );

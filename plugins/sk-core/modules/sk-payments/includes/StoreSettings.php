@@ -32,7 +32,7 @@ class StoreSettings {
         $user_id = get_current_user_id();
 
         if ( ! function_exists( 'sk_is_user_seller' ) || ! sk_is_user_seller( $user_id ) ) {
-            wp_send_json_error( [ 'message' => 'Nur für Verkäufer.' ] );
+            wp_send_json_error( [ 'message' => 'Nur für Anbieter.' ] );
         }
 
         if ( ! sk_rate_limit( 'wallet-test:' . $user_id, 10 ) ) {

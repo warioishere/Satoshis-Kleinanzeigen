@@ -158,7 +158,7 @@ class ProductPage {
         }
 
         if ( ! StoreSettings::has_onchain( $vendor_id ) ) {
-            wp_send_json_error( [ 'message' => 'Verkäufer akzeptiert keine Onchain-Zahlungen.' ] );
+            wp_send_json_error( [ 'message' => 'Anbieter akzeptiert keine Onchain-Zahlungen.' ] );
         }
 
         // Derive a fresh address for this buyer.

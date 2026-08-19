@@ -69,7 +69,7 @@ class ChatIntegration {
         $product_title = get_the_title( $product_id );
 
         if ( ! $vendor_id ) {
-            wp_send_json_error( [ 'message' => 'Kein Verkäufer für dieses Inserat.' ] );
+            wp_send_json_error( [ 'message' => 'Kein Anbieter für dieses Inserat.' ] );
         }
 
         if ( $buyer_id === $vendor_id ) {
@@ -125,7 +125,7 @@ class ChatIntegration {
         // Only the seller may issue an invoice — otherwise a "buyer" could put
         // an invoice on their own wallet into the chat and get paid.
         if ( ! $this->is_chat_vendor( $chat_id, $vendor_id ) ) {
-            wp_send_json_error( [ 'message' => 'Nur der Verkäufer des Inserats kann eine Invoice erstellen.' ] );
+            wp_send_json_error( [ 'message' => 'Nur der Anbieter des Inserats kann eine Invoice erstellen.' ] );
         }
 
         // The chat defines the product, not the request.

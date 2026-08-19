@@ -179,7 +179,7 @@
             attempts++;
             if (attempts > maxAttempts) {
                 stopOnchainPolling();
-                $('#skp-onchain-status').html('<span style="color:#5a6a7e;">Timeout — Verkäufer kann manuell bestätigen.</span>');
+                $('#skp-onchain-status').html('<span style="color:#5a6a7e;">Timeout — Anbieter kann manuell bestätigen.</span>');
                 return;
             }
 

@@ -140,7 +140,7 @@ $msg = isset( $_GET['msg'] ) ? sanitize_text_field( wp_unslash( $_GET['msg'] ) )
                     <th>ID</th>
                     <th>Datum</th>
                     <th>Käufer</th>
-                    <th>Verkäufer</th>
+                    <th>Anbieter</th>
                     <th>Produkt</th>
                     <th>Sats</th>
                     <th>Grund</th>
@@ -203,7 +203,7 @@ $msg = isset( $_GET['msg'] ) ? sanitize_text_field( wp_unslash( $_GET['msg'] ) )
                     <tr>
                         <th>Datum</th>
                         <th>Käufer</th>
-                        <th>Verkäufer</th>
+                        <th>Anbieter</th>
                         <th>Produkt</th>
                         <th style="text-align:right;">Sats</th>
                         <th>Status</th>

@@ -123,8 +123,8 @@ class Enforcement {
 
         if ( $is_final ) {
             $text = "Letzte Erinnerung ({$current}/{$max}): Du hast {$count} offene Kommission(en) über {$sats_formatted} Sats.\n\n" .
-                "Bitte bezahle innerhalb der nächsten 7 Tage. Danach wird dein Store vorübergehend gesperrt " .
-                "(Produkte auf Entwurf, Shop nicht mehr sichtbar).\n\n" .
+                "Bitte bezahle innerhalb der nächsten 7 Tage. Danach wird dein Anbieter-Profil vorübergehend gesperrt " .
+                "(Produkte auf Entwurf, Anbieter-Seite nicht mehr sichtbar).\n\n" .
                 "Nach Bezahlung wird alles automatisch wieder freigeschaltet.";
         } else {
             $text = "Erinnerung ({$current}/{$max}): Du hast {$count} offene Kommission(en) über {$sats_formatted} Sats.\n\n" .
@@ -163,9 +163,9 @@ class Enforcement {
         $chat_id  = self::get_or_create_commission_chat( $admin_id, $vendor_id );
         if ( $chat_id ) {
             $sats_formatted = number_format( $total_sats, 0, ',', '.' );
-            $message = "Dein Store wurde gesperrt. {$count} Kommission(en) über {$sats_formatted} Sats sind unbezahlt.\n\n" .
-                "Deine Produkte wurden auf Entwurf gesetzt und dein Shop ist nicht mehr sichtbar.\n\n" .
-                "Bezahle die offenen Invoices unter Käufe/Verkäufe → Kommissionen — dein Store wird danach automatisch wieder freigeschaltet.";
+            $message = "Dein Anbieter-Profil wurde gesperrt. {$count} Kommission(en) über {$sats_formatted} Sats sind unbezahlt.\n\n" .
+                "Deine Produkte wurden auf Entwurf gesetzt und deine Anbieter-Seite ist nicht mehr sichtbar.\n\n" .
+                "Bezahle die offenen Invoices unter Käufe/Verkäufe → Kommissionen — dein Anbieter-Profil wird danach automatisch wieder freigeschaltet.";
 
             ChatIntegration::add_chat_message_static( $chat_id, $admin_id, $message );
         }
@@ -246,7 +246,7 @@ class Enforcement {
         if ( $chat_id ) {
             $message = $still_suspended
                 ? 'Alle Kommissionen bezahlt. Dein Konto ist aus einem anderen Grund weiterhin gesperrt — bitte wende dich an den Support.'
-                : 'Alle Kommissionen bezahlt — dein Store ist wieder aktiv und deine Produkte sind wieder sichtbar.';
+                : 'Alle Kommissionen bezahlt — dein Anbieter-Profil ist wieder aktiv und deine Produkte sind wieder sichtbar.';
 
             ChatIntegration::add_chat_message_static( $chat_id, $admin_id, $message );
         }
