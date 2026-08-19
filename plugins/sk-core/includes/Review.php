@@ -751,7 +751,9 @@ class Review extends DashboardModule {
             Cache::invalidate_group( "product_reviews_{$seller_id}" );
 
             if ( $action === 'delete' ) {
-                wp_delete_comment( $commentid );
+                // force delete, otherwise WordPress only trashes anything that is
+                // not already in spam or trash — the label promises more than that
+                wp_delete_comment( $commentid, true );
             } else {
                 wp_set_comment_status( $commentid, $action );
             }

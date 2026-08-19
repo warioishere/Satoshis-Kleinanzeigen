@@ -21,6 +21,7 @@ defined( 'ABSPATH' ) || exit;
                     <option value="approve"><?php esc_html_e( 'Genehmigen', 'sk' ); ?></option>
                     <option value="spam"><?php esc_html_e( 'Als Spam markieren', 'sk' ); ?></option>
                     <option value="trash"><?php esc_html_e( 'In Papierkorb', 'sk' ); ?></option>
+                    <option value="delete"><?php esc_html_e( 'Dauerhaft löschen', 'sk' ); ?></option>
                 <?php elseif ( $comment_status === 'spam' ) : ?>
                     <option value="approve"><?php esc_html_e( 'Kein Spam', 'sk' ); ?></option>
                     <option value="delete"><?php esc_html_e( 'Dauerhaft löschen', 'sk' ); ?></option>
@@ -31,6 +32,7 @@ defined( 'ABSPATH' ) || exit;
                     <option value="hold"><?php esc_html_e( 'Ausstehend markieren', 'sk' ); ?></option>
                     <option value="spam"><?php esc_html_e( 'Als Spam markieren', 'sk' ); ?></option>
                     <option value="trash"><?php esc_html_e( 'In Papierkorb', 'sk' ); ?></option>
+                    <option value="delete"><?php esc_html_e( 'Dauerhaft löschen', 'sk' ); ?></option>
                 <?php endif; ?>
             </select>
             <?php wp_nonce_field( 'sk_comment_nonce_action', 'sk_comment_nonce' ); ?>

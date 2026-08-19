@@ -64,6 +64,18 @@
         });
     });
 
+    // Permanent deletion cannot be undone — ask before submitting the bulk form.
+    $(document).on('submit', '#sk_comments-form', function (e) {
+        if ($(this).find('.sk-reviews-bulk-select').val() !== 'delete') return;
+
+        var count = $('.sk-check-col:checked').length;
+        if (!count) return;
+
+        if (!confirm(count + ' Rezension(en) werden dauerhaft gelöscht. Das lässt sich nicht rückgängig machen. Fortfahren?')) {
+            e.preventDefault();
+        }
+    });
+
     // Bulk action: select all checkboxes
     $(document).on('change', '.sk-check-all', function () {
         $('.sk-check-col').prop('checked', $(this).is(':checked'));
