@@ -31,9 +31,6 @@ class Order {
 
         // after order status changed
         add_action( 'woocommerce_order_status_changed', [ $this, 'process_order_status_changed' ], 10, 3 );
-
-        // Modifies Mangopay payin data.
-        add_filter( 'sk_mangopay_payin_data', [ $this, 'modify_mangopay_payin_data' ] );
     }
 
     /**
@@ -191,37 +188,5 @@ class Order {
         }
 
         return $display_value;
-    }
-
-    /**
-     * Modifies payin data for Mangopay while purchasing advertisement.
-     *
-     *
-     * @param array $payin_data
-     *
-     * @return bool
-     */
-    public function modify_mangopay_payin_data( $payin_data ) {
-        if ( empty( $payin_data['order_id'] ) ) {
-            return $payin_data;
-        }
-
-        $order = wc_get_order( $payin_data['order_id'] );
-
-        if ( ! $order ) {
-            return $payin_data;
-        }
-
-        if ( ! Helper::has_product_advertisement_in_order( $order ) ) {
-            return $payin_data;
-        }
-
-        /*
-         * We cannot pass the full amount as fees.
-         * So the amount for the marketplace will be 1 cent less than the payin amount.
-         */
-        $payin_data['fees'] = $payin_data['amount'] - 1;
-
-        return $payin_data;
     }
 }

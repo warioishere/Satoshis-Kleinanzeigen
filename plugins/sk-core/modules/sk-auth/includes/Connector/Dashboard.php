@@ -392,7 +392,7 @@ class SK_Auth_Dashboard extends \SK\Core\Dashboard\DashboardModule {
 
         $message = 'Nostr-Konto erfolgreich verknüpft!';
 
-        // If user wants to sync profile and is a Dokan vendor, do it now
+        // If user wants to sync profile and is an SK vendor, do it now
         if ($sync_profile && class_exists('SK_Core') && function_exists('sk_is_user_seller') && sk_is_user_seller($user_id)) {
             $profile_sync = new UAC_Nostr_Profile_Sync();
             $synced = $profile_sync->manual_sync($user_id);

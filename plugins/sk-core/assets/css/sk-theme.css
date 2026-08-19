@@ -4429,7 +4429,7 @@ div.media-sidebar a.edit-attachment {
   margin: 0px;
   padding: 0px;
 }
-/* Banner/Gravatar Dokan-era CSS removed — styling now lives centrally
+/* Banner/Gravatar Legacy-CSS removed — styling now lives centrally
  * in .sk-settings-field--media rules (line ~8570+) which work with the
  * sk_form_media_upload() helper output. */
 .sk-settings-content .sk-settings-area ul.sk-categories {

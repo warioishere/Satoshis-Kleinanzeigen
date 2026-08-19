@@ -151,10 +151,6 @@ class Module {
         add_filter( 'sk_vendor_to_array', array( $this, 'add_currently_subscribed_pack_info_to_shop_data' ), 10, 2 );
         add_action( 'sk_before_update_vendor', array( $this, 'update_vendor_subscription_data' ), 10, 2 );
 
-        // Order and payment processing for Mangopay
-        add_filter( 'sk_mangopay_needs_cart_validation', [ $this, 'skip_cart_validation_for_mangopay' ] );
-        add_filter( 'sk_mangopay_disburse_payment', [ $this, 'skip_payment_disbursement_for_mangopay' ], 10, 2 );
-        add_filter( 'sk_mangopay_payin_data', [ $this, 'modify_mangopay_payin_data' ] );
         add_filter( 'woocommerce_available_payment_gateways', [ $this, 'remove_unsupported_payment_gateways_on_sk_subscription_product' ], 99 );
 
         // Stores REST API.
@@ -2006,103 +2002,6 @@ class Module {
         }
 
         return $to_return;
-    }
-
-    /**
-     * Skips cart validation for Mangopay while purchasing subscription pack.
-     * Currently, it applies for non-recurring subscriptions only.
-     *
-     * @todo Add support for recurring subscriptions.
-     *
-     *
-     * @param bool $needs_validation Indicates if validation is needed.
-     *
-     * @return bool
-     */
-    public function skip_cart_validation_for_mangopay( $needs_validation ) {
-        if ( ! $needs_validation ) {
-            return $needs_validation;
-        }
-
-        if ( ! Helper::is_subscription_module_enabled() ) {
-            return $needs_validation;
-        }
-
-        if ( empty( WC()->cart ) ) {
-            return $needs_validation;
-        }
-
-        /**
-         * Traverse through all the items in the cart and check if subscription exists.
-         * Currently, only the non-recurring subscription is supported.
-         */
-        foreach ( WC()->cart->cart_contents as $item ) {
-            $product_id = $item['data']->get_id();
-
-            if (
-                Helper::is_subscription_product( $product_id ) &&
-                ! Helper::is_recurring_pack( $product_id )
-            ) {
-                $needs_validation = false;
-            } else {
-                $needs_validation = true;
-            }
-        }
-
-        return $needs_validation;
-    }
-
-    /**
-     * Skips payment disbursement process for Mangopay while purchasing subscription pack.
-     *
-     *
-     * @param bool $disburse Indicates if disbursement is needed.
-     * @param \WC_Order $order The order being processed.
-     *
-     * @return bool
-     */
-    public function skip_payment_disbursement_for_mangopay( $disburse, $order ) {
-        if ( ! $disburse ) {
-            return $disburse;
-        }
-
-        if ( ! Helper::is_vendor_subscription_order( $order ) ) {
-            return $disburse;
-        }
-
-        return false;
-    }
-
-    /**
-     * Modifies payin data for Mangopay while purchasing subscription pack.
-     *
-     *
-     * @param array $payin_data
-     *
-     * @return bool
-     */
-    public function modify_mangopay_payin_data( $payin_data ) {
-        if ( empty( $payin_data['order_id'] ) ) {
-            return $payin_data;
-        }
-
-        $order = wc_get_order( $payin_data['order_id'] );
-
-        if ( ! $order ) {
-            return $payin_data;
-        }
-
-        if ( ! Helper::is_vendor_subscription_order( $order ) ) {
-            return $payin_data;
-        }
-
-        /*
-        * We cannot pass the full amount as fees.
-        * So the amount for the marketplace will be 1 cent less than the payin amount.
-        */
-        $payin_data['fees'] = $payin_data['amount'] - 1;
-
-        return $payin_data;
     }
 
     /**

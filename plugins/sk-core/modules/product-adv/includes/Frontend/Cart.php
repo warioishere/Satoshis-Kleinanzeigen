@@ -44,10 +44,6 @@ class Cart {
         // Skip Stripe Express cart validation and disbursement.
         add_filter( 'sk_stripe_express_needs_cart_validation', [ $this, 'skip_cart_validation_for_advertisement' ] );
         add_filter( 'sk_stripe_express_disburse_payment', [ $this, 'skip_payment_disbursement_for_advertisement' ], 10, 2 );
-
-        // Skip MangoPay cart validation and disbursement.
-        add_filter( 'sk_mangopay_needs_cart_validation', [ $this, 'skip_cart_validation_for_advertisement' ] );
-        add_filter( 'sk_mangopay_disburse_payment', [ $this, 'skip_payment_disbursement_for_advertisement' ], 10, 2 );
     }
 
     /**
@@ -344,7 +340,7 @@ class Cart {
     }
 
     /**
-     * Skips the cart validation for Stripe Express and MangoPay.
+     * Skips the cart validation for Stripe Express.
      *
      *
      * @param bool $needs_validation
@@ -360,7 +356,7 @@ class Cart {
     }
 
     /**
-     * Skips payment disbursement to vendors for Stripe Express and MangoPay.
+     * Skips payment disbursement to vendors for Stripe Express.
      *
      *
      * @param bool $disburse
