@@ -94,8 +94,12 @@ class Admin {
             return;
         }
 
-        if ( (int) $post_id === Helper::get_advertisement_base_product() ) {
-            update_option( Helper::get_advertisement_base_product_option_key(), '' );
+        $option_key = Helper::get_advertisement_base_product_option_key();
+
+        // read the option directly, get_advertisement_base_product() would save the
+        // product we are about to trash
+        if ( (int) $post_id === (int) get_option( $option_key, 0 ) ) {
+            delete_option( $option_key );
         }
     }
 }

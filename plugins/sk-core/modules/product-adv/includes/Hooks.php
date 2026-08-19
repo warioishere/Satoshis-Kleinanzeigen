@@ -189,10 +189,12 @@ class Hooks {
      * @return void
      */
     public function delete_advertisement_base_product( $post_id ) {
-        if (
-            file_exists( SK_PRODUCT_ADVERTISEMENT_INC . 'Helper' )
-            && $post_id === Helper::get_advertisement_base_product() ) {
-            delete_option( Helper::get_advertisement_base_product_option_key() );
+        $option_key = Helper::get_advertisement_base_product_option_key();
+
+        // read the option directly, get_advertisement_base_product() would save the
+        // product we are about to delete
+        if ( (int) $post_id === (int) get_option( $option_key, 0 ) ) {
+            delete_option( $option_key );
         }
     }
 
