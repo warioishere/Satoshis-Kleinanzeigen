@@ -141,31 +141,6 @@ class Helper {
     }
 
 
-    /**
-     * Returns a readable recurring period
-     *
-     * @param string $period
-     *
-     * @return string
-     */
-    public static function recurring_period( $period, $length = 1 ) {
-        switch ( $period ) {
-            case 'day':
-                return (int) $length === 1 ? __( 'day', 'sk' ) : __( 'days', 'sk' );
-
-            case 'week':
-                return (int) $length === 1 ? __( 'week', 'sk' ) : __( 'weeks', 'sk' );
-
-            case 'month':
-                return (int) $length === 1 ? __( 'month', 'sk' ) : __( 'months', 'sk' );
-
-            case 'year':
-                return (int) $length === 1 ? __( 'year', 'sk' ) : __( 'years', 'sk' );
-
-            default:
-                return apply_filters( 'dps_recurring_text', $period );
-        }
-    }
 
     /**
      * Get a list of options of all the product types
@@ -190,49 +165,6 @@ class Helper {
         echo $output;
     }
 
-    /**
-     * Get a list of options for trail period
-     *
-     * @return string
-     */
-    public static function get_trial_period_options() {
-        $subscription   = sk()->subscription->get( get_the_ID() );
-        $selected_range = $subscription->get_trial_range();
-        $range_output   = '';
-        $period_range   = range( 1, 30 );
-        $range_output   .= '<select name="sk_subscription_trail_range" class="sk-subscription-range" style="margin-right: 10px">';
-
-        foreach ( $period_range as $range ) {
-            $range_output .= '<option value="' . esc_attr( $range ) . '"';
-            $range_output .= selected( $selected_range, $range, false );
-            $range_output .= '>' . __( $range, 'sk' ) . '</option>';
-        }
-
-        $range_output .= '</select>';
-        echo $range_output;
-
-        $selected_period_types = $subscription->get_trial_period_types();
-        $period_types_output   = '';
-        $period_types          = apply_filters(
-            'sk_subscription_trial_period_types', [
-                'day'   => __( 'Day(s)', 'sk' ),
-                'week'  => __( 'Week(s)', 'sk' ),
-                'month' => __( 'Month(s)', 'sk' ),
-                'year'  => __( 'Year(s)', 'sk' ),
-            ]
-        );
-
-        $period_types_output .= '<select name="sk_subscription_trial_period_types">';
-
-        foreach ( $period_types as $key => $value ) {
-            $period_types_output .= '<option value="' . esc_attr( $key ) . '"';
-            $period_types_output .= selected( $selected_period_types, $key, false );
-            $period_types_output .= '>' . $value . '</option>';
-        }
-
-        $period_types_output .= '</select>';
-        echo $period_types_output;
-    }
 
     /**
      * Get vendor subscription pack id
@@ -297,170 +229,11 @@ class Helper {
         return $categories;
     }
 
-    /**
-     * Get subscription recurring interval strings
-     *
-     * @return string
-     */
-    public static function get_subscription_period_interval_strings( $interval = '' ) {
-        $intervals = [ 1 => _x( 'every', 'period interval (eg "$10 _every_ 2 weeks")', 'sk' ) ];
-
-        foreach ( range( 2, 6 ) as $i ) {
-            // translators: period interval, placeholder is ordinal (eg "$10 every _2nd/3rd/4th_", etc)
-            $intervals[ $i ] = sprintf( _x( 'every %s', 'period interval with ordinal number (e.g. "every 2nd"', 'sk' ), self::append_numeral_suffix( $i ) );
-        }
-
-        $intervals = apply_filters( 'sk_pro_subscription_period_interval_strings', $intervals );
-
-        if ( empty( $interval ) ) {
-            return $intervals;
-        } else {
-            return $intervals[ $interval ];
-        }
-    }
-
-    /**
-     * Takes a number and returns the number with its relevant suffix appended, eg. for 2, the function returns 2nd
-     *
-     */
-    public static function append_numeral_suffix( $number ) {
-
-        // Handle teens: if the tens digit of a number is 1, then write "th" after the number. For example: 11th, 13th, 19th, 112th, 9311th. http://en.wikipedia.org/wiki/English_numerals
-        if ( strlen( $number ) > 1 && 1 == substr( $number, -2, 1 ) ) { //phpcs:ignore
-            // translators: placeholder is a number, this is for the teens
-            $number_string = sprintf( __( '%sth', 'sk' ), $number );
-        } else { // Append relevant suffix
-            switch ( substr( $number, -1 ) ) {
-                case 1:
-                    // translators: placeholder is a number, numbers ending in 1
-                    $number_string = sprintf( __( '%sst', 'sk' ), $number );
-                    break;
-                case 2:
-                    // translators: placeholder is a number, numbers ending in 2
-                    $number_string = sprintf( __( '%snd', 'sk' ), $number );
-                    break;
-                case 3:
-                    // translators: placeholder is a number, numbers ending in 3
-                    $number_string = sprintf( __( '%srd', 'sk' ), $number );
-                    break;
-                default:
-                    // translators: placeholder is a number, numbers ending in 4-9, 0
-                    $number_string = sprintf( __( '%sth', 'sk' ), $number );
-                    break;
-            }
-        }
-
-        return apply_filters( 'woocommerce_numeral_suffix', $number_string, $number );
-    }
 
 
-    /**
-     * Returns an array of subscription lengths.
-     *
-     * PayPal Standard Allowable Ranges
-     * D – for days; allowable range is 1 to 90
-     * W – for weeks; allowable range is 1 to 52
-     * M – for months; allowable range is 1 to 24
-     * Y – for years; allowable range is 1 to 5
-     *
-     */
-    public static function get_non_cached_subscription_ranges() {
-        foreach ( [ 'day', 'week', 'month', 'year' ] as $period ) {
-            $subscription_lengths = [
-                _x( 'Never expire', 'Subscription length', 'sk' ),
-            ];
 
-            switch ( $period ) {
-                case 'day':
-                    $subscription_lengths[] = _x( '1 day', 'Subscription lengths. e.g. "For 1 day..."', 'sk' );
-                    $subscription_range     = range( 2, 90 );
-                    break;
-                case 'week':
-                    $subscription_lengths[] = _x( '1 week', 'Subscription lengths. e.g. "For 1 week..."', 'sk' );
-                    $subscription_range     = range( 2, 52 );
-                    break;
-                case 'month':
-                    $subscription_lengths[] = _x( '1 month', 'Subscription lengths. e.g. "For 1 month..."', 'sk' );
-                    $subscription_range     = range( 2, 24 );
-                    break;
-                case 'year':
-                    $subscription_lengths[] = _x( '1 year', 'Subscription lengths. e.g. "For 1 year..."', 'sk' );
-                    $subscription_range     = range( 2, 5 );
-                    break;
-            }
 
-            foreach ( $subscription_range as $number ) {
-                $subscription_range[ $number ] = self::get_subscription_period_strings( $number, $period );
-            }
 
-            // Add the possible range to all time range
-            $subscription_lengths += $subscription_range;
-
-            $subscription_ranges[ $period ] = $subscription_lengths;
-        }
-
-        return $subscription_ranges;
-    }
-
-    /**
-     * Return an i18n'ified associative array of all possible subscription periods.
-     *
-     *
-     * @param string (optional) One of day, week, month or year. If empty, all subscription ranges are returned.
-     * @param int (optional) An interval in the range 1-6
-     *
-     * @return string|array
-     */
-    public static function get_subscription_period_strings( $number = 1, $period = '' ) {
-        // phpcs:disable Generic.Functions.FunctionCallArgumentSpacing.TooMuchSpaceAfterComma
-        $translated_periods = apply_filters(
-            'sk_pro_subscription_periods',
-            [
-                // translators: placeholder is number of days. (e.g. "Bill this every day / 4 days")
-                'day'   => sprintf( _nx( 'day', '%s days', $number, 'Subscription billing period.', 'sk' ), $number ), // phpcs:ignore WordPress.WP.I18n.MissingSingularPlaceholder,WordPress.WP.I18n.MismatchedPlaceholders
-                // translators: placeholder is number of weeks. (e.g. "Bill this every week / 4 weeks")
-                'week'  => sprintf( _nx( 'week', '%s weeks', $number, 'Subscription billing period.', 'sk' ), $number ), // phpcs:ignore WordPress.WP.I18n.MissingSingularPlaceholder,WordPress.WP.I18n.MismatchedPlaceholders
-                // translators: placeholder is number of months. (e.g. "Bill this every month / 4 months")
-                'month' => sprintf( _nx( 'month', '%s months', $number, 'Subscription billing period.', 'sk' ), $number ), // phpcs:ignore WordPress.WP.I18n.MissingSingularPlaceholder,WordPress.WP.I18n.MismatchedPlaceholders
-                // translators: placeholder is number of years. (e.g. "Bill this every year / 4 years")
-                'year'  => sprintf( _nx( 'year', '%s years', $number, 'Subscription billing period.', 'sk' ), $number ), // phpcs:ignore WordPress.WP.I18n.MissingSingularPlaceholder,WordPress.WP.I18n.MismatchedPlaceholders
-            ],
-            $number
-        );
-
-        // phpcs:enable
-
-        return ( ! empty( $period ) ) ? $translated_periods[ $period ] : $translated_periods;
-    }
-
-    /**
-     * Retaining the API, it makes use of the transient functionality.
-     *
-     * @param string $period
-     *
-     * @return bool|mixed
-     */
-    public static function get_subscription_ranges( $subscription_period = '' ) {
-        static $sk_subscription_locale_ranges = [];
-
-        if ( ! is_string( $subscription_period ) ) {
-            $subscription_period = '';
-        }
-
-        $locale = function_exists( 'get_user_locale' ) ? get_user_locale() : get_locale();
-
-        if ( ! isset( $sk_subscription_locale_ranges[ $locale ] ) ) {
-            $sk_subscription_locale_ranges[ $locale ] = self::get_non_cached_subscription_ranges();
-        }
-
-        $subscription_ranges = apply_filters( 'woocommerce_subscription_lengths', $sk_subscription_locale_ranges[ $locale ], $subscription_period );
-
-        if ( ! empty( $subscription_period ) ) {
-            return $subscription_ranges[ $subscription_period ];
-        } else {
-            return $subscription_ranges;
-        }
-    }
 
     /**
      * Is subscription module is enabled
@@ -494,19 +267,6 @@ class Helper {
         return 'on' === $is_enabled ? true : false;
     }
 
-    /**
-     * Check wheter the pack is recurring or not
-     *
-     *
-     * @param int $pack_id
-     *
-     * @return boolean
-     */
-    public static function is_recurring_pack( $pack_id ) {
-        $subscription = new SubscriptionPack( $pack_id );
-
-        return $subscription->is_recurring();
-    }
 
     /**
      * Check is product is subscription or not
@@ -525,17 +285,6 @@ class Helper {
         return false;
     }
 
-    /**
-     * Check is product is a recurring subscription product or not
-     *
-     *
-     * @param integer $product_id
-     *
-     * @return boolean
-     */
-    public static function is_recurring_subscription_product( $product_id ) {
-        return self::is_subscription_product( $product_id ) && self::is_recurring_pack( $product_id );
-    }
 
     /**
      * Checks the cart to see if it contains a subscription product
@@ -557,26 +306,6 @@ class Helper {
         return $contains_subscription;
     }
 
-    /**
-     * Check if Cart contains recurring subscription product
-     *
-     *
-     * @return int 0 if no recurring subscription product found, else recurring subscription product id
-     */
-    public static function cart_contains_recurring_subscription_product() {
-        $contains_recurring = 0;
-
-        if ( ! empty( WC()->cart->cart_contents ) ) {
-            foreach ( WC()->cart->cart_contents as $cart_item ) {
-                if ( self::is_subscription_product( $cart_item['product_id'] ) && self::is_recurring_pack( $cart_item['product_id'] ) ) {
-                    $contains_recurring = absint( $cart_item['product_id'] );
-                    break;
-                }
-            }
-        }
-
-        return $contains_recurring;
-    }
 
     /**
      * Get subscription product from an order
@@ -684,11 +413,6 @@ class Helper {
         delete_user_meta( $customer_id, 'sk_has_active_cancelled_subscrption' );
         delete_user_meta( $customer_id, 'sk_vendor_subscription_cancel_email' );
         delete_user_meta( $customer_id, '_paypal_subscriber_ID' );
-        delete_user_meta( $customer_id, '_customer_recurring_subscription' );
-        delete_user_meta( $customer_id, '_sk_paypal_marketplace_vendor_subscription_id' );
-        delete_user_meta( $customer_id, '_sk_subscription_is_on_trial' );
-        delete_user_meta( $customer_id, '_sk_subscription_trial_until' );
-        delete_user_meta( $customer_id, '_stripe_subscription_id' );
 
         // make product status draft after subscriptions is got cancelled.
         if ( self::check_vendor_has_existing_product( $customer_id ) ) {
@@ -875,44 +599,7 @@ class Helper {
         return false;
     }
 
-    /**
-     * Determine if the user has used a free pack before
-     *
-     * @param int $user_id
-     *
-     * @return boolean
-     */
-    public static function has_used_trial_pack( $user_id ) {
-        $has_used = get_user_meta( $user_id, 'sk_used_trial_pack', true );
 
-        if ( ! $has_used ) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Add used trial pack
-     *
-     * @param int $user_id
-     * @param int $pack_id
-     *
-     * @return void
-     */
-    public static function add_used_trial_pack( $user_id, $pack_id ) {
-        $subscription = sk()->subscription->get( $pack_id );
-
-        if ( empty( $subscription->pack_id ) ) {
-            return;
-        }
-
-        if ( ! $subscription->is_trial() ) {
-            return;
-        }
-
-        update_user_meta( $user_id, 'sk_used_trial_pack', true );
-    }
 
     /**
      * Check wheter vendor is subscribed or not
@@ -1129,52 +816,7 @@ class Helper {
         return $link;
     }
 
-    /**
-     * Handle Subscription Activation on trial.
-     *
-     * Before calling this function, must confirms that the subscription is on trial.
-     *
-     *
-     * @param \WC_Order        $order
-     * @param SubscriptionPack $subscription
-     * @param string           $subscription_id
-     *
-     * @return void
-     */
-    public static function activate_trial_subscription( \WC_Order $order, SubscriptionPack $subscription, $subscription_id ) {
-        // Get vendor from Order
-        $vendor_id = $order->get_customer_id();
 
-        // translators: 1) Stripe Subscription ID coming from stripe event
-        $order->add_order_note( sprintf( __( 'Subscription Trial activated. Subscription ID: %s', 'sk' ), $subscription_id ) );
-
-        // store trial information as user meta
-        update_user_meta( $vendor_id, '_sk_subscription_is_on_trial', 'yes' );
-
-        // store trial period also
-        $trial_interval_unit  = $subscription->get_trial_period_types(); //day, week, month, year
-        $trial_interval_count = absint( $subscription->get_trial_range() ); //int
-
-        $time = sk_current_datetime();
-        $time = $time->modify( "$trial_interval_count $trial_interval_unit" );
-
-        if ( $time ) {
-            update_user_meta( $vendor_id, '_sk_subscription_trial_until', $time->format( 'Y-m-d H:i:s' ) );
-        }
-    }
-
-    /**
-     * Delete Trial Meta data for vendor.
-     *
-     *
-     * @param int $vendor_id
-     *
-     * @return void
-     */
-    public static function delete_trial_meta_data( $vendor_id ) {
-        delete_user_meta( $vendor_id, '_sk_subscription_is_on_trial' );
-        delete_user_meta( $vendor_id, '_sk_subscription_trial_until' );
-    }
 
     /**
      * Get subscription order by user_id

@@ -278,7 +278,7 @@ class SK_REST_Subscription_Controller extends SkRESTController {
      */
     public function get_nonrecurring_subscription_packages( $request ) {
         $params                = $request->get_params();
-        $subscription_packages = ( new SubscriptionPack() )->get_nonrecurring_packages();
+        $subscription_packages = ( new SubscriptionPack() )->all()->get_posts();
         $total_packages        = count( $subscription_packages );
         $packages              = array();
 
@@ -350,25 +350,13 @@ class SK_REST_Subscription_Controller extends SkRESTController {
         }
 
         if ( 'activate' === $action ) {
-            if ( $subscription->has_recurring_pack() && $subscription->has_active_cancelled_subscrption() ) {
-                Helper::log( 'Subscription re-activattion check: Admin has re-activate Subscription of User #' . $user_id . ' on order #' . $order_id );
-                do_action( 'dps_activate_recurring_subscription', $order_id, $user_id );
-            }
-
-            if ( ! $subscription->has_recurring_pack() ) {
-                Helper::log( 'Subscription re-activattion check: Admin has re-activate Subscription of User #' . $user_id . ' on order #' . $order_id );
-                do_action( 'dps_activate_non_recurring_subscription', $order_id, $user_id );
-            }
+            Helper::log( 'Subscription re-activation check: Admin has re-activated Subscription of User #' . $user_id . ' on order #' . $order_id );
+            do_action( 'dps_activate_non_recurring_subscription', $order_id, $user_id );
         }
 
         if ( 'cancel' === $action ) {
-            if ( $subscription->has_recurring_pack() ) {
-                Helper::log( 'Subscription cancellation check: Admin has canceled Subscription of User #' . $user_id . ' on order #' . $order_id );
-                do_action( 'dps_cancel_recurring_subscription', $order_id, $user_id, $cancel_immediately );
-            } elseif ( ! $subscription->has_recurring_pack() ) {
-                Helper::log( 'Subscription cancellation check: Admin has canceled Subscription of User #' . $user_id . ' on order #' . $order_id );
-                do_action( 'dps_cancel_non_recurring_subscription', $order_id, $user_id, $cancel_immediately );
-            }
+            Helper::log( 'Subscription cancellation check: Admin has canceled Subscription of User #' . $user_id . ' on order #' . $order_id );
+            do_action( 'dps_cancel_non_recurring_subscription', $order_id, $user_id, $cancel_immediately );
         }
 
         $response = $this->prepare_item_for_response( $seller, $request );
@@ -402,22 +390,13 @@ class SK_REST_Subscription_Controller extends SkRESTController {
             $vendor = sk()->vendor->get( $user_id )->subscription;
 
             if ( 'activate' === $action ) {
-                if ( $vendor->has_recurring_pack() && $vendor->has_active_cancelled_subscrption() ) {
-                    Helper::log( 'Subscription activation check: Admin has activated Subscription of User #' . $user_id . ' on order #' . $order_id );
-                    do_action( 'dps_activate_recurring_subscription', $order_id, $user_id );
-                }
+                Helper::log( 'Subscription activation check: Admin has activated Subscription of User #' . $user_id . ' on order #' . $order_id );
+                do_action( 'dps_activate_non_recurring_subscription', $order_id, $user_id );
             }
 
             if ( 'cancel' === $action ) {
-                if ( $vendor->has_recurring_pack() && ! $vendor->has_active_cancelled_subscrption() ) {
-                    $cancel_immediately = false;
-                    Helper::log( 'Subscription cancellation check: Admin has canceled Subscription of User #' . $user_id . ' on order #' . $order_id );
-                    do_action( 'dps_cancel_recurring_subscription', $order_id, $user_id, $cancel_immediately );
-                } elseif ( ! $vendor->has_recurring_pack() ) {
-                    $cancel_immediately = true;
-                    Helper::log( 'Subscription cancellation check: Admin has canceled Subscription of User #' . $user_id . ' on order #' . $order_id );
-                    do_action( 'dps_cancel_non_recurring_subscription', $order_id, $user_id, $cancel_immediately );
-                }
+                Helper::log( 'Subscription cancellation check: Admin has canceled Subscription of User #' . $user_id . ' on order #' . $order_id );
+                do_action( 'dps_cancel_non_recurring_subscription', $order_id, $user_id, true );
             }
         }
 
@@ -459,18 +438,11 @@ class SK_REST_Subscription_Controller extends SkRESTController {
             'can_post_product'         => (bool) $subscription->can_post_product(),
             'no_of_allowed_products'   => '-1' !== $subscription->get_number_of_products() ? $subscription->get_number_of_products() : __( 'unlimited', 'sk' ),
             'pack_validity_days'       => $subscription->get_pack_valid_days(),
-            'is_on_trial'              => $subscription->is_on_trial(),
-            'trial_range'              => $subscription->get_trial_range(),
-            'trial_period_type'        => $subscription->get_trial_period_types(),
-            'subscription_trial_until' => $subscription->get_trial_end_date(),
             'start_date'               => sk_format_date( $subscription->get_pack_start_date() ),
             'end_date'                 => 'unlimited' === $end_date ? __( 'Unlimited', 'sk' ) : sk_format_date( $end_date ),
             'subscription_end_date'    => 'unlimited' === $subscription_end_date ? __( 'Unlimited', 'sk' ) : sk_format_date( $subscription_end_date ),
             'current_date'             => sk_format_date(),
             'status'                   => $subscription->has_subscription(),
-            'is_recurring'             => $subscription->has_recurring_pack(),
-            'recurring_interval'       => $subscription->get_recurring_interval(),
-            'recurring_period_type'    => $subscription->get_period_type(),
             'has_active_cancelled_sub' => $subscription->has_active_cancelled_subscrption(),
         ];
 

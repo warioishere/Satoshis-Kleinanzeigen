@@ -188,35 +188,6 @@ class SK_REST_Vendor_Subscription_Packages_Controller extends SK_REST_Vendor_Sub
             $data['gallery_restriction_count'] = $item->get_meta( '_gallery_image_restriction_count' );
         }
 
-        if ( in_array( 'recurring_payment', $fields, true ) ) {
-            $data['recurring_payment'] = $item->get_meta( '_enable_recurring_payment' );
-        }
-
-        if ( in_array( 'recurring_period_interval', $fields, true ) ) {
-            // translatable support for recurring period interval.
-            $data['recurring_period_interval'] = number_format_i18n( $item->get_meta( '_sk_subscription_period_interval' ) ? $item->get_meta( '_sk_subscription_period_interval' ) : 1 );
-        }
-
-        if ( in_array( 'recurring_period_type', $fields, true ) ) {
-            $sk_subscription_period_interval = $item->get_meta( '_sk_subscription_period_interval' ) ? $item->get_meta( '_sk_subscription_period_interval' ) : 1;
-            $data['recurring_period_type'] = Helper::recurring_period( $item->get_meta( '_sk_subscription_period' ), $sk_subscription_period_interval );
-        }
-
-        if ( in_array( 'recurring_period_length', $fields, true ) ) {
-            $data['recurring_period_length'] = $item->get_meta( '_sk_subscription_length' );
-        }
-
-        if ( in_array( 'allowed_trial', $fields, true ) ) {
-            $data['allowed_trial'] = $item->get_meta( 'sk_subscription_enable_trial' );
-        }
-
-        if ( in_array( 'trial_period_range', $fields, true ) ) {
-            $data['trial_period_range'] = $item->get_meta( 'sk_subscription_trail_range' );
-        }
-
-        if ( in_array( 'trial_period_types', $fields, true ) ) {
-            $data['trial_period_types'] = $item->get_meta( 'sk_subscription_trial_period_types' );
-        }
 
         if ( in_array( 'advertisement_slot_count', $fields, true ) ) {
             $data['advertisement_slot_count'] = $item->get_meta( '_sk_advertisement_slot_count' );
@@ -318,48 +289,6 @@ class SK_REST_Vendor_Subscription_Packages_Controller extends SK_REST_Vendor_Sub
                 ],
                 'gallery_restriction_count' => [
                     'description' => __( 'Maximum number of gallery images allowed.', 'sk' ),
-                    'type'        => 'string',
-                    'context'     => [ 'view' ],
-                    'readonly'    => true,
-                ],
-                'recurring_payment'        => [
-                    'description' => __( 'Whether recurring payment is enabled.', 'sk' ),
-                    'type'        => 'string',
-                    'context'     => [ 'view' ],
-                    'readonly'    => true,
-                ],
-                'recurring_period_interval' => [
-                    'description' => __( 'Interval between recurring payments.', 'sk' ),
-                    'type'        => 'string',
-                    'context'     => [ 'view' ],
-                    'readonly'    => true,
-                ],
-                'recurring_period_type'    => [
-                    'description' => __( 'Type of recurring period.', 'sk' ),
-                    'type'        => 'string',
-                    'context'     => [ 'view' ],
-                    'readonly'    => true,
-                ],
-                'recurring_period_length'  => [
-                    'description' => __( 'Length of the recurring period.', 'sk' ),
-                    'type'        => 'string',
-                    'context'     => [ 'view' ],
-                    'readonly'    => true,
-                ],
-                'allowed_trial'            => [
-                    'description' => __( 'Whether trial is allowed.', 'sk' ),
-                    'type'        => 'string',
-                    'context'     => [ 'view' ],
-                    'readonly'    => true,
-                ],
-                'trial_period_range'       => [
-                    'description' => __( 'Range of the trial period.', 'sk' ),
-                    'type'        => 'string',
-                    'context'     => [ 'view' ],
-                    'readonly'    => true,
-                ],
-                'trial_period_types'       => [
-                    'description' => __( 'Type of trial period.', 'sk' ),
                     'type'        => 'string',
                     'context'     => [ 'view' ],
                     'readonly'    => true,

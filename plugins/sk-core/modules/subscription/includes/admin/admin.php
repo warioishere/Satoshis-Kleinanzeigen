@@ -173,14 +173,12 @@ class DPS_Admin {
             return;
         }
 
-        // check if recurring order
+        // renewal orders are children of the original order
         if ( 0 !== $order->get_parent_id() ) {
-            // this is a recurring order
             echo '<span class="sk_vs_renew_order tips" data-tip="' . esc_attr__( 'Vendor Subscription Renewal Order', 'sk' ) . '"></span>';
             return;
         }
 
-        // determine if order is recurring or non-recurring
         $product = Helper::get_vendor_subscription_product_by_order( $order );
 
         if ( ! $product ) {
@@ -189,14 +187,7 @@ class DPS_Admin {
             return;
         }
 
-        // check if recurring subscription order
-        if ( Helper::is_recurring_pack( $product->get_id() ) ) {
-            // this is a recurring pack
-            echo '<span class="sk_vs_recurring_order tips" data-tip="' . esc_attr__( 'Vendor Subscription Recurring Order', 'sk' ) . '"></span>';
-        } else {
-            // this is a non-recurring pack
-            echo '<span class="sk_vs_non_recurring_order tips" data-tip="' . esc_attr__( 'Vendor Subscription Non Recurring Order', 'sk' ) . '"></span>';
-        }
+        echo '<span class="sk_vs_non_recurring_order tips" data-tip="' . esc_attr__( 'Vendor Subscription Order', 'sk' ) . '"></span>';
     }
 
     /**
@@ -288,7 +279,7 @@ class DPS_Admin {
             $parent_order = wc_get_order( $order->get_parent_id() );
         }
 
-        // check if order is main order or recurring order
+        // collect the renewal orders belonging to this parent order
         $args = [
             'parent'  => $parent_order->get_id(),
             'limit'   => -1,
@@ -344,10 +335,8 @@ class DPS_Admin {
         wp_localize_script(
             'dps-custom-admin-js', 'skSubscription', array(
                 'ajaxurl'               => admin_url( 'admin-ajax.php' ),
-                'subscriptionLengths'   => Helper::get_subscription_ranges(),
                 'isSubscriptionEnabled' => Helper::is_vendor_subscription_enabled(),
-                'exclusiveForAdminOnly' => __( 'This subscription is set to recurring and exclusive for Admins only will be only available for non recurring subscription.', 'sk' ),
-            )
+                            )
         );
 
         $screen = sk_is_hpos_enabled() ? wc_get_page_screen_id( 'shop_order' ) : 'shop_order';
@@ -483,74 +472,6 @@ class DPS_Admin {
             )
         );
 
-        wp_enqueue_script( 'sk-subscription-admin' );
-
-        woocommerce_wp_checkbox(
-            array(
-                'id'          => '_enable_recurring_payment',
-                'label'       => __( 'Recurring Payment', 'sk' ),
-                'description' => __( 'Please check this if you want to enable recurring payment system', 'sk' ),
-            )
-        );
-        echo '</div>';
-
-        // Set month as the default billing period
-        if ( ! $subscription_period = get_post_meta( $post->ID, '_sk_subscription_period', true ) ) { // phpcs:ignore
-            $subscription_period = 'day';
-        }
-
-        echo '<div class="options_group show_if_product_pack sk_subscription_pricing">';
-        // Subscription Period Interval
-        echo '<div class="sk-billing-cycle-wrap">';
-        woocommerce_wp_select(
-            array(
-                'id'      => '_sk_subscription_period_interval',
-                'class'   => 'wc_input_subscription_period_interval',
-                'label'   => __( 'Billing cycle', 'sk' ),
-                'options' => Helper::get_subscription_period_interval_strings(),
-            )
-        );
-
-        // Billing Period
-        woocommerce_wp_select(
-            array(
-                'id'          => '_sk_subscription_period',
-                'class'       => 'wc_input_subscription_period',
-                'label'       => '',
-                'options'     => Helper::get_subscription_period_strings(),
-            )
-        );
-
-        echo '</div>';
-
-        echo '<div class="sk-billing-cyle-clear"></div>';
-
-        // Subscription Length
-        woocommerce_wp_select(
-            array(
-                'id'          => '_sk_subscription_length',
-                'class'       => 'wc_input_subscription_length',
-                'label'       => __( 'Billing cycle stop', 'sk' ),
-                'options'     => Helper::get_subscription_ranges( $subscription_period ),
-
-            )
-        );
-
-        woocommerce_wp_checkbox(
-            array(
-                'id'          => 'sk_subscription_enable_trial',
-                'label'       => __( 'Enable Trial', 'sk' ),
-                'description' => __( 'Please check this if you want to allow trial subscirption.', 'sk' ),
-            )
-        );
-
-        echo '<p class="form-field sk_subscription_trial_period">';
-        echo '<label for="sk_subscription_trial_period">' . __( 'Trial Period', 'sk' ) . '</label>';
-
-        Helper::get_trial_period_options();
-
-        echo '<span class="description">' . __( 'Define the trial period', 'sk' ) . '</span>';
-        echo '</p>';
         echo '</div>';
 
         wp_nonce_field( 'dps_product_fields_nonce', 'dps_product_pack' );
@@ -612,35 +533,6 @@ class DPS_Admin {
         } elseif ( $woocommerce_enable_gallery_restriction === 'no' ) {
             delete_post_meta( $post_id, '_gallery_image_restriction_count' );
         }
-
-        $sk_subscription_enable_trial = isset( $_POST['sk_subscription_enable_trial'] ) ? 'yes' : 'no';
-        update_post_meta( $post_id, 'sk_subscription_enable_trial', $sk_subscription_enable_trial );
-
-        $sk_subscription_trail_range = isset( $_POST['sk_subscription_trail_range'] ) ? intval( wp_unslash( $_POST['sk_subscription_trail_range'] ) ) : 1;
-        if ( ! empty( $sk_subscription_trail_range ) ) {
-            update_post_meta( $post_id, 'sk_subscription_trail_range', $sk_subscription_trail_range );
-        }
-
-        $sk_subscription_trial_period_types = isset( $_POST['sk_subscription_trial_period_types'] ) ? sanitize_text_field( wp_unslash( $_POST['sk_subscription_trial_period_types'] ) ) : 'days';
-        if ( ! empty( $sk_subscription_trial_period_types ) ) {
-            update_post_meta( $post_id, 'sk_subscription_trial_period_types', $sk_subscription_trial_period_types );
-        }
-
-        $woocommerce_enable_recurring_field = isset( $_POST['_enable_recurring_payment'] ) ? 'yes' : 'no';
-        update_post_meta( $post_id, '_enable_recurring_payment', $woocommerce_enable_recurring_field );
-
-        $woocommerce_subscription_period_interval_field = isset( $_POST['_sk_subscription_period_interval'] ) ? intval( wp_unslash( $_POST['_sk_subscription_period_interval'] ) ) : '';
-        if ( $woocommerce_enable_recurring_field !== '' ) {
-            update_post_meta( $post_id, '_sk_subscription_period_interval', $woocommerce_subscription_period_interval_field );
-        }
-
-        $woocommerce_subscription_period_field = isset( $_POST['_sk_subscription_period'] ) ? sanitize_text_field( wp_unslash( $_POST['_sk_subscription_period'] ) ) : '';
-        if ( $woocommerce_enable_recurring_field !== '' ) {
-            update_post_meta( $post_id, '_sk_subscription_period', $woocommerce_subscription_period_field );
-        }
-
-        $woocommerce_subscription_length_field = isset( $_POST['_sk_subscription_length'] ) ? intval( wp_unslash( $_POST['_sk_subscription_length'] ) ) : 0;
-        update_post_meta( $post_id, '_sk_subscription_length', $woocommerce_subscription_length_field );
 
         $product = wc_get_product( $post_id );
         $exclusive_for_admin_only = isset( $_POST['_exclusive_for_admin_only'] ) ? 'yes' : 'no';
@@ -775,14 +667,8 @@ class DPS_Admin {
                     'terms'    => 'product_pack',
                 ),
             ),
-            'meta_query' => array(
-                array(
-                    'key' => '_enable_recurring_payment',
-                    'value' => 'no',
-                ),
-            ),
         );
-        $sub_packs = get_posts( apply_filters( 'dps_get_non_recurring_pack_arg', $args ) );
+        $sub_packs = get_posts( apply_filters( 'sk_get_assignable_pack_args', $args ) );
         ?>
         <tr>
             <td>
@@ -814,12 +700,6 @@ class DPS_Admin {
                 </td>
             </tr>
         <?php endif; ?>
-
-        <tr>
-            <?php if ( $users_assigned_pack && get_user_meta( $user->ID, '_customer_recurring_subscription', true ) === 'active' ) : ?>
-                <td colspan="2"><em><?php esc_html_e( 'This user already has recurring pack assigned. Are you sure to assign a new normal pack to the user? If you do so, the existing recurring plan will be replaced with the new one', 'sk' ); ?></em></td>
-            <?php endif; ?>
-        </tr>
 
         <tr>
             <td><?php esc_html_e( 'Allowed categories', 'sk' ); ?></td>
@@ -856,7 +736,6 @@ class DPS_Admin {
                         <option value="<?php echo $pack->ID; ?>" <?php selected( $users_assigned_pack, $pack->ID ); ?>><?php echo $pack->post_title; ?></option>
                     <?php endforeach; ?>
                 </select>
-                <p class="description"><?php _e( 'You can only assign non-recurring packs', 'sk' ); ?></p>
             </td>
         </tr>
         <?php
@@ -900,18 +779,6 @@ class DPS_Admin {
             return;
         }
 
-        // cancel a running recurring plan before assigning a new pack
-        if ( get_user_meta( $user_id, '_customer_recurring_subscription', true ) == 'active' ) {
-            $order_id = get_user_meta( $user_id, 'product_order_id', true );
-
-            Helper::log( 'Subscription cancel check: On assign pack by admin cancel Recurring Subscription of User #' . $user_id . ' on order #' . $order_id );
-
-            //this hook will ensure other gateway payments cancels their subscriptions
-            do_action( 'dps_cancel_recurring_subscription', $order_id, $user_id, true );
-
-            do_action( 'sk_subscription_cancelled_by_admin', $user_id, $order_id );
-        }
-
         // create a order for the subscription
         try {
             $order = new WC_Order();
@@ -939,7 +806,6 @@ class DPS_Admin {
         }
 
         update_user_meta( $user_id, 'can_post_product', 1 );
-        update_user_meta( $user_id, '_customer_recurring_subscription', '' );
 
         do_action( 'sk_vendor_purchased_subscription', $user_id );
     }

@@ -101,13 +101,11 @@ class Module {
 
         add_filter( 'woocommerce_checkout_order_processed', [ $this, 'process_subscription_ordermeta' ], 10, 1 );
         add_action( 'woocommerce_store_api_checkout_order_processed', [ $this, 'process_subscription_ordermeta' ], 10, 1 );
-        add_filter( 'woocommerce_available_payment_gateways', [ $this, 'filter_payment_gateways' ] );
         add_action( 'woocommerce_order_status_changed', [ $this, 'process_order_pack_product' ], 10, 3 );
         add_action( 'woocommerce_after_checkout_validation', [ $this, 'validate_billing_email' ], 10, 2 );
 
         add_action( 'template_redirect', array( $this, 'maybe_cancel_or_activate_subscription' ) );
         add_action( 'dps_cancel_non_recurring_subscription', array( $this, 'cancel_non_recurring_subscription' ), 10, 3 );
-        add_action( 'dps_activate_recurring_subscription', array( $this, 'activate_recurring_subscription' ), 10, 2 );
         add_action( 'dps_activate_non_recurring_subscription', array( $this, 'activate_non_recurring_subscription' ), 10, 2 );
 
         // Handle popup error if subscription outdated
@@ -152,7 +150,6 @@ class Module {
         add_filter( 'sk_vendor_to_array', array( $this, 'add_currently_subscribed_pack_info_to_shop_data' ), 10, 2 );
         add_action( 'sk_before_update_vendor', array( $this, 'update_vendor_subscription_data' ), 10, 2 );
 
-        add_filter( 'woocommerce_available_payment_gateways', [ $this, 'remove_unsupported_payment_gateways_on_sk_subscription_product' ], 99 );
 
         // Stores REST API.
         add_filter( 'sk_rest_api_store_collection_params', [ $this, 'add_params_to_store_collection' ] );
@@ -824,10 +821,9 @@ class Module {
 
         $is_seller_enabled  = sk_is_seller_enabled( $user->ID );
         $can_post_product   = $vendor_subscription->can_post_product();
-        $has_recurring_pack = $vendor_subscription->has_recurring_pack();
         $has_subscription   = $vendor_subscription->has_subscription();
 
-        if ( ! $has_recurring_pack && $is_seller_enabled && $has_subscription && $can_post_product ) {
+        if ( $is_seller_enabled && $has_subscription && $can_post_product ) {
             if ( Helper::alert_before_two_days( $user->ID ) ) {
                 do_action( 'dps_send_subscription_expiration_alert_email', $user->ID );
                 update_user_meta( $user->ID, 'sk_vendor_subscription_cancel_email', 'yes' );
@@ -978,14 +974,6 @@ class Module {
 
         $product_id = $product->get_id();
 
-        if ( ! Helper::has_used_trial_pack( $customer_id ) ) {
-            Helper::add_used_trial_pack( $customer_id, $product_id );
-        }
-
-        if ( Helper::is_recurring_pack( $product_id ) ) {
-            return;
-        }
-
         // If order has pack validity get it, or get validity from product and format it as Y-m-d H:i:s otherwise validity will be unlimited.
         if ( $order->meta_exists( '_pack_validity' ) ) {
             $pack_validity = $order->get_meta( '_pack_validity', true  );
@@ -1005,7 +993,6 @@ class Module {
         update_user_meta( $customer_id, 'product_no_with_pack', $num_product );
         update_user_meta( $customer_id, 'product_pack_startdate', sk_current_datetime()->format( 'Y-m-d H:i:s' ) );
         update_user_meta( $customer_id, 'can_post_product', '1' );
-        update_user_meta( $customer_id, '_customer_recurring_subscription', '' );
         update_user_meta( $customer_id, 'sk_has_active_cancelled_subscrption', false);
 
         do_action( 'sk_vendor_purchased_subscription', $customer_id );
@@ -1048,22 +1035,6 @@ class Module {
         }
     }
 
-    /**
-     * Filters available payment gateways as needed.
-     * For example, COD should not be available for recurring subscription.
-     *
-     *
-     * @param array $available_gateways
-     *
-     * @return array
-     */
-    public function filter_payment_gateways( $available_gateways ) {
-        if ( Helper::cart_contains_recurring_subscription_product() ) {
-            unset( $available_gateways['cod'] );
-        }
-
-        return $available_gateways;
-    }
 
     /**
      * Redirect after add product into cart
@@ -1085,22 +1056,6 @@ class Module {
 
         $url = wc_get_checkout_url();
 
-        if ( Helper::is_recurring_pack( $product_id ) && ! is_user_logged_in() ) {
-            WC()->cart->empty_cart();
-
-            wc_clear_notices();
-            wc_add_notice(
-                __( 'You need to be logged in to buy a recurring subscription pack. Please log in or create an account to proceed to the checkout.', 'sk' ),
-                'notice'
-            );
-
-            $url = add_query_arg(
-                [
-                    'redirect_to' => $url, // redirect to checkout page after logging in
-                ],
-                get_permalink( get_option( 'woocommerce_myaccount_page_id' ) )
-            );
-        }
 
         return $url;
     }
@@ -1185,29 +1140,15 @@ class Module {
         if ( $cancel_action ) {
             $cancel_immediately = false;
 
-            if ( $order_id && get_user_meta( $user_id, '_customer_recurring_subscription', true ) == 'active' ) {
-                Helper::log( 'Subscription cancel check: User #' . $user_id . ' has canceled his Subscription of order #' . $order_id );
-                do_action( 'dps_cancel_recurring_subscription', $order_id, $user_id, $cancel_immediately );
-                wp_redirect( add_query_arg( array( 'msg' => 'dps_sub_cancelled' ), $page_url ) );
-                exit;
-            } else {
-                Helper::log( 'Subscription cancel check: User #' . $user_id . ' has canceled his Subscription of order #' . $order_id );
-                do_action( 'dps_cancel_non_recurring_subscription', $order_id, $user_id, $cancel_immediately );
-                wp_redirect( add_query_arg( array( 'msg' => 'dps_sub_cancelled' ), $page_url ) );
-                exit;
-            }
+            Helper::log( 'Subscription cancel check: User #' . $user_id . ' has canceled his Subscription of order #' . $order_id );
+            do_action( 'dps_cancel_non_recurring_subscription', $order_id, $user_id, $cancel_immediately );
+            wp_redirect( add_query_arg( array( 'msg' => 'dps_sub_cancelled' ), $page_url ) );
+            exit;
         }
 
         if ( $activate_action ) {
-            $subscription = sk()->vendor->get( $user_id )->subscription;
-
             Helper::log( 'Subscription activation check: User #' . $user_id . ' has reactivate his Subscription of order #' . $order_id );
-
-            if ( $subscription && $subscription->has_recurring_pack() ) {
-                do_action( 'dps_activate_recurring_subscription', $order_id, $user_id );
-            } else {
-                do_action( 'dps_activate_non_recurring_subscription', $order_id, $user_id );
-            }
+            do_action( 'dps_activate_non_recurring_subscription', $order_id, $user_id );
 
             wp_redirect( add_query_arg( array( 'msg' => 'dps_sub_activated' ), $page_url ) );
             exit;
@@ -1262,21 +1203,6 @@ class Module {
         do_action( 'sk_subscription_reactivated', $vendor_id, get_user_meta( $vendor_id, 'product_package_id', true ), $order_id );
     }
 
-    /**
-     * Reactivate a cancelled recurring subscription.
-     *
-     * The gateway side of a recurring plan can only be resumed by the gateway
-     * integration itself. Clear the local flag and let the gateways hook in.
-     *
-     *
-     * @param int $order_id
-     * @param int $vendor_id
-     *
-     * @return void
-     */
-    public function activate_recurring_subscription( $order_id, $vendor_id ) {
-        $this->activate_non_recurring_subscription( $order_id, $vendor_id );
-    }
 
     public function cancel_non_recurring_subscription( $order_id, $vendor_id, $cancel_immediately ) {
         /**
@@ -1949,7 +1875,6 @@ class Module {
                 'expiry_date'        => '',
                 'published_products' => 0,
                 'remaining_products' => 0,
-                'recurring'          => false,
                 'start_date'         => '',
             );
         } else {
@@ -1961,7 +1886,6 @@ class Module {
             $shop_data['assigned_subscription']      = $users_assigned_pack;
             $shop_data['assigned_subscription_info'] = $subscription_pack->get_info();
 
-            $shop_data['assigned_subscription_info']['recurring']  = $subscription_pack->is_recurring();
             $shop_data['assigned_subscription_info']['start_date'] = sk_format_date( $subscription_pack->get_pack_start_date() );
         }
 
@@ -1975,7 +1899,7 @@ class Module {
      * @return array
      */
     private function get_nonrecurring_subscription_packs_with_emply_package() {
-        $subscriptions_packs = ( new SubscriptionPack() )->get_nonrecurring_packages();
+        $subscriptions_packs = ( new SubscriptionPack() )->all()->get_posts();
         $response_array = array(
             array(
                 'name' => 0,
@@ -2042,7 +1966,6 @@ class Module {
             }
 
             update_user_meta( $vendor_id, 'can_post_product', 1 );
-            update_user_meta( $vendor_id, '_customer_recurring_subscription', '' );
         }
     }
 
@@ -2109,50 +2032,6 @@ class Module {
         return $to_return;
     }
 
-    /**
-     * Remove unsupported payment gateways.
-     *
-     *
-     * @param array $gateways All payment gateways.
-     *
-     * @return array
-     */
-    public function remove_unsupported_payment_gateways_on_sk_subscription_product( array $gateways ): array {
-        if ( ! WC()->cart || WC()->cart->is_empty() || is_admin() ) {
-            return $gateways;
-        }
-
-        $is_recurring_subscription_product_is_in_cart = false;
-        foreach ( WC()->cart->get_cart() as $item ) {
-            if ( is_a( $item['data'], \WC_Product::class ) && 'product_pack' === $item['data']->get_type() && Helper::is_recurring_pack( $item['data']->get_id() ) ) {
-                $is_recurring_subscription_product_is_in_cart = true;
-                break;
-            }
-        }
-
-        if ( ! $is_recurring_subscription_product_is_in_cart ) {
-            return $gateways;
-        }
-
-        $vendor_recurring_subscription_supported_payment_gateways = apply_filters(
-            'sk_pro_recurring_vendor_subscription_supported_payment_gateways',
-            [
-                'sk_stripe_express',
-                'sk-stripe-connect',
-                'sk_paypal_adaptive',
-                'sk_paypal_marketplace',
-                'paypal',
-            ]
-        );
-
-        foreach ( $gateways as $key => $gateway ) {
-            if ( ! in_array( $gateway->id, $vendor_recurring_subscription_supported_payment_gateways, true ) ) {
-                unset( $gateways[ $key ] );
-            }
-        }
-
-        return $gateways;
-    }
 
     /**
      * Add Params to Store Collection.

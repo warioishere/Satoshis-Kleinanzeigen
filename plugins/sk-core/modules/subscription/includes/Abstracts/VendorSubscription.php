@@ -80,28 +80,7 @@ abstract class VendorSubscription {
         return get_user_meta( $this->get_vendor(), 'product_pack_startdate', true );
     }
 
-    /**
-     * Check if trial is running for current vendor
-     *
-     *
-     * @return bool
-     */
-    public function is_on_trial() {
-        return 'yes' === get_user_meta( $this->get_vendor(), '_sk_subscription_is_on_trial', true );
-    }
 
-    /**
-     * Get trial end date for a subscription
-     *
-     *
-     * @return false|string
-     */
-    public function get_trial_end_date() {
-        $trial_end_date = get_user_meta( $this->get_vendor(), '_sk_subscription_trial_until', true );
-        if ( ! empty( $trial_end_date ) ) {
-            return sk_format_date( $trial_end_date );
-        }
-    }
     /**
      * Check package validity for seller
      *
@@ -184,20 +163,6 @@ abstract class VendorSubscription {
         return $remaining_product;
     }
 
-    /**
-     * Vendor has recurring subscription pack
-     *
-     * @return boolean
-     */
-    public function has_recurring_pack() {
-        $status = get_user_meta( $this->get_vendor(), '_customer_recurring_subscription', true );
-
-        if ( 'active' === $status ) {
-            return true;
-        }
-
-        return false;
-    }
 
     /**
      * Check wheter vendor has any unpaid or pending subscription or not

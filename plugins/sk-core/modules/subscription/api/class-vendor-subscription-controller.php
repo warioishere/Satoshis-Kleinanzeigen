@@ -133,25 +133,13 @@ class SK_REST_Vendor_Subscription_Controller extends SK_REST_Subscription_Contro
         }
 
         if ( 'activate' === $action ) {
-            if ( $subscription->has_recurring_pack() && $subscription->has_active_cancelled_subscrption() ) {
-                Helper::log( 'Subscription re-activation check: Recurring subscription re-activation for User #' . $vendor_id . ' on order #' . $order_id );
-                do_action( 'dps_activate_recurring_subscription', $order_id, $vendor_id );
-            }
-
-            if ( ! $subscription->has_recurring_pack() ) {
-                Helper::log( 'Subscription re-activation check: Non-recurring subscription re-activation for User #' . $vendor_id . ' on order #' . $order_id );
-                do_action( 'dps_activate_non_recurring_subscription', $order_id, $vendor_id );
-            }
+            Helper::log( 'Subscription re-activation check: re-activation for User #' . $vendor_id . ' on order #' . $order_id );
+            do_action( 'dps_activate_non_recurring_subscription', $order_id, $vendor_id );
         }
 
         if ( 'cancel' === $action ) {
-            if ( $subscription->has_recurring_pack() ) {
-                Helper::log( 'Subscription cancellation check: Recurring subscription cancellation for User #' . $vendor_id . ' on order #' . $order_id );
-                do_action( 'dps_cancel_recurring_subscription', $order_id, $vendor_id, $cancel_immediately );
-            } elseif ( ! $subscription->has_recurring_pack() ) {
-                Helper::log( 'Subscription cancellation check: Non-recurring subscription cancellation for User #' . $vendor_id . ' on order #' . $order_id );
-                do_action( 'dps_cancel_non_recurring_subscription', $order_id, $vendor_id, $cancel_immediately );
-            }
+            Helper::log( 'Subscription cancellation check: cancellation for User #' . $vendor_id . ' on order #' . $order_id );
+            do_action( 'dps_cancel_non_recurring_subscription', $order_id, $vendor_id, $cancel_immediately );
         }
 
         $response = $this->prepare_item_for_response( $vendor, $request );

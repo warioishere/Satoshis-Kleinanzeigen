@@ -176,133 +176,30 @@ class SubscriptionPack extends VendorSubscription {
         return ! empty( $count ) ? intval( $count ) : -1;
     }
 
+
+
+
+
+
     /**
-     * Is trial
+     * Work out when a freshly bought pack should end.
      *
-     * @return boolean
-     */
-    public function is_trial() {
-        $is_trial = get_post_meta( $this->get_id(), 'sk_subscription_enable_trial', true );
-
-        return 'yes' === $is_trial;
-    }
-
-    /**
-     * Get trial subscription range (ei: how many days or weeks)
+     * A pack validity of 0 means the pack never expires.
      *
-     * @return int
-     */
-    public function get_trial_range() {
-        return get_post_meta( $this->get_id(), 'sk_subscription_trail_range', true );
-    }
-
-    /**
-     * Get trial subscription period typs (ei; dyas, weeks, months)
-     *
-     * @return string
-     */
-    public function get_trial_period_types() {
-        return get_post_meta( $this->get_id(), 'sk_subscription_trial_period_types', true );
-    }
-
-    /**
-     * Get trial period length (ei: number of days)
-     *
-     * @return int
-     */
-    public function get_trial_period_length() {
-        $range  = $this->get_trial_range();
-        $types  = $this->get_trial_period_types();
-        $length = 0;
-
-        if ( ! $range || ! $types ) {
-            return 0;
-        }
-
-        switch ( $types ) {
-            case 'week':
-                $length = 7 * $range;
-                break;
-
-            case 'month':
-                $length = 30 * $range;
-                break;
-
-            case 'year':
-                $length = 365 * $range;
-                break;
-
-            default:
-                $length = $range;
-                break;
-        }
-
-        return absint( $length );
-    }
-
-    /**
-     * Get trial end time (ei: required for paypal)
-     *
-     * @return int
-     */
-    public function get_trial_end_time() {
-        $length = $this->get_trial_period_length();
-
-        if ( ! $length ) {
-            return 0;
-        }
-
-        $date_time = sk_current_datetime()->modify( "+ {$length} days" );
-
-        return intval( $date_time->getTimestamp() );
-    }
-
-    /**
      * @return string
      */
     public function get_product_pack_end_date() {
-        $end_date       = 'unlimited';
-        $subscription_length    = $this->get_period_length(); //_sk_subscription_length : billing cycle stops
-        $subscription_period    = $this->get_period_type(); //_sk_subscription_period : day week month year
-        $pack_validity          = absint( $this->get_pack_valid_days() ); //_pack_validity
+        $pack_validity = absint( $this->get_pack_valid_days() ); //_pack_validity
 
-        if ( $this->is_recurring() && $subscription_length > 0 ) {
-            // if subscription_length is greater that zero product pack enddate will be equal to subscription_length
-            try {
-                $add_s          = $subscription_length > 1 ? 's' : '';
-                $date_time      = sk_current_datetime()
-                                    ->modify( "+ {$subscription_length} {$subscription_period}{$add_s}" );
-
-                // now add trial time if exists.
-                if ( $this->is_trial() ) {
-                    $vendor_used_trial = false;
-                    // if vendor already has used a trial pack, create a new plan without trial period
-                    if ( ! empty( $this->get_vendor() ) && Helper::has_used_trial_pack( $this->get_vendor() ) ) {
-                        $vendor_used_trial = true;
-                    }
-                    // check if user is set and user didn;t used their trial period
-                    if ( ! $vendor_used_trial ) {
-                        $trial_length = $this->get_trial_period_length();
-                        $date_time    = $date_time->modify( "+ $trial_length days" );
-                    }
-                }
-                // finally get formatted end date
-                $end_date = $date_time->format( 'Y-m-d H:i:s' );
-
-            } catch ( \Exception $exception ) {
-                $end_date = 'unlimited';
-            }
-        } elseif ( ! $this->is_recurring() && $pack_validity !== 0 ) {
-            try {
-                $date_time = sk_current_datetime()
-                            ->modify( "+{$pack_validity} days" );
-                $end_date = $date_time->format( 'Y-m-d H:i:s' );
-            } catch ( \Exception $exception ) {
-                $end_date = 'unlimited';
-            }
+        if ( 0 === $pack_validity ) {
+            return 'unlimited';
         }
 
-        return $end_date;
+        try {
+            return sk_current_datetime()->modify( "+{$pack_validity} days" )->format( 'Y-m-d H:i:s' );
+        } catch ( \Exception $exception ) {
+            return 'unlimited';
+        }
     }
 
     /**
@@ -311,19 +208,9 @@ class SubscriptionPack extends VendorSubscription {
      * @return string|null
      */
     public function subscription_end_date() {
-        if ( $this->is_recurring() ) {
-            $pack_start_date = $this->get_pack_start_date();
-            $subscription_end_date = new \DateTime( $pack_start_date );
-            $subscription_end_date->modify( '+ 1 ' . $this->get_period_type() );
-            //$subscription_end_date->modify( '-1 day' );
-            $subscription_end_date = $subscription_end_date->format( 'Y-m-d H:i:s' );
-        } else {
-            $subscription_end_date = $this->get_pack_end_date();
-        }
-
         return apply_filters(
             'sk_get_vendor_subscription_end_date',
-            $subscription_end_date,
+            $this->get_pack_end_date(),
             $this
         );
     }
@@ -366,43 +253,9 @@ class SubscriptionPack extends VendorSubscription {
         return get_post_meta( $this->get_id(), '_pack_validity', true );
     }
 
-    /**
-     * Check if is recurring pack
-     *
-     * @return boolean
-     */
-    public function is_recurring() {
-        $is_recurring = get_post_meta( $this->get_id(), '_enable_recurring_payment', true );
 
-        return 'yes' === $is_recurring ? true : false;
-    }
 
-    /**
-     * Get subscription pack recurring interval
-     *
-     * @return int
-     */
-    public function get_recurring_interval() {
-        return (int) get_post_meta( $this->get_id(), '_sk_subscription_period_interval', true );
-    }
 
-    /**
-     * Get subscription pack period type (ei: day, month, year)
-     *
-     * @return string
-     */
-    public function get_period_type() {
-        return get_post_meta( $this->get_id(), '_sk_subscription_period', true );
-    }
-
-    /**
-     * Get subscription pack period lenght
-     *
-     * @return int
-     */
-    public function get_period_length() {
-        return absint( get_post_meta( $this->get_id(), '_sk_subscription_length', true ) );
-    }
 
     /**
      * Get subscription pack price
@@ -415,27 +268,6 @@ class SubscriptionPack extends VendorSubscription {
         return $package ? $package->get_price() : 0;
     }
 
-    /**
-     * Get All Non recurring packages.
-     *
-     *
-     * @param array $args
-     *
-     * @return \WP_Post[]
-     */
-    public function get_nonrecurring_packages( $args = [] ) {
-        $defaults = [
-            'meta_query' => [
-                [
-                    'key' => '_enable_recurring_payment',
-                    'value' => 'no',
-                ],
-            ],
-        ];
-
-        $args = wp_parse_args( apply_filters( 'dps_get_non_recurring_pack_arg', $args ), $defaults );
-        return $this->get_packages( $args )->get_posts();
-    }
 
     /**
      * Activate the subscription after purchase
@@ -467,12 +299,6 @@ class SubscriptionPack extends VendorSubscription {
         update_user_meta( $user_id, 'product_order_id', $order->get_id() );
         update_user_meta( $user_id, 'product_pack_enddate', $this->get_product_pack_end_date() );
         update_user_meta( $user_id, 'sk_has_active_cancelled_subscrption', false );
-
-        if ( $this->is_recurring() ) {
-            update_user_meta( $user_id, '_customer_recurring_subscription', 'active' );
-        } else {
-            update_user_meta( $user_id, '_customer_recurring_subscription', '' );
-        }
 
         do_action( 'sk_vendor_purchased_subscription', $user_id );
     }

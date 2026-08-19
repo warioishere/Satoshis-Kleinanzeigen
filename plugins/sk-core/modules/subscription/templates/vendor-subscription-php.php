@@ -129,18 +129,11 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
                 $no_of_product  = '-1' !== $subscription->get_number_of_products() ? $subscription->get_number_of_products() : 'Unbegrenzt';
                 $pack_title     = $subscription->get_package_title();
                 $is_cancelled   = $subscription->has_active_cancelled_subscrption();
-                $is_trial       = $subscription->is_trial();
-                $is_recurring   = $subscription->is_recurring();
                 $end_date       = $subscription->get_pack_end_date();
 
                 // Laufzeit-Text
                 if ( $is_cancelled ) {
                     $laufzeit = sprintf( 'Aktiv bis %s (gekündigt)', sk_format_date( $end_date ) );
-                } elseif ( $is_trial ) {
-                    $trial_label = $subscription->get_trial_range() . ' ' . Helper::recurring_period( $subscription->get_trial_period_types(), $subscription->get_trial_range() );
-                    $laufzeit    = 'Testphase: ' . $trial_label;
-                } elseif ( $is_recurring ) {
-                    $laufzeit = 'Alle ' . $subscription->get_recurring_interval() . ' ' . Helper::recurring_period( $subscription->get_period_type(), $subscription->get_recurring_interval() );
                 } elseif ( $end_date === 'unlimited' ) {
                     $laufzeit = 'Unbegrenzt';
                 } else {
@@ -150,7 +143,7 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
                 <div class="sk-sub-active-info">
                     <div class="sk-sub-active-info__header">
                         <i class="fas fa-check-circle"></i>
-                        <h3><?php echo $is_trial ? 'Deine Testphase' : 'Dein aktives Abo'; ?></h3>
+                        <h3>Dein aktives Abo</h3>
                     </div>
 
                     <div class="sk-sub-active-info__stats">
@@ -202,22 +195,13 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
                         $subscription_packs->the_post();
 
                         $sub_pack           = sk()->subscription->get( get_the_ID() );
-                        $is_recurring       = $sub_pack->is_recurring();
-                        $recurring_interval = $sub_pack->get_recurring_interval();
-                        $recurring_period   = $sub_pack->get_period_type();
                         $pack_id            = apply_filters( 'sk_vendor_subscription_package_id', get_the_ID() );
-                        $is_trial_used      = $sub_pack->is_trial() && Helper::has_used_trial_pack( get_current_user_id() );
                         $is_current         = Helper::is_vendor_subscribed_pack( $pack_id ) || Helper::pack_renew_seller( $pack_id );
                         ?>
-                        <div class="product_pack_item <?php echo $is_current ? 'current_pack' : ''; ?> <?php echo $is_trial_used ? 'fp_already_taken' : ''; ?>">
+                        <div class="product_pack_item <?php echo $is_current ? 'current_pack' : ''; ?>">
 
                             <div class="pack_price">
                                 <span class="dps-amount"><?php echo wp_kses_post( wc_price( $sub_pack->get_price() ) ); ?></span>
-                                <?php if ( $is_recurring && 1 === (int) $recurring_interval ) : ?>
-                                    <span class="dps-rec-period">
-                                        <span class="sep">/</span><?php echo esc_html( Helper::recurring_period( $recurring_period, $recurring_interval ) ); ?>
-                                    </span>
-                                <?php endif; ?>
                             </div>
 
                             <?php
@@ -266,36 +250,13 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
                                         echo sprintf( '<strong>%d</strong> %s <br />', (int) $no_of_product, esc_html__( 'Products', 'sk' ) );
                                     }
                                     ?>
-                                    <?php if ( $is_recurring && $sub_pack->is_trial() && $is_trial_used ) : ?>
-                                        <span class="dps-rec-period">
-                                            <?php esc_html_e( 'In every', 'sk' ); ?>
-                                            <?php echo esc_html( number_format_i18n( $recurring_interval ) ); ?>
-                                            <?php echo esc_html( Helper::recurring_period( $recurring_period, $recurring_interval ) ); ?>
-                                        </span>
-                                    <?php elseif ( $is_recurring && $sub_pack->is_trial() ) : ?>
-                                        <span class="dps-rec-period">
-                                            <?php esc_html_e( 'In every', 'sk' ); ?>
-                                            <?php echo esc_html( number_format_i18n( $recurring_interval ) ); ?>
-                                            <?php echo esc_html( Helper::recurring_period( $recurring_period, $recurring_interval ) ); ?>
-                                            <p class="trail-details">
-                                                <?php echo esc_html( $sub_pack->get_trial_range() ); ?>
-                                                <?php echo esc_html( Helper::recurring_period( $sub_pack->get_trial_period_types(), $sub_pack->get_trial_range() ) ); ?>
-                                                <?php esc_html_e( 'trial', 'sk' ); ?>
-                                            </p>
-                                        </span>
-                                    <?php elseif ( $is_recurring && $recurring_interval >= 1 ) : ?>
-                                        <span class="dps-rec-period">
-                                            <?php esc_html_e( 'In every', 'sk' ); ?>
-                                            <?php echo esc_html( number_format_i18n( $recurring_interval ) ); ?>
-                                            <?php echo esc_html( Helper::recurring_period( $recurring_period, $recurring_interval ) ); ?>
-                                        </span>
-                                    <?php else :
-                                        if ( empty( $sub_pack->get_pack_valid_days() ) ) {
-                                            echo sprintf( '%1$s<br /><strong>%2$s</strong> %3$s', esc_html__( 'For', 'sk' ), esc_html__( 'Unlimited', 'sk' ), esc_html__( 'Days', 'sk' ) );
-                                        } else {
-                                            echo sprintf( '%1$s<br /><strong>%2$s</strong> %3$s', esc_html__( 'For', 'sk' ), esc_html( $sub_pack->get_pack_valid_days() ), esc_html__( 'Days', 'sk' ) );
-                                        }
-                                    endif; ?>
+                                    <?php
+                                    if ( empty( $sub_pack->get_pack_valid_days() ) ) {
+                                        echo sprintf( '%1$s<br /><strong>%2$s</strong> %3$s', esc_html__( 'For', 'sk' ), esc_html__( 'Unlimited', 'sk' ), esc_html__( 'Days', 'sk' ) );
+                                    } else {
+                                        echo sprintf( '%1$s<br /><strong>%2$s</strong> %3$s', esc_html__( 'For', 'sk' ), esc_html( $sub_pack->get_pack_valid_days() ), esc_html__( 'Days', 'sk' ) );
+                                    }
+                                    ?>
                                 </div>
                             </div>
 
@@ -310,30 +271,16 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
                                         <?php esc_html_e( 'Renew', 'sk' ); ?>
                                     </a>
 
+                                <?php elseif ( ! Helper::vendor_has_subscription( sk_get_current_user_id() ) ) : ?>
+                                    <a href="<?php echo esc_url( do_shortcode( '[add_to_cart_url id="' . get_the_ID() . '"]' ) ); ?>" class="sk-btn sk-btn-theme buy_product_pack">
+                                        <?php esc_html_e( 'Buy Now', 'sk' ); ?>
+                                    </a>
+
                                 <?php else : ?>
-                                    <?php if ( $sub_pack->is_trial() && Helper::vendor_has_subscription( sk_get_current_user_id() ) && $is_trial_used ) : ?>
-                                        <a href="<?php echo esc_url( do_shortcode( '[add_to_cart_url id="' . get_the_ID() . '"]' ) ); ?>" class="sk-btn sk-btn-theme buy_product_pack">
-                                            <?php esc_html_e( 'Switch Plan', 'sk' ); ?>
-                                        </a>
-                                    <?php elseif ( $sub_pack->is_trial() && $is_trial_used ) : ?>
-                                        <a href="<?php echo esc_url( do_shortcode( '[add_to_cart_url id="' . get_the_ID() . '"]' ) ); ?>" class="sk-btn sk-btn-theme buy_product_pack">
-                                            <?php esc_html_e( 'Buy Now', 'sk' ); ?>
-                                        </a>
-                                    <?php elseif ( ! Helper::vendor_has_subscription( sk_get_current_user_id() ) ) : ?>
-                                        <?php if ( $sub_pack->is_trial() ) : ?>
-                                            <a href="<?php echo esc_url( do_shortcode( '[add_to_cart_url id="' . get_the_ID() . '"]' ) ); ?>" class="sk-btn sk-btn-theme buy_product_pack trial_pack">
-                                                <?php esc_html_e( 'Start Free Trial', 'sk' ); ?>
-                                            </a>
-                                        <?php else : ?>
-                                            <a href="<?php echo esc_url( do_shortcode( '[add_to_cart_url id="' . get_the_ID() . '"]' ) ); ?>" class="sk-btn sk-btn-theme buy_product_pack">
-                                                <?php esc_html_e( 'Buy Now', 'sk' ); ?>
-                                            </a>
-                                        <?php endif; ?>
-                                    <?php else : ?>
-                                        <a href="<?php echo esc_url( do_shortcode( '[add_to_cart_url id="' . get_the_ID() . '"]' ) ); ?>" class="sk-btn sk-btn-theme buy_product_pack">
-                                            <?php esc_html_e( 'Switch Plan', 'sk' ); ?>
-                                        </a>
-                                    <?php endif; ?>
+                                    <a href="<?php echo esc_url( do_shortcode( '[add_to_cart_url id="' . get_the_ID() . '"]' ) ); ?>" class="sk-btn sk-btn-theme buy_product_pack">
+                                        <?php esc_html_e( 'Switch Plan', 'sk' ); ?>
+                                    </a>
+
                                 <?php endif; ?>
                             </div>
 
