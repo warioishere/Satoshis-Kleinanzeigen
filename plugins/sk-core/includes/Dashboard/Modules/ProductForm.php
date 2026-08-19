@@ -230,6 +230,7 @@ class ProductForm {
         }
 
         wp_enqueue_style( 'sk-seo-audit' );
+        wp_enqueue_script( 'sk-seo-audit-bulk' );
 
         $per_page = max( 1, absint( apply_filters( 'sk_seo_autofill_focuskw_per_page', 20 ) ) );
         $paged    = isset( $_GET['paged'] ) ? max( 1, absint( wp_unslash( $_GET['paged'] ) ) ) : 1;
@@ -328,16 +329,6 @@ class ProductForm {
             }
             ?>
         </div>
-        <script>
-        (function(){
-            var t=document.getElementById('sk-seo-check-all');
-            if(!t)return;
-            t.addEventListener('change',function(){
-                var b=document.querySelectorAll('input[name="product_ids[]"]');
-                for(var i=0;i<b.length;i++)b[i].checked=t.checked;
-            });
-        })();
-        </script>
         <?php
     }
 

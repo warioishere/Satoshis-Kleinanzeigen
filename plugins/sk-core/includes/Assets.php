@@ -345,6 +345,18 @@ class Assets {
                 'src'  => $asset_url . '/js/dashboard/announcement.js',
                 'deps' => [ 'jquery', 'sk-util-helper' ],
             ],
+            'sk-admin-user-profile-fields' => [
+                'src'  => $asset_url . '/js/admin/user-profile.js',
+                'deps' => [ 'jquery' ],
+            ],
+            'sk-author-quick-edit'   => [
+                'src'  => $asset_url . '/js/admin/author-quick-edit.js',
+                'deps' => [ 'jquery' ],
+            ],
+            'sk-seo-audit-bulk'      => [
+                'src'  => $asset_url . '/js/admin/seo-audit.js',
+                'deps' => [],
+            ],
             'sk-products-listing'    => [
                 'src'  => $asset_url . '/js/products/products-listing.js',
                 'deps' => [],

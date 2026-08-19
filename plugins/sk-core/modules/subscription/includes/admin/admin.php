@@ -333,6 +333,7 @@ class DPS_Admin {
         wp_register_style( 'dps-custom-style', DPS_URL . '/assets/css/style' . $suffix . '.css', false, $version );
         wp_register_style( 'sk-subscription-related-orders', DPS_URL . '/assets/css/admin-related-orders.css', false, $version );
         wp_register_style( 'sk-subscription-order-page', DPS_URL . '/assets/css/admin-order-page.css', false, $version );
+        wp_register_script( 'sk-subscription-admin', DPS_URL . '/assets/js/admin-subscription.js', array(), $version, true );
         wp_register_script( 'dps-custom-admin-js', DPS_URL . '/assets/js/admin-script' . $suffix . '.js', array( 'jquery' ), $version, true );
     }
 
@@ -482,28 +483,7 @@ class DPS_Admin {
             )
         );
 
-        ?>
-
-        <script type="text/javascript">
-            ;(function () {
-                var image_enable = document.querySelector('#_enable_gallery_restriction');
-                var image_count = document.querySelector('._gallery_image_restriction_count_field');
-                if (image_enable.checked === true) {
-                    image_count.style.display = '';
-                } else {
-                    image_count.style.display = 'none';
-                }
-                image_enable.addEventListener('click', function () {
-                    if (image_enable.checked === true) {
-                        image_count.style.display = '';
-                    } else {
-                        image_count.style.display = 'none';
-                    }
-                })
-            })();
-        </script>
-
-        <?php
+        wp_enqueue_script( 'sk-subscription-admin' );
 
         woocommerce_wp_checkbox(
             array(
