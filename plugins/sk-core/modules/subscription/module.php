@@ -108,6 +108,8 @@ class Module {
         add_action( 'template_redirect', array( $this, 'maybe_cancel_or_activate_subscription' ) );
         add_action( 'dps_cancel_recurring_subscription', array( $this, 'cancel_recurring_subscription' ), 10, 2 );
         add_action( 'dps_cancel_non_recurring_subscription', array( $this, 'cancel_non_recurring_subscription' ), 10, 3 );
+        add_action( 'dps_activate_recurring_subscription', array( $this, 'activate_recurring_subscription' ), 10, 2 );
+        add_action( 'dps_activate_non_recurring_subscription', array( $this, 'activate_non_recurring_subscription' ), 10, 2 );
 
         // Handle popup error if subscription outdated
         add_action( 'sk_new_product_popup_args', [ __CLASS__, 'can_create_product' ], 20, 2 );
@@ -439,21 +441,23 @@ class Module {
     public function seller_add_products( $errors ) {
         $user_id = sk_get_current_user_id();
 
-        if ( sk_is_user_seller( $user_id ) ) {
-            $remaining_product = Helper::get_vendor_remaining_products( $user_id );
-
-            if ( true === $remaining_product ) {
-                return;
-            }
-
-            if ( $remaining_product <= 0 ) {
-                $errors[] = __( 'Sorry your subscription exceeds your package limits please update your package subscription', 'sk' );
-                return $errors;
-            } else {
-                update_user_meta( $user_id, 'product_no_with_pack', $remaining_product - 1 );
-                return $errors;
-            }
+        // always hand back the errors collected so far, never null
+        if ( ! sk_is_user_seller( $user_id ) ) {
+            return $errors;
         }
+
+        $remaining_product = Helper::get_vendor_remaining_products( $user_id );
+
+        // true means unlimited products
+        if ( true === $remaining_product ) {
+            return $errors;
+        }
+
+        if ( $remaining_product <= 0 ) {
+            $errors[] = __( 'Sorry your subscription exceeds your package limits please update your package subscription', 'sk' );
+        }
+
+        return $errors;
     }
 
     /**
@@ -555,26 +559,27 @@ class Module {
      */
     public static function can_create_product( $errors, $data ) {
         if ( isset( $data['ID'] ) ) {
-            return;
+            return $errors;
         }
 
         $user_id = sk_get_current_user_id();
 
-        if ( sk_is_user_seller( $user_id ) ) {
-            $remaining_product = Helper::get_vendor_remaining_products( $user_id );
-
-            if ( true === $remaining_product ) {
-                return;
-            }
-
-            if ( $remaining_product <= 0 ) {
-                $errors = new \WP_Error( 'no-subscription', __( 'Sorry your subscription exceeds your package limits please update your package subscription', 'sk' ) );
-            } else {
-                update_user_meta( $user_id, 'product_no_with_pack', $remaining_product - 1 );
-            }
-
+        if ( ! sk_is_user_seller( $user_id ) ) {
             return $errors;
         }
+
+        $remaining_product = Helper::get_vendor_remaining_products( $user_id );
+
+        // true means unlimited products
+        if ( true === $remaining_product ) {
+            return $errors;
+        }
+
+        if ( $remaining_product <= 0 ) {
+            $errors = new \WP_Error( 'no-subscription', __( 'Sorry your subscription exceeds your package limits please update your package subscription', 'sk' ) );
+        }
+
+        return $errors;
     }
 
     /**
@@ -1144,9 +1149,18 @@ class Module {
         }
 
         if ( $activate_action ) {
+            $subscription = sk()->vendor->get( $user_id )->subscription;
+
             Helper::log( 'Subscription activation check: User #' . $user_id . ' has reactivate his Subscription of order #' . $order_id );
-            do_action( 'dps_activate_recurring_subscription', $order_id, $user_id );
+
+            if ( $subscription && $subscription->has_recurring_pack() ) {
+                do_action( 'dps_activate_recurring_subscription', $order_id, $user_id );
+            } else {
+                do_action( 'dps_activate_non_recurring_subscription', $order_id, $user_id );
+            }
+
             wp_redirect( add_query_arg( array( 'msg' => 'dps_sub_activated' ), $page_url ) );
+            exit;
         }
     }
 
@@ -1177,6 +1191,60 @@ class Module {
      *
      * @return void
      */
+    /**
+     * Reactivate a cancelled non recurring subscription.
+     *
+     * Cancelling a validity pack only flags it, the pack stays usable until its
+     * end date. Reactivating therefore just clears that flag again.
+     *
+     *
+     * @param int $order_id
+     * @param int $vendor_id
+     *
+     * @return void
+     */
+    public function activate_non_recurring_subscription( $order_id, $vendor_id ) {
+        $subscription = sk()->vendor->get( $vendor_id )->subscription;
+
+        if ( ! $subscription ) {
+            /* translators: 1) vendor id */
+            sk_log( sprintf( __( 'Unable to find subscription to be reactivated for vendor id# %s', 'sk' ), $vendor_id ) );
+            return;
+        }
+
+        if ( ! $subscription->has_active_cancelled_subscrption() ) {
+            return;
+        }
+
+        $subscription->reset_active_cancelled_subscription();
+        delete_user_meta( $vendor_id, 'sk_vendor_subscription_cancel_email' );
+
+        /**
+         * Fires after a subscription has been reactivated.
+         *
+         * @param int      $vendor_id
+         * @param int|bool $package_id
+         * @param int      $order_id
+         */
+        do_action( 'sk_subscription_reactivated', $vendor_id, get_user_meta( $vendor_id, 'product_package_id', true ), $order_id );
+    }
+
+    /**
+     * Reactivate a cancelled recurring subscription.
+     *
+     * The gateway side of a recurring plan can only be resumed by the gateway
+     * integration itself. Clear the local flag and let the gateways hook in.
+     *
+     *
+     * @param int $order_id
+     * @param int $vendor_id
+     *
+     * @return void
+     */
+    public function activate_recurring_subscription( $order_id, $vendor_id ) {
+        $this->activate_non_recurring_subscription( $order_id, $vendor_id );
+    }
+
     public function cancel_non_recurring_subscription( $order_id, $vendor_id, $cancel_immediately ) {
         /**
          * @param bool $cancel_immediately
