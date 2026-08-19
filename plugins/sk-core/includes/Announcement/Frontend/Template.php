@@ -200,7 +200,11 @@ class Template extends DashboardModule {
      * @return void
      */
     public function remove_announcement() {
-        check_ajax_referer( 'sk_reviews' );
+        check_ajax_referer( 'sk_announcement_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'skdar' ) ) {
+            wp_send_json_error();
+        }
 
         $notice_id = isset( $_POST['row_id'] ) ? absint( $_POST['row_id'] ) : 0;
         if ( ! $notice_id ) {
@@ -232,6 +236,10 @@ class Template extends DashboardModule {
      */
     public function ajax_get_notice() {
         check_ajax_referer( 'sk_announcement_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'skdar' ) ) {
+            wp_send_json_error();
+        }
 
         $notice_id = isset( $_POST['notice_id'] ) ? absint( $_POST['notice_id'] ) : 0;
         if ( ! $notice_id ) {

@@ -34,14 +34,40 @@ class PostType {
      * @return void
      */
     public function register_post_type() {
+        // Announcements are written on the SK admin page, not in the post editor.
+        // With the generic `post` capabilities every role holding `edit_posts` could
+        // create them and every role holding `edit_others_posts` (Editor) could read,
+        // rewrite and delete them, so both the UI and the caps are locked down here.
+        $capabilities = array_fill_keys(
+            array(
+                'edit_post',
+                'read_post',
+                'delete_post',
+                'edit_posts',
+                'edit_others_posts',
+                'delete_posts',
+                'delete_others_posts',
+                'delete_private_posts',
+                'delete_published_posts',
+                'edit_private_posts',
+                'edit_published_posts',
+                'publish_posts',
+                'read_private_posts',
+                'create_posts',
+            ),
+            'manage_woocommerce'
+        );
+
         register_post_type(
             $this->post_type, array(
                 'label'           => __( 'Announcement', 'sk-core' ),
                 'description'     => '',
                 'public'          => false,
-                'show_ui'         => true,
+                'show_ui'         => false,
                 'show_in_menu'    => false,
                 'capability_type' => 'post',
+                'capabilities'    => $capabilities,
+                'map_meta_cap'    => true,
                 'hierarchical'    => false,
                 'rewrite'         => array( 'slug' => '' ),
                 'query_var'       => false,

@@ -38,6 +38,37 @@ class Manager {
     }
 
     /**
+     * Add the lookup index the announcement table shipped without.
+     *
+     * Every vendor dashboard load joins on `post_id` and filters `user_id`, which
+     * was a full table scan. Installations created before this run only get the
+     * index on plugin activation, so it is added here as well.
+     *
+     * @return void
+     */
+    public function maybe_upgrade_table() {
+        if ( 'yes' === get_option( 'sk_announcement_table_indexed' ) ) {
+            return;
+        }
+
+        global $wpdb;
+
+        if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $this->announcement_table ) ) !== $this->announcement_table ) {
+            return;
+        }
+
+        // @codingStandardsIgnoreStart
+        $has_index = $wpdb->get_var( "SHOW INDEX FROM {$this->announcement_table} WHERE Key_name = 'user_post'" );
+
+        if ( ! $has_index ) {
+            $wpdb->query( "ALTER TABLE {$this->announcement_table} ADD KEY user_post (user_id, post_id), ADD KEY post_id (post_id)" );
+        }
+        // @codingStandardsIgnoreEnd
+
+        update_option( 'sk_announcement_table_indexed', 'yes' );
+    }
+
+    /**
      * Get announcement
      *
      *
@@ -113,7 +144,10 @@ class Manager {
         if ( ! empty( $args['status'] ) && in_array( $args['status'], [ 'publish', 'pending', 'draft', 'future', 'trash' ], true ) ) {
             $where        .= ' AND p.post_status = %s';
             $query_args[] = $args['status'];
-        } elseif ( empty( $args['status'] ) || ( ! empty( $args['status'] ) && 'trash' === $args['status'] ) ) {
+        } elseif ( empty( $args['id'] ) ) {
+            // 'all' — and anything unrecognised — means every status but the trash.
+            // A lookup by id stays unfiltered so trashed announcements can still be
+            // restored or force-deleted.
             $where        .= ' AND p.post_status != %s';
             $query_args[] = 'trash';
         }
@@ -537,7 +571,14 @@ class Manager {
      * @return WP_Post|WP_Error Post data on success, WP_Error on failure.
      */
     public function delete_announcement( $id, $force = false ) {
-        $announcement   = $this->get_single_announcement( $id );
+        $announcement = $this->get_single_announcement( $id );
+
+        // Bail before wp_delete_post()/wp_trash_post() get their hands on an id
+        // that belongs to some other post type — they would happily delete it.
+        if ( is_wp_error( $announcement ) ) {
+            return $announcement;
+        }
+
         $supports_trash = apply_filters( 'sk_announcement_trashable', ( EMPTY_TRASH_DAYS > 0 ), $announcement );
 
         // delete individual announcement cache
@@ -597,6 +638,11 @@ class Manager {
      * @return WP_Post|WP_Error Post data on success, WP_Error on failure.
      */
     public function untrash_announcement( $announcement_id ) {
+        $announcement = $this->get_single_announcement( $announcement_id );
+        if ( is_wp_error( $announcement ) ) {
+            return $announcement;
+        }
+
         $result = wp_untrash_post( $announcement_id );
         if ( ! $result ) {
             return new WP_Error( 'untrash_announcement_error', __( 'Error in untrashing announcement.', 'sk-core' ) );

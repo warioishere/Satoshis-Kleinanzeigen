@@ -68,10 +68,16 @@ class AnnouncementsPage extends AbstractPage {
             return;
         }
 
-        $action = isset( $_POST['announcement_action'] ) ? sanitize_text_field( $_POST['announcement_action'] ) : '';
+        $action  = isset( $_POST['announcement_action'] ) ? sanitize_text_field( $_POST['announcement_action'] ) : '';
+        $post_id = isset( $_POST['post_id'] ) ? absint( $_POST['post_id'] ) : 0;
+
+        // wp_delete_post() and wp_update_post() operate on any post type, so a
+        // tampered or stale post_id would delete a product or rewrite a page.
+        if ( $post_id && 'sk_announcement' !== get_post_type( $post_id ) ) {
+            wp_die( __( 'Invalid announcement.', 'sk-core' ) );
+        }
 
         if ( $action === 'delete' ) {
-            $post_id = isset( $_POST['post_id'] ) ? absint( $_POST['post_id'] ) : 0;
             if ( $post_id ) {
                 $manager = new \SK\Core\Announcement\Manager();
                 $manager->delete_announcement( $post_id, true );
@@ -86,7 +92,6 @@ class AnnouncementsPage extends AbstractPage {
         }
 
         // Save / Update via Announcement Manager (handles vendor assignments).
-        $post_id = isset( $_POST['post_id'] ) ? absint( $_POST['post_id'] ) : 0;
         $title   = isset( $_POST['announcement_title'] ) ? sanitize_text_field( $_POST['announcement_title'] ) : '';
         $content = isset( $_POST['announcement_content'] ) ? wp_kses_post( $_POST['announcement_content'] ) : '';
         $status  = isset( $_POST['announcement_status'] ) ? sanitize_text_field( $_POST['announcement_status'] ) : 'draft';

@@ -158,12 +158,19 @@ class Installer {
 
     private function create_announcement_table() {
         global $wpdb;
-        dbDelta( "CREATE TABLE IF NOT EXISTS `{$wpdb->prefix}sk_announcement` (
-            `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-            `user_id` bigint(20) unsigned NOT NULL,
-            `post_id` bigint(11) NOT NULL,
-            `status` varchar(30) NOT NULL,
-            PRIMARY KEY (id)
+
+        // No `IF NOT EXISTS` here: dbDelta detects the table name with
+        // `|CREATE TABLE ([^ ]*)|`, so it would read the name as "IF", never match
+        // the existing table and never generate the ALTERs for missing columns
+        // or keys.
+        dbDelta( "CREATE TABLE {$wpdb->prefix}sk_announcement (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            user_id bigint(20) unsigned NOT NULL,
+            post_id bigint(11) NOT NULL,
+            status varchar(30) NOT NULL,
+            PRIMARY KEY  (id),
+            KEY user_post (user_id, post_id),
+            KEY post_id (post_id)
         ) ENGINE=InnoDB {$wpdb->get_charset_collate()};" );
     }
 

@@ -29,6 +29,8 @@ class Announcement {
      */
     public function __construct() {
         $this->set_controllers();
+
+        add_action( 'admin_init', [ $this->manager, 'maybe_upgrade_table' ] );
     }
 
     public function set_controllers() {
@@ -50,19 +52,23 @@ class Announcement {
      */
     public function delete_announcement_cache( $seller_ids, $post_id = null ) {
         if ( is_array( $seller_ids ) ) {
-            foreach ( $seller_ids as $seller_id ) {
-                Cache::invalidate_group( "seller_announcement_{$seller_id}" );
-            }
-        } elseif ( is_numeric( $seller_ids ) ) {
-            Cache::invalidate_group( "seller_announcement_{$seller_ids}" );
-        } elseif ( is_numeric( $post_id ) ) {
-            $seller_ids = sk_ext()->announcement->manager->get_assigned_seller_from_db( $post_id );
-            foreach ( $seller_ids as $seller_id ) {
-                Cache::invalidate_group( "seller_announcement_{$seller_id['user_id']}" );
-            }
+            $seller_ids = array_filter( $seller_ids, 'is_numeric' );
+        } else {
+            $seller_ids = is_numeric( $seller_ids ) ? [ $seller_ids ] : [];
         }
 
-        // remove the main cache group
-        Cache::invalidate_group( 'announcements' );
+        // Trashing, deleting and untrashing pass an empty recipient list, so the
+        // recipients have to be looked up or their lists stay stale.
+        if ( empty( $seller_ids ) && is_numeric( $post_id ) ) {
+            $seller_ids = $this->manager->get_assigned_seller_from_db( $post_id );
+        }
+
+        foreach ( $seller_ids as $seller_id ) {
+            Cache::invalidate_group( "seller_announcement_{$seller_id}" );
+        }
+
+        // remove the main cache group — this has to match the group Manager::all()
+        // writes the admin lists to.
+        Cache::invalidate_group( 'announcement' );
     }
 }

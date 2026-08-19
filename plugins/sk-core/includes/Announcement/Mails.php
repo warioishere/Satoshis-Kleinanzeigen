@@ -74,11 +74,21 @@ class Mails {
             return;
         }
 
+        // This runs on every save of a published announcement, so without a record
+        // of who already got the mail, fixing a typo would blast every vendor again.
+        $already_mailed = get_post_meta( $post_id, '_announcement_mailed_users', true );
+        $already_mailed = is_array( $already_mailed ) ? $already_mailed : [];
+
+        $recipients = array_diff( $assigned_sellers, $already_mailed );
+        if ( empty( $recipients ) ) {
+            return;
+        }
+
         // Retrieve announcement arguments, processor for queue.
         $args      = [ 'id' => $post_id ];
         $processor = sk_ext()->announcement->processor;
 
-        foreach ( $assigned_sellers as $vendor_id ) {
+        foreach ( $recipients as $vendor_id ) {
             // Ensures that `notice_id` is associated for this vendor & retrieve announcements.
             $args['vendor_id'] = $vendor_id;
             $announcements     = $manager->all( $args );
@@ -86,11 +96,17 @@ class Mails {
             $payload = [
                 'post_id'   => $post_id,
                 'sender_id' => $vendor_id,
-                'notice_id' => ! empty( $announcements ) ? $announcements->get_notice_id() : 0, // Pass announcement `notice_id` for seller single notice info.
+                'notice_id' => $announcements instanceof Single ? $announcements->get_notice_id() : 0, // Pass announcement `notice_id` for seller single notice info.
             ];
 
             $processor->push_to_queue( $payload );
         }
+
+        update_post_meta(
+            $post_id,
+            '_announcement_mailed_users',
+            array_values( array_unique( array_merge( $already_mailed, $recipients ) ) )
+        );
 
         $processor->save()->dispatch();
     }
