@@ -626,7 +626,10 @@ class Assets {
             }
 
             if ( SK_CORE_LOAD_SCRIPTS ) {
-                $this->load_map_scripts();
+                // Only the store pages can carry the store-location widget.
+                if ( sk_is_store_page() || sk_is_store_listing() ) {
+                    $this->load_map_scripts();
+                }
 
                 wp_enqueue_script( 'jquery-ui-sortable' );
                 wp_enqueue_script( 'jquery-ui-datepicker' );
@@ -726,7 +729,13 @@ class Assets {
 
         if ( SK_CORE_LOAD_SCRIPTS ) {
             self::load_form_validate_script();
-            $this->load_map_scripts();
+
+            // The only dashboard page that renders a map is the store settings form
+            // (templates/settings/store-form.php). Loading the bundle everywhere put
+            // 1.7 MB of JavaScript on every dashboard page for nothing.
+            if ( isset( $wp->query_vars['settings'] ) && 'store' === $wp->query_vars['settings'] ) {
+                $this->load_map_scripts();
+            }
 
             wp_enqueue_script( 'jquery' );
             wp_enqueue_script( 'jquery-ui' );
