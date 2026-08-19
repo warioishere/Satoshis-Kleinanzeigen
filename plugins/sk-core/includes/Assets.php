@@ -726,10 +726,17 @@ class Assets {
         if ( SK_CORE_LOAD_SCRIPTS ) {
             self::load_form_validate_script();
 
-            // The only dashboard page that renders a map is the store settings form
-            // (templates/settings/store-form.php). Loading the bundle everywhere put
-            // 1.7 MB of JavaScript on every dashboard page for nothing.
-            if ( isset( $wp->query_vars['settings'] ) && 'store' === $wp->query_vars['settings'] ) {
+            // Maps appear on the store settings form and in the product location box
+            // of the product editor. Everywhere else the 1.7 MB bundle is dead weight.
+            // The product editor condition mirrors the geolocation module's own
+            // enqueue, whose script declares sk-maps as a dependency — without it
+            // WordPress drops that script and the location picker stops working.
+            $is_store_settings = isset( $wp->query_vars['settings'] ) && 'store' === $wp->query_vars['settings'];
+            $is_product_editor = isset( $wp->query_vars['products'] )
+                && isset( $_GET['action'] ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+                && 'edit' === sanitize_text_field( wp_unslash( $_GET['action'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+            if ( $is_store_settings || $is_product_editor ) {
                 $this->load_map_scripts();
             }
 
