@@ -2,6 +2,8 @@
 
 namespace SK\Core\Dashboard\Modules;
 
+use SK\Core\Dashboard\PageCache;
+
 /**
  * Dashboard performance optimizations.
  *
@@ -34,7 +36,7 @@ class Performance {
     /* ---- Helpers ---- */
 
     public function page_cache_enabled(): bool {
-        return (bool) get_option( 'sk_page_cache_enabled', 1 );
+        return PageCache::is_enabled();
     }
 
     /* ---- init defaults ---- */
@@ -162,46 +164,20 @@ class Performance {
 
     /* ---- Page cache (Redis) ---- */
 
-    private function get_user_hash(): string {
-        foreach ( $_COOKIE as $k => $v ) {
-            if ( str_starts_with( $k, 'wordpress_logged_in_' ) ) {
-                return md5( $v );
-            }
-        }
-        return '';
-    }
-
-    private function get_cache_key( string $user_hash, string $uri ): string {
-        $version     = (int) wp_cache_get( 'sk_dcv_' . $user_hash, 'sk_page_cache' );
-        $file_ver    = (int) wp_cache_get( 'sk_dcv_files', 'sk_page_cache' );
-        return 'sk_dc_' . $user_hash . '_' . $version . '_' . $file_ver . '_' . md5( $uri );
-    }
-
     public function maybe_serve_cached_page(): void {
-        if ( ! $this->page_cache_enabled() ) {
-            return;
-        }
-        if ( ( $_SERVER['REQUEST_METHOD'] ?? '' ) !== 'GET' ) {
-            return;
-        }
         $uri = $_SERVER['REQUEST_URI'] ?? '';
-        if ( false === strpos( $uri, '/dashboard/' ) ) {
+
+        if ( ! PageCache::is_enabled()
+            || ! PageCache::is_cacheable_request( $_SERVER['REQUEST_METHOD'] ?? '', $uri ) ) {
             return;
         }
 
-        foreach ( [ 'message=', 'updated=', 'saved=', 'deleted=', 'error=', 'trashed=', 'sk_dash_opt_updated' ] as $p ) {
-            if ( false !== strpos( $uri, $p ) ) {
-                return;
-            }
-        }
-
-        $user_hash = $this->get_user_hash();
+        $user_hash = PageCache::user_hash();
         if ( '' === $user_hash ) {
             return;
         }
 
-        $key    = $this->get_cache_key( $user_hash, $uri );
-        $cached = wp_cache_get( $key, 'sk_page_cache' );
+        $cached = wp_cache_get( PageCache::cache_key( $user_hash, $uri ), PageCache::GROUP );
 
         if ( false !== $cached && is_string( $cached ) && '' !== $cached ) {
             header( 'Content-Type: text/html; charset=UTF-8' );
@@ -214,50 +190,61 @@ class Performance {
     }
 
     public function maybe_start_output_buffer(): void {
-        if ( ! $this->page_cache_enabled() ) {
-            return;
-        }
-        if ( ( $_SERVER['REQUEST_METHOD'] ?? '' ) !== 'GET' ) {
-            return;
-        }
         $uri = $_SERVER['REQUEST_URI'] ?? '';
-        if ( false === strpos( $uri, '/dashboard/' ) ) {
+
+        if ( ! PageCache::is_enabled()
+            || ! PageCache::is_cacheable_request( $_SERVER['REQUEST_METHOD'] ?? '', $uri ) ) {
             return;
         }
-        $user_hash = $this->get_user_hash();
+
+        $user_hash = PageCache::user_hash();
         if ( '' === $user_hash ) {
             return;
         }
 
-        $key = $this->get_cache_key( $user_hash, $uri );
+        $key = PageCache::cache_key( $user_hash, $uri );
+
         ob_start( static function ( string $html ) use ( $key ): string {
             if ( ! empty( $html ) && false !== stripos( $html, '</html>' ) ) {
-                wp_cache_set( $key, $html, 'sk_page_cache', 300 );
+                wp_cache_set( $key, $html, PageCache::GROUP, PageCache::TTL );
             }
+
             return $html;
         } );
     }
 
+    /**
+     * Invalidate this visitor's cached pages after they changed something.
+     */
     public function maybe_bust_cache_on_post(): void {
         if ( ( $_SERVER['REQUEST_METHOD'] ?? '' ) !== 'POST' ) {
             return;
         }
+
         $uri = $_SERVER['REQUEST_URI'] ?? '';
         $ref = $_SERVER['HTTP_REFERER'] ?? '';
+
         $needs_bust = false;
+
         if ( false !== strpos( $uri, '/dashboard' ) ) {
             $needs_bust = true;
         } elseif ( false !== strpos( $ref, '/dashboard/' ) ) {
-            if ( false !== strpos( $uri, 'admin-ajax.php' ) || false !== strpos( $uri, 'admin-post.php' ) || false !== strpos( $uri, '/wp-json/' ) ) {
+            // A dashboard page posting to ajax, admin-post or the REST API.
+            if ( false !== strpos( $uri, 'admin-ajax.php' )
+                || false !== strpos( $uri, 'admin-post.php' )
+                || false !== strpos( $uri, '/wp-json/' ) ) {
                 $needs_bust = true;
             }
         }
+
         if ( ! $needs_bust ) {
             return;
         }
-        $user_hash = $this->get_user_hash();
+
+        $user_hash = PageCache::user_hash();
+
         if ( '' !== $user_hash ) {
-            wp_cache_set( 'sk_dcv_' . $user_hash, time(), 'sk_page_cache', 3600 );
+            wp_cache_set( 'sk_dcv_' . $user_hash, time(), PageCache::GROUP, HOUR_IN_SECONDS );
         }
     }
 
