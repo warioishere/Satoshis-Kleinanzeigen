@@ -17,16 +17,11 @@ class ExtendedManager {
 
         $class_map[ $inc . '/REST/StoreCategoryController.php' ]          = StoreCategoryController::class;
         $class_map[ $inc . '/REST/ReviewsController.php' ]                = ReviewsController::class;
-        $class_map[ $inc . '/REST/ProductVariationController.php' ]       = ProductVariationController::class;
         $class_map[ $inc . '/REST/ExtendedStoreController.php' ]               = ProStoreController::class;
         $class_map[ $inc . '/REST/ModulesController.php' ]                = ModulesController::class;
         $class_map[ $inc . '/REST/AnnouncementController.php' ]           = AnnouncementController::class;
         $class_map[ $inc . '/REST/DashboardController.php' ]              = DashboardController::class;
         $class_map[ $inc . '/REST/ExtendedProductController.php' ]             = ProProductController::class;
-
-        if ( class_exists( ProductBlockController::class ) ) {
-            $class_map[ $inc . '/REST/ProductVariationBlockController.php' ] = ProductVariationBlockController::class;
-        }
 
         $class_map[ $inc . '/REST/TaxClassesController.php' ]             = TaxClassesController::class;
         $class_map[ $inc . '/REST/TaxesController.php' ]                  = TaxesController::class;

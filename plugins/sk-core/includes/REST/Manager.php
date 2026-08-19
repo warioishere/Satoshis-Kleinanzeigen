@@ -182,8 +182,6 @@ class Manager {
                 SK_CORE_DIR . '/includes/REST/StoreController.php'                   => '\SK\Core\REST\StoreController',
                 SK_CORE_DIR . '/includes/REST/ProductController.php'                 => '\SK\Core\REST\ProductController',
                 SK_CORE_DIR . '/includes/REST/ProductControllerV2.php'               => '\SK\Core\REST\ProductControllerV2',
-                SK_CORE_DIR . '/includes/REST/ProductAttributeController.php'        => '\SK\Core\REST\ProductAttributeController',
-                SK_CORE_DIR . '/includes/REST/ProductAttributeTermsController.php'   => '\SK\Core\REST\ProductAttributeTermsController',
                 SK_CORE_DIR . '/includes/REST/StoreSettingController.php'            => '\SK\Core\REST\StoreSettingController',
                 SK_CORE_DIR . '/includes/REST/StoreSettingControllerV2.php'          => '\SK\Core\REST\StoreSettingControllerV2',
                 SK_CORE_DIR . '/includes/REST/VendorDashboardController.php'         => '\SK\Core\REST\VendorDashboardController',
