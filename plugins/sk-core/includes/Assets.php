@@ -361,10 +361,6 @@ class Assets {
                 'src'  => $asset_url . '/js/products/products-listing.js',
                 'deps' => [],
             ],
-            'sk-product-variation-dates' => [
-                'src'  => $asset_url . '/js/products/product-variation-dates.js',
-                'deps' => [ 'jquery', 'jquery-ui-datepicker' ],
-            ],
             'sk-php-dashboard-modules' => [
                 'src'  => $asset_url . '/js/admin/php-dashboard/modules.js',
                 'deps' => [],
