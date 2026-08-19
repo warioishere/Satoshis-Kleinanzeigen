@@ -42,7 +42,7 @@ class Nostr_Login_Handler {
     }
 
     public function add_admin_menu() {
-        add_options_page( __( 'Nostr Login Settings', 'nostr-login' ), __( 'Nostr Login', 'nostr-login' ), 'manage_options', 'nostr-login', array( $this, 'options_page' ) );
+        add_options_page( __( 'Nostr Login Settings', 'sk-core' ), __( 'Nostr Login', 'sk-core' ), 'manage_options', 'nostr-login', array( $this, 'options_page' ) );
     }
 
     public function register_settings() {
@@ -66,30 +66,30 @@ class Nostr_Login_Handler {
     public function options_page() {
         ?>
         <div class="wrap">
-            <h1><?php esc_html_e( 'Nostr Login Settings', 'nostr-login' ); ?></h1>
+            <h1><?php esc_html_e( 'Nostr Login Settings', 'sk-core' ); ?></h1>
             <form method="post" action="options.php">
                 <?php settings_fields( 'nostr_login_options' ); ?>
                 <?php do_settings_sections( 'nostr_login_options' ); ?>
                 <table class="form-table">
                     <tr valign="top">
-                        <th scope="row"><?php esc_html_e( 'Nostr Relays', 'nostr-login' ); ?></th>
+                        <th scope="row"><?php esc_html_e( 'Nostr Relays', 'sk-core' ); ?></th>
                         <td>
                             <textarea name="nostr_login_relays" rows="5" cols="50"><?php echo esc_textarea( get_option( 'nostr_login_relays', implode( "\n", $this->default_relays ) ) ); ?></textarea>
-                            <p class="description"><?php esc_html_e( 'Enter one relay URL per line.', 'nostr-login' ); ?></p>
+                            <p class="description"><?php esc_html_e( 'Enter one relay URL per line.', 'sk-core' ); ?></p>
                         </td>
                     </tr>
                     <tr valign="top">
-                        <th scope="row"><?php esc_html_e( 'Redirect After Login', 'nostr-login' ); ?></th>
+                        <th scope="row"><?php esc_html_e( 'Redirect After Login', 'sk-core' ); ?></th>
                         <td>
                             <select name="nostr_login_redirect">
                                 <option value="admin" <?php selected( get_option( 'nostr_login_redirect', 'admin' ), 'admin' ); ?>>
-                                    <?php esc_html_e( 'Admin Dashboard', 'nostr-login' ); ?>
+                                    <?php esc_html_e( 'Admin Dashboard', 'sk-core' ); ?>
                                 </option>
                                 <option value="home" <?php selected( get_option( 'nostr_login_redirect', 'admin' ), 'home' ); ?>>
-                                    <?php esc_html_e( 'Home Page', 'nostr-login' ); ?>
+                                    <?php esc_html_e( 'Home Page', 'sk-core' ); ?>
                                 </option>
                                 <option value="profile" <?php selected( get_option( 'nostr_login_redirect', 'admin' ), 'profile' ); ?>>
-                                    <?php esc_html_e( 'User Profile', 'nostr-login' ); ?>
+                                    <?php esc_html_e( 'User Profile', 'sk-core' ); ?>
                                 </option>
                             </select>
                         </td>
@@ -103,23 +103,23 @@ class Nostr_Login_Handler {
 
     public function add_custom_user_profile_fields( $user ) {
         ?>
-        <h3><?php esc_html_e( "Nostr Information", "nostr-login" ); ?></h3>
+        <h3><?php esc_html_e( "Nostr Information", "sk-core" ); ?></h3>
         <?php wp_nonce_field('nostr_login_save_profile', 'nostr_login_nonce'); ?>
 
         <table class="form-table">
             <tr>
-                <th><label><?php esc_html_e("Connect Nostr Account", "nostr-login"); ?></label></th>
+                <th><label><?php esc_html_e("Connect Nostr Account", "sk-core"); ?></label></th>
                 <td>
                     <?php if (!get_user_meta($user->ID, 'nostr_public_key', true)): ?>
                         <button type="button" id="nostr-connect-extension" class="button">
-                            <?php esc_html_e("Sync with Nostr Extension", "nostr-login"); ?>
+                            <?php esc_html_e("Sync with Nostr Extension", "sk-core"); ?>
                         </button>
                         <p class="description">
-                            <?php esc_html_e("Connect your Nostr account to sync your public key, NIP-05, and avatar", "nostr-login"); ?>
+                            <?php esc_html_e("Connect your Nostr account to sync your public key, NIP-05, and avatar", "sk-core"); ?>
                         </p>
                     <?php else: ?>
                         <button type="button" id="nostr-resync-extension" class="button">
-                            <?php esc_html_e("Resync Nostr Data", "nostr-login"); ?>
+                            <?php esc_html_e("Resync Nostr Data", "sk-core"); ?>
                         </button>
                     <?php endif; ?>
                     <div id="nostr-connect-feedback" style="display:none; margin-top:10px;"></div>
@@ -128,7 +128,7 @@ class Nostr_Login_Handler {
 
             <!-- Existing fields as read-only -->
             <tr>
-                <th><label><?php esc_html_e("Nostr Public Key", "nostr-login"); ?></label></th>
+                <th><label><?php esc_html_e("Nostr Public Key", "sk-core"); ?></label></th>
                 <td>
                     <input type="text" id="nostr_public_key"
                            value="<?php echo esc_attr(get_user_meta($user->ID, 'nostr_public_key', true)); ?>"
@@ -136,7 +136,7 @@ class Nostr_Login_Handler {
                 </td>
             </tr>
             <tr>
-                <th><label><?php esc_html_e("Nostr NIP-05", "nostr-login"); ?></label></th>
+                <th><label><?php esc_html_e("Nostr NIP-05", "sk-core"); ?></label></th>
                 <td>
                     <input type="text" id="nip05"
                            value="<?php echo esc_attr(get_user_meta($user->ID, 'nip05', true)); ?>"
@@ -257,7 +257,7 @@ class Nostr_Login_Handler {
         // Validate public key format
         $public_key = $nip98->pubkey;
         if (!$this->is_valid_public_key($public_key)) {
-            wp_send_json_error(array('message' => __('Invalid public key format.', 'nostr-login')));
+            wp_send_json_error(array('message' => __('Invalid public key format.', 'sk-core')));
         }
 
         // Decode and sanitize metadata
@@ -265,7 +265,7 @@ class Nostr_Login_Handler {
 
         if ( json_last_error() !== JSON_ERROR_NONE ) {
             nostr_login_debug_log( 'Invalid metadata JSON: ' . json_last_error_msg() );
-            wp_send_json_error( array( 'message' => __( 'Invalid metadata: ', 'nostr-login' ) . json_last_error_msg() ) );
+            wp_send_json_error( array( 'message' => __( 'Invalid metadata: ', 'sk-core' ) . json_last_error_msg() ) );
         }
 
         // Sanitize and validate each field
@@ -327,7 +327,7 @@ class Nostr_Login_Handler {
             wp_send_json_success(array('redirect' => $redirect_url));
         } else {
             nostr_login_debug_log( 'Login failed for public key: ' . $public_key );
-            wp_send_json_error( array( 'message' => __( 'Login failed. Please try again.', 'nostr-login' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Login failed. Please try again.', 'sk-core' ) ) );
         }
     }
 
@@ -449,17 +449,17 @@ class Nostr_Login_Handler {
         <div class="nostr-login-container">
             <label for="nostr_login_toggle" class="nostr-toggle-label">
                 <input type="checkbox" id="nostr_login_toggle">
-                <span><?php esc_html_e( 'Use Nostr Login', 'nostr-login' ); ?></span>
+                <span><?php esc_html_e( 'Use Nostr Login', 'sk-core' ); ?></span>
             </label>
             <?php wp_nonce_field( 'nostr-login-nonce', 'nostr_login_nonce' ); ?>
         </div>
         <p class="nostr-login-field" style="display:none;">
-            <label for="nostr_private_key"><?php esc_html_e( 'Nostr Private Key', 'nostr-login' ); ?></label>
+            <label for="nostr_private_key"><?php esc_html_e( 'Nostr Private Key', 'sk-core' ); ?></label>
             <input type="password" name="nostr_private_key" id="nostr_private_key" class="input" size="20" autocapitalize="off" />
         </p>
         <p class="nostr-login-buttons" style="display:none;">
-            <button type="button" id="use_nostr_extension" class="button"><?php esc_html_e( 'Use Nostr Extension', 'nostr-login' ); ?></button>
-            <input type="submit" name="wp-submit" id="nostr-wp-submit" class="button button-primary" value="<?php esc_attr_e( 'Log In with Nostr', 'nostr-login' ); ?>">
+            <button type="button" id="use_nostr_extension" class="button"><?php esc_html_e( 'Use Nostr Extension', 'sk-core' ); ?></button>
+            <input type="submit" name="wp-submit" id="nostr-wp-submit" class="button button-primary" value="<?php esc_attr_e( 'Log In with Nostr', 'sk-core' ); ?>">
         </p>
         <div id="nostr-login-feedback" style="display:none;"></div>
         <?php
@@ -469,21 +469,21 @@ class Nostr_Login_Handler {
     public function ajax_nostr_sync_profile() {
         try {
             if (!check_ajax_referer('nostr-login-nonce', 'nonce', false)) {
-                throw new Exception(__('Security check failed.', 'nostr-login'));
+                throw new Exception(__('Security check failed.', 'sk-core'));
             }
 
             if (!is_user_logged_in()) {
-                throw new Exception(__('You must be logged in.', 'nostr-login'));
+                throw new Exception(__('You must be logged in.', 'sk-core'));
             }
 
             $user_id = get_current_user_id();
             if (!current_user_can('edit_user', $user_id)) {
-                throw new Exception(__('You do not have permission to perform this action.', 'nostr-login'));
+                throw new Exception(__('You do not have permission to perform this action.', 'sk-core'));
             }
 
             // Validate and sanitize metadata input
             if (!isset($_POST['metadata']) || empty($_POST['metadata'])) {
-                throw new Exception(__('No metadata provided.', 'nostr-login'));
+                throw new Exception(__('No metadata provided.', 'sk-core'));
             }
 
             // Sanitize the JSON string before decoding
@@ -491,18 +491,18 @@ class Nostr_Login_Handler {
             $metadata = json_decode($raw_metadata, true);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new Exception(__('Invalid metadata format.', 'nostr-login'));
+                throw new Exception(__('Invalid metadata format.', 'sk-core'));
             }
 
             // Validate public key
             if (empty($metadata['public_key']) || !$this->is_valid_public_key($metadata['public_key'])) {
-                throw new Exception(__('Invalid public key.', 'nostr-login'));
+                throw new Exception(__('Invalid public key.', 'sk-core'));
             }
 
             // Check for existing public key
             $existing_user = $this->get_user_by_public_key($metadata['public_key']);
             if ($existing_user && $existing_user->ID !== $user_id) {
-                throw new Exception(__('This Nostr account is already linked to another user.', 'nostr-login'));
+                throw new Exception(__('This Nostr account is already linked to another user.', 'sk-core'));
             }
 
             // Update Nostr-specific data
@@ -518,7 +518,7 @@ class Nostr_Login_Handler {
                 nostr_login_debug_log("Updated avatar for user $user_id: $avatar_url");
             }
 
-            wp_send_json_success(array('message' => __('Nostr data successfully synced!', 'nostr-login')));
+            wp_send_json_success(array('message' => __('Nostr data successfully synced!', 'sk-core')));
 
         } catch (\Exception $e) {
             wp_send_json_error(array('message' => $e->getMessage()));

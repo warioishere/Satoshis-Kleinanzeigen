@@ -151,11 +151,11 @@ class DPS_Admin {
             // populate wc subscription field data
             $output = '';
             if ( wcs_order_contains_subscription( $post_id, 'renewal' ) ) {
-                $output = '<span class="subscription_renewal_order tips" data-tip="' . esc_attr__( 'Renewal Order', 'woocommerce-subscriptions' ) . '"></span>'; //phpcs:ignore
+                $output = '<span class="subscription_renewal_order tips" data-tip="' . esc_attr__( 'Renewal Order', 'sk-core' ) . '"></span>'; //phpcs:ignore
             } elseif ( wcs_order_contains_subscription( $post_id, 'resubscribe' ) ) {
-                $output = '<span class="subscription_resubscribe_order tips" data-tip="' . esc_attr__( 'Resubscribe Order', 'woocommerce-subscriptions' ) . '"></span>'; //phpcs:ignore
+                $output = '<span class="subscription_resubscribe_order tips" data-tip="' . esc_attr__( 'Resubscribe Order', 'sk-core' ) . '"></span>'; //phpcs:ignore
             } elseif ( wcs_order_contains_subscription( $post_id, 'parent' ) ) {
-                $output = '<span class="subscription_parent_order tips" data-tip="' . esc_attr__( 'Parent Order', 'woocommerce-subscriptions' ) . '"></span>';  //phpcs:ignore
+                $output = '<span class="subscription_parent_order tips" data-tip="' . esc_attr__( 'Parent Order', 'sk-core' ) . '"></span>';  //phpcs:ignore
             }
 
             // early return if its wc subscription order

@@ -563,6 +563,7 @@ msgstr ""
 #: includes/Dashboard/Modules/LogoutModal.php:48
 #: modules/sk-feed/templates/comment-thread.php:52
 #: modules/sk-feed/templates/dashboard-feed.php:112
+#: templates/dashboard/vendor-chat/dashboard-vendor-chat.php:312
 msgid "Abbrechen"
 msgstr ""
 
@@ -832,6 +833,10 @@ msgstr "Adresse: %s"
 msgid "Admin can earn more by allowing vendors to advertise their products and give them the right exposure."
 msgstr "Administratoren können mehr verdienen, wenn sie den Anbietern erlauben, ihre Produkte zu bewerben und ihnen die richtige Aufmerksamkeit zu geben."
 
+#: modules/sk-auth/includes/NostrLogin.php:86
+msgid "Admin Dashboard"
+msgstr ""
+
 #: includes/Vendor/SettingsApi/Settings/Pages/Store.php:265
 msgid "Advanced"
 msgstr "Erweitert"
@@ -901,6 +906,7 @@ msgid "Aktion"
 msgstr ""
 
 #: templates/admin/php-dashboard/antifraud.php:259
+#: templates/dashboard/vendor-chat/dashboard-vendor-chat.php:56
 msgid "Aktiv"
 msgstr ""
 
@@ -1317,6 +1323,14 @@ msgstr "Anbieter zulassen"
 msgid "April"
 msgstr "April"
 
+#: templates/dashboard/vendor-chat/dashboard-vendor-chat.php:206
+msgid "Archivieren"
+msgstr ""
+
+#: templates/dashboard/vendor-chat/dashboard-vendor-chat.php:62
+msgid "Archiviert"
+msgstr ""
+
 #: includes/Dashboard/Templates/Settings.php:157
 #: includes/Dashboard/Templates/Settings.php:162
 #: includes/Dashboard/Templates/Settings.php:172
@@ -1490,6 +1504,10 @@ msgstr ""
 #: includes/functions.php:1077
 msgid "Author"
 msgstr "Autor"
+
+#: modules/sk-auth/templates/nostr-import-page.php:14
+msgid "Author Pubkey/Npub"
+msgstr ""
 
 #: templates/admin/php-dashboard/antifraud.php:42
 msgid "Auto-Suspend"
@@ -2007,6 +2025,7 @@ msgid "Catalog visibility."
 msgstr "Katalog Sichtbarkeit."
 
 #: includes/SettingsApi/Store.php:77
+#: modules/sk-auth/templates/nostr-import-page.php:54
 #: templates/products/sk-category-header-ui.php:23
 msgid "Category"
 msgstr "Kategorie"
@@ -2308,6 +2327,14 @@ msgstr "Neues Passwort bestätigen"
 msgid "Congratulations %s!"
 msgstr "Glückwunsch %s!"
 
+#: modules/sk-auth/includes/NostrLogin.php:111
+msgid "Connect Nostr Account"
+msgstr ""
+
+#: modules/sk-auth/includes/NostrLogin.php:118
+msgid "Connect your Nostr account to sync your public key, NIP-05, and avatar"
+msgstr ""
+
 #: includes/Widgets/StoreContactForm.php:38
 #: includes/Widgets/StoreContactForm.php:115 includes/template-tags.php:546
 msgid "Contact Vendor"
@@ -2535,6 +2562,13 @@ msgstr ""
 msgid "Dashboard"
 msgstr "Übersicht"
 
+#: includes/Dashboard/Modules/Performance.php:98
+#: includes/Dashboard/Modules/Performance.php:99
+#: includes/Dashboard/Modules/Performance.php:112
+#: includes/Dashboard/Modules/Performance.php:149
+msgid "Dashboard Performance"
+msgstr ""
+
 #: includes/Dashboard/Modules/UserOnboarding.php:152
 msgid "Dashboard → Angebote → Neues Produkt hinzufügen"
 msgstr ""
@@ -2567,9 +2601,17 @@ msgstr "Datenbank Fehler: Bitte kontaktieren Sie den Webseite Administrator."
 msgid "Date"
 msgstr "Datum"
 
+#: modules/sk-auth/templates/nostr-import-page.php:25
+msgid "Date From"
+msgstr ""
+
 #: includes/functions.php:1698
 msgid "Date is not valid"
 msgstr "Datum ist ungültig"
+
+#: modules/sk-auth/templates/nostr-import-page.php:34
+msgid "Date To"
+msgstr ""
 
 #: templates/admin/php-dashboard/feedback.php:115
 #: templates/products/products-listing-row.php:100
@@ -2633,6 +2675,10 @@ msgstr "Standardformularwerte: Dies sind die Attribute, die im Frontend vorgewä
 #: modules/geolocation/class-geolocation-admin-settings.php:131
 msgid "Default Location"
 msgstr "Standard Standort"
+
+#: modules/sk-auth/includes/NostrImport.php:155
+msgid "Default Post Status"
+msgstr ""
 
 #: includes/Product/functions.php:593
 msgid "Default sorting"
@@ -2706,6 +2752,10 @@ msgstr ""
 
 #: includes/Dashboard/Modules/UserOnboarding.php:227
 msgid "Deine Inserate sind kryptographisch beweisbar deine"
+msgstr ""
+
+#: templates/dashboard/vendor-chat/dashboard-vendor-chat.php:301
+msgid "Deine Nachricht:"
 msgstr ""
 
 #: includes/Dashboard/Modules/UserOnboarding.php:213
@@ -2939,7 +2989,8 @@ msgstr "Herunterladbare Produkte"
 msgid "Downloadable products give access to a file upon purchase."
 msgstr "Herunterladbare Produkte ermöglichen beim Kauf den Zugriff auf eine Datei."
 
-#: includes/functions.php:787 modules/subscription/includes/admin/admin.php:640
+#: includes/functions.php:787 modules/sk-auth/includes/NostrImport.php:159
+#: modules/subscription/includes/admin/admin.php:640
 #: templates/admin/php-dashboard/announcement-edit.php:55
 msgid "Draft"
 msgstr "Entwurf"
@@ -3110,6 +3161,7 @@ msgstr ""
 msgid "Einstellungen für Lightning-Zahlungen und Reputation."
 msgstr ""
 
+#: includes/Dashboard/Modules/Performance.php:144
 #: includes/Dashboard/Modules/UserOnboarding.php:466
 #: includes/Dashboard/Modules/VendorChat.php:261
 #: templates/admin/php-dashboard/antifraud.php:20
@@ -3413,6 +3465,11 @@ msgstr ""
 msgid "Enter no of validity days you want to give this pack "
 msgstr "Geben Sie die Anzahl der Gültigkeitstage ein, die Sie diesem Paket geben möchten "
 
+#: modules/sk-auth/includes/NostrImport.php:151
+#: modules/sk-auth/includes/NostrLogin.php:78
+msgid "Enter one relay URL per line."
+msgstr ""
+
 #: includes/Product/Hooks.php:189
 msgid "Enter product name"
 msgstr "Produktnamen eingeben"
@@ -3454,6 +3511,10 @@ msgstr "Geben Sie einen Text oder einige Attribute durch \"%s\" ein, um die Wert
 #: modules/subscription/includes/admin/admin.php:390
 msgid "Enter the no of product you want to give this package."
 msgstr "Geben Sie die Produktnummer ein, die Sie diesem Paket geben möchten."
+
+#: modules/sk-auth/templates/nostr-import-page.php:19
+msgid "Enter the Nostr public key (hex or npub format)"
+msgstr ""
 
 #: includes/woo-views/variation-admin-html.php:244
 #: templates/products/edit/html-product-variation.php:350
@@ -3612,6 +3673,10 @@ msgstr ""
 msgid "Es wurde nichts automatisch gesperrt — bitte prüfen."
 msgstr ""
 
+#: modules/sk-auth/includes/NostrImport.php:812
+msgid "Event ID %1$s is already associated with post ID %2$d"
+msgstr ""
+
 #. translators: 1) interval period
 #: includes/Abstracts/SkBackgroundProcesses.php:83
 #, php-format
@@ -3689,6 +3754,10 @@ msgstr "Externes/Affiliate Produkt"
 #: includes/Privacy.php:196 includes/functions.php:2288
 msgid "Facebook"
 msgstr "Facebook"
+
+#: modules/sk-auth/includes/NostrImport.php:686
+msgid "Failed to import comment"
+msgstr ""
 
 #: includes/Dashboard/Templates/Settings.php:191
 msgid "Failed to process data, invalid submission"
@@ -3809,6 +3878,10 @@ msgstr "Dateiname"
 #: includes/REST/ProductVariationController.php:730
 msgid "File name."
 msgstr "Dateiname."
+
+#: modules/sk-auth/includes/NostrImport.php:430
+msgid "File size exceeds maximum upload limit of %s"
+msgstr ""
 
 #: includes/woo-views/variation-admin-html.php:194
 #: templates/products/downloadable.php:39
@@ -4281,6 +4354,10 @@ msgstr "Verbergen Sie die Kontaktinformationen des Anbieters auf der einzelnen A
 msgid "Hide Vendor Info"
 msgstr "Anbieter Info verbergen"
 
+#: modules/sk-auth/includes/NostrLogin.php:89
+msgid "Home Page"
+msgstr ""
+
 #: modules/product-adv/includes/REST/AdvertisementController.php:612
 msgid "How data will be returned"
 msgstr "Wie die Daten zurückgegeben werden"
@@ -4453,9 +4530,33 @@ msgstr "Bild URL."
 msgid "Immediately enable selling for newly registered vendors"
 msgstr "Sofortiger Verkauf für neu registrierte Anbieter"
 
+#: modules/sk-auth/templates/nostr-import-page.php:105
+msgid "Import associated comments for each post."
+msgstr ""
+
+#: modules/sk-auth/templates/nostr-import-page.php:100
+msgid "Import Comments"
+msgstr ""
+
+#: modules/sk-auth/includes/NostrImport.php:357
+msgid "Import failed: "
+msgstr ""
+
+#: modules/sk-auth/includes/NostrImport.php:176
+msgid "Import Nostr Posts"
+msgstr ""
+
 #: includes/functions.php:2614
 msgid "Import product"
 msgstr "Produkt importieren"
+
+#: modules/sk-auth/includes/NostrImport.php:146
+msgid "Import Relays"
+msgstr ""
+
+#: modules/sk-auth/templates/nostr-import-page.php:135
+msgid "Import Selected Posts"
+msgstr ""
 
 #: includes/Admin/Pointers.php:109
 msgid "Important Details At a Glance"
@@ -4582,6 +4683,10 @@ msgstr "Anbieter-Namen einfügen"
 msgid "Instagram"
 msgstr "Instagram"
 
+#: includes/Dashboard/Modules/Performance.php:126
+msgid "Insufficient permissions."
+msgstr ""
+
 #: templates/settings/store-form.php:284
 msgid "Interessenten zahlen 21 Sats via BTCPay, um deine Kontaktdaten zu sehen."
 msgstr ""
@@ -4606,12 +4711,28 @@ msgstr ""
 msgid "Invalid customer_email."
 msgstr "Ungültige customer_email."
 
+#: modules/sk-auth/includes/NostrImport.php:244
+msgid "Invalid event structure."
+msgstr ""
+
 #: includes/Abstracts/SkRESTController.php:70
 #: includes/REST/ProductController.php:388
 #: includes/REST/ProductController.php:412
 #: includes/REST/ProductVariationController.php:546
 msgid "Invalid ID."
 msgstr "Ungültige ID."
+
+#: modules/sk-auth/includes/NostrImport.php:237
+msgid "Invalid JSON data provided."
+msgstr ""
+
+#: modules/sk-auth/includes/NostrLogin.php:494
+msgid "Invalid metadata format."
+msgstr ""
+
+#: modules/sk-auth/includes/NostrLogin.php:268
+msgid "Invalid metadata: "
+msgstr ""
 
 #: includes/Admin/Settings.php:46 includes/Admin/Settings.php:80
 #: includes/Products.php:740 modules/product-adv/includes/Ajax.php:34
@@ -4644,6 +4765,14 @@ msgstr "Ungültige Produkt ID."
 #: modules/product-adv/includes/Ajax.php:84
 msgid "Invalid product id. Please check your input."
 msgstr "Ungültige Produkt ID. Bitte überprüfen Sie Ihre Eingabe."
+
+#: modules/sk-auth/includes/NostrLogin.php:260
+msgid "Invalid public key format."
+msgstr ""
+
+#: modules/sk-auth/includes/NostrLogin.php:499
+msgid "Invalid public key."
+msgstr ""
 
 #: modules/report-abuse/includes/Ajax.php:119
 msgid "Invalid reason."
@@ -4795,8 +4924,16 @@ msgstr ""
 msgid "keine"
 msgstr ""
 
+#: templates/dashboard/vendor-chat/dashboard-vendor-chat.php:74
+msgid "Keine aktiven Chats"
+msgstr ""
+
 #: templates/announcement/announcement.php:63
 msgid "Keine Ankündigungen"
+msgstr ""
+
+#: templates/dashboard/vendor-chat/dashboard-vendor-chat.php:130
+msgid "Keine archivierten Chats"
 msgstr ""
 
 #: modules/sk-feed/includes/Ajax.php:144 modules/sk-feed/includes/Ajax.php:228
@@ -4822,6 +4959,10 @@ msgstr ""
 #: modules/geolocation/class-geolocation-admin-settings.php:98
 msgid "Kilometers"
 msgstr "Kilometer"
+
+#: templates/dashboard/vendor-chat/dashboard-vendor-chat.php:277
+msgid "Klicke auf einen Chat in der Seitenleiste, um die Unterhaltung anzuzeigen."
+msgstr ""
 
 #: modules/sk-anti-fraud/includes/AntifraudSettings.php:162
 msgid "Kommagetrennt. Wird in Titel, Beschreibung, Schlagwörtern und Kategorien gesucht, Gross-/Kleinschreibung egal. Teiltreffer zählen — „ticket\" erfasst auch „Tickets\"."
@@ -5106,6 +5247,10 @@ msgstr "Laden fehlgeschlagen"
 msgid "Loading more results&hellip;"
 msgstr "Mehr Ergebnisse werden geladen&hellip;"
 
+#: modules/sk-auth/templates/nostr-import-page.php:112
+msgid "Loading..."
+msgstr ""
+
 #: modules/geolocation/class-sk-geolocation-product-single.php:45
 #: modules/geolocation/functions.php:167 modules/geolocation/functions.php:273
 msgid "Location"
@@ -5123,12 +5268,20 @@ msgstr "Standort, IP Adresse und Browsertyp: Wir verwenden dies zum Zwecke der S
 msgid "Log in"
 msgstr "Login"
 
+#: modules/sk-auth/includes/NostrLogin.php:462
+msgid "Log In with Nostr"
+msgstr ""
+
 #: includes/functions-dashboard-navigation.php:218
 msgid "Log out"
 msgstr "Abmelden"
 
 #: modules/product-votes/includes/Ajax.php:19
 msgid "Login erforderlich."
+msgstr ""
+
+#: modules/sk-auth/includes/NostrLogin.php:330
+msgid "Login failed. Please try again."
 msgstr ""
 
 #: modules/sk-auth/includes/AuthSettings.php:42
@@ -5175,6 +5328,7 @@ msgstr "Schwellwert für geringen Lagerbestand"
 #: modules/sk-feed/templates/dashboard-feed.php:136
 #: templates/admin/php-dashboard/antifraud.php:145
 #: templates/admin/php-dashboard/feedback.php:149
+#: templates/dashboard/vendor-chat/dashboard-vendor-chat.php:210
 msgid "Löschen"
 msgstr ""
 
@@ -5578,7 +5732,16 @@ msgstr ""
 msgid "Nachricht gesendet!"
 msgstr ""
 
+#: templates/dashboard/vendor-chat/dashboard-vendor-chat.php:261
+msgid "Nachricht schreiben..."
+msgstr ""
+
+#: templates/dashboard/vendor-chat/dashboard-vendor-chat.php:316
+msgid "Nachricht senden"
+msgstr ""
+
 #: includes/Dashboard/Modules/VendorChat.php:25
+#: templates/dashboard/vendor-chat/dashboard-vendor-chat.php:47
 msgid "Nachrichten"
 msgstr ""
 
@@ -5599,6 +5762,10 @@ msgstr ""
 
 #: includes/Dashboard/Modules/UserOnboarding.php:484
 msgid "Neue Benutzer sehen nach der Registrierung ein interaktives Onboarding-Modal."
+msgstr ""
+
+#: templates/dashboard/vendor-chat/dashboard-vendor-chat.php:293
+msgid "Neue Nachricht"
 msgstr ""
 
 #: modules/sk-notifications/includes/NotificationSettings.php:74
@@ -5796,6 +5963,10 @@ msgstr "Keine Ankündigung gefunden."
 msgid "No announcements found."
 msgstr ""
 
+#: modules/sk-auth/templates/nostr-import-page.php:76
+msgid "No categories found."
+msgstr ""
+
 #: templates/products/sk-category-ui.php:50
 msgid "No category"
 msgstr "Keine Kategorie"
@@ -5815,6 +5986,10 @@ msgstr "Keine Daten gefunden"
 #: includes/Product/functions.php:266
 msgid "No default"
 msgstr "Kein Standard"
+
+#: modules/sk-auth/includes/NostrImport.php:230
+msgid "No event data provided."
+msgstr ""
 
 #: includes/Admin/Settings.php:708
 msgid "No filter found to refresh the setting options"
@@ -5841,6 +6016,10 @@ msgstr "Keine Artikel deren Gültigkeit abgelaufen ist gefunden."
 #: includes/Assets.php:858
 msgid "No matches found"
 msgstr "Keine Übereinstimmung gefunden"
+
+#: modules/sk-auth/includes/NostrLogin.php:486
+msgid "No metadata provided."
+msgstr ""
 
 #: templates/admin/php-dashboard/modules.php:31
 msgid "No modules available."
@@ -6089,6 +6268,10 @@ msgstr ""
 msgid "Noch keine Kommentare. Sei der Erste!"
 msgstr ""
 
+#: templates/dashboard/vendor-chat/dashboard-vendor-chat.php:221
+msgid "Noch keine Nachrichten"
+msgstr ""
+
 #: templates/admin/php-dashboard/antifraud.php:82
 msgid "Noch nichts protokolliert."
 msgstr ""
@@ -6129,15 +6312,32 @@ msgstr "Keine"
 msgid "Nostr"
 msgstr ""
 
+#: modules/sk-auth/includes/Connector/NostrProfileSync.php:191
+msgid "Nostr %s for user %s"
+msgstr ""
+
 #: modules/sk-notifications/includes/NotificationSettings.php:36
 msgid "Nostr Auto Poster"
+msgstr ""
+
+#: modules/sk-auth/includes/NostrLogin.php:521
+msgid "Nostr data successfully synced!"
 msgstr ""
 
 #: modules/sk-nostr-market/includes/MarketplaceSettings.php:75
 msgid "Nostr DM Bridge"
 msgstr ""
 
+#: modules/sk-auth/includes/NostrImport.php:44
+msgid "Nostr Importer"
+msgstr ""
+
+#: modules/sk-auth/includes/NostrLogin.php:106
+msgid "Nostr Information"
+msgstr ""
+
 #: modules/sk-auth/includes/AuthSettings.php:89
+#: modules/sk-auth/includes/NostrLogin.php:45
 msgid "Nostr Login"
 msgstr ""
 
@@ -6149,6 +6349,11 @@ msgstr ""
 msgid "Nostr Login Box Shortcode [nostr_login_box] aktivieren."
 msgstr ""
 
+#: modules/sk-auth/includes/NostrLogin.php:45
+#: modules/sk-auth/includes/NostrLogin.php:69
+msgid "Nostr Login Settings"
+msgstr ""
+
 #: modules/sk-nostr-market/includes/MarketplaceSettings.php:20
 msgid "Nostr Marketplace"
 msgstr ""
@@ -6157,8 +6362,28 @@ msgstr ""
 msgid "Nostr Marketplace aktivieren"
 msgstr ""
 
+#: modules/sk-auth/includes/NostrLogin.php:139
+msgid "Nostr NIP-05"
+msgstr ""
+
+#: modules/sk-auth/includes/NostrImport.php:43
+msgid "Nostr Post Importer"
+msgstr ""
+
+#: modules/sk-auth/includes/NostrImport.php:137
+msgid "Nostr Post Importer Settings"
+msgstr ""
+
 #: modules/sk-notifications/includes/NotificationSettings.php:42
 msgid "Nostr Poster aktivieren"
+msgstr ""
+
+#: modules/sk-auth/includes/NostrLogin.php:457
+msgid "Nostr Private Key"
+msgstr ""
+
+#: modules/sk-auth/includes/NostrLogin.php:131
+msgid "Nostr Public Key"
 msgstr ""
 
 #: templates/settings/store-form.php:271
@@ -6166,6 +6391,7 @@ msgid "Nostr Public Key (npub...)"
 msgstr ""
 
 #: modules/sk-auth/includes/AuthSettings.php:95
+#: modules/sk-auth/includes/NostrLogin.php:75
 #: modules/sk-notifications/includes/NotificationSettings.php:49
 msgid "Nostr Relays"
 msgstr ""
@@ -6377,6 +6603,14 @@ msgstr "Optionale Anmerkungen, die dem Kunden nach dem Kauf mitgeteilt wird."
 msgid "Optional vendor ID"
 msgstr ""
 
+#: modules/sk-auth/templates/nostr-import-page.php:48
+msgid "Optional: Filter by tag (without #)"
+msgstr ""
+
+#: modules/sk-auth/templates/nostr-import-page.php:72
+msgid "Optional: Select categories for imported posts. Hold Ctrl/Cmd to select multiple."
+msgstr ""
+
 #: includes/Widgets/FilterByAttributes.php:102
 msgid "OR"
 msgstr "ODER"
@@ -6516,6 +6750,10 @@ msgstr "Übergeordnete Ankündigung"
 #: modules/store-reviews/module.php:123
 msgid "Parent Item"
 msgstr "Übergeordneter Artikel"
+
+#: modules/subscription/includes/admin/admin.php:158
+msgid "Parent Order"
+msgstr ""
 
 #: templates/dashboard/edit-account.php:65
 msgid "Password Change"
@@ -6829,6 +7067,10 @@ msgstr "Bitte wählen Sie eine Kategorie aus"
 msgid "Please select at least one category"
 msgstr "Bitte wählen Sie mindestens eine Kategorie"
 
+#: modules/sk-auth/includes/NostrImport.php:222
+msgid "Please wait before making another request."
+msgstr ""
+
 #: includes/Dashboard/Modules/VendorChat.php:305
 msgid "Plugin Version:"
 msgstr ""
@@ -6840,6 +7082,14 @@ msgstr ""
 #: modules/product-adv/includes/Frontend/ProductSection.php:42
 msgid "Popular Products"
 msgstr "Beliebte Produkte"
+
+#: modules/sk-auth/includes/NostrImport.php:273
+msgid "Post already exists (ID: %1$d, Status: %2$s). Skipping import."
+msgstr ""
+
+#: modules/sk-auth/includes/NostrImport.php:342
+msgid "Post imported successfully with %d comments included."
+msgstr ""
 
 #: includes/Privacy.php:220
 msgid "Postal Code"
@@ -6858,6 +7108,14 @@ msgstr ""
 msgid "Posts"
 msgstr ""
 
+#: includes/Dashboard/Modules/Performance.php:81
+msgid "Prefetcht Dashboard-Seiten und navigiert schneller (Hover + Mousedown)."
+msgstr ""
+
+#: includes/Dashboard/Modules/Performance.php:155
+msgid "Prefetcht Dashboard-Seiten und navigiert schneller."
+msgstr ""
+
 #: modules/sk-auth/includes/AuthSettings.php:83
 msgid "Prefix für automatisch erstellte Benutzernamen (z.B. \"LN-\" ergibt \"LN-1\")."
 msgstr ""
@@ -6869,6 +7127,10 @@ msgstr ""
 
 #: includes/Admin/Settings.php:438
 msgid "Preis ausblenden"
+msgstr ""
+
+#: modules/sk-auth/templates/nostr-import-page.php:118
+msgid "Preview Posts"
 msgstr ""
 
 #: modules/product-adv/includes/Frontend/ProductWidget.php:56
@@ -6932,6 +7194,10 @@ msgstr "Datenschutzrichtlinie"
 #: includes/Admin/Settings.php:288
 msgid "Privacy Settings"
 msgstr "Datenschutzeinstellungen"
+
+#: modules/sk-auth/includes/NostrImport.php:165
+msgid "Private"
+msgstr ""
 
 #: includes/Privacy.php:65
 msgid "Process payments and prevent fraud"
@@ -7361,6 +7627,7 @@ msgid "Publish Products"
 msgstr "Produkte veröffentlichen"
 
 #: includes/Admin/ExtendedAdmin.php:142
+#: modules/sk-auth/includes/NostrImport.php:162
 #: modules/subscription/includes/admin/admin.php:638
 #: templates/admin/php-dashboard/announcement-edit.php:54
 msgid "Published"
@@ -7483,6 +7750,10 @@ msgstr "Ordnen Sie die Beiträge und Links des gelöschten User dieser User ID n
 msgid "Recipient(s)"
 msgstr "Empfänger"
 
+#: modules/sk-auth/includes/NostrLogin.php:82
+msgid "Redirect After Login"
+msgstr ""
+
 #: modules/sk-auth/includes/AuthSettings.php:66
 #: modules/sk-auth/includes/AuthSettings.php:103
 msgid "Redirect nach Login"
@@ -7556,6 +7827,10 @@ msgstr "Dieses Bild entfernen"
 #: modules/subscription/templates/vendor-subscription-php.php:271
 msgid "Renew"
 msgstr "Erneuern"
+
+#: modules/subscription/includes/admin/admin.php:154
+msgid "Renewal Order"
+msgstr ""
 
 #: includes/functions.php:2642
 msgid "Report"
@@ -7633,6 +7908,14 @@ msgstr "Hochladen von Galeriebildern einschränken"
 #: modules/report-abuse/includes/AdminSettings.php:56
 msgid "Restrict Product Abuse feature for logged-In users only"
 msgstr "Einschränkung der Produktmissbrauchsfunktion nur für angemeldete Benutzer"
+
+#: modules/subscription/includes/admin/admin.php:156
+msgid "Resubscribe Order"
+msgstr ""
+
+#: modules/sk-auth/includes/NostrLogin.php:122
+msgid "Resync Nostr Data"
+msgstr ""
 
 #: includes/functions.php:2645
 msgid "Review"
@@ -7804,6 +8087,10 @@ msgstr "Änderungen vor dem Verlassen der Seite speichern?"
 msgid "Save Product"
 msgstr "Produkt speichern"
 
+#: modules/sk-auth/includes/NostrImport.php:171
+msgid "Save Settings"
+msgstr ""
+
 #: includes/Product/functions.php:305
 msgid "Save Variations"
 msgstr "Variationen speichern"
@@ -7829,6 +8116,7 @@ msgid "Schließen"
 msgstr ""
 
 #: includes/Dashboard/Modules/VendorChat.php:207
+#: templates/dashboard/vendor-chat/dashboard-vendor-chat.php:306
 msgid "Schreibe deine Nachricht..."
 msgstr ""
 
@@ -7940,6 +8228,11 @@ msgstr "Alle ansehen"
 
 #: templates/admin/php-dashboard/antifraud.php:294
 msgid "Seit"
+msgstr ""
+
+#: includes/Dashboard/Modules/Performance.php:86
+#: includes/Dashboard/Modules/Performance.php:156
+msgid "Seiten-Cache"
 msgstr ""
 
 #: templates/admin/php-dashboard/feedback.php:87
@@ -8167,6 +8460,7 @@ msgid "Send you marketing messages, if you choose to receive them"
 msgstr "Senden Sie Ihnen Marketingnachrichten, wenn Sie diese erhalten möchten"
 
 #: includes/Dashboard/Modules/VendorChat.php:214
+#: templates/dashboard/vendor-chat/dashboard-vendor-chat.php:267
 msgid "Senden"
 msgstr ""
 
@@ -8964,6 +9258,7 @@ msgstr ""
 msgid "Spam-Schutz: zu schnell abgesendet."
 msgstr ""
 
+#: includes/Dashboard/Modules/Performance.php:158
 #: modules/sk-feed/templates/dashboard-feed.php:111
 #: templates/settings/header.php:18
 msgid "Speichern"
@@ -8971,6 +9266,14 @@ msgstr ""
 
 #: modules/sk-anti-fraud/includes/AntifraudSettings.php:206
 msgid "Speichern wird abgelehnt, wenn der Name schon vergeben ist, und du bekommst eine E-Mail mit beiden Accounts. Verglichen wird ohne Gross-/Kleinschreibung, Leerzeichen und Sonderzeichen — „Florian_Stangl21\" und „florian stangl 21\" gelten als derselbe Name."
+msgstr ""
+
+#: includes/Dashboard/Modules/Performance.php:90
+msgid "Speichert Dashboard-Seiten im Redis-Cache (5 Min. TTL) für sofortiges Laden."
+msgstr ""
+
+#: includes/Dashboard/Modules/Performance.php:157
+msgid "Speichert Dashboard-Seiten im Redis-Cache (5 Min.) für sofortiges Laden."
 msgstr ""
 
 #: templates/admin/php-dashboard/antifraud.php:175
@@ -9007,6 +9310,10 @@ msgstr "Startdatum des Angebotspreises, in der Zeitzone der Webseite."
 #: includes/REST/VendorDashboardController.php:428
 msgid "Start date to show orders"
 msgstr "Startdatum für die Anzeige von Bestellungen"
+
+#: templates/dashboard/vendor-chat/dashboard-vendor-chat.php:75
+msgid "Starte einen Chat von einer Produktseite"
+msgstr ""
 
 #: modules/sk-auth/includes/AuthSettings.php:108
 msgid "Startseite"
@@ -9541,6 +9848,14 @@ msgstr ""
 msgid "Sybil-resistentes Reputationssystem basierend auf verifizierten Lightning-Zahlungen. Zeigt Badges und Proof-Pages auf Store-Seiten."
 msgstr ""
 
+#: modules/sk-auth/includes/NostrLogin.php:115
+msgid "Sync with Nostr Extension"
+msgstr ""
+
+#: modules/sk-auth/templates/nostr-import-page.php:43
+msgid "Tag Filter"
+msgstr ""
+
 #: includes/REST/ProductController.php:2136
 msgid "Tag ID."
 msgstr "Schlagwort ID."
@@ -9932,6 +10247,10 @@ msgstr "Dies ist die URL oder der absolute Pfad zu der Datei, auf die Kunden zug
 msgid "This lets you choose which products are part of this group."
 msgstr "Auf diese Weise können Sie auswählen, welche Produkte zu dieser Gruppe gehören."
 
+#: modules/sk-auth/includes/NostrLogin.php:505
+msgid "This Nostr account is already linked to another user."
+msgstr ""
+
 #: templates/sub-orders.php:29
 msgid "This order has products from multiple vendors. So we divided this order into multiple vendor orders. Each order will be handled by their respective vendor independently."
 msgstr "Diese Bestellung enthält Produkte von mehreren Anbietern. Daher haben wir diese Bestellung in mehrere Anbieter Bestellungen aufgeteilt. Jede Bestellung wird von ihrem jeweiligen Anbieter unabhängig bearbeitet."
@@ -10215,6 +10534,11 @@ msgstr "Die"
 #: includes/functions.php:2696
 msgid "Tuesday"
 msgstr "Dienstag"
+
+#: includes/Dashboard/Modules/Performance.php:77
+#: includes/Dashboard/Modules/Performance.php:154
+msgid "Turbo-Navigation"
+msgstr ""
 
 #: templates/settings/store-form.php:257
 msgid "Twitter / X Handle"
@@ -10527,6 +10851,14 @@ msgstr ""
 msgid "URL-Slug"
 msgstr ""
 
+#: modules/sk-auth/includes/NostrLogin.php:461
+msgid "Use Nostr Extension"
+msgstr ""
+
+#: modules/sk-auth/includes/NostrLogin.php:452
+msgid "Use Nostr Login"
+msgstr ""
+
 #: includes/Ajax.php:1214 templates/products/edit/attributes.php:85
 #: templates/products/edit/html-product-attribute.php:28
 msgid "Used for variations"
@@ -10552,6 +10884,10 @@ msgstr ""
 #: includes/REST/StoreController.php:1130
 msgid "User password."
 msgstr "Benutzer Passwort."
+
+#: modules/sk-auth/includes/NostrLogin.php:92
+msgid "User Profile"
+msgstr ""
 
 #: modules/product-adv/includes/Admin/Settings.php:179
 msgid "Validation error"
@@ -11344,6 +11680,7 @@ msgstr "Warum möchtest du das Inserat melden?"
 msgid "Width"
 msgstr "Breite"
 
+#: templates/dashboard/vendor-chat/dashboard-vendor-chat.php:202
 #: templates/review/listing-table-tr.php:64
 #: templates/review/manage-reviews.php:29
 msgid "Wiederherstellen"
@@ -11395,6 +11732,10 @@ msgstr "Schreiben Sie über Ihr Unternehmen, Ihr Produktangebot und mehr"
 
 #: templates/announcement/announcement.php:134
 msgid "Wähle eine Ankündigung aus"
+msgstr ""
+
+#: templates/dashboard/vendor-chat/dashboard-vendor-chat.php:276
+msgid "Wähle einen Chat aus"
 msgstr ""
 
 #: modules/sk-nostr-market/includes/MarketplaceSettings.php:48
@@ -11526,6 +11867,10 @@ msgstr "Sie können das Produkt entwerfen oder entfernen oder diese E-Mail ignor
 msgid "You can login by using the URL below."
 msgstr ""
 
+#: modules/sk-auth/templates/nostr-import-page.php:87
+msgid "You can manage your categories in the <a href=\"%s\">WordPress Categories</a> section."
+msgstr ""
+
 #: modules/product-adv/templates/product-advertisement-content.php:57
 msgid "You can not advertise this product. Product needs to be published before you can advertise."
 msgstr "Du kannst dieses Produkt nicht bewerben. Das Produkt muss veröffentlicht werden, bevor Du boosten kannst."
@@ -11600,6 +11945,10 @@ msgstr "Sie sind nicht berechtigt, diese Aktion auszuführen."
 msgid "You do not have permission to perform this action"
 msgstr "Sie haben nicht die Erlaubnis, diese Aktion durchzuführen"
 
+#: modules/sk-auth/includes/NostrLogin.php:481
+msgid "You do not have permission to perform this action."
+msgstr ""
+
 #: includes/Admin/PhpDashboard/SettingsPage.php:50
 msgid "You do not have permission to save settings."
 msgstr ""
@@ -11612,6 +11961,10 @@ msgstr ""
 #: modules/product-adv/includes/Helper.php:831
 msgid "You do not have permission to use this action."
 msgstr "Sie haben nicht die Erlaubnis, diese Aktion zu nutzen."
+
+#: modules/sk-auth/includes/NostrImport.php:208
+msgid "You do not have sufficient permissions to perform this action."
+msgstr ""
 
 #: includes/Admin/Ajax.php:24 includes/Admin/ExtendedAdmin.php:295
 #: includes/Admin/ExtendedAdmin.php:299 includes/Admin/ExtendedAdmin.php:476
@@ -11673,6 +12026,10 @@ msgstr "Sie haben erfolgreich %s Produkt erstellt"
 
 #: modules/follow-store/includes/class-sk-follow-store-ajax.php:64
 msgid "You have to logged in to get your status."
+msgstr ""
+
+#: modules/sk-auth/includes/NostrLogin.php:476
+msgid "You must be logged in."
 msgstr ""
 
 #: modules/subscription/module.php:1123
@@ -11971,6 +12328,21 @@ msgstr ""
 msgid "⚡ Zahlungsnachricht"
 msgstr ""
 
+#: modules/sk-auth/includes/LnurlSettings.php:627
+msgctxt "Admin User Columns Custom Column Name"
+msgid "LNURL Auth"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:658
+msgctxt "Admin User Edit Custom Settings"
+msgid "LNURL Auth"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:660
+msgctxt "Admin User Edit Custom Settings"
+msgid "Public Key"
+msgstr ""
+
 #: modules/geolocation/class-sk-geolocation-country-filter.php:88
 msgctxt "country name"
 msgid "Deutschland"
@@ -11986,6 +12358,11 @@ msgctxt "country name"
 msgid "Österreich"
 msgstr ""
 
+#: modules/sk-auth/includes/LnurlLogin.php:367
+msgctxt "create_lnurl error"
+msgid "We failed generating a new unique key for you. Maybe try again later."
+msgstr ""
+
 #. translators: %s: order number.
 #. translators: renewal order number
 #. translators: order number
@@ -11995,6 +12372,71 @@ msgstr ""
 msgctxt "hash before order number"
 msgid "#%s"
 msgstr "#%s"
+
+#: modules/sk-auth/includes/LnurlLogin.php:165
+msgctxt "lnurl_auth_callback error"
+msgid "No session for this k1. Please reload the page and try again."
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlLogin.php:225
+msgctxt "lnurl_auth_callback error"
+msgid "Registrations are disabled. We are not able to create an account for you."
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlLogin.php:309
+msgctxt "lnurl_auth_callback error"
+msgid "Something went wrong. Please reload the page and try again."
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlLogin.php:197
+msgctxt "lnurl_auth_callback error"
+msgid "Sorry, your node has no access to this site."
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlLogin.php:181
+msgctxt "lnurl_auth_callback error"
+msgid "Sorry, your node is banned from this site."
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlLogin.php:148
+msgctxt "lnurl_auth_callback error"
+msgid "Verifying signature failed. Please reload the page and try again."
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlLogin.php:288
+msgctxt "lnurl_auth_callback error"
+msgid "We failed searching for your user account. Please try again later."
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlLogin.php:259
+msgctxt "lnurl_auth_callback error"
+msgid "We failed to create a user for you. Please try again later."
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlAssets.php:272
+msgctxt "lnurl_auth_javascript message"
+msgid "Authentication timed out."
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlAssets.php:58
+msgctxt "lnurl_auth_javascript message"
+msgid "Processing login…"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlLogin.php:446
+msgctxt "Loginform button label"
+msgid "Login with E-Mail"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlLogin.php:444
+msgctxt "Loginform button label"
+msgid "⚡️ Login with Bitcoin Lightning"
+msgstr "⚡️ Mit Lightning einloggen ⚡️"
+
+#: modules/sk-auth/includes/LnurlLogin.php:445
+msgctxt "Loginform option divider"
+msgid "or"
+msgstr ""
 
 #: includes/template-tags.php:52
 msgctxt "Next post link"
@@ -12026,6 +12468,16 @@ msgctxt "placeholder"
 msgid "To&hellip; YYYY-MM-DD"
 msgstr "Zu&hellip; YYYY-MM-DD"
 
+#: modules/sk-auth/includes/LnurlSettings.php:166
+msgctxt "Plugins settings menu title"
+msgid "LNURL Auth"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:165
+msgctxt "Plugins settings page title"
+msgid "LNURL Auth"
+msgstr ""
+
 #: modules/store-reviews/module.php:119
 msgctxt "Post Type General Name"
 msgid "Store Reviews"
@@ -12040,6 +12492,222 @@ msgstr "Anbieter-Rezension"
 msgctxt "Previous post link"
 msgid "&larr;"
 msgstr "&larr;"
+
+#: modules/sk-auth/includes/LnurlLogin.php:483
+msgctxt "QR Code label"
+msgid "⚡️ Login with Bitcoin Lightning"
+msgstr "⚡️ Mit Lightning einloggen ⚡️"
+
+#: modules/sk-auth/includes/LnurlLogin.php:422
+msgctxt "QR Code permalink label"
+msgid "Open Wallet"
+msgstr "Direkt mit der Wallet öffnen"
+
+#: modules/sk-auth/includes/LnurlLogin.php:508
+msgctxt "QR Code reinit button label"
+msgid "Try Again"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlLogin.php:503
+msgctxt "QR Code timer short minutes"
+msgid "M"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlLogin.php:503
+msgctxt "QR Code timer short seconds"
+msgid "SS"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:148
+msgctxt "Settings link in WordPress plugin list"
+msgid "Plugin Settings"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:286
+msgctxt "Settings Page Donate Panel"
+msgid "Bitcoin Lightning LNURL"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:319
+msgctxt "Settings Page Donate Panel"
+msgid "Coinbase"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:319
+msgctxt "Settings Page Donate Panel"
+msgid "CoinCorner"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:285
+msgctxt "Settings Page Donate Panel"
+msgid "Donate"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:319
+msgctxt "Settings Page Donate Panel"
+msgid "Opennode"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:318
+msgctxt "Settings Page Donate Panel"
+msgid "Other Options"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:319
+msgctxt "Settings Page Donate Panel"
+msgid "Paypal"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:338
+msgctxt "Settings page heading"
+msgid "Settings › LNURL Auth"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:60
+msgctxt "Settings page setting label"
+msgid "Bitcoin Lightning & WordPress"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:73
+msgctxt "Settings page setting label"
+msgid "Callback URL"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:54
+msgctxt "Settings page setting label"
+msgid "Choose which options your users can use to login."
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:84
+msgctxt "Settings page setting label"
+msgid "Comma separated list of Node ID's. Nodes from this list will be allowed to use LNURL Auth on this website."
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:78
+msgctxt "Settings page setting label"
+msgid "Comma separated list of Node ID's. Nodes from this list will be blocked from using LNURL auth on this website."
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:66
+msgctxt "Settings page setting label"
+msgid "Default redirect URL after sucessfull LNURL Auth."
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:91
+msgctxt "Settings page setting label"
+msgid "Enable Registrations"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:96
+msgctxt "Settings page setting label"
+msgid "If a new user account is created, this prefix gets suffixed by the next available number to create the user_login. E.g. LN-1."
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:90
+msgctxt "Settings page setting label"
+msgid "If a node tries to login to your website and no exisiting user can be found, a new user will be created for this node."
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:62
+msgctxt "Settings page setting label"
+msgid "Lightning Only"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:55
+msgctxt "Settings page setting label"
+msgid "Login Options"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:85
+msgctxt "Settings page setting label"
+msgid "Node Allowlist"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:79
+msgctxt "Settings page setting label"
+msgid "Node Banlist"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:67
+msgctxt "Settings page setting label"
+msgid "Redirect URL"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:97
+msgctxt "Settings page setting label"
+msgid "Usercreation prefix"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:102
+#: modules/sk-auth/includes/LnurlSettings.php:103
+msgctxt "Settings page setting label"
+msgid "Usercreation roles"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:72
+msgctxt "Settings page setting label"
+msgid "Wallets will respond to this URL."
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:59
+msgctxt "Settings page setting label"
+msgid "WordPress & Bitcoin Lightning"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:61
+msgctxt "Settings page setting label"
+msgid "WordPress Only"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:276
+msgctxt "Settings Page Shortcode Panel"
+msgid "Note on LNURL Auth Coloring"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:264
+msgctxt "Settings Page Shortcode Panel"
+msgid "Redirect to after login"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:268
+msgctxt "Settings Page Shortcode Panel"
+msgid "Set Foreground Color (Label, Logo, QR, Link, Timer)"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:270
+msgctxt "Settings Page Shortcode Panel"
+msgid "Set Logo Foreground Color"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:272
+msgctxt "Settings Page Shortcode Panel"
+msgid "Set Permalink Foreground Color"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:274
+msgctxt "Settings Page Shortcode Panel"
+msgid "Set Timer Foreground Color"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:263
+msgctxt "Settings Page Shortcode Panel"
+msgid "Shortcode Options"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:261
+msgctxt "Settings Page Shortcode Panel"
+msgid "Shortcode Usage"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:266
+msgctxt "Settings Page Shortcode Panel"
+msgid "Show/Hide Label"
+msgstr ""
+
+#: modules/sk-auth/includes/LnurlSettings.php:277
+msgctxt "Settings Page Shortcode Panel"
+msgid "The QR Code inherits foreground- and background-color if no color is specified."
+msgstr ""
 
 #: modules/product-adv/includes/Frontend/ProductWidget.php:62
 msgctxt "Sorting order"

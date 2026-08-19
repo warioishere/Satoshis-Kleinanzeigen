@@ -44,7 +44,7 @@ do_action( 'sk_dashboard_wrap_start' );
 		<?php do_action( 'sk_dashboard_content_inside_before' ); ?>
 
 		<div class="sk-review-page-header">
-			<h2><i class="fas fa-comments"></i> <?php esc_html_e( 'Nachrichten', 'sk-vendor-chat' ); ?></h2>
+			<h2><i class="fas fa-comments"></i> <?php esc_html_e( 'Nachrichten', 'sk-core' ); ?></h2>
 		</div>
 
 		<div class="dvc-chat-container">
@@ -53,13 +53,13 @@ do_action( 'sk_dashboard_wrap_start' );
 				<!-- Tabs -->
 				<div class="dvc-chat-tabs">
 					<button class="dvc-tab-btn <?php echo $view === 'active' ? 'active' : ''; ?>" data-tab="active">
-						<?php esc_html_e( 'Aktiv', 'sk-vendor-chat' ); ?>
+						<?php esc_html_e( 'Aktiv', 'sk-core' ); ?>
 						<?php if ( count( $active_chats ) > 0 ) : ?>
 							<span class="dvc-count">(<?php echo count( $active_chats ); ?>)</span>
 						<?php endif; ?>
 					</button>
 					<button class="dvc-tab-btn <?php echo $view === 'archived' ? 'active' : ''; ?>" data-tab="archived">
-						<?php esc_html_e( 'Archiviert', 'sk-vendor-chat' ); ?>
+						<?php esc_html_e( 'Archiviert', 'sk-core' ); ?>
 						<?php if ( count( $archived_chats ) > 0 ) : ?>
 							<span class="dvc-count">(<?php echo count( $archived_chats ); ?>)</span>
 						<?php endif; ?>
@@ -71,8 +71,8 @@ do_action( 'sk_dashboard_wrap_start' );
 					<?php if ( empty( $active_chats ) ) : ?>
 						<div class="dvc-empty-state">
 							<i class="fas fa-inbox"></i>
-							<p><?php esc_html_e( 'Keine aktiven Chats', 'sk-vendor-chat' ); ?></p>
-							<small><?php esc_html_e( 'Starte einen Chat von einer Produktseite', 'sk-vendor-chat' ); ?></small>
+							<p><?php esc_html_e( 'Keine aktiven Chats', 'sk-core' ); ?></p>
+							<small><?php esc_html_e( 'Starte einen Chat von einer Produktseite', 'sk-core' ); ?></small>
 						</div>
 					<?php else : ?>
 						<?php foreach ( $active_chats as $chat ) : ?>
@@ -127,7 +127,7 @@ do_action( 'sk_dashboard_wrap_start' );
 					<?php if ( empty( $archived_chats ) ) : ?>
 						<div class="dvc-empty-state">
 							<i class="fas fa-archive"></i>
-							<p><?php esc_html_e( 'Keine archivierten Chats', 'sk-vendor-chat' ); ?></p>
+							<p><?php esc_html_e( 'Keine archivierten Chats', 'sk-core' ); ?></p>
 						</div>
 					<?php else : ?>
 						<?php foreach ( $archived_chats as $chat ) : ?>
@@ -199,15 +199,15 @@ do_action( 'sk_dashboard_wrap_start' );
 						</div>
 						<div class="dvc-chat-actions">
 							<?php if ( $is_archived ) : ?>
-								<button class="dvc-action-btn dvc-unarchive-btn" data-chat-id="<?php echo esc_attr( $chat_id ); ?>" title="<?php esc_attr_e( 'Wiederherstellen', 'sk-vendor-chat' ); ?>">
+								<button class="dvc-action-btn dvc-unarchive-btn" data-chat-id="<?php echo esc_attr( $chat_id ); ?>" title="<?php esc_attr_e( 'Wiederherstellen', 'sk-core' ); ?>">
 									<i class="fas fa-box-open"></i>
 								</button>
 							<?php else : ?>
-								<button class="dvc-action-btn dvc-archive-btn" data-chat-id="<?php echo esc_attr( $chat_id ); ?>" title="<?php esc_attr_e( 'Archivieren', 'sk-vendor-chat' ); ?>">
+								<button class="dvc-action-btn dvc-archive-btn" data-chat-id="<?php echo esc_attr( $chat_id ); ?>" title="<?php esc_attr_e( 'Archivieren', 'sk-core' ); ?>">
 									<i class="fas fa-archive"></i>
 								</button>
 							<?php endif; ?>
-							<button class="dvc-action-btn dvc-delete-btn" data-chat-id="<?php echo esc_attr( $chat_id ); ?>" title="<?php esc_attr_e( 'Löschen', 'sk-vendor-chat' ); ?>">
+							<button class="dvc-action-btn dvc-delete-btn" data-chat-id="<?php echo esc_attr( $chat_id ); ?>" title="<?php esc_attr_e( 'Löschen', 'sk-core' ); ?>">
 								<i class="fas fa-trash"></i>
 							</button>
 						</div>
@@ -218,7 +218,7 @@ do_action( 'sk_dashboard_wrap_start' );
 						<?php if ( empty( $messages ) ) : ?>
 							<div class="dvc-empty-chat">
 								<i class="fas fa-comments"></i>
-								<p><?php esc_html_e( 'Noch keine Nachrichten', 'sk-vendor-chat' ); ?></p>
+								<p><?php esc_html_e( 'Noch keine Nachrichten', 'sk-core' ); ?></p>
 							</div>
 						<?php else : ?>
 							<?php foreach ( $messages as $message ) : ?>
@@ -258,13 +258,13 @@ do_action( 'sk_dashboard_wrap_start' );
 							<textarea
 								name="message"
 								class="dvc-message-input"
-								placeholder="<?php esc_attr_e( 'Nachricht schreiben...', 'sk-vendor-chat' ); ?>"
+								placeholder="<?php esc_attr_e( 'Nachricht schreiben...', 'sk-core' ); ?>"
 								rows="3"
 								required
 							></textarea>
 							<button type="submit" class="dvc-send-btn">
 								<i class="fas fa-paper-plane"></i>
-								<?php esc_html_e( 'Senden', 'sk-vendor-chat' ); ?>
+								<?php esc_html_e( 'Senden', 'sk-core' ); ?>
 							</button>
 						</form>
 					</div>
@@ -273,8 +273,8 @@ do_action( 'sk_dashboard_wrap_start' );
 					<!-- No chat selected -->
 					<div class="dvc-no-chat-selected">
 						<i class="fas fa-comments"></i>
-						<h3><?php esc_html_e( 'Wähle einen Chat aus', 'sk-vendor-chat' ); ?></h3>
-						<p><?php esc_html_e( 'Klicke auf einen Chat in der Seitenleiste, um die Unterhaltung anzuzeigen.', 'sk-vendor-chat' ); ?></p>
+						<h3><?php esc_html_e( 'Wähle einen Chat aus', 'sk-core' ); ?></h3>
+						<p><?php esc_html_e( 'Klicke auf einen Chat in der Seitenleiste, um die Unterhaltung anzuzeigen.', 'sk-core' ); ?></p>
 					</div>
 				<?php endif; ?>
 			</div>
@@ -290,7 +290,7 @@ do_action( 'sk_dashboard_wrap_start' );
 <div id="dvc-chat-modal" class="dvc-modal" style="display:none;">
 	<div class="dvc-modal-content">
 		<div class="dvc-modal-header">
-			<h3><?php esc_html_e( 'Neue Nachricht', 'sk-vendor-chat' ); ?></h3>
+			<h3><?php esc_html_e( 'Neue Nachricht', 'sk-core' ); ?></h3>
 			<button class="dvc-modal-close">&times;</button>
 		</div>
 		<div class="dvc-modal-body">
@@ -298,22 +298,22 @@ do_action( 'sk_dashboard_wrap_start' );
 				<input type="hidden" name="vendor_id" id="dvc-vendor-id">
 				<input type="hidden" name="product_id" id="dvc-product-id">
 				<div class="dvc-form-group">
-					<label><?php esc_html_e( 'Deine Nachricht:', 'sk-vendor-chat' ); ?></label>
+					<label><?php esc_html_e( 'Deine Nachricht:', 'sk-core' ); ?></label>
 					<textarea
 						name="message"
 						id="dvc-chat-message"
 						rows="5"
-						placeholder="<?php esc_attr_e( 'Schreibe deine Nachricht...', 'sk-vendor-chat' ); ?>"
+						placeholder="<?php esc_attr_e( 'Schreibe deine Nachricht...', 'sk-core' ); ?>"
 						required
 					></textarea>
 				</div>
 				<div class="dvc-modal-actions">
 					<button type="button" class="dvc-btn-secondary dvc-modal-close">
-						<?php esc_html_e( 'Abbrechen', 'sk-vendor-chat' ); ?>
+						<?php esc_html_e( 'Abbrechen', 'sk-core' ); ?>
 					</button>
 					<button type="submit" class="dvc-btn-primary">
 						<i class="fas fa-paper-plane"></i>
-						<?php esc_html_e( 'Nachricht senden', 'sk-vendor-chat' ); ?>
+						<?php esc_html_e( 'Nachricht senden', 'sk-core' ); ?>
 					</button>
 				</div>
 			</form>

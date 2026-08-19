@@ -55,7 +55,7 @@ class Assets {
 	public function lnurl_auth_javascript() {
 		return '
                 const lnurlAuthElementClass = "lnurl-auth";
-                const lnurlAuthProcessingMessage = "' . esc_js( _x( 'Processing login…', 'lnurl_auth_javascript message', 'lnurl-auth' ) ) . '";
+                const lnurlAuthProcessingMessage = "' . esc_js( _x( 'Processing login…', 'lnurl_auth_javascript message', 'sk-core' ) ) . '";
 		// observe elements visibility
 		const intersectionObserver = new IntersectionObserver((observers) => {
 			observers.map(function(observer) {
@@ -269,7 +269,7 @@ class Assets {
 						}
 
 						if (!seconds_remaining) {
-							element.lnurlAuthMessage("' . _x( 'Authentication timed out.', 'lnurl_auth_javascript message', 'lnurl-auth' ) . '", countdown);
+							element.lnurlAuthMessage("' . _x( 'Authentication timed out.', 'lnurl_auth_javascript message', 'sk-core' ) . '", countdown);
 						};
 					}, 1000);
 				}

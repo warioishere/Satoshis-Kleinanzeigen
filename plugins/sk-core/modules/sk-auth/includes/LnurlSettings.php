@@ -51,56 +51,56 @@ class Settings {
 
 		$this->display_settings = array(
 			SK_AUTH_LNURL_PREFIX . '-login-options'       => array(
-				'legend'  => esc_html( _x( 'Choose which options your users can use to login.', 'Settings page setting label', 'lnurl-auth' ) ),
-				'label'   => esc_html( _x( 'Login Options', 'Settings page setting label', 'lnurl-auth' ) ),
+				'legend'  => esc_html( _x( 'Choose which options your users can use to login.', 'Settings page setting label', 'sk-core' ) ),
+				'label'   => esc_html( _x( 'Login Options', 'Settings page setting label', 'sk-core' ) ),
 				'type'    => 'select',
 				'default' => 'prio-wp',
 				'options' => array(
-					'prio-wp'        => esc_html( _x( 'WordPress & Bitcoin Lightning', 'Settings page setting label', 'lnurl-auth' ) ),
-					'prio-lightning' => esc_html( _x( 'Bitcoin Lightning & WordPress', 'Settings page setting label', 'lnurl-auth' ) ),
-					'wordpress-only' => esc_html( _x( 'WordPress Only', 'Settings page setting label', 'lnurl-auth' ) ),
-					'lightning-only' => esc_html( _x( 'Lightning Only', 'Settings page setting label', 'lnurl-auth' ) ),
+					'prio-wp'        => esc_html( _x( 'WordPress & Bitcoin Lightning', 'Settings page setting label', 'sk-core' ) ),
+					'prio-lightning' => esc_html( _x( 'Bitcoin Lightning & WordPress', 'Settings page setting label', 'sk-core' ) ),
+					'wordpress-only' => esc_html( _x( 'WordPress Only', 'Settings page setting label', 'sk-core' ) ),
+					'lightning-only' => esc_html( _x( 'Lightning Only', 'Settings page setting label', 'sk-core' ) ),
 				),
 			),
 			SK_AUTH_LNURL_PREFIX . '-redirect-url'        => array(
-				'legend'  => esc_html( _x( 'Default redirect URL after sucessfull LNURL Auth.', 'Settings page setting label', 'lnurl-auth' ) ),
-				'label'   => esc_html( _x( 'Redirect URL', 'Settings page setting label', 'lnurl-auth' ) ),
+				'legend'  => esc_html( _x( 'Default redirect URL after sucessfull LNURL Auth.', 'Settings page setting label', 'sk-core' ) ),
+				'label'   => esc_html( _x( 'Redirect URL', 'Settings page setting label', 'sk-core' ) ),
 				'type'    => 'url',
 				'default' => esc_html( get_site_url() ),
 			),
 			SK_AUTH_LNURL_PREFIX . '-callback-url'        => array(
-				'legend'  => esc_html( _x( 'Wallets will respond to this URL.', 'Settings page setting label', 'lnurl-auth' ) ),
-				'label'   => esc_html( _x( 'Callback URL', 'Settings page setting label', 'lnurl-auth' ) ),
+				'legend'  => esc_html( _x( 'Wallets will respond to this URL.', 'Settings page setting label', 'sk-core' ) ),
+				'label'   => esc_html( _x( 'Callback URL', 'Settings page setting label', 'sk-core' ) ),
 				'type'    => 'url',
 				'default' => esc_html( wp_login_url() ),
 			),
 			SK_AUTH_LNURL_PREFIX . '-node-banlist'        => array(
-				'legend'  => esc_html( _x( "Comma separated list of Node ID's. Nodes from this list will be blocked from using LNURL auth on this website.", 'Settings page setting label', 'lnurl-auth' ) ),
-				'label'   => esc_html( _x( 'Node Banlist', 'Settings page setting label', 'lnurl-auth' ) ),
+				'legend'  => esc_html( _x( "Comma separated list of Node ID's. Nodes from this list will be blocked from using LNURL auth on this website.", 'Settings page setting label', 'sk-core' ) ),
+				'label'   => esc_html( _x( 'Node Banlist', 'Settings page setting label', 'sk-core' ) ),
 				'type'    => 'strings-comma-separated',
 				'default' => array(),
 			),
 			SK_AUTH_LNURL_PREFIX . '-node-allowlist'      => array(
-				'legend'  => esc_html( _x( "Comma separated list of Node ID's. Nodes from this list will be allowed to use LNURL Auth on this website.", 'Settings page setting label', 'lnurl-auth' ) ),
-				'label'   => esc_html( _x( 'Node Allowlist', 'Settings page setting label', 'lnurl-auth' ) ),
+				'legend'  => esc_html( _x( "Comma separated list of Node ID's. Nodes from this list will be allowed to use LNURL Auth on this website.", 'Settings page setting label', 'sk-core' ) ),
+				'label'   => esc_html( _x( 'Node Allowlist', 'Settings page setting label', 'sk-core' ) ),
 				'type'    => 'strings-comma-separated',
 				'default' => array(),
 			),
 			SK_AUTH_LNURL_PREFIX . '-usercreation'        => array(
-				'legend'  => esc_html( _x( 'If a node tries to login to your website and no exisiting user can be found, a new user will be created for this node.', 'Settings page setting label', 'lnurl-auth' ) ),
-				'label'   => esc_html( _x( 'Enable Registrations', 'Settings page setting label', 'lnurl-auth' ) ),
+				'legend'  => esc_html( _x( 'If a node tries to login to your website and no exisiting user can be found, a new user will be created for this node.', 'Settings page setting label', 'sk-core' ) ),
+				'label'   => esc_html( _x( 'Enable Registrations', 'Settings page setting label', 'sk-core' ) ),
 				'type'    => 'boolean',
 				'default' => esc_html( get_option( 'users_can_register' ) ),
 			),
 			SK_AUTH_LNURL_PREFIX . '-usercreation-prefix' => array(
-				'legend'  => esc_html( _x( 'If a new user account is created, this prefix gets suffixed by the next available number to create the user_login. E.g. LN-1.', 'Settings page setting label', 'lnurl-auth' ) ),
-				'label'   => esc_html( _x( 'Usercreation prefix', 'Settings page setting label', 'lnurl-auth' ) ),
+				'legend'  => esc_html( _x( 'If a new user account is created, this prefix gets suffixed by the next available number to create the user_login. E.g. LN-1.', 'Settings page setting label', 'sk-core' ) ),
+				'label'   => esc_html( _x( 'Usercreation prefix', 'Settings page setting label', 'sk-core' ) ),
 				'type'    => 'string',
 				'default' => 'LN-',
 			),
 			SK_AUTH_LNURL_PREFIX . '-usercreation-roles'  => array(
-				'legend'  => esc_html( _x( 'Usercreation roles', 'Settings page setting label', 'lnurl-auth' ) ),
-				'label'   => esc_html( _x( 'Usercreation roles', 'Settings page setting label', 'lnurl-auth' ) ),
+				'legend'  => esc_html( _x( 'Usercreation roles', 'Settings page setting label', 'sk-core' ) ),
+				'label'   => esc_html( _x( 'Usercreation roles', 'Settings page setting label', 'sk-core' ) ),
 				'type'    => 'multiselect',
 				'default' => array( get_option( 'default_role' ) ),
 				'options' => wp_roles()->get_names(),
@@ -145,7 +145,7 @@ class Settings {
 		// Build and escape the URL.
 		$url = admin_url( $this->parent_slug . '?page=' . SK_AUTH_LNURL_PREFIX );
 		// Create the link.
-		$settings_link = "<a href='$url'>" . esc_html( _x( 'Plugin Settings', 'Settings link in WordPress plugin list', 'lnurl-auth' ) ) . '</a>';
+		$settings_link = "<a href='$url'>" . esc_html( _x( 'Plugin Settings', 'Settings link in WordPress plugin list', 'sk-core' ) ) . '</a>';
 		// Adds the link to the end of the array.
 		array_push(
 			$links,
@@ -162,8 +162,8 @@ class Settings {
 	public function register_options_page() {
 		add_submenu_page(
 			$this->parent_slug,
-			esc_html( _x( 'LNURL Auth', 'Plugins settings page title', 'lnurl-auth' ) ),
-			esc_html( _x( 'LNURL Auth', 'Plugins settings menu title', 'lnurl-auth' ) ),
+			esc_html( _x( 'LNURL Auth', 'Plugins settings page title', 'sk-core' ) ),
+			esc_html( _x( 'LNURL Auth', 'Plugins settings menu title', 'sk-core' ) ),
 			'manage_options',
 			$this->menu_slug,
 			array( $this, 'render_settings_page' )
@@ -258,23 +258,23 @@ class Settings {
 		echo '<div class="card">';
 
 		echo '<div class="lnurl-auth-admin-shortcode">';
-		echo '<h4>' . esc_html( _x( 'Shortcode Usage', 'Settings Page Shortcode Panel', 'lnurl-auth' ) ) . '</h4>';
+		echo '<h4>' . esc_html( _x( 'Shortcode Usage', 'Settings Page Shortcode Panel', 'sk-core' ) ) . '</h4>';
 		echo '<code>[lnurl_auth]</code>';
-		echo '<h4>' . esc_html( _x( 'Shortcode Options', 'Settings Page Shortcode Panel', 'lnurl-auth' ) ) . '</h4>';
-		echo '<h5>' . esc_html( _x( 'Redirect to after login', 'Settings Page Shortcode Panel', 'lnurl-auth' ) ) . '</h5>';
+		echo '<h4>' . esc_html( _x( 'Shortcode Options', 'Settings Page Shortcode Panel', 'sk-core' ) ) . '</h4>';
+		echo '<h5>' . esc_html( _x( 'Redirect to after login', 'Settings Page Shortcode Panel', 'sk-core' ) ) . '</h5>';
 		echo '<code>redirect="https://example.com"</code>';
-		echo '<h5>' . esc_html( _x( 'Show/Hide Label', 'Settings Page Shortcode Panel', 'lnurl-auth' ) ) . '</h5>';
+		echo '<h5>' . esc_html( _x( 'Show/Hide Label', 'Settings Page Shortcode Panel', 'sk-core' ) ) . '</h5>';
 		echo '<code>label="true|false"</code>';
-		echo '<h5>' . esc_html( _x( 'Set Foreground Color (Label, Logo, QR, Link, Timer)', 'Settings Page Shortcode Panel', 'lnurl-auth' ) ) . '</h5>';
+		echo '<h5>' . esc_html( _x( 'Set Foreground Color (Label, Logo, QR, Link, Timer)', 'Settings Page Shortcode Panel', 'sk-core' ) ) . '</h5>';
 		echo '<code>foreground="#F7931A"</code>';
-		echo '<h5>' . esc_html( _x( 'Set Logo Foreground Color', 'Settings Page Shortcode Panel', 'lnurl-auth' ) ) . '</h5>';
+		echo '<h5>' . esc_html( _x( 'Set Logo Foreground Color', 'Settings Page Shortcode Panel', 'sk-core' ) ) . '</h5>';
 		echo '<code>logo-foreground="#F7931A"</code>';
-		echo '<h5>' . esc_html( _x( 'Set Permalink Foreground Color', 'Settings Page Shortcode Panel', 'lnurl-auth' ) ) . '</h5>';
+		echo '<h5>' . esc_html( _x( 'Set Permalink Foreground Color', 'Settings Page Shortcode Panel', 'sk-core' ) ) . '</h5>';
 		echo '<code>permalink-foreground="#F7931A"</code>';
-		echo '<h5>' . esc_html( _x( 'Set Timer Foreground Color', 'Settings Page Shortcode Panel', 'lnurl-auth' ) ) . '</h5>';
+		echo '<h5>' . esc_html( _x( 'Set Timer Foreground Color', 'Settings Page Shortcode Panel', 'sk-core' ) ) . '</h5>';
 		echo '<code>timer-foreground="#F7931A"</code>';
-		echo '<h4>' . esc_html( _x( 'Note on LNURL Auth Coloring', 'Settings Page Shortcode Panel', 'lnurl-auth' ) ) . '</h4>';
-		echo '<p><i>' . esc_html( _x( 'The QR Code inherits foreground- and background-color if no color is specified.', 'Settings Page Shortcode Panel', 'lnurl-auth' ) ) . '</p></i>';
+		echo '<h4>' . esc_html( _x( 'Note on LNURL Auth Coloring', 'Settings Page Shortcode Panel', 'sk-core' ) ) . '</h4>';
+		echo '<p><i>' . esc_html( _x( 'The QR Code inherits foreground- and background-color if no color is specified.', 'Settings Page Shortcode Panel', 'sk-core' ) ) . '</p></i>';
 		echo '</div>';
 
 		echo '</div>';
@@ -282,8 +282,8 @@ class Settings {
 		echo '<div class="card">';
 		echo '<div class="lnurl-auth-admin-donate">';
 
-		echo '<h4>' . esc_html( _x( 'Donate', 'Settings Page Donate Panel', 'lnurl-auth' ) ) . '</h4>';
-		echo '<h5>' . esc_html( _x( 'Bitcoin Lightning LNURL', 'Settings Page Donate Panel', 'lnurl-auth' ) ) . '</h5>';
+		echo '<h4>' . esc_html( _x( 'Donate', 'Settings Page Donate Panel', 'sk-core' ) ) . '</h4>';
+		echo '<h5>' . esc_html( _x( 'Bitcoin Lightning LNURL', 'Settings Page Donate Panel', 'sk-core' ) ) . '</h5>';
 
 		echo '<div class="lnurl-auth-admin-donate-grid">';
 		echo '<div class="lnurl-auth-admin-donate-left">';
@@ -315,8 +315,8 @@ class Settings {
 		echo '<div class="lnurl-auth-admin-donate-right">';
 		echo '<p style="word-break: break-all;"><i>' . esc_html( $donate_lnurl ) . '</i></p>';
 
-		echo '<h5>' . esc_html( _x( 'Other Options', 'Settings Page Donate Panel', 'lnurl-auth' ) ) . '</h5>';
-		echo '<p><a target="_blank" href="lightning:' . esc_html( $donate_lnurl ) . '">' . esc_html( _x( 'CoinCorner', 'Settings Page Donate Panel', 'lnurl-auth' ) ) . '</a> | <a target="_blank" href="https://checkout.opennode.com/p/9a52a597-64bc-4302-9b9e-23faac7a414c">' . esc_html( _x( 'Opennode', 'Settings Page Donate Panel', 'lnurl-auth' ) ) . '</a> | <a target="_blank" href="https://commerce.coinbase.com/checkout/99bafc19-737b-4b16-aaec-962f81a17a5d">' . esc_html( _x( 'Coinbase', 'Settings Page Donate Panel', 'lnurl-auth' ) ) . '</a> | <a target="_blank" href="https://www.paypal.com/donate/?hosted_button_id=F3KWZLKR2YKNW">' . esc_html( _x( 'Paypal', 'Settings Page Donate Panel', 'lnurl-auth' ) ) . '</a></p>';
+		echo '<h5>' . esc_html( _x( 'Other Options', 'Settings Page Donate Panel', 'sk-core' ) ) . '</h5>';
+		echo '<p><a target="_blank" href="lightning:' . esc_html( $donate_lnurl ) . '">' . esc_html( _x( 'CoinCorner', 'Settings Page Donate Panel', 'sk-core' ) ) . '</a> | <a target="_blank" href="https://checkout.opennode.com/p/9a52a597-64bc-4302-9b9e-23faac7a414c">' . esc_html( _x( 'Opennode', 'Settings Page Donate Panel', 'sk-core' ) ) . '</a> | <a target="_blank" href="https://commerce.coinbase.com/checkout/99bafc19-737b-4b16-aaec-962f81a17a5d">' . esc_html( _x( 'Coinbase', 'Settings Page Donate Panel', 'sk-core' ) ) . '</a> | <a target="_blank" href="https://www.paypal.com/donate/?hosted_button_id=F3KWZLKR2YKNW">' . esc_html( _x( 'Paypal', 'Settings Page Donate Panel', 'sk-core' ) ) . '</a></p>';
 		echo '</div>';
 		echo '</div>';
 
@@ -335,7 +335,7 @@ class Settings {
 	 * @since 1.0.0
 	 */
 	public function render_settings_head() {
-		echo '<h1 class="wp-heading-inline">' . esc_html( _x( 'Settings › LNURL Auth', 'Settings page heading', 'lnurl-auth' ) ) . '</h1>';
+		echo '<h1 class="wp-heading-inline">' . esc_html( _x( 'Settings › LNURL Auth', 'Settings page heading', 'sk-core' ) ) . '</h1>';
 		echo '<hr class="wp-header-end">';
 	}
 
@@ -624,7 +624,7 @@ class Settings {
 		foreach ( $column_headers as $k => $v ) {
 			$updated_headers[ $k ] = $v;
 			if ( 'username' === $k ) {
-				$updated_headers['lnurl-auth'] = esc_html( _x( 'LNURL Auth', 'Admin User Columns Custom Column Name', 'lnurl-auth' ) );
+				$updated_headers['lnurl-auth'] = esc_html( _x( 'LNURL Auth', 'Admin User Columns Custom Column Name', 'sk-core' ) );
 			}
 		}
 		return $updated_headers;
@@ -655,9 +655,9 @@ class Settings {
 		if ( ! current_user_can( 'edit_user', $user->ID ) || ! current_user_can( 'administrator' ) ) {
 			return false;
 		}
-		echo '<h2 style="margin-top:2.6em;">' . esc_html( _x( 'LNURL Auth', 'Admin User Edit Custom Settings', 'lnurl-auth' ) ) . '</h2>';
+		echo '<h2 style="margin-top:2.6em;">' . esc_html( _x( 'LNURL Auth', 'Admin User Edit Custom Settings', 'sk-core' ) ) . '</h2>';
 		echo '<table class="form-table"><tr>';
-		echo '<th><label for="' . 'lnurl-auth-bjm-id' . '">' . esc_html( _x( 'Public Key', 'Admin User Edit Custom Settings', 'lnurl-auth' ) ) . '</label></th>';
+		echo '<th><label for="' . 'lnurl-auth-bjm-id' . '">' . esc_html( _x( 'Public Key', 'Admin User Edit Custom Settings', 'sk-core' ) ) . '</label></th>';
 		echo '<td><input class="regular-text ltr" type="text" name="' . 'lnurl-auth-bjm-id' . '" value="' . esc_attr( get_the_author_meta( 'lnurl-auth-bjm-id', $user->ID ) ) . '" /></td>';
 		echo '</tr></table>';
 	}

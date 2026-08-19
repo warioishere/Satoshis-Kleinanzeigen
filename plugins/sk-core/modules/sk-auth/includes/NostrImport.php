@@ -40,8 +40,8 @@ class Nostr_Import_Handler {
     public function add_admin_menu() {
         add_submenu_page(
             'tools.php',                              // Parent slug
-            __('Nostr Post Importer', 'nostr-login'), // Page title
-            __('Nostr Importer', 'nostr-login'),      // Menu title
+            __('Nostr Post Importer', 'sk-core'), // Page title
+            __('Nostr Importer', 'sk-core'),      // Menu title
             'manage_options',                         // Capability
             'nostr-post-importer',                   // Menu slug
             array($this, 'render_admin_page')        // Callback function
@@ -134,7 +134,7 @@ class Nostr_Import_Handler {
         // First, let's add the settings section
         ?>
         <div class="wrap">
-            <h1><?php echo esc_html__('Nostr Post Importer Settings', 'nostr-login'); ?></h1>
+            <h1><?php echo esc_html__('Nostr Post Importer Settings', 'sk-core'); ?></h1>
             
             <form method="post" action="options.php">
                 <?php
@@ -143,37 +143,37 @@ class Nostr_Import_Handler {
                 ?>
                 <table class="form-table">
                     <tr>
-                        <th scope="row"><?php esc_html_e('Import Relays', 'nostr-login'); ?></th>
+                        <th scope="row"><?php esc_html_e('Import Relays', 'sk-core'); ?></th>
                         <td>
                             <textarea name="nostr_import_relays" rows="5" cols="50"><?php 
                                 echo esc_textarea(get_option('nostr_import_relays', implode("\n", $this->default_relays))); 
                             ?></textarea>
-                            <p class="description"><?php esc_html_e('Enter one relay URL per line.', 'nostr-login'); ?></p>
+                            <p class="description"><?php esc_html_e('Enter one relay URL per line.', 'sk-core'); ?></p>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php esc_html_e('Default Post Status', 'nostr-login'); ?></th>
+                        <th scope="row"><?php esc_html_e('Default Post Status', 'sk-core'); ?></th>
                         <td>
                             <select name="nostr_import_post_status">
                                 <option value="draft" <?php selected(get_option('nostr_import_post_status', 'draft'), 'draft'); ?>>
-                                    <?php esc_html_e('Draft', 'nostr-login'); ?>
+                                    <?php esc_html_e('Draft', 'sk-core'); ?>
                                 </option>
                                 <option value="publish" <?php selected(get_option('nostr_import_post_status', 'draft'), 'publish'); ?>>
-                                    <?php esc_html_e('Published', 'nostr-login'); ?>
+                                    <?php esc_html_e('Published', 'sk-core'); ?>
                                 </option>
                                 <option value="private" <?php selected(get_option('nostr_import_post_status', 'draft'), 'private'); ?>>
-                                    <?php esc_html_e('Private', 'nostr-login'); ?>
+                                    <?php esc_html_e('Private', 'sk-core'); ?>
                                 </option>
                             </select>
                         </td>
                     </tr>
                 </table>
-                <?php submit_button(__('Save Settings', 'nostr-login')); ?>
+                <?php submit_button(__('Save Settings', 'sk-core')); ?>
             </form>
 
             <hr>
 
-            <h2><?php echo esc_html__('Import Nostr Posts', 'nostr-login'); ?></h2>
+            <h2><?php echo esc_html__('Import Nostr Posts', 'sk-core'); ?></h2>
             
             <?php
             // Load the import form template
@@ -205,21 +205,21 @@ class Nostr_Import_Handler {
             // Add strict capability check with specific error message
             if (!current_user_can('manage_options')) {
                 wp_send_json_error(array(
-                    'message' => __('You do not have sufficient permissions to perform this action.', 'nostr-login')
+                    'message' => __('You do not have sufficient permissions to perform this action.', 'sk-core')
                 ), 403);
             }
             
             // Add strict nonce verification
             if (!check_ajax_referer('nostr_import_nonce', 'nonce', false)) {
                 wp_send_json_error(array(
-                    'message' => __('Security check failed.', 'nostr-login')
+                    'message' => __('Security check failed.', 'sk-core')
                 ), 403);
             }
 
             // Add rate limiting check
             if (!$this->check_rate_limit()) {
                 wp_send_json_error(array(
-                    'message' => __('Please wait before making another request.', 'nostr-login')
+                    'message' => __('Please wait before making another request.', 'sk-core')
                 ), 429);
             }
 
@@ -227,21 +227,21 @@ class Nostr_Import_Handler {
             $event_json = isset($_POST['event']) ? sanitize_text_field(wp_unslash($_POST['event'])) : '';
             if (empty($event_json)) {
                 wp_send_json_error(array(
-                    'message' => __('No event data provided.', 'nostr-login')
+                    'message' => __('No event data provided.', 'sk-core')
                 ));
             }
 
             $event = json_decode($event_json, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
                 wp_send_json_error(array(
-                    'message' => __('Invalid JSON data provided.', 'nostr-login')
+                    'message' => __('Invalid JSON data provided.', 'sk-core')
                 ));
             }
 
             // Validate required event fields
             if (!isset($event['id'], $event['content'], $event['created_at'])) {
                 wp_send_json_error(array(
-                    'message' => __('Invalid event structure.', 'nostr-login')
+                    'message' => __('Invalid event structure.', 'sk-core')
                 ));
             }
 
@@ -270,7 +270,7 @@ class Nostr_Import_Handler {
                     'post_url' => $post_url,
                     /* translators: %1$d: Post ID, %2$s: Post status */
                     'message' => sprintf(
-                        __('Post already exists (ID: %1$d, Status: %2$s). Skipping import.', 'nostr-login'),
+                        __('Post already exists (ID: %1$d, Status: %2$s). Skipping import.', 'sk-core'),
                         $existing_post_id,
                         $post->post_status
                     )
@@ -339,7 +339,7 @@ class Nostr_Import_Handler {
             wp_send_json_success(array(
                 /* translators: %d: Number of comments imported */
                 'message' => sprintf(
-                    __('Post imported successfully with %d comments included.', 'nostr-login'),
+                    __('Post imported successfully with %d comments included.', 'sk-core'),
                     !empty($event['comments']) ? count($event['comments']) : 0
                 ),
                 'post_id' => $post_id,
@@ -354,7 +354,7 @@ class Nostr_Import_Handler {
                 'trace' => $e->getTraceAsString()
             ));
             wp_send_json_error(array(
-                'message' => __('Import failed: ', 'nostr-login') . $e->getMessage()
+                'message' => __('Import failed: ', 'sk-core') . $e->getMessage()
             ), 500);
         }
     }
@@ -427,7 +427,7 @@ class Nostr_Import_Handler {
                 wp_delete_file($tmp);
                 /* translators: %s: Maximum allowed file size in formatted bytes */
                 throw new Exception(sprintf(
-                    __('File size exceeds maximum upload limit of %s', 'nostr-login'),
+                    __('File size exceeds maximum upload limit of %s', 'sk-core'),
                     size_format($max_size)
                 ));
             }
@@ -683,7 +683,7 @@ class Nostr_Import_Handler {
                 $comment_id = $this->import_comment($comment, $post_id);
                 if (!$comment_id) {
                     wp_delete_post($post_id, true); // Cleanup if comment import fails
-                    return new \WP_Error('comment_import_failed', __('Failed to import comment', 'nostr-login'));
+                    return new \WP_Error('comment_import_failed', __('Failed to import comment', 'sk-core'));
                 }
             }
         }
@@ -809,7 +809,7 @@ class Nostr_Import_Handler {
             if ($existing_with_event_id && $existing_with_event_id !== $post_id) {
                 /* translators: %1$s: Nostr event ID, %2$d: WordPress post ID */
                 throw new Exception(sprintf(
-                    esc_html__('Event ID %1$s is already associated with post ID %2$d', 'nostr-login'),
+                    esc_html__('Event ID %1$s is already associated with post ID %2$d', 'sk-core'),
                     esc_html($event['id']),
                     absint($existing_with_event_id)
                 ));

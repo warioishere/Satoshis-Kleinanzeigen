@@ -188,7 +188,7 @@ class UAC_Nostr_Profile_Sync {
 
         // Upload to media library
         $id = media_handle_sideload($file_array, 0, sprintf(
-            __('Nostr %s for user %s', 'unified-auth-connector'),
+            __('Nostr %s for user %s', 'sk-core'),
             $type,
             $user_id
         ));

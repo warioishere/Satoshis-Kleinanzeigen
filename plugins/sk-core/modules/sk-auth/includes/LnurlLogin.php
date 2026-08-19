@@ -145,7 +145,7 @@ class Login {
 			try {
 				$signed = lnurl\auth( $k1, $signed_k1, $node_linking_key );
 			} catch ( \Throwable $th ) {
-				$message = '"' . sanitize_text_field( $th->getMessage() ) . '": ' . esc_html( _x( 'Verifying signature failed. Please reload the page and try again.', 'lnurl_auth_callback error', 'lnurl-auth' ) );
+				$message = '"' . sanitize_text_field( $th->getMessage() ) . '": ' . esc_html( _x( 'Verifying signature failed. Please reload the page and try again.', 'lnurl_auth_callback error', 'sk-core' ) );
 				lnurl_auth()->Transients->set( $k1, false, false, $message );
 				// error_log( json_encode( array( $k1, $signed_k1, $node_linking_key, $message ) ) );
 				echo wp_json_encode(
@@ -162,7 +162,7 @@ class Login {
 				$transient = lnurl_auth()->Transients->get( $k1 );
 
 				if ( empty( $transient ) || ( isset( $transient['user_id'] ) && ! empty( $transient['user_id'] ) ) ) {
-					$message = esc_html( _x( 'No session for this k1. Please reload the page and try again.', 'lnurl_auth_callback error', 'lnurl-auth' ) );
+					$message = esc_html( _x( 'No session for this k1. Please reload the page and try again.', 'lnurl_auth_callback error', 'sk-core' ) );
 					lnurl_auth()->Transients->set( $k1, false, false, $message );
 					// error_log( json_encode( array( $k1, $signed_k1, $node_linking_key, $message ) ) );
 					echo wp_json_encode(
@@ -178,7 +178,7 @@ class Login {
 				$banlist = get_option( SK_AUTH_LNURL_PREFIX . '-node-banlist' );
 
 				if ( in_array( $node_linking_key, $banlist, true ) ) {
-					$message = esc_html( _x( 'Sorry, your node is banned from this site.', 'lnurl_auth_callback error', 'lnurl-auth' ) );
+					$message = esc_html( _x( 'Sorry, your node is banned from this site.', 'lnurl_auth_callback error', 'sk-core' ) );
 					lnurl_auth()->Transients->set( $k1, false, false, $message );
 					// error_log( json_encode( array( $k1, $signed_k1, $node_linking_key, $message ) ) );
 					echo wp_json_encode(
@@ -194,7 +194,7 @@ class Login {
 				$allowlist = get_option( SK_AUTH_LNURL_PREFIX . '-node-allowlist' );
 
 				if ( ! empty( $allowlist ) && ! in_array( $node_linking_key, $allowlist, true ) ) {
-					$message = esc_html( _x( 'Sorry, your node has no access to this site.', 'lnurl_auth_callback error', 'lnurl-auth' ) );
+					$message = esc_html( _x( 'Sorry, your node has no access to this site.', 'lnurl_auth_callback error', 'sk-core' ) );
 					lnurl_auth()->Transients->set( $k1, false, false, $message );
 					// error_log( json_encode( array( $k1, $signed_k1, $node_linking_key, $message ) ) );
 					echo wp_json_encode(
@@ -222,7 +222,7 @@ class Login {
 
 					// if no user exists and usercreation is off
 					if ( 'on' !== get_option( SK_AUTH_LNURL_PREFIX . '-usercreation' ) ) {
-						$message = esc_html( _x( 'Registrations are disabled. We are not able to create an account for you.', 'lnurl_auth_callback error', 'lnurl-auth' ) );
+						$message = esc_html( _x( 'Registrations are disabled. We are not able to create an account for you.', 'lnurl_auth_callback error', 'sk-core' ) );
 						lnurl_auth()->Transients->set( $k1, false, false, $message );
 						// error_log( json_encode( array( $k1, $signed_k1, $node_linking_key, $message ) ) );
 						echo wp_json_encode(
@@ -256,7 +256,7 @@ class Login {
 
 					// if usercreation failed
 					if ( is_wp_error( $user_id ) ) {
-						$message = esc_html( _x( 'We failed to create a user for you. Please try again later.', 'lnurl_auth_callback error', 'lnurl-auth' ) );
+						$message = esc_html( _x( 'We failed to create a user for you. Please try again later.', 'lnurl_auth_callback error', 'sk-core' ) );
 						lnurl_auth()->Transients->set( $k1, false, false, $message );
 						// error_log( json_encode( array( $k1, $signed_k1, $node_linking_key, $message ) ) );
 						echo wp_json_encode(
@@ -285,7 +285,7 @@ class Login {
 					if ( $user_id ) {
 						$user = get_user_by( 'id', $user_id );
 					} else {
-						$message = esc_html( _x( 'We failed searching for your user account. Please try again later.', 'lnurl_auth_callback error', 'lnurl-auth' ) );
+						$message = esc_html( _x( 'We failed searching for your user account. Please try again later.', 'lnurl_auth_callback error', 'sk-core' ) );
 						lnurl_auth()->Transients->set( $k1, false, false, $message );
 						// error_log( json_encode( array( $k1, $signed_k1, $node_linking_key, $message ) ) );
 						echo wp_json_encode(
@@ -306,7 +306,7 @@ class Login {
 			}
 
 			// why are you down here?
-			$message = esc_html( _x( 'Something went wrong. Please reload the page and try again.', 'lnurl_auth_callback error', 'lnurl-auth' ) );
+			$message = esc_html( _x( 'Something went wrong. Please reload the page and try again.', 'lnurl_auth_callback error', 'sk-core' ) );
 			lnurl_auth()->Transients->set( $k1, false, false, $message );
 			// error_log( json_encode( array( $k1, $signed_k1, $node_linking_key, $message ) ) );
 			echo wp_json_encode(
@@ -364,7 +364,7 @@ class Login {
 				// if ckecked 100 times and always duplicate, return
 				if ( 99 === $i ) {
 					$response->status  = 'Failed';
-					$response->message = _x( 'We failed generating a new unique key for you. Maybe try again later.', 'create_lnurl error', 'lnurl-auth' );
+					$response->message = _x( 'We failed generating a new unique key for you. Maybe try again later.', 'create_lnurl error', 'sk-core' );
 					return $response;
 				}
 			}
@@ -419,7 +419,7 @@ class Login {
 		$response->lnurl           = $lnurl;
 		$response->qrcode          = $result;
 		$response->html->qrcode    = '<img src="' . esc_attr( $result->getDataUri() ) . '" alt="Mit Bitcoin Lightning Wallet scannen zum Einloggen" width="100%" height="100%">';
-		$response->html->permalink = '<a href="lightning:' . esc_html( $lnurl ) . '">' . esc_html( _x( 'Open Wallet', 'QR Code permalink label', 'lnurl-auth' ) ) . '</a>';
+		$response->html->permalink = '<a href="lightning:' . esc_html( $lnurl ) . '">' . esc_html( _x( 'Open Wallet', 'QR Code permalink label', 'sk-core' ) ) . '</a>';
 		$response->k1              = isset( $k1 ) ? sanitize_text_field( $k1 ) : '';
 		$response->status          = 'Success';
 
@@ -441,9 +441,9 @@ class Login {
 			echo do_shortcode( '[lnurl_auth label="true" foreground="#000000" redirect="' . esc_attr( $this->redirect_url ) . '"]' );
 
 			// buttons
-			echo '<button onclick="document.body.classList.toggle(`⚡️`)" class="lnurl-auth-loginform-lightning-button button button-primary button-large"type="button">' . esc_html( _x( '⚡️ Login with Bitcoin Lightning', 'Loginform button label', 'lnurl-auth' ) ) . '</button>';
-			echo '<div class="lnurl-auth-loginform-divider"><hr class="lnurl-auth-loginform-hr"><span class="lnurl-auth-loginform-divider-label">' . esc_html( _x( 'or', 'Loginform option divider', 'lnurl-auth' ) ) . '</span></div>';
-			echo '<button onclick="(function(){document.body.classList.toggle(`⚡️`);document.getElementById(`user_pass`).disabled = false;})();return false;" class="lnurl-auth-loginform-wordpress-button button button-primary button-large" type="button">' . esc_html( _x( 'Login with E-Mail', 'Loginform button label', 'lnurl-auth' ) ) . '</button>';
+			echo '<button onclick="document.body.classList.toggle(`⚡️`)" class="lnurl-auth-loginform-lightning-button button button-primary button-large"type="button">' . esc_html( _x( '⚡️ Login with Bitcoin Lightning', 'Loginform button label', 'sk-core' ) ) . '</button>';
+			echo '<div class="lnurl-auth-loginform-divider"><hr class="lnurl-auth-loginform-hr"><span class="lnurl-auth-loginform-divider-label">' . esc_html( _x( 'or', 'Loginform option divider', 'sk-core' ) ) . '</span></div>';
+			echo '<button onclick="(function(){document.body.classList.toggle(`⚡️`);document.getElementById(`user_pass`).disabled = false;})();return false;" class="lnurl-auth-loginform-wordpress-button button button-primary button-large" type="button">' . esc_html( _x( 'Login with E-Mail', 'Loginform button label', 'sk-core' ) ) . '</button>';
 
 			echo '</div>';
 		}
@@ -480,7 +480,7 @@ class Login {
 		echo '>';
 
 		if ( empty( $atts ) || ( ! empty( $atts ) && isset( $atts['label'] ) && 'true' === $atts['label'] ) ) {
-			echo '<label class="lnurl-auth-label" for="lnurl-auth">' . esc_html( _x( '⚡️ Login with Bitcoin Lightning', 'QR Code label', 'lnurl-auth' ) ) . '</label>';
+			echo '<label class="lnurl-auth-label" for="lnurl-auth">' . esc_html( _x( '⚡️ Login with Bitcoin Lightning', 'QR Code label', 'sk-core' ) ) . '</label>';
 		}
 
 		echo '<div class="lnurl-auth-qrcode-wrapper"';
@@ -500,12 +500,12 @@ class Login {
 		if ( ( ! empty( $atts ) && isset( $atts['timer-foreground'] ) ) ) {
 			echo ' style="color: ' . esc_html( $atts['timer-foreground'] ) . '"';
 		}
-		echo '><span class="lnurl-auth-timer-clock">🕛</span> <span class="lnurl-auth-timer-minutes">' . esc_html( _x( 'M', 'QR Code timer short minutes', 'lnurl-auth' ) ) . '</span><span class="lnurl-auth-timer-separator">:</span><span class="lnurl-auth-timer-seconds">' . esc_html( _x( 'SS', 'QR Code timer short seconds', 'lnurl-auth' ) ) . '</span></p>';
+		echo '><span class="lnurl-auth-timer-clock">🕛</span> <span class="lnurl-auth-timer-minutes">' . esc_html( _x( 'M', 'QR Code timer short minutes', 'sk-core' ) ) . '</span><span class="lnurl-auth-timer-separator">:</span><span class="lnurl-auth-timer-seconds">' . esc_html( _x( 'SS', 'QR Code timer short seconds', 'sk-core' ) ) . '</span></p>';
 
 		echo '<div class="lnurl-auth-message-wrapper">';
 		echo '<div class="lnurl-auth-message-scroll-wrapper">';
 		echo '<div class="lnurl-auth-message"></div>';
-		echo '<button class="lnurl-auth-reinit" type="button">' . esc_html( _x( 'Try Again', 'QR Code reinit button label', 'lnurl-auth' ) ) . '</button>';
+		echo '<button class="lnurl-auth-reinit" type="button">' . esc_html( _x( 'Try Again', 'QR Code reinit button label', 'sk-core' ) ) . '</button>';
 		echo '</div>';
 		echo '</div>';
 

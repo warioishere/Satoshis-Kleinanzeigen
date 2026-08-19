@@ -74,20 +74,20 @@ class Performance {
 
         add_settings_section( 'sk_dashboard_performance_main', '', '__return_null', 'sk-dashboard-performance' );
 
-        add_settings_field( 'sk_turbo_field', esc_html__( 'Turbo-Navigation', 'satoshiskleinanzeigen' ), function () {
+        add_settings_field( 'sk_turbo_field', esc_html__( 'Turbo-Navigation', 'sk-core' ), function () {
             ?>
             <label>
                 <input type="checkbox" name="sk_turbo_navigation_enabled" value="1" <?php checked( $this->turbo_navigation_enabled() ); ?>>
-                <?php esc_html_e( 'Prefetcht Dashboard-Seiten und navigiert schneller (Hover + Mousedown).', 'satoshiskleinanzeigen' ); ?>
+                <?php esc_html_e( 'Prefetcht Dashboard-Seiten und navigiert schneller (Hover + Mousedown).', 'sk-core' ); ?>
             </label>
             <?php
         }, 'sk-dashboard-performance', 'sk_dashboard_performance_main' );
 
-        add_settings_field( 'sk_cache_field', esc_html__( 'Seiten-Cache', 'satoshiskleinanzeigen' ), function () {
+        add_settings_field( 'sk_cache_field', esc_html__( 'Seiten-Cache', 'sk-core' ), function () {
             ?>
             <label>
                 <input type="checkbox" name="sk_page_cache_enabled" value="1" <?php checked( $this->page_cache_enabled() ); ?>>
-                <?php esc_html_e( 'Speichert Dashboard-Seiten im Redis-Cache (5 Min. TTL) für sofortiges Laden.', 'satoshiskleinanzeigen' ); ?>
+                <?php esc_html_e( 'Speichert Dashboard-Seiten im Redis-Cache (5 Min. TTL) für sofortiges Laden.', 'sk-core' ); ?>
             </label>
             <?php
         }, 'sk-dashboard-performance', 'sk_dashboard_performance_main' );
@@ -95,8 +95,8 @@ class Performance {
 
     public function add_admin_menu(): void {
         add_options_page(
-            esc_html__( 'Dashboard Performance', 'satoshiskleinanzeigen' ),
-            esc_html__( 'Dashboard Performance', 'satoshiskleinanzeigen' ),
+            esc_html__( 'Dashboard Performance', 'sk-core' ),
+            esc_html__( 'Dashboard Performance', 'sk-core' ),
             'manage_options',
             'sk-dashboard-performance',
             [ $this, 'render_admin_page' ]
@@ -109,7 +109,7 @@ class Performance {
         }
         ?>
         <div class="wrap">
-            <h1><?php esc_html_e( 'Dashboard Performance', 'satoshiskleinanzeigen' ); ?></h1>
+            <h1><?php esc_html_e( 'Dashboard Performance', 'sk-core' ); ?></h1>
             <form action="options.php" method="post">
                 <?php
                 settings_fields( 'sk_dashboard_performance' );
@@ -123,7 +123,7 @@ class Performance {
 
     public function handle_frontend_save(): void {
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( esc_html__( 'Insufficient permissions.', 'satoshiskleinanzeigen' ) );
+            wp_die( esc_html__( 'Insufficient permissions.', 'sk-core' ) );
         }
         check_admin_referer( 'sk_dashboard_optimizations_action' );
         update_option( 'sk_turbo_navigation_enabled',        isset( $_POST['sk_turbo_navigation_enabled'] ) ? 1 : 0 );
@@ -141,21 +141,21 @@ class Performance {
         $cache = $this->page_cache_enabled();
         $msg   = '';
         if ( isset( $_GET['sk_dash_opt_updated'] ) ) {
-            $msg = '<div class="sk-dash-opt-notice">' . esc_html__( 'Einstellungen gespeichert.', 'satoshiskleinanzeigen' ) . '</div>';
+            $msg = '<div class="sk-dash-opt-notice">' . esc_html__( 'Einstellungen gespeichert.', 'sk-core' ) . '</div>';
         }
         ob_start();
         ?>
         <div class="sk-dash-opt-settings">
-            <h2><?php esc_html_e( 'Dashboard Performance', 'satoshiskleinanzeigen' ); ?></h2>
+            <h2><?php esc_html_e( 'Dashboard Performance', 'sk-core' ); ?></h2>
             <?php echo $msg; // phpcs:ignore ?>
             <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
                 <?php wp_nonce_field( 'sk_dashboard_optimizations_action' ); ?>
                 <input type="hidden" name="action" value="sk_dashboard_optimizations_save">
-                <label class="sk-toggle"><input type="checkbox" name="sk_turbo_navigation_enabled" value="1" <?php checked( $turbo ); ?>><span><?php esc_html_e( 'Turbo-Navigation', 'satoshiskleinanzeigen' ); ?></span></label>
-                <p class="sk-desc"><?php esc_html_e( 'Prefetcht Dashboard-Seiten und navigiert schneller.', 'satoshiskleinanzeigen' ); ?></p>
-                <label class="sk-toggle"><input type="checkbox" name="sk_page_cache_enabled" value="1" <?php checked( $cache ); ?>><span><?php esc_html_e( 'Seiten-Cache', 'satoshiskleinanzeigen' ); ?></span></label>
-                <p class="sk-desc"><?php esc_html_e( 'Speichert Dashboard-Seiten im Redis-Cache (5 Min.) für sofortiges Laden.', 'satoshiskleinanzeigen' ); ?></p>
-                <p><button type="submit" class="button button-primary"><?php esc_html_e( 'Speichern', 'satoshiskleinanzeigen' ); ?></button></p>
+                <label class="sk-toggle"><input type="checkbox" name="sk_turbo_navigation_enabled" value="1" <?php checked( $turbo ); ?>><span><?php esc_html_e( 'Turbo-Navigation', 'sk-core' ); ?></span></label>
+                <p class="sk-desc"><?php esc_html_e( 'Prefetcht Dashboard-Seiten und navigiert schneller.', 'sk-core' ); ?></p>
+                <label class="sk-toggle"><input type="checkbox" name="sk_page_cache_enabled" value="1" <?php checked( $cache ); ?>><span><?php esc_html_e( 'Seiten-Cache', 'sk-core' ); ?></span></label>
+                <p class="sk-desc"><?php esc_html_e( 'Speichert Dashboard-Seiten im Redis-Cache (5 Min.) für sofortiges Laden.', 'sk-core' ); ?></p>
+                <p><button type="submit" class="button button-primary"><?php esc_html_e( 'Speichern', 'sk-core' ); ?></button></p>
             </form>
         </div>
         <style>
