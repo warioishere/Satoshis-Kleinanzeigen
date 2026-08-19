@@ -169,7 +169,7 @@ class Installer {
             post_id bigint(11) NOT NULL,
             status varchar(30) NOT NULL,
             PRIMARY KEY  (id),
-            KEY user_post (user_id, post_id),
+            UNIQUE KEY user_post (user_id, post_id),
             KEY post_id (post_id)
         ) ENGINE=InnoDB {$wpdb->get_charset_collate()};" );
     }

@@ -15,6 +15,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Manager {
 
     /**
+     * Schema version of the announcement table.
+     *
+     * @var string
+     */
+    const TABLE_VERSION = '2';
+
+    /**
      *
      * @var string $post_table
      */
@@ -47,7 +54,7 @@ class Manager {
      * @return void
      */
     public function maybe_upgrade_table() {
-        if ( 'yes' === get_option( 'sk_announcement_table_indexed' ) ) {
+        if ( self::TABLE_VERSION === get_option( 'sk_announcement_table_version' ) ) {
             return;
         }
 
@@ -57,15 +64,48 @@ class Manager {
             return;
         }
 
-        // @codingStandardsIgnoreStart
-        $has_index = $wpdb->get_var( "SHOW INDEX FROM {$this->announcement_table} WHERE Key_name = 'user_post'" );
+        $table = $this->announcement_table;
 
-        if ( ! $has_index ) {
-            $wpdb->query( "ALTER TABLE {$this->announcement_table} ADD KEY user_post (user_id, post_id), ADD KEY post_id (post_id)" );
+        // @codingStandardsIgnoreStart
+        // A vendor can only ever hold one notice per announcement. Carry a read or
+        // trashed state over to the surviving row before dropping the copies, so
+        // deduplicating cannot mark something unread again.
+        $wpdb->query(
+            "UPDATE {$table} a
+                JOIN {$table} b ON a.user_id = b.user_id AND a.post_id = b.post_id AND a.id < b.id
+                SET a.status = b.status
+              WHERE a.status = 'unread' AND b.status <> 'unread'"
+        );
+
+        // Keep the lowest id: notice ids are what the announcement mails link to.
+        $wpdb->query(
+            "DELETE a FROM {$table} a
+                JOIN {$table} b ON a.user_id = b.user_id AND a.post_id = b.post_id AND a.id > b.id"
+        );
+
+        $index = $wpdb->get_row( "SHOW INDEX FROM {$table} WHERE Key_name = 'user_post'" );
+
+        // An earlier version added this as a plain key; it has to be unique now.
+        if ( $index && (int) $index->Non_unique === 1 ) {
+            $wpdb->query( "ALTER TABLE {$table} DROP INDEX user_post" );
+            $index = null;
+        }
+
+        if ( ! $index ) {
+            $wpdb->query( "ALTER TABLE {$table} ADD UNIQUE KEY user_post (user_id, post_id)" );
+        }
+
+        if ( ! $wpdb->get_var( "SHOW INDEX FROM {$table} WHERE Key_name = 'post_id'" ) ) {
+            $wpdb->query( "ALTER TABLE {$table} ADD KEY post_id (post_id)" );
         }
         // @codingStandardsIgnoreEnd
 
-        update_option( 'sk_announcement_table_indexed', 'yes' );
+        if ( $wpdb->last_error ) {
+            return;
+        }
+
+        delete_option( 'sk_announcement_table_indexed' );
+        update_option( 'sk_announcement_table_version', self::TABLE_VERSION );
     }
 
     /**
@@ -567,8 +607,15 @@ class Manager {
             ++$i;
         }
 
+        if ( '' === $values ) {
+            return;
+        }
+
+        // IGNORE, because the unique key on (user_id, post_id) would otherwise let a
+        // single already-assigned vendor abort the whole batch. An existing row keeps
+        // its notice id and read status, which is exactly what should happen.
         // @codingStandardsIgnoreStart
-        $sql = "INSERT INTO {$this->announcement_table} (`user_id`, `post_id`, `status` ) VALUES $values";
+        $sql = "INSERT IGNORE INTO {$this->announcement_table} (`user_id`, `post_id`, `status` ) VALUES $values";
         $wpdb->query( $sql );
         // @codingStandardsIgnoreEnd
     }
