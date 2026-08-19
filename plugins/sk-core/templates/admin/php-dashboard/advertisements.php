@@ -36,6 +36,12 @@ $base_url = admin_url( 'admin.php?page=sk&tab=advertisements' );
                     <td colspan="7"><?php esc_html_e( 'No advertisements found.', 'sk' ); ?></td>
                 </tr>
             <?php else : ?>
+                <?php
+                $status_labels = [
+                    1 => __( 'Active', 'sk' ),
+                    2 => __( 'Expired', 'sk' ),
+                ];
+                ?>
                 <?php foreach ( $advertisements as $ad ) :
                     $vendor_name = '';
                     if ( ! empty( $ad->vendor_id ) ) {
@@ -45,15 +51,19 @@ $base_url = admin_url( 'admin.php?page=sk&tab=advertisements' );
                             $vendor_name = $vendor_user ? $vendor_user->display_name : '';
                         }
                     }
+
+                    $status  = (int) ( $ad->status ?? 0 );
+                    $expires = (int) ( $ad->expires_at ?? 0 );
+                    $added   = (int) ( $ad->added ?? 0 );
                     ?>
                     <tr>
                         <td><?php echo esc_html( $ad->product_title ?? __( '(deleted)', 'sk' ) ); ?></td>
                         <td><?php echo esc_html( $vendor_name ); ?></td>
                         <td><?php echo esc_html( $ad->created_via ?? '' ); ?></td>
-                        <td><?php echo esc_html( $ad->price ?? '' ); ?></td>
-                        <td><?php echo esc_html( ucfirst( $ad->status ?? '' ) ); ?></td>
-                        <td><?php echo esc_html( ! empty( $ad->expires_at ) ? date_i18n( get_option( 'date_format' ), strtotime( $ad->expires_at ) ) : __( 'N/A', 'sk' ) ); ?></td>
-                        <td><?php echo esc_html( ! empty( $ad->created_at ) ? date_i18n( get_option( 'date_format' ), strtotime( $ad->created_at ) ) : '' ); ?></td>
+                        <td><?php echo wp_kses_post( wc_price( (float) ( $ad->price ?? 0 ) ) ); ?></td>
+                        <td><?php echo esc_html( $status_labels[ $status ] ?? (string) $status ); ?></td>
+                        <td><?php echo esc_html( $expires > 0 ? sk_format_date( $expires ) : __( 'Unlimited', 'sk' ) ); ?></td>
+                        <td><?php echo esc_html( $added > 0 ? sk_format_date( $added ) : '' ); ?></td>
                     </tr>
                 <?php endforeach; ?>
             <?php endif; ?>

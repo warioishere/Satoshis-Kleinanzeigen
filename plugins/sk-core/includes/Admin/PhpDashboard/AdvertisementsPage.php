@@ -38,7 +38,7 @@ class AdvertisementsPage extends AbstractPage {
             $total_pages = ceil( $total_items / $per_page );
 
             $advertisements = $wpdb->get_results( $wpdb->prepare(
-                "SELECT a.*, p.post_title as product_title
+                "SELECT a.*, p.post_title as product_title, p.post_author as vendor_id
                  FROM {$table} a
                  LEFT JOIN {$wpdb->posts} p ON a.product_id = p.ID
                  ORDER BY a.id DESC
