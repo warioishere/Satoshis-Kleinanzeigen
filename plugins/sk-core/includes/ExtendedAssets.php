@@ -4,6 +4,11 @@ namespace SK\Core;
 
 /**
  * Extended Assets — i18n and admin localization.
+ *
+ * Note: this used to ship the complete translation catalogue to the browser as
+ * sk_pro_i18n (roughly 1.7 MB inline on every dashboard and admin page). That was
+ * consumed by the Vue/React frontend which has since been replaced by PHP
+ * templates. Nothing in wp-content reads it any more, so it is no longer emitted.
  */
 class ExtendedAssets {
 
@@ -16,7 +21,6 @@ class ExtendedAssets {
     }
 
     public function add_localized_data( $data ) {
-        $data['sk_pro_i18n']        = array( 'sk' => sk_get_jed_locale_data( 'sk', SK_CORE_DIR . '/languages/' ) );
         $data['current_plan']       = sk_ext()->license->get_plan();
         $data['active_modules']     = sk_ext()->module->get_active_modules();
         $data['pro_has_license_key'] = sk_ext()->license->has_license_key();
@@ -30,7 +34,6 @@ class ExtendedAssets {
             'i18n_country_name'   => __( 'Please provide a country!', 'sk' ),
             'i18n_invalid'        => __( 'Failed! Something went wrong', 'sk' ),
             'i18n_gravater'       => __( 'Upload a Photo', 'sk' ),
-            'sk_pro_i18n'         => array( 'sk' => sk_get_jed_locale_data( 'sk', SK_CORE_DIR . '/languages/' ) ),
         ];
         return array_merge( $default_script, $localize_script );
     }
