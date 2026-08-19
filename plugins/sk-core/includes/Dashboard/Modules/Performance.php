@@ -5,9 +5,8 @@ namespace SK\Core\Dashboard\Modules;
 /**
  * Dashboard performance optimizations.
  *
- * Two toggles:
- *   - Turbo-Navigation: prefetch + mousedown navigation
- *   - Seiten-Cache: Redis HTML caching (served via template_redirect)
+ * Serves dashboard pages from a per-user Redis HTML cache and drops assets that
+ * the current page does not need.
  */
 class Performance {
 
@@ -30,16 +29,9 @@ class Performance {
 
         // Asset trimmer
         add_action( 'sk_enqueue_scripts', [ $this, 'trim_assets' ], 999 );
-
-        // Turbo navigation JS
-        add_action( 'wp_footer', [ $this, 'output_turbo_navigation' ], 99 );
     }
 
     /* ---- Helpers ---- */
-
-    public function turbo_navigation_enabled(): bool {
-        return (bool) get_option( 'sk_turbo_navigation_enabled', 1 );
-    }
 
     public function page_cache_enabled(): bool {
         return (bool) get_option( 'sk_page_cache_enabled', 1 );
@@ -48,9 +40,6 @@ class Performance {
     /* ---- init defaults ---- */
 
     public function init_defaults(): void {
-        if ( false === get_option( 'sk_turbo_navigation_enabled', false ) ) {
-            add_option( 'sk_turbo_navigation_enabled', 1 );
-        }
         if ( false === get_option( 'sk_page_cache_enabled', false ) ) {
             add_option( 'sk_page_cache_enabled', 1 );
         }
@@ -60,7 +49,6 @@ class Performance {
 
     public function register_settings(): void {
         $options = [
-            'sk_turbo_navigation_enabled',
             'sk_page_cache_enabled',
         ];
 
@@ -73,15 +61,6 @@ class Performance {
         }
 
         add_settings_section( 'sk_dashboard_performance_main', '', '__return_null', 'sk-dashboard-performance' );
-
-        add_settings_field( 'sk_turbo_field', esc_html__( 'Turbo-Navigation', 'sk-core' ), function () {
-            ?>
-            <label>
-                <input type="checkbox" name="sk_turbo_navigation_enabled" value="1" <?php checked( $this->turbo_navigation_enabled() ); ?>>
-                <?php esc_html_e( 'Prefetcht Dashboard-Seiten und navigiert schneller (Hover + Mousedown).', 'sk-core' ); ?>
-            </label>
-            <?php
-        }, 'sk-dashboard-performance', 'sk_dashboard_performance_main' );
 
         add_settings_field( 'sk_cache_field', esc_html__( 'Seiten-Cache', 'sk-core' ), function () {
             ?>
@@ -126,7 +105,6 @@ class Performance {
             wp_die( esc_html__( 'Insufficient permissions.', 'sk-core' ) );
         }
         check_admin_referer( 'sk_dashboard_optimizations_action' );
-        update_option( 'sk_turbo_navigation_enabled',        isset( $_POST['sk_turbo_navigation_enabled'] ) ? 1 : 0 );
         update_option( 'sk_page_cache_enabled',              isset( $_POST['sk_page_cache_enabled'] ) ? 1 : 0 );
         $redirect = wp_get_referer() ?: home_url( '/' );
         wp_safe_redirect( add_query_arg( 'sk_dash_opt_updated', '1', $redirect ) );
@@ -137,7 +115,6 @@ class Performance {
         if ( ! current_user_can( 'manage_options' ) ) {
             return '';
         }
-        $turbo = $this->turbo_navigation_enabled();
         $cache = $this->page_cache_enabled();
         $msg   = '';
         if ( isset( $_GET['sk_dash_opt_updated'] ) ) {
@@ -151,8 +128,6 @@ class Performance {
             <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
                 <?php wp_nonce_field( 'sk_dashboard_optimizations_action' ); ?>
                 <input type="hidden" name="action" value="sk_dashboard_optimizations_save">
-                <label class="sk-toggle"><input type="checkbox" name="sk_turbo_navigation_enabled" value="1" <?php checked( $turbo ); ?>><span><?php esc_html_e( 'Turbo-Navigation', 'sk-core' ); ?></span></label>
-                <p class="sk-desc"><?php esc_html_e( 'Prefetcht Dashboard-Seiten und navigiert schneller.', 'sk-core' ); ?></p>
                 <label class="sk-toggle"><input type="checkbox" name="sk_page_cache_enabled" value="1" <?php checked( $cache ); ?>><span><?php esc_html_e( 'Seiten-Cache', 'sk-core' ); ?></span></label>
                 <p class="sk-desc"><?php esc_html_e( 'Speichert Dashboard-Seiten im Redis-Cache (5 Min.) für sofortiges Laden.', 'sk-core' ); ?></p>
                 <p><button type="submit" class="button button-primary"><?php esc_html_e( 'Speichern', 'sk-core' ); ?></button></p>
@@ -344,70 +319,5 @@ class Performance {
                 if ( ! $has_style_deps( $h ) ) { wp_dequeue_style( $h ); wp_deregister_style( $h ); }
             }
         }
-    }
-
-    /* ---- Turbo Navigation ---- */
-
-    public function output_turbo_navigation(): void {
-        if ( ! function_exists( 'sk_is_seller_dashboard' ) || ! sk_is_seller_dashboard() ) {
-            return;
-        }
-        if ( ! $this->turbo_navigation_enabled() ) {
-            return;
-        }
-        ?>
-        <style id="sk-turbo-css">
-            #sk-turbo-progress{position:fixed;top:0;left:0;width:0;height:3px;background:linear-gradient(90deg,#f05025,#ff7043);z-index:999999;pointer-events:none;opacity:0}
-            #sk-turbo-progress.loading{opacity:1;width:70%;transition:width 2s cubic-bezier(.1,.05,.1,1)}
-            #sk-turbo-progress.done{width:100%;transition:width .15s ease}
-            #sk-turbo-progress.hide{opacity:0;transition:opacity .3s ease .15s}
-        </style>
-        <script id="sk-turbo-js">
-        (function(){
-            'use strict';
-            var sidebar = document.querySelector('.sk-dash-sidebar');
-            if (!sidebar) return;
-            var bar = document.createElement('div');
-            bar.id = 'sk-turbo-progress';
-            document.body.appendChild(bar);
-            function progressShow(){ bar.className=''; void bar.offsetWidth; bar.className='loading'; }
-            function ok(a){
-                if (!a||!a.href) return false;
-                try { if (new URL(a.href).origin!==location.origin) return false; } catch(_){ return false; }
-                if (a.href.indexOf('#')!==-1) return false;
-                if (a.target&&a.target!=='_self') return false;
-                var li=a.closest('li[data-react-route]');
-                if (li&&li.getAttribute('data-react-route')) return false;
-                if (a.href.indexOf('wp-login')!==-1||a.href.indexOf('wp-admin')!==-1) return false;
-                return true;
-            }
-            var warmed={};
-            function warmCache(url){ if(warmed[url]) return; warmed[url]=true; fetch(url,{credentials:'same-origin',priority:'low',mode:'same-origin'}).catch(function(){}); }
-            sidebar.addEventListener('mouseenter',function(e){ var a=e.target.closest&&e.target.closest('a[href]'); if(ok(a)&&a.href!==location.href) warmCache(a.href); },true);
-            sidebar.addEventListener('touchstart',function(e){ var a=e.target.closest&&e.target.closest('a[href]'); if(ok(a)&&a.href!==location.href) warmCache(a.href); },{passive:true,capture:true});
-            var navigating=false;
-            sidebar.addEventListener('mousedown',function(e){
-                if(e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey) return;
-                var a=e.target.closest&&e.target.closest('a[href]');
-                if(!ok(a)||a.href===location.href) return;
-                warmCache(a.href); progressShow(); navigating=true; location.href=a.href;
-            });
-            sidebar.addEventListener('click',function(e){
-                if(e.ctrlKey||e.metaKey||e.shiftKey||e.altKey) return;
-                var a=e.target.closest&&e.target.closest('a[href]');
-                if(!ok(a)) return;
-                if(navigating){e.preventDefault();return;}
-                if(a.href!==location.href){warmCache(a.href);progressShow();}
-            });
-            if('requestIdleCallback' in window){
-                requestIdleCallback(function(){
-                    var links=sidebar.querySelectorAll('.sk-dashboard-menu a[href]'),i=0;
-                    function next(){ if(i>=links.length) return; var a=links[i++]; if(ok(a)&&a.href!==location.href) warmCache(a.href); setTimeout(next,300); }
-                    next();
-                },{timeout:3000});
-            }
-        })();
-        </script>
-        <?php
     }
 }
