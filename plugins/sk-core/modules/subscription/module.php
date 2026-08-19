@@ -741,54 +741,98 @@ class Module {
             return;
         }
 
-        $users = get_users(
-            [
-                'role__in'   => [ 'seller', 'administrator' ],
-                'fields' => [ 'ID', 'user_email' ],
-            ]
-        );
+        $per_page  = 100;
+        $paged     = 1;
+        $processed = 0;
+        $started   = time();
+        $deadline  = (int) apply_filters( 'sk_subscription_expiry_cron_deadline', 90 );
 
-        foreach ( $users as $user ) {
-            $vendor_subscription = sk()->vendor->get( $user->ID )->subscription;
+        do {
+            /*
+             * Only vendors with a dated pack can expire or need a reminder. Packs
+             * stored as "unlimited" and users without the meta at all are filtered
+             * out in SQL, which keeps this from walking every seller on the site.
+             */
+            $users = get_users(
+                [
+                    'role'       => 'seller',
+                    'fields'     => [ 'ID', 'user_email' ],
+                    'number'     => $per_page,
+                    'paged'      => $paged,
+                    'orderby'    => 'ID',
+                    'order'      => 'ASC',
+                    'meta_query' => [
+                        [
+                            'key'     => 'product_pack_enddate',
+                            'value'   => 'unlimited',
+                            'compare' => '!=',
+                        ],
+                    ],
+                ]
+            );
 
-            // if no vendor is not subscribed to any pack, skip the vendor, this process also enable code editor autocomplete/quick access support.
-            if ( ! $vendor_subscription instanceof \SK\Modules\Subscription\SubscriptionPack ) {
-                continue;
+            foreach ( $users as $user ) {
+                $this->process_vendor_subscription_expiry( $user );
+                $processed++;
             }
 
-            if ( ! Helper::is_subscription_product( $vendor_subscription->get_id() ) ) {
-                continue;
+            $paged++;
+            $timed_out = ( time() - $started ) >= $deadline;
+        } while ( count( $users ) === $per_page && ! $timed_out );
+
+        if ( ! empty( $timed_out ) && count( $users ) === $per_page ) {
+            Helper::log( sprintf( 'Subscription expiry cron stopped after %d vendors, the run hit the %d second limit. Remaining vendors are picked up on the next run.', $processed, $deadline ) );
+        }
+    }
+
+    /**
+     * Expire one vendor's subscription and send the reminder mail if it is due.
+     *
+     *
+     * @param \WP_User|object $user Needs at least ID and user_email.
+     *
+     * @return void
+     */
+    protected function process_vendor_subscription_expiry( $user ) {
+        $vendor_subscription = sk()->vendor->get( $user->ID )->subscription;
+
+        // if no vendor is not subscribed to any pack, skip the vendor, this process also enable code editor autocomplete/quick access support.
+        if ( ! $vendor_subscription instanceof \SK\Modules\Subscription\SubscriptionPack ) {
+            return;
+        }
+
+        if ( ! Helper::is_subscription_product( $vendor_subscription->get_id() ) ) {
+            return;
+        }
+
+        if ( Helper::maybe_cancel_subscription( $user->ID ) ) {
+            if ( Helper::check_vendor_has_existing_product( $user->ID ) ) {
+                Helper::apply_product_status_after_end( $user->ID );
             }
 
-            if ( Helper::maybe_cancel_subscription( $user->ID ) ) {
-                if ( Helper::check_vendor_has_existing_product( $user->ID ) ) {
-                    Helper::apply_product_status_after_end( $user->ID );
-                }
+            $order_id = get_user_meta( $user->ID, 'product_order_id', true );
 
-                $order_id = get_user_meta( $user->ID, 'product_order_id', true );
+            if ( $order_id ) {
+                $subject = ( sk_get_option( 'cancelling_email_subject', 'sk_product_subscription' ) ) ? sk_get_option( 'cancelling_email_subject', 'sk_product_subscription' ) : __( 'Subscription Package Cancel notification', 'sk' );
+                $message = ( sk_get_option( 'cancelling_email_body', 'sk_product_subscription' ) ) ? sk_get_option( 'cancelling_email_body', 'sk_product_subscription' ) : __( 'Dear subscriber, Your subscription has expired. Please renew your package to continue using it.', 'sk' );
+                $headers = 'From: ' . get_option( 'blogname' ) . ' <' . get_option( 'admin_email' ) . '>' . "\r\n";
 
-                if ( $order_id ) {
-                    $subject = ( sk_get_option( 'cancelling_email_subject', 'sk_product_subscription' ) ) ? sk_get_option( 'cancelling_email_subject', 'sk_product_subscription' ) : __( 'Subscription Package Cancel notification', 'sk' );
-                    $message = ( sk_get_option( 'cancelling_email_body', 'sk_product_subscription' ) ) ? sk_get_option( 'cancelling_email_body', 'sk_product_subscription' ) : __( 'Dear subscriber, Your subscription has expired. Please renew your package to continue using it.', 'sk' );
-                    $headers = 'From: ' . get_option( 'blogname' ) . ' <' . get_option( 'admin_email' ) . '>' . "\r\n";
+                wp_mail( $user->user_email, $subject, $message, $headers );
 
-                    wp_mail( $user->user_email, $subject, $message, $headers );
-
-                    Helper::log( 'Subscription cancel check: As the package has expired for order #' . $order_id . ', we are cancelling the Subscription Package of user #' . $user->ID );
-                    Helper::delete_subscription_pack( $user->ID, $order_id );
-                }
+                Helper::log( 'Subscription cancel check: As the package has expired for order #' . $order_id . ', we are cancelling the Subscription Package of user #' . $user->ID );
+                Helper::delete_subscription_pack( $user->ID, $order_id );
             }
+        }
 
-            $is_seller_enabled  = sk_is_seller_enabled( $user->ID );
-            $can_post_product   = $vendor_subscription->can_post_product();
-            $has_recurring_pack = $vendor_subscription->has_recurring_pack();
-            $has_subscription   = $vendor_subscription->has_subscription();
+        $is_seller_enabled  = sk_is_seller_enabled( $user->ID );
+        $can_post_product   = $vendor_subscription->can_post_product();
+        $has_recurring_pack = $vendor_subscription->has_recurring_pack();
+        $has_subscription   = $vendor_subscription->has_subscription();
 
-            if ( ! $has_recurring_pack && $is_seller_enabled && $has_subscription && $can_post_product ) {
-                if ( Helper::alert_before_two_days( $user->ID ) ) {
-                    do_action( 'dps_send_subscription_expiration_alert_email', $user->ID );
-                    update_user_meta( $user->ID, 'sk_vendor_subscription_cancel_email', 'yes' );
-                }
+        if ( ! $has_recurring_pack && $is_seller_enabled && $has_subscription && $can_post_product ) {
+            if ( Helper::alert_before_two_days( $user->ID ) ) {
+                do_action( 'dps_send_subscription_expiration_alert_email', $user->ID );
+                update_user_meta( $user->ID, 'sk_vendor_subscription_cancel_email', 'yes' );
             }
         }
     }
