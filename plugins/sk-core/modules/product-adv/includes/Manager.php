@@ -84,11 +84,9 @@ class Manager {
             $fields = 'COUNT(featured.id) AS count';
         } else {
             $fields = 'featured.*, post.post_title AS product_title, post.post_status AS post_status, post.post_author AS vendor_id, u_meta.meta_value AS store_name';
-            // join user meta table
-            $join .= " LEFT JOIN {$wpdb->usermeta} AS u_meta ON post.post_author = u_meta.user_id";
-            // include sk_store_name under where param
-            $where .= ' AND u_meta.meta_key=%s';
-            $query_args[] = 'sk_store_name';
+            // join user meta table, the meta_key belongs into the ON clause so vendors
+            // without a sk_store_name row don't get filtered out of the result set
+            $join .= " LEFT JOIN {$wpdb->usermeta} AS u_meta ON post.post_author = u_meta.user_id AND u_meta.meta_key = 'sk_store_name'";
         }
 
         // check if id filter is applied
@@ -120,27 +118,13 @@ class Manager {
             $status = $wpdb->prepare( ' AND featured.status = %d', $args['status'] );
         }
 
-        // check if expires_at filter is applied
-        // convert into timestamp
-        $now = sk_current_datetime();
+        // check if expires_at filter is applied, convert both bounds into timestamps
         if ( ! empty( $args['expires_at']['min'] ) ) {
-            // fix date format
-            if ( is_numeric( $args['expires_at']['min'] ) ) {
-                $now = $now->setTimestamp( $args['expires_at']['min'] );
-            } else {
-                $now = $now->modify( $args['expires_at']['min'] );
-            }
-            $args['expires_at']['min'] = $now ? $now->setTime( 0, 0, 0 )->getTimestamp() : 0;
+            $args['expires_at']['min'] = $this->to_boundary_timestamp( $args['expires_at']['min'], false );
         }
 
-        // convert into timestamp
         if ( ! empty( $args['expires_at']['max'] ) ) {
-            if ( is_numeric( $args['expires_at']['max'] ) ) {
-                $now = $now->setTimestamp( $args['expires_at']['max'] );
-            } else {
-                $now = $now->modify( $args['expires_at']['max'] );
-            }
-            $args['expires_at']['max'] = $now ? $now->setTime( 23, 59, 59 )->getTimestamp() : 0;
+            $args['expires_at']['max'] = $this->to_boundary_timestamp( $args['expires_at']['max'], true );
         }
 
         // check if min and max both values are set, search  in between
@@ -673,12 +657,12 @@ class Manager {
         global $wpdb;
 
         $fields      = ' DISTINCT post.post_author as vendor_id, u_meta.meta_value as store_name ';
-        $join        = " LEFT JOIN {$wpdb->posts} AS post ON featured.product_id = post.ID LEFT JOIN {$wpdb->usermeta} AS u_meta ON post.post_author = u_meta.user_id";
-        $where       = ' AND u_meta.meta_key=%s';
+        $join        = " LEFT JOIN {$wpdb->posts} AS post ON featured.product_id = post.ID LEFT JOIN {$wpdb->usermeta} AS u_meta ON post.post_author = u_meta.user_id AND u_meta.meta_key = 'sk_store_name'";
+        $where       = ' AND post.post_author IS NOT NULL';
         $groupby     = '';
         $orderby     = ' ORDER BY store_name ASC';
         $limits      = '';
-        $query_args  = [ 1, 1, 'sk_store_name' ];
+        $query_args  = [ 1, 1 ];
 
         // prepare search parameter
         if ( ! empty( $args['search'] ) ) {
@@ -807,6 +791,40 @@ class Manager {
     }
 
     /**
+     * Convert a date filter value into a day boundary timestamp.
+     *
+     * Accepts a timestamp or any string DateTimeImmutable understands. Unparsable
+     * input yields 0 so the filter is skipped instead of throwing.
+     *
+     *
+     * @param string|int $value
+     * @param bool       $end_of_day true for 23:59:59, false for 00:00:00
+     *
+     * @return int
+     */
+    protected function to_boundary_timestamp( $value, $end_of_day ) {
+        $date = sk_current_datetime();
+
+        if ( is_numeric( $value ) ) {
+            $date = $date->setTimestamp( (int) $value );
+        } else {
+            try {
+                $date = $date->modify( (string) $value );
+            } catch ( \Exception $e ) {
+                return 0;
+            }
+        }
+
+        if ( ! $date ) {
+            return 0;
+        }
+
+        return $end_of_day
+            ? $date->setTime( 23, 59, 59 )->getTimestamp()
+            : $date->setTime( 0, 0, 0 )->getTimestamp();
+    }
+
+    /**
      * This will check if given var is empty or not.
      *
      *
@@ -819,8 +837,9 @@ class Manager {
             return true;
         }
 
-        if ( isset( $var[0] ) && intval( $var[0] === 0 ) ) {
-            return true;
+        // an array that only holds zeros carries no usable filter value
+        if ( is_array( $var ) ) {
+            return empty( array_filter( array_map( 'absint', $var ) ) );
         }
 
         return false;
