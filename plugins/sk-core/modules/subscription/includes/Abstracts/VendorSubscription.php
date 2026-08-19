@@ -147,7 +147,7 @@ abstract class VendorSubscription {
      *
      * @return bool
      */
-    public function has_active_cancelled_subscrption() {
+    public function has_active_cancelled_subscription() {
         return (bool) get_user_meta( $this->get_vendor(), 'sk_has_active_cancelled_subscrption', true );
     }
 

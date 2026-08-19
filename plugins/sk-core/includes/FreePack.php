@@ -267,12 +267,16 @@ final class FreePack {
         update_user_meta( $user_id, 'product_id', $product_id );
         update_user_meta( $user_id, 'product_package_id', $product_id );
         update_user_meta( $user_id, 'product_order_id', $order_id );
-        update_user_meta( $user_id, 'product_no_with_pack', 0 );
-        update_user_meta( $user_id, 'product_pack_startdate', gmdate( 'Y-m-d H:i:s', $start_ts ) );
+        /*
+         * Site local time, not GMT. The subscription module writes these two metas
+         * with sk_current_datetime() and reads them back the same way, so writing
+         * GMT here put the pack dates hours off against everything else.
+         */
+        update_user_meta( $user_id, 'product_pack_startdate', wp_date( 'Y-m-d H:i:s', $start_ts ) );
         update_user_meta(
             $user_id,
             'product_pack_enddate',
-            $end_ts === PHP_INT_MAX ? 'unlimited' : gmdate( 'Y-m-d H:i:s', $end_ts )
+            $end_ts === PHP_INT_MAX ? 'unlimited' : wp_date( 'Y-m-d H:i:s', $end_ts )
         );
         update_user_meta( $user_id, 'can_post_product', 1 );
         update_user_meta( $user_id, '_customer_recurring_subscription', false );

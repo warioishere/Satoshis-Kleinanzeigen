@@ -30,7 +30,7 @@ use SK\Modules\Subscription\Helper;
     <?php elseif ( $subscription && $subscription->can_post_product() ) :
         $no_of_product  = '-1' !== $subscription->get_number_of_products() ? $subscription->get_number_of_products() : 'Unbegrenzt';
         $pack_title     = $subscription->get_package_title();
-        $is_cancelled   = $subscription->has_active_cancelled_subscrption();
+        $is_cancelled   = $subscription->has_active_cancelled_subscription();
         $end_date       = $subscription->get_pack_end_date();
 
         // Laufzeit-Text
@@ -96,7 +96,7 @@ use SK\Modules\Subscription\Helper;
         <?php if ( isset( $_GET['msg'] ) && 'dps_sub_cancelled' === sanitize_text_field( wp_unslash( $_GET['msg'] ) ) ) : //phpcs:ignore ?>
             <div class="sk-message">
                 <?php
-                if ( $subscription && $subscription->has_active_cancelled_subscrption() ) {
+                if ( $subscription && $subscription->has_active_cancelled_subscription() ) {
                     $date = sk_format_date( $subscription->get_pack_end_date() );
                     // translators: Package validity date.
                     $notice = sprintf( __( 'Your subscription has been cancelled! However the it\'s is still active till %s', 'sk' ), $date );

@@ -443,7 +443,7 @@ class SK_REST_Subscription_Controller extends SkRESTController {
             'subscription_end_date'    => 'unlimited' === $subscription_end_date ? __( 'Unlimited', 'sk' ) : sk_format_date( $subscription_end_date ),
             'current_date'             => sk_format_date(),
             'status'                   => $subscription->has_subscription(),
-            'has_active_cancelled_sub' => $subscription->has_active_cancelled_subscrption(),
+            'has_active_cancelled_sub' => $subscription->has_active_cancelled_subscription(),
         ];
 
         $context = ! empty( $request['context'] ) ? $request['context'] : 'view';

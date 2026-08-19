@@ -990,7 +990,6 @@ class Module {
         update_user_meta( $customer_id, 'product_pack_enddate', $pack_validity );
         update_user_meta( $customer_id, 'product_package_id', $product_id );
         update_user_meta( $customer_id, 'product_order_id', $order_id );
-        update_user_meta( $customer_id, 'product_no_with_pack', $num_product );
         update_user_meta( $customer_id, 'product_pack_startdate', sk_current_datetime()->format( 'Y-m-d H:i:s' ) );
         update_user_meta( $customer_id, 'can_post_product', '1' );
         update_user_meta( $customer_id, 'sk_has_active_cancelled_subscrption', false);
@@ -1186,7 +1185,7 @@ class Module {
             return;
         }
 
-        if ( ! $subscription->has_active_cancelled_subscrption() ) {
+        if ( ! $subscription->has_active_cancelled_subscription() ) {
             return;
         }
 
@@ -1956,7 +1955,6 @@ class Module {
 
             update_user_meta( $vendor_id, 'product_package_id', $subscription_id );
             update_user_meta( $vendor_id, 'product_order_id', $order->get_id() );
-            update_user_meta( $vendor_id, 'product_no_with_pack', get_post_meta( $subscription_id, '_no_of_product', true ) ); //number of products
             update_user_meta( $vendor_id, 'product_pack_startdate', sk_current_datetime()->format( 'Y-m-d H:i:s' ) );
 
             if ( absint( $pack_validity ) > 0 ) {

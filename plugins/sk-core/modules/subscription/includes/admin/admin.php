@@ -796,7 +796,6 @@ class DPS_Admin {
 
         update_user_meta( $user_id, 'product_package_id', $pack_id );
         update_user_meta( $user_id, 'product_order_id', $order->get_id() );
-        update_user_meta( $user_id, 'product_no_with_pack', get_post_meta( $pack_id, '_no_of_product', true ) ); //number of products
         update_user_meta( $user_id, 'product_pack_startdate', sk_current_datetime()->format( 'Y-m-d H:i:s' ) );
 
         if ( absint( $pack_validity ) > 0 ) {

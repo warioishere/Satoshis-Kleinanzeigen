@@ -95,7 +95,7 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
             <?php if ( isset( $_GET['msg'] ) ) :
                 $msg = sanitize_text_field( wp_unslash( $_GET['msg'] ) );
                 if ( 'dps_sub_cancelled' === $msg ) :
-                    if ( $subscription && $subscription->has_active_cancelled_subscrption() ) {
+                    if ( $subscription && $subscription->has_active_cancelled_subscription() ) {
                         $date   = sk_format_date( $subscription->get_pack_end_date() );
                         $notice = sprintf( __( 'Your subscription has been cancelled! However it\'s is still active till %s', 'sk' ), $date );
                     } else {
@@ -128,7 +128,7 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
             <?php elseif ( $subscription && $subscription->can_post_product() ) :
                 $no_of_product  = '-1' !== $subscription->get_number_of_products() ? $subscription->get_number_of_products() : 'Unbegrenzt';
                 $pack_title     = $subscription->get_package_title();
-                $is_cancelled   = $subscription->has_active_cancelled_subscrption();
+                $is_cancelled   = $subscription->has_active_cancelled_subscription();
                 $end_date       = $subscription->get_pack_end_date();
 
                 // Laufzeit-Text
