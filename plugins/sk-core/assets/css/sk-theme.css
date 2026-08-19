@@ -3252,11 +3252,6 @@ div.media-sidebar a.edit-attachment {
 .sk-edit-row .sk-section-heading i.fa.fa-flip-vertical {
   margin-top: 9px;
 }
-.sk-edit-row .sk-section-heading .sk-section-toggle {
-  float: right;
-  color: #888;
-  font-size: 15px;
-}
 .sk-edit-row .sk-section-heading h2 {
   margin: 0px;
   padding: 0px;
@@ -9779,12 +9774,6 @@ a.sk-sub-order-action:hover {
   font-size: 14px !important;
   color: #5a6a7e !important;
   margin: 0 !important;
-}
-.sk-dashboard .sk-edit-row .sk-section-heading .sk-section-toggle {
-  color: #5a6a7e !important;
-}
-.sk-dashboard .sk-edit-row .sk-section-heading .sk-section-toggle:hover {
-  color: #F7931A !important;
 }
 .sk-dashboard .sk-edit-row .sk-section-content {
   padding: 18px !important;

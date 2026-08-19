@@ -758,7 +758,11 @@ class Assets {
             wp_enqueue_style( 'sk-mapbox-gl-geocoder', SK_CORE_ASSETS . '/vendor/mapbox/mapbox-gl-geocoder.css', [ 'sk-mapbox-gl' ], SK_CORE_VERSION );
 
             wp_enqueue_script( 'sk-maps', SK_CORE_ASSETS . '/vendor/mapbox/mapbox-gl.js', [], SK_CORE_VERSION, true );
-            wp_add_inline_script( 'sk-maps', '(function(){var O=XMLHttpRequest.prototype.open,S=XMLHttpRequest.prototype.send;XMLHttpRequest.prototype.open=function(m,u){this._u=u;return O.apply(this,arguments)};XMLHttpRequest.prototype.send=function(){if(this._u&&this._u.indexOf("events.mapbox.com")!==-1)return;return S.apply(this,arguments)};var F=window.fetch;window.fetch=function(u){if(typeof u==="string"&&u.indexOf("events.mapbox.com")!==-1)return Promise.resolve(new Response("",{status:204}));return F.apply(this,arguments)};if(navigator.sendBeacon){var B=navigator.sendBeacon.bind(navigator);navigator.sendBeacon=function(u,d){if(typeof u==="string"&&u.indexOf("events.mapbox.com")!==-1)return true;return B(u,d)}}})();', 'after' );
+            // Mapbox GL calls fetch( new Request( url ) ) for its telemetry, so the
+            // URL has to be read off the Request object — a typeof string check
+            // never matches and the call goes out. Stays inline and runs 'before',
+            // because it has to be in place before the bundle issues anything.
+            wp_add_inline_script( 'sk-maps', '(function(){var E="events.mapbox.com";function u(v){return typeof v==="string"?v:(v&&v.url?v.url:(v?String(v):""))}function b(v){return u(v).indexOf(E)!==-1}var O=XMLHttpRequest.prototype.open,S=XMLHttpRequest.prototype.send;XMLHttpRequest.prototype.open=function(m,v){this._skBlocked=b(v);return O.apply(this,arguments)};XMLHttpRequest.prototype.send=function(){if(this._skBlocked)return;return S.apply(this,arguments)};var F=window.fetch;window.fetch=function(v){if(b(v))return Promise.resolve(new Response("",{status:204}));return F.apply(this,arguments)};if(navigator.sendBeacon){var B=navigator.sendBeacon.bind(navigator);navigator.sendBeacon=function(v,d){if(b(v))return true;return B(v,d)}}})();', 'before' );
             wp_enqueue_script( 'sk-mapbox-suggestions', SK_CORE_ASSETS . '/js/suggestions-polyfill.js', [], SK_CORE_VERSION, true );
             wp_enqueue_script( 'sk-mapbox-gl-geocoder', SK_CORE_ASSETS . '/vendor/mapbox/mapbox-gl-geocoder.min.js', [ 'sk-maps' ], SK_CORE_VERSION, true );
         }

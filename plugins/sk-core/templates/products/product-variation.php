@@ -14,9 +14,6 @@ wp_enqueue_script( 'sk-product-variation-dates' );
         <p class="show_if_variable show_if_variable-subscription"><?php esc_html_e( 'Manage attributes and variations for this variable product.', 'sk-core' ); ?></p>
         <p class="show_if_simple show_if_subscription show_if_grouped"><?php esc_html_e( 'Manage attributes for this simple product.', 'sk-core' ); ?></p>
 
-        <a href="#" class="sk-section-toggle">
-            <i class="fas fa-sort-down fa-flip-vertical" aria-hidden="true"></i>
-        </a>
 
         <div class="sk-clearfix"></div>
     </div>

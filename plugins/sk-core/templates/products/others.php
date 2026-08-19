@@ -5,10 +5,6 @@ $post_statuses = sk_get_available_post_status( $post->ID );
 <div class="sk-other-options sk-edit-row sk-clearfix <?php echo esc_attr( $class ); ?>">
     <div class="sk-section-heading" data-togglehandler="sk_other_options">
         <h2><i class="fas fa-cog" aria-hidden="true"></i> <?php esc_html_e( 'Other Options', 'sk-core' ); ?></h2>
-        <p><?php esc_html_e( 'Set your extra product options', 'sk-core' ); ?></p>
-        <a href="#" class="sk-section-toggle">
-            <i class="fas fa-sort-down fa-flip-vertical" aria-hidden="true"></i>
-        </a>
         <div class="sk-clearfix"></div>
     </div>
 

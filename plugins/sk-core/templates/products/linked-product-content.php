@@ -2,9 +2,6 @@
     <div class="sk-section-heading" data-togglehandler="sk_linked_product_options">
         <h2><i class="fas fa-link" aria-hidden="true"></i> <?php _e( 'Linked Products', 'sk-core' ); ?></h2>
         <p><?php _e( 'Set your linked products for upsell and cross-sells', 'sk-core' ); ?></p>
-        <a href="#" class="sk-section-toggle">
-            <i class="fas fa-sort-down fa-flip-vertical" aria-hidden="true"></i>
-        </a>
         <div class="sk-clearfix"></div>
     </div>
 

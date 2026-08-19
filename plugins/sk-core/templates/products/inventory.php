@@ -2,9 +2,6 @@
     <div class="sk-section-heading" data-togglehandler="sk_product_inventory">
         <h2><i class="fas fa-cubes" aria-hidden="true"></i> <?php esc_html_e( 'Inventory', 'sk-core' ); ?></h2>
         <p><?php esc_html_e( 'Manage inventory for this product.', 'sk-core' ); ?></p>
-        <a href="#" class="sk-section-toggle">
-            <i class="fas fa-sort-down fa-flip-vertical" aria-hidden="true"></i>
-        </a>
         <div class="sk-clearfix"></div>
     </div>
 

@@ -19,7 +19,7 @@ class Manager {
      *
      * @var string
      */
-    const TABLE_VERSION = '2';
+    const TABLE_VERSION = '3';
 
     /**
      *
@@ -98,6 +98,28 @@ class Manager {
         if ( ! $wpdb->get_var( "SHOW INDEX FROM {$table} WHERE Key_name = 'post_id'" ) ) {
             $wpdb->query( "ALTER TABLE {$table} ADD KEY post_id (post_id)" );
         }
+
+        // Announcements written before the Dokan rename kept the old post type, so
+        // every query missed them and their notices became unreachable. They were
+        // delivered long ago — mark them read before making them visible again,
+        // otherwise ancient announcements resurface with an unread badge.
+        $wpdb->query(
+            "UPDATE {$table} a
+                JOIN {$wpdb->posts} p ON p.ID = a.post_id
+                SET a.status = 'read'
+              WHERE p.post_type = 'dokan_announcement' AND a.status = 'unread'"
+        );
+
+        $wpdb->query(
+            "UPDATE {$wpdb->posts} SET post_type = 'sk_announcement' WHERE post_type = 'dokan_announcement'"
+        );
+
+        // Notices of users that no longer exist can never be read or displayed.
+        $wpdb->query(
+            "DELETE a FROM {$table} a
+                LEFT JOIN {$wpdb->users} u ON u.ID = a.user_id
+              WHERE u.ID IS NULL"
+        );
         // @codingStandardsIgnoreEnd
 
         if ( $wpdb->last_error ) {
