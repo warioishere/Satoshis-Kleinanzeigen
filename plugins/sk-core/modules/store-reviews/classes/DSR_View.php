@@ -39,7 +39,7 @@ class DSR_View {
      */
     function ajax_handler() {
 
-        switch ( $_POST['data'] ) {
+        switch ( isset( $_POST['data'] ) ? sanitize_key( wp_unslash( $_POST['data'] ) ) : '' ) {
 
             case 'review_form':
                 wp_send_json_success( $this->review_form() );
