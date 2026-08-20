@@ -47,7 +47,6 @@ final class Module {
         require_once SK_REPORT_ABUSE_INCLUDES . '/SingleProduct.php';
         require_once SK_REPORT_ABUSE_INCLUDES . '/EmailLoader.php';
         require_once SK_REPORT_ABUSE_INCLUDES . '/Admin.php';
-        require_once SK_REPORT_ABUSE_INCLUDES . '/Rest.php';
         require_once SK_REPORT_ABUSE_INCLUDES . '/AdminSingleProduct.php';
     }
 
@@ -64,7 +63,6 @@ final class Module {
         new \SK\Modules\ReportAbuse\SingleProduct();
         new \SK\Modules\ReportAbuse\EmailLoader();
         new \SK\Modules\ReportAbuse\Admin();
-        new \SK\Modules\ReportAbuse\Rest();
         new \SK\Modules\ReportAbuse\AdminSingleProduct();
     }
 

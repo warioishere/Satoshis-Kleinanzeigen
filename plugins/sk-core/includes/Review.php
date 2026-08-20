@@ -30,8 +30,6 @@ class Review extends DashboardModule {
     }
 
     protected function register_extras(): void {
-	    add_filter( 'sk_rest_admin_dashboard_monthly_overview_data', [ $this, 'load_monthly_review_count' ], 10, 2 );
-
         add_action( 'sk_review_content_inside_before', array( $this, 'show_seller_enable_message' ) );
         add_action( 'sk_review_content_area_header', array( $this, 'sk_review_header_render' ), 10 );
         add_action( 'sk_review_content', array( $this, 'sk_review_content_render' ), 10 );
@@ -73,43 +71,6 @@ class Review extends DashboardModule {
      *
 	 * @return mixed
 	 */
-	public function load_monthly_review_count( $data, $date_range ) {
-		global $wpdb;
-
-		$reviews_data = $wpdb->get_row(
-			$wpdb->prepare(
-				"SELECT
-                    SUM(CASE WHEN comment_date >= %s THEN 1 ELSE 0 END) AS current_reviews,
-                    SUM(CASE WHEN comment_date < %s THEN 1 ELSE 0 END) AS previous_reviews
-                FROM $wpdb->comments
-                WHERE comment_type = 'review'
-                AND comment_approved = 1
-                AND comment_date BETWEEN %s AND %s",
-				$date_range['current_month_start'],
-				$date_range['current_month_start'],
-				$date_range['previous_month_start'],
-				$date_range['current_month_end']
-			)
-		);
-
-		$reviews_current  = $reviews_data->current_reviews ?? 0;
-		$reviews_previous = $reviews_data->previous_reviews ?? 0;
-
-		// Apply filters to modify the review count data.
-		$data['reviews'] = apply_filters(
-			'sk_dashboard_monthly_reviews_count',
-			[
-				'icon'     => 'Star',
-				'current'  => (int) $reviews_current,
-				'previous' => (int) $reviews_previous,
-				'title'    => esc_html__( 'Reviews', 'sk-core' ),
-				'tooltip'  => esc_html__( 'Total new reviews in the time period', 'sk-core' ),
-                'position' => 70,
-			]
-		);
-
-		return $data;
-	}
 
     /**
      * Load Review template

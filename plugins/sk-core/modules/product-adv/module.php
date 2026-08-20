@@ -111,8 +111,6 @@ final class Module {
      */
     public function init_hooks() {
         // set action hooks
-        add_filter( 'sk_rest_api_class_map', [ $this, 'rest_api_class_map' ] ); // include rest api class
-
         // set template path
         add_filter( 'sk_set_template_path', [ $this, 'load_templates' ], 10, 3 );
 
@@ -163,12 +161,6 @@ final class Module {
      *
      * @return array
      */
-    public function rest_api_class_map( $classes ) {
-        $class[ SK_PRODUCT_ADVERTISEMENT_INC . '/REST/AdvertisementController.php' ] = '\SK\Modules\ProductAdvertisement\REST\AdvertisementController';
-
-        return array_merge( $classes, $class );
-    }
-
     /**
      * Set template path for Product Advertisement module
      *

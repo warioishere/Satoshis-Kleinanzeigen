@@ -125,9 +125,6 @@ class Module {
         // Allow vendor to import only allowed number of products
         add_filter( 'woocommerce_product_import_pre_insert_product_object', [ __CLASS__, 'import_products' ] );
 
-        // include rest api class
-        add_filter( 'sk_rest_api_class_map', [ __CLASS__, 'rest_api_class_map' ] );
-
         // include email class
         add_action( 'sk_loaded', [ __CLASS__, 'load_emails' ], 20 );
 
@@ -1357,16 +1354,6 @@ class Module {
      *
      * @return array
      */
-    public static function rest_api_class_map( $classes ) {
-        $class = [
-            dirname( __FILE__ ) . '/api/class-subscription-controller.php'                 => 'SK_REST_Subscription_Controller',
-            dirname( __FILE__ ) . '/api/class-vendor-subscription-controller.php'          => 'SK_REST_Vendor_Subscription_Controller',
-            dirname( __FILE__ ) . '/api/class-vendor-subscription-packages-controller.php' => 'SK_REST_Vendor_Subscription_Packages_Controller',
-            dirname( __FILE__ ) . '/api/class-vendor-subscription-orders-controller.php'   => 'SK_REST_Vendor_Subscription_Orders_Controller',
-        ];
-
-        return array_merge( $classes, $class );
-    }
 
     /**
      * Register email class

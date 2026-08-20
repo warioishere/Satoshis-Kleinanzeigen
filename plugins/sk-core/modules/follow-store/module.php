@@ -2,7 +2,6 @@
 
 namespace SK\Modules\FollowStore;
 
-use SkFollowStoreRestController;
 
 final class Module {
 
@@ -92,7 +91,6 @@ final class Module {
 
         // flush rewrite rules
         add_action( 'woocommerce_flush_rewrite_rules', [ $this, 'flush_rewrite_rules' ] );
-        add_filter( 'sk_rest_api_class_map', [ $this, 'rest_api_class_map' ] );
         add_action( 'plugins_loaded', [ $this, 'load_background_class' ] );
     }
 
@@ -125,12 +123,6 @@ final class Module {
     public function flush_rewrite_rules() {
         sk()->rewrite->register_rule();
         flush_rewrite_rules( true );
-    }
-
-    public function rest_api_class_map( $class_map ) {
-        $class_map[ SK_FOLLOW_STORE_PATH . '/includes/class-sk-follow-store-rest-controller.php' ] = SkFollowStoreRestController::class;
-
-        return $class_map;
     }
 
     public function load_background_class() {

@@ -34,7 +34,6 @@ class Module {
         // Loads frontend scripts and styles
         add_action( 'init', array( $this, 'register_scripts' ) );
         add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
-        add_filter( 'sk_rest_api_class_map', array( $this, 'rest_api_class_map' ) );
     }
 
     /**
@@ -102,11 +101,6 @@ class Module {
      *
      * @return void
      */
-    public function rest_api_class_map( $class_map ) {
-        $class_map[ SK_SELLER_RATINGS_DIR . '/classes/api/class-store-reviews-controller.php' ] = 'SK_REST_Store_Review_Controller';
-
-        return $class_map;
-    }
 
     /**
      * Register Custom Post type for Store Reviews

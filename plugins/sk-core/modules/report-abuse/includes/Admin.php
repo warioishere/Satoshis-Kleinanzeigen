@@ -14,7 +14,6 @@ class Admin {
         add_action( 'sk_admin_menu', [ self::class, 'add_admin_menu' ] );
         add_action( 'init', [ self::class, 'register_scripts' ] );
         add_action( 'sk_after_saving_settings', [ $this, 'after_save_settings' ], 10, 3 );
-        add_filter( 'sk_admin_dashboard_pages_settings', [ $this, 'load_most_reported_vendors' ] );
     }
 
     /**
@@ -74,9 +73,4 @@ class Admin {
      *
      * @return array
      */
-    public function load_most_reported_vendors( array $localized_data ): array {
-        $localized_data['show_most_reported_vendors'] = true;
-
-        return $localized_data;
-    }
 }

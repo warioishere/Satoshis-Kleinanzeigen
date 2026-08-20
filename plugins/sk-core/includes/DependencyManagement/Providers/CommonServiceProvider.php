@@ -18,7 +18,6 @@ class CommonServiceProvider extends BaseServiceProvider {
 		\SK\Core\Privacy::class,
 		\SK\Core\Exceptions\Handler::class,
 		\SK\Core\Shortcodes\FullWidthVendorLayout::class,
-		\SK\Core\Vendor\ApiMeta::class,
 		\SK\Core\StoreCategory::class,
 		\SK\Core\Store::class,
 		\SK\Core\Review::class,
