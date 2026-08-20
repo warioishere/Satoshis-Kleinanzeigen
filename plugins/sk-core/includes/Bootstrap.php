@@ -58,7 +58,6 @@ class Bootstrap {
     }
 
     public function load_filters() {
-        add_filter( 'sk_rest_api_class_map', [ $this, 'rest_api_class_map' ] );
         add_filter( 'sk_is_pro_exists', '__return_true', 99 );
         add_filter( 'sk_query_var_filter', [ $this, 'load_query_var' ], 10 );
         add_filter( 'sk_widgets', [ $this, 'register_widgets' ] );
@@ -163,10 +162,6 @@ class Bootstrap {
     public function register_widgets( $widgets ) {
         $widgets['feature_seller'] = Widgets\FeatureSeller::class;
         return $widgets;
-    }
-
-    public function rest_api_class_map( $class_map ) {
-        return REST\ExtendedManager::register_rest_routes( $class_map );
     }
 
     public function load_query_var( $query_vars ) {

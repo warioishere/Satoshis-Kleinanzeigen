@@ -27,7 +27,7 @@ class ExtendedManager extends ProductManager {
             return [];
         }
 
-        $ids = sk_search_seller_products( $term, $user_ids, '', true );
+        $ids = sk_search_seller_products( $term, $user_ids );
 
         if ( ! empty( $exclude ) ) {
             $ids = array_diff( $ids, (array) sanitize_text_field( wp_unslash( $exclude ) ) );

@@ -173,25 +173,6 @@ class Manager {
         if ( ! empty( $this->class_map ) ) {
             return;
         }
-        $this->class_map = apply_filters(
-            'sk_rest_api_class_map', array(
-                SK_CORE_DIR . '/includes/REST/AdminReportController.php'             => 'SK\Core\REST\AdminReportController',
-                SK_CORE_DIR . '/includes/REST/AdminDashboardController.php'          => 'SK\Core\REST\AdminDashboardController',
-                SK_CORE_DIR . '/includes/REST/AdminMiscController.php'               => 'SK\Core\REST\AdminMiscController',
-                SK_CORE_DIR . '/includes/REST/AdminSetupGuideController.php'         => 'SK\Core\REST\AdminSetupGuideController',
-                SK_CORE_DIR . '/includes/REST/StoreController.php'                   => '\SK\Core\REST\StoreController',
-                SK_CORE_DIR . '/includes/REST/ProductController.php'                 => '\SK\Core\REST\ProductController',
-                SK_CORE_DIR . '/includes/REST/ProductControllerV2.php'               => '\SK\Core\REST\ProductControllerV2',
-                SK_CORE_DIR . '/includes/REST/StoreSettingController.php'            => '\SK\Core\REST\StoreSettingController',
-                SK_CORE_DIR . '/includes/REST/StoreSettingControllerV2.php'          => '\SK\Core\REST\StoreSettingControllerV2',
-                SK_CORE_DIR . '/includes/REST/VendorDashboardController.php'         => '\SK\Core\REST\VendorDashboardController',
-                SK_CORE_DIR . '/includes/REST/ProductBlockController.php'            => '\SK\Core\REST\ProductBlockController',
-                SK_CORE_DIR . '/includes/REST/CustomersController.php'               => '\SK\Core\REST\CustomersController',
-                SK_CORE_DIR . '/includes/REST/SkDataCountriesController.php'      => '\SK\Core\REST\SkDataCountriesController',
-                SK_CORE_DIR . '/includes/REST/SkDataContinentsController.php'     => '\SK\Core\REST\SkDataContinentsController',
-                SK_CORE_DIR . '/includes/REST/VendorProductCategoriesController.php' => '\SK\Core\REST\VendorProductCategoriesController',
-                SK_CORE_DIR . '/includes/REST/ExportController.php'                => '\SK\Core\REST\ExportController',
-            )
-        );
+        $this->class_map = apply_filters( 'sk_rest_api_class_map', array() );
     }
 }

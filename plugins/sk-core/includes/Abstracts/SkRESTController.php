@@ -64,9 +64,7 @@ abstract class SkRESTController extends WP_REST_Controller {
         $id   = (int) $request['id'];
         $post = get_post( $id );
 
-        if ( ! empty( $post->post_type ) && 'product_variation' === $post->post_type && 'product' === $this->post_type ) {
-            return new WP_Error( "sk_rest_invalid_{$this->post_type}_id", __( 'To manipulate product variations you should use the /products/&lt;product_id&gt;/variations/&lt;id&gt; endpoint.', 'sk-core' ), array( 'status' => 404 ) );
-        } elseif ( empty( $id ) || empty( $post->ID ) || $post->post_type !== $this->post_type ) {
+        if ( empty( $id ) || empty( $post->ID ) || $post->post_type !== $this->post_type ) {
             return new WP_Error( "sk_rest_invalid_{$this->post_type}_id", __( 'Invalid ID.', 'sk-core' ), array( 'status' => 404 ) );
         }
 

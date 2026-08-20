@@ -183,16 +183,15 @@ function sk_get_product_visibility_options() {
  *
  * @param string $term
  * @param string $user_ids
- * @param string $type               of product
- * @param bool   $include_variations in search or not
+ * @param string $type     of product
  *
  * @return array of ids
  */
-function sk_search_seller_products( $term, $user_ids = false, $type = '', $include_variations = false ) {
+function sk_search_seller_products( $term, $user_ids = false, $type = '' ) {
     global $wpdb;
 
     $like_term     = '%' . $wpdb->esc_like( $term ) . '%';
-    $post_types    = $include_variations ? [ 'product', 'product_variation' ] : [ 'product' ];
+    $post_types    = [ 'product' ];
     $post_statuses = current_user_can( 'edit_private_products' ) ? [ 'private', 'publish' ] : [ 'publish' ];
     $type_join     = '';
     $type_where    = '';
@@ -244,9 +243,7 @@ function sk_search_seller_products( $term, $user_ids = false, $type = '', $inclu
         $post_id   = absint( $term );
         $post_type = get_post_type( $post_id );
 
-        if ( 'product_variation' === $post_type && $include_variations ) {
-            $product_ids[] = $post_id;
-        } elseif ( 'product' === $post_type ) {
+        if ( 'product' === $post_type ) {
             $product_ids[] = $post_id;
         }
 
