@@ -40,7 +40,10 @@ class Registration {
             return new WP_Error( 'nonce_verification_failed', __( 'Nonce verification failed', 'sk-core' ) );
         }
 
-        $allowed_roles = apply_filters( 'sk_register_user_role', [ 'customer', 'seller' ] );
+        // Only sellers register here. The form carries no role field, so a POST
+        // naming one is hand-crafted — 171 spam accounts on staging arrived as
+        // role=customer, which skipped every required field below.
+        $allowed_roles = apply_filters( 'sk_register_user_role', [ 'seller' ] );
 
         // is the role name allowed or user is trying to manipulate?
         if ( empty( $_POST['role'] ) || ( ! in_array( $_POST['role'], $allowed_roles, true ) ) ) {
@@ -88,8 +91,8 @@ class Registration {
             return $data;
         }
 
-        $allowed_roles = apply_filters( 'sk_register_user_role', [ 'customer', 'seller' ] );
-        $role          = ( isset( $_POST['role'] ) && in_array( $_POST['role'], $allowed_roles, true ) ) ? sanitize_text_field( wp_unslash( $_POST['role'] ) ) : 'customer';
+        $allowed_roles = apply_filters( 'sk_register_user_role', [ 'seller' ] );
+        $role          = ( isset( $_POST['role'] ) && in_array( $_POST['role'], $allowed_roles, true ) ) ? sanitize_text_field( wp_unslash( $_POST['role'] ) ) : 'seller';
 
         $data['role'] = $role;
 
