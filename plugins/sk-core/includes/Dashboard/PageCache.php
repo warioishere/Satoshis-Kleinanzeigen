@@ -99,13 +99,23 @@ final class PageCache {
     /**
      * Files whose modification invalidates every cached page.
      *
+     * One deploy marker instead of a hand-kept list of source files. Every
+     * deploy is a `git reset --hard` in wp-content, which rewrites the index,
+     * so any change ships with a fresh version — regardless of which file it
+     * touched. The list it replaces only covered the buy-now sources and had
+     * gone stale on top of that: it still named mu-plugins/nostr-login-box.php,
+     * deleted long before, while four deploys in a row left the version sitting
+     * on the previous day's timestamp.
+     *
+     * Should wp-content ever stop being a checkout, the file_exists() guard in
+     * refresh_file_version() skips this and the version stays constant — the
+     * cache then ages out via TTL, which is what it did before anyway.
+     *
      * @return string[]
      */
     private static function watched_files(): array {
         return [
-            WP_CONTENT_DIR . '/mu-plugins/nostr-login-box.php',
-            WP_CONTENT_DIR . '/plugins/sk-core/includes/BuyNow.php',
-            WP_CONTENT_DIR . '/plugins/sk-core/assets/js/sk-buynow.js',
+            WP_CONTENT_DIR . '/.git/index',
         ];
     }
 
