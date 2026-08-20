@@ -104,16 +104,9 @@ class SK_Follow_Store_Email extends WC_Email {
     public function process_admin_options() {
         parent::process_admin_options();
 
-        // do stuff the unschedule event
-        $frequency = $this->get_option( 'frequency' );
-        // Clear existing schedule
-        $timestamp = wp_next_scheduled( 'sk_follow_store_send_updates' );
-        if ( $timestamp ) {
-            wp_unschedule_event( $timestamp, 'sk_follow_store_send_updates' );
-        }
-
-        // Always reschedule after clearing
-        wp_schedule_event( time(), $frequency, 'sk_follow_store_send_updates' );
+        // One place decides whether and how often the event runs; saving the
+        // settings only asks it to look again.
+        SK_Follow_Store_Cron::maybe_schedule_event();
     }
 
     /**

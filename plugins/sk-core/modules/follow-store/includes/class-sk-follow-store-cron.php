@@ -1,6 +1,17 @@
 <?php
 
 class SK_Follow_Store_Cron {
+
+    /**
+     * Cron hook name.
+     */
+    const HOOK = 'sk_follow_store_send_updates';
+
+    /**
+     * WooCommerce settings option of the digest email.
+     */
+    const SETTINGS_OPTION = 'woocommerce_updates_for_store_followers_settings';
+
     /**
      * Class constructor
      *
@@ -9,7 +20,72 @@ class SK_Follow_Store_Cron {
      */
     public function __construct() {
         add_filter( 'cron_schedules', array( $this, 'add_weekly_schedule' ) );
-        add_action( 'sk_follow_store_send_updates', array( $this, 'send_based_on_frequency' ) );
+        add_action( 'init', array( __CLASS__, 'maybe_schedule_event' ), 20 );
+        add_action( self::HOOK, array( $this, 'send_based_on_frequency' ) );
+    }
+
+    /**
+     * Is the digest email switched on?
+     *
+     * Reads the WooCommerce option directly so this stays cheap enough for
+     * every request — booting WC_Emails just to read a checkbox would not be.
+     *
+     *
+     * @return bool
+     */
+    public static function is_enabled() {
+        $settings = get_option( self::SETTINGS_OPTION, array() );
+
+        return ! isset( $settings['enabled'] ) || 'yes' === $settings['enabled'];
+    }
+
+    /**
+     * Keep the cron event in step with the email settings.
+     *
+     * The event used to be scheduled only by process_admin_options(), so it
+     * existed only if an admin had saved the email settings at least once —
+     * which had never happened, and the digest therefore never went out.
+     *
+     *
+     * @return void
+     */
+    public static function maybe_schedule_event() {
+        $event = wp_get_scheduled_event( self::HOOK );
+
+        if ( ! self::is_enabled() ) {
+            if ( $event ) {
+                wp_unschedule_event( $event->timestamp, self::HOOK );
+            }
+
+            return;
+        }
+
+        $frequency = self::get_frequency();
+
+        if ( $event && $event->schedule === $frequency ) {
+            return;
+        }
+
+        if ( $event ) {
+            wp_unschedule_event( $event->timestamp, self::HOOK );
+        }
+
+        wp_schedule_event( self::next_run_timestamp(), $frequency, self::HOOK );
+    }
+
+    /**
+     * First run: the coming 8 o'clock, site time.
+     *
+     * Not time(), which would fire the digest on the next cron tick right after
+     * a deploy or a settings save.
+     *
+     *
+     * @return int
+     */
+    private static function next_run_timestamp() {
+        $next = sk_current_datetime()->modify( 'tomorrow 8:00' );
+
+        return $next ? $next->getTimestamp() : time() + DAY_IN_SECONDS;
     }
     public function send_based_on_frequency() {
         if ( $this->get_frequency() === 'daily' ) {
@@ -36,11 +112,11 @@ class SK_Follow_Store_Cron {
      *
      * @return string 'daily' or 'weekly'
      */
-    public function get_frequency() {
-            $option_key = 'woocommerce_updates_for_store_followers_settings';
-            $settings = get_option( $option_key, array() );
-            return isset($settings['frequency']) ? $settings['frequency'] : 'daily';
-    } 
+    public static function get_frequency() {
+        $settings = get_option( self::SETTINGS_OPTION, array() );
+
+        return isset( $settings['frequency'] ) && 'weekly' === $settings['frequency'] ? 'weekly' : 'daily';
+    }
     /**
      * Unschedule cron
      *
@@ -50,9 +126,9 @@ class SK_Follow_Store_Cron {
      * @return void
      */
     public static function unschedule_event() {
-        $timestamp = wp_next_scheduled( 'sk_follow_store_send_updates' );
+        $timestamp = wp_next_scheduled( self::HOOK );
         if ( $timestamp ) {
-            wp_unschedule_event( $timestamp, 'sk_follow_store_send_updates' );
+            wp_unschedule_event( $timestamp, self::HOOK );
         }
     }
 
