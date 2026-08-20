@@ -143,12 +143,6 @@ class Products {
             update_post_meta( $post_id, '_height', '' );
         }
 
-        // Save external
-        if ( 'external' === $product_type ) {
-            update_post_meta( $post_id, '_product_url', isset( $post_data['_product_url'] ) ? $post_data['_product_url'] : '' );
-            update_post_meta( $post_id, '_button_text', isset( $post_data['_button_text'] ) ? $post_data['_button_text'] : '' );
-        }
-
     }
 
     /**
@@ -404,13 +398,9 @@ class Products {
      * @return array
      */
     public function set_default_product_types( $product_types ) {
-        // No 'variable': variable products need the attribute and variation editor,
-        // which this dashboard no longer offers.
-        $product_types = array(
-            'simple'   => __( 'Simple', 'sk-core' ),
-            'external' => __( 'External/Affiliate product', 'sk-core' ),
+        return array(
+            'simple' => __( 'Simple', 'sk-core' ),
         );
-        return $product_types;
     }
 
     /**
@@ -452,30 +442,6 @@ class Products {
      *
      * @return void
      */
-    /**
-     * External product content
-     *
-     *
-     * @return void
-     */
-    public function external_product_content( $post, $post_id ) {
-        $product_types = apply_filters( 'sk_product_types', 'simple' );
-
-        if ( ! array_key_exists( 'external', $product_types ) ) {
-            return;
-        }
-
-        sk_get_template_part(
-            'products/external-product',
-            '',
-            array(
-                'pro'     => true,
-                'post'    => $post,
-                'post_id' => $post_id,
-                'product' => wc_get_product( $post_id ),
-            )
-        );
-    }
 
     /**
      * Remove unwanted meta_keys while duplicating product

@@ -263,7 +263,7 @@ do_action( 'sk_dashboard_wrap_before', $post, $post_id );
                                         ?>
                                     </div>
 
-                                    <div class="show_if_simple sk-clearfix show_if_external">
+                                    <div class="show_if_simple sk-clearfix">
 
                                         <div class="sk-form-group sk-clearfix sk-price-container">
 

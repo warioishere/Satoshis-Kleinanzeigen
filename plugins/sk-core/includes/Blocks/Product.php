@@ -27,10 +27,6 @@ class Product {
      * @return array
      */
     public function set_block_data( $block, $product, $context = 'view' ) {
-        // External product type.
-        $block['general']['external_url'] = $product->is_type( 'external' ) ? $product->get_product_url( $context ) : '';
-        $block['general']['button_text'] = $product->is_type( 'external' ) ? $product->get_button_text( $context ) : '';
-
         return $block;
     }
 

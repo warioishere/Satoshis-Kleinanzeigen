@@ -39,7 +39,7 @@ if ( $tax_classes ) {
         </div>
     </div>
 
-    <div class="sk-form-group hide_if_variable <?php echo ( $product_type == 'simple' ) ? 'show_if_stock' : ''; ?>">
+    <div class="sk-form-group <?php echo ( $product_type == 'simple' ) ? 'show_if_stock' : ''; ?>">
         <label class="sk-w4 sk-control-label" for="_stock_status"><?php _e( 'Stock Status', 'sk-core' ); ?></label>
         <div class="sk-w4 sk-text-left">
             <?php sk_post_input_box( $post->ID, '_stock_status', array( 'options' => array(

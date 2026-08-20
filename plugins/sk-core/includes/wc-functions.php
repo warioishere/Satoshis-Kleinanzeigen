@@ -90,17 +90,10 @@ function sk_process_product_meta( int $post_id, array $data = [] ) {
     }
 
     // Prepare price variables for WC product API (used below in $product->set_*())
-    $date_from     = '';
-    $date_to       = '';
-    $regular_price = '';
-    $sale_price    = '';
-
-    if ( 'variable' !== $product_type ) {
-        $date_from     = isset( $data['_sale_price_dates_from'] ) ? (string) wc_clean( $data['_sale_price_dates_from'] ) : '';
-        $date_to       = isset( $data['_sale_price_dates_to'] ) ? (string) wc_clean( $data['_sale_price_dates_to'] ) : '';
-        $regular_price = isset( $data['_regular_price'] ) ? (string) wc_clean( $data['_regular_price'] ) : '';
-        $sale_price    = isset( $data['_sale_price'] ) ? (string) wc_clean( $data['_sale_price'] ) : '';
-    }
+    $date_from     = isset( $data['_sale_price_dates_from'] ) ? (string) wc_clean( $data['_sale_price_dates_from'] ) : '';
+    $date_to       = isset( $data['_sale_price_dates_to'] ) ? (string) wc_clean( $data['_sale_price_dates_to'] ) : '';
+    $regular_price = isset( $data['_regular_price'] ) ? (string) wc_clean( $data['_regular_price'] ) : '';
+    $sale_price    = isset( $data['_sale_price'] ) ? (string) wc_clean( $data['_sale_price'] ) : '';
 
     //enable reviews
     $comment_status = 'closed';
@@ -135,16 +128,7 @@ function sk_process_product_meta( int $post_id, array $data = [] ) {
         $manage_stock = 'no';
         $backorders   = 'no';
         $stock_status = wc_clean( $data['_stock_status'] );
-        if ( 'external' === $product_type ) {
-            $stock_status = 'instock';
-        } elseif ( 'variable' === $product_type ) {
-            // Stock status is always determined by children so sync later
-            $stock_status = '';
-            if ( ! empty( $data['_manage_stock'] ) && $data['_manage_stock'] === 'yes' ) {
-                $manage_stock = 'yes';
-                $backorders   = wc_clean( $data['_backorders'] );
-            }
-        } elseif ( ! empty( $data['_manage_stock'] ) ) {
+        if ( ! empty( $data['_manage_stock'] ) ) {
             $manage_stock = $data['_manage_stock'];
             $backorders   = wc_clean( $data['_backorders'] );
         }
@@ -166,11 +150,7 @@ function sk_process_product_meta( int $post_id, array $data = [] ) {
         $stock_amount = 'yes' === $manage_stock ? wc_stock_amount( wp_unslash( $stock_amount ) ) : '';
         // Only update the stock amount if it has changed
         if ( $original_stock != $stock_amount ) {
-            if ( 'variable' === $product_type ) {
-                update_post_meta( $post_id, '_stock', $stock_amount );
-            } else {
-                wc_update_product_stock( $post_id, $stock_amount );
-            }
+            wc_update_product_stock( $post_id, $stock_amount );
         }
 
         // Update low stock amount regardless of stock changes

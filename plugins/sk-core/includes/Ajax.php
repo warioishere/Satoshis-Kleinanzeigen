@@ -3,7 +3,6 @@
 namespace SK\Core;
 
 use WC_Meta_Box_Product_Data;
-use WC_Product_Variable;
 use WC_Tax;
 
 /**

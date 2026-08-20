@@ -12,7 +12,7 @@
             <?php sk_post_input_box( $post_id, '_sku' ); ?>
         </div>
 
-        <div class="content-half-part hide_if_variable hide_if_external hide_if_stock_global">
+        <div class="content-half-part hide_if_stock_global">
             <label for="_stock_status" class="form-label"><?php esc_html_e( 'Stock Status', 'sk-core' ); ?></label>
 
             <?php
@@ -34,7 +34,7 @@
         <div class="sk-clearfix"></div>
 
         <?php if ( 'yes' === get_option( 'woocommerce_manage_stock' ) ) : ?>
-        <div class="sk-form-group hide_if_grouped hide_if_external">
+        <div class="sk-form-group">
             <?php sk_post_input_box( $post_id, '_manage_stock', array( 'label' => __( 'Enable product stock management', 'sk-core' ) ), 'checkbox' ); ?>
         </div>
 
@@ -76,7 +76,7 @@
         </div><!-- .show_if_stock -->
         <?php endif; ?>
 
-        <div class="sk-form-group hide_if_grouped hide_if_external">
+        <div class="sk-form-group">
             <?php sk_post_input_box( $post_id, '_sold_individually', array( 'label' => __( 'Allow only one quantity of this product to be bought in a single order', 'sk-core' ) ), 'checkbox' ); ?>
         </div>
 

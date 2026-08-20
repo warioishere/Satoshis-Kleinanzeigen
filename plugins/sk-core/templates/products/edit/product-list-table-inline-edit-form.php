@@ -88,7 +88,7 @@
                         </div>
                     <?php } ?>
 
-                    <?php if ( 'simple' === $product_type || 'external' === $product_type || 'subscription' === $product_type ) { ?>
+                    <?php if ( 'simple' === $product_type || 'subscription' === $product_type ) { ?>
                         <div class="sk-inline-edit-field-row sk-clearfix">
                             <label class="sk-w3">
                                 <?php esc_html_e( 'Price', 'sk-core' ); ?>
@@ -155,7 +155,7 @@
 
                     <hr>
 
-                    <?php if ( ( 'simple' === $product_type || 'variable' === $product_type ) && $options['can_manage_stock'] ) { ?>
+                    <?php if ( 'simple' === $product_type && $options['can_manage_stock'] ) { ?>
                         <label>
                             <input type="checkbox" data-field-name="manage_stock" value="open" data-field-toggler <?php checked( $manage_stock, true ); ?>> &nbsp;
                             <?php esc_html_e( 'Manage Stock', 'sk-core' ); ?>

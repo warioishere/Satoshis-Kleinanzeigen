@@ -844,9 +844,7 @@ function sk_get_post_status_label_class( $status = '' ) {
 function sk_get_product_types( $status = '' ) {
     $types = apply_filters(
         'sk_get_product_types', [
-            'simple'   => __( 'Simple Product', 'sk-core' ),
-            'variable' => __( 'Variable Product', 'sk-core' ),
-            'external' => __( 'External/Affiliate Product', 'sk-core' ),
+            'simple' => __( 'Simple Product', 'sk-core' ),
         ]
     );
 

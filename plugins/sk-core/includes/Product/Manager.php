@@ -162,39 +162,30 @@ class Manager {
             $product->set_attributes( $args['attributes'] );
         }
 
-        // Sales and prices.
-        if ( $product->is_type( 'variable' ) ) {
-            $product->set_regular_price( '' );
-            $product->set_sale_price( '' );
-            $product->set_date_on_sale_to( '' );
-            $product->set_date_on_sale_from( '' );
-            $product->set_price( '' );
-        } else {
-            // Regular Price.
-            if ( isset( $args['regular_price'] ) ) {
-                $product->set_regular_price( $args['regular_price'] );
-            }
+        // Regular Price.
+        if ( isset( $args['regular_price'] ) ) {
+            $product->set_regular_price( $args['regular_price'] );
+        }
 
-            // Sale Price.
-            if ( isset( $args['sale_price'] ) ) {
-                $product->set_sale_price( $args['sale_price'] );
-            }
+        // Sale Price.
+        if ( isset( $args['sale_price'] ) ) {
+            $product->set_sale_price( $args['sale_price'] );
+        }
 
-            if ( isset( $args['date_on_sale_from'] ) ) {
-                $product->set_date_on_sale_from( $args['date_on_sale_from'] );
-            }
+        if ( isset( $args['date_on_sale_from'] ) ) {
+            $product->set_date_on_sale_from( $args['date_on_sale_from'] );
+        }
 
-            if ( isset( $args['date_on_sale_from_gmt'] ) ) {
-                $product->set_date_on_sale_from( $args['date_on_sale_from_gmt'] ? strtotime( $args['date_on_sale_from_gmt'] ) : null );
-            }
+        if ( isset( $args['date_on_sale_from_gmt'] ) ) {
+            $product->set_date_on_sale_from( $args['date_on_sale_from_gmt'] ? strtotime( $args['date_on_sale_from_gmt'] ) : null );
+        }
 
-            if ( isset( $args['date_on_sale_to'] ) ) {
-                $product->set_date_on_sale_to( $args['date_on_sale_to'] );
-            }
+        if ( isset( $args['date_on_sale_to'] ) ) {
+            $product->set_date_on_sale_to( $args['date_on_sale_to'] );
+        }
 
-            if ( isset( $args['date_on_sale_to_gmt'] ) ) {
-                $product->set_date_on_sale_to( $args['date_on_sale_to_gmt'] ? strtotime( $args['date_on_sale_to_gmt'] ) : null );
-            }
+        if ( isset( $args['date_on_sale_to_gmt'] ) ) {
+            $product->set_date_on_sale_to( $args['date_on_sale_to_gmt'] ? strtotime( $args['date_on_sale_to_gmt'] ) : null );
         }
 
         // Product parent ID.
@@ -226,16 +217,8 @@ class Manager {
                 $product->set_backorders( $args['backorders'] );
             }
 
-            if ( $product->is_type( 'external' ) ) {
-                $product->set_manage_stock( 'no' );
-                $product->set_backorders( 'no' );
-                $product->set_stock_quantity( '' );
-                $product->set_stock_status( 'instock' );
-            } elseif ( $product->get_manage_stock() ) {
-                // Stock status is always determined by children so sync later.
-                if ( ! $product->is_type( 'variable' ) ) {
-                    $product->set_stock_status( $stock_status );
-                }
+            if ( $product->get_manage_stock() ) {
+                $product->set_stock_status( $stock_status );
 
                 // Stock quantity.
                 if ( isset( $args['stock_quantity'] ) ) {
@@ -251,7 +234,7 @@ class Manager {
                 $product->set_stock_quantity( '' );
                 $product->set_stock_status( $stock_status );
             }
-        } elseif ( ! $product->is_type( 'variable' ) ) {
+        } else {
             $product->set_stock_status( $stock_status );
         }
 
@@ -290,22 +273,6 @@ class Manager {
             if ( isset( $args['download_expiry'] ) ) {
                 $product->set_download_expiry( $args['download_expiry'] );
             }
-        }
-
-        // Product url and button text for external products.
-        if ( $product->is_type( 'external' ) ) {
-            if ( isset( $args['external_url'] ) ) {
-                $product->set_product_url( $args['external_url'] );
-            }
-
-            if ( isset( $args['button_text'] ) ) {
-                $product->set_button_text( $args['button_text'] );
-            }
-        }
-
-        // Save default attributes for variable products.
-        if ( $product->is_type( 'variable' ) ) {
-            $product = $this->save_default_attributes( $product, $args );
         }
 
         // Set featured image id
@@ -349,66 +316,6 @@ class Manager {
         $product_id = $product->save();
 
         return wc_get_product( $product_id );
-    }
-
-    /**
-     * Save default attributes.
-     *
-     *
-     * @param WC_Product      $product Product instance.
-     * @param \WP_REST_Request $request Request data.
-     *
-     * @return WC_Product
-     */
-    public function save_default_attributes( $product, $request ) {
-        if ( isset( $request['default_attributes'] ) && is_array( $request['default_attributes'] ) ) {
-            $attributes         = $product->get_attributes();
-            $default_attributes = [];
-
-            foreach ( $request['default_attributes'] as $attribute ) {
-                $attribute_id   = 0;
-                $attribute_name = '';
-
-                // Check ID for global attributes or name for product attributes.
-                if ( ! empty( $attribute['id'] ) ) {
-                    $attribute_id   = absint( $attribute['id'] );
-                    $attribute_name = wc_attribute_taxonomy_name_by_id( $attribute_id );
-                } elseif ( ! empty( $attribute['name'] ) ) {
-                    $attribute_name = sanitize_title( $attribute['name'] );
-                }
-
-                if ( ! $attribute_id && ! $attribute_name ) {
-                    continue;
-                }
-
-                if ( isset( $attributes[ $attribute_name ] ) ) {
-                    $_attribute = $attributes[ $attribute_name ];
-
-                    if ( $_attribute['is_variation'] ) {
-                        $value = isset( $attribute['option'] ) ? wc_clean( stripslashes( $attribute['option'] ) ) : '';
-
-                        if ( ! empty( $_attribute['is_taxonomy'] ) ) {
-                            // If dealing with a taxonomy, we need to get the slug from the name posted to the API.
-                            $term = get_term_by( 'name', $value, $attribute_name );
-
-                            if ( $term && ! is_wp_error( $term ) ) {
-                                $value = $term->slug;
-                            } else {
-                                $value = sanitize_title( $value );
-                            }
-                        }
-
-                        if ( $value ) {
-                            $default_attributes[ $attribute_name ] = $value;
-                        }
-                    }
-                }
-            }
-
-            $product->set_default_attributes( $default_attributes );
-        }
-
-        return $product;
     }
 
     /**
@@ -543,23 +450,8 @@ class Manager {
      * @return mixed
      */
     protected function maybe_update_stock_status( $product, $stock_status ) {
-        if ( $product->is_type( 'external' ) ) {
-            // External products are always in stock.
-            $product->set_stock_status( 'instock' );
-        } elseif ( isset( $stock_status ) ) {
-            if ( $product->is_type( 'variable' ) && ! $product->get_manage_stock() ) {
-                // Stock status is determined by children.
-                foreach ( $product->get_children() as $child_id ) {
-                    $child = wc_get_product( $child_id );
-                    if ( ! $product->get_manage_stock() ) {
-                        $child->set_stock_status( $stock_status );
-                        $child->save();
-                    }
-                }
-                $product = \WC_Product_Variable::sync( $product, false );
-            } else {
-                $product->set_stock_status( $stock_status );
-            }
+        if ( isset( $stock_status ) ) {
+            $product->set_stock_status( $stock_status );
         }
 
         return $product;

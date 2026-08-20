@@ -90,10 +90,6 @@ class Module {
                         continue;
                     }
 
-                    if ( 'variable' === $product->get_type() ) {
-                        $price = wc_price( $product->get_variation_price() ) . ' - ' . wc_price( $product->get_variation_price( 'max' ) );
-                    }
-
                     $get_product_image = esc_url( get_the_post_thumbnail_url( $result->ID, 'thumbnail' ) );
 
                     if ( empty( $get_product_image ) && function_exists( 'wc_placeholder_img_src' ) ) {
