@@ -2,6 +2,11 @@
 
 class SK_Follow_Store_Install {
 
+    /** Bump to let maybe_upgrade_tables() apply schema changes. */
+    const DB_VERSION = '1';
+
+    const VERSION_OPTION = 'sk_follow_store_db_version';
+
     /**
      * Class constructor
      *
@@ -12,6 +17,27 @@ class SK_Follow_Store_Install {
         add_action( 'sk_activated_module_follow_store', array( $this, 'activate' ) );
         add_action( 'sk_deactivated_module_follow_store', array( $this, 'deactivate' ) );
         add_action( 'deleted_user', array( $this, 'delete_user_rows' ) );
+        add_action( 'admin_init', array( __CLASS__, 'maybe_upgrade_tables' ) );
+    }
+
+    /**
+     * Apply schema changes outside the activation hook.
+     *
+     * create_tables() only ever ran when the module was activated, and a deploy
+     * that resets the working tree never activates anything — a new column would
+     * have stayed unapplied. Cheap no-op once the version matches.
+     *
+     *
+     * @return void
+     */
+    public static function maybe_upgrade_tables() {
+        if ( get_option( self::VERSION_OPTION ) === self::DB_VERSION ) {
+            return;
+        }
+
+        ( new self() )->create_tables();
+
+        update_option( self::VERSION_OPTION, self::DB_VERSION, false );
     }
 
     /**
@@ -94,7 +120,7 @@ class SK_Follow_Store_Install {
      *
      * @return void
      */
-    private function create_tables() {
+    public function create_tables() {
         global $wpdb;
 
         $collate = '';

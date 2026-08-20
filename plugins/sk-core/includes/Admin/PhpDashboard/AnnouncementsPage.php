@@ -81,7 +81,7 @@ class AnnouncementsPage extends AbstractPage {
             if ( $post_id ) {
                 $manager = new \SK\Core\Announcement\Manager();
                 $manager->delete_announcement( $post_id, true );
-                wp_cache_set( 'sk_dcv_files', time(), 'sk_page_cache', 86400 );
+                wp_cache_set( 'sk_dcv_files', time(), \SK\Core\Dashboard\PageCache::GROUP, DAY_IN_SECONDS );
             }
             wp_safe_redirect( add_query_arg( [
                 'page'    => 'sk',
@@ -113,7 +113,7 @@ class AnnouncementsPage extends AbstractPage {
         }
 
         $manager->create_announcement( $args, (bool) $post_id );
-        wp_cache_set( 'sk_dcv_files', time(), 'sk_page_cache', 86400 );
+        wp_cache_set( 'sk_dcv_files', time(), \SK\Core\Dashboard\PageCache::GROUP, DAY_IN_SECONDS );
 
         wp_safe_redirect( add_query_arg( [
             'page'  => 'sk',

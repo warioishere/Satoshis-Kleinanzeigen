@@ -137,11 +137,12 @@ class Gesuche extends DashboardModule {
         }
         $user_id = get_current_user_id();
 
-        // Löschen
-        if ( isset( $_GET['delete_gesuch'] ) && is_numeric( $_GET['delete_gesuch'] ) ) {
-            $delete_id = (int) $_GET['delete_gesuch'];
+        // Löschen — per POST, weil ein Link, der loescht, vom Browser-Prefetch
+        // ausgeloest werden kann.
+        if ( isset( $_POST['delete_gesuch'] ) && is_numeric( $_POST['delete_gesuch'] ) ) {
+            $delete_id = (int) $_POST['delete_gesuch'];
             $post      = get_post( $delete_id );
-            $nonce_ok  = isset( $_GET['_dg_nonce'] ) && wp_verify_nonce( sanitize_text_field( $_GET['_dg_nonce'] ), 'dg_del_' . $delete_id );
+            $nonce_ok  = isset( $_POST['_dg_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_dg_nonce'] ) ), 'dg_del_' . $delete_id );
             if ( $nonce_ok && $post && (int) $post->post_author === $user_id && $post->post_type === 'gesuch' ) {
                 wp_delete_post( $delete_id, true );
                 echo '<div class="sk-alert sk-alert-success">Gesuch gelöscht.</div>';
@@ -231,8 +232,8 @@ class Gesuche extends DashboardModule {
                 <ul class="gesuch-list">
                     <?php while ( $query->have_posts() ) : $query->the_post();
                         $pid      = get_the_ID();
-                        $del_url  = add_query_arg( [ 'delete_gesuch' => $pid, '_dg_nonce' => wp_create_nonce( 'dg_del_' . $pid ) ], remove_query_arg( [ 'edit_gesuch' ] ) );
-                        $edit_url = add_query_arg( [ 'edit_gesuch' => $pid ], remove_query_arg( [ 'delete_gesuch', '_dg_nonce' ] ) );
+                        $del_action = remove_query_arg( [ 'edit_gesuch', 'delete_gesuch', '_dg_nonce' ] );
+                        $edit_url   = add_query_arg( [ 'edit_gesuch' => $pid ], remove_query_arg( [ 'delete_gesuch', '_dg_nonce' ] ) );
                     ?>
                         <li class="gesuch-item">
                             <div class="gesuch-item-head">
@@ -242,7 +243,11 @@ class Gesuche extends DashboardModule {
                             <div class="gesuch-excerpt"><?php echo wp_trim_words( get_the_content(), 28 ); ?></div>
                             <div class="gesuch-actions">
                                 <a class="btn btn-sm btn-secondary" href="<?php echo esc_url( $edit_url ); ?>">Bearbeiten</a>
-                                <a class="btn btn-sm btn-danger" href="<?php echo esc_url( $del_url ); ?>" onclick="return confirm('Wirklich löschen?');">Löschen</a>
+                                <form method="post" action="<?php echo esc_url( $del_action ); ?>" class="gesuch-delete-form" onsubmit="return confirm('Wirklich löschen?');">
+                                    <?php wp_nonce_field( 'dg_del_' . $pid, '_dg_nonce' ); ?>
+                                    <input type="hidden" name="delete_gesuch" value="<?php echo esc_attr( $pid ); ?>">
+                                    <button type="submit" class="btn btn-sm btn-danger">Löschen</button>
+                                </form>
                                 <a class="btn btn-sm btn-outline" href="<?php the_permalink(); ?>" target="_blank" rel="noopener">Ansehen</a>
                             </div>
                         </li>

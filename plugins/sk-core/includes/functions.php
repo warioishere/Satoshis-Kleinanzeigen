@@ -1118,9 +1118,11 @@ add_action( 'login_init', 'sk_redirect_to_register' );
  * @return bool
  */
 function sk_is_seller_enabled( $user_id ): bool {
+    // Der dritte Parameter von get_user_meta() ist $single, kein Standardwert —
+    // 'no' hat hier nur zufaellig als truthy gewirkt.
     return apply_filters(
         'sk_is_seller_enabled',
-        'yes' === get_user_meta( $user_id, 'sk_enable_selling', 'no' )
+        'yes' === get_user_meta( $user_id, 'sk_enable_selling', true )
     );
 }
 

@@ -32,34 +32,19 @@ function sk_follow_store_button_labels() {
 /**
  * May this user be followed?
  *
- * Mirrors the definition the store listing uses (Vendor\Manager::get_vendors):
- * role seller or administrator, selling enabled. Without it sk()->vendor->get()
- * returns an object for *any* user id, so the "invalid vendor" guards in the
- * ajax and rest endpoints never triggered and a customer — or any account at
- * all — could be followed, mail included.
+ * sk()->vendor->get() answers for any user id, so asking whether the object
+ * came back said nothing — a customer, or any account at all, could be followed,
+ * mail included. is_vendor() plus is_enabled() is the vocabulary the rest of the
+ * plugin uses for the same question (see sk_rest_validate_store_id()).
  *
  * @param int $vendor_id
  *
  * @return bool
  */
 function sk_follow_store_is_followable_vendor( $vendor_id ) {
-    $vendor_id = absint( $vendor_id );
+    $vendor = sk()->vendor->get( absint( $vendor_id ) );
 
-    if ( ! $vendor_id ) {
-        return false;
-    }
-
-    $user = get_userdata( $vendor_id );
-
-    if ( ! $user instanceof WP_User ) {
-        return false;
-    }
-
-    if ( ! array_intersect( [ 'seller', 'administrator' ], (array) $user->roles ) ) {
-        return false;
-    }
-
-    return 'yes' === get_user_meta( $vendor_id, 'sk_enable_selling', true );
+    return (bool) $vendor->get_id() && $vendor->is_vendor() && $vendor->is_enabled();
 }
 
 /**
