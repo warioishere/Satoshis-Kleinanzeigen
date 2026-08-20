@@ -27,10 +27,10 @@ do_action( 'woocommerce_email_header', $email_heading, $email ); ?>
         <?php
         if ( 'following' === $data['status'] ) {
             // translators: Follower Name.
-            printf( __( '%s has just followed your store.', 'sk-core' ), $data['follower']->display_name );
+            printf( esc_html__( '%s has just followed your store.', 'sk-core' ), esc_html( $data['follower']->display_name ) );
         } else {
             // translators: Follower Name.
-            printf( __( '%s has just unfollowed your store.', 'sk-core' ), $data['follower']->display_name );
+            printf( esc_html__( '%s has just unfollowed your store.', 'sk-core' ), esc_html( $data['follower']->display_name ) );
         }
         ?>
     </p>

@@ -111,7 +111,7 @@ class SK_Follow_Store_Vendor_Email extends WC_Email {
      * @return string
      */
     public function get_default_subject() {
-        return __( '{follower_name}, see new updates from {site_title}', 'sk-core' );
+        return __( '{follower_name} folgt deinem Shop auf {site_title}', 'sk-core' );
     }
 
     /**
@@ -121,7 +121,7 @@ class SK_Follow_Store_Vendor_Email extends WC_Email {
      * @return string
      */
     public function get_default_heading() {
-        return __( 'Latest updates from {site_title}', 'sk-core' );
+        return __( 'Neuer Follower', 'sk-core' );
     }
 
     /**
@@ -139,6 +139,19 @@ class SK_Follow_Store_Vendor_Email extends WC_Email {
         if ( ! $this->is_enabled() ) {
             return;
         }
+
+        // Unfollowing is not news for the vendor, and mailing on both edges of
+        // the toggle turned a follow button into a mail generator.
+        if ( 'following' !== $status ) {
+            return;
+        }
+
+        // One notice per follower and day: re-following after an unfollow must
+        // not produce another mail.
+        if ( ! sk_rate_limit( 'follow-notify:' . absint( $vendor_id ) . ':' . absint( $follower_id ), 1, DAY_IN_SECONDS ) ) {
+            return;
+        }
+
         $this->setup_locale();
 
         $this->follower = get_userdata( $follower_id );

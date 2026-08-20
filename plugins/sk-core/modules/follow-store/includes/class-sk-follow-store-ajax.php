@@ -31,13 +31,23 @@ class SK_Follow_Store_Ajax {
         }
 
         $customer_id = get_current_user_id();
-        $vendor      = sk()->vendor->get( $_POST['vendor_id'] );
+        $vendor_id   = absint( $_POST['vendor_id'] );
 
-        if ( ! $vendor->id ) {
+        // sk()->vendor->get() answers for any user id, so ask whether the id is
+        // a listed store instead of whether the object came back.
+        if ( ! sk_follow_store_is_followable_vendor( $vendor_id ) ) {
             wp_send_json_error( new WP_Error( 'invalid_vendor', __( 'Invalid vendor_id', 'sk-core' ) ), 422 );
         }
 
-        $status = sk_follow_store_toggle_status( $vendor->id, $customer_id );
+        if ( $vendor_id === $customer_id ) {
+            wp_send_json_error( new WP_Error( 'self_follow', __( 'Du kannst deinem eigenen Shop nicht folgen.', 'sk-core' ) ), 422 );
+        }
+
+        if ( ! sk_rate_limit( 'follow-toggle:' . $customer_id, 20 ) ) {
+            wp_send_json_error( new WP_Error( 'rate_limited', __( 'Zu viele Anfragen. Bitte kurz warten.', 'sk-core' ) ), 429 );
+        }
+
+        $status = sk_follow_store_toggle_status( $vendor_id, $customer_id );
 
         if ( is_wp_error( $status ) ) {
             wp_send_json_error( $status, 422 );

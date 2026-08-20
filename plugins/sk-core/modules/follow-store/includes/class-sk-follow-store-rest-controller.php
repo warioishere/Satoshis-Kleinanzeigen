@@ -83,10 +83,12 @@ class SkFollowStoreRestController extends SkRESTController {
      * @return WP_Error|WP_REST_Response
      */
     public function toggle_follow_status( $request ) {
-        $vendor_id = $request->get_param( 'vendor_id' );
-        $vendor    = sk()->vendor->get( $vendor_id );
+        $vendor_id   = absint( $request->get_param( 'vendor_id' ) );
+        $customer_id = get_current_user_id();
 
-        if ( ! $vendor->id ) {
+        // sk()->vendor->get() answers for any user id, so ask whether the id is
+        // a listed store instead of whether the object came back.
+        if ( ! sk_follow_store_is_followable_vendor( $vendor_id ) ) {
             return rest_ensure_response(
                 new WP_Error(
                     'sk_rest_no_vendor_found',
@@ -96,7 +98,27 @@ class SkFollowStoreRestController extends SkRESTController {
             );
         }
 
-        $status = sk_follow_store_toggle_status( $vendor->id, get_current_user_id() );
+        if ( $vendor_id === $customer_id ) {
+            return rest_ensure_response(
+                new WP_Error(
+                    'sk_rest_self_follow',
+                    __( 'Du kannst deinem eigenen Shop nicht folgen.', 'sk-core' ),
+                    [ 'status' => 422 ]
+                )
+            );
+        }
+
+        if ( ! sk_rate_limit( 'follow-toggle:' . $customer_id, 20 ) ) {
+            return rest_ensure_response(
+                new WP_Error(
+                    'sk_rest_rate_limited',
+                    __( 'Zu viele Anfragen. Bitte kurz warten.', 'sk-core' ),
+                    [ 'status' => 429 ]
+                )
+            );
+        }
+
+        $status = sk_follow_store_toggle_status( $vendor_id, $customer_id );
         if ( is_wp_error( $status ) ) {
             return rest_ensure_response(
                 new WP_Error(
@@ -363,10 +385,9 @@ class SkFollowStoreRestController extends SkRESTController {
      * @return WP_Error|WP_REST_Response
      */
     public function is_following( $request ) {
-        $vendor_id = $request->get_param( 'vendor_id' );
-        $vendor    = sk()->vendor->get( $vendor_id );
+        $vendor_id = absint( $request->get_param( 'vendor_id' ) );
 
-        if ( ! $vendor->id ) {
+        if ( ! sk_follow_store_is_followable_vendor( $vendor_id ) ) {
             return new WP_Error(
                 'sk_rest_no_vendor_found',
                 __( 'No vendor found with given vendor id.', 'sk-core' ),

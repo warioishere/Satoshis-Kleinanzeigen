@@ -11,6 +11,44 @@ class SK_Follow_Store_Install {
     public function __construct() {
         add_action( 'sk_activated_module_follow_store', array( $this, 'activate' ) );
         add_action( 'sk_deactivated_module_follow_store', array( $this, 'deactivate' ) );
+        add_action( 'deleted_user', array( $this, 'delete_user_rows' ) );
+    }
+
+    /**
+     * Drop follow rows of a deleted user, on both sides of the relation.
+     *
+     * Without this the table keeps rows pointing at accounts that are gone; the
+     * vendor then sees them in the follower list as "(no name)" while the count
+     * still includes them.
+     *
+     *
+     * @param int $user_id
+     *
+     * @return void
+     */
+    public function delete_user_rows( $user_id ) {
+        $user_id = absint( $user_id );
+
+        if ( ! $user_id ) {
+            return;
+        }
+
+        global $wpdb;
+
+        $vendor_ids = $wpdb->get_col( $wpdb->prepare(
+            "select vendor_id from {$wpdb->prefix}sk_follow_store_followers where follower_id = %d",
+            $user_id
+        ) );
+
+        $wpdb->query( $wpdb->prepare(
+            "delete from {$wpdb->prefix}sk_follow_store_followers where vendor_id = %d or follower_id = %d",
+            $user_id,
+            $user_id
+        ) );
+
+        foreach ( array_unique( array_merge( $vendor_ids, [ $user_id ] ) ) as $vendor_id ) {
+            \SK\Core\Cache::invalidate_group( 'followers_' . absint( $vendor_id ) );
+        }
     }
 
     /**

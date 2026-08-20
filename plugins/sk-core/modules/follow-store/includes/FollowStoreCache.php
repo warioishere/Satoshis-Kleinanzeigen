@@ -32,8 +32,11 @@ class FollowStoreCache {
      * @return void
      */
     public function clear_cache( $vendor_id, $follower_id, $status, $current_time ) {
-        $cache_group = "followers_{$vendor_id}";
+        // The rest controller caches under get_followers_<md5(args)> in the same
+        // group; deleting the single 'get_followers' key left those behind, and
+        // Cache::set() defaults to a two week lifetime.
+        Cache::invalidate_group( "followers_{$vendor_id}" );
 
-        Cache::delete( 'get_followers', $cache_group );
+        sk_follow_store_get_following_ids( $follower_id, true );
     }
 }

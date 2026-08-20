@@ -36,6 +36,80 @@ function sk_follow_store_button_labels() {
 }
 
 /**
+ * May this user be followed?
+ *
+ * Mirrors the definition the store listing uses (Vendor\Manager::get_vendors):
+ * role seller or administrator, selling enabled. Without it sk()->vendor->get()
+ * returns an object for *any* user id, so the "invalid vendor" guards in the
+ * ajax and rest endpoints never triggered and a customer — or any account at
+ * all — could be followed, mail included.
+ *
+ * @param int $vendor_id
+ *
+ * @return bool
+ */
+function sk_follow_store_is_followable_vendor( $vendor_id ) {
+    $vendor_id = absint( $vendor_id );
+
+    if ( ! $vendor_id ) {
+        return false;
+    }
+
+    $user = get_userdata( $vendor_id );
+
+    if ( ! $user instanceof WP_User ) {
+        return false;
+    }
+
+    if ( ! array_intersect( [ 'seller', 'administrator' ], (array) $user->roles ) ) {
+        return false;
+    }
+
+    return 'yes' === get_user_meta( $vendor_id, 'sk_enable_selling', true );
+}
+
+/**
+ * Vendor IDs the given user follows — one query per request, shared by every
+ * follow button on the page instead of one query per button.
+ *
+ * @param int  $follower_id
+ * @param bool $refresh     Drop the memo, e.g. after a toggle.
+ *
+ * @return int[]
+ */
+function sk_follow_store_get_following_ids( $follower_id = 0, $refresh = false ) {
+    static $memo = [];
+
+    global $wpdb;
+
+    $follower_id = $follower_id ? absint( $follower_id ) : get_current_user_id();
+
+    if ( ! $follower_id ) {
+        return [];
+    }
+
+    if ( $refresh ) {
+        unset( $memo[ $follower_id ] );
+
+        return [];
+    }
+
+    if ( isset( $memo[ $follower_id ] ) ) {
+        return $memo[ $follower_id ];
+    }
+
+    $ids = $wpdb->get_col( $wpdb->prepare(
+        "select vendor_id from {$wpdb->prefix}sk_follow_store_followers"
+        . " where follower_id = %d and unfollowed_at is null",
+        $follower_id
+    ) );
+
+    $memo[ $follower_id ] = array_map( 'intval', (array) $ids );
+
+    return $memo[ $follower_id ];
+}
+
+/**
  * Toggle store follow status for a customer
  *
  *
@@ -193,7 +267,7 @@ function sk_follow_store_get_button_args( $vendor, $button_classes = array() ) {
 
     $status = null;
 
-    if ( sk_follow_store_is_following_store( $vendor->ID, $customer_id ) ) {
+    if ( in_array( (int) $vendor->ID, sk_follow_store_get_following_ids( $customer_id ), true ) ) {
         $label_current = $btn_labels['following'];
         $status = 'following';
     } else {
@@ -211,7 +285,7 @@ function sk_follow_store_get_button_args( $vendor, $button_classes = array() ) {
         'vendor_id'      => $vendor->ID,
         'status'         => $status,
         'button_classes' => implode( ' ', $button_classes ),
-        'is_logged_in'   => $customer_id,
+        'is_logged_in'   => $customer_id ? 1 : 0,
     );
 
     return $args;
