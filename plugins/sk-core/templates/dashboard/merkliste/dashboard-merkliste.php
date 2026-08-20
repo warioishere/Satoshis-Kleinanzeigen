@@ -10,10 +10,10 @@ if (!is_user_logged_in()) {
 
 $user_id = get_current_user_id();
 
-// Handle delete action
-if (isset($_GET['delete_product']) && is_numeric($_GET['delete_product'])) {
-    $delete_id = (int) $_GET['delete_product'];
-    $nonce_ok = isset($_GET['_dm_nonce']) && wp_verify_nonce(sanitize_text_field($_GET['_dm_nonce']), 'dm_del_' . $delete_id);
+// Handle delete action (POST only — a link that deletes is fired by browser prefetch)
+if (isset($_POST['delete_product']) && is_numeric($_POST['delete_product'])) {
+    $delete_id = (int) $_POST['delete_product'];
+    $nonce_ok = isset($_POST['_dm_nonce']) && wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['_dm_nonce'])), 'dm_del_' . $delete_id);
 
     if ($nonce_ok) {
         dm_remove_from_merkliste($delete_id, $user_id);
@@ -50,18 +50,22 @@ do_action('sk_dashboard_wrap_start');
             <div class="merkliste-dashboard-inner">
 
                 <?php
-                $merkliste_items = dm_get_merkliste_products($user_id);
+                // Resolve first: rows can point at products that are gone or no longer
+                // published, and those must not count towards a non-empty list either.
+                $merkliste_products = [];
+                foreach (dm_get_merkliste_products($user_id) as $item) {
+                    $product = wc_get_product($item->product_id);
+                    if ($product && 'publish' === $product->get_status()) {
+                        $merkliste_products[] = $product;
+                    }
+                }
 
-                if (!empty($merkliste_items)) :
+                if (!empty($merkliste_products)) :
                 ?>
                     <ul class="merkliste-list">
                         <?php
-                        foreach ($merkliste_items as $item) :
-                            $product_id = $item->product_id;
-                            $product = wc_get_product($product_id);
-
-                            // Skip if product doesn't exist or is deleted
-                            if (!$product) continue;
+                        foreach ($merkliste_products as $product) :
+                            $product_id = $product->get_id();
 
                             $vendor = sk_get_vendor_by_product($product);
                             $vendor_name = $vendor ? $vendor->get_shop_name() : __('Unbekannter Anbieter', 'sk-core');
@@ -72,10 +76,6 @@ do_action('sk_dashboard_wrap_start');
                             $product_price = $product->get_price_html();
                             $product_image = $product->get_image('thumbnail');
 
-                            $del_url = add_query_arg(
-                                ['delete_product' => $product_id, '_dm_nonce' => wp_create_nonce('dm_del_' . $product_id)],
-                                remove_query_arg(['delete_product', '_dm_nonce'])
-                            );
                         ?>
                             <li class="merkliste-item" data-product-id="<?php echo esc_attr($product_id); ?>">
                                 <div class="merkliste-item-image">
@@ -105,11 +105,14 @@ do_action('sk_dashboard_wrap_start');
                                     <a class="btn btn-sm btn-primary" href="<?php echo esc_url($product_url); ?>" target="_blank" rel="noopener">
                                         <i class="fas fa-eye"></i> Ansehen
                                     </a>
-                                    <a class="btn btn-sm btn-danger dm-remove-from-list"
-                                       href="<?php echo esc_url($del_url); ?>"
-                                       data-product-id="<?php echo esc_attr($product_id); ?>">
-                                        <i class="fas fa-trash"></i> Entfernen
-                                    </a>
+                                    <form class="merkliste-remove-form" method="post" action="<?php echo esc_url(remove_query_arg(['delete_product', '_dm_nonce'])); ?>">
+                                        <?php wp_nonce_field('dm_del_' . $product_id, '_dm_nonce'); ?>
+                                        <input type="hidden" name="delete_product" value="<?php echo esc_attr($product_id); ?>">
+                                        <button type="submit" class="btn btn-sm btn-danger dm-remove-from-list"
+                                                data-product-id="<?php echo esc_attr($product_id); ?>">
+                                            <i class="fas fa-trash"></i> Entfernen
+                                        </button>
+                                    </form>
                                 </div>
                             </li>
                         <?php endforeach; ?>
