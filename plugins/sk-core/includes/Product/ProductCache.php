@@ -27,32 +27,10 @@ class ProductCache {
 
         add_action( 'wp_trash_post', [ $this, 'clear_seller_product_caches' ], 20 );
         add_action( 'delete_post', [ $this, 'clear_seller_product_caches' ], 20 );
-        add_action( 'woocommerce_attribute_created', [ $this, 'clear_attribute_caches' ], 20 );
-        add_action( 'woocommerce_attribute_updated', [ $this, 'clear_attribute_caches' ], 20 );
-        add_action( 'woocommerce_attribute_deleted', [ $this, 'clear_attribute_caches' ], 20 );
 
         add_action( 'sk_product_updated', [ $this, 'clear_single_product_caches' ], 999 );
         add_action( 'sk_new_product_added', [ $this, 'clear_single_product_caches' ], 999 );
         add_action( 'sk_bulk_product_status_change', [ $this, 'cache_clear_bulk_product_status_change' ], 20, 2 );
-    }
-
-    /**
-     * Reset the site-wide product cache after an attribute changed.
-     *
-     * These hooks hand over an attribute id, which used to be passed straight
-     * into clear_seller_product_caches() — that turns its argument into a
-     * product via wc_get_product(), so the invalidation silently did nothing.
-     * Worse, an attribute id that happens to match a product post id would have
-     * flushed an unrelated seller's cache.
-     *
-     * An attribute is not owned by a seller, so only the shared group can be
-     * cleared here; the per-seller groups would have to be walked one by one.
-     *
-     *
-     * @return void
-     */
-    public function clear_attribute_caches() {
-        Cache::invalidate_group( 'product_data' );
     }
 
     /**
