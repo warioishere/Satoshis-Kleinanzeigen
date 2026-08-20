@@ -27,7 +27,6 @@ class Products {
      * @uses filters
      */
     public function __construct() {
-        add_action( 'sk_product_edit_after_inventory_variants', array( $this, 'load_linked_product_content' ), 15, 2 );
         add_action( 'sk_render_new_product_template', array( $this, 'render_new_product_template' ), 10 );
         add_action( 'sk_new_product_added', array( $this, 'set_product_tags' ), 10, 2 );
         add_action( 'sk_product_updated', array( $this, 'set_product_tags' ) );
@@ -45,7 +44,6 @@ class Products {
         add_filter( 'sk_update_product_post_data', array( $this, 'change_product_status' ), 10 );
         add_filter( 'sk_product_types', array( $this, 'set_default_product_types' ), 10 );
 
-        add_action( 'sk_after_linked_product_fields', array( $this, 'group_product_content' ), 10, 2 );
         add_filter( 'woocommerce_duplicate_product_exclude_meta', array( $this, 'remove_unwanted_meta' ) );
 
         add_filter( 'sk_localized_args', array( $this, 'sk_pro_localized_args' ) );
@@ -77,29 +75,6 @@ class Products {
         }
     }
 
-
-    /**
-     * Render linked product content
-     *
-     *
-     * @return void
-     */
-    public function load_linked_product_content( $post, $post_id ) {
-        $upsells_ids = get_post_meta( $post_id, '_upsell_ids', true );
-        $crosssells_ids = get_post_meta( $post_id, '_crosssell_ids', true );
-
-        sk_get_template_part(
-            'products/linked-product-content',
-            '',
-            array(
-                'pro'            => true,
-                'post'           => $post,
-                'post_id'        => $post_id,
-                'upsells_ids'    => $upsells_ids,
-                'crosssells_ids' => $crosssells_ids,
-            )
-        );
-    }
 
     /**
      * Get taxes options value
@@ -168,25 +143,12 @@ class Products {
             update_post_meta( $post_id, '_height', '' );
         }
 
-        // Cross sells and upsells
-        $upsells    = isset( $post_data['upsell_ids'] ) ? array_map( 'intval', $post_data['upsell_ids'] ) : array();
-        $crosssells = isset( $post_data['crosssell_ids'] ) ? array_map( 'intval', $post_data['crosssell_ids'] ) : array();
-
-        update_post_meta( $post_id, '_upsell_ids', $upsells );
-        update_post_meta( $post_id, '_crosssell_ids', $crosssells );
-
         // Save external
         if ( 'external' === $product_type ) {
             update_post_meta( $post_id, '_product_url', isset( $post_data['_product_url'] ) ? $post_data['_product_url'] : '' );
             update_post_meta( $post_id, '_button_text', isset( $post_data['_button_text'] ) ? $post_data['_button_text'] : '' );
         }
 
-        if ( 'grouped' === $product_type ) {
-            $product = new \WC_Product_Grouped( $post_id );
-            $group_product_ids = isset( $post_data['grouped_products'] ) ? array_filter( array_map( 'intval', (array) $post_data['grouped_products'] ) ) : array();
-            $product->set_children( $group_product_ids );
-            $product->save();
-        }
     }
 
     /**
@@ -448,7 +410,6 @@ class Products {
             'simple'   => __( 'Simple', 'sk-core' ),
             'external' => __( 'External/Affiliate product', 'sk-core' ),
         );
-        $product_types['grouped'] = __( 'Group Product', 'sk-core' );
         return $product_types;
     }
 
@@ -491,19 +452,6 @@ class Products {
      *
      * @return void
      */
-    public function group_product_content( $post, $post_id ) {
-        sk_get_template_part(
-            'products/group-product',
-            '',
-            array(
-                'pro'     => true,
-                'post'    => $post,
-                'post_id' => $post_id,
-                'product' => wc_get_product( $post_id ),
-            )
-        );
-    }
-
     /**
      * External product content
      *

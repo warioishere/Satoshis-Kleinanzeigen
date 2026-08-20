@@ -12920,9 +12920,6 @@ body:has(.dvc-modal) .dkp-contact-icons {
 .sk-dashboard-wrap form#store-form .sk-form-group label[for="setting_phone"],
 .sk-dashboard-wrap form#store-form .sk-form-group input#setting_phone { display: none !important; }
 
-/* Linked products (upsells/cross-sells) */
-.sk-linked-product-options { display: none !important; }
-
 /* Brand selector */
 #product_brand { display: none !important; }
 

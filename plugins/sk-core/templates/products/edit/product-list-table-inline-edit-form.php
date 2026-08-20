@@ -199,21 +199,6 @@
                                 </select>
                             </div>
                         </div>
-                    <?php } elseif ( 'grouped' === $product_type ) { ?>
-                        <div class="sk-inline-edit-field-row sk-clearfix">
-                            <label class="sk-w3">
-                                <?php esc_html_e( 'In Stock?', 'sk-core' ); ?>
-                            </label>
-                            <div class="sk-w9">
-                                <select data-field-name="stock_status" class="sk-form-control">
-                                    <?php foreach ( $options['stock_statuses'] as $stock_status_slug => $stock_status_name ) { ?>
-                                        <option value="<?php echo esc_attr( $stock_status_slug ); ?>"<?php selected( $stock_status, $stock_status_slug ); ?>>
-                                            <?php echo esc_html( $stock_status_name ); ?>
-                                        </option>
-                                    <?php } ?>
-                                </select>
-                            </div>
-                        </div>
                     <?php } ?>
 
                     <?php

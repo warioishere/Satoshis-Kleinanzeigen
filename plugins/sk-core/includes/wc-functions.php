@@ -95,7 +95,7 @@ function sk_process_product_meta( int $post_id, array $data = [] ) {
     $regular_price = '';
     $sale_price    = '';
 
-    if ( ! in_array( $product_type, [ 'variable', 'grouped' ], true ) ) {
+    if ( 'variable' !== $product_type ) {
         $date_from     = isset( $data['_sale_price_dates_from'] ) ? (string) wc_clean( $data['_sale_price_dates_from'] ) : '';
         $date_to       = isset( $data['_sale_price_dates_to'] ) ? (string) wc_clean( $data['_sale_price_dates_to'] ) : '';
         $regular_price = isset( $data['_regular_price'] ) ? (string) wc_clean( $data['_regular_price'] ) : '';
@@ -122,7 +122,7 @@ function sk_process_product_meta( int $post_id, array $data = [] ) {
     update_post_meta( $post_id, '_sold_individually', $sold_individually );
 
     // Stock Data
-    $manage_stock      = ! empty( $data['_manage_stock'] ) && 'grouped' !== $product_type ? 'yes' : 'no';
+    $manage_stock      = ! empty( $data['_manage_stock'] ) ? 'yes' : 'no';
     $backorders        = ! empty( $data['_backorders'] ) && 'yes' === $manage_stock ? wc_clean( $data['_backorders'] ) : 'no';
     $stock_status      = ! empty( $data['_stock_status'] ) ? wc_clean( $data['_stock_status'] ) : 'instock';
     $stock_amount      = isset( $data['_stock'] ) ? wc_clean( $data['_stock'] ) : '';
@@ -144,7 +144,7 @@ function sk_process_product_meta( int $post_id, array $data = [] ) {
                 $manage_stock = 'yes';
                 $backorders   = wc_clean( $data['_backorders'] );
             }
-        } elseif ( 'grouped' !== $product_type && ! empty( $data['_manage_stock'] ) ) {
+        } elseif ( ! empty( $data['_manage_stock'] ) ) {
             $manage_stock = $data['_manage_stock'];
             $backorders   = wc_clean( $data['_backorders'] );
         }

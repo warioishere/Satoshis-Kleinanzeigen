@@ -698,7 +698,7 @@ class Module {
         if ( 'sk_view_product_menu' === $cap ) {
             $allowed_product_types = Helper::get_vendor_allowed_product_types();
 
-            $default_types = [ 'simple', 'variable', 'grouped', 'external' ];
+            $default_types = [ 'simple', 'variable', 'external' ];
 
             // if no other default product is selected ( ei: sk_get_product_types() ) then don't show the product menu
             if ( $allowed_product_types && ! array_intersect( $default_types, $allowed_product_types ) ) {

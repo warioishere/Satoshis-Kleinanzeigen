@@ -163,7 +163,7 @@ class Manager {
         }
 
         // Sales and prices.
-        if ( in_array( $product->get_type(), [ 'variable', 'grouped' ], true ) ) {
+        if ( $product->is_type( 'variable' ) ) {
             $product->set_regular_price( '' );
             $product->set_sale_price( '' );
             $product->set_date_on_sale_to( '' );
@@ -226,12 +226,7 @@ class Manager {
                 $product->set_backorders( $args['backorders'] );
             }
 
-            if ( $product->is_type( 'grouped' ) ) {
-                $product->set_manage_stock( 'no' );
-                $product->set_backorders( 'no' );
-                $product->set_stock_quantity( '' );
-                $product->set_stock_status( $stock_status );
-            } elseif ( $product->is_type( 'external' ) ) {
+            if ( $product->is_type( 'external' ) ) {
                 $product->set_manage_stock( 'no' );
                 $product->set_backorders( 'no' );
                 $product->set_stock_quantity( '' );
@@ -262,38 +257,6 @@ class Manager {
 
         // sync stock status
         $product = $this->maybe_update_stock_status( $product, $stock_status );
-
-        // Upsells.
-        if ( isset( $args['upsell_ids'] ) ) {
-            $upsells = [];
-            $ids     = $args['upsell_ids'];
-
-            if ( ! empty( $ids ) ) {
-                foreach ( $ids as $id ) {
-                    if ( $id && $id > 0 ) {
-                        $upsells[] = $id;
-                    }
-                }
-            }
-
-            $product->set_upsell_ids( $upsells );
-        }
-
-        // Cross sells.
-        if ( isset( $args['cross_sell_ids'] ) ) {
-            $crosssells = [];
-            $ids        = $args['cross_sell_ids'];
-
-            if ( ! empty( $ids ) ) {
-                foreach ( $ids as $id ) {
-                    if ( $id && $id > 0 ) {
-                        $crosssells[] = $id;
-                    }
-                }
-            }
-
-            $product->set_cross_sell_ids( $crosssells );
-        }
 
         // Product categories.
         if ( isset( $args['categories'] ) && is_array( $args['categories'] ) ) {
@@ -343,11 +306,6 @@ class Manager {
         // Save default attributes for variable products.
         if ( $product->is_type( 'variable' ) ) {
             $product = $this->save_default_attributes( $product, $args );
-        }
-
-        // Set children for a grouped product.
-        if ( $product->is_type( 'grouped' ) && isset( $args['grouped_products'] ) ) {
-            $product->set_children( $args['grouped_products'] );
         }
 
         // Set featured image id

@@ -846,7 +846,6 @@ function sk_get_product_types( $status = '' ) {
         'sk_get_product_types', [
             'simple'   => __( 'Simple Product', 'sk-core' ),
             'variable' => __( 'Variable Product', 'sk-core' ),
-            'grouped'  => __( 'Grouped Product', 'sk-core' ),
             'external' => __( 'External/Affiliate Product', 'sk-core' ),
         ]
     );

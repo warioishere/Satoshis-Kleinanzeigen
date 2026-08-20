@@ -31,11 +31,6 @@ class Product {
         $block['general']['external_url'] = $product->is_type( 'external' ) ? $product->get_product_url( $context ) : '';
         $block['general']['button_text'] = $product->is_type( 'external' ) ? $product->get_button_text( $context ) : '';
 
-        // Linked section.
-        $block['linked']['upsell_ids']       = $this->get_formatted_products( array_map( 'absint', $product->get_upsell_ids( $context ) ) );
-        $block['linked']['cross_sell_ids']   = $this->get_formatted_products( array_map( 'absint', $product->get_cross_sell_ids( $context ) ) );
-        $block['linked']['grouped_products'] = $product->is_type( 'grouped' ) ? $this->get_formatted_products( $product->get_children() ) : [];
-
         return $block;
     }
 
