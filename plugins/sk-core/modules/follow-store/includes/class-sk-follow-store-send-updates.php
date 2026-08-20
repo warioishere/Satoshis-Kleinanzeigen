@@ -146,6 +146,17 @@ class SK_Follow_Store_Send_Updates extends SkBackgroundProcesses {
                 'before'    => $args['to'],
                 'inclusive' => true,
             ),
+            // Products hidden from the catalog are internal bookkeeping items —
+            // the payment and withdrawal products of the admin store showed up
+            // as "new listings" in the digest, linking to pages nobody can open.
+            'tax_query'   => array(
+                array(
+                    'taxonomy' => 'product_visibility',
+                    'field'    => 'name',
+                    'terms'    => array( 'exclude-from-catalog' ),
+                    'operator' => 'NOT IN',
+                ),
+            ),
         );
 
         return new WP_Query( $query_args );

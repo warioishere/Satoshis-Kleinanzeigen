@@ -5057,7 +5057,7 @@ msgstr "Neueste Produkte"
 #: modules/follow-store/includes/class-sk-follow-store-email.php:136
 #: modules/follow-store/includes/class-sk-follow-store-vendor-email.php:124
 msgid "Latest updates from {site_title}"
-msgstr ""
+msgstr "Neues von deinen Anbietern"
 
 #: includes/woo-views/variation-admin-html.php:238
 #: templates/products/edit/html-product-variation.php:346
@@ -12246,7 +12246,7 @@ msgstr "{customer_name} – Hat eine Nachricht von {site_title} gesendet"
 #: modules/follow-store/includes/class-sk-follow-store-email.php:126
 #: modules/follow-store/includes/class-sk-follow-store-vendor-email.php:114
 msgid "{follower_name}, see new updates from {site_title}"
-msgstr ""
+msgstr "Neues von deinen Anbietern auf {site_title}"
 
 #: includes/Emails/ProductPublished.php:65
 msgid "{product_title} - is published"

@@ -35,6 +35,9 @@ if ( ! defined( 'ABSPATH' ) ) {
     define( 'ABSPATH', $abspath );
 }
 
+// plural-forms.php uses array_last(), which lives in compat.php — without it the
+// PO import dies as soon as it reads the Plural-Forms header.
+require_once $abspath . 'wp-includes/compat.php';
 require_once $abspath . 'wp-includes/pomo/po.php';
 require_once $abspath . 'wp-includes/pomo/mo.php';
 require_once $abspath . 'wp-includes/l10n/class-wp-translation-file.php';
