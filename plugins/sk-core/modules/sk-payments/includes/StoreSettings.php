@@ -358,16 +358,16 @@ class StoreSettings {
         update_user_meta( $store_id, 'sk_profile_settings', $settings );
     }
 
+    /**
+     * Checksum-verified — a mistyped payout address would otherwise be saved
+     * and paid out to nowhere.
+     */
     public static function is_valid_btc_address( string $value ): bool {
-        return (bool) preg_match( '/^(bc1[a-z0-9]{25,90}|[13][a-km-zA-HJ-NP-Z1-9]{25,34})$/', $value );
+        return \SK\Core\BitcoinAddress::is_valid( $value );
     }
 
     public static function get_btc_address_type( string $value ): string {
-        if ( strpos( $value, 'bc1q' ) === 0 ) return 'SegWit (bech32)';
-        if ( strpos( $value, 'bc1p' ) === 0 ) return 'Taproot (bech32m)';
-        if ( strpos( $value, '3' ) === 0 )    return 'P2SH';
-        if ( strpos( $value, '1' ) === 0 )    return 'Legacy (P2PKH)';
-        return 'Unbekannt';
+        return \SK\Core\BitcoinAddress::type( $value );
     }
 
     /**

@@ -16,28 +16,14 @@ class BtcLogin {
 	}
 
 	/**
-	 * Validate a Bitcoin address format.
+	 * Validate a Bitcoin address.
 	 *
 	 * Supports: Legacy (1...), P2SH (3...), Bech32 (bc1q...), Taproot (bc1p...).
+	 * Checksum-verified, so a typo or an invented string is rejected — the
+	 * previous regexes only described the shape.
 	 */
 	public static function is_valid_address( string $address ): bool {
-		// Legacy (P2PKH): starts with 1, 25-34 chars.
-		if ( preg_match( '/^1[a-km-zA-HJ-NP-Z1-9]{25,34}$/', $address ) ) {
-			return true;
-		}
-		// P2SH: starts with 3, 25-34 chars.
-		if ( preg_match( '/^3[a-km-zA-HJ-NP-Z1-9]{25,34}$/', $address ) ) {
-			return true;
-		}
-		// Bech32 (Segwit): starts with bc1q, 42 chars.
-		if ( preg_match( '/^bc1q[a-z0-9]{38,}$/', strtolower( $address ) ) ) {
-			return true;
-		}
-		// Bech32m (Taproot): starts with bc1p, 62 chars.
-		if ( preg_match( '/^bc1p[a-z0-9]{58}$/', strtolower( $address ) ) ) {
-			return true;
-		}
-		return false;
+		return \SK\Core\BitcoinAddress::is_valid( $address );
 	}
 
 	/**
@@ -156,7 +142,7 @@ class BtcLogin {
 		}
 
 		if ( ! self::is_valid_address( $address ) ) {
-			return 'Ungültige Bitcoin-Adresse. Unterstützt: 1..., 3..., bc1q..., bc1p...';
+			return 'Ungültige Bitcoin-Adresse — bitte auf Tippfehler prüfen. Unterstützt: 1..., 3..., bc1q..., bc1p...';
 		}
 
 		if ( $_POST['btclogin_action'] === 'register' ) {
