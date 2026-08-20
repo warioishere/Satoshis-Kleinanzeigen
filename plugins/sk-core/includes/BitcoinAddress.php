@@ -32,6 +32,17 @@ final class BitcoinAddress {
     private const B58_VERSIONS = [ 0x00, 0x05 ];
 
     /**
+     * Mainnet account key version bytes. Testnet (tpub/upub/vpub) is absent on
+     * purpose — the derivation falls through to P2PKH for anything that is not
+     * zpub or ypub, so a tpub would silently produce unspendable addresses.
+     */
+    private const XPUB_VERSIONS = [
+        "\x04\x88\xb2\x1e", // xpub — BIP-44
+        "\x04\x9d\x7c\xb2", // ypub — BIP-49
+        "\x04\xb2\x47\x46", // zpub — BIP-84
+    ];
+
+    /**
      * Is this a valid mainnet address?
      */
     public static function is_valid( string $address ): bool {
@@ -70,6 +81,29 @@ final class BitcoinAddress {
         }
 
         return 'Unbekannt';
+    }
+
+    /**
+     * Is this a valid mainnet account extended public key?
+     *
+     * Same Base58Check envelope as an address, only wider: 78 bytes of payload
+     * plus the 4 byte checksum.
+     */
+    public static function is_valid_xpub( string $key ): bool {
+        $raw = self::base58_decode( trim( $key ) );
+
+        if ( null === $raw || 82 !== strlen( $raw ) ) {
+            return false;
+        }
+
+        $payload  = substr( $raw, 0, 78 );
+        $checksum = substr( $raw, 78 );
+
+        if ( substr( hash( 'sha256', hash( 'sha256', $payload, true ), true ), 0, 4 ) !== $checksum ) {
+            return false;
+        }
+
+        return in_array( substr( $payload, 0, 4 ), self::XPUB_VERSIONS, true );
     }
 
     /* ---- Base58Check ---- */

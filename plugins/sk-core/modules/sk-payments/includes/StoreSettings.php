@@ -371,12 +371,13 @@ class StoreSettings {
     }
 
     /**
-     * Mainnet account keys only. The derivation falls through to P2PKH for
-     * anything that is not zpub or ypub, so a testnet tpub would silently
-     * produce addresses nobody can spend from.
+     * Mainnet account keys only, checksum-verified. The derivation falls
+     * through to P2PKH for anything that is not zpub or ypub, so a testnet
+     * tpub would silently produce addresses nobody can spend from — and a
+     * mistyped key produces a whole chain of them.
      */
     public static function is_valid_xpub( string $value ): bool {
-        return (bool) preg_match( '/^(xpub|ypub|zpub)[a-km-zA-HJ-NP-Z1-9]{100,120}$/', $value );
+        return \SK\Core\BitcoinAddress::is_valid_xpub( $value );
     }
 
     public static function get_btc_address( int $vendor_id ): string {

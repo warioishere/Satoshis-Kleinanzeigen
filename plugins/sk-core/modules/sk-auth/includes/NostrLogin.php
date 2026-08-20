@@ -281,6 +281,10 @@ class Nostr_Login_Handler {
     }
 
     private function create_new_user( $public_key, $sanitized_metadata ) {
+        if ( ! sk_auth_registration_allowed() ) {
+            return new \WP_Error( 'sk_auth_rate_limited', sk_auth_registration_limit_message() );
+        }
+
         // Always generate anonymous `satoshi-XXXXX` login — matches BtcLogin
         // pattern. The Nostr profile's `name` is applied separately as
         // display_name via update_user_metadata(), so the user-facing label

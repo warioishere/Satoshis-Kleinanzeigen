@@ -171,6 +171,10 @@ class BtcLogin {
 			return 'Diese Bitcoin-Adresse ist bereits registriert.';
 		}
 
+		if ( ! sk_auth_registration_allowed() ) {
+			return sk_auth_registration_limit_message();
+		}
+
 		$username = 'satoshi-' . wp_generate_password( 5, false, false );
 		while ( username_exists( $username ) ) {
 			$username = 'satoshi-' . wp_generate_password( 5, false, false );

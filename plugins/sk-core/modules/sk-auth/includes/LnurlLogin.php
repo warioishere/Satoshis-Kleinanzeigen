@@ -234,6 +234,18 @@ class Login {
 						die;
 					}
 
+					if ( ! sk_auth_registration_allowed() ) {
+						$message = sk_auth_registration_limit_message();
+						lnurl_auth()->Transients->set( $k1, false, false, $message );
+						echo wp_json_encode(
+							array(
+								'status' => 'ERROR',
+								'reason' => $message,
+							)
+						);
+						die;
+					}
+
 					// if user does not exist an usercreation is on
 					// create new user
 					// generate and check if username already taken
