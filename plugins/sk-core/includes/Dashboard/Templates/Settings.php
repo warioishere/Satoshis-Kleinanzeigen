@@ -438,15 +438,9 @@ class Settings {
         do_action( 'sk_store_profile_saved', $store_id, $sk_settings, $prev_sk_settings );
 
         // Bust page cache so settings page shows fresh data
-        $user_hash = '';
-        foreach ( $_COOKIE as $k => $v ) {
-            if ( str_starts_with( $k, 'wordpress_logged_in_' ) ) {
-                $user_hash = md5( $v );
-                break;
-            }
-        }
-        if ( $user_hash ) {
-            wp_cache_set( 'sk_dcv_' . $user_hash, time(), 'sk_page_cache', 3600 );
+        $user_hash = \SK\Core\Dashboard\PageCache::user_hash();
+        if ( '' !== $user_hash ) {
+            wp_cache_set( 'sk_dcv_' . $user_hash, time(), \SK\Core\Dashboard\PageCache::GROUP, HOUR_IN_SECONDS );
         }
 
         if ( ! defined( 'DOING_AJAX' ) ) {

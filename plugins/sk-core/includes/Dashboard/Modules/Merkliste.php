@@ -3,6 +3,7 @@
 namespace SK\Core\Dashboard\Modules;
 
 use SK\Core\Dashboard\DashboardModule;
+use SK\Core\Dashboard\PageCache;
 
 /**
  * Merkliste (wishlist/bookmarks) for vendor dashboard.
@@ -42,7 +43,6 @@ class Merkliste extends DashboardModule {
     protected function register_extras(): void {
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue' ] );
 
-        add_action( 'wp_ajax_dm_add_to_merkliste',      [ $this, 'ajax_add' ] );
         add_action( 'wp_ajax_dm_remove_from_merkliste', [ $this, 'ajax_remove' ] );
         add_action( 'wp_ajax_dm_toggle_merkliste',      [ $this, 'ajax_toggle' ] );
 
@@ -62,30 +62,47 @@ class Merkliste extends DashboardModule {
     }
 
     public function enqueue(): void {
-        $css_path   = SK_CORE_DIR . '/assets/css/sk-merkliste.css';
-        $js_path    = SK_CORE_DIR . '/assets/js/sk-merkliste.js';
-        $css_ver    = file_exists( $css_path ) ? (string) filemtime( $css_path ) : SK_CORE_VERSION;
-        $js_ver     = file_exists( $js_path )  ? (string) filemtime( $js_path )  : SK_CORE_VERSION;
+        $js_path = SK_CORE_DIR . '/assets/js/sk-merkliste.js';
+        $js_ver  = file_exists( $js_path ) ? (string) filemtime( $js_path ) : SK_CORE_VERSION;
 
         if ( ! wp_style_is( 'fontawesome-free', 'enqueued' ) ) {
             wp_enqueue_style( 'fontawesome-free', SK_CORE_ASSETS . '/vendors/font-awesome-6/css/all.min.css', [], '6.5.0' );
         }
 
-        // CSS merged into sk-theme.css (CSS consolidation)
-        wp_enqueue_script( 'sk-merkliste-js', SK_CORE_ASSETS . '/js/sk-merkliste.js', [ 'jquery' ], $js_ver, true );
+        // CSS merged into sk-theme.css (CSS consolidation). The script is only
+        // registered here — a page without a single merkliste control does not
+        // need it, and building its data costs a query.
+        wp_register_script( 'sk-merkliste-js', SK_CORE_ASSETS . '/js/sk-merkliste.js', [ 'jquery' ], $js_ver, true );
+
+        // isset, not truthiness: the rewrite sets merkliste="" for the bare
+        // /dashboard/merkliste/ URL, which get_query_var() cannot tell from absent.
+        global $wp;
+        if ( isset( $wp->query_vars['merkliste'] ) ) {
+            $this->enqueue_assets();
+        }
+    }
+
+    /**
+     * Load the script for the page being rendered. Called by every place that
+     * emits a control, so it runs at most once and only when there is one.
+     */
+    private function enqueue_assets(): void {
+        if ( wp_script_is( 'sk-merkliste-js', 'enqueued' ) ) {
+            return;
+        }
+
+        wp_enqueue_script( 'sk-merkliste-js' );
 
         wp_localize_script( 'sk-merkliste-js', 'merklisteAjax', [
             'ajaxurl'      => admin_url( 'admin-ajax.php' ),
             'nonce'        => wp_create_nonce( 'merkliste_nonce' ),
             'items'        => $this->ids(),
-            'addedText'    => __( 'Zur Merkliste hinzugefügt', 'sk-core' ),
-            'removedText'  => __( 'Von Merkliste entfernt', 'sk-core' ),
             'errorText'    => __( 'Fehler beim Speichern', 'sk-core' ),
             'loginRequired'=> __( 'Du musst eingeloggt sein, um die Merkliste zu nutzen.', 'sk-core' ),
-            'loginUrl'     => wp_login_url( get_permalink() ),
             'isLoggedIn'   => is_user_logged_in(),
             'addTitle'     => __( 'Zur Merkliste hinzufügen', 'sk-core' ),
             'removeTitle'  => __( 'Von Merkliste entfernen', 'sk-core' ),
+            'confirmText'  => __( 'Wirklich von der Merkliste entfernen?', 'sk-core' ),
         ] );
     }
 
@@ -116,21 +133,6 @@ class Merkliste extends DashboardModule {
         }
 
         return $product_id;
-    }
-
-    public function ajax_add(): void {
-        $product_id = $this->guard_write_request();
-
-        if ( ! $this->is_in_list( $product_id ) && $this->count() >= self::MAX_ITEMS ) {
-            wp_send_json_error( [ 'message' => __( 'Deine Merkliste ist voll.', 'sk-core' ) ] );
-        }
-
-        if ( $this->add( $product_id ) ) {
-            $this->purge_merkliste_cache();
-            wp_send_json_success( [ 'message' => __( 'Zur Merkliste hinzugefügt', 'sk-core' ), 'count' => $this->count() ] );
-        } else {
-            wp_send_json_error( [ 'message' => __( 'Fehler beim Hinzufügen', 'sk-core' ) ] );
-        }
     }
 
     public function ajax_remove(): void {
@@ -176,6 +178,8 @@ class Merkliste extends DashboardModule {
         if ( ! $product ) {
             return;
         }
+        $this->enqueue_assets();
+
         $product_id   = $product->get_id();
         $is_logged_in = is_user_logged_in();
         $is_in_list   = $is_logged_in && in_array( $product_id, $this->ids(), true );
@@ -193,6 +197,8 @@ class Merkliste extends DashboardModule {
         if ( ! $product ) {
             return;
         }
+        $this->enqueue_assets();
+
         $product_id   = $product->get_id();
         $is_logged_in = is_user_logged_in();
         $is_in_list   = $is_logged_in && in_array( $product_id, $this->ids(), true );
@@ -216,7 +222,13 @@ class Merkliste extends DashboardModule {
     public function wcps_thumb_class( $class, $args ) {
         $product_id = isset( $args['product_id'] ) ? absint( $args['product_id'] ) : 0;
 
-        return $product_id ? $class . ' sk-merk-pid-' . $product_id : $class;
+        if ( ! $product_id ) {
+            return $class;
+        }
+
+        $this->enqueue_assets();
+
+        return $class . ' sk-merk-pid-' . $product_id;
     }
 
     /* ---- Cleanup ---- */
@@ -317,22 +329,16 @@ class Merkliste extends DashboardModule {
     private function purge_merkliste_cache(): void {
         $this->ids_cache = null;
 
-        // Bust the Redis dashboard page cache (Performance.php uses sk_dcv_{user_hash} as version key)
-        $user_hash = '';
-        foreach ( $_COOKIE as $k => $v ) {
-            if ( str_starts_with( $k, 'wordpress_logged_in_' ) ) {
-                $user_hash = md5( $v );
-                break;
-            }
-        }
+        // Bust the Redis dashboard page cache (PageCache holds the key rules).
+        $user_hash = PageCache::user_hash();
         if ( '' !== $user_hash ) {
-            wp_cache_set( 'sk_dcv_' . $user_hash, time(), 'sk_page_cache', 3600 );
+            wp_cache_set( 'sk_dcv_' . $user_hash, time(), PageCache::GROUP, HOUR_IN_SECONDS );
         }
 
-        // WP Fastest Cache file cache
-        $url = sk_get_navigation_url( 'merkliste' );
+        // WP Fastest Cache file cache. Neither entry point exists in the free
+        // version, so the URL is only resolved once one of them does.
         if ( function_exists( 'wpfc_clear_cache_by_url' ) ) {
-            wpfc_clear_cache_by_url( $url );
+            wpfc_clear_cache_by_url( sk_get_navigation_url( 'merkliste' ) );
         }
         global $WpFastestCache;
         if ( isset( $WpFastestCache ) && method_exists( $WpFastestCache, 'deleteSpecificCache' ) ) {
@@ -401,11 +407,12 @@ class Merkliste extends DashboardModule {
         if ( ! $user_id || ! $product_id ) {
             return false;
         }
-        if ( $this->is_in_list( $product_id, $user_id ) ) {
-            return true;
-        }
+        // INSERT IGNORE, not insert(): two parallel adds used to collide on the
+        // unique key and report a failure for a row that is on the list.
         $table  = $wpdb->prefix . 'sk_merkliste';
-        $result = $wpdb->insert( $table, [ 'user_id' => $user_id, 'product_id' => $product_id ], [ '%d', '%d' ] );
+        $result = $wpdb->query(
+            $wpdb->prepare( "INSERT IGNORE INTO {$table} (user_id, product_id) VALUES (%d, %d)", $user_id, $product_id )
+        );
         return $result !== false;
     }
 

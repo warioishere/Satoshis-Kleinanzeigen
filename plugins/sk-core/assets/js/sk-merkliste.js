@@ -145,7 +145,7 @@ jQuery(document).ready(function($) {
     $(document).on('click', '.dm-remove-from-list', function(e) {
         e.preventDefault();
 
-        if (!confirm('Wirklich von der Merkliste entfernen?')) {
+        if (!confirm(merklisteAjax.confirmText)) {
             return;
         }
 

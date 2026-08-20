@@ -233,6 +233,19 @@ class DashboardRegistry {
                 continue;
             }
 
+            // Permission gate, same as dispatch_tab(). Without it the capability
+            // in a module's config only hid the menu entry, never the page.
+            $permission = $config['permission'] ?? '';
+            if ( $permission && ! current_user_can( $permission ) ) {
+                sk_get_template_part(
+                    'global/sk-error', '', [
+                        'deleted' => false,
+                        'message' => __( 'You have no permission to view this page', 'sk-core' ),
+                    ]
+                );
+                return;
+            }
+
             // Callable template: module renders it itself (needed for modules
             // with their own template paths outside sk-core/templates/, or
             // that need to prep variables).

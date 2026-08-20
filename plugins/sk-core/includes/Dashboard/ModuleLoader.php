@@ -10,6 +10,11 @@ namespace SK\Core\Dashboard;
  */
 class ModuleLoader {
 
+    /** Bump to let maybe_upgrade_tables() apply schema changes. */
+    private const DB_VERSION = '1';
+
+    private const VERSION_OPTION = 'sk_dashboard_db_version';
+
     public function __construct() {
         // Load standalone function shims unconditionally (bypasses autoloader/opcode cache)
         require_once __DIR__ . '/dashboard-functions.php';
@@ -36,6 +41,25 @@ class ModuleLoader {
         new Modules\LogoutModal();
         new Modules\SmtpConfig();
         new Modules\AccountDeletion();
+
+        add_action( 'admin_init', [ self::class, 'maybe_upgrade_tables' ] );
+    }
+
+    /**
+     * Apply schema changes outside the activation hook.
+     *
+     * maybe_create_tables() only ever ran on activation, and a deploy that
+     * resets the working tree never activates the plugin — a new column would
+     * have stayed unapplied. Cheap no-op once the version matches.
+     */
+    public static function maybe_upgrade_tables(): void {
+        if ( get_option( self::VERSION_OPTION ) === self::DB_VERSION ) {
+            return;
+        }
+
+        self::maybe_create_tables();
+
+        update_option( self::VERSION_OPTION, self::DB_VERSION, false );
     }
 
     /**
