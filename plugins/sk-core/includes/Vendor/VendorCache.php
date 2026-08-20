@@ -21,22 +21,11 @@ class VendorCache {
         add_action( 'sk_delete_vendor', [ $this, 'clear_cache_group' ], 10 );
         add_action( 'sk_vendor_enabled', [ $this, 'clear_cache_group' ], 10 );
         add_action( 'sk_vendor_disabled', [ $this, 'clear_cache_group' ], 10 );
-        add_action( 'sk_store_profile_saved', [ $this, 'after_update_vendor_profile' ], 10, 2 );
 
         /* Clear wp-user related caches */
         add_action( 'user_register', [ $this, 'after_created_new_wp_user' ], 10 );
         add_action( 'profile_update', [ $this, 'after_updated_wp_user' ], 10, 2 );
         add_action( 'delete_user', [ $this, 'before_deleting_wp_user' ], 10, 2 );
-    }
-
-    /**
-     * Clear vendor cache group.
-     *
-     *
-     * @return void
-     */
-    public static function delete() {
-        Cache::invalidate_group( 'vendors' );
     }
 
     /**
@@ -48,26 +37,10 @@ class VendorCache {
      * @return void
      */
     public function clear_cache_group( $vendor_id ) {
-        // Delete vendor cache group
-        self::delete();
-
-        // delete product cache for this vendor
+        // Nothing is cached under a 'vendors' group — the invalidation that used
+        // to stand here flushed an empty Redis group on every vendor and user
+        // save, at roughly 7ms a call. Vendor listings are not object-cached.
         ProductCache::delete( $vendor_id );
-    }
-
-    /**
-     * Clear Vendor Cache Group after vendor profile update.
-     *
-     *
-     * @param int   $store_id
-     * @param array $sk_settings
-     *
-     * @return void
-     */
-    public function after_update_vendor_profile( $store_id, $sk_settings ) {
-        // We'll just delete vendor cache group,
-        // no need to delete product caches
-        self::delete();
     }
 
     /**
@@ -84,8 +57,6 @@ class VendorCache {
         if ( ! user_can( $user_id, 'skdar' ) ) {
             return;
         }
-
-        self::delete();
 
         // On delete user, clear product caches of that vendor too.
         if ( $is_user_delete ) {
