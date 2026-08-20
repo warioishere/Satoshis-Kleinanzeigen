@@ -92,11 +92,14 @@ class SK_Follow_Store_Send_Updates extends SkBackgroundProcesses {
         $limit = 1;
         $offset = ( $page - 1 ) * $limit;
 
+        // Without ORDER BY the row order is not guaranteed between the batches,
+        // so a follower could be skipped or mailed twice as the offset walks on.
         return $wpdb->get_col( $wpdb->prepare(
               "select follower_id"
             . " from {$wpdb->prefix}sk_follow_store_followers"
             . " where unfollowed_at is null"
             . " group by follower_id"
+            . " order by follower_id asc"
             . " limit %d, %d",
             $offset,
             $limit
