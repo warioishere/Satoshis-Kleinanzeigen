@@ -298,7 +298,15 @@ function sk_geo_store_lists_filter_form() {
  * @return array
  */
 function sk_geo_get_product_data( $product_id ) {
-    $store_id           = sk_get_current_user_id();
+    // The shop location belongs to the product's author, not to whoever happens
+    // to be looking at it. With the current user an admin opening someone else's
+    // product saw their own location presented as the shop's.
+    $store_id = $product_id ? (int) get_post_field( 'post_author', $product_id ) : 0;
+
+    if ( ! $store_id ) {
+        $store_id = sk_get_current_user_id();
+    }
+
     $store_geo_latitude = get_user_meta( $store_id, 'sk_geo_latitude', true );
     $use_store_settings = 'no' !== get_post_meta( $product_id, '_sk_geolocation_use_store_settings', true );
 

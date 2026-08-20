@@ -114,7 +114,17 @@ class SK_Geolocation_Vendor_Dashboard {
      * @return void
      */
     public function update_product_settings( $post_id ) {
-        $store_id            = ! empty( $_POST['sk_product_author_override'] ) ? intval( $_POST['sk_product_author_override'] ) : sk_get_current_user_id();
+        // The shop location to inherit belongs to the product's author. Falling
+        // back to the current user wrote an administrator's own location onto
+        // every vendor product they saved.
+        $store_id = ! empty( $_POST['sk_product_author_override'] )
+            ? intval( $_POST['sk_product_author_override'] )
+            : (int) get_post_field( 'post_author', $post_id );
+
+        if ( ! $store_id ) {
+            $store_id = sk_get_current_user_id();
+        }
+
         $sk_geo_latitude  = get_user_meta( $store_id, 'sk_geo_latitude', true );
         $sk_geo_longitude = get_user_meta( $store_id, 'sk_geo_longitude', true );
         $sk_geo_public    = get_user_meta( $store_id, 'sk_geo_public', true );
