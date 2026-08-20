@@ -74,7 +74,6 @@ class Bootstrap {
 
         if ( is_admin() ) {
             new Admin\ExtendedAdmin();
-            new Admin\Ajax();
             new Admin\ShortcodesButton();
 
             add_action( 'admin_init', [ Install\LegacyCleanup::class, 'maybe_run' ] );

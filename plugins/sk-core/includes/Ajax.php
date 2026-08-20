@@ -53,13 +53,8 @@ class Ajax {
 
         $post = get_post( $product_id );
 
-        if ( ! $post || ! in_array( $post->post_type, [ 'product', 'product_variation' ], true ) ) {
+        if ( ! $post || 'product' !== $post->post_type ) {
             return false;
-        }
-
-        // Variations belong to their parent product.
-        if ( 'product_variation' === $post->post_type && $post->post_parent ) {
-            return self::can_edit_product( $post->post_parent );
         }
 
         if ( current_user_can( 'manage_options' ) || current_user_can( 'edit_others_products' ) ) {

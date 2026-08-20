@@ -3643,33 +3643,7 @@ function sk_override_product_author( $product, $seller_id ) {
         ]
     );
 
-    sk_override_author_for_product_variations( $product, $seller_id );
-
     do_action( 'sk_after_override_product_author', $product, $seller_id );
-}
-
-/**
- * Overrides author for products with variations.
- *
- *
- * @param WC_Product $product
- * @param int        $seller_id
- *
- * @return void
- */
-function sk_override_author_for_product_variations( $product, $seller_id ) {
-    if ( 'variable' === $product->get_type() || 'variable-subscription' === $product->get_type() ) {
-        $variations = $product->get_children();
-
-        foreach ( $variations as $variation_id ) {
-            wp_update_post(
-                [
-                    'ID'          => $variation_id,
-                    'post_author' => $seller_id,
-                ]
-            );
-        }
-    }
 }
 
 /**

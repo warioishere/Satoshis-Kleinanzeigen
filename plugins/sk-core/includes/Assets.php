@@ -864,7 +864,6 @@ class Assets {
                 'i18n_remove_personal_data_notice'         => __( 'This action cannot be reversed. Are you sure you wish to erase personal data from the selected orders?', 'sk-core' ),
                 'decimal_point'                            => $decimal,
                 'mon_decimal_point'                        => wc_get_price_decimal_separator(),
-                'variations_per_page'                      => absint( apply_filters( 'sk_product_variations_per_page', 10 ) ),
                 'store_banner_dimension'                   => [
                     'width'       => $banner_width,
                     'height'      => $banner_height,

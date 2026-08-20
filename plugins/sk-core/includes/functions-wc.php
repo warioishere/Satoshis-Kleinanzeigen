@@ -178,60 +178,6 @@ function sk_set_variations_args( $args ) {
 }
 
 /**
- * Set variation product author to product vendor id
- *
- * @param int $variation_id
- *
- *
- * @return void
- */
-function sk_override_variation_product_author( $variation_id ) {
-    if ( ! is_admin() ) {
-        return;
-    }
-
-    $variation_product = get_post( $variation_id );
-
-    if ( ! $variation_product ) {
-        return;
-    }
-
-    $product_id = $variation_product->post_parent;
-
-    if ( ! $product_id ) {
-        return;
-    }
-
-    $product = wc_get_product( $product_id );
-
-    if ( ! $product ) {
-        return;
-    }
-
-    $vendor    = sk_get_vendor_by_product( $product );
-    $vendor_id = $vendor->get_id();
-
-    if ( ! $vendor || ! $vendor_id ) {
-        return;
-    }
-
-    if ( absint( $vendor_id ) === absint( $variation_product->post_author ) ) {
-        return;
-    }
-
-    wp_update_post(
-        [
-            'ID'          => $variation_id,
-            'post_author' => $vendor_id,
-        ]
-    );
-
-    do_action( 'sk_after_override_variation_product_author', $product, $vendor_id );
-}
-
-add_action( 'woocommerce_save_product_variation', 'sk_override_variation_product_author' );
-
-/**
  * SK enabble single seller mode
  *
  * @param bool $valid

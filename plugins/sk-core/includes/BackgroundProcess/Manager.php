@@ -32,7 +32,6 @@ class Manager {
      * @return void
      */
     public function init_classes() {
-        $this->container['rewrite_variable_products_author'] = new RewriteVariableProductsAuthor();
         $this->container['change_vendor_product_status']     = new ChangeVendorProductStatus();
 
         $this->container = apply_filters( 'sk_background_process_container', $this->container );
