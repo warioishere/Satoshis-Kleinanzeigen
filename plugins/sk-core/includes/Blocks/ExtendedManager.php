@@ -44,7 +44,6 @@ class ExtendedManager {
         $this->block_classes = apply_filters(
             'sk_block_classes', [
                 Product::class,
-                ProductAttribute::class,
             ]
         );
     }

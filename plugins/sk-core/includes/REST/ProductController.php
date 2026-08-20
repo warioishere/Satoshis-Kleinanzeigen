@@ -15,7 +15,6 @@ use WC_Product_Factory;
 use WC_Product_Download;
 use SK\Core\ProductCategory\Categories;
 use SK\Core\Abstracts\SkRESTController;
-use SK\Core\Product\ProductAttribute;
 
 /**
  * Store API Controller
@@ -662,7 +661,7 @@ class ProductController extends SkRESTController {
         // Set post_status.
         $args['post_status'] = ! empty( $request['status'] ) ? $request['status'] : $this->post_status;
 
-        // Taxonomy query to filter products by type, category, tag, and attribute.
+        // Taxonomy query to filter products by type, category and tag.
         $tax_query = [];
 
         // Map between taxonomy name and arg's key.
@@ -689,17 +688,6 @@ class ProductController extends SkRESTController {
                 'field'    => 'slug',
                 'terms'    => $request['type'],
             ];
-        }
-
-        // Filter by attribute and term.
-        if ( ! empty( $request['attribute'] ) && ! empty( $request['attribute_term'] ) ) {
-            if ( in_array( $request['attribute'], wc_get_attribute_taxonomy_names(), true ) ) {
-                $tax_query[] = [
-                    'taxonomy' => $request['attribute'],
-                    'field'    => 'term_id',
-                    'terms'    => $request['attribute_term'],
-                ];
-            }
         }
 
         if ( ! empty( $tax_query ) ) {
@@ -857,8 +845,6 @@ class ProductController extends SkRESTController {
             'categories'            => $this->get_taxonomy_terms( $product ),
             'tags'                  => $this->get_taxonomy_terms( $product, 'tag' ),
             'images'                => $this->get_images( $product ),
-            'attributes'            => $this->get_attributes( $product ),
-            'default_attributes'    => $this->get_default_attributes( $product ),
             'variations'            => $product->is_type( 'variable' ) ? $product->get_children() : [],
             'grouped_products'      => $product->is_type( 'grouped' ) ? $product->get_children() : [],
             'menu_order'            => $product->get_menu_order( $context ),
@@ -999,12 +985,6 @@ class ProductController extends SkRESTController {
         // SKU.
         if ( isset( $request['sku'] ) ) {
             $product->set_sku( wc_clean( $request['sku'] ) );
-        }
-
-        // Attributes.
-        if ( isset( $request['attributes'] ) ) {
-            $product_attribute = new ProductAttribute( $request['attributes'] );
-            $product_attribute->set( $product );
         }
 
         // Sales and prices.
@@ -1188,11 +1168,6 @@ class ProductController extends SkRESTController {
             }
         }
 
-        // Save default attributes for variable products.
-        if ( $product->is_type( 'variable' ) ) {
-            $product = $this->save_default_attributes( $product, $request );
-        }
-
         // Set children for a grouped product.
         if ( $product->is_type( 'grouped' ) && isset( $request['grouped_products'] ) ) {
             $product->set_children( $request['grouped_products'] );
@@ -1335,156 +1310,6 @@ class ProductController extends SkRESTController {
         }
 
         return $images;
-    }
-
-    /**
-     * Get attribute taxonomy label.
-     *
-     * @param string $name Taxonomy name.
-     *
-     * @return string
-     * @deprecated 2.8.0
-     */
-    protected function get_attribute_taxonomy_label( $name ) {
-        $tax    = get_taxonomy( $name );
-        $labels = get_taxonomy_labels( $tax );
-
-        return $labels->singular_name;
-    }
-
-    /**
-     * Get product attribute taxonomy name.
-     *
-     * @param string $slug Taxonomy name.
-     * @param WC_Product $product Product data.
-     *
-     * @return string
-     */
-    protected function get_attribute_taxonomy_name( $slug, $product ) {
-        $attributes = $product->get_attributes();
-
-        if ( ! isset( $attributes[ $slug ] ) ) {
-            return str_replace( 'pa_', '', $slug );
-        }
-
-        $attribute = $attributes[ $slug ];
-
-        // Taxonomy attribute name.
-        if ( $attribute->is_taxonomy() ) {
-            return $attribute->get_taxonomy_object()->attribute_label;
-        }
-
-        // Custom product attribute name.
-        return $attribute->get_name();
-    }
-
-    /**
-     * Get default attributes.
-     *
-     * @param WC_Product $product Product instance.
-     *
-     * @return array
-     */
-    protected function get_default_attributes( $product ) {
-        $default = [];
-
-        if ( $product->is_type( 'variable' ) ) {
-            foreach ( array_filter( (array) $product->get_default_attributes(), 'strlen' ) as $key => $value ) {
-                if ( 0 === strpos( $key, 'pa_' ) ) {
-                    $default[] = [
-                        'id'     => wc_attribute_taxonomy_id_by_name( $key ),
-                        'name'   => $this->get_attribute_taxonomy_name( $key, $product ),
-                        'option' => $value,
-                    ];
-                } else {
-                    $default[] = [
-                        'id'     => 0,
-                        'name'   => $this->get_attribute_taxonomy_name( $key, $product ),
-                        'option' => $value,
-                    ];
-                }
-            }
-        }
-
-        return $default;
-    }
-
-    /**
-     * Get attribute options.
-     *
-     * @param int $product_id Product ID.
-     * @param array $attribute Attribute data.
-     *
-     * @return array
-     */
-    protected function get_attribute_options( $product_id, $attribute ) {
-        if ( isset( $attribute['is_taxonomy'] ) && $attribute['is_taxonomy'] ) {
-            return wc_get_product_terms(
-                $product_id, $attribute['name'], [
-                    'fields' => 'names',
-                ]
-            );
-        }
-
-        if ( isset( $attribute['value'] ) ) {
-            return array_map( 'trim', explode( '|', $attribute['value'] ) );
-        }
-
-        return [];
-    }
-
-    /**
-     * Get the attributes for a product or product variation.
-     *
-     * @param WC_Product|WC_Product_Variation $product Product instance.
-     *
-     * @return array
-     */
-    protected function get_attributes( $product ) {
-        $attributes = [];
-
-        if ( $product->is_type( 'variation' ) ) {
-            $_product = wc_get_product( $product->get_parent_id() );
-            foreach ( $product->get_variation_attributes() as $attribute_name => $attribute ) {
-                $name = str_replace( 'attribute_', '', $attribute_name );
-
-                if ( ! $attribute ) {
-                    continue;
-                }
-
-                // Taxonomy-based attributes are prefixed with `pa_`, otherwise simply `attribute_`.
-                if ( 0 === strpos( $attribute_name, 'attribute_pa_' ) ) {
-                    $option_term  = get_term_by( 'slug', $attribute, $name );
-                    $attributes[] = [
-                        'id'     => wc_attribute_taxonomy_id_by_name( $name ),
-                        'slug'   => $attribute_name,
-                        'name'   => $this->get_attribute_taxonomy_name( $name, $_product ),
-                        'option' => $option_term && ! is_wp_error( $option_term ) ? $option_term->name : $attribute,
-                    ];
-                } else {
-                    $attributes[] = [
-                        'id'     => 0,
-                        'slug'   => $attribute_name,
-                        'name'   => $this->get_attribute_taxonomy_name( $name, $_product ),
-                        'option' => $attribute,
-                    ];
-                }
-            }
-        } else {
-            foreach ( $product->get_attributes() as $attribute ) {
-                $attributes[] = [
-                    'id'        => $attribute['is_taxonomy'] ? wc_attribute_taxonomy_id_by_name( $attribute['name'] ) : 0,
-                    'slug'      => $attribute['name'],
-                    'name'      => $this->get_attribute_taxonomy_name( $attribute['name'], $product ),
-                    'position'  => (int) $attribute['position'],
-                    'visible'   => (bool) $attribute['is_visible'],
-                    'variation' => (bool) $attribute['is_variation'],
-                    'options'   => $this->get_attribute_options( $product->get_id(), $attribute ),
-                ];
-            }
-        }
-
-        return $attributes;
     }
 
     /**
@@ -1677,24 +1502,6 @@ class ProductController extends SkRESTController {
             $product->set_category_ids( $term_ids );
         } elseif ( 'tag' === $taxonomy ) {
             $product->set_tag_ids( $term_ids );
-        }
-
-        return $product;
-    }
-
-    /**
-     * Save default attributes.
-     *
-     * @param WC_Product $product Product instance.
-     * @param WP_REST_Request $request Request data.
-     *
-     *
-     * @return WC_Product
-     */
-    protected function save_default_attributes( $product, $request ) {
-        if ( isset( $request['default_attributes'] ) && is_array( $request['default_attributes'] ) ) {
-            $product_attribute = new ProductAttribute( $request['default_attributes'] );
-            $product_attribute->set_default( $product );
         }
 
         return $product;
@@ -2207,76 +2014,6 @@ class ProductController extends SkRESTController {
                             'position'          => [
                                 'description' => __( 'Image position. 0 means that the image is featured.', 'sk-core' ),
                                 'type'        => 'integer',
-                                'context'     => [ 'view', 'edit' ],
-                            ],
-                        ],
-                    ],
-                ],
-                'attributes'            => [
-                    'description' => __( 'List of attributes.', 'sk-core' ),
-                    'type'        => 'array',
-                    'context'     => [ 'view', 'edit' ],
-                    'items'       => [
-                        'type'       => 'object',
-                        'properties' => [
-                            'id'        => [
-                                'description' => __( 'Attribute ID.', 'sk-core' ),
-                                'type'        => 'integer',
-                                'context'     => [ 'view', 'edit' ],
-                            ],
-                            'name'      => [
-                                'description' => __( 'Attribute name.', 'sk-core' ),
-                                'type'        => 'string',
-                                'context'     => [ 'view', 'edit' ],
-                            ],
-                            'position'  => [
-                                'description' => __( 'Attribute position.', 'sk-core' ),
-                                'type'        => 'integer',
-                                'context'     => [ 'view', 'edit' ],
-                            ],
-                            'visible'   => [
-                                'description' => __( "Define if the attribute is visible on the \"Additional information\" tab in the product's page.", 'sk-core' ),
-                                'type'        => 'boolean',
-                                'default'     => false,
-                                'context'     => [ 'view', 'edit' ],
-                            ],
-                            'variation' => [
-                                'description' => __( 'Define if the attribute can be used as variation.', 'sk-core' ),
-                                'type'        => 'boolean',
-                                'default'     => false,
-                                'context'     => [ 'view', 'edit' ],
-                            ],
-                            'options'   => [
-                                'description' => __( 'List of available term names of the attribute.', 'sk-core' ),
-                                'type'        => 'array',
-                                'context'     => [ 'view', 'edit' ],
-                                'items'       => [
-                                    'type' => 'string',
-                                ],
-                            ],
-                        ],
-                    ],
-                ],
-                'default_attributes'    => [
-                    'description' => __( 'Defaults variation attributes.', 'sk-core' ),
-                    'type'        => 'array',
-                    'context'     => [ 'view', 'edit' ],
-                    'items'       => [
-                        'type'       => 'object',
-                        'properties' => [
-                            'id'     => [
-                                'description' => __( 'Attribute ID.', 'sk-core' ),
-                                'type'        => 'integer',
-                                'context'     => [ 'view', 'edit' ],
-                            ],
-                            'name'   => [
-                                'description' => __( 'Attribute name.', 'sk-core' ),
-                                'type'        => 'string',
-                                'context'     => [ 'view', 'edit' ],
-                            ],
-                            'option' => [
-                                'description' => __( 'Selected attribute term name.', 'sk-core' ),
-                                'type'        => 'string',
                                 'context'     => [ 'view', 'edit' ],
                             ],
                         ],

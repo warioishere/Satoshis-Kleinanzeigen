@@ -548,7 +548,6 @@ class Products {
         }
 
         $postdata = wp_unslash( $_POST ); // phpcs:ignore
-        /**  Process all variation products meta */
         sk_process_product_meta( $post_id, $postdata );
 
         if ( $is_new_product ) {

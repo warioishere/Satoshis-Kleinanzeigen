@@ -175,11 +175,6 @@ class Products {
         update_post_meta( $post_id, '_upsell_ids', $upsells );
         update_post_meta( $post_id, '_crosssell_ids', $crosssells );
 
-        // Save variations
-        if ( 'variable' === $product_type ) {
-            sk_save_variations( $post_id );
-        }
-
         // Save external
         if ( 'external' === $product_type ) {
             update_post_meta( $post_id, '_product_url', isset( $post_data['_product_url'] ) ? $post_data['_product_url'] : '' );
