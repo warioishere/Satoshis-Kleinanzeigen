@@ -12,7 +12,7 @@ class SK_Follow_Store_Ajax {
      */
     public function __construct() {
         add_action( 'wp_ajax_sk_follow_store_toggle_status', array( $this, 'toggle_follow_status' ) );
-        add_filter( 'wp_ajax_sk_follow_store_get_current_status', array( $this, 'get_current_status' ) );
+        add_action( 'wp_ajax_sk_follow_store_get_current_status', array( $this, 'get_current_status' ) );
     }
 
     /**

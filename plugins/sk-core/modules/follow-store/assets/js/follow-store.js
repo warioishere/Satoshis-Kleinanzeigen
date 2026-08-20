@@ -17,8 +17,11 @@
                 vendor_id: vendorId
             }
         }).fail(function (xhr) {
-            var err = xhr.responseJSON.data.pop();
-            sk_sweetalert(err.message, { icon: 'error' });
+            // A 500 or a dropped connection has no responseJSON; reading it blindly
+            // threw a TypeError and the user saw nothing at all.
+            var data = xhr.responseJSON && xhr.responseJSON.data;
+            var err = Array.isArray(data) ? data[data.length - 1] : data;
+            sk_sweetalert((err && err.message) || skFollowStore.error_text, { icon: 'error' });
         }).always(function () {
             $btn.toggleClass('sk-follow-store-button-working');
         }).done(function (res) {
@@ -60,16 +63,21 @@
         var vendorId = parseInt($btn.data('vendor-id'));
 
         if (!parseInt($btn.data('is-logged-in'))) {
-            $('body').on('sk:login_form_popup:fetching_form sk:login_form_popup:fetched_form', function () {
+            // .one() and a namespace: every click used to stack another set of
+            // handlers on body, so after two clicks the toggle ran twice and the
+            // follow was undone right after it happened.
+            $('body').off('.skFollowLogin');
+
+            $('body').on('sk:login_form_popup:fetching_form.skFollowLogin sk:login_form_popup:fetched_form.skFollowLogin', function () {
                 $btn.toggleClass('sk-follow-store-button-working');
             });
-            $('body').on('sk:login_form_popup:logged_in', function () {
+            $('body').one('sk:login_form_popup:logged_in.skFollowLogin', function () {
                 getCurrentStatus(vendorId);
             });
-            $('body').on('sk:follow_store:current_status', function (ev, data) {
+            $('body').one('sk:follow_store:current_status.skFollowLogin', function (ev, data) {
                 data.is_following ? window.location.reload() : toggleFollow($btn, vendorId, data.nonce);
             });
-            $('body').on('sk:follow_store:changed_follow_status', function () {
+            $('body').one('sk:follow_store:changed_follow_status.skFollowLogin', function () {
                 window.location.reload();
             });
             $('body').trigger('sk:login_form_popup:show');

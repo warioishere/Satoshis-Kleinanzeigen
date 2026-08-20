@@ -180,4 +180,13 @@ if ( $additional_content ) {
     echo wp_kses_post( wpautop( wptexturize( $additional_content ) ) );
 }
 
+// One click, no login — an unsubscribe the reader has to log in for is not one.
+if ( ! empty( $email->follower->ID ) ) {
+    printf(
+        '<p style="font-size:12px;text-align:center;color:#8a8a8a;"><a style="color:#8a8a8a;" href="%1$s">%2$s</a></p>',
+        esc_url( SK_Follow_Store_Vendor_Dashboard::unsubscribe_url( $email->follower->ID ) ),
+        esc_html__( 'Keine E-Mails mehr über neue Inserate', 'sk-core' )
+    );
+}
+
 do_action( 'woocommerce_email_footer', $email );

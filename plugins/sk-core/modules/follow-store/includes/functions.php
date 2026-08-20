@@ -22,12 +22,6 @@ function sk_follow_store_get_template( $name, $args = [] ) {
  * @return array
  */
 function sk_follow_store_button_labels() {
-    /**
-     * Filter to change the follow button label when not following
-     *
-     *
-     * @param $string
-     */
     return array(
         'follow'    => 'Folgen',
         'following' => 'Folge ich',

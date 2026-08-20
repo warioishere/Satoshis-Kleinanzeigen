@@ -36,6 +36,10 @@ class SK_Follow_Store_Send_Updates extends SkBackgroundProcesses {
         }
 
         foreach ( $followers as $follower_id ) {
+            if ( SK_Follow_Store_Vendor_Dashboard::is_opted_out( $follower_id ) ) {
+                continue;
+            }
+
             $follower    = get_user_by( 'ID', $follower_id );
             $vendors_ids = $this->get_following_vendors( $follower_id );
 

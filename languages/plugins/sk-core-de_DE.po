@@ -10766,7 +10766,7 @@ msgstr "Aktualisieren Sie Ihre Erfahrung mit <a href='%s' target='_blank'>%s</a>
 #: modules/follow-store/views/emails/follow-store-updates-email-html.php:11
 #: modules/follow-store/views/emails/plain/follow-store-updates-email-html.php:17
 msgid "Updates from your favorite stores"
-msgstr "Neuigkeiten aus Ihren Lieblings-Anbietern"
+msgstr "Neues von deinen Anbietern"
 
 #: templates/admin/php-dashboard/settings.php:192
 msgid "Upload"

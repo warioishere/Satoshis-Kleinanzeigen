@@ -56,7 +56,6 @@ final class Module {
         require_once SK_FOLLOW_STORE_INCLUDES . '/class-sk-follow-store-scripts.php';
         require_once SK_FOLLOW_STORE_INCLUDES . '/class-sk-follow-store-ajax.php';
         require_once SK_FOLLOW_STORE_INCLUDES . '/class-sk-follow-store-follow-button.php';
-        require_once SK_FOLLOW_STORE_INCLUDES . '/class-sk-follow-store-my-account.php';
         require_once SK_FOLLOW_STORE_INCLUDES . '/class-sk-follow-store-vendor-dashboard.php';
         require_once SK_FOLLOW_STORE_INCLUDES . '/class-sk-follow-store-cron.php';
         require_once SK_FOLLOW_STORE_INCLUDES . '/class-sk-follow-store-email-loader.php';
@@ -74,7 +73,6 @@ final class Module {
         new \SK_Follow_Store_Scripts();
         new \SK_Follow_Store_Ajax();
         new \SK_Follow_Store_Follow_Button();
-        new \SK_Follow_Store_My_Account();
         new \SK_Follow_Store_Vendor_Dashboard();
         new \SK_Follow_Store_Cron();
         new \SK_Follow_Store_Email_Loader();

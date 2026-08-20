@@ -73,4 +73,9 @@ if ( ! empty( $additional_content ) ) {
     echo "\n\n----------------------------------------\n\n";
 }
 
+if ( ! empty( $email->follower->ID ) ) {
+    echo esc_html__( 'Keine E-Mails mehr über neue Inserate:', 'sk-core' ) . "\n";
+    echo esc_url_raw( SK_Follow_Store_Vendor_Dashboard::unsubscribe_url( $email->follower->ID ) ) . "\n\n";
+}
+
 echo esc_html( wp_strip_all_tags( wptexturize( apply_filters( 'woocommerce_email_footer_text', get_option( 'woocommerce_email_footer_text' ) ) ) ) );
