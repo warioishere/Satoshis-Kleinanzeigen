@@ -85,11 +85,6 @@ class ModuleManager {
 
             $module = $sk_pro_modules[ $module_id ];
 
-            // check if module is under purchased package, if not continue
-            if ( ! $this->is_module_available_under_package( $module ) ) {
-                continue;
-            }
-
             // store this module as activated modules
             if ( file_exists( $module['module_file'] ) ) {
                 $activated_modules[] = $module_id;
@@ -157,7 +152,6 @@ class ModuleManager {
                         'thumbnail'    => $thumbnail_dir . '/follow-store.svg',
                         'module_file'  => SK_CORE_DIR . '/modules' . '/product-votes/module.php',
                         'module_class' => 'SK\Modules\ProductVotes\Module',
-                        'plan'         => [ 'professional', 'business', 'enterprise' ],
                         'categories'   => [ 'Product Management' ],
                     ],
                     'follow_store' => [
@@ -167,7 +161,6 @@ class ModuleManager {
                         'thumbnail'    => $thumbnail_dir . '/follow-store.svg',
                         'module_file'  => SK_CORE_DIR . '/modules' . '/follow-store/module.php',
                         'module_class' => 'SK\Modules\FollowStore\Module',
-                        'plan'         => [ 'professional', 'business', 'enterprise' ],
                         'categories'   => [ 'Store Management' ],
                     ],
                     'geolocation' => [
@@ -177,7 +170,6 @@ class ModuleManager {
                         'thumbnail'    => $thumbnail_dir . '/geolocation.svg',
                         'module_file'  => SK_CORE_DIR . '/modules' . '/geolocation/module.php',
                         'module_class' => 'SK\Modules\Geolocation\Module',
-                        'plan'         => [ 'business', 'enterprise' ],
                         'categories'   => [ 'Store Management', 'Product Management' ],
                     ],
                     'live_search' => [
@@ -187,7 +179,6 @@ class ModuleManager {
                         'thumbnail'    => $thumbnail_dir . '/ajax-live-search.svg',
                         'module_file'  => SK_CORE_DIR . '/modules' . '/live-search/module.php',
                         'module_class' => 'SK\Modules\LiveSearch\Module',
-                        'plan'         => [ 'professional', 'business', 'enterprise' ],
                         'categories'   => [ 'Product Management' ],
                     ],
                     'report_abuse' => [
@@ -197,7 +188,6 @@ class ModuleManager {
                         'thumbnail'    => $thumbnail_dir . '/report-abuse.svg',
                         'module_file'  => SK_CORE_DIR . '/modules' . '/report-abuse/module.php',
                         'module_class' => 'SK\Modules\ReportAbuse\Module',
-                        'plan'         => [ 'professional', 'business', 'enterprise' ],
                         'categories'   => [ 'Store Management' ],
                     ],
                     'store_reviews' => [
@@ -207,7 +197,6 @@ class ModuleManager {
                         'thumbnail'    => $thumbnail_dir . '/vendor-review.svg',
                         'module_file'  => SK_CORE_DIR . '/modules' . '/store-reviews/module.php',
                         'module_class' => 'SK\Modules\StoreReviews\Module',
-                        'plan'         => [ 'professional', 'business', 'enterprise' ],
                         'categories'   => [ 'Store Management' ],
                     ],
                     'product_advertising' => [
@@ -217,7 +206,6 @@ class ModuleManager {
                         'thumbnail'    => $thumbnail_dir . '/product-adv.svg',
                         'module_file'  => SK_CORE_DIR . '/modules' . '/product-adv/module.php',
                         'module_class' => 'SK\Modules\ProductAdvertisement\Module',
-                        'plan'         => [ 'business', 'enterprise' ],
                     ],
                     'product_subscription' => [
                         'id'           => 'product_subscription',
@@ -226,7 +214,6 @@ class ModuleManager {
                         'thumbnail'    => $thumbnail_dir . '/subscription.svg',
                         'module_file'  => SK_CORE_DIR . '/modules' . '/subscription/module.php',
                         'module_class' => 'SK\Modules\ProductSubscription\Module',
-                        'plan'         => [ 'professional', 'business', 'enterprise' ],
                         'categories'   => [ 'Store Management' ],
                     ],
                     'sk_payments' => [
@@ -236,7 +223,6 @@ class ModuleManager {
                         'thumbnail'    => $thumbnail_dir . '/follow-store.svg',
                         'module_file'  => SK_CORE_DIR . '/modules' . '/sk-payments/module.php',
                         'module_class' => 'SK\Modules\Payments\Module',
-                        'plan'         => [ 'professional', 'business', 'enterprise' ],
                         'categories'   => [ 'Store Management' ],
                     ],
                     'sk_reputation' => [
@@ -246,7 +232,6 @@ class ModuleManager {
                         'thumbnail'    => $thumbnail_dir . '/follow-store.svg',
                         'module_file'  => SK_CORE_DIR . '/modules' . '/sk-reputation/module.php',
                         'module_class' => 'SK\Modules\Reputation\Module',
-                        'plan'         => [ 'professional', 'business', 'enterprise' ],
                         'categories'   => [ 'Store Management' ],
                     ],
                     'sk_zaps' => [
@@ -256,7 +241,6 @@ class ModuleManager {
                         'thumbnail'    => $thumbnail_dir . '/follow-store.svg',
                         'module_file'  => SK_CORE_DIR . '/modules' . '/sk-zaps/module.php',
                         'module_class' => 'SK\Modules\Zaps\Module',
-                        'plan'         => [ 'professional', 'business', 'enterprise' ],
                         'categories'   => [ 'Store Management' ],
                     ],
                     'sk_nostr_market' => [
@@ -266,7 +250,6 @@ class ModuleManager {
                         'thumbnail'    => $thumbnail_dir . '/follow-store.svg',
                         'module_file'  => SK_CORE_DIR . '/modules' . '/sk-nostr-market/module.php',
                         'module_class' => 'SK\Modules\NostrMarket\Module',
-                        'plan'         => [ 'professional', 'business', 'enterprise' ],
                         'categories'   => [ 'Store Management' ],
                     ],
                     'sk_notifications' => [
@@ -276,7 +259,6 @@ class ModuleManager {
                         'thumbnail'    => $thumbnail_dir . '/follow-store.svg',
                         'module_file'  => SK_CORE_DIR . '/modules' . '/sk-notifications/module.php',
                         'module_class' => 'SK\Modules\Notifications\Module',
-                        'plan'         => [ 'professional', 'business', 'enterprise' ],
                         'categories'   => [ 'Store Management' ],
                     ],
                     'sk_auth' => [
@@ -286,7 +268,6 @@ class ModuleManager {
                         'thumbnail'    => $thumbnail_dir . '/follow-store.svg',
                         'module_file'  => SK_CORE_DIR . '/modules' . '/sk-auth/module.php',
                         'module_class' => 'SK\Modules\Auth\Module',
-                        'plan'         => [ 'professional', 'business', 'enterprise' ],
                         'categories'   => [ 'Store Management' ],
                     ],
                     'sk_anti_fraud' => [
@@ -296,7 +277,6 @@ class ModuleManager {
                         'thumbnail'    => $thumbnail_dir . '/follow-store.svg',
                         'module_file'  => SK_CORE_DIR . '/modules' . '/sk-anti-fraud/module.php',
                         'module_class' => 'SK\Modules\AntiFraud\Module',
-                        'plan'         => [ 'professional', 'business', 'enterprise' ],
                         'categories'   => [ 'Store Management' ],
                     ],
                     'sk_feed' => [
@@ -306,7 +286,6 @@ class ModuleManager {
                         'thumbnail'    => $thumbnail_dir . '/follow-store.svg',
                         'module_file'  => SK_CORE_DIR . '/modules' . '/sk-feed/module.php',
                         'module_class' => 'SK\Modules\Feed\Module',
-                        'plan'         => [ 'professional', 'business', 'enterprise' ],
                         'categories'   => [ 'Store Management' ],
                     ],
                 ]
@@ -383,28 +362,6 @@ class ModuleManager {
         return $this->active_modules;
     }
 
-    /**
-     * Get a list of available modules
-     *
-     *
-     * @return array
-     */
-    public function get_available_modules() {
-        $modules           = $this->get_all_modules();
-        $available_modules = [];
-
-        foreach ( $modules as $module_id => $module ) {
-            if ( ! $this->is_module_available_under_package( $module ) ) {
-                continue;
-            }
-
-            if ( file_exists( $module['module_file'] ) ) {
-                $available_modules[] = $module['id'];
-            }
-        }
-
-        return $available_modules;
-    }
 
     /**
      * Backward compatible module naming map
@@ -515,32 +472,4 @@ class ModuleManager {
         return false;
     }
 
-    /**
-     * Check if a module is available or not
-     *
-     *
-     * @param string $module_id
-     *
-     * @return bool
-     */
-    public function is_available( $module_id ) {
-        $available_modules = $this->get_available_modules();
-
-        return in_array( $module_id, $available_modules, true );
-    }
-
-    /**
-     * Check if the module is in the package.
-     *
-     *
-     * @param $module
-     *
-     * @return bool
-     */
-    public function is_module_available_under_package( $module ) {
-        $license_plan = sk_ext()->license->get_plan();
-        $module_plan_scope = $module['plan'];
-
-        return in_array( $license_plan, $module_plan_scope, true );
-    }
 }

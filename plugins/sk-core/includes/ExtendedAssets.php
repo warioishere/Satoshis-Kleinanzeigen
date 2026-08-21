@@ -21,9 +21,7 @@ class ExtendedAssets {
     }
 
     public function add_localized_data( $data ) {
-        $data['current_plan']       = sk_ext()->license->get_plan();
         $data['active_modules']     = sk_ext()->module->get_active_modules();
-        $data['pro_has_license_key'] = sk_ext()->license->has_license_key();
         return $data;
     }
 

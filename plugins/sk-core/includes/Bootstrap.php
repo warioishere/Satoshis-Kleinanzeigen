@@ -17,7 +17,6 @@ class Bootstrap {
         // Load pro functions early — needed by classes registered in ServiceProviders
         require_once \SK_CORE_INC_DIR . '/extended-functions.php';
 
-        add_action( 'sk_loaded', [ $this, 'init_updater' ], 1 );
         add_action( 'sk_loaded', [ $this, 'init_plugin' ] );
     }
 
@@ -103,19 +102,6 @@ class Bootstrap {
         if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
             new Ajax();
         }
-    }
-
-    public function init_updater() {
-        $this->container['license'] = new class {
-            public function is_valid(): bool { return true; }
-            public function has_license_key(): bool { return true; }
-            public function get_plan(): string { return 'business'; }
-            public function get_expiry_days(): int { return 9999; }
-            public function refresh_license(): void {}
-            public function register_license_routes(): void {}
-            public function get_license_source_id(): string { return ''; }
-            public function get_license_url(): string { return ''; }
-        };
     }
 
     public function register_scripts() {
