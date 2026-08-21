@@ -150,7 +150,9 @@ class Gesuche extends DashboardModule {
         }
 
         // Neu anlegen
-        if ( isset( $_POST['dg_action'] ) && $_POST['dg_action'] === 'create' ) {
+        if ( isset( $_POST['dg_action'] ) && $_POST['dg_action'] === 'create'
+            && isset( $_POST['_dg_nonce'] )
+            && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_dg_nonce'] ) ), 'dg_create' ) ) {
             $title   = sanitize_text_field( $_POST['gesuch_title'] ?? '' );
             $content = sanitize_textarea_field( $_POST['gesuch_content'] ?? '' );
             $post_id = wp_insert_post( [
@@ -167,10 +169,11 @@ class Gesuche extends DashboardModule {
         }
 
         // Bearbeiten
-        if ( isset( $_POST['dg_action'] ) && $_POST['dg_action'] === 'edit' && is_numeric( $_POST['gesuch_id'] ) ) {
+        if ( isset( $_POST['dg_action'], $_POST['gesuch_id'] ) && $_POST['dg_action'] === 'edit' && is_numeric( $_POST['gesuch_id'] ) ) {
             $gesuch_id = (int) $_POST['gesuch_id'];
             $post      = get_post( $gesuch_id );
-            if ( $post && (int) $post->post_author === $user_id ) {
+            $nonce_ok  = isset( $_POST['_dg_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_dg_nonce'] ) ), 'dg_edit_' . $gesuch_id );
+            if ( $nonce_ok && $post && (int) $post->post_author === $user_id && $post->post_type === 'gesuch' ) {
                 wp_update_post( [
                     'ID'           => $gesuch_id,
                     'post_title'   => sanitize_text_field( $_POST['gesuch_title'] ?? '' ),
@@ -213,8 +216,10 @@ class Gesuche extends DashboardModule {
                 <?php if ( $editing ) : ?>
                     <input type="hidden" name="dg_action" value="edit">
                     <input type="hidden" name="gesuch_id" value="<?php echo esc_attr( $edit_post->ID ); ?>">
+                    <?php wp_nonce_field( 'dg_edit_' . $edit_post->ID, '_dg_nonce' ); ?>
                 <?php else : ?>
                     <input type="hidden" name="dg_action" value="create">
+                    <?php wp_nonce_field( 'dg_create', '_dg_nonce' ); ?>
                 <?php endif; ?>
                 <input type="submit" class="sk-btn sk-btn-btc"
                        value="<?php echo $editing ? 'Gesuch speichern' : 'Gesuch veröffentlichen'; ?>">
@@ -237,7 +242,7 @@ class Gesuche extends DashboardModule {
                     ?>
                         <li class="gesuch-item">
                             <div class="gesuch-item-head">
-                                <strong class="gesuch-title"><?php the_title(); ?></strong>
+                                <strong class="gesuch-title"><?php echo esc_html( get_the_title() ); ?></strong>
                                 <span class="gesuch-status"><?php echo esc_html( get_post_status_object( get_post_status() )->label ); ?></span>
                             </div>
                             <div class="gesuch-excerpt"><?php echo wp_trim_words( get_the_content(), 28 ); ?></div>

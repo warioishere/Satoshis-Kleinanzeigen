@@ -50,7 +50,7 @@ if ( have_posts() ) :
           </div>
         </div>
 
-        <h1 class="gesuch-title"><?php the_title(); ?></h1>
+        <h1 class="gesuch-title"><?php echo esc_html( get_the_title() ); ?></h1>
       </header>
 
       <div class="gesuch-content">
