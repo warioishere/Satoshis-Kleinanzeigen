@@ -50,7 +50,7 @@ class Gesuche extends DashboardModule {
             'has_archive'     => false,
             'rewrite'         => [ 'slug' => 'gesuch' ],
             'supports'        => [ 'title', 'editor', 'author' ],
-            'show_in_rest'    => true,
+            'show_in_rest'    => false,
             'show_ui'         => true,
             'show_in_menu'    => true,
             'menu_icon'       => 'dashicons-search',
