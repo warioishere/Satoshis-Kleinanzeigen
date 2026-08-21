@@ -153,18 +153,24 @@ class Gesuche extends DashboardModule {
         if ( isset( $_POST['dg_action'] ) && $_POST['dg_action'] === 'create'
             && isset( $_POST['_dg_nonce'] )
             && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_dg_nonce'] ) ), 'dg_create' ) ) {
-            $title   = sanitize_text_field( $_POST['gesuch_title'] ?? '' );
-            $content = sanitize_textarea_field( $_POST['gesuch_content'] ?? '' );
-            $post_id = wp_insert_post( [
-                'post_title'   => $title,
-                'post_content' => $content,
-                'post_type'    => 'gesuch',
-                'post_status'  => 'publish',
-                'post_author'  => $user_id,
-            ] );
-            if ( $post_id && ! is_wp_error( $post_id ) ) {
-                update_post_meta( $post_id, '_vendor_id', $user_id );
-                echo '<div class="sk-alert sk-alert-success">Gesuch veröffentlicht.</div>';
+            // Slot erst nach der Nonce-Pruefung ziehen, damit verworfene
+            // Requests das Kontingent nicht aufbrauchen.
+            if ( ! sk_rate_limit( 'gesuch-create:' . $user_id, 5, HOUR_IN_SECONDS ) ) {
+                echo '<div class="sk-alert sk-alert-warning">Du kannst höchstens 5 Gesuche pro Stunde veröffentlichen. Bitte versuche es später erneut.</div>';
+            } else {
+                $title   = sanitize_text_field( $_POST['gesuch_title'] ?? '' );
+                $content = sanitize_textarea_field( $_POST['gesuch_content'] ?? '' );
+                $post_id = wp_insert_post( [
+                    'post_title'   => $title,
+                    'post_content' => $content,
+                    'post_type'    => 'gesuch',
+                    'post_status'  => 'publish',
+                    'post_author'  => $user_id,
+                ] );
+                if ( $post_id && ! is_wp_error( $post_id ) ) {
+                    update_post_meta( $post_id, '_vendor_id', $user_id );
+                    echo '<div class="sk-alert sk-alert-success">Gesuch veröffentlicht.</div>';
+                }
             }
         }
 
