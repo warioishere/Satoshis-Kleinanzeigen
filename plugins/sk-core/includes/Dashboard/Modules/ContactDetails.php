@@ -433,7 +433,7 @@ class ContactDetails {
     /* ---- Publish blocking ---- */
 
     public function maybe_force_draft( int $product_id, array $data = [] ): void {
-        if ( function_exists( 'dvc_is_enabled' ) && dvc_is_enabled() ) return;
+        if ( VendorChat::is_enabled() ) return;
         if ( $product_id <= 0 || ! is_user_logged_in() ) return;
         $uid = get_current_user_id();
         if ( ! function_exists( 'sk_is_user_seller' ) || ! sk_is_user_seller( $uid ) ) return;
@@ -446,7 +446,7 @@ class ContactDetails {
     }
 
     public function maybe_force_bulk_draft( $status, array $product_ids ): void {
-        if ( function_exists( 'dvc_is_enabled' ) && dvc_is_enabled() ) return;
+        if ( VendorChat::is_enabled() ) return;
         if ( ! is_user_logged_in() ) return;
         $uid = get_current_user_id();
         if ( ! function_exists( 'sk_is_user_seller' ) || ! sk_is_user_seller( $uid ) ) return;
@@ -462,14 +462,14 @@ class ContactDetails {
     }
 
     public function maybe_filter_default_status( $status, $seller_id, $is_trusted ) {
-        if ( function_exists( 'dvc_is_enabled' ) && dvc_is_enabled() ) return $status;
+        if ( VendorChat::is_enabled() ) return $status;
         $sid = (int) ( $seller_id ?: get_current_user_id() );
         if ( $sid <= 0 || ! function_exists( 'sk_is_user_seller' ) || ! sk_is_user_seller( $sid ) ) return $status;
         return $this->vendor_has_public_contact( $sid ) ? $status : 'draft';
     }
 
     public function maybe_filter_post_statuses( array $statuses, int $product_id ): array {
-        if ( function_exists( 'dvc_is_enabled' ) && dvc_is_enabled() ) return $statuses;
+        if ( VendorChat::is_enabled() ) return $statuses;
         if ( ! is_user_logged_in() ) return $statuses;
         $uid = get_current_user_id();
         if ( ! function_exists( 'sk_is_user_seller' ) || ! sk_is_user_seller( $uid ) ) return $statuses;

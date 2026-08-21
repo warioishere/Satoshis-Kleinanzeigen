@@ -17,7 +17,7 @@ use SK\Core\Dashboard\DashboardModule;
 class VendorChat extends DashboardModule {
 
 	public function config(): ?array {
-		if ( ! $this->is_enabled() ) {
+		if ( ! self::is_enabled() ) {
 			return null;
 		}
 		return [
@@ -151,7 +151,7 @@ class VendorChat extends DashboardModule {
 	 *
 	 */
 	public function output_modal() {
-		if ( ! $this->is_enabled() ) {
+		if ( ! self::is_enabled() ) {
 			return;
 		}
 
@@ -324,7 +324,7 @@ class VendorChat extends DashboardModule {
 	 * @return array
 	 */
 	public function add_chat_icon( $icons, $vendor_id, $product_id = 0, $context = '' ) {
-		if ( ! $this->is_enabled() ) {
+		if ( ! self::is_enabled() ) {
 			return $icons;
 		}
 
@@ -593,7 +593,13 @@ class VendorChat extends DashboardModule {
 	 *
 	 * @return bool
 	 */
-	public function is_enabled() {
+	/**
+	 * Is the chat feature switched on?
+	 *
+	 * Static because other modules gate behaviour on it — a vendor without
+	 * public contact details is still reachable while the chat is running.
+	 */
+	public static function is_enabled(): bool {
 		return get_option( 'dvc_enabled', 'no' ) === 'yes';
 	}
 

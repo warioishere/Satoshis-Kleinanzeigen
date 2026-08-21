@@ -80,7 +80,7 @@ class UserOnboarding {
 			$first_name = '';
 		}
 
-		$chat_enabled = function_exists( 'dvc_is_enabled' ) && dvc_is_enabled();
+		$chat_enabled = VendorChat::is_enabled();
 		?>
 		<div id="uob-modal" class="uob-modal">
 			<div class="uob-modal-content">
