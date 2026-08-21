@@ -21,12 +21,15 @@ class VendorChat extends DashboardModule {
 			return null;
 		}
 		return [
-			'slug'       => 'vendor-chat',
-			'title'      => __( 'Nachrichten', 'sk-core' ),
-			'icon'       => '<i class="fas fa-comment-dots"></i>',
-			'pos'        => 56,
-			'permission' => 'sk_view_overview_menu',
-			'template'   => 'dashboard/vendor-chat/dashboard-vendor-chat',
+			'slug'          => 'vendor-chat',
+			'title'         => __( 'Nachrichten', 'sk-core' ),
+			'icon'          => '<i class="fas fa-comment-dots"></i>',
+			'pos'           => 56,
+			'permission'    => 'sk_view_overview_menu',
+			'template'      => 'dashboard/vendor-chat/dashboard-vendor-chat',
+			// Data and the mark-as-read side effect run here, before the
+			// template loads; the template only renders what this returns.
+			'template_args' => [ $this, 'dashboard_view_data' ],
 		];
 	}
 
@@ -115,6 +118,173 @@ class VendorChat extends DashboardModule {
 	}
 
 	// (Nav activation + template dispatch handled by DashboardRegistry via config()).
+
+	// =========================================================================
+	// Dashboard view data
+	// =========================================================================
+
+	/**
+	 * Everything the Nachrichten dashboard renders.
+	 *
+	 * Registered as 'template_args', so it runs before the template is
+	 * included. Includes the mark-as-read side effect of opening a chat.
+	 *
+	 * @param array $query_vars
+	 * @return array
+	 */
+	public function dashboard_view_data( $query_vars = [] ): array {
+		$user_id = get_current_user_id();
+
+		$view    = isset( $_GET['view'] ) ? sanitize_text_field( $_GET['view'] ) : 'active';
+		$chat_id = isset( $_GET['chat_id'] ) ? intval( $_GET['chat_id'] ) : 0;
+
+		$active_chats   = $this->get_user_chats( $user_id, false );
+		$archived_chats = $this->get_user_chats( $user_id, true );
+
+		// One query each for the previews and the unread markers, instead of
+		// loading every message of every chat for the lists.
+		$list_chat_ids = array_map(
+			static function ( $chat ) {
+				return (int) $chat->ID;
+			},
+			array_merge( $active_chats, $archived_chats )
+		);
+		$last_messages = ChatMessages::last_messages( $list_chat_ids );
+		$unread_counts = ChatMessages::unread_counts( $list_chat_ids, $user_id );
+
+		$open_chat = null;
+
+		if ( $chat_id && $this->can_view_chat( $chat_id, $user_id ) ) {
+			// Read after the counts above, so the chat being opened still
+			// carries its unread marker in the list on this one render.
+			$this->mark_as_read( $chat_id, $user_id );
+			$open_chat = $this->open_chat_data( $chat_id, $user_id );
+		}
+
+		return [
+			'current_user_id' => $user_id,
+			'view'            => $view,
+			'chat_id'         => $chat_id,
+			'active_count'    => count( $active_chats ),
+			'archived_count'  => count( $archived_chats ),
+			// Previews only for the active list — the archived list does not
+			// show one, and building it costs a payment-card lookup per chat.
+			'active_rows'     => $this->chat_rows( $active_chats, $user_id, $last_messages, $unread_counts, true ),
+			'archived_rows'   => $this->chat_rows( $archived_chats, $user_id, $last_messages, $unread_counts, false ),
+			'open_chat'       => $open_chat,
+		];
+	}
+
+	/**
+	 * May this user open the chat? Participant, and not deleted by them.
+	 *
+	 * @param int $chat_id
+	 * @param int $user_id
+	 * @return bool
+	 */
+	public function can_view_chat( $chat_id, $user_id ) {
+		return $this->is_participant( $chat_id, $user_id )
+			&& ! self::is_deleted_for_user( $chat_id, $user_id );
+	}
+
+	/**
+	 * One sidebar entry per chat.
+	 *
+	 * @param \WP_Post[] $chats
+	 * @param int        $user_id
+	 * @param array      $last_messages [ chat_id => message ]
+	 * @param array      $unread_counts [ chat_id => count ]
+	 * @param bool       $with_preview  Build the message preview line.
+	 * @return array
+	 */
+	private function chat_rows( array $chats, $user_id, array $last_messages, array $unread_counts, $with_preview ): array {
+		$rows = [];
+
+		foreach ( $chats as $chat ) {
+			$id            = (int) $chat->ID;
+			$other_user_id = $this->get_other_participant( $id, $user_id );
+			$product_id    = get_post_meta( $id, '_dvc_product_id', true );
+			$last_message  = $last_messages[ $id ] ?? null;
+
+			$preview = null;
+			if ( $with_preview && $last_message ) {
+				$prepared = self::prepare_message( $last_message, $id );
+				$preview  = $prepared['text'];
+			}
+
+			$rows[] = [
+				'id'            => $id,
+				'other_user_id' => $other_user_id,
+				'display_name'  => $this->display_name_for( $other_user_id ),
+				'product_title' => get_the_title( $product_id ),
+				'timestamp'     => $last_message ? (int) $last_message['timestamp'] : null,
+				'preview'       => $preview,
+				'unread'        => ! empty( $unread_counts[ $id ] ),
+			];
+		}
+
+		return $rows;
+	}
+
+	/**
+	 * Header, actions and message history of the opened chat.
+	 *
+	 * Only called once the caller has confirmed the user may view it.
+	 *
+	 * @param int $chat_id
+	 * @param int $user_id
+	 * @return array
+	 */
+	private function open_chat_data( $chat_id, $user_id ): array {
+		$chat_id       = (int) $chat_id;
+		$other_user_id = $this->get_other_participant( $chat_id, $user_id );
+		$product_id    = get_post_meta( $chat_id, '_dvc_product_id', true );
+		$archived_by   = get_post_meta( $chat_id, '_dvc_archived_by', true ) ?: [];
+
+		$messages = [];
+		foreach ( $this->get_messages( $chat_id ) as $message ) {
+			// Payment markers never reach the reader as raw text; the card is
+			// rebuilt from verified data (see prepare_message).
+			$prepared = self::prepare_message( $message, $chat_id );
+
+			$messages[] = [
+				'user_id'   => $message['user_id'],
+				'is_own'    => $message['user_id'] == $user_id,
+				'name'      => $this->display_name_for( $message['user_id'] ),
+				'timestamp' => $message['timestamp'],
+				'text'      => $prepared['text'],
+				'card'      => $prepared['card'],
+			];
+		}
+
+		return [
+			'id'            => $chat_id,
+			'other_user_id' => $other_user_id,
+			'display_name'  => $this->display_name_for( $other_user_id ),
+			'product_title' => get_the_title( $product_id ),
+			'product_url'   => get_permalink( $product_id ),
+			'is_archived'   => in_array( $user_id, (array) $archived_by ),
+			'messages'      => $messages,
+		];
+	}
+
+	/**
+	 * Store name if the user runs a shop, display name otherwise.
+	 *
+	 * @param int $user_id
+	 * @return string
+	 */
+	private function display_name_for( $user_id ) {
+		$store_info = sk_get_store_info( $user_id );
+
+		if ( ! empty( $store_info['store_name'] ) ) {
+			return $store_info['store_name'];
+		}
+
+		$user = get_userdata( $user_id );
+
+		return $user ? $user->display_name : '';
+	}
 
 	// =========================================================================
 	// Assets

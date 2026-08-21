@@ -2,36 +2,21 @@
 /**
  * SK Vendor Chat Dashboard Template
  *
+ * Variables come from VendorChat::dashboard_view_data(), registered as
+ * 'template_args' in the module config and run before this file is included.
+ *
+ * @var int        $current_user_id
+ * @var string     $view            'active' or 'archived'.
+ * @var int        $chat_id         Chat requested via ?chat_id=, 0 if none.
+ * @var int        $active_count
+ * @var int        $archived_count
+ * @var array[]    $active_rows     Sidebar entries, with preview line.
+ * @var array[]    $archived_rows   Sidebar entries, without preview line.
+ * @var array|null $open_chat       Opened chat, null if none is viewable.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
-}
-
-$current_user_id = get_current_user_id();
-
-// Get active and archived chats
-$active_chats   = dvc_get_user_chats( $current_user_id, false );
-$archived_chats = dvc_get_user_chats( $current_user_id, true );
-
-// One query each for the previews and the unread markers, instead of loading
-// every message of every chat in the loops below.
-$list_chat_ids  = array_map(
-	static function ( $chat ) {
-		return (int) $chat->ID;
-	},
-	array_merge( $active_chats, $archived_chats )
-);
-$last_messages  = dvc_get_last_messages( $list_chat_ids );
-$unread_counts  = dvc_get_unread_counts( $list_chat_ids, $current_user_id );
-
-// Get current view
-$view    = isset( $_GET['view'] ) ? sanitize_text_field( $_GET['view'] ) : 'active';
-$chat_id = isset( $_GET['chat_id'] ) ? intval( $_GET['chat_id'] ) : 0;
-
-// If viewing a specific chat
-if ( $chat_id && dvc_can_view_chat( $chat_id, $current_user_id ) ) {
-	dvc_mark_chat_as_read( $chat_id, $current_user_id );
 }
 
 do_action( 'sk_dashboard_wrap_start' );
@@ -54,67 +39,52 @@ do_action( 'sk_dashboard_wrap_start' );
 				<div class="dvc-chat-tabs">
 					<button class="dvc-tab-btn <?php echo $view === 'active' ? 'active' : ''; ?>" data-tab="active">
 						<?php esc_html_e( 'Aktiv', 'sk-core' ); ?>
-						<?php if ( count( $active_chats ) > 0 ) : ?>
-							<span class="dvc-count">(<?php echo count( $active_chats ); ?>)</span>
+						<?php if ( $active_count > 0 ) : ?>
+							<span class="dvc-count">(<?php echo $active_count; ?>)</span>
 						<?php endif; ?>
 					</button>
 					<button class="dvc-tab-btn <?php echo $view === 'archived' ? 'active' : ''; ?>" data-tab="archived">
 						<?php esc_html_e( 'Archiviert', 'sk-core' ); ?>
-						<?php if ( count( $archived_chats ) > 0 ) : ?>
-							<span class="dvc-count">(<?php echo count( $archived_chats ); ?>)</span>
+						<?php if ( $archived_count > 0 ) : ?>
+							<span class="dvc-count">(<?php echo $archived_count; ?>)</span>
 						<?php endif; ?>
 					</button>
 				</div>
 
 				<!-- Active chats list -->
 				<div class="dvc-chat-list" id="dvc-active-list" style="<?php echo $view !== 'active' ? 'display:none;' : ''; ?>">
-					<?php if ( empty( $active_chats ) ) : ?>
+					<?php if ( empty( $active_rows ) ) : ?>
 						<div class="dvc-empty-state">
 							<i class="fas fa-inbox"></i>
 							<p><?php esc_html_e( 'Keine aktiven Chats', 'sk-core' ); ?></p>
 							<small><?php esc_html_e( 'Starte einen Chat von einer Produktseite', 'sk-core' ); ?></small>
 						</div>
 					<?php else : ?>
-						<?php foreach ( $active_chats as $chat ) : ?>
-							<?php
-							$other_user_id = dvc_get_other_participant( $chat->ID, $current_user_id );
-							$other_user    = get_userdata( $other_user_id );
-							$vendor_info   = sk_get_store_info( $other_user_id );
-							$display_name  = isset( $vendor_info['store_name'] ) && ! empty( $vendor_info['store_name'] )
-								? $vendor_info['store_name']
-								: $other_user->display_name;
-							$product_id    = get_post_meta( $chat->ID, '_dvc_product_id', true );
-							$product_title = get_the_title( $product_id );
-							$last_message  = $last_messages[ (int) $chat->ID ] ?? null;
-							$unread        = ! empty( $unread_counts[ (int) $chat->ID ] );
-							?>
-							<div class="dvc-chat-item <?php echo $chat_id == $chat->ID ? 'active' : ''; ?> <?php echo $unread ? 'unread' : ''; ?>"
-								data-chat-id="<?php echo esc_attr( $chat->ID ); ?>">
+						<?php foreach ( $active_rows as $row ) : ?>
+							<div class="dvc-chat-item <?php echo $chat_id == $row['id'] ? 'active' : ''; ?> <?php echo $row['unread'] ? 'unread' : ''; ?>"
+								data-chat-id="<?php echo esc_attr( $row['id'] ); ?>">
 								<div class="dvc-chat-item-avatar">
-									<?php echo get_avatar( $other_user_id, 40 ); ?>
+									<?php echo get_avatar( $row['other_user_id'], 40 ); ?>
 								</div>
 								<div class="dvc-chat-item-content">
 									<div class="dvc-chat-item-header">
-										<strong><?php echo esc_html( $display_name ); ?></strong>
-										<?php if ( $last_message ) : ?>
+										<strong><?php echo esc_html( $row['display_name'] ); ?></strong>
+										<?php if ( null !== $row['timestamp'] ) : ?>
 											<span class="dvc-chat-time">
-												<?php echo human_time_diff( $last_message['timestamp'], current_time( 'timestamp' ) ); ?>
+												<?php echo human_time_diff( $row['timestamp'], current_time( 'timestamp' ) ); ?>
 											</span>
 										<?php endif; ?>
 									</div>
 									<div class="dvc-chat-item-product">
-										<small><?php echo esc_html( $product_title ); ?></small>
+										<small><?php echo esc_html( $row['product_title'] ); ?></small>
 									</div>
-									<?php if ( $last_message ) : ?>
+									<?php if ( null !== $row['preview'] ) : ?>
 										<div class="dvc-chat-item-preview">
-											<?php
-											$preview = dvc_prepare_chat_message( $last_message, $chat->ID );
-											echo esc_html( wp_trim_words( $preview['text'], 8, '...' ) );
-											?>
+											<?php echo esc_html( wp_trim_words( $row['preview'], 8, '...' ) ); ?>
 										</div>
 									<?php endif; ?>
 								</div>
-								<?php if ( $unread ) : ?>
+								<?php if ( $row['unread'] ) : ?>
 									<div class="dvc-unread-indicator"></div>
 								<?php endif; ?>
 							</div>
@@ -124,40 +94,29 @@ do_action( 'sk_dashboard_wrap_start' );
 
 				<!-- Archived chats list -->
 				<div class="dvc-chat-list" id="dvc-archived-list" style="<?php echo $view !== 'archived' ? 'display:none;' : ''; ?>">
-					<?php if ( empty( $archived_chats ) ) : ?>
+					<?php if ( empty( $archived_rows ) ) : ?>
 						<div class="dvc-empty-state">
 							<i class="fas fa-archive"></i>
 							<p><?php esc_html_e( 'Keine archivierten Chats', 'sk-core' ); ?></p>
 						</div>
 					<?php else : ?>
-						<?php foreach ( $archived_chats as $chat ) : ?>
-							<?php
-							$other_user_id = dvc_get_other_participant( $chat->ID, $current_user_id );
-							$other_user    = get_userdata( $other_user_id );
-							$vendor_info   = sk_get_store_info( $other_user_id );
-							$display_name  = isset( $vendor_info['store_name'] ) && ! empty( $vendor_info['store_name'] )
-								? $vendor_info['store_name']
-								: $other_user->display_name;
-							$product_id    = get_post_meta( $chat->ID, '_dvc_product_id', true );
-							$product_title = get_the_title( $product_id );
-							$last_message  = $last_messages[ (int) $chat->ID ] ?? null;
-							?>
-							<div class="dvc-chat-item <?php echo $chat_id == $chat->ID ? 'active' : ''; ?>"
-								data-chat-id="<?php echo esc_attr( $chat->ID ); ?>">
+						<?php foreach ( $archived_rows as $row ) : ?>
+							<div class="dvc-chat-item <?php echo $chat_id == $row['id'] ? 'active' : ''; ?>"
+								data-chat-id="<?php echo esc_attr( $row['id'] ); ?>">
 								<div class="dvc-chat-item-avatar">
-									<?php echo get_avatar( $other_user_id, 40 ); ?>
+									<?php echo get_avatar( $row['other_user_id'], 40 ); ?>
 								</div>
 								<div class="dvc-chat-item-content">
 									<div class="dvc-chat-item-header">
-										<strong><?php echo esc_html( $display_name ); ?></strong>
-										<?php if ( $last_message ) : ?>
+										<strong><?php echo esc_html( $row['display_name'] ); ?></strong>
+										<?php if ( null !== $row['timestamp'] ) : ?>
 											<span class="dvc-chat-time">
-												<?php echo human_time_diff( $last_message['timestamp'], current_time( 'timestamp' ) ); ?>
+												<?php echo human_time_diff( $row['timestamp'], current_time( 'timestamp' ) ); ?>
 											</span>
 										<?php endif; ?>
 									</div>
 									<div class="dvc-chat-item-product">
-										<small><?php echo esc_html( $product_title ); ?></small>
+										<small><?php echo esc_html( $row['product_title'] ); ?></small>
 									</div>
 								</div>
 							</div>
@@ -168,46 +127,33 @@ do_action( 'sk_dashboard_wrap_start' );
 
 			<!-- Chat window -->
 			<div class="dvc-chat-window">
-				<?php if ( $chat_id && dvc_can_view_chat( $chat_id, $current_user_id ) ) : ?>
-					<?php
-					$other_user_id = dvc_get_other_participant( $chat_id, $current_user_id );
-					$other_user    = get_userdata( $other_user_id );
-					$vendor_info   = sk_get_store_info( $other_user_id );
-					$display_name  = isset( $vendor_info['store_name'] ) && ! empty( $vendor_info['store_name'] )
-						? $vendor_info['store_name']
-						: $other_user->display_name;
-					$product_id    = get_post_meta( $chat_id, '_dvc_product_id', true );
-					$product_title = get_the_title( $product_id );
-					$product_url   = get_permalink( $product_id );
-					$messages      = dvc_get_chat_messages( $chat_id );
-					$is_archived   = in_array( $current_user_id, get_post_meta( $chat_id, '_dvc_archived_by', true ) ?: [] );
-					?>
+				<?php if ( $open_chat ) : ?>
 
 					<!-- Chat header -->
 					<div class="dvc-chat-header">
 						<div class="dvc-chat-header-info">
-							<?php echo get_avatar( $other_user_id, 40 ); ?>
+							<?php echo get_avatar( $open_chat['other_user_id'], 40 ); ?>
 							<div>
-								<strong><?php echo esc_html( $display_name ); ?></strong>
+								<strong><?php echo esc_html( $open_chat['display_name'] ); ?></strong>
 								<div class="dvc-chat-product-link">
-									<a href="<?php echo esc_url( $product_url ); ?>" target="_blank">
+									<a href="<?php echo esc_url( $open_chat['product_url'] ); ?>" target="_blank">
 										<i class="fas fa-box"></i>
-										<?php echo esc_html( $product_title ); ?>
+										<?php echo esc_html( $open_chat['product_title'] ); ?>
 									</a>
 								</div>
 							</div>
 						</div>
 						<div class="dvc-chat-actions">
-							<?php if ( $is_archived ) : ?>
-								<button class="dvc-action-btn dvc-unarchive-btn" data-chat-id="<?php echo esc_attr( $chat_id ); ?>" title="<?php esc_attr_e( 'Wiederherstellen', 'sk-core' ); ?>">
+							<?php if ( $open_chat['is_archived'] ) : ?>
+								<button class="dvc-action-btn dvc-unarchive-btn" data-chat-id="<?php echo esc_attr( $open_chat['id'] ); ?>" title="<?php esc_attr_e( 'Wiederherstellen', 'sk-core' ); ?>">
 									<i class="fas fa-box-open"></i>
 								</button>
 							<?php else : ?>
-								<button class="dvc-action-btn dvc-archive-btn" data-chat-id="<?php echo esc_attr( $chat_id ); ?>" title="<?php esc_attr_e( 'Archivieren', 'sk-core' ); ?>">
+								<button class="dvc-action-btn dvc-archive-btn" data-chat-id="<?php echo esc_attr( $open_chat['id'] ); ?>" title="<?php esc_attr_e( 'Archivieren', 'sk-core' ); ?>">
 									<i class="fas fa-archive"></i>
 								</button>
 							<?php endif; ?>
-							<button class="dvc-action-btn dvc-delete-btn" data-chat-id="<?php echo esc_attr( $chat_id ); ?>" title="<?php esc_attr_e( 'Löschen', 'sk-core' ); ?>">
+							<button class="dvc-action-btn dvc-delete-btn" data-chat-id="<?php echo esc_attr( $open_chat['id'] ); ?>" title="<?php esc_attr_e( 'Löschen', 'sk-core' ); ?>">
 								<i class="fas fa-trash"></i>
 							</button>
 						</div>
@@ -215,36 +161,29 @@ do_action( 'sk_dashboard_wrap_start' );
 
 					<!-- Messages area -->
 					<div class="dvc-messages-area" id="dvc-messages-area" data-current-user-id="<?php echo esc_attr( $current_user_id ); ?>">
-						<?php if ( empty( $messages ) ) : ?>
+						<?php if ( empty( $open_chat['messages'] ) ) : ?>
 							<div class="dvc-empty-chat">
 								<i class="fas fa-comments"></i>
 								<p><?php esc_html_e( 'Noch keine Nachrichten', 'sk-core' ); ?></p>
 							</div>
 						<?php else : ?>
-							<?php foreach ( $messages as $message ) : ?>
-								<?php
-								$is_own_message  = $message['user_id'] == $current_user_id;
-								$message_user    = get_userdata( $message['user_id'] );
-								$msg_store_info  = sk_get_store_info( $message['user_id'] );
-								$msg_name        = ! empty( $msg_store_info['store_name'] ) ? $msg_store_info['store_name'] : ( $message_user ? $message_user->display_name : '' );
-								$prepared        = dvc_prepare_chat_message( $message, $chat_id );
-								?>
-								<div class="dvc-message <?php echo $is_own_message ? 'own' : 'other'; ?>"
-									<?php if ( $prepared['card'] ) : ?>
-									data-sk-card="<?php echo esc_attr( wp_json_encode( $prepared['card'] ) ); ?>"
+							<?php foreach ( $open_chat['messages'] as $message ) : ?>
+								<div class="dvc-message <?php echo $message['is_own'] ? 'own' : 'other'; ?>"
+									<?php if ( $message['card'] ) : ?>
+									data-sk-card="<?php echo esc_attr( wp_json_encode( $message['card'] ) ); ?>"
 									<?php endif; ?>>
 									<div class="dvc-message-avatar">
 										<?php echo get_avatar( $message['user_id'], 32 ); ?>
 									</div>
 									<div class="dvc-message-content">
 										<div class="dvc-message-header">
-											<strong><?php echo esc_html( $msg_name ); ?></strong>
+											<strong><?php echo esc_html( $message['name'] ); ?></strong>
 											<span class="dvc-message-time">
 												<?php echo date_i18n( 'd.m.Y H:i', $message['timestamp'] ); ?>
 											</span>
 										</div>
 										<div class="dvc-message-text">
-											<?php echo nl2br( esc_html( $prepared['text'] ) ); ?>
+											<?php echo nl2br( esc_html( $message['text'] ) ); ?>
 										</div>
 									</div>
 								</div>
@@ -254,7 +193,7 @@ do_action( 'sk_dashboard_wrap_start' );
 
 					<!-- Message input -->
 					<div class="dvc-message-input-area">
-						<form class="dvc-send-message-form" data-chat-id="<?php echo esc_attr( $chat_id ); ?>">
+						<form class="dvc-send-message-form" data-chat-id="<?php echo esc_attr( $open_chat['id'] ); ?>">
 							<textarea
 								name="message"
 								class="dvc-message-input"

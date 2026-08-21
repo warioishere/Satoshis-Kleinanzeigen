@@ -16,9 +16,6 @@ class ModuleLoader {
     private const VERSION_OPTION = 'sk_dashboard_db_version';
 
     public function __construct() {
-        // Load standalone function shims unconditionally (bypasses autoloader/opcode cache)
-        require_once __DIR__ . '/dashboard-functions.php';
-
         // Bootstrap the dashboard registry before instantiating any module so
         // modules extending DashboardModule can self-register.
         DashboardRegistry::bootstrap();
