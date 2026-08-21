@@ -1,24 +1,17 @@
 <?php
+/**
+ * Merkliste dashboard.
+ *
+ * Variables come from Merkliste::dashboard_view_data(), registered as
+ * 'template_args' in the module config and run before this file is included.
+ *
+ * @var bool                                      $logged_in
+ * @var array<int,array{type:string,text:string}> $notices
+ * @var WC_Product[]                              $products
+ */
+
 if (!defined('ABSPATH')) {
     exit;
-}
-
-if (!is_user_logged_in()) {
-    echo '<p>Bitte <a href="/mein-konto/">einloggen</a>, um deine Merkliste zu sehen.</p>';
-    return;
-}
-
-$user_id = get_current_user_id();
-
-// Handle delete action (POST only — a link that deletes is fired by browser prefetch)
-if (isset($_POST['delete_product']) && is_numeric($_POST['delete_product'])) {
-    $delete_id = (int) $_POST['delete_product'];
-    $nonce_ok = isset($_POST['_dm_nonce']) && wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['_dm_nonce'])), 'dm_del_' . $delete_id);
-
-    if ($nonce_ok) {
-        dm_remove_from_merkliste($delete_id, $user_id);
-        echo '<div class="sk-alert sk-alert-success">Produkt von Merkliste entfernt.</div>';
-    }
 }
 
 do_action('sk_dashboard_wrap_start');
@@ -42,6 +35,10 @@ do_action('sk_dashboard_wrap_start');
             do_action('sk_dashboard_content_inside_before');
         ?>
 
+        <?php if (!$logged_in) : ?>
+            <p>Bitte <a href="/mein-konto/">einloggen</a>, um deine Merkliste zu sehen.</p>
+        <?php else : ?>
+
         <div class="sk-review-page-header">
             <h2><i class="fas fa-thumbtack"></i> Merkliste</h2>
         </div>
@@ -49,22 +46,14 @@ do_action('sk_dashboard_wrap_start');
         <div class="merkliste-dashboard-wrapper">
             <div class="merkliste-dashboard-inner">
 
-                <?php
-                // Resolve first: rows can point at products that are gone or no longer
-                // published, and those must not count towards a non-empty list either.
-                $merkliste_products = [];
-                foreach (dm_get_merkliste_products($user_id) as $item) {
-                    $product = wc_get_product($item->product_id);
-                    if ($product && 'publish' === $product->get_status()) {
-                        $merkliste_products[] = $product;
-                    }
-                }
+                <?php foreach ($notices as $notice) : ?>
+                    <div class="sk-alert sk-alert-<?php echo esc_attr($notice['type']); ?>"><?php echo esc_html($notice['text']); ?></div>
+                <?php endforeach; ?>
 
-                if (!empty($merkliste_products)) :
-                ?>
+                <?php if (!empty($products)) : ?>
                     <ul class="merkliste-list">
                         <?php
-                        foreach ($merkliste_products as $product) :
+                        foreach ($products as $product) :
                             $product_id = $product->get_id();
 
                             $vendor = sk_get_vendor_by_product($product);
@@ -130,6 +119,8 @@ do_action('sk_dashboard_wrap_start');
 
             </div>
         </div>
+
+        <?php endif; ?>
 
         <?php
             /**

@@ -13,35 +13,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // =============================================================================
-// Merkliste shims
-// =============================================================================
-
-if ( ! function_exists( 'dm_get_merkliste_products' ) ) {
-	function dm_get_merkliste_products( int $user_id ): array {
-		global $wpdb;
-		if ( ! $user_id ) {
-			return [];
-		}
-		$table = $wpdb->prefix . 'sk_merkliste';
-		return $wpdb->get_results(
-			$wpdb->prepare( "SELECT * FROM {$table} WHERE user_id = %d ORDER BY added_date DESC", $user_id )
-		) ?: [];
-	}
-}
-
-if ( ! function_exists( 'dm_remove_from_merkliste' ) ) {
-	function dm_remove_from_merkliste( int $product_id, int $user_id ): bool {
-		global $wpdb;
-		if ( ! $user_id || ! $product_id ) {
-			return false;
-		}
-		$table  = $wpdb->prefix . 'sk_merkliste';
-		$result = $wpdb->delete( $table, [ 'user_id' => $user_id, 'product_id' => $product_id ], [ '%d', '%d' ] );
-		return $result !== false;
-	}
-}
-
-// =============================================================================
 // VendorChat shims
 // =============================================================================
 

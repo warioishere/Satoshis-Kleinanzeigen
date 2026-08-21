@@ -31,12 +31,15 @@ class Merkliste extends DashboardModule {
 
     public function config(): ?array {
         return [
-            'slug'       => 'merkliste',
-            'title'      => __( 'Merkliste', 'sk-core' ),
-            'icon'       => '<i class="fas fa-thumbtack"></i>',
-            'pos'        => 56,
-            'permission' => 'sk_view_overview_menu',
-            'template'   => 'dashboard/merkliste/dashboard-merkliste',
+            'slug'          => 'merkliste',
+            'title'         => __( 'Merkliste', 'sk-core' ),
+            'icon'          => '<i class="fas fa-thumbtack"></i>',
+            'pos'           => 56,
+            'permission'    => 'sk_view_overview_menu',
+            'template'      => 'dashboard/merkliste/dashboard-merkliste',
+            // Handler runs here, before the template loads; the template only
+            // renders what this returns.
+            'template_args' => [ $this, 'dashboard_view_data' ],
         ];
     }
 
@@ -104,6 +107,86 @@ class Merkliste extends DashboardModule {
             'removeTitle'  => __( 'Von Merkliste entfernen', 'sk-core' ),
             'confirmText'  => __( 'Wirklich von der Merkliste entfernen?', 'sk-core' ),
         ] );
+    }
+
+    /* ---- Dashboard page ---- */
+
+    /**
+     * Run the POST handler and collect everything the dashboard template needs.
+     *
+     * Called by DashboardRegistry::dispatch_template() before the template is
+     * included, so the template itself contains no write logic.
+     *
+     * @param array $query_vars Dashboard query vars (unused, part of the callback signature).
+     *
+     * @return array{logged_in:bool,notices:array<int,array{type:string,text:string}>,products:\WC_Product[]}
+     */
+    public function dashboard_view_data( $query_vars = [] ): array {
+        $data = [
+            'logged_in' => is_user_logged_in(),
+            'notices'   => [],
+            'products'  => [],
+        ];
+
+        if ( ! $data['logged_in'] ) {
+            return $data;
+        }
+
+        $user_id = get_current_user_id();
+
+        $data['notices']  = $this->handle_remove_post( $user_id );
+        $data['products'] = $this->resolve_products( $user_id );
+
+        return $data;
+    }
+
+    /**
+     * Remove one product from the own list. POST only, because a link that
+     * deletes can be fired by browser prefetch.
+     *
+     * No ownership check is needed on the product: remove() scopes the DELETE
+     * to the calling user, so a foreign product ID simply matches no row.
+     *
+     * @param int $user_id
+     *
+     * @return array<int,array{type:string,text:string}>
+     */
+    private function handle_remove_post( int $user_id ): array {
+        if ( ! isset( $_POST['delete_product'] ) || ! is_numeric( $_POST['delete_product'] ) ) {
+            return [];
+        }
+
+        $delete_id = (int) $_POST['delete_product'];
+        $nonce_ok  = isset( $_POST['_dm_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_dm_nonce'] ) ), 'dm_del_' . $delete_id );
+
+        if ( ! $nonce_ok ) {
+            return [];
+        }
+
+        $this->remove( $delete_id, $user_id );
+
+        return [ [ 'type' => 'success', 'text' => 'Produkt von Merkliste entfernt.' ] ];
+    }
+
+    /**
+     * Rows resolved to products.
+     *
+     * Rows can point at products that are gone or no longer published, and
+     * those must not count towards a non-empty list either.
+     *
+     * @param int $user_id
+     *
+     * @return \WC_Product[]
+     */
+    private function resolve_products( int $user_id ): array {
+        $products = [];
+        foreach ( $this->get_products( $user_id ) as $item ) {
+            $product = wc_get_product( $item->product_id );
+            if ( $product && 'publish' === $product->get_status() ) {
+                $products[] = $product;
+            }
+        }
+        return $products;
     }
 
     /* ---- AJAX ---- */
