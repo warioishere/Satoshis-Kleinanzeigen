@@ -324,7 +324,6 @@ class DPS_Admin {
         wp_register_style( 'dps-custom-style', DPS_URL . '/assets/css/style' . $suffix . '.css', false, $version );
         wp_register_style( 'sk-subscription-related-orders', DPS_URL . '/assets/css/admin-related-orders.css', false, $version );
         wp_register_style( 'sk-subscription-order-page', DPS_URL . '/assets/css/admin-order-page.css', false, $version );
-        wp_register_script( 'sk-subscription-admin', DPS_URL . '/assets/js/admin-subscription.js', array(), $version, true );
         wp_register_script( 'dps-custom-admin-js', DPS_URL . '/assets/js/admin-script' . $suffix . '.js', array( 'jquery' ), $version, true );
     }
 

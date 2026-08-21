@@ -281,23 +281,6 @@ function sk_process_product_meta( int $post_id, array $data = [] ) {
 
 
 /**
- * Change seller display name to store name
- *
- *
- * @param string $display_name
- *
- * @return string $display_name
- */
-function sk_seller_displayname( $display_name ) {
-    if ( current_user_can( 'seller' ) && ! is_admin() ) {
-        $seller_info  = sk_get_store_info( sk_get_current_user_id() );
-        $display_name = ( ! empty( $seller_info['store_name'] ) ) ? $seller_info['store_name'] : $display_name;
-    }
-
-    return $display_name;
-}
-
-/**
  * Get featured products
  *
  * Shown on homepage
@@ -430,85 +413,6 @@ function sk_get_top_rated_products( $per_page = 8, $seller_id = '', $page = 1 ) 
     return sk()->product->top_rated( apply_filters( 'sk_top_rated_query', $args ) );
 }
 
-/**
- * Get products on-sale
- *
- * Shown on homepage
- *
- * @param int $per_page
- * @param int $paged
- * @param int $seller_id
- *
- * @return WP_Query
- */
-function sk_get_on_sale_products( int $per_page = 10, int $paged = 1, int $seller_id = 0 ): WP_Query {
-    // Get products on sale
-    $product_ids_on_sale = wc_get_product_ids_on_sale();
-
-    $args = [
-        'posts_per_page' => $per_page,
-        'no_found_rows'  => 1,
-        'paged'          => $paged,
-        'post_status'    => 'publish',
-        'post_type'      => 'product',
-        'post__in'       => array_merge( [ 0 ], $product_ids_on_sale ),
-        'meta_query'     => [ //phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-            [
-                'key'     => '_visibility',
-                'value'   => [ 'catalog', 'visible' ],
-                'compare' => 'IN',
-            ],
-            [
-                'key'     => '_stock_status',
-                'value'   => 'instock',
-                'compare' => '=',
-            ],
-        ],
-    ];
-
-    if ( ! empty( $seller_id ) ) {
-        $args['author'] = (int) $seller_id;
-    }
-
-    return new WP_Query( apply_filters( 'sk_on_sale_products_query', $args ) );
-}
-
-/**
- * Get current balance of a seller
- *
- * Total balance for the seller
- *
- * @param int  $seller_id
- * @param bool $formatted
- *
- * @return float|string float if formatted is false, string otherwise
- */
-function sk_get_seller_balance( $seller_id, $formatted = true ) {
-    $vendor = sk()->vendor->get( $seller_id );
-
-    return $vendor->get_balance( $formatted );
-}
-
-/**
- * Get Seller Earned amount
- *
- *
- * @param boolean $formatted
- * @param string  $on_date
- *
- * @param int     $seller_id
- *
- * @return float|null
- */
-function sk_get_seller_earnings( $seller_id, $formatted = true, $on_date = '' ) {
-    $vendor = sk()->vendor->get( $seller_id );
-
-    if ( $vendor->id === 0 ) {
-        return null;
-    }
-
-    return $vendor->get_earnings( $formatted, $on_date );
-}
 
 /**
  * Get seller rating

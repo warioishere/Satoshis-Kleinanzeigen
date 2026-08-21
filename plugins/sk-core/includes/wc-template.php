@@ -106,16 +106,6 @@ function sk_order_show_suborders( $parent_order ) {
 
 add_action( 'woocommerce_order_details_after_order_table', 'sk_order_show_suborders' );
 
-/**
- * Default seller image
- *
- * @return string
- */
-function sk_get_no_seller_image() {
-    $image = SK_CORE_ASSETS . '/images/no-seller-image.png';
-
-    return apply_filters( 'sk_no_seller_image', $image );
-}
 
 /**
  * Override Customer Orders array

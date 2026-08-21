@@ -82,7 +82,6 @@ class Rewrites {
             'sk_query_var_filter', [
                 'products',
                 'new-product',
-                'orders',
                 'settings',
                 'edit-account',
             ]

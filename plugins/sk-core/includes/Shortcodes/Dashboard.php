@@ -69,16 +69,6 @@ class Dashboard extends SkShortcode {
             return ob_get_clean();
         }
 
-        if ( isset( $query_vars['orders'] ) ) {
-            if ( ! current_user_can( 'sk_view_order_menu' ) ) {
-                sk_get_template_part( 'global/no-permission' );
-            } else {
-                sk_get_template_part( 'orders/orders' );
-            }
-
-            return ob_get_clean();
-        }
-
         if ( isset( $query_vars['settings'] ) ) {
             sk_get_template_part( 'settings/store' );
 

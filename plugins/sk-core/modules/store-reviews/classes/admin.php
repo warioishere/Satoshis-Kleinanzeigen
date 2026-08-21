@@ -12,7 +12,6 @@ class DSR_Admin {
      */
     public function __construct() {
         add_action( 'sk_admin_menu', array( $this, 'load_store_review_menu' ) );
-        add_action( 'init', array( $this, 'register_scripts' ) );
     }
 
     /**
@@ -46,17 +45,6 @@ class DSR_Admin {
 
             $submenu[ $slug ][] = [ $title, $capability, 'admin.php?page=' . $slug . '&tab=store-reviews' ];
         }
-    }
-
-    /**
-     * Register Scripts
-     *
-     */
-    public function register_scripts() {
-        list( $suffix, $version ) = sk_get_script_suffix_and_version();
-
-        wp_register_style( 'dsr-admin-css', SK_SELLER_RATINGS_PLUGIN_ASSEST . '/js/admin' . $suffix . '.css', false, $version );
-        wp_register_script( 'dsr-admin', SK_SELLER_RATINGS_PLUGIN_ASSEST . '/js/admin' . $suffix . '.js', array( 'jquery' ), $version, true );
     }
 
 }

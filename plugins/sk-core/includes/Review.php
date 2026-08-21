@@ -37,7 +37,6 @@ class Review extends DashboardModule {
         add_action( 'sk_review_content_listing', [ $this, 'review_content_listing' ], 10, 1 );
         add_action( 'sk_manage_reviews_form', [ $this, 'render_manage_reviews_form' ], 10, 1 );
         add_action( 'sk_review_listing_table_body', array( $this, 'sk_render_listing_table_body' ), 10 );
-        add_action( 'sk_review_content_inside_after', array( $this, 'sk_render_listing_table_script_template' ), 10 );
         add_action( 'template_redirect', array( $this, 'handle_status' ), 10 );
 
         add_action( 'wp_ajax_sk_comment_status', array( $this, 'ajax_comment_status' ) );
@@ -308,20 +307,6 @@ class Review extends DashboardModule {
                 'pro'            => true,
                 'comment_status' => $comment_status,
             ]
-        );
-    }
-
-    /**
-     * Render Reviews Edit underscores template
-     *
-     *
-     * @return void
-     */
-    public function sk_render_listing_table_script_template() {
-        sk_get_template_part(
-            'review/tmpl-review-script', '', array(
-				'pro' => true,
-            )
         );
     }
 

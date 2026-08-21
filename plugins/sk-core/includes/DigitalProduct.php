@@ -27,8 +27,6 @@ class DigitalProduct {
      */
     public function init_hooks() {
         add_filter( 'sk_settings_general_site_options', [ $this, 'add_admin_setting_digital_mode' ], 9 );
-        add_action( 'sk_admin_setup_wizard_step_store_after', [ $this, 'admin_wizard_store_setup_field' ] );
-        add_action( 'sk_admin_setup_wizard_save_step_store', [ $this, 'after_admin_wizard_store_field_save' ] );
     }
 
     /**
@@ -69,49 +67,6 @@ class DigitalProduct {
      */
     public function get_selling_product_type() {
         return sk_get_option( 'global_digital_mode', 'sk_general', 'sell_both' );
-    }
-
-    /**
-     * Add store digitial product option template
-     *
-     *
-     * @return void
-     */
-    public function admin_wizard_store_setup_field( $wizard ) {
-        $args = array(
-            'pro'          => true,
-            'label'        => __( 'Selling Product Types', 'sk-core' ),
-            'digital_mode' => $this->get_selling_product_type(),
-            'plans' => apply_filters(
-                'sk_digital_product_types',
-                [
-                    'sell_physical' => __( 'Physical', 'sk-core' ),
-                    'sell_digital'  => __( 'Digital', 'sk-core' ),
-                    'sell_both'     => __( 'Both', 'sk-core' ),
-                ]
-            ),
-        );
-
-        sk_get_template_part( 'settings/seller-wizard-digital-product-settings', '', $args );
-    }
-
-    /**
-     * Set store categories after wizard settings is saved
-     *
-     *
-     * @param \SK\Core\Vendor\SetupWizard $wizard
-     *
-     * @return void
-     */
-    public function after_admin_wizard_store_field_save( $wizard ) {
-        check_admin_referer( 'sk-setup' );
-
-        $get_postdata  = wp_unslash( $_POST ); // phpcs:ignore
-        $sk_general = get_option( 'sk_general', array() );
-
-        $sk_general['global_digital_mode'] = ! empty( $get_postdata['sk_digital_product'] ) ? sanitize_text_field( $get_postdata['sk_digital_product'] ) : 'sell_both';
-
-        update_option( 'sk_general', $sk_general );
     }
 
 }

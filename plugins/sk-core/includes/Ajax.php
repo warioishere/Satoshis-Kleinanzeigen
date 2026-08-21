@@ -28,7 +28,6 @@ class Ajax {
         // Variation Handle for Vendor frontend
 
         // Single product Design ajax
-        add_action( 'wp_ajax_sk_load_order_items', [ $this, 'load_order_items' ] );
 
         add_action( 'wp_ajax_sk_toggle_seller', [ $this, 'toggle_seller_status' ] );
     }
@@ -62,8 +61,6 @@ class Ajax {
 
         return (int) $post->post_author === (int) sk_get_current_user_id();
     }
-
-
 
 
     /**
@@ -451,7 +448,6 @@ class Ajax {
     }
 
 
-
     /**
      * Enable/disable seller selling capability from admin seller listing page
      *
@@ -480,42 +476,6 @@ class Ajax {
         wp_send_json_success( $user );
         exit;
     }
-
-    /**
-     * Load State via ajax for refund
-     *
-     *
-     * @return html Set of states
-     */
-    public function load_order_items() {
-        check_ajax_referer( 'order-item', 'security' );
-
-        if ( ! current_user_can( 'edit_shop_orders' ) ) {
-            die( -1 );
-        }
-
-        // Return HTML items
-        $order_id = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
-        $order    = wc_get_order( $order_id );
-        $data     = $order->get_meta_data();
-
-        sk_get_template_part(
-            'orders/views/html-order-items',
-            '',
-            [
-                'pro'   => true,
-                'data'  => $data,
-                'order' => $order,
-            ]
-        );
-
-        die();
-    }
-
-
-
-
-
 
     public function sk_json_search_products_tags() {
         $return = [];

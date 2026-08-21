@@ -12,7 +12,6 @@ class Admin {
      */
     public function __construct() {
         add_action( 'sk_admin_menu', [ self::class, 'add_admin_menu' ] );
-        add_action( 'init', [ self::class, 'register_scripts' ] );
         add_action( 'sk_after_saving_settings', [ $this, 'after_save_settings' ], 10, 3 );
     }
 
@@ -33,16 +32,6 @@ class Admin {
 
             $submenu[ $slug ][] = [ $title, $capability, 'admin.php?page=' . $slug . '&tab=abuse-reports' ];
         }
-    }
-
-    /**
-     * Register scripts
-     *
-     */
-    public static function register_scripts() {
-        list( $suffix, $version ) = sk_get_script_suffix_and_version();
-
-        wp_register_style( 'woocommerce_select2', WC()->plugin_url() . '/assets/css/select2.css', [], WC_VERSION );
     }
 
     /**

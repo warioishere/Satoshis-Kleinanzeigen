@@ -8,81 +8,6 @@ use SK\Core\Cache;
  *
  */
 
-/**
- * Get get seller coupon
- *
- *
- * @param int $seller_id
- *
- * @return array
- */
-function sk_get_seller_coupon( $seller_id, $show_on_store = false ) {
-    $args = [
-        'post_type'   => 'shop_coupon',
-        'post_status' => 'publish',
-        'author'      => $seller_id,
-    ];
-
-    if ( $show_on_store ) {
-        $args['meta_query'][] = [
-            'key'   => 'show_on_store',
-            'value' => 'yes',
-        ];
-    }
-
-    $coupons = get_posts( $args );
-
-    return $coupons;
-}
-
-/**
- * Get marketplace seller coupons
- *
- *
- * @param int  $seller_id
- * @param bool $show_on_store
- *
- * @return array
- */
-function sk_get_marketplace_seller_coupon( $seller_id, $show_on_store = false ) {
-    $args = [
-        'post_type'   => 'shop_coupon',
-        'post_status' => 'publish',
-    ];
-
-    if ( $show_on_store ) {
-        $args['meta_query'][] = [
-            'key'   => 'admin_coupons_show_on_stores',
-            'value' => 'yes',
-        ];
-    }
-
-    $coupons     = get_posts( $args );
-    $get_coupons = [];
-
-    if ( empty( $coupons ) ) {
-        return $get_coupons;
-    }
-
-    foreach ( $coupons as $coupon ) {
-        $vendors_ids     = get_post_meta( $coupon->ID, 'coupons_vendors_ids', true );
-        $vendors_ids     = ! empty( $vendors_ids ) ? array_map( 'intval', explode( ',', $vendors_ids ) ) : [];
-        $exclude_vendors = get_post_meta( $coupon->ID, 'coupons_exclude_vendors_ids', true );
-        $exclude_vendors = ! empty( $exclude_vendors ) ? array_map( 'intval', explode( ',', $exclude_vendors ) ) : [];
-
-        $coupon_meta = [
-            'admin_coupons_enabled_for_vendor' => get_post_meta( $coupon->ID, 'admin_coupons_enabled_for_vendor', true ),
-            'coupons_vendors_ids'              => $vendors_ids,
-            'coupons_exclude_vendors_ids'      => $exclude_vendors,
-        ];
-
-        if ( sk_is_admin_created_vendor_coupon_by_meta( $coupon_meta, $seller_id ) ) {
-            $get_coupons[] = $coupon;
-        }
-    }
-
-    return $get_coupons;
-}
 
 /**
  * Get review page url of a seller
@@ -209,34 +134,6 @@ function sk_set_default_store_category_id( $category_id ) {
     return $updated_settings && $updated_default;
 }
 
-/**
- * Nomalize shipping postcode that contains '-' or space
- *
- *
- * @param string $code
- *
- * @return string
- */
-function sk_normalize_shipping_postcode( $code ) {
-    return str_replace( [ ' ', '-' ], '', $code );
-}
-
-/**
- * Include SK Pro template
- *
- * Modules should have their own get
- * template function, like `sk_geo_get_template`
- * used in Geolocation module.
- *
- *
- * @param string $name
- * @param array  $args
- *
- * @return void
- */
-function sk_pro_get_template( $name, $args = [] ) {
-    sk_get_template( "$name.php", $args, 'sk', trailingslashit( SK_CORE_DIR . "/templates" ) );
-}
 
 /**
  * SK is single seller mode enable
@@ -250,49 +147,6 @@ function sk_is_single_seller_mode_enable() {
     return apply_filters( 'sk_single_seller_mode', $is_single_seller_mode );
 }
 
-
-
-/**
- * This method will return a random string
- *
- * @param int $length should be positive even number
- *
- * @return string
- */
-function sk_get_random_string( $length = 8 ) {
-    // ensure a minimum length
-    if ( ! isset( $length ) || $length < 4 ) {
-        $length = 8;
-    }
-    // make length as even number
-    if ( $length % 2 !== 0 ) {
-        ++$length;
-    }
-    // get random bytes via available methods
-    $random_bytes = '';
-    if ( function_exists( 'random_bytes' ) ) {
-        try {
-            $random_bytes = random_bytes( $length / 2 );
-        } catch ( TypeError $e ) {
-            $random_bytes = '';
-        } catch ( Error $e ) {
-            $random_bytes = '';
-        } catch ( Exception $e ) {
-            $random_bytes = '';
-        }
-    }
-    // random_bytes failed, try another method
-    if ( empty( $random_bytes ) && function_exists( 'openssl_random_pseudo_bytes' ) ) {
-        $random_bytes = openssl_random_pseudo_bytes( $length / 2 );
-    }
-
-    if ( ! empty( $random_bytes ) ) {
-        return bin2hex( $random_bytes );
-    }
-
-    // builtin method failed, try manual method
-    return substr( str_shuffle( str_repeat( '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', wp_rand( 1, 10 ) ) ), 1, $length );
-}
 
 /**
  * Get script suffic and version for sk

@@ -56,20 +56,6 @@ function sk_is_user_seller( $user_id, $exclude_staff = false ) {
     return user_can( $user_id, 'skdar' );
 }
 
-/**
- * Check if a user is customer
- *
- * @param int $user_id
- *
- * @return bool
- */
-function sk_is_user_customer( $user_id ) {
-    if ( ! user_can( $user_id, 'customer' ) ) {
-        return false;
-    }
-
-    return true;
-}
 
 /**
  * Get reserved URL slugs that cannot be used for custom slugs like store base
@@ -144,15 +130,6 @@ function sk_is_store_page() {
     return false;
 }
 
-/**
- * Check if it's product edit page
- *
- *
- * @return bool
- */
-function sk_is_product_edit_page() {
-    return get_query_var( 'edit' ) && is_singular( 'product' );
-}
 
 /**
  * Check if it's a Seller Dashboard page
@@ -1288,55 +1265,6 @@ function sk_get_store_tabs( $store_id ) {
     return apply_filters( 'sk_store_tabs', $tabs, $store_id );
 }
 
-/**
- * Get seller bank details
- *
- * @param int $seller_id
- *
- * @return string
- */
-function sk_get_seller_bank_details( $seller_id ) {
-    $info    = sk_get_store_info( $seller_id );
-    $payment = $info['payment']['bank'];
-    $details = [];
-
-    if ( isset( $payment['ac_name'] ) ) {
-        // translators: 1) bank account name
-        $details[] = sprintf( __( 'Account Name: %s', 'sk-core' ), $payment['ac_name'] );
-    }
-
-    if ( isset( $payment['ac_number'] ) ) {
-        // translators: 1) bank account number
-        $details[] = sprintf( __( 'Account Number: %s', 'sk-core' ), $payment['ac_number'] );
-    }
-
-    if ( isset( $payment['bank_name'] ) ) {
-        // translators: 1) bank name
-        $details[] = sprintf( __( 'Bank Name: %s', 'sk-core' ), $payment['bank_name'] );
-    }
-
-    if ( isset( $payment['bank_addr'] ) ) {
-        // translators: 1)  bank address
-        $details[] = sprintf( __( 'Address: %s', 'sk-core' ), $payment['bank_addr'] );
-    }
-
-    if ( isset( $payment['routing_number'] ) ) {
-        // translators: 1) bank routing number
-        $details[] = sprintf( __( 'Routing Number: %s', 'sk-core' ), $payment['routing_number'] );
-    }
-
-    if ( isset( $payment['iban'] ) ) {
-        // translators: 1) bank iban
-        $details[] = sprintf( __( 'IBAN: %s', 'sk-core' ), $payment['iban'] );
-    }
-
-    if ( isset( $payment['swift'] ) ) {
-        // translators: 1) bank swift
-        $details[] = sprintf( __( 'SWIFT: %s', 'sk-core' ), $payment['swift'] );
-    }
-
-    return nl2br( implode( "\n", $details ) );
-}
 
 /**
  * Get seller listing
@@ -1355,65 +1283,6 @@ function sk_get_sellers( $args = [] ) {
     ];
 }
 
-/**
- * Put data with post_date's into an array of times
- *
- * @param array  $data       array of your data
- * @param string $date_key   key for the 'date' field. e.g. 'post_date'
- * @param string $data_key   key for the data you are charting
- * @param int    $interval
- * @param int    $start_date timestamp
- * @param string $group_by
- *
- * @return array
- */
-function sk_prepare_chart_data( $data, $date_key, $data_key, $interval, $start_date, $group_by ) {
-    $prepared_data = [];
-    $start_date    = sk_current_datetime()->setTimestamp( $start_date )->setTime( 0, 0, 0 );
-    $now           = sk_current_datetime()->modify( 'today' ); // so that we don't need to write sk_current_datetime() everytime
-
-    // get duration string
-    $duration_str = 'day' === $group_by ? 'P1D' : 'P1M';
-    // fix start date
-    $start_date = 'day' !== $group_by ? $start_date->modify( 'first day of this month' ) : $start_date;
-
-    $date_interval = new DateInterval( $duration_str );
-    $date_range    = $interval > 0 ? new DatePeriod( $start_date, $date_interval, $interval ) : [ $start_date ];
-    foreach ( $date_range as $date ) {
-        $time = $date->getTimestamp() . '000';
-        if ( ! isset( $prepared_data[ $time ] ) ) {
-            // Ensure all days (or months) have values first in this range
-            $prepared_data[ $time ] = [ esc_js( $time ), 0 ];
-        }
-    }
-
-    foreach ( $data as $d ) {
-        switch ( $group_by ) {
-            case 'day':
-                //modify() can return zero
-                $time = strtotime( $d->$date_key ) ? (string) $now->modify( $d->$date_key )->setTime( 0, 0, 0 )->getTimestamp() : (string) $now->getTimestamp();
-                $time .= '000';
-                break;
-
-            default:
-                $time = strtotime( $d->$date_key ) ? (string) $now->modify( $d->$date_key )->modify( 'first day of this month' )->setTime( 0, 0, 0 )->getTimestamp() : (string) $now->getTimestamp();
-                $time .= '000';
-                break;
-        }
-
-        if ( ! isset( $prepared_data[ $time ] ) ) {
-            continue;
-        }
-
-        if ( $data_key ) {
-            $prepared_data[ $time ][1] += $d->$data_key;
-        } else {
-            ++$prepared_data[ $time ][1];
-        }
-    }
-
-    return $prepared_data;
-}
 
 /**
  * Disable selling capability by default once a seller is registered
@@ -1469,201 +1338,6 @@ function sk_get_percentage_of( $this_period = 0, $last_period = 0 ) {
     ];
 }
 
-/**
- * Get seller count based on enable, disabled sellers and time period
- *
- * @param string $from
- * @param string $to
- *
- * @return array
- */
-function sk_get_seller_count( $from = null, $to = null ) {
-    $now              = sk_current_datetime();
-    $inactive_sellers = sk_get_sellers(
-        [
-            'number' => - 1,
-            'status' => 'pending',
-        ]
-    );
-
-    $active_sellers = sk_get_sellers(
-        [
-            'number' => - 1,
-        ]
-    );
-
-    $this_month = sk_get_sellers(
-        [
-            'date_query' => [
-                [
-                    'year'  => $now->format( 'Y' ),
-                    'month' => $now->format( 'm' ),
-                ],
-            ],
-        ]
-    );
-
-    $last_month = sk_get_sellers(
-        [
-            'date_query' => [
-                [
-                    'year'  => $now->modify( 'last month' )->format( 'Y' ),
-                    'month' => $now->modify( 'last month' )->format( 'm' ),
-                ],
-            ],
-        ]
-    );
-
-    if ( $from && $to ) {
-        $prepared_date = sk_prepare_date_query( $from, $to );
-
-        $this_period = sk_get_sellers(
-            [
-                'date_query' => [
-                    [
-                        'after'  => [
-                            'year'  => $prepared_date['from_year'],
-                            'month' => $prepared_date['from_month'],
-                            'day'   => $prepared_date['from_day'],
-                        ],
-                        'before' => [
-                            'year'  => $prepared_date['to_year'],
-                            'month' => $prepared_date['to_month'],
-                            'day'   => $prepared_date['to_day'],
-                        ],
-                    ],
-                ],
-            ]
-        );
-
-        $last_period = sk_get_sellers(
-            [
-                'date_query' => [
-                    [
-                        'after'  => [
-                            'year'  => $prepared_date['last_from_year'],
-                            'month' => $prepared_date['last_from_month'],
-                            'day'   => $prepared_date['last_from_day'],
-                        ],
-                        'before' => [
-                            'year'  => $prepared_date['last_to_year'],
-                            'month' => $prepared_date['last_to_month'],
-                            'day'   => $prepared_date['last_to_day'],
-                        ],
-                    ],
-                ],
-            ]
-        );
-
-        $vendor_parcent = sk_get_percentage_of( $this_period['count'], $last_period['count'] );
-    } else {
-        $vendor_parcent = sk_get_percentage_of( $this_month['count'], $last_month['count'] );
-    }
-
-    return [
-        'inactive'    => $inactive_sellers['count'],
-        'active'      => $active_sellers['count'],
-        'this_month'  => $this_month['count'],
-        'last_month'  => $last_month['count'],
-        'this_period' => $from && $to ? $this_period['count'] : null,
-        'class'       => $vendor_parcent['class'],
-        'parcent'     => $vendor_parcent['parcent'],
-    ];
-}
-
-/**
- * Get product count of this month and last month with percentage
- *
- * @param string $from
- * @param string $to
- *
- * @return array
- */
-function sk_get_product_count( $from = null, $to = null, $seller_id = null ) {
-    $this_month_posts = sk()->product->all(
-        [
-            'date_query' => [
-                [
-                    'year'  => sk_current_datetime()->format( 'Y' ),
-                    'month' => sk_current_datetime()->format( 'm' ),
-                ],
-            ],
-            'author'     => $seller_id ? $seller_id : '',
-            'fields'     => 'ids',
-        ]
-    );
-
-    $last_month_posts = sk()->product->all(
-        [
-            'date_query' => [
-                [
-                    'year'  => sk_current_datetime()->modify( 'last month' )->format( 'Y' ),
-                    'month' => sk_current_datetime()->modify( 'last month' )->format( 'm' ),
-                ],
-            ],
-            'author'     => $seller_id ? $seller_id : '',
-            'fields'     => 'ids',
-        ]
-    );
-
-    if ( $from && $to ) {
-        $prepared_date = sk_prepare_date_query( $from, $to );
-
-        $this_period = sk()->product->all(
-            [
-                'date_query' => [
-                    [
-                        'after'  => [
-                            'year'  => $prepared_date['from_year'],
-                            'month' => $prepared_date['from_month'],
-                            'day'   => $prepared_date['from_day'],
-                        ],
-                        'before' => [
-                            'year'  => $prepared_date['to_year'],
-                            'month' => $prepared_date['to_month'],
-                            'day'   => $prepared_date['to_day'],
-                        ],
-                    ],
-                ],
-                'author'     => $seller_id ? $seller_id : '',
-                'fields'     => 'ids',
-            ]
-        );
-
-        $last_period = sk()->product->all(
-            [
-                'date_query' => [
-                    [
-                        'after'  => [
-                            'year'  => $prepared_date['last_from_year'],
-                            'month' => $prepared_date['last_from_month'],
-                            'day'   => $prepared_date['last_from_day'],
-                        ],
-                        'before' => [
-                            'year'  => $prepared_date['last_to_year'],
-                            'month' => $prepared_date['last_to_month'],
-                            'day'   => $prepared_date['last_to_day'],
-                        ],
-                    ],
-                ],
-                'author'     => $seller_id ? $seller_id : '',
-                'fields'     => 'ids',
-            ]
-        );
-
-        $product_parcent = sk_get_percentage_of( $this_period->found_posts, $last_period->found_posts );
-    } else {
-        $product_parcent = sk_get_percentage_of( $this_month_posts->found_posts, $last_month_posts->found_posts );
-    }
-
-    return [
-        'this_month'  => $this_month_posts->found_posts,
-        'last_month'  => $last_month_posts->found_posts,
-        'this_period' => $from && $to ? $this_period->found_posts : null,
-        'class'       => $product_parcent['class'],
-        'parcent'     => $product_parcent['parcent'],
-    ];
-}
 
 /**
  * SK prepare date query
@@ -1729,115 +1403,6 @@ function sk_prepare_date_query( $from, $to ) {
     return $prepared_data;
 }
 
-/**
- * Get seles count based on this month and last month
- *
- * @global WPDB $wpdb
- *
- * @return array
- */
-function sk_get_sales_count( $from = null, $to = null, $seller_id = 0 ) {
-    // get current month report
-    $this_month_report_data = sk_admin_report_data( 'day', '', '', '', $seller_id );
-
-    $this_month_order_total   = 0;
-    $this_month_earning_total = 0;
-    $this_month_total_orders  = 0;
-    // get current time
-    $now = sk_current_datetime();
-
-    if ( $this_month_report_data ) {
-        foreach ( $this_month_report_data as $row ) {
-            $this_month_order_total   += $row->order_total;
-            $this_month_earning_total += $row->earning;
-            $this_month_total_orders  += $row->total_orders;
-        }
-    }
-
-    // get last month report
-    $last_month_report_data = sk_admin_report_data(
-        'day',
-        '',
-        $now->modify( 'first day of previous month' )->format( 'Y-m-d' ),
-        $now->modify( 'last day of previous month' )->format( 'Y-m-d' ),
-        $seller_id
-    );
-
-    $last_month_order_total   = 0;
-    $last_month_earning_total = 0;
-    $last_month_total_orders  = 0;
-
-    if ( $last_month_report_data ) {
-        foreach ( $last_month_report_data as $row ) {
-            $last_month_order_total   += $row->order_total;
-            $last_month_earning_total += $row->earning;
-            $last_month_total_orders  += $row->total_orders;
-        }
-    }
-
-    if ( $from && $to ) {
-        $date             = sk_prepare_date_query( $from, $to );
-        $this_period_data = sk_admin_report_data( 'day', $date['from_year'], $date['from_full_date'], $date['to_full_date'], $seller_id );
-        $last_period_data = sk_admin_report_data( 'day', $date['last_from_year'], $date['last_from_full_date'], $date['last_to_full_date'], $seller_id );
-
-        $this_period_order_total   = 0;
-        $this_period_earning_total = 0;
-        $this_period_total_orders  = 0;
-        $last_period_order_total   = 0;
-        $last_period_earning_total = 0;
-        $last_period_total_orders  = 0;
-
-        if ( $this_period_data ) {
-            foreach ( $this_period_data as $row ) {
-                $this_period_order_total   += $row->order_total;
-                $this_period_earning_total += $row->earning;
-                $this_period_total_orders  += $row->total_orders;
-            }
-        }
-
-        if ( $last_period_data ) {
-            foreach ( $last_period_data as $row ) {
-                $last_period_order_total   += $row->order_total;
-                $last_period_earning_total += $row->earning;
-                $last_period_total_orders  += $row->total_orders;
-            }
-        }
-
-        $sale_percentage    = sk_get_percentage_of( $this_period_order_total, $last_period_order_total );
-        $earning_percentage = sk_get_percentage_of( $this_period_earning_total, $last_period_earning_total );
-        $order_percentage   = sk_get_percentage_of( $this_period_total_orders, $last_period_total_orders );
-    } else {
-        $sale_percentage    = sk_get_percentage_of( $this_month_order_total, $last_month_order_total );
-        $earning_percentage = sk_get_percentage_of( $this_month_earning_total, $last_month_earning_total );
-        $order_percentage   = sk_get_percentage_of( $this_month_total_orders, $last_month_total_orders );
-    }
-
-    $data = [
-        'sales'   => [
-            'this_month'  => $this_month_order_total,
-            'last_month'  => $last_month_order_total,
-            'this_period' => $from && $to ? $this_period_order_total : null,
-            'class'       => $sale_percentage['class'],
-            'parcent'     => $sale_percentage['parcent'],
-        ],
-        'orders'  => [
-            'this_month'  => $this_month_total_orders,
-            'last_month'  => $last_month_total_orders,
-            'this_period' => $from && $to ? $this_period_total_orders : null,
-            'class'       => $order_percentage['class'],
-            'parcent'     => $order_percentage['parcent'],
-        ],
-        'earning' => [
-            'this_month'  => $this_month_earning_total,
-            'last_month'  => $last_month_earning_total,
-            'this_period' => $from && $to ? $this_period_earning_total : null,
-            'class'       => $earning_percentage['class'],
-            'parcent'     => $earning_percentage['parcent'],
-        ],
-    ];
-
-    return $data;
-}
 
 /**
  * Prevent sellers and customers from seeing the admin bar
@@ -1905,53 +1470,6 @@ function sk_remove_sellerdiv_metabox() {
 
 add_action( 'do_meta_boxes', 'sk_remove_sellerdiv_metabox' );
 
-/**
- * Human readable number format.
- *
- * Shortens the number by dividing 1000
- *
- * @param float|int $number
- *
- * @return float|int|string
- */
-function sk_number_format( $number ) {
-    $threshold = 10000;
-
-    if ( $number > $threshold ) {
-        return number_format( $number / 1000, 0, '.', '' ) . ' K';
-    }
-
-    return $number;
-}
-
-/**
- * Get coupon edit url
- *
- * @param int    $coupon_id
- * @param string $coupon_page
- *
- * @return string
- */
-function sk_get_coupon_edit_url( $coupon_id, $coupon_page = '' ) {
-    if ( ! $coupon_page ) {
-        $coupon_page = sk_get_page_url( 'coupons' );
-    }
-
-    $edit_url = wp_nonce_url(
-        add_query_arg(
-            [
-                'post'   => $coupon_id,
-                'action' => 'edit',
-                'view'   => 'add_coupons',
-            ],
-            $coupon_page
-        ),
-        '_coupon_nonce',
-        'coupon_nonce_url'
-    );
-
-    return $edit_url;
-}
 
 /**
  * Filter `get_avatar_url` to retrieve image url from sk profile settings
@@ -2038,53 +1556,6 @@ function sk_get_navigation_url( $name = '', $new_url = false ) {
     return apply_filters( 'sk_get_navigation_url', esc_url( $url ), $name, $new_url );
 }
 
-/**
- * Generate country dropdwon
- *
- * @param array  $options
- * @param string $selected
- * @param bool   $everywhere
- */
-function sk_country_dropdown( $options, $selected = '', $everywhere = false ) {
-    printf( '<option value="">%s</option>', esc_html__( '- Select a location -', 'sk-core' ) );
-
-    if ( $everywhere ) {
-        echo '<optgroup label="--------------------------">';
-        printf( '<option value="everywhere"%s>%s</option>', selected( $selected, 'everywhere', true ), esc_html__( 'Everywhere Else', 'sk-core' ) );
-        echo '</optgroup>';
-    }
-
-    echo '<optgroup label="------------------------------">';
-
-    foreach ( $options as $key => $value ) {
-        printf( '<option value="%s"%s>%s</option>', esc_attr( $key ), selected( $selected, $key, true ), esc_html( $value ) );
-    }
-    echo '</optgroup>';
-}
-
-/**
- * Generate country dropdwon
- *
- * @param array  $options
- * @param string $selected
- * @param bool   $everywhere
- */
-function sk_state_dropdown( $options, $selected = '', $everywhere = false ) {
-    printf( '<option value="">%s</option>', esc_html__( '- Select a State -', 'sk-core' ) );
-
-    if ( $everywhere ) {
-        echo '<optgroup label="--------------------------">';
-        printf( '<option value="everywhere" %s>%s</option>', selected( $selected, 'everywhere', true ), esc_html__( 'Everywhere Else', 'sk-core' ) );
-        echo '</optgroup>';
-    }
-
-    echo '<optgroup label="------------------------------">';
-
-    foreach ( $options as $key => $value ) {
-        printf( '<option value="%s" %s>%s</option>', esc_attr( $key ), selected( $selected, $key, true ), esc_html( $value ) );
-    }
-    echo '</optgroup>';
-}
 
 /**
  * Send email to seller and admin when there is no product in stock or low stock
@@ -2137,52 +1608,6 @@ function sk_get_products_listing_months_for_vendor( $user_id ) {
     return apply_filters( 'months_dropdown_results', $months, 'product' );
 }
 
-/**
- * Display a monthly dropdown for filtering product listing on seller dashboard
- *
- *
- * @param int $user_id
- */
-function sk_product_listing_filter_months_dropdown( $user_id ) {
-    global $wp_locale;
-
-    $months      = sk_get_products_listing_months_for_vendor( $user_id );
-    $month_count = count( $months );
-
-    if ( ! $month_count || ( 1 === $month_count && 0 === (int) $months[0]->month ) ) {
-        return;
-    }
-
-    // get default date
-    $date = 0;
-    // get date from url
-    if ( isset( $_GET['_product_listing_filter_nonce'], $_GET['date'] ) && wp_verify_nonce( sanitize_key( wp_unslash( $_GET['_product_listing_filter_nonce'] ) ), 'product_listing_filter' ) ) {
-        $date = intval( wp_unslash( $_GET['date'] ) );
-    }
-    ?>
-    <select name="date" id="filter-by-date" class="sk-form-control">
-        <option<?php selected( $date, 0 ); ?> value="0"><?php esc_html_e( 'All dates', 'sk-core' ); ?></option>
-        <?php
-        foreach ( $months as $arc_row ) {
-            if ( 0 === $arc_row->year ) {
-                continue;
-            }
-
-            $month = zeroise( $arc_row->month, 2 );
-            $year  = $arc_row->year;
-
-            printf(
-                "<option %s value='%s' >%s</option>\n",
-                selected( $date, $year . $month, false ),
-                esc_attr( $year . $month ),
-                /* translators: 1: month name, 2: 4-digit year */
-                sprintf( esc_html__( '%1$s %2$d', 'sk-core' ), esc_html( $wp_locale->get_month( $month ) ), esc_html( $year ) ) // phpcs:ignore WordPress.XSS.EscapeOutput.OutputNotEscaped
-            );
-        }
-        ?>
-    </select>
-    <?php
-}
 
 /**
  * Display form for filtering product listing on seller dashboard
@@ -2452,23 +1877,6 @@ function sk_after_login_redirect( $redirect_to, $user ) {
 
 add_filter( 'woocommerce_login_redirect', 'sk_after_login_redirect', 1, 2 );
 
-/**
- * Check if the post belongs to the given user
- *
- * @param int $post_id
- * @param int $user_id
- *
- * @return bool
- */
-function sk_is_valid_owner( $post_id, $user_id ) {
-    $author = (int) get_post_field( 'post_author', $post_id );
-
-    if ( $user_id === $author ) {
-        return true;
-    }
-
-    return false;
-}
 
 add_action( 'wp', 'sk_set_is_home_false_on_store' );
 
@@ -2606,7 +2014,6 @@ function sk_get_all_caps() {
         'menu'     => [
             'sk_view_overview_menu'       => __( 'View overview menu', 'sk-core' ),
             'sk_view_product_menu'        => __( 'View product menu', 'sk-core' ),
-            'sk_view_order_menu'          => __( 'View order menu', 'sk-core' ),
             'sk_view_review_menu'         => __( 'View review menu', 'sk-core' ),
             'sk_view_store_settings_menu' => __( 'View store settings menu', 'sk-core' ),
             'sk_view_store_social_menu'   => __( 'View social settings menu', 'sk-core' ),
@@ -2742,42 +2149,6 @@ function sk_pro_buynow_url() {
     return $link;
 }
 
-/**
- * Remove hook for anonymous class
- *
- * @param string $hook_name
- * @param string $class_name
- * @param string $method_name
- * @param int    $priority
- *
- * @return bool
- */
-function sk_remove_hook_for_anonymous_class( $hook_name = '', $class_name = '', $method_name = '', $priority = 0 ) {
-    global $wp_filter;
-
-    // Take only filters on right hook name and priority
-    if ( ! isset( $wp_filter[ $hook_name ][ $priority ] ) || ! is_array( $wp_filter[ $hook_name ][ $priority ] ) ) {
-        return false;
-    }
-
-    // Loop on filters registered
-    foreach ( (array) $wp_filter[ $hook_name ][ $priority ] as $unique_id => $filter_array ) {
-        // Test if filter is an array ! (always for class/method)
-        if ( isset( $filter_array['function'] ) && is_array( $filter_array['function'] ) ) {
-            // Test if object is a class, class and method is equal to param !
-            if ( is_object( $filter_array['function'][0] ) && get_class( $filter_array['function'][0] ) && get_class( $filter_array['function'][0] ) === $class_name && $filter_array['function'][1] === $method_name ) {
-                // Test for WordPress >= 4.7 WP_Hook class (https://make.wordpress.org/core/2016/09/08/wp_hook-next-generation-actions-and-filters/)
-                if ( is_a( $wp_filter[ $hook_name ], 'WP_Hook' ) ) {
-                    unset( $wp_filter[ $hook_name ]->callbacks[ $priority ][ $unique_id ] );
-                } else {
-                    unset( $wp_filter[ $hook_name ][ $priority ][ $unique_id ] );
-                }
-            }
-        }
-    }
-
-    return false;
-}
 
 /**
  * SK get variable product earnings
@@ -2829,23 +2200,6 @@ function sk_get_variable_product_earning( $product_id, $formated = true, $deprec
     return $earning;
 }
 
-/**
- * Get page permalink of sk pages by page id
- *
- *
- * @param string $page_id
- *
- * @return string
- */
-function sk_get_permalink( $page_id ) {
-    if ( ! $page_id ) {
-        return false;
-    }
-
-    $pages = get_option( 'sk_pages' );
-
-    return isset( $pages[ $page_id ] ) ? get_permalink( $pages[ $page_id ] ) : false;
-}
 
 /**
  * Check if it's store listing page
@@ -3095,19 +2449,6 @@ function sk_install_wp_org_plugin( $plugin_slug, $main_file = null ) {
     return true;
 }
 
-/**
- * Redirect to SK admin setup wizard page
- *
- *
- * @return void
- */
-function sk_redirect_to_admin_setup_wizard() {
-    // Delete the redirect transient
-    delete_transient( '_sk_setup_page_redirect' );
-
-    wp_safe_redirect( add_query_arg( [ 'page' => 'sk-setup' ], admin_url( 'index.php' ) ) );
-    exit;
-}
 
 /**
  * SK generate star ratings
@@ -3159,34 +2500,6 @@ function sk_has_map_api_key() {
     return ! empty( $sk_appearance['mapbox_access_token'] );
 }
 
-/**
- * SK clear product caches.
- * We'll be calling `WC_Product_Data_Store_CPT::clear_caches()` to clear product caches.
- *
- *
- * @param int|\WC_Product $product
- *
- * @return void
- */
-function sk_clear_product_caches( $product ) {
-    if ( ! $product instanceof \WC_Product ) {
-        $product = wc_get_product( $product );
-    }
-
-    $store       = \WC_Data_Store::load( 'product-' . $product->get_type() );
-    $class       = $store->get_current_class_name();
-    $class       = is_object( $class ) ? $class : new $class();
-    $reflection  = new \ReflectionClass( $class );
-    $method_name = 'clear_caches';
-
-    if ( ! $reflection->hasMethod( $method_name ) ) {
-        return;
-    }
-
-    $method = $reflection->getMethod( $method_name );
-    $method->setAccessible( true );
-    $method->invokeArgs( $class, [ &$product ] );
-}
 
 /**
  * Check which vendor info should be hidden
@@ -3320,23 +2633,6 @@ function sk_format_date( $date = '', $format = false ) {
     return sk_format_datetime( $date, $format );
 }
 
-/**
- * Get a formatted time from WordPress format
- *
- *
- * @param string|int|DateTimeImmutable $date   the date string or timestamp or DateTimeImmutable object
- * @param string|bool                  $format date format string or false for default WordPress date
- *
- * @return string|false The date, translated if locale specifies it. False on invalid timestamp input.
- */
-function sk_format_time( $date = '', $format = false ) {
-    // if no format is specified, get default WordPress date format
-    if ( ! $format ) {
-        $format = wc_time_format();
-    }
-
-    return sk_format_datetime( $date, $format );
-}
 
 /**
  * Create an expected date time format from a given format.
@@ -3355,181 +2651,6 @@ function sk_create_date_from_format( $format, $date_string ) {
     );
 }
 
-/**
- * Convert times in expected format.
- *
- * @param array|string $times_data    Times data
- * @param string       $input_format  Times current format
- * @param string       $output_format Times converted format
- *
- * @return string|array
- */
-function sk_convert_date_format( $times_data, $input_format = 'g:i a', $output_format = 'g:i a' ) {
-    if ( empty( $times_data ) ) {
-        return $times_data;
-    }
-
-    $times = [];
-    foreach ( (array) $times_data as $time ) {
-        $datetime = sk_create_date_from_format( $input_format, $time );
-        $times[]  = $datetime ? $datetime->format( $output_format ) : '';
-    }
-
-    return is_string( $times_data ) ? $times[0] : $times;
-}
-
-/**
- * This method will convert datetime string into timestamp
- *
- *
- * @param string $date_string
- * @param bool   $gmt_date
- *
- * @return bool|int date timestamp on success, false otherwise
- */
-function sk_get_timestamp( $date_string, $gmt_date = false ) {
-    // get current time
-    $now = sk_current_datetime();
-    // convert to gmt time
-    if ( $gmt_date ) {
-        $now = $now->setTimezone( new DateTimeZone( 'UTC' ) );
-    }
-    // modify current date
-    $now = $now->modify( $date_string );
-
-    return $now ? $now->getTimestamp() : false;
-}
-
-/**
- * Get inverval between two dates, useful for chart functions
- *
- *
- * @param string|int $start_date
- * @param string|int $end_date
- * @param string     $group_by
- *
- * @return false|int
- */
-function sk_get_interval_between_dates( $start_date, $end_date, $group_by = 'day' ) {
-    $now        = sk_current_datetime();
-    $start_date = is_numeric( $start_date ) ? $now->setTimestamp( $start_date ) : $now->modify( $start_date );
-    $end_date   = is_numeric( $end_date ) ? $now->setTimestamp( $end_date ) : $now->modify( $end_date );
-
-    if ( ! $start_date || ! $end_date ) {
-        // invalid start or end date
-        return 0;
-    }
-
-    $date_interval = $start_date->diff( $end_date );
-
-    return $group_by === 'day' ? $date_interval->days : $date_interval->m;
-}
-
-/**
- * Mask or hide part of email address.
- *
- *
- * @param string $email Email address
- *
- * @return string
- */
-function sk_mask_email_address( $email ) {
-    if ( ! filter_var( $email, FILTER_VALIDATE_EMAIL ) ) {
-        return $email;
-    }
-
-    [ $first, $last ] = explode( '@', $email );
-    $first       = str_replace( substr( $first, '1' ), str_repeat( '*', strlen( $first ) - 1 ), $first );
-    $last        = explode( '.', $last );
-    $last_domain = str_replace( substr( $last['0'], '1' ), str_repeat( '*', strlen( $last['0'] ) - 1 ), $last['0'] );
-
-    return "{$first}@{$last_domain}.{$last['1']}";
-}
-
-/**
- * Mask or hide part of string.
- *
- *
- * @param string  $text text
- * @param integer $position
- *
- * @return string
- */
-function sk_mask_string( $text, $position = 1, $show_max_letters = 4 ) {
-    $first_letters = substr( $text, 0, $position );
-    $remaining_letters = substr( $text, 2 );
-
-    $masked_letters = str_repeat( '*', min( $show_max_letters, strlen( $remaining_letters ) ) );
-
-    return $first_letters . $masked_letters;
-}
-
-/**
- * Add item in specific position of an array
- *
- *
- * @param array      $array
- * @param int|string $position <index position or name of the key after which you want to add the new array>
- * @param array      $new_array
- *
- * @return array
- */
-function sk_array_after( $array, $position, $new_array ) {
-    if ( is_int( $position ) ) {
-        return array_merge(
-            array_slice( $array, 0, $position ),
-            $new_array,
-            array_slice( $array, $position )
-        );
-    }
-
-    $pos = array_search( $position, array_keys( $array ), true );
-
-    return array_merge(
-        array_slice( $array, 0, $pos + 1 ),
-        $new_array,
-        array_slice( $array, $pos )
-    );
-}
-
-/**
- * Insert a value or key/value pair (assoc array) after a specific key in an array.  If key doesn't exist, value is appended
- * to the end of the array.
- *
- *
- * @param array  $old_array
- * @param array  $new_array
- * @param string $insert_after_key
- *
- * @return array
- */
-function sk_array_insert_after( array $old_array, array $new_array, $insert_after_key = '' ) {
-    $keys  = array_keys( $old_array );
-    $index = ! empty( $insert_after_key ) ? array_search( $insert_after_key, $keys, true ) : false;
-    $pos   = false === $index ? count( $old_array ) : $index + 1;
-
-    return array_slice( $old_array, 0, $pos, true ) + $new_array + array_slice( $old_array, $pos, count( $old_array ) - 1, true );
-}
-
-/**
- * Check a order have apply admin coupon
- *
- *
- * @param WC_Order $order
- * @param int      $vendor_id
- * @param int      $product_id
- *
- * @return bool
- */
-function sk_is_admin_coupon_applied( $order, $vendor_id, $product_id = 0 ) {
-    if (
-        function_exists( 'sk_is_admin_coupon_used_for_vendors' ) &&
-        sk_is_admin_coupon_used_for_vendors( $order, $vendor_id, $product_id ) ) {
-        return true;
-    }
-
-    return false;
-}
 
 /**
  * Get vendor store banner width
@@ -3561,15 +2682,6 @@ function sk_get_vendor_store_banner_height() {
     return ( $height !== 0 ) ? $height : 300;
 }
 
-/**
- * Get additional products sections.
- *
- *
- * @return array
- */
-function sk_get_additional_product_sections() {
-    return sk()->product_sections->get_available_product_sections();
-}
 
 /**
  * Converts a 'on' or 'off' to boolean
@@ -3599,16 +2711,6 @@ function sk_bool_to_on_off( $bool ) {
     return true === $bool ? 'on' : 'off';
 }
 
-/**
- * Check is 12-hour format in current setup.
- *
- *
- * @return bool
- */
-function is_tweleve_hour_format() {
-    // Check if current setup format is 12 hour format.
-    return preg_match( '/(am|pm)$/i', sk_current_datetime()->format( wc_time_format() ) );
-}
 
 /**
  * Sanitize phone number.
@@ -3703,22 +2805,6 @@ if ( ! function_exists( 'sk_user_update_to_seller' ) ) {
     }
 }
 
-/**
- * Get new product creation URL.
- *
- *
- * @return false|string
- */
-function sk_get_new_product_url() {
-    $one_step_product_create = 'on' === sk_get_option( 'one_step_product_create', 'sk_selling', 'on' );
-
-    return $one_step_product_create ? sk_edit_product_url( 0, true ) : add_query_arg(
-        [
-            '_sk_add_product_nonce' => wp_create_nonce( 'sk_add_product_nonce' ),
-        ],
-        sk_get_navigation_url( 'new-product' )
-    );
-}
 
 /**
  * Check if a vendor has at least one real public contact method.

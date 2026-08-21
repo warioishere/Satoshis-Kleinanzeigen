@@ -378,28 +378,3 @@ function sk_report_abuse_get_reports( $args = [] ) {
     return $reports;
 }
 
-/**
- * Delete abuse reports
- *
- *
- * @param array $ids
- *
- * @return int
- */
-function sk_report_abuse_delete_reports( $ids ) {
-    global $wpdb;
-
-    $ids = implode( ',', $ids );
-
-    $result = $wpdb->query(
-        "delete from {$wpdb->prefix}sk_report_abuse_reports where id in ({$ids})"
-    );
-
-    /**
-     * Fires after deleted of bulk abuse reports
-     *
-     */
-    do_action( 'sk_report_abuse_deleted_report' );
-
-    return $result;
-}

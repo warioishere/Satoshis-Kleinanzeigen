@@ -57,15 +57,6 @@
 
         </article>
 
-        <?php
-
-            /**
-             *  sk_review_content_inside_after hook
-             *
-             */
-            do_action( 'sk_review_content_inside_after' );
-        ?>
-
     </div><!-- .sk-dashboard-content -->
 
     <?php
