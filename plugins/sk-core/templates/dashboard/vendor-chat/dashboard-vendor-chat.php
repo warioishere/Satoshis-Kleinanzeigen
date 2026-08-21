@@ -225,40 +225,4 @@ do_action( 'sk_dashboard_wrap_start' );
 	<?php do_action( 'sk_dashboard_content_after' ); ?>
 </div>
 
-<!-- Chat request modal -->
-<div id="dvc-chat-modal" class="dvc-modal" style="display:none;">
-	<div class="dvc-modal-content">
-		<div class="dvc-modal-header">
-			<h3><?php esc_html_e( 'Neue Nachricht', 'sk-core' ); ?></h3>
-			<button class="dvc-modal-close">&times;</button>
-		</div>
-		<div class="dvc-modal-body">
-			<form id="dvc-start-chat-form">
-				<input type="hidden" name="vendor_id" id="dvc-vendor-id">
-				<input type="hidden" name="product_id" id="dvc-product-id">
-				<div class="dvc-form-group">
-					<label><?php esc_html_e( 'Deine Nachricht:', 'sk-core' ); ?></label>
-					<textarea
-						name="message"
-						id="dvc-chat-message"
-						rows="5"
-						placeholder="<?php esc_attr_e( 'Schreibe deine Nachricht...', 'sk-core' ); ?>"
-						required
-					></textarea>
-				</div>
-				<div class="dvc-modal-actions">
-					<button type="button" class="dvc-btn-secondary dvc-modal-close">
-						<?php esc_html_e( 'Abbrechen', 'sk-core' ); ?>
-					</button>
-					<button type="submit" class="dvc-btn-primary">
-						<i class="fas fa-paper-plane"></i>
-						<?php esc_html_e( 'Nachricht senden', 'sk-core' ); ?>
-					</button>
-				</div>
-			</form>
-		</div>
-	</div>
-</div>
-
-
 <?php do_action( 'sk_dashboard_wrap_end' ); ?>

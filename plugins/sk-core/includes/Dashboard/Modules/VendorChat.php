@@ -34,16 +34,28 @@ class VendorChat extends DashboardModule {
 	}
 
 	protected function register_extras(): void {
-		add_action( 'init',                         [ $this, 'register_cpt' ] );
-		add_action( 'init',                         [ ChatMessages::class, 'maybe_install' ] );
+		// Registered whatever the setting says: existing chats have to keep
+		// cleaning up their message rows, and the settings page is what
+		// switches the feature back on.
+		add_action( 'init',               [ $this, 'register_cpt' ] );
+		add_action( 'init',               [ ChatMessages::class, 'maybe_install' ] );
 		// Custom table rows are not covered by post deletion.
-		add_action( 'before_delete_post',           [ $this, 'delete_chat_messages' ] );
+		add_action( 'before_delete_post', [ $this, 'delete_chat_messages' ] );
+		add_action( 'admin_menu',         [ $this, 'add_admin_menu' ] );
+		add_action( 'admin_init',         [ $this, 'register_settings' ] );
+
+		// Everything below is the running chat. With the feature switched off
+		// the dashboard entry and the product-page icon already disappeared,
+		// but the six write endpoints stayed reachable and every frontend page
+		// still shipped the script together with a valid nonce.
+		if ( ! self::is_enabled() ) {
+			return;
+		}
+
 		// Badge runs AFTER Registry injects at 50 so it can modify the entry.
 		add_filter( 'sk_get_dashboard_nav',         [ $this, 'add_notification_badge' ], 60 );
 		add_action( 'wp_enqueue_scripts',           [ $this, 'enqueue_assets' ] );
 		add_action( 'wp_footer',                    [ $this, 'output_modal' ] );
-		add_action( 'admin_menu',                   [ $this, 'add_admin_menu' ] );
-		add_action( 'admin_init',                   [ $this, 'register_settings' ] );
 		add_filter( 'dkp_contact_icons_collection', [ $this, 'add_chat_icon' ], 10, 4 );
 
 		// AJAX handlers — logged-in users only
@@ -1105,20 +1117,6 @@ class VendorChat extends DashboardModule {
 	 */
 	public function mark_as_read( $chat_id, $user_id ) {
 		ChatMessages::mark_read( (int) $chat_id, (int) $user_id );
-	}
-
-	/**
-	 * Does this chat hold messages the user has not seen?
-	 *
-	 *
-	 * @param int $chat_id
-	 * @param int $user_id
-	 * @return bool
-	 */
-	public function has_unread_messages( $chat_id, $user_id ) {
-		$counts = ChatMessages::unread_counts( [ (int) $chat_id ], (int) $user_id );
-
-		return ! empty( $counts[ (int) $chat_id ] );
 	}
 }
 
