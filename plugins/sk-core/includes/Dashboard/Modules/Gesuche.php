@@ -12,12 +12,15 @@ class Gesuche extends DashboardModule {
 
     public function config(): ?array {
         return [
-            'slug'       => 'gesuche',
-            'title'      => __( 'Gesuche', 'sk-core' ),
-            'icon'       => '<i class="fas fa-search"></i>',
-            'pos'        => 55,
-            'permission' => 'sk_view_overview_menu',
-            'template'   => 'dashboard/gesuche/dashboard-gesuche',
+            'slug'          => 'gesuche',
+            'title'         => __( 'Gesuche', 'sk-core' ),
+            'icon'          => '<i class="fas fa-search"></i>',
+            'pos'           => 55,
+            'permission'    => 'sk_view_overview_menu',
+            'template'      => 'dashboard/gesuche/dashboard-gesuche',
+            // Handlers run here, before the template loads; the template only
+            // renders what this returns.
+            'template_args' => [ $this, 'dashboard_view_data' ],
         ];
     }
 
@@ -129,149 +132,155 @@ class Gesuche extends DashboardModule {
     }
 
     /**
-     * Render the gesuche dashboard content (called from template).
+     * Run the POST handlers and collect everything the dashboard template needs.
+     *
+     * Called by DashboardRegistry::dispatch_template() before the template is
+     * included, so the template itself contains no write logic.
+     *
+     * @param array $query_vars Dashboard query vars (unused, part of the callback signature).
+     *
+     * @return array{logged_in:bool,notices:array<int,array{type:string,text:string}>,editing:bool,edit_post:?\WP_Post,gesuche:?\WP_Query}
      */
-    public static function render_dashboard(): string {
-        if ( ! is_user_logged_in() ) {
-            return '<p>Bitte <a href="/mein-konto/">einloggen</a>, um Gesuche zu verwalten.</p>';
+    public function dashboard_view_data( $query_vars = [] ): array {
+        $data = [
+            'logged_in' => is_user_logged_in(),
+            'notices'   => [],
+            'editing'   => false,
+            'edit_post' => null,
+            'gesuche'   => null,
+        ];
+
+        if ( ! $data['logged_in'] ) {
+            return $data;
         }
+
         $user_id = get_current_user_id();
 
-        // Löschen — per POST, weil ein Link, der loescht, vom Browser-Prefetch
-        // ausgeloest werden kann.
-        if ( isset( $_POST['delete_gesuch'] ) && is_numeric( $_POST['delete_gesuch'] ) ) {
-            $delete_id = (int) $_POST['delete_gesuch'];
-            $post      = get_post( $delete_id );
-            $nonce_ok  = isset( $_POST['_dg_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_dg_nonce'] ) ), 'dg_del_' . $delete_id );
-            if ( $nonce_ok && $post && (int) $post->post_author === $user_id && $post->post_type === 'gesuch' ) {
-                wp_delete_post( $delete_id, true );
-                echo '<div class="sk-alert sk-alert-success">Gesuch gelöscht.</div>';
-            }
-        }
+        $data['notices'] = array_merge(
+            self::handle_delete( $user_id ),
+            self::handle_create( $user_id ),
+            self::handle_edit( $user_id )
+        );
 
-        // Neu anlegen
-        if ( isset( $_POST['dg_action'] ) && $_POST['dg_action'] === 'create'
-            && isset( $_POST['_dg_nonce'] )
-            && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_dg_nonce'] ) ), 'dg_create' ) ) {
-            // Slot erst nach der Nonce-Pruefung ziehen, damit verworfene
-            // Requests das Kontingent nicht aufbrauchen.
-            if ( ! sk_rate_limit( 'gesuch-create:' . $user_id, 5, HOUR_IN_SECONDS ) ) {
-                echo '<div class="sk-alert sk-alert-warning">Du kannst höchstens 5 Gesuche pro Stunde veröffentlichen. Bitte versuche es später erneut.</div>';
-            } else {
-                $title   = sanitize_text_field( $_POST['gesuch_title'] ?? '' );
-                $content = sanitize_textarea_field( $_POST['gesuch_content'] ?? '' );
-                $post_id = wp_insert_post( [
-                    'post_title'   => $title,
-                    'post_content' => $content,
-                    'post_type'    => 'gesuch',
-                    'post_status'  => 'publish',
-                    'post_author'  => $user_id,
-                ] );
-                if ( $post_id && ! is_wp_error( $post_id ) ) {
-                    update_post_meta( $post_id, '_vendor_id', $user_id );
-                    echo '<div class="sk-alert sk-alert-success">Gesuch veröffentlicht.</div>';
-                }
-            }
-        }
-
-        // Bearbeiten
-        if ( isset( $_POST['dg_action'], $_POST['gesuch_id'] ) && $_POST['dg_action'] === 'edit' && is_numeric( $_POST['gesuch_id'] ) ) {
-            $gesuch_id = (int) $_POST['gesuch_id'];
-            $post      = get_post( $gesuch_id );
-            $nonce_ok  = isset( $_POST['_dg_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_dg_nonce'] ) ), 'dg_edit_' . $gesuch_id );
-            if ( $nonce_ok && $post && (int) $post->post_author === $user_id && $post->post_type === 'gesuch' ) {
-                wp_update_post( [
-                    'ID'           => $gesuch_id,
-                    'post_title'   => sanitize_text_field( $_POST['gesuch_title'] ?? '' ),
-                    'post_content' => sanitize_textarea_field( $_POST['gesuch_content'] ?? '' ),
-                ] );
-                echo '<div class="sk-alert sk-alert-success">Gesuch aktualisiert.</div>';
-            }
-        }
-
-        $editing   = false;
-        $edit_post = null;
+        // Edit state is resolved after the handlers, so a gesuch deleted in this
+        // same request cannot be put back into the form.
         if ( isset( $_GET['edit_gesuch'] ) && is_numeric( $_GET['edit_gesuch'] ) ) {
             $edit_id   = (int) $_GET['edit_gesuch'];
             $edit_post = get_post( $edit_id );
             if ( $edit_post && (int) $edit_post->post_author === $user_id && $edit_post->post_type === 'gesuch' ) {
-                $editing = true;
+                $data['editing']   = true;
+                $data['edit_post'] = $edit_post;
             }
         }
 
-        ob_start();
-        ?>
-        <div class="sk-review-page-header">
-            <h2><i class="fas fa-search"></i> Gesuche</h2>
-        </div>
+        $data['gesuche'] = new \WP_Query( [
+            'post_type'      => 'gesuch',
+            'post_status'    => [ 'publish', 'draft' ],
+            'author'         => $user_id,
+            'posts_per_page' => 20,
+        ] );
 
-        <div class="gesuche-dashboard-wrapper">
-          <div class="gesuche-dashboard-inner">
-            <h3 class="sk-gesuche-section-title"><?php echo $editing ? 'Gesuch bearbeiten' : 'Gesuch erstellen'; ?></h3>
-            <form method="post" class="gesuch-form">
-                <div class="sk-form-group">
-                    <label for="gesuch_title">Titel</label>
-                    <input type="text" id="gesuch_title" name="gesuch_title" class="sk-form-control"
-                           value="<?php echo $editing ? esc_attr( $edit_post->post_title ) : ''; ?>" required>
-                </div>
-                <div class="sk-form-group">
-                    <label for="gesuch_content">Beschreibung</label>
-                    <textarea id="gesuch_content" name="gesuch_content" rows="6" class="sk-form-control" required><?php
-                        echo $editing ? esc_textarea( $edit_post->post_content ) : ''; ?></textarea>
-                </div>
-                <?php if ( $editing ) : ?>
-                    <input type="hidden" name="dg_action" value="edit">
-                    <input type="hidden" name="gesuch_id" value="<?php echo esc_attr( $edit_post->ID ); ?>">
-                    <?php wp_nonce_field( 'dg_edit_' . $edit_post->ID, '_dg_nonce' ); ?>
-                <?php else : ?>
-                    <input type="hidden" name="dg_action" value="create">
-                    <?php wp_nonce_field( 'dg_create', '_dg_nonce' ); ?>
-                <?php endif; ?>
-                <input type="submit" class="sk-btn sk-btn-btc"
-                       value="<?php echo $editing ? 'Gesuch speichern' : 'Gesuch veröffentlichen'; ?>">
-            </form>
+        return $data;
+    }
 
-            <h3 class="sk-gesuche-section-title">Meine Gesuche</h3>
-            <?php
-            $query = new \WP_Query( [
-                'post_type'      => 'gesuch',
-                'post_status'    => [ 'publish', 'draft' ],
-                'author'         => $user_id,
-                'posts_per_page' => 20,
-            ] );
-            if ( $query->have_posts() ) : ?>
-                <ul class="gesuch-list">
-                    <?php while ( $query->have_posts() ) : $query->the_post();
-                        $pid      = get_the_ID();
-                        $del_action = remove_query_arg( [ 'edit_gesuch', 'delete_gesuch', '_dg_nonce' ] );
-                        $edit_url   = add_query_arg( [ 'edit_gesuch' => $pid ], remove_query_arg( [ 'delete_gesuch', '_dg_nonce' ] ) );
-                    ?>
-                        <li class="gesuch-item">
-                            <div class="gesuch-item-head">
-                                <strong class="gesuch-title"><?php echo esc_html( get_the_title() ); ?></strong>
-                                <span class="gesuch-status"><?php echo esc_html( get_post_status_object( get_post_status() )->label ); ?></span>
-                            </div>
-                            <div class="gesuch-excerpt"><?php echo wp_trim_words( get_the_content(), 28 ); ?></div>
-                            <div class="gesuch-actions">
-                                <a class="btn btn-sm btn-secondary" href="<?php echo esc_url( $edit_url ); ?>">Bearbeiten</a>
-                                <form method="post" action="<?php echo esc_url( $del_action ); ?>" class="gesuch-delete-form" onsubmit="return confirm('Wirklich löschen?');">
-                                    <?php wp_nonce_field( 'dg_del_' . $pid, '_dg_nonce' ); ?>
-                                    <input type="hidden" name="delete_gesuch" value="<?php echo esc_attr( $pid ); ?>">
-                                    <button type="submit" class="btn btn-sm btn-danger">Löschen</button>
-                                </form>
-                                <a class="btn btn-sm btn-outline" href="<?php the_permalink(); ?>" target="_blank" rel="noopener">Ansehen</a>
-                            </div>
-                        </li>
-                    <?php endwhile; wp_reset_postdata(); ?>
-                </ul>
-            <?php else : ?>
-                <p>Du hast noch keine Gesuche erstellt.</p>
-            <?php endif; ?>
-          </div>
-        </div>
-        <?php
-        return ob_get_clean();
+    /**
+     * Delete one own gesuch. POST only, because a link that deletes can be
+     * fired by browser prefetch.
+     *
+     * @param int $user_id
+     *
+     * @return array<int,array{type:string,text:string}>
+     */
+    private static function handle_delete( int $user_id ): array {
+        if ( ! isset( $_POST['delete_gesuch'] ) || ! is_numeric( $_POST['delete_gesuch'] ) ) {
+            return [];
+        }
+
+        $delete_id = (int) $_POST['delete_gesuch'];
+        $post      = get_post( $delete_id );
+        $nonce_ok  = isset( $_POST['_dg_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_dg_nonce'] ) ), 'dg_del_' . $delete_id );
+
+        if ( ! $nonce_ok || ! $post || (int) $post->post_author !== $user_id || $post->post_type !== 'gesuch' ) {
+            return [];
+        }
+
+        wp_delete_post( $delete_id, true );
+
+        return [ [ 'type' => 'success', 'text' => 'Gesuch gelöscht.' ] ];
+    }
+
+    /**
+     * Publish a new gesuch.
+     *
+     * @param int $user_id
+     *
+     * @return array<int,array{type:string,text:string}>
+     */
+    private static function handle_create( int $user_id ): array {
+        if ( ! isset( $_POST['dg_action'] ) || $_POST['dg_action'] !== 'create' ) {
+            return [];
+        }
+        if ( ! isset( $_POST['_dg_nonce'] )
+            || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_dg_nonce'] ) ), 'dg_create' ) ) {
+            return [];
+        }
+
+        // Slot erst nach der Nonce-Pruefung ziehen, damit verworfene
+        // Requests das Kontingent nicht aufbrauchen.
+        if ( ! sk_rate_limit( 'gesuch-create:' . $user_id, 5, HOUR_IN_SECONDS ) ) {
+            return [ [ 'type' => 'warning', 'text' => 'Du kannst höchstens 5 Gesuche pro Stunde veröffentlichen. Bitte versuche es später erneut.' ] ];
+        }
+
+        $post_id = wp_insert_post( [
+            'post_title'   => sanitize_text_field( $_POST['gesuch_title'] ?? '' ),
+            'post_content' => sanitize_textarea_field( $_POST['gesuch_content'] ?? '' ),
+            'post_type'    => 'gesuch',
+            'post_status'  => 'publish',
+            'post_author'  => $user_id,
+        ] );
+
+        if ( ! $post_id || is_wp_error( $post_id ) ) {
+            return [];
+        }
+
+        update_post_meta( $post_id, '_vendor_id', $user_id );
+
+        return [ [ 'type' => 'success', 'text' => 'Gesuch veröffentlicht.' ] ];
+    }
+
+    /**
+     * Update one own gesuch.
+     *
+     * The post_type check is not cosmetic: without it a vendor could overwrite
+     * their own products through this form.
+     *
+     * @param int $user_id
+     *
+     * @return array<int,array{type:string,text:string}>
+     */
+    private static function handle_edit( int $user_id ): array {
+        // Both keys checked before is_numeric(), otherwise PHP warns about the
+        // undefined array key.
+        if ( ! isset( $_POST['dg_action'], $_POST['gesuch_id'] )
+            || $_POST['dg_action'] !== 'edit'
+            || ! is_numeric( $_POST['gesuch_id'] ) ) {
+            return [];
+        }
+
+        $gesuch_id = (int) $_POST['gesuch_id'];
+        $post      = get_post( $gesuch_id );
+        $nonce_ok  = isset( $_POST['_dg_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_dg_nonce'] ) ), 'dg_edit_' . $gesuch_id );
+
+        if ( ! $nonce_ok || ! $post || (int) $post->post_author !== $user_id || $post->post_type !== 'gesuch' ) {
+            return [];
+        }
+
+        wp_update_post( [
+            'ID'           => $gesuch_id,
+            'post_title'   => sanitize_text_field( $_POST['gesuch_title'] ?? '' ),
+            'post_content' => sanitize_textarea_field( $_POST['gesuch_content'] ?? '' ),
+        ] );
+
+        return [ [ 'type' => 'success', 'text' => 'Gesuch aktualisiert.' ] ];
     }
 }
-
-// =============================================================================

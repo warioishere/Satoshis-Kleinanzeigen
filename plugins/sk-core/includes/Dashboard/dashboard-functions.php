@@ -13,16 +13,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // =============================================================================
-// Gesuche shims
-// =============================================================================
-
-if ( ! function_exists( 'dg_render_gesuche_dashboard' ) ) {
-	function dg_render_gesuche_dashboard(): string {
-		return \SK\Core\Dashboard\Modules\Gesuche::render_dashboard();
-	}
-}
-
-// =============================================================================
 // Merkliste shims
 // =============================================================================
 
