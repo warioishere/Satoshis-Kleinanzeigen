@@ -144,8 +144,9 @@ class Merkliste extends DashboardModule {
      * Remove one product from the own list. POST only, because a link that
      * deletes can be fired by browser prefetch.
      *
-     * No ownership check is needed on the product: remove() scopes the DELETE
-     * to the calling user, so a foreign product ID simply matches no row.
+     * No ownership check is needed on the product: the DELETE is scoped to the
+     * calling user, so a foreign product ID simply matches no row — and then no
+     * success notice is returned either.
      *
      * @param int $user_id
      *
@@ -163,7 +164,12 @@ class Merkliste extends DashboardModule {
             return [];
         }
 
-        $this->remove( $delete_id, $user_id );
+        // Only report success when a row actually went away. A foreign or
+        // already-removed product matches nothing, and claiming otherwise told
+        // the user something had happened when nothing had.
+        if ( ! $this->delete_row( $delete_id, $user_id ) ) {
+            return [];
+        }
 
         return [ [ 'type' => 'success', 'text' => 'Produkt von Merkliste entfernt.' ] ];
     }
@@ -499,7 +505,19 @@ class Merkliste extends DashboardModule {
         return $result !== false;
     }
 
-    public function remove( int $product_id, int $user_id = 0 ): bool {
+    /**
+     * Delete the row and report how many were actually removed.
+     *
+     * A product that is not on this user's list matches no row and yields 0 —
+     * that is not an error, but it is also not a removal, and callers that
+     * report success to the user need to tell the two apart.
+     *
+     * @param int $product_id
+     * @param int $user_id
+     *
+     * @return int|false Rows deleted, false on DB error or missing IDs.
+     */
+    private function delete_row( int $product_id, int $user_id = 0 ) {
         global $wpdb;
         if ( ! $user_id ) {
             $user_id = get_current_user_id();
@@ -507,9 +525,19 @@ class Merkliste extends DashboardModule {
         if ( ! $user_id || ! $product_id ) {
             return false;
         }
-        $table  = $wpdb->prefix . 'sk_merkliste';
-        $result = $wpdb->delete( $table, [ 'user_id' => $user_id, 'product_id' => $product_id ], [ '%d', '%d' ] );
-        return $result !== false;
+        $table = $wpdb->prefix . 'sk_merkliste';
+        return $wpdb->delete( $table, [ 'user_id' => $user_id, 'product_id' => $product_id ], [ '%d', '%d' ] );
+    }
+
+    /**
+     * Whether the delete ran without a database error.
+     *
+     * Deliberately true for a no-op: the ajax endpoints call this after their
+     * own list check, and a second click on an already-removed pin must not
+     * surface as a failure.
+     */
+    public function remove( int $product_id, int $user_id = 0 ): bool {
+        return $this->delete_row( $product_id, $user_id ) !== false;
     }
 
     private function count( int $user_id = 0 ): int {
