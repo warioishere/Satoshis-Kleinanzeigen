@@ -89,15 +89,12 @@ function sk_product_get_row_action( $post, $format_html = true ) {
         return $row_action;
     }
 
-    $i            = 0;
-    $action_count = count( $row_action );
-
     foreach ( $row_action as $key => $action ) {
-        ++$i;
-
-        $sep = ( $i < $action_count ) ? ' | ' : '';
-
-        $row_action_html[ $key ] = sprintf( '<span class="%s"><a href="%s" %s>%s</a>%s</span>', $action['class'], esc_url( $action['url'] ), isset( $action['other'] ) ? $action['other'] : '', $action['title'], $sep );
+        // Kein "|" zwischen den Aktionen: auf dem Desktop steht es in #444 auf
+        // dunklem Grund und ist unsichtbar, auf Mobile werden die Aktionen zu
+        // gestapelten Knoepfen und der Trenner haengt als Strich daneben.
+        // Den Abstand setzt das Stylesheet ueber .row-actions > span.
+        $row_action_html[ $key ] = sprintf( '<span class="%s"><a href="%s" %s>%s</a></span>', $action['class'], esc_url( $action['url'] ), isset( $action['other'] ) ? $action['other'] : '', $action['title'] );
     }
 
     $row_action_html = apply_filters( 'sk_product_row_action_html', $row_action_html, $post );

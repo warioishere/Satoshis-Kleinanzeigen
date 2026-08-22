@@ -6994,6 +6994,11 @@ ul.sk-store-custom-fields ul {
 .sk-dashboard #sk-product-list-table .row-actions a {
   color: #6b7a90;
 }
+/* Der Abstand zwischen den Aktionen kam frueher vom "|" im Markup; 6px ist
+   genau dessen Breite, damit die Zeile auf dem Desktop unveraendert bleibt. */
+.sk-dashboard #sk-product-list-table .row-actions > span:not(:last-child) {
+  margin-right: 6px;
+}
 .sk-dashboard #sk-product-list-table .row-actions a:hover {
   color: #F7931A;
 }
@@ -7216,6 +7221,7 @@ ul.sk-store-custom-fields ul {
     display: block;
     opacity: 1;
     width: 100%;
+    margin-right: 0;
     text-align: center;
   }
 
