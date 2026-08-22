@@ -1,3 +1,29 @@
+/* ==========================================================================
+ * Zum Umgang mit !important in dieser Datei
+ *
+ * Stand nach dem Aufraeumen im August 2026: 628 !important in 6.679
+ * Deklarationen. Vorher waren es 1.199 in 7.157.
+ *
+ * Entfernt wurde nur, was nachweislich wirkungslos war. Fuer jede Deklaration
+ * wurde per CSS.getMatchedStylesForNode auf 31 Seiten in fuenf Breiten, ein-
+ * und ausgeloggt, bestimmt, ob ohne das !important eine andere Regel gewinnen
+ * und einen anderen Wert setzen wuerde.
+ *
+ * Von den verbliebenen ist bei 154 die Notwendigkeit belegt: 46 schlagen ein
+ * fremdes Stylesheet (select2, iziModal, Mapbox, Kadence,
+ * wp-includes/css/buttons.min.css, eigene Module) oder per JS gesetzte
+ * Inline-Styles — diese Regeln tragen einen Kommentar mit der Gegenquelle.
+ * 108 schlagen eine andere Regel DIESER Datei; sie liessen sich durch
+ * Zusammenlegen der Regeln aufloesen und sind der naechste Schritt.
+ *
+ * Die uebrigen 474 haben auf keiner gemessenen Seite je ein Element getroffen
+ * — weder als noetig noch als entbehrlich belegt, deshalb unangetastet.
+ * Wer sie anfasst, misst vorher.
+ *
+ * Neue !important bitte nur mit Kommentar, welche fremde Regel sie schlagen.
+ * Vorbild: .sk-pe-save-btn weiter unten.
+ * ========================================================================== */
+
 /* === BASE COMPONENTS (from style.css) === */
 /* Spinner, close, alerts, tooltips, forms, grid, buttons, tables, labels, panels, utilities */
 
@@ -5411,6 +5437,7 @@ div.media-sidebar a.edit-attachment {
   }
 }
 @media (max-width: 480px) {
+  /* !important noetig (margin): schlaegt modules/follow-store. */
   .sk-single-store .sk-store-tabs ul.sk-modules-button li {
     display: inline-block;
     margin: 0 5px 3px 0 !important;
@@ -5445,6 +5472,7 @@ div.media-sidebar a.edit-attachment {
   .apply-filter {
     margin-top: 20px;
   }
+  /* !important noetig (display): schlaegt modules/geolocation (sk-geolocation-filters.css). */
   .apply-filter #cancel-filter-btn {
     display: block !important;
   }
@@ -5579,6 +5607,7 @@ div.media-sidebar a.edit-attachment {
  */
 
 /* Global: .sk-btn-theme → bitcoin orange (overrides style.css purple) */
+/* !important noetig (border-color): schlaegt modules/geolocation (sk-geolocation-filters.css). */
 input[type='submit'].sk-btn-theme,
 a.sk-btn-theme,
 .sk-btn-theme {
@@ -5919,6 +5948,7 @@ ul.product_list_widget li div[style*="font-size: 0.8em"] {
 }
 
 /* Karten-Basis */
+/* !important noetig (border): schlaegt modules/subscription. */
 .sk-subscription-content .pack_content_wrapper .product_pack_item {
   width: auto;
   max-width: none;
@@ -5942,6 +5972,7 @@ ul.product_list_widget li div[style*="font-size: 0.8em"] {
 }
 
 /* ===== Preis-/Anzahl-Kreis oben: BTC-Orange, zentriert, Text weiss ===== */
+/* !important noetig (color): schlaegt (inline. */
 .sk-subscription-content .pack_content_wrapper .product_pack_item .pack_price,
 .sk-subscription-content .pack_content_wrapper .product_pack_item .pack_price *,
 .sk-subscription-content .pack_content_wrapper .product_pack_item .pack_price .woocommerce-Price-amount,
@@ -6057,6 +6088,7 @@ ul.product_list_widget li div[style*="font-size: 0.8em"] {
   font-size: 16px;
   line-height: 1.7;
 }
+/* !important noetig (color, font-size, margin): schlaegt modules/subscription. */
 .sk-subscription-content .pack_content_wrapper .product_pack_item .pack_data_option {
   color: #c4cdd8 !important;
   font-size: 16px !important;
@@ -6334,6 +6366,7 @@ body.single-product .sk-vendor-info-wrap .sk-vendor-name h5 {
 }
 
 /* Kontaktinfos im Store-Header */
+/* !important noetig (margin): schlaegt (inline. */
 ul.sk-store-custom-fields,
 ul.sk-store-custom-fields li,
 ul.sk-store-custom-fields ol,
@@ -7404,15 +7437,18 @@ ul.sk-store-custom-fields ul {
 .mapboxgl-ctrl-group:not(:empty) {
   background: #fff;
 }
+/* !important noetig (background-color, height, width): schlaegt Mapbox, modules/geolocation (geolocation.css). */
 .mapboxgl-ctrl-group button {
   background-color: transparent !important;
   color: #333;
   width: 29px !important;
   height: 29px !important;
 }
+/* !important noetig (border-top): schlaegt modules/geolocation (sk-geolocation-filters.css). */
 .mapboxgl-ctrl-group button + button {
   border-top: 1px solid #ddd !important;
 }
+/* !important noetig (background-position, display, width): schlaegt Mapbox, modules/geolocation (sk-geolocation-filters.css). */
 .mapboxgl-ctrl-group button .mapboxgl-ctrl-icon {
   filter: none;
   background-repeat: no-repeat;
@@ -7422,12 +7458,15 @@ ul.sk-store-custom-fields ul {
   width: 100% !important;
   height: 100%;
 }
+/* !important noetig (background-image): schlaegt Mapbox. */
 .mapboxgl-ctrl-zoom-in .mapboxgl-ctrl-icon {
   background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='29' height='29' viewBox='0 0 29 29' xmlns='http://www.w3.org/2000/svg' fill='%23333'%3E%3Cpath d='M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5z'/%3E%3C/svg%3E") !important;
 }
+/* !important noetig (background-image): schlaegt Mapbox. */
 .mapboxgl-ctrl-zoom-out .mapboxgl-ctrl-icon {
   background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='29' height='29' viewBox='0 0 29 29' xmlns='http://www.w3.org/2000/svg' fill='%23333'%3E%3Cpath d='M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-9z'/%3E%3C/svg%3E") !important;
 }
+/* !important noetig (background-image): schlaegt Mapbox. */
 .mapboxgl-ctrl-compass .mapboxgl-ctrl-icon {
   background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='29' height='29' viewBox='0 0 29 29' xmlns='http://www.w3.org/2000/svg' fill='%23333'%3E%3Cpath d='M10.5 14l4-8 4 8h-8z'/%3E%3Cpath d='M10.5 16l4 8 4-8h-8z' fill='%23ccc'/%3E%3C/svg%3E") !important;
 }
@@ -8370,6 +8409,7 @@ a.sk-review-action.delete:hover {
   border-top: 1px solid rgba(255,255,255,0.07);
 }
 .sk-sub-active-info__action form { margin: 0; }
+/* !important noetig (border-radius, font-size, padding): schlaegt Kadence (global.min.css). */
 .sk-sub-cancel-btn {
   font-size: 15px !important;
   padding: 7px 18px !important;
@@ -8667,6 +8707,7 @@ a.sk-sub-order-action:hover {
 }
 
 /* ── All inputs / selects within product edit form ── */
+/* !important noetig (border): schlaegt select2. */
 .sk-dashboard .product-edit-new-container input[type="text"],
 .sk-dashboard .product-edit-new-container input[type="number"],
 .sk-dashboard .product-edit-new-container input[type="email"],
@@ -8833,6 +8874,7 @@ a.sk-sub-order-action:hover {
   display: block;
   margin-bottom: 6px;
 }
+/* !important noetig (color): schlaegt (inline. */
 .sk-dashboard .sk-edit-row .sk-section-content small {
   color: #5a6a7e !important;
   display: block;
@@ -8889,6 +8931,7 @@ a.sk-sub-order-action:hover {
   border-top: 1px solid rgba(255,255,255,0.07);
   margin-top: 8px;
 }
+/* !important noetig (font-size, line-height, min-height, padding): schlaegt wp-includes/css/buttons.min.css. */
 .sk-pe-save-btn {
   font-size: 17px !important;
   padding: 10px 28px !important;
@@ -10607,6 +10650,7 @@ body:has(.dvc-modal) .dkp-contact-icons {
 }
 
 /* Mapbox Geocoder: hide suggestions until input is focused */
+/* !important noetig (display): schlaegt (inline. */
 .mapboxgl-ctrl-geocoder .suggestions {
   display: none !important;
 }
@@ -10739,16 +10783,19 @@ body:has(.dvc-modal) .dkp-contact-icons {
 }
 
 /* ── Select2 Dark Theme ── */
+/* !important noetig (background, border, border-radius): schlaegt select2. */
 .select2-container--default .select2-selection--multiple {
   background: #181e27 !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-radius: 6px !important;
 }
+/* !important noetig (background, border-color): schlaegt select2. */
 .select2-container--default .select2-selection--multiple .select2-selection__choice {
   background: #252d38 !important;
   border-color: rgba(255, 255, 255, 0.12) !important;
   color: #e8ecf0;
 }
+/* !important noetig (color): schlaegt select2. */
 .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
   color: #9aa4b2 !important;
 }
@@ -10814,6 +10861,7 @@ body:has(.dvc-modal) .dkp-contact-icons {
 .iziModal-overlay { background: rgba(0, 0, 0, 0.75) !important; backdrop-filter: blur(4px); }
 
 /* Modal box */
+/* !important noetig (background, border, border-radius, box-shadow, max-width): schlaegt (inline, iziModal. */
 .iziModal {
   background: #181e27 !important;
   border-radius: 12px !important;
@@ -10823,22 +10871,26 @@ body:has(.dvc-modal) .dkp-contact-icons {
 }
 
 /* Header */
+/* !important noetig (background, padding): schlaegt (inline, iziModal. */
 .iziModal .iziModal-header {
   background: #181e27 !important;
   border-bottom: 1px solid #2e3846;
   border-radius: 12px 12px 0 0;
   padding: 20px 24px !important;
 }
+/* !important noetig (font-size, font-weight): schlaegt iziModal. */
 .iziModal .iziModal-header-title {
   color: #fff;
   font-weight: 700 !important;
   font-size: 18px !important;
 }
+/* !important noetig (color): schlaegt iziModal. */
 .iziModal .iziModal-header-subtitle {
   color: #9aa4b2 !important;
 }
 
 /* Close button */
+/* !important noetig (transition): schlaegt iziModal. */
 .iziModal .iziModal-button-close {
   color: #9aa4b2;
   transition: color 0.2s !important;
