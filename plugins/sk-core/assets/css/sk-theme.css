@@ -5417,10 +5417,11 @@ div.media-sidebar a.edit-attachment {
     float: none;
     width: auto;
   }
-  .sk-dashboard .sk-dash-sidebar ul.sk-dashboard-menu li {
-    display: inline-block;
-    border-right: 1px solid #454545;
-  }
+  /* Hier stand ein display:inline-block mit border-right — ein waagerechtes
+     Reiter-Layout aus dem Dokan-Erbe. Die Navigation ist heute eine
+     senkrechte Liste; der Eintrag ist von sich aus blockweise und fuellt die
+     Breite. Das width:100% weiter unten war nur das Pflaster darauf, die
+     Trennlinie lag ausserhalb der Sidebar und wurde abgeschnitten. */
   .sk-dashboard .sk-dash-sidebar ul.sk-dashboard-menu li.active:after {
     content: '';
     display: none;
@@ -5505,10 +5506,11 @@ div.media-sidebar a.edit-attachment {
   .sk-dashboard .sk-dash-sidebar ul.sk-dashboard-menu:after {
     clear: both;
   }
-  .sk-dashboard .sk-dash-sidebar ul.sk-dashboard-menu li {
-    float: left;
-    width: 100%;
-  }
+  /* float/width:100% stammen aus dem alten Float-Layout. Zusammen mit
+     box-sizing:border-box und dem margin:2px 8px der Eintraege ergab das
+     8px mehr als die Sidebar breit ist, und die schneidet per overflow:hidden
+     ab — der aktive Eintrag war rechts angeschnitten. Ohne beides fuellt der
+     Eintrag die Breite von allein, wie oberhalb von 430px auch. */
   .sk-dashboard .sk-dash-sidebar ul.sk-dashboard-menu li a {
     padding: 12px 18px;
   }
