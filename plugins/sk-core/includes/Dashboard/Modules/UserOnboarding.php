@@ -24,7 +24,12 @@ class UserOnboarding {
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
 
 		// Dashboard banner for existing users who missed onboarding.
-		add_action( 'sk_dashboard_content_before', [ $this, 'nostr_identity_banner' ] );
+		// content_before feuert INNERHALB von .sk-dashboard-wrap, also direkt neben
+		// Sidebar und Inhalt. Der Banner wurde dadurch zum dritten Flex-Kind und
+		// nahm dem Inhalt die Breite (1440px: Sidebar 220 | Banner 639 | Inhalt 476).
+		// inside_before rendert ihn oberhalb des Inhalts, wie den Kontakt-Hinweis
+		// aus ContactDetails.
+		add_action( 'sk_dashboard_content_inside_before', [ $this, 'nostr_identity_banner' ] );
 	}
 
 	// ── Helpers ────────────────────────────────────────────────────────────
