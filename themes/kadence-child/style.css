@@ -120,7 +120,7 @@ Text Domain: kadence-child
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  position: absolute !important;
+  position: absolute;
   top: 1.1rem;
   right: 0.6rem;
   padding: 0;
@@ -147,8 +147,8 @@ Text Domain: kadence-child
 
 /* === Unterkategorie-Zeilen als Flex – Hover über ganze Breite === */
 .wc-block-product-categories-list--depth-1 .wc-block-product-categories-list-item {
-  display: flex !important;
-  align-items: center !important;
+  display: flex;
+  align-items: center;
   border-radius: 8px;
   padding: 0.5rem 1rem;
   background: transparent;
@@ -175,7 +175,7 @@ Text Domain: kadence-child
 /* === Zähler in Unterkategorie: Badge rechts === */
 .wc-block-product-categories-list--depth-1 .wc-block-product-categories-list-item > *:last-child {
   position: static !important;
-  margin-left: .75rem !important;
+  margin-left: .75rem;
   background: #444;
   color: #ccc;
   border-radius: 4px;
@@ -211,18 +211,18 @@ Text Domain: kadence-child
     grid-template-columns: 1fr;
     justify-items: stretch;
     width: 100%;
-    margin: 0 !important;
+    margin: 0;
     padding: 0 !important;
-    padding-inline-start: 0 !important;
-    list-style: none !important;
+    padding-inline-start: 0;
+    list-style: none;
   }
   .wc-block-product-categories-list > .wc-block-product-categories-list-item {
-    margin: 0 !important;
+    margin: 0;
     width: 100%;
   }
   .wp-block-woocommerce-product-categories {
-    margin-left: 0 !important;
-    padding-left: 0 !important;
+    margin-left: 0;
+    padding-left: 0;
   }
 }
 
@@ -238,7 +238,7 @@ Text Domain: kadence-child
 /* Entfernt bestimmte Kategorien aus den WooCommerce-Kategorie-Listen (Blocks) */
 .wc-block-product-categories-list li:has(> a[href*="/produkt-kategorie/unkategorisiert/"]),
 .wc-block-product-categories-list li:has(> a[href*="/produkt-kategorie/abos/"]) {
-  display: none !important;
+  display: none;
 }
 
 /** Kategorie Badge
