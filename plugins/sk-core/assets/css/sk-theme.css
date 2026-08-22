@@ -9833,6 +9833,12 @@ a.sk-sub-order-action:hover {
   padding: 10px 28px !important;
   border-radius: 8px !important;
   font-weight: 700 !important;
+  /* wp-includes/css/buttons.min.css kommt ueber wp_enqueue_media() mit (der
+     Bild-Upload braucht es) und setzt unterhalb 782px auf .wp-core-ui .button
+     line-height: 2.714 und min-height: 40px. Der Speichern-Knopf war dadurch
+     auf Mobile 68px hoch statt 45px wie auf dem Desktop. */
+  line-height: 1.33 !important;
+  min-height: 0 !important;
 }
 
 /* ── Price section ── */

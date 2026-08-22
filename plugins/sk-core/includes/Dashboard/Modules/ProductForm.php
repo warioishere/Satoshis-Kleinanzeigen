@@ -105,7 +105,6 @@ class ProductForm {
         <div class="sk-edit-row sk-other-options sk-clearfix" data-togglehandler="p2p_shipping_box">
             <div class="sk-section-heading">
                 <h2><i class="fas fa-truck"></i> P2P Versandkosten</h2>
-                <p>Versandkosten in Sats bei p2p Trades</p>
             </div>
             <div class="sk-section-content">
                 <label for="p2p_shipping_note">Text oder Betrag:</label>
@@ -175,7 +174,6 @@ class ProductForm {
         <div id="sats-converter-box" class="sk-edit-row sk-other-options sk-clearfix">
             <div class="sk-section-heading" data-togglehandler="sats_converter_box">
                 <h2><i class="fas fa-coins"></i> Sats Rechner</h2>
-                <p>Hilft dir, Preise in Sats umzurechnen</p>
             </div>
             <div class="sk-section-content">
                 <label for="fiat_to_sats">Betrag in Fiat:</label>
