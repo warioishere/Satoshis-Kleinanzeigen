@@ -388,10 +388,46 @@ class UserOnboarding {
 	}
 
 	/**
+	 * Skript und Konfiguration fuer das Anlegen einer Nostr-Identitaet.
+	 *
+	 * Wird vom Banner und von der Nostr/LN-Link-Seite gebraucht — beide rufen
+	 * denselben Endpunkt `sk_create_nostr_identity` mit demselben Nonce.
+	 */
+	public static function enqueue_nostr_script(): void {
+		$js_path = SK_CORE_DIR . '/assets/js/dashboard/nostr-banner.js';
+
+		wp_enqueue_script(
+			'sk-nostr-banner',
+			SK_CORE_ASSETS . '/js/dashboard/nostr-banner.js',
+			[ 'jquery' ],
+			file_exists( $js_path ) ? (string) filemtime( $js_path ) : SK_CORE_VERSION,
+			true
+		);
+
+		wp_localize_script(
+			'sk-nostr-banner',
+			'uobAjax',
+			[
+				'ajaxurl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( 'uob_ajax_nonce' ),
+			]
+		);
+	}
+
+	/**
 	 * Dashboard banner for existing users without Nostr identity.
 	 */
 	public function nostr_identity_banner(): void {
 		if ( ! is_user_logged_in() ) {
+			return;
+		}
+
+		// Auf der Nostr/LN-Link-Seite waere der Banner doppelt: dort steht die
+		// Aktion selbst. isset() statt get_query_var(), weil die Rewrite-Regel
+		// die Query-Var auf '' setzt und get_query_var() das nicht von "nicht
+		// gesetzt" unterscheiden kann.
+		global $wp;
+		if ( isset( $wp->query_vars['auth-connector'] ) ) {
 			return;
 		}
 
@@ -470,18 +506,7 @@ class UserOnboarding {
 			</button>
 		</div>
 		<?php
-		$js_path = SK_CORE_DIR . '/assets/js/dashboard/nostr-banner.js';
-		wp_enqueue_script(
-			'sk-nostr-banner',
-			SK_CORE_ASSETS . '/js/dashboard/nostr-banner.js',
-			[ 'jquery' ],
-			file_exists( $js_path ) ? (string) filemtime( $js_path ) : SK_CORE_VERSION,
-			true
-		);
-		wp_localize_script( 'sk-nostr-banner', 'uobAjax', [
-			'ajaxurl' => admin_url( 'admin-ajax.php' ),
-			'nonce'   => wp_create_nonce( 'uob_ajax_nonce' ),
-		] );
+		self::enqueue_nostr_script();
 	}
 
 	// ── Cleanup ────────────────────────────────────────────────────────────

@@ -158,6 +158,23 @@ class SK_Auth_Dashboard extends \SK\Core\Dashboard\DashboardModule {
                                                 Nostr-Konto verknüpfen
                                             </button>
                                             <div class="uac-status-message" id="uac-nostr-status"></div>
+
+                                            <?php
+                                            // Ohne diesen Weg gaebe es im Frontend keinen: der Hinweisbanner
+                                            // auf dem Dashboard war die einzige Stelle, die eine Identitaet
+                                            // anlegen konnte, und er laesst sich dauerhaft wegklicken.
+                                            \SK\Core\Dashboard\Modules\UserOnboarding::enqueue_nostr_script();
+                                            ?>
+                                            <p class="uac-method-description" style="margin-top:16px;">
+                                                <strong>Noch kein Nostr-Account?</strong>
+                                                Wir legen dir einen an. Den privaten Schlüssel kannst du dir
+                                                anschliessend hier anzeigen lassen und überall im Nostr-Netz
+                                                verwenden — er gehört dir, nicht der Plattform.
+                                            </p>
+                                            <button type="button" class="button" id="sk-nostr-create">
+                                                Nostr-Identität erstellen
+                                            </button>
+                                            <div class="uac-status-message" id="sk-nostr-create-status"></div>
                                         <?php endif; ?>
                                     </div>
                                 </div>
