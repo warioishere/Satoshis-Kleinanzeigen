@@ -36,7 +36,7 @@ class NostrIdentity {
             return;
         }
         // Defer to shutdown to not slow down the settings save.
-        register_shutdown_function( [ __CLASS__, 'publish_profile' ], $store_id );
+        register_shutdown_function( [ __CLASS__, 'publish_profile_deferred' ], $store_id );
     }
 
     /**
@@ -57,8 +57,13 @@ class NostrIdentity {
         // Mark source.
         update_user_meta( $user_id, 'sk_nostr_identity_source', 'generated' );
 
-        // Publish Kind 0 profile.
-        self::publish_profile( $user_id );
+        // Kind-0-Profil erst nach der Antwort veroeffentlichen. Der Versand an
+        // die Relays dauert gemessene ~85 s: die vendorte Relay-Klasse kennt
+        // kein setTimeout(), der Aufruf weiter unten laeuft deshalb ohne jede
+        // Zeitbegrenzung. Synchron blockierte das den Klick auf "Erstellen"
+        // eineinhalb Minuten lang. Gleiches Vorgehen wie beim Profil-Update
+        // weiter oben in dieser Datei.
+        register_shutdown_function( [ __CLASS__, 'publish_profile_deferred' ], $user_id );
 
         return $pubkey;
     }
@@ -220,6 +225,23 @@ class NostrIdentity {
         $profile = array_filter( $profile );
 
         return self::publish( $user_id, 0, wp_json_encode( $profile, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) );
+    }
+
+    /**
+     * Profil veroeffentlichen, nachdem die Antwort beim Browser ist.
+     *
+     * `register_shutdown_function()` allein genuegt unter PHP-FPM nicht: die
+     * Ausgabe geht erst raus, wenn das Skript samt Shutdown-Handlern fertig
+     * ist. Der Klick auf "Erstellen" haette also weiterhin ~85 s gewartet.
+     * `fastcgi_finish_request()` schliesst die Antwort vorher ab, der Versand
+     * an die Relays laeuft danach im selben Prozess weiter.
+     */
+    public static function publish_profile_deferred( int $user_id ): void {
+        if ( function_exists( 'fastcgi_finish_request' ) ) {
+            fastcgi_finish_request();
+        }
+
+        self::publish_profile( $user_id );
     }
 
     /**
