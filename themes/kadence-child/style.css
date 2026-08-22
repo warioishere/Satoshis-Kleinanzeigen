@@ -323,7 +323,7 @@ body.single-product .woocommerce-Tabs-panel--description ul {
 
 /* Produktseiten-Container breiter machen */
 .single-product .content-container.site-container {
-    max-width: 1000px !important;  /* gewünschten Wert einsetzen */
+    max-width: 1000px;  /* gewünschten Wert einsetzen */
 }
 
 /* Produktbeschreibung Fließtext */
@@ -459,7 +459,7 @@ body.woocommerce-account form.lost_reset_password fieldset {
   width: 100% !important;
   height: 100% !important;          /* überschreibt height:auto */
   object-fit: cover !important;      /* crop statt contain */
-  object-position: center center !important;
+  object-position: center center;
   display: block;
 }
 
@@ -467,7 +467,7 @@ body.woocommerce-account form.lost_reset_password fieldset {
 .single-product div.product .woocommerce-product-gallery {
   margin-bottom: 0 !important;
   padding-bottom: 0 !important;
-  background: transparent !important;
+  background: transparent;
 }
 
 .woocommerce div.product div.images img {
@@ -513,21 +513,21 @@ body.woocommerce-account form.lost_reset_password fieldset {
 
 /* UL als moderne Tab-Leiste (Desktop/Tablet) */
 .single-product .woocommerce-tabs ul.tabs {
-  display: flex !important;
-  gap: 10px !important;
-  list-style: none !important;
+  display: flex;
+  gap: 10px;
+  list-style: none;
   margin: 0 !important;
   padding: 10px 6px !important;
   overflow-x: auto !important;
-  scrollbar-width: none !important;
+  scrollbar-width: none;
 }
-.single-product .woocommerce-tabs ul.tabs::-webkit-scrollbar { display: none !important; }
+.single-product .woocommerce-tabs ul.tabs::-webkit-scrollbar { display: none; }
 
 /* Li-Reset */
 .single-product .woocommerce-tabs ul.tabs li {
-  position: relative !important;
+  position: relative;
   margin: 0 !important;
-  padding: 0 !important;
+  padding: 0;
   border: 0 !important;
   background: transparent !important;
 }
@@ -535,19 +535,19 @@ body.woocommerce-account form.lost_reset_password fieldset {
 /* Pill-Buttons */
 .single-product .woocommerce-tabs ul.tabs li a {
   display: inline-flex !important;
-  align-items: center !important;
-  gap: 8px !important;
+  align-items: center;
+  gap: 8px;
   padding: 14px 22px !important; /* größerer Kreis */
-  border-radius: 999px !important;
-  background: var(--tab-pill) !important;
-  color: var(--tab-text) !important;
+  border-radius: 999px;
+  background: var(--tab-pill);
+  color: var(--tab-text);
   font-weight: 600 !important;
   font-size: 16px !important;
-  line-height: 1 !important;
-  text-decoration: none !important;
-  border: 1px solid var(--tab-border) !important;
-  transition: transform .15s ease, background .2s ease, color .2s ease, border-color .2s ease !important;
-  white-space: nowrap !important;
+  line-height: 1;
+  text-decoration: none;
+  border: 1px solid var(--tab-border);
+  transition: transform .15s ease, background .2s ease, color .2s ease, border-color .2s ease;
+  white-space: nowrap;
 }
 
 /* Hover */
@@ -560,21 +560,21 @@ body.woocommerce-account form.lost_reset_password fieldset {
 .single-product .woocommerce-tabs ul.tabs li.active a,
 .single-product .woocommerce-tabs ul.tabs li.active a:focus-visible {
   background: linear-gradient(180deg, rgba(247,147,26,.18), rgba(247,147,26,.10)) !important;
-  color: var(--tab-text-active) !important;
+  color: var(--tab-text-active);
   border-color: rgba(247,147,26,.65) !important;
 }
 
 /* Underline-Indicator (Desktop/Tablet) */
 .single-product .woocommerce-tabs ul.tabs li.active a::after {
-  content: "" !important;
-  position: absolute !important;
-  left: 10px !important;
-  right: 10px !important;
-  bottom: -10px !important;
-  height: 4px !important;
-  border-radius: 4px !important;
-  background: var(--accent) !important;
-  box-shadow: 0 0 0 2px rgba(247,147,26,.15) !important;
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: -10px;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px rgba(247,147,26,.15);
 }
 
 /* Fokus */
@@ -588,17 +588,17 @@ body.woocommerce-account form.lost_reset_password fieldset {
 /* Panels – Beschreibung */
 .single-product .woocommerce-tabs .panel {
   margin-top: 15px !important;
-  background: #181e27 !important;
-  border: 1px solid var(--tab-border) !important;
-  border-radius: 14px !important;
+  background: #181e27;
+  border: 1px solid var(--tab-border);
+  border-radius: 14px;
   padding: 24px 24px !important;
-  box-shadow: var(--shadow) !important;
+  box-shadow: var(--shadow);
 }
 
 /* Zentrierte Tabs auf Desktop */
 @media (min-width: 992px) {
   .single-product .woocommerce-tabs ul.tabs {
-    justify-content: center !important;
+    justify-content: center;
   }
 }
 
@@ -609,21 +609,21 @@ body.woocommerce-account form.lost_reset_password fieldset {
   }
 
   .single-product .woocommerce-tabs ul.tabs {
-    flex-direction: column !important;
-    align-items: stretch !important;
+    flex-direction: column;
+    align-items: stretch;
     gap: 8px !important;
     padding: 8px !important;
     overflow-x: visible !important;  /* kein horizontaler Scroll */
-    scrollbar-width: none !important;
+    scrollbar-width: none;
   }
 
   .single-product .woocommerce-tabs ul.tabs li {
-    width: 100% !important;
+    width: 100%;
   }
 
   .single-product .woocommerce-tabs ul.tabs li a {
-    width: 100% !important;
-    justify-content: center !important;
+    width: 100%;
+    justify-content: center;
     padding: 12px 14px !important;
     border-radius: 14px !important;  /* weniger pillig, mehr Button */
     font-size: 15px !important;
@@ -634,13 +634,13 @@ body.woocommerce-account form.lost_reset_password fieldset {
   .single-product .woocommerce-tabs ul.tabs li.active a::after {
     left: 8px !important;
     right: auto !important;
-    top: 50% !important;
+    top: 50%;
     bottom: auto !important;
-    width: 6px !important;
+    width: 6px;
     height: 60% !important;
-    transform: translateY(-50%) !important;
+    transform: translateY(-50%);
     border-radius: 6px !important;
-    background: var(--accent) !important;
+    background: var(--accent);
     box-shadow: 0 0 0 2px rgba(247,147,26,.12) !important;
   }
 }
@@ -656,10 +656,10 @@ body.woocommerce-account form.lost_reset_password fieldset {
 /* Kill weißer Rahmen & Extra-Abstand auf Mobile vom Theme */
 @media (max-width: 719px) {
   .woocommerce div.product .woocommerce-tabs {
-    border: 0 !important;
-    margin-bottom: 0 !important;   /* Abstand steuern wir selbst */
-    background: transparent !important;
-    box-shadow: none !important;
+    border: 0;
+    margin-bottom: 0;   /* Abstand steuern wir selbst */
+    background: transparent;
+    box-shadow: none;
   }
 }
 
@@ -699,10 +699,10 @@ nav.woocommerce-pagination ul li span.current {
 /* Zusatzbilder (Galerie-Upload) */
 ul.product_images li.add-image.add-product-images {
   border: 2px solid #3a3f48 !important;
-  background-color: #232a34 !important;
+  background-color: #232a34;
   border-radius: 8px !important;
-  width: 64px !important;
-  height: 64px !important;
+  width: 64px;
+  height: 64px;
   transition: all 0.2s ease-in-out;
 }
 
@@ -714,8 +714,8 @@ ul.product_images li.add-image.add-product-images:hover {
 
 /* Plus-Symbol in der Box etwas hervorheben */
 ul.product_images li.add-image.add-product-images a.add-product-images::before {
-  color: #f6c343 !important;
-  font-size: 28px !important;
+  color: #f6c343;
+  font-size: 28px;
   opacity: 0.9;
   transition: opacity 0.2s;
 }
