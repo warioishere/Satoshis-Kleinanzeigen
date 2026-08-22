@@ -2297,10 +2297,13 @@ span.error {
   border-radius: 3px;
   padding: 3px 8px;
 }
+/* Der Umschalter schaltet nur um. Farbe und Hintergrund der Navigation
+   stehen weiter unten im Abschnitt "Sidebar base" und gelten fuer beide
+   Zustaende; frueher setzte diese Regel hier zusaetzlich background:#000 und
+   color:#fff aus dem Dokan-Erbe, was eine spaetere Regel per !important
+   wieder einfangen musste. */
 .sk-dashboard .sk-dash-sidebar #sk-navigation > input:checked + ul.sk-dashboard-menu {
   display: block !important;
-  background: #000;
-  color: #fff;
   animation: showNav 350ms ease-in-out both;
 }
 @keyframes showNav {
