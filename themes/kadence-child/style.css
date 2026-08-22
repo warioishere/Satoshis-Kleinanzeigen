@@ -383,10 +383,8 @@ body.woocommerce-account form.lost_reset_password fieldset {
 .woocommerce .col2-set,
 .woocommerce .woocommerce-billing-fields,
 .woocommerce .woocommerce-shipping-fields {
-  background: #1b2532;
   border-radius: 12px;
   padding: 10px;
-  margin-bottom: 20px;
   color: #fff; /* Damit der Text nicht zu dunkel wirkt */
 }
 
@@ -398,7 +396,6 @@ body.woocommerce-account form.lost_reset_password fieldset {
 }
 
 .woocommerce .woocommerce-checkout .shop_table {
-  background: #1b2532;
   border-radius: 12px;
   overflow: hidden; /* wichtig, damit Inhalte nicht über die runden Ecken hinausragen */
 }
@@ -419,16 +416,6 @@ body.woocommerce-account form.lost_reset_password fieldset {
     display: none !important;
 }
 
-
-.woocommerce div.product div.images img {
-    max-height: 400px;
-    width: auto;
-    height: auto;
-    max-width: 100%;
-    object-fit: contain;
-    display: block;
-    margin: 0 auto; /* optional: zentrieren */
-}
 
 /* ----------------------------------------------------------
  * WooCommerce Produkt-Titel: Hover in Bitcoin-Orange
@@ -898,14 +885,6 @@ body.no-js .splide {
 
 /*neu*/
 
-.wcps-container .wcps-items-thumb.element-1 img {
-  width: 100%;
-  height: 250px;
-  object-fit: cover;
-  object-position: center;
-  display: block;
-}
-
 /* 1) Der Content-Block der Karte ist der Bezugspunkt */
 .splide__slide .elements-wrapper .layer-content.element-3 {
   position: relative;        /* für das absolute Pricing */
@@ -1130,7 +1109,6 @@ ul, ol {
 @media (max-width: 767px) {
   .wppis-slider.horizontal .wppis-figure img {
     max-width: 100px;  /* z. B. 150px breite Thumbs */
-    height: auto;
   }
 }
 
@@ -1138,7 +1116,6 @@ ul, ol {
 @media (min-width: 768px) and (max-width: 1024px) {
   .wppis-slider.horizontal .wppis-figure img {
     max-width: 200px;  /* z. B. 200px breite Thumbs */
-    height: auto;
   }
 }
 
@@ -1235,10 +1212,6 @@ body.post-type-archive-gesuch .hero-section-overlay {
   margin-left: 12px;   /* Äußerer Abstand zur linken Kante */
 }
 
-#payment ul.wc_payment_methods li.wc_payment_method input[type="radio"]:first-child:checked + label {
-  border-left: 5px solid var(--global-palette-highlight);
-  background: #f7931a;
-}
 #payment ul.wc_payment_methods li.wc_payment_method input[type="radio"]:first-child:checked + label {
   border-left: 5px solid var(--global-palette-highlight);
   background: #f7931a;
@@ -1384,7 +1357,6 @@ form.sort-by.item label {
 ul.products li.product {
     display: flex;
     flex-direction: column;
-    min-height: 650px;
 }
 
 /* Produkt-Excerpt (Kurzbeschreibung) optisch abgestuft */
