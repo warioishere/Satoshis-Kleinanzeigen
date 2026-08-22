@@ -13,7 +13,7 @@ Text Domain: kadence-child
 
 /* Globale Anker-Offset-Lösung gegen Sticky-Header */
 :root { --sticky-offset: 120px !important; } /* ggf. auf deine Headerhöhe anpassen */
-[id] { scroll-margin-top: var(--sticky-offset) !important; }
+[id] { scroll-margin-top: var(--sticky-offset); }
 
 /* Optional nur für FAQ, falls gewünscht:
 .page-id-123 [id] { scroll-margin-top: var(--sticky-offset) !important; } 
@@ -298,7 +298,7 @@ ul.products li.product .produkt-vendor-info{
   align-items:center;
   gap:10px;
 
-  margin: 10px 0 10px 0 !important; /* links/rechts 0 erzwingen */
+  margin: 10px 0 10px 0; /* links/rechts 0 erzwingen */
   padding: 0 25px;                  /* Innenabstand behalten (optional) */
 
   border-bottom:1px solid rgba(255,255,255,.12);
@@ -410,8 +410,8 @@ body.woocommerce-account form.lost_reset_password fieldset {
 
 /* Hover-Effekte deaktivieren */
 .woocommerce div.product div.images img {
-    transform: none !important;
-    transition: none !important;
+    transform: none;
+    transition: none;
 }
 
 /* Falls WooCommerce Zoom-Container aktiv ist */
@@ -687,7 +687,7 @@ nav.woocommerce-pagination ul li span.current {
 
   /* Optional: einzelne Filterfelder untereinander statt nebeneinander */
   #product-filter .sk-form-group {
-    width: 100% !important;
+    width: 100%;
     margin-bottom: 10px;
   }
 }
@@ -847,7 +847,7 @@ button.edit-slug.button.button-small.hide-if-no-js {
 /*--- Buttons Hover --*/
 
 a.wp-block-button__link.has-theme-palette-4-background-color.has-background.wp-element-button {
-  transition: all 0.25s ease-in-out !important;
+  transition: all 0.25s ease-in-out;
 }
 
 a.wp-block-button__link.has-theme-palette-4-background-color.has-background.wp-element-button:hover {
@@ -865,10 +865,10 @@ a.wp-block-button__link.has-theme-palette-4-background-color.has-background.wp-e
 .woocommerce del bdi {
   color: #999 !important; /* alte Preisfarbe leicht ausgegraut */
   opacity: 0.9 !important;
-  text-decoration: line-through !important;
+  text-decoration: line-through;
   text-decoration-thickness: 2px !important; /* dickere Linie */
   text-decoration-color: #ff6600 !important; /* z. B. Orange für bessere Sichtbarkeit */
-  margin-right: 6px !important; /* kleiner Abstand zum neuen Preis */
+  margin-right: 6px; /* kleiner Abstand zum neuen Preis */
 }
 
 /*-- WCPS Slider Tuning --*/
@@ -963,7 +963,7 @@ body.no-js .splide {
 }
 
 .layout- img {
-	border-radius: 5px !important;
+	border-radius: 5px;
 }
 
 .layout- .element-5 a {
@@ -1315,14 +1315,14 @@ h3.text-2xl.font-semibold {
 
 /* Mobile Menü-Icon zentrieren */
 #mobile-menu-icon {
-    position: static !important;
+    position: static;
     margin: 0 auto;
     display: block;
 }
 
 /* Zeilenaktionen übersichtlich */
 .row-actions {
-    display: flex !important;
+    display: flex;
     flex-wrap: wrap;
     gap: 8px 16px;
     align-items: center;
@@ -1338,7 +1338,7 @@ h3.text-2xl.font-semibold {
 
 /* Aktiver Tab weiß */
 .sk-store-tabs li.active a {
-    color: #ffffff !important;
+    color: #ffffff;
 }
 
 /* ───────────────🔹 SEITENSPEZIFISCHE ANPASSUNGEN ─────────────── */
@@ -1347,15 +1347,15 @@ h3.text-2xl.font-semibold {
 body.page-id-14 p.item.store-count,
 body.page-id-14 label[for="stores_orderby"],
 body.page-id-14 .sort-by-item label {
-    color: #ffffff !important;
+    color: #ffffff;
 }
 body.page-id-14 select#stores_orderby {
-    color: #e8ecf0 !important;
+    color: #e8ecf0;
 }
 
 /* Ansicht-Umschalter Icons */
 .toggle-view .dashicons {
-    color: #9aa4b2 !important;
+    color: #9aa4b2;
 }
 .toggle-view .dashicons.active {
     color: #f7931a !important;
@@ -1363,7 +1363,7 @@ body.page-id-14 select#stores_orderby {
 
 /* Label im Sortierformular */
 form.sort-by.item label {
-    color: #ffffff !important;
+    color: #ffffff;
 }
 
 /* Mediathek: Überschriften und Menü */
