@@ -413,11 +413,54 @@ class UserOnboarding {
 		if ( get_user_meta( $user_id, 'sk_nostr_banner_dismissed', true ) ) {
 			return;
 		}
+		// Nur nennen, was auf dieser Installation auch wirklich laeuft. Die
+		// Nostr-Module lassen sich einzeln abschalten — auf Live sind
+		// sk_nostr_market, sk_zaps und sk_reputation aus, ein Versprechen
+		// "deine Inserate erscheinen auf Nostr" waere dort schlicht falsch.
+		$benefits = [];
+
+		if ( sk_module_active( 'sk_nostr_market' ) ) {
+			$benefits[] = __( 'Inserate auch auf Nostr', 'sk-core' );
+		}
+		if ( sk_module_active( 'sk_feed' ) ) {
+			$benefits[] = __( 'Beiträge auch auf Nostr', 'sk-core' );
+		}
+		if ( sk_module_active( 'sk_nostr_market' ) && VendorChat::is_enabled() ) {
+			$benefits[] = __( 'Chat-Nachrichten auch als Nostr-DM', 'sk-core' );
+		}
+		if ( sk_module_active( 'sk_zaps' ) ) {
+			$benefits[] = __( 'Zaps empfangen', 'sk-core' );
+		}
+		$benefits[] = __( 'Anmeldung mit Nostr', 'sk-core' );
+
+		$connector_url = sk_get_navigation_url( 'auth-connector' );
 		?>
 		<div class="sk-alert sk-alert-info sk-nostr-banner" id="sk-nostr-banner" style="margin-bottom:16px;display:flex;align-items:center;gap:12px;">
 			<div style="flex:1;">
 				<strong><i class="fas fa-key"></i> <?php _e( 'Nostr-Identität empfohlen', 'sk-core' ); ?></strong>
-				<p style="margin:4px 0 0;font-size:13px;"><?php _e( 'Erstelle eine Nostr-Identität für verifizierbare Inserate und Scam-Schutz.', 'sk-core' ); ?></p>
+				<p style="margin:4px 0 0;font-size:13px;">
+					<?php
+					printf(
+						/* translators: %s: Aufzaehlung der Funktionen, die eine Nostr-Identitaet freischaltet. */
+						esc_html__( 'Damit möglich: %s.', 'sk-core' ),
+						esc_html( wp_sprintf_l( '%l', $benefits ) )
+					);
+					?>
+				</p>
+				<p style="margin:4px 0 0;font-size:13px;">
+					<?php
+					if ( $connector_url ) {
+						printf(
+							/* translators: %s: Link zur Seite Nostr/LN Link. */
+							wp_kses( __( 'Du hast schon einen Nostr-Account? Dann verknüpfe diesen unter <a href="%s">Nostr/LN Link</a>, statt hier einen neuen anzulegen.', 'sk-core' ), [ 'a' => [ 'href' => [] ] ] ),
+							esc_url( $connector_url )
+						);
+					} else {
+						esc_html_e( 'Du hast schon einen Nostr-Account? Dann verknüpfe diesen unter Nostr/LN Link, statt hier einen neuen anzulegen.', 'sk-core' );
+					}
+					?>
+					<?php esc_html_e( 'Ein hier erstellter Schlüssel gehört dir: du kannst ihn exportieren und überall im Nostr-Netz verwenden, nicht nur hier.', 'sk-core' ); ?>
+				</p>
 			</div>
 			<button type="button" class="sk-btn sk-btn-btc sk-btn-sm" id="sk-nostr-banner-create">
 				<i class="fas fa-key"></i> <?php _e( 'Erstellen', 'sk-core' ); ?>
