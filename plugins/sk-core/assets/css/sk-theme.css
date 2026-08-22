@@ -9032,12 +9032,43 @@ a.sk-sub-order-action:hover {
   color: #F7931A !important;
 }
 
-/* ── Featured image: fixed square 275×275 ── */
+/* ── Titelbild: quadratisch ──
+   Ohne !important: .product-edit-container .sk-feat-image-upload weiter oben
+   hat dieselbe Spezifitaet und steht frueher, diese Regel gewinnt ohnehin. */
 .product-edit-new-container .sk-new-product-featured-img,
 .product-edit-new-container .sk-product-edit-form .sk-new-product-featured-img {
-  width: 300px !important;
-  height: 300px !important;
+  width: 100%;
+  max-width: 300px;
+  height: 300px;
   max-height: 300px;
+}
+
+/* .featured-image steckt hier in einer .content-half-part-Spalte. Die 25%
+   weiter oben stammen aus einem Raster, in dem es selbst die Spalte war —
+   verschachtelt ergibt das 25% von 50%, also 43px bei 768 und 64px bei
+   1440. Der Rahmen stand seitdem ueber seinen Container hinaus. */
+.sk-new-product-area .content-half-part > .featured-image {
+  width: 100%;
+}
+
+/* ── Produktformular unter 768px: einspaltig ──
+   .content-half-part ist ein 50%-Float aus dem Dokan-Raster, und darin nimmt
+   .featured-image nochmal 25%. Bei 768px blieben davon 43px uebrig, in die
+   der 200px breite Rahmen nicht passt; bei 430px waren es 100px. Der Rahmen
+   stand deshalb ueber seinen Container hinaus und nicht mittig. */
+@media (max-width: 767px) {
+  .sk-dashboard .content-half-part,
+  .sk-new-product-area .featured-image,
+  .sk-new-product-area .sk-product-meta {
+    float: none;
+    width: 100%;
+  }
+  .product-edit-new-container .sk-new-product-featured-img,
+  .product-edit-new-container .sk-product-edit-form .sk-new-product-featured-img,
+  .product-edit-container .sk-feat-image-upload {
+    width: 100%;
+    max-width: none;
+  }
 }
 
 /* === GESUCHE === */
