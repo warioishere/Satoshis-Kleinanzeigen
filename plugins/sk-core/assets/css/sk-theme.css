@@ -3081,10 +3081,13 @@ div.media-sidebar a.edit-attachment {
   font-weight: normal;
   cursor: pointer;
 }
+/* width fluid statt fest: in der 172px schmalen Spalte bei 768px stand der
+   Rahmen sonst 28px ueber seinen Container hinaus. */
 .product-edit-container .sk-feat-image-upload {
   border: 4px dashed #dddddd;
   height: 200px;
-  width: 200px;
+  width: 100%;
+  max-width: 200px;
   margin-bottom: 20px;
   overflow: hidden;
   position: relative;
