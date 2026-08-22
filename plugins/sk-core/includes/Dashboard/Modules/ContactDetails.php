@@ -181,6 +181,15 @@ class ContactDetails {
     }
 
     public function save_account_fields( int $store_id ): void {
+        // sk_store_profile_saved fires for both settings forms. The account
+        // fields belong to the store form (sk_view_store_settings_menu), so
+        // bind them to its nonce instead of to the shared hook — otherwise the
+        // social form (sk_view_store_social_menu) can carry them along.
+        if ( ! isset( $_POST['_wpnonce'] )
+            || ! wp_verify_nonce( sanitize_key( $_POST['_wpnonce'] ), 'sk_store_settings_nonce' ) ) {
+            return;
+        }
+
         if ( $store_id <= 0 ) return;
         $user = get_userdata( $store_id );
         if ( ! $user instanceof \WP_User ) return;
