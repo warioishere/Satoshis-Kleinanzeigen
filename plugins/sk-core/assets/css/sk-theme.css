@@ -2278,12 +2278,12 @@ span.error {
 .sk-dashboard .sk-dash-sidebar #sk-navigation #mobile-menu-icon {
   display: none;
 }
+/* Kein position:absolute mehr: das Kind-Theme setzt seit laengerem
+   position:static !important und margin:0 auto, um das Symbol zu zentrieren.
+   Unsere gegenlaeufige Angabe hat nur noch dagegengehalten. */
 .sk-dashboard .sk-dash-sidebar #sk-navigation > #mobile-menu-icon {
   font-size: 17px;
   color: #fff;
-  position: absolute;
-  top: 0;
-  right: 0;
   width: 33px;
   z-index: 1;
   cursor: pointer;
@@ -2320,9 +2320,12 @@ span.error {
    dreizehn Eintraege oberhalb des Inhalts, an denen man nach jedem
    Seitenwechsel erst vorbeiscrollen musste. */
 @media only screen and (max-width: 991px) {
+  /* Keine feste Hoehe: die 33px stammen aus der Zeit, als das Symbol
+     absolut positioniert war und keinen Platz brauchte. Im Fluss ist es mit
+     Rahmen und Innenabstand 35px hoch und wurde oben und unten angeschnitten. */
   .sk-dashboard .sk-dash-sidebar #sk-navigation {
-    height: 33px;
     position: relative;
+    padding: 8px 0;
   }
   .sk-dashboard .sk-dash-sidebar #sk-navigation #mobile-menu-icon {
     display: block;
@@ -2330,10 +2333,11 @@ span.error {
   .sk-dashboard .sk-dash-sidebar #sk-navigation #toggle-mobile-menu {
     display: none;
   }
+  /* Das padding-top:48px hielt frueher den Platz unter dem schwebenden
+     Symbol frei. Den Abstand macht jetzt der Innenabstand der Leiste. */
   .sk-dashboard .sk-dash-sidebar #sk-navigation ul.sk-dashboard-menu {
     display: none;
     height: auto;
-    padding-top: 48px !important;
   }
 }
 @media screen and (max-width: 768px) {
@@ -5480,9 +5484,10 @@ div.media-sidebar a.edit-attachment {
   .apply-filter #cancel-filter-btn {
     display: block !important;
   }
-  .sk-dashboard .sk-dash-sidebar {
-    padding: 20px 0;
-  }
+  /* Hier stand padding:20px 0 nur fuer Breiten bis 430px. Dadurch war die
+     Navigationsleiste im Hochformat 71px hoch, im Querformat 51px — bei
+     identischer Leiste. Den Innenabstand macht jetzt #sk-navigation, und
+     zwar in jeder Breite gleich. */
   .sk-dashboard .sk-dash-sidebar .sk-table,
   .sk-dashboard .sk-dashboard-content .sk-table {
     display: table;
