@@ -284,6 +284,14 @@ select.sk-form-control {
 .sk-input-group .form-control {
   display: table-cell;
 }
+/* Direkte Eingabefelder ohne .form-control/.sk-form-control fielen bisher
+   durch dieses Muster: sie blieben inline-block mit ihrer Standardbreite von
+   223px und sprengten die Gruppe. Das Preisfeld heisst wc_input_price und
+   stand dadurch bei 768px 53px ueber seine Spalte hinaus. */
+.sk-input-group > input {
+  display: table-cell;
+  width: 100%;
+}
 .sk-input-group-addon:not(:first-child):not(:last-child),
 .sk-input-group-btn:not(:first-child):not(:last-child),
 .sk-input-group .form-control:not(:first-child):not(:last-child) {
