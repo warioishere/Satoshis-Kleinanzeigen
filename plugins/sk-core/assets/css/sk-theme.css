@@ -3661,10 +3661,10 @@ div.media-sidebar a.edit-attachment {
   margin: 0;
 }
 .sk-vendor-info-wrap a {
-  text-decoration: none!important;
-  background: transparent!important;
-  box-shadow: unset!important;
-  padding: 0!important;
+  text-decoration: none;
+  background: transparent;
+  box-shadow: unset;
+  padding: 0;
 }
 .sk-vendor-info-wrap .sk-vendor-image {
   width: 50px;
@@ -5630,34 +5630,34 @@ a.sk-btn-theme:active,
 
 /* SK: Vendor-Info-Box hübsch machen */
 .single-product .sk-vendor-info-wrap {
-  border: 1px solid #2e3846 !important;   /* statt weiß */
-  background: #181e27 !important;
-  border-radius: 14px !important;
-  padding: 14px 16px !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 14px !important;
-  box-shadow: 0 12px 28px rgba(0,0,0,.28) !important;
-  margin-top: 10px !important;
+  border: 1px solid #2e3846;   /* statt weiß */
+  background: #181e27;
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 12px 28px rgba(0,0,0,.28);
+  margin-top: 10px;
   margin-bottom: 10px;
 }
 
 /* Avatar: rund mit BTC-Orange Ring */
 .single-product .sk-vendor-info-wrap .sk-vendor-image img {
-  width: 52px !important;
-  height: 52px !important;
-  border-radius: 50% !important;
-  object-fit: cover !important;
-  display: block !important;
-  border: 3px solid #F7931A !important;
-  box-shadow: 0 2px 6px rgba(0,0,0,.35) !important;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  border: 3px solid #F7931A;
+  box-shadow: 0 2px 6px rgba(0,0,0,.35);
 }
 
 /* Textblock: Name/Rating sauber setzen */
 .single-product .sk-vendor-info-wrap .sk-vendor-info {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 4px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 /* Sterne/Meta dezenter, Sterne in Orange */
@@ -5671,7 +5671,7 @@ a.sk-btn-theme:active,
 }
 @media (max-width: 560px) {
   .single-product .sk-vendor-info-wrap {
-    flex-direction: column !important;
+    flex-direction: column;
     align-items: flex-start !important;
     gap: 10px !important;
     padding: 12px 14px !important;
@@ -5680,13 +5680,13 @@ a.sk-btn-theme:active,
 
 /* Falls Theme irgendwo den alten weißen Rahmen neu setzt – hart neutralisieren */
 .single-product .sk-vendor-info-wrap {
-  box-sizing: border-box !important;
+  box-sizing: border-box;
 }
 
 /* Vendor-Karte: als Link kenntlich machen */
 .single-product .sk-vendor-info-wrap {
-  cursor: pointer !important;
-  -webkit-tap-highlight-color: transparent !important; /* iOS */
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent; /* iOS */
 }
 
 /* optional: kleines Hover-/Focus-Feedback */
@@ -5830,7 +5830,7 @@ a.sk-btn-theme:active,
 .sk-store-wrap .sk-store-sidebar 
 .widget.woocommerce.widget_products 
 ul.product_list_widget li div[style*="font-size: 0.8em"] {
-  display: none !important;
+  display: none;
 }
 
 .sk-store-wrap .sk-store-sidebar .woocommerce del .woocommerce-Price-amount {
@@ -6330,7 +6330,7 @@ ul.product_list_widget li div[style*="font-size: 0.8em"] {
 
 /* Vendor-Name auf Produktseite weiß */
 body.single-product .sk-vendor-info-wrap .sk-vendor-name h5 {
-    color: #fff !important;
+    color: #fff;
 }
 
 /* Kontaktinfos im Store-Header */
@@ -10955,14 +10955,14 @@ body:has(.dvc-modal) .dkp-contact-icons {
 .woocommerce-Reviews .comment-form input[type="text"],
 .woocommerce-Reviews .comment-form input[type="email"],
 .woocommerce-Reviews .comment-form input[type="url"] {
-  color: #1A202C !important;
-  opacity: 1 !important;
+  color: #1A202C;
+  opacity: 1;
 }
 .woocommerce-Reviews .comment-form label,
 .woocommerce-Reviews .comment-form .comment-form-rating-label,
 .woocommerce-Reviews .comment-reply-title {
-  color: #fff !important;
-  opacity: 1 !important;
+  color: #fff;
+  opacity: 1;
 }
 .woocommerce-Reviews .comment-form ::placeholder {
   color: #4A5568 !important;
@@ -12122,11 +12122,11 @@ div.sk-error { border-left-color: #ef4444; }
 /* Shop-Sortierung: Kadence setzt select.orderby auf transparent, dadurch war
    der gewaehlte Eintrag auf dem dunklen Hintergrund nicht mehr zu lesen. */
 .woocommerce-ordering select.orderby {
-  background-color: #181e27 !important;
-  color: #fff !important;
-  border: 1px solid #5c6b81 !important;
-  border-radius: 6px !important;
-  padding: 8px 30px 8px 12px !important;
+  background-color: #181e27;
+  color: #fff;
+  border: 1px solid #5c6b81;
+  border-radius: 6px;
+  padding: 8px 30px 8px 12px;
 }
 
 .woocommerce-ordering select.orderby:focus {
