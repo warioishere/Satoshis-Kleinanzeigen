@@ -5912,27 +5912,27 @@ ul.product_list_widget li div[style*="font-size: 0.8em"] {
 
 /* ===== Layout: 2 Desktop / 1 Mobile via Grid ===== */
 .sk-subscription-content .pack_content_wrapper {
-  display: grid !important;
-  grid-template-columns: repeat(2, 1fr) !important;
-  column-gap: 24px !important;
-  row-gap: 70px !important;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  column-gap: 24px;
+  row-gap: 70px;
 }
 
 /* Karten-Basis */
 .sk-subscription-content .pack_content_wrapper .product_pack_item {
-  width: auto !important;
-  max-width: none !important;
-  margin: 0 !important;
+  width: auto;
+  max-width: none;
+  margin: 0;
   position: relative;
-  background: #1e2b3c !important;
+  background: #1e2b3c;
   border: 1px solid rgba(255,255,255,0.07) !important;
-  padding: 28px 24px 24px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
-  border-radius: 10px !important;
-  color: #c4cdd8 !important;
+  padding: 28px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  border-radius: 10px;
+  color: #c4cdd8;
   text-align: center;
 }
 @media (max-width: 640px) {
@@ -5956,7 +5956,7 @@ ul.product_list_widget li div[style*="font-size: 0.8em"] {
   left: 50%;
   top: -52px;
   transform: translateX(-50%);
-  background: #F7931A !important;
+  background: #F7931A;
   border-radius: 50%;
   display: flex;
   flex-direction: column;
@@ -5972,9 +5972,9 @@ ul.product_list_widget li div[style*="font-size: 0.8em"] {
 /* ===== Buttons in Bitcoin-Orange ===== */
 .sk-subscription-content .buy_pack_button a.sk-btn,
 .sk-subscription-content .buy_pack_button a.sk-btn-theme {
-  background-color: #F7931A !important;   /* Bitcoin-Orange */
+  background-color: #F7931A;   /* Bitcoin-Orange */
   border-color: #F7931A !important;
-  color: #fff !important;                 /* weisse Schrift */
+  color: #fff;                 /* weisse Schrift */
   font-weight: 600;
   border-radius: 6px;
   transition: all 0.2s ease-in-out;
@@ -6043,29 +6043,29 @@ ul.product_list_widget li div[style*="font-size: 0.8em"] {
 
 /* Paket-Titel in Orange */
 .sk-subscription-content .pack_content_wrapper .product_pack_item .pack_content h2 {
-  color: #F7931A !important;
-  font-size: 22px !important;
-  font-weight: 700 !important;
-  margin-bottom: 12px !important;
+  color: #F7931A;
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 12px;
 }
 /* Paket-Body-Text hell + lesbar */
 .sk-subscription-content .pack_content_wrapper .product_pack_item .pack_content,
 .sk-subscription-content .pack_content_wrapper .product_pack_item .pack_content p,
 .sk-subscription-content .pack_content_wrapper .product_pack_item .pack_short_desc,
 .sk-subscription-content .pack_content_wrapper .product_pack_item .pack_short_desc p {
-  color: #c4cdd8 !important;
-  font-size: 16px !important;
-  line-height: 1.7 !important;
+  color: #c4cdd8;
+  font-size: 16px;
+  line-height: 1.7;
 }
 .sk-subscription-content .pack_content_wrapper .product_pack_item .pack_data_option {
   color: #c4cdd8 !important;
   font-size: 16px !important;
-  line-height: 1.9 !important;
+  line-height: 1.9;
   margin: 14px 0 !important;
 }
 .sk-subscription-content .pack_content_wrapper .product_pack_item .pack_data_option strong {
-  color: #e8ecf0 !important;
-  font-size: 19px !important;
+  color: #e8ecf0;
+  font-size: 19px;
 }
 
 /* ==========================================================
@@ -8248,15 +8248,15 @@ a.sk-review-action.delete:hover {
 /* Active subscription info box — override module style.css #fff */
 .sk-subscription-content .seller_subs_info,
 .sk-sub-active-info {
-  background: #1e2b3c !important;
-  border: 1px solid rgba(255,255,255,0.08) !important;
-  border-radius: 12px !important;
-  padding: 24px 28px !important;
-  margin-bottom: 32px !important;
-  color: #c4cdd8 !important;
-  font-size: 17px !important;
-  line-height: 1.7 !important;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.25) !important;
+  background: #1e2b3c;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 24px 28px;
+  margin-bottom: 32px;
+  color: #c4cdd8;
+  font-size: 17px;
+  line-height: 1.7;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
   text-align: center;
 }
 .sk-sub-active-info p {
@@ -8294,10 +8294,10 @@ a.sk-review-action.delete:hover {
   color: #F7931A;
 }
 .sk-sub-active-info__header h3 {
-  margin: 0 !important;
-  font-size: 19px !important;
-  font-weight: 700 !important;
-  color: #e8ecf0 !important;
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  color: #e8ecf0;
   letter-spacing: 0.3px;
 }
 
@@ -8323,11 +8323,11 @@ a.sk-review-action.delete:hover {
   border-right: none;
 }
 .sk-sub-active-info__stat-label {
-  font-size: 13px !important;
+  font-size: 13px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  color: #5a6a7e !important;
+  color: #5a6a7e;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -8337,9 +8337,9 @@ a.sk-review-action.delete:hover {
   color: #F7931A;
 }
 .sk-sub-active-info__stat-value {
-  font-size: 18px !important;
+  font-size: 18px;
   font-weight: 700;
-  color: #e8ecf0 !important;
+  color: #e8ecf0;
 }
 
 /* Warning notice inside box */
@@ -8369,7 +8369,7 @@ a.sk-review-action.delete:hover {
   padding-top: 16px;
   border-top: 1px solid rgba(255,255,255,0.07);
 }
-.sk-sub-active-info__action form { margin: 0 !important; }
+.sk-sub-active-info__action form { margin: 0; }
 .sk-sub-cancel-btn {
   font-size: 15px !important;
   padding: 7px 18px !important;
@@ -8400,23 +8400,23 @@ a.sk-review-action.delete:hover {
 
 /* Pack listing grid — extra top margin for floating price circle */
 .sk-subscription-content .pack_content_wrapper {
-  margin-top: 60px !important;
+  margin-top: 60px;
 }
 
 /* Ensure pack content clears the absolute-positioned price circle above.
    Mirrors dps-custom-style which is only loaded on a hard page load. */
 .sk-subscription-content .pack_content_wrapper .product_pack_item .pack_content {
-  margin-top: 60px !important;
-  width: 100% !important;
-  text-align: center !important;
+  margin-top: 60px;
+  width: 100%;
+  text-align: center;
 }
 .sk-subscription-content .pack_content_wrapper .product_pack_item .buy_pack_button {
-  margin: 10px 0 8px !important;
+  margin: 10px 0 8px;
 }
 .sk-subscription-content .pack_content_wrapper .product_pack_item .pack_short_desc {
-  width: 100% !important;
-  text-align: center !important;
-  margin-top: 8px !important;
+  width: 100%;
+  text-align: center;
+  margin-top: 8px;
 }
 
 /* Order card list */
@@ -11775,7 +11775,7 @@ body:has(.dvc-modal) .dkp-contact-icons {
 #edit-slug-buttons .edit-slug.button.button-small.hide-if-no-js { display: none !important; }
 
 /* CHF conversion in subscription */
-.sk-subscription-content .dps-amount > div { display: none !important; }
+.sk-subscription-content .dps-amount > div { display: none; }
 
 /* Purchase note field */
 .sk-dashboard .sk-section-content label[for="_purchase_note"],
@@ -11979,7 +11979,7 @@ span.item-inline-edit.editline { display: none; }
 #tab-description > h2:first-of-type { display: none; }
 
 /* Currency symbol in subscription */
-.sk-subscription-content .woocommerce-Price-currencySymbol { display: none !important; }
+.sk-subscription-content .woocommerce-Price-currencySymbol { display: none; }
 
 /* Notice boxes (p/div.sk-info) — override the badge-style .sk-info rule with SK-theme look */
 p.sk-info,
