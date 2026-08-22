@@ -6261,10 +6261,10 @@ ul.product_list_widget li div[style*="font-size: 0.8em"] {
 }
 @media only screen and (max-width: 768px) {
   .sk-settings-content .sk-settings-area .sk-update-setting-top {
-    width: 100% !important;
-    float: none !important;
-    display: flex !important;
-    justify-content: center !important;
+    width: 100%;
+    float: none;
+    display: flex;
+    justify-content: center;
     margin-top: 15px;
   }
 
@@ -6443,7 +6443,7 @@ ul.sk-store-custom-fields ul {
 
 @media (max-width: 991px) {
   .sk-dashboard .sk-dashboard-content > article.sk-settings-area {
-    margin-top: 0px !important
+    margin-top: 0px
   }
 }
 
@@ -7305,7 +7305,7 @@ ul.sk-store-custom-fields ul {
   flex: 0 0 150px;
   font-size: 16px;
   font-weight: 500;
-  color: #8a9bb0 !important;
+  color: #8a9bb0;
   padding-top: 9px;
   line-height: 1.3;
 }
@@ -7342,11 +7342,11 @@ ul.sk-store-custom-fields ul {
 .sk-settings-form textarea,
 .sk-settings-form select,
 .sk-settings-form .sk-form-control {
-  background: #252d38 !important;
-  border: 1px solid rgba(255,255,255,0.08) !important;
-  color: #e8ecf0 !important;
-  padding: 10px 30px !important;
-  font-size: 16px !important;
+  background: #252d38;
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #e8ecf0;
+  padding: 10px 30px;
+  font-size: 16px;
   width: 100%;
   box-sizing: border-box;
   transition: border-color 0.15s;
@@ -7365,16 +7365,16 @@ ul.sk-store-custom-fields ul {
 .sk-settings-check-row,
 .sk-settings-form .sk-contact-email label,
 .sk-settings-form .sk-form-group label:not(.sk-control-label):not(.sk-settings-label) {
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 7px !important;
-  font-size: 15px !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 15px;
   color: #6b7a90 !important;
   cursor: pointer;
   margin-top: 6px;
 }
 .sk-settings-form input[type="checkbox"] {
-  width: auto !important;
+  width: auto;
   accent-color: #F7931A;
   cursor: pointer;
 }
@@ -7396,7 +7396,7 @@ ul.sk-store-custom-fields ul {
 .sk-settings-form .mapboxgl-map,
 .sk-settings-form .mapboxgl-canvas {
   border: none !important;
-  outline: none !important;
+  outline: none;
 }
 
 /* Mapbox zoom / compass buttons: keep icons visible on the white bar */
@@ -7586,13 +7586,13 @@ ul.sk-store-custom-fields ul {
  * card width (default .sk-settings-field is label-left / input-right, which
  * would make a small centered avatar sit visually right-of-center). */
 .sk-settings-field--gravatar {
-  flex-direction: column !important;
-  align-items: center !important;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
 }
 .sk-settings-field--gravatar .sk-settings-label {
-  flex: none !important;
-  padding-top: 0 !important;
+  flex: none;
+  padding-top: 0;
   text-align: center;
 }
 .sk-settings-field--gravatar .sk-settings-input {
@@ -7603,40 +7603,40 @@ ul.sk-store-custom-fields ul {
  * mirroring the gravatar variant so the upload button (empty state) and the
  * banner image (uploaded state) both sit centered in the card. */
 .sk-settings-field--banner {
-  flex-direction: column !important;
-  align-items: center !important;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
 }
 .sk-settings-field--banner .sk-settings-label {
-  flex: none !important;
-  padding-top: 0 !important;
+  flex: none;
+  padding-top: 0;
   text-align: center;
 }
 .sk-settings-field--banner .sk-settings-input {
   width: 100%;
 }
 .sk-settings-field--banner .button-area {
-  align-items: center !important;
+  align-items: center;
   margin-top: 12px;
 }
 
 /* Center gravatar / image upload (rendered by sk_form_media_upload variant='gravatar') */
 .sk-settings-input.sk-gravatar {
-  display: flex !important;
+  display: flex;
   flex-direction: column;
-  align-items: center !important;
+  align-items: center;
 }
 .sk-settings-input.sk-gravatar .gravatar-wrap,
 .sk-settings-input.sk-gravatar .gravatar-button-area {
-  display: flex !important;
+  display: flex;
   flex-direction: column;
-  align-items: center !important;
+  align-items: center;
   gap: 8px;
 }
 
 /* Gravatar wrap: stacking context for the remove button */
 .sk-settings-input.sk-gravatar .gravatar-wrap {
-  position: relative !important;
+  position: relative;
   display: inline-flex !important;
 }
 .sk-settings-input.sk-gravatar .gravatar-wrap.sk-hide {
@@ -7645,25 +7645,25 @@ ul.sk-store-custom-fields ul {
 
 /* Override core black full-circle overlay on gravatar */
 .sk-settings-input.sk-gravatar .sk-remove-gravatar-image {
-  position: absolute !important;
-  top: 0 !important;
-  right: 0 !important;
-  left: auto !important;
-  width: 22px !important;
-  height: 22px !important;
-  background: rgba(0,0,0,0.65) !important;
-  color: #fff !important;
-  border-radius: 50% !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  font-size: 16px !important;
-  line-height: 1 !important;
-  padding: 0 !important;
-  text-decoration: none !important;
-  cursor: pointer !important;
-  opacity: 1 !important;
-  z-index: 2 !important;
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: auto;
+  width: 22px;
+  height: 22px;
+  background: rgba(0,0,0,0.65);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+  text-decoration: none;
+  cursor: pointer;
+  opacity: 1;
+  z-index: 2;
 }
 
 /* "Visit Store" link in header */
@@ -7699,14 +7699,14 @@ ul.sk-store-custom-fields ul {
 .sk-settings-form .sk-banner,
 .sk-dashboard .sk-settings-area,
 .sk-dashboard .sk-settings-content .sk-settings-area {
-  background: transparent !important;
-  box-shadow: none !important;
-  border: none !important;
+  background: transparent;
+  box-shadow: none;
+  border: none;
 }
 
 
 /* Biography TinyMCE wrapper — dark theme */
-.sk-settings-field--bio { padding: 16px 20px !important; }
+.sk-settings-field--bio { padding: 16px 20px; }
 .sk-settings-field--bio .sk-settings-input { width: 100%; }
 /* Text tab textarea */
 .sk-settings-form #vendor_biography { background: #252d38 !important; color: #e8ecf0 !important; border: none !important; }
@@ -9040,9 +9040,9 @@ a.sk-sub-order-action:hover {
 .gesuch-form input[type="search"],
 .gesuch-form input[type="email"],
 .gesuch-form textarea {
-  background: #1f2732 !important;
-  border: 1px solid #384355 !important;
-  color: #e8ecf0 !important;
+  background: #1f2732;
+  border: 1px solid #384355;
+  color: #e8ecf0;
   border-radius: 6px;
   width: 100%;
   padding: 8px 12px;
@@ -9057,7 +9057,7 @@ a.sk-sub-order-action:hover {
 .gesuch-form label {
   font-size: 14px;
   font-weight: 500;
-  color: #8a9bb0 !important;
+  color: #8a9bb0;
 }
 .gesuch-form ::placeholder { color: #4e5e72 !important; }
 .sk-form-group { margin-bottom: 16px; }
@@ -11925,8 +11925,8 @@ body:has(.dvc-modal) .dkp-contact-icons {
 
 /* Flat field variant — no border-bottom separator / no padding override */
 .sk-settings-field--flat {
-  border-bottom: none !important;
-  padding: 0 !important;
+  border-bottom: none;
+  padding: 0;
 }
 
 /* sk-input-group used by sk_form_input prefix param (social URL icons etc.) */
