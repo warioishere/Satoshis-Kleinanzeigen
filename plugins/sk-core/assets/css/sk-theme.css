@@ -5024,7 +5024,7 @@ div.media-sidebar a.edit-attachment {
   border: none;
 }
 #sk-seller-listing-wrap .seller-listing-content .sk-seller-wrap .sk-single-seller .store-wrapper .store-data h2 {
-  padding: 0 !important;
+  padding: 0;
 }
 #sk-seller-listing-wrap .seller-listing-content .sk-seller-wrap .sk-single-seller .store-wrapper .store-data .sk-seller-rating i.dashicons {
   width: 15px;
@@ -5403,7 +5403,7 @@ div.media-sidebar a.edit-attachment {
     text-align: center;
   }
   ul.sk-seller-wrap li.sk-single-seller {
-    width: 90% !important;
+    width: 90%;
     margin-bottom: 50px;
   }
   .sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info {
@@ -7402,11 +7402,11 @@ ul.sk-store-custom-fields ul {
 /* Mapbox zoom / compass buttons: keep icons visible on the white bar */
 .mapboxgl-ctrl-group,
 .mapboxgl-ctrl-group:not(:empty) {
-  background: #fff !important;
+  background: #fff;
 }
 .mapboxgl-ctrl-group button {
   background-color: transparent !important;
-  color: #333 !important;
+  color: #333;
   width: 29px !important;
   height: 29px !important;
 }
@@ -7414,13 +7414,13 @@ ul.sk-store-custom-fields ul {
   border-top: 1px solid #ddd !important;
 }
 .mapboxgl-ctrl-group button .mapboxgl-ctrl-icon {
-  filter: none !important;
-  background-repeat: no-repeat !important;
+  filter: none;
+  background-repeat: no-repeat;
   background-position: center !important;
-  background-size: contain !important;
+  background-size: contain;
   display: block !important;
   width: 100% !important;
-  height: 100% !important;
+  height: 100%;
 }
 .mapboxgl-ctrl-zoom-in .mapboxgl-ctrl-icon {
   background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='29' height='29' viewBox='0 0 29 29' xmlns='http://www.w3.org/2000/svg' fill='%23333'%3E%3Cpath d='M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5z'/%3E%3C/svg%3E") !important;
