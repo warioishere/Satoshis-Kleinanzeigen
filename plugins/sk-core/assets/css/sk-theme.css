@@ -3966,7 +3966,7 @@ div.media-sidebar a.edit-attachment {
   background-repeat: no-repeat;
 }
 .sk-single-store .profile-frame .profile-info-box.profile-layout-default .profile-info-img {
-  height: 100% !important;
+  height: 100%;
   object-fit: cover;
 }
 .sk-single-store .profile-frame .profile-info-box.profile-layout-default .profile-info-img.dummy-image {
@@ -4687,7 +4687,7 @@ div.media-sidebar a.edit-attachment {
   .sk-store-sidebar,
   .sk-single-store {
     margin-right: 3%;
-    width: 94% !important;
+    width: 94%;
     margin-left: 3%;
   }
   .sk-single-store .profile-frame.profile-frame-no-banner .profile-info-box.profile-layout-layout3 .profile-info-summery-wrapper .profile-info-summery .profile-info-head {
@@ -5416,12 +5416,12 @@ div.media-sidebar a.edit-attachment {
     margin: 0 5px 3px 0 !important;
   }
   .sk-single-store .sk-store-tabs ul.sk-modules-button li:last-child {
-    margin-top: 0 !important;
+    margin-top: 0;
   }
   .sk-single-store .sk-store-tabs ul.sk-modules-button li button {
     font-size: 12px;
-    margin: 0 !important;
-    top: 0 !important;
+    margin: 0;
+    top: 0;
   }
   .sk-single-store .sk-store-tabs ul.sk-list-inline {
     flex-wrap: wrap;
@@ -6009,8 +6009,8 @@ ul.product_list_widget li div[style*="font-size: 0.8em"] {
 
 /* Maximale Höhe für das Profilbild im Store-Header */
 .sk-single-store .profile-info-box .profile-info-img {
-  max-height: 370px !important;
-  object-fit: cover !important;
+  max-height: 370px;
+  object-fit: cover;
   display: block;
   margin: 0 auto; /* optional: zentrieren */
 }
@@ -6574,16 +6574,16 @@ ul.sk-store-custom-fields ul {
 }
 
 .sk-single-store .profile-info-box.profile-layout-default {
-  border-radius: 14px !important;
-  overflow: hidden !important;
-  box-shadow: 0 4px 18px rgba(0,0,0,.18) !important;
-  margin-bottom: 24px !important;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 18px rgba(0,0,0,.18);
+  margin-bottom: 24px;
 }
 .sk-single-store .profile-frame {
-  padding: 0 !important;
-  position: relative !important;
-  background-size: cover !important;
-  background-color: transparent !important;
+  padding: 0;
+  position: relative;
+  background-size: cover;
+  background-color: transparent;
 }
 .sk-single-store .profile-info-head .store-name {
   color: #F7931A !important;
@@ -6591,41 +6591,41 @@ ul.sk-store-custom-fields ul {
   margin-bottom: 11px !important;
 }
 .sk-single-store .profile-info-head .profile-img.profile-img-circle img {
-  border-radius: 50% !important;
+  border-radius: 50%;
   background: #F7931A !important;
   border: 3px solid #F7931A !important;
   width: 80px !important;
   height: 80px !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
+  margin-left: auto;
+  margin-right: auto;
 }
 .sk-single-store .profile-info-box .profile-info-summery .profile-info {
-  position: relative !important;
-  top: 0 !important;
+  position: relative;
+  top: 0;
   padding-bottom: 20px !important;
-  width: 100% !important;
-  margin: 0 !important;
-  display: block !important;
-  overflow: visible !important;
-  line-height: 1.4 !important;
+  width: 100%;
+  margin: 0;
+  display: block;
+  overflow: visible;
+  line-height: 1.4;
 }
 @media (max-width: 1199px) {
   .sk-single-store .profile-frame .profile-info-box .profile-info-summery-wrapper {
-    position: relative !important;
-    background-color: #252d38 !important;
-    border-color: #252d38 !important;
-    color: #fff !important;
+    position: relative;
+    background-color: #252d38;
+    border-color: #252d38;
+    color: #fff;
   }
   .sk-single-store .profile-info-head .profile-img {
-    text-align: center !important;
-    margin-bottom: 12px !important;
-    padding-top: 10px !important;
+    text-align: center;
+    margin-bottom: 12px;
+    padding-top: 10px;
   }
 }
 @media (min-width: 1200px) {
   .sk-single-store .profile-frame .profile-info-box .profile-info-summery-wrapper {
-    background-color: transparent !important;
-    border-color: transparent !important;
+    background-color: transparent;
+    border-color: transparent;
   }
 }
 
@@ -6637,26 +6637,26 @@ ul.sk-store-custom-fields ul {
   --tab-border: #2e3846 !important;
   --accent: #F7931A !important;
   --shadow: 0 14px 30px rgba(0,0,0,.28) !important;
-  background: var(--tab-bg) !important;
-  border: 1px solid var(--tab-border) !important;
-  border-radius: 20px !important;
-  box-shadow: var(--shadow) !important;
-  padding: 22px 18px 10px !important;
-  margin: 30px 0 22px !important;
+  background: var(--tab-bg);
+  border: 1px solid var(--tab-border);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  padding: 22px 18px 10px;
+  margin: 30px 0 22px;
 }
 .sk-single-store .sk-store-tabs .sk-modules-button,
 .sk-single-store .sk-store-tabs .sk-list-inline {
   background: transparent !important;
   border: 0 !important;
-  box-shadow: none !important;
+  box-shadow: none;
   margin: 0 !important;
   padding: 0 !important;
-  list-style: none !important;
+  list-style: none;
 }
 .sk-single-store .sk-store-tabs .sk-modules-button {
-  display: flex !important;
-  align-items: center !important;
-  gap: 10px !important;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin-bottom: 10px !important;
 }
 .sk-single-store .sk-store-tabs .sk-modules-button li { float: none !important; }
@@ -6681,32 +6681,32 @@ ul.sk-store-custom-fields ul {
   border-color: rgba(247,147,26,.45) !important;
 }
 .sk-single-store .sk-store-tabs .sk-list-inline {
-  display: flex !important;
-  gap: 10px !important;
+  display: flex;
+  gap: 10px;
   padding: 10px 6px 14px !important;
   border-top: 1px solid var(--tab-border) !important;
-  justify-content: center !important;
-  overflow: visible !important;
-  flex-wrap: wrap !important;
-  scrollbar-width: none !important;
+  justify-content: center;
+  overflow: visible;
+  flex-wrap: wrap;
+  scrollbar-width: none;
 }
-.sk-single-store .sk-store-tabs .sk-list-inline::-webkit-scrollbar { display: none !important; }
-.sk-single-store .sk-store-tabs .sk-list-inline li { margin: 0 !important; }
+.sk-single-store .sk-store-tabs .sk-list-inline::-webkit-scrollbar { display: none; }
+.sk-single-store .sk-store-tabs .sk-list-inline li { margin: 0; }
 .sk-single-store .sk-store-tabs .sk-list-inline li a {
   display: inline-flex !important;
-  align-items: center !important;
-  gap: 8px !important;
+  align-items: center;
+  gap: 8px;
   padding: 14px 22px !important;
-  border-radius: 999px !important;
-  background: var(--tab-pill) !important;
+  border-radius: 999px;
+  background: var(--tab-pill);
   color: var(--tab-text) !important;
-  border: 1px solid var(--tab-border) !important;
-  font-weight: 600 !important;
-  font-size: 16px !important;
-  line-height: 1 !important;
-  white-space: nowrap !important;
-  text-decoration: none !important;
-  transition: transform .15s ease, background .2s ease, color .2s ease, border-color .2s ease !important;
+  border: 1px solid var(--tab-border);
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: transform .15s ease, background .2s ease, color .2s ease, border-color .2s ease;
 }
 .sk-single-store .sk-store-tabs .sk-list-inline li a:hover {
   transform: translateY(-1px) !important;
@@ -6717,25 +6717,25 @@ ul.sk-store-custom-fields ul {
   background: linear-gradient(180deg, rgba(247,147,26,.18), rgba(247,147,26,.10)) !important;
   color: var(--tab-text-active) !important;
   border-color: rgba(247,147,26,.65) !important;
-  position: relative !important;
+  position: relative;
 }
 .sk-single-store .sk-store-tabs .sk-list-inline li.active a::after {
-  content: "" !important;
-  position: absolute !important;
-  left: 10px !important;
-  right: 10px !important;
-  bottom: -10px !important;
-  height: 4px !important;
-  border-radius: 4px !important;
-  background: var(--accent) !important;
-  box-shadow: 0 0 0 2px rgba(247,147,26,.15) !important;
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: -10px;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px rgba(247,147,26,.15);
 }
 @media (min-width: 992px) {
-  .sk-single-store .sk-store-tabs .sk-list-inline { justify-content: center !important; }
+  .sk-single-store .sk-store-tabs .sk-list-inline { justify-content: center; }
 }
 @media (max-width: 640px) {
   .sk-single-store .sk-store-tabs .sk-modules-button {
-    flex-wrap: wrap !important;
+    flex-wrap: wrap;
     gap: 8px !important;
   }
   .sk-single-store .sk-store-tabs .sk-modules-button li > a,
@@ -6749,15 +6749,15 @@ ul.sk-store-custom-fields ul {
     padding: 14px 12px 8px !important;
   }
   .sk-single-store .sk-store-tabs .sk-list-inline {
-    flex-direction: column !important;
-    align-items: stretch !important;
+    flex-direction: column;
+    align-items: stretch;
     gap: 8px !important;
     padding: 8px !important;
-    overflow-x: visible !important;
+    overflow-x: visible;
   }
   .sk-single-store .sk-store-tabs .sk-list-inline li a {
-    width: 100% !important;
-    justify-content: center !important;
+    width: 100%;
+    justify-content: center;
     padding: 12px 14px !important;
     border-radius: 14px !important;
     font-size: 15px !important;
@@ -6766,18 +6766,18 @@ ul.sk-store-custom-fields ul {
   .sk-single-store .sk-store-tabs .sk-list-inline li.active a::after {
     left: 8px !important;
     right: auto !important;
-    top: 50% !important;
+    top: 50%;
     bottom: auto !important;
-    width: 6px !important;
+    width: 6px;
     height: 60% !important;
-    transform: translateY(-50%) !important;
+    transform: translateY(-50%);
     border-radius: 6px !important;
   }
 }
 .sk-single-store .sk-store-tabs ul.sk-list-inline li {
-  display: block !important;
-  flex: 0 0 auto !important;
-  margin-right: 0 !important;
+  display: block;
+  flex: 0 0 auto;
+  margin-right: 0;
   border-right: 0 !important;
 }
 @media (max-width: 480px) {
@@ -6789,12 +6789,12 @@ ul.sk-store-custom-fields ul {
 
 .sk-single-store .sk-btn-sm,
 .sk-single-store a.sk-btn-sm {
-  background: #F7931A !important;
+  background: #F7931A;
   background-color: #F7931A !important;
-  border: none !important;
+  border: none;
   border-color: transparent !important;
-  color: #fff !important;
-  box-shadow: none !important;
+  color: #fff;
+  box-shadow: none;
 }
 .sk-single-store .sk-btn-sm:hover,
 .sk-single-store a.sk-btn-sm:hover {
