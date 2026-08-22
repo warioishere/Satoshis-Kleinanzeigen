@@ -752,6 +752,10 @@ function sk_get_post_status( $status = '' ) {
         'sk_get_post_status', [
             'publish' => __( 'Online', 'sk-core' ),
             'draft'   => __( 'Draft', 'sk-core' ),
+            // Ein noch nicht gespeichertes Inserat hat auto-draft. Ohne
+            // Eintrag lieferte sk_get_post_status() dafuer einen leeren String
+            // und die Status-Pille im Produktformular blieb leer.
+            'auto-draft' => __( 'Draft', 'sk-core' ),
             'pending' => __( 'Pending Review', 'sk-core' ),
             'future'  => __( 'Scheduled', 'sk-core' ),
         ]
