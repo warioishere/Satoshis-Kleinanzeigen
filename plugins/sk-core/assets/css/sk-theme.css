@@ -2142,12 +2142,6 @@ span.error {
     max-height: 400px;
   }
 }
-.sk-dashboard .sk-dash-sidebar {
-  width: 17%;
-  _float: left;
-  flex: 1 auto;
-  background-color: var(--sk-sidebar-background-color, #322067);
-}
 .sk-dashboard .sk-dash-sidebar ul.sk-dashboard-menu {
   background: var(--sk-sidebar-background-color, #322067);
   list-style: none;
@@ -2426,15 +2420,6 @@ div.media-sidebar a.edit-attachment {
 .daterangepicker .calendar-table td {
   padding: 5px 10px;
 }
-.sk-dashboard .sk-dashboard-wrap {
-  display: flex;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  flex-wrap: wrap;
-  -webkit-flex-wrap: wrap;
-  -ms-flex-wrap: wrap;
-  width: 100%;
-}
 .sk-dashboard .sk-dashboard-wrap * {
   box-sizing: border-box;
 }
@@ -2457,13 +2442,6 @@ div.media-sidebar a.edit-attachment {
 }
 .sk-dashboard header.sk-dashboard-header .sk-add-product-link .sk-btn {
   margin-right: 10px;
-}
-.sk-dashboard .sk-dashboard-content {
-  padding: 4px 4px 4px 25px;
-  overflow: hidden;
-  margin-top: 0px;
-  width: 83%;
-  flex: 5 auto;
 }
 .sk-dashboard .sk-dashboard-content article.dashboard-content-area:before,
 .sk-dashboard .sk-dashboard-content article.dashboard-content-area:after {
@@ -6153,11 +6131,6 @@ p.vendor-customer-registration .radio:hover {
     padding-left: 15px;
     padding-right: 15px;
   }
-  .sk-dashboard .sk-dash-sidebar,
-  .sk-dashboard .sk-dashboard-content {
-    float: none;
-    width: 100%;
-  }
   .sk-dashboard .sk-dash-sidebar ul.sk_tabs,
   .sk-dashboard .sk-dashboard-content ul.sk_tabs {
     border: 0;
@@ -6190,9 +6163,6 @@ p.vendor-customer-registration .radio:hover {
   }
   .sk-dashboard .sk-dash-sidebar ul.sk-dashboard-menu li a {
     padding: 12px 24px;
-  }
-  .sk-dashboard .sk-dashboard-content {
-    padding-left: 0;
   }
   ul.sk-seller-wrap {
     text-align: center;
@@ -6247,10 +6217,7 @@ p.vendor-customer-registration .radio:hover {
   .apply-filter #cancel-filter-btn {
     display: block !important;
   }
-  .sk-dashboard .sk-dash-sidebar,
-  .sk-dashboard .sk-dashboard-content {
-    float: none;
-    width: 100%;
+  .sk-dashboard .sk-dash-sidebar {
     padding: 20px 0;
   }
   .sk-dashboard .sk-dash-sidebar .sk-table,
@@ -6921,58 +6888,71 @@ ul.product_list_widget li div[style*="font-size: 0.8em"] {
 }
 
 /* ==========================================================
- * DASHBOARD LAYOUT — sidebar + content as one unified block
- * The WRAP gets the border-radius + overflow:hidden.
- * Sidebar and content have NO individual radius — the parent clips them.
+ * Dashboard-Grundlayout — Sidebar und Inhalt als ein Block
+ *
+ * Einzige Quelle fuer Aufbau und Groessen von .sk-dashboard-wrap,
+ * .sk-dash-sidebar und .sk-dashboard-content. Vorher war das ueber sechs
+ * Stellen der Datei verteilt, die einander per !important ueberschrieben —
+ * mit dem Ergebnis, dass ein `width: 83%` aus dem obersten Block unterhalb
+ * von 992px doch wirksam wurde und den Inhaltsbereich dort auf 83% der
+ * Breite verengte. Da nun nichts mehr konkurriert, kommt der Block ohne
+ * !important aus.
+ *
+ * Farbe und Hintergrund der Sidebar setzt weiter unten der Abschnitt
+ * "Dashboard sidebar nav"; das Innenabstandsmass fuer Mobile kommt aus dem
+ * Schalen-Block am Dateiende (--sk-dash-shell).
+ *
+ * Der Wrap traegt Eckenradius und overflow:hidden, deshalb bekommen Sidebar
+ * und Inhalt bewusst keinen eigenen Radius — der Elternteil beschneidet sie.
  * ========================================================== */
 
-/* Outer container: one seamless rounded block */
 .sk-dashboard .sk-dashboard-wrap {
-  display: flex !important;
-  flex-wrap: nowrap !important;
-  align-items: stretch !important;
-  gap: 0 !important;
-  overflow: hidden !important;
-  border-radius: 12px !important;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 12px;
 }
 
-/* Sidebar: fixed width, no individual radius, thin right divider */
 .sk-dashboard .sk-dash-sidebar {
-  flex: 0 0 220px !important;
-  max-width: 220px !important;
-  min-width: 220px !important;
-  align-self: stretch !important;
-  border-radius: 0 !important;
-  overflow: hidden !important;
-  border-right: 1px solid rgba(255,255,255,0.07) !important;
+  flex: 0 0 220px;
+  min-width: 220px;
+  max-width: 220px;
+  align-self: stretch;
+  overflow: hidden;
+  border-radius: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
 }
 
-/* Content: fills remaining width, no individual radius */
 .sk-dashboard .sk-dashboard-content {
-  flex: 1 1 0% !important;
-  min-width: 0 !important;
-  box-sizing: border-box !important;
-  border-radius: 0 !important;
-  background-color: #252d38 !important;
-  padding: 24px !important;
+  flex: 1 1 0%;
+  min-width: 0;
+  box-sizing: border-box;
   overflow: visible;
-  margin-top: 0 !important;
+  margin-top: 0;
+  padding: 24px;
+  border-radius: 0;
+  background-color: #252d38;
 }
 
-/* Mobile: stack vertically */
+/* Ab hier steht die Sidebar ueber dem Inhalt. Derselbe Breakpoint gilt fuer
+   die Hamburger-Navigation weiter oben — laufen die beiden auseinander,
+   steht eine voll ausgeklappte Navigation ueber dem Inhalt. */
 @media (max-width: 991px) {
   .sk-dashboard .sk-dashboard-wrap {
-    flex-direction: column !important;
-    border-radius: 8px !important;
+    flex-direction: column;
+    border-radius: 8px;
   }
   .sk-dashboard .sk-dash-sidebar {
-    flex: none !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-    width: 100% !important;
+    flex: none;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
   }
   .sk-dashboard .sk-dashboard-content {
-    padding: 16px !important;
+    width: 100%;
   }
 }
 
