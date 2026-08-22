@@ -48,6 +48,22 @@ final class PageCache {
     ];
 
     /**
+     * Dashboard sections whose content changes through OTHER people's actions
+     * and must therefore never be served from the cache.
+     *
+     * The cache key is built from the visitor's own login cookie, so only the
+     * visitor themselves can ever invalidate it. A chat partner writing a
+     * message has no way to reach that key — their message would sit invisible
+     * in the chat list until the TTL ran out. An opened conversation refreshes
+     * itself over AJAX every 10 seconds, the list does not.
+     *
+     * @var string[]
+     */
+    private const SKIP_PATHS = [
+        '/dashboard/vendor-chat',
+    ];
+
+    /**
      * Is the page cache switched on?
      */
     public static function is_enabled(): bool {
@@ -71,6 +87,12 @@ final class PageCache {
 
         foreach ( self::SKIP_PARAMS as $param ) {
             if ( false !== strpos( $uri, $param ) ) {
+                return false;
+            }
+        }
+
+        foreach ( self::SKIP_PATHS as $path ) {
+            if ( false !== strpos( $uri, $path ) ) {
                 return false;
             }
         }

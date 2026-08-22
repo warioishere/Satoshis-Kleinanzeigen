@@ -1,0 +1,27 @@
+/**
+ * Weiche Seitenwechsel im Verkaeufer-Dashboard.
+ *
+ * Cross-Document View Transitions: der Browser blendet zwischen alter und
+ * neuer Seite ueber, statt den Inhalt kurz weiss aufblitzen zu lassen. Die
+ * Navigation bleibt ein ganz normaler Seitenwechsel — kein abgefangener
+ * Klick, kein DOM-Tausch, keine Skript-Neuinitialisierung, kein Scrollcode.
+ *
+ * Wirkt nur, wenn BEIDE beteiligten Seiten die Regel mitbringen. Diese Datei
+ * wird ausschliesslich im Dashboard geladen, also gilt der Uebergang zwischen
+ * Dashboard-Seiten und sonst nirgends. Browser ohne Unterstuetzung ignorieren
+ * die At-Regel und verhalten sich exakt wie bisher.
+ */
+
+@view-transition {
+	navigation: auto;
+}
+
+/* Wer im Betriebssystem weniger Bewegung eingestellt hat, bekommt den
+   Seitenwechsel ohne Animation — der Uebergang ist dann sofort fertig. */
+@media (prefers-reduced-motion: reduce) {
+	::view-transition-group(*),
+	::view-transition-old(*),
+	::view-transition-new(*) {
+		animation: none !important;
+	}
+}

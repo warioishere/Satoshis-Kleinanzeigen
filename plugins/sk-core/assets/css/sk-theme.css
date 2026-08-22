@@ -2389,7 +2389,12 @@ span.error {
     opacity: 1;
   }
 }
-@media only screen and (max-width: 450px) {
+/* Der Breakpoint muss dem des Layouts entsprechen (991px, weiter unten):
+   darunter steht die Sidebar ueber dem Inhalt. Stand er wie frueher auf
+   450px, war die Navigation zwischen 451px und 991px voll ausgeklappt —
+   dreizehn Eintraege oberhalb des Inhalts, an denen man nach jedem
+   Seitenwechsel erst vorbeiscrollen musste. */
+@media only screen and (max-width: 991px) {
   .sk-dashboard .sk-dash-sidebar #sk-navigation {
     height: 33px;
     position: relative;

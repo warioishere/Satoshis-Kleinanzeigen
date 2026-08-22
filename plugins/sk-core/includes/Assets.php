@@ -221,6 +221,11 @@ class Assets {
                 'deps'    => [],
                 'version' => self::asset_version( $dir . 'css/sk-theme.css' ),
             ],
+            'sk-dashboard-transitions'   => [
+                'src'     => SK_CORE_ASSETS . '/css/sk-dashboard-transitions.css',
+                'deps'    => [],
+                'version' => self::asset_version( $dir . 'css/sk-dashboard-transitions.css' ),
+            ],
             'sk-store-settings'          => [
                 'src'  => SK_CORE_ASSETS . '/css/sk-store-settings.css',
                 'deps' => [],
@@ -589,6 +594,13 @@ class Assets {
         // load only in sk dashboard and product edit page
         if ( ( sk_is_seller_dashboard() || ( get_query_var( 'edit' ) && is_singular( 'product' ) ) ) || apply_filters( 'sk_forced_load_scripts', false ) ) {
             $this->sk_dashboard_scripts();
+        }
+
+        // Weiche Uebergaenge zwischen Dashboard-Seiten. Bewusst nur hier: eine
+        // Cross-Document View Transition greift nur, wenn beide Seiten die
+        // Regel mitbringen, also bleibt der oeffentliche Teil unveraendert.
+        if ( sk_is_seller_dashboard() ) {
+            wp_enqueue_style( 'sk-dashboard-transitions' );
         }
 
         // Load category ui css and product-edit JS on product add/edit pages.
