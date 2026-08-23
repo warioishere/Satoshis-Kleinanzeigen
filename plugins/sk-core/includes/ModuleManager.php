@@ -287,6 +287,15 @@ class ModuleManager {
                         'module_class' => 'SK\Modules\Feed\Module',
                         'categories'   => [ 'Store Management' ],
                     ],
+                    'sk_shop_import' => [
+                        'id'           => 'sk_shop_import',
+                        'name'         => __( 'Shop-Import', 'sk-core' ),
+                        'description'  => __( 'Haendlerkataloge per CSV als Inserate uebernehmen.', 'sk-core' ),
+                        'thumbnail'    => $thumbnail_dir . '/follow-store.svg',
+                        'module_file'  => SK_CORE_DIR . '/modules' . '/sk-shop-import/module.php',
+                        'module_class' => 'SK\Modules\ShopImport\Module',
+                        'categories'   => [ 'Product Management' ],
+                    ],
                     'sk_contact_clicks' => [
                         'id'           => 'sk_contact_clicks',
                         'name'         => __( 'Kontaktklicks', 'sk-core' ),
