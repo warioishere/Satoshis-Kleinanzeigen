@@ -1,0 +1,231 @@
+/* Spendenbalken */
+
+.sk-donate {
+    max-width: 720px;
+    margin: 2rem auto;
+    padding: 1.25rem 1.5rem;
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    border-radius: 10px;
+}
+
+.sk-donate--compact {
+    padding: 1rem 1.25rem;
+}
+
+.sk-donate__heading {
+    margin: 0 0 0.5rem;
+    font-size: 1.15rem;
+}
+
+.sk-donate__intro,
+.sk-donate__numbers,
+.sk-donate__missing,
+.sk-donate__hint {
+    margin: 0 0 0.6rem;
+}
+
+.sk-donate__intro {
+    opacity: 0.85;
+}
+
+.sk-donate__error {
+    border-left: 4px solid #d63638;
+    padding: 0.5rem 0.8rem;
+    background: rgba(214, 54, 56, 0.08);
+}
+
+.sk-donate__track {
+    position: relative;
+    height: 22px;
+    border-radius: 11px;
+    background: rgba(128, 128, 128, 0.2);
+    overflow: hidden;
+    margin-bottom: 0.6rem;
+}
+
+.sk-donate__fill {
+    height: 100%;
+    background: #db6218;
+    transition: width 0.4s ease;
+}
+
+.sk-donate__pct {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.sk-donate__missing--done {
+    color: #008a20;
+    font-weight: 600;
+}
+
+.sk-donate__amounts {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.8rem;
+}
+
+.sk-donate__amount {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.8rem;
+    border: 1px solid rgba(128, 128, 128, 0.4);
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.sk-donate__amount:has(input:checked) {
+    border-color: #db6218;
+    box-shadow: 0 0 0 1px #db6218;
+}
+
+.sk-donate__amount--free input {
+    width: 7rem;
+}
+
+.sk-donate__submit {
+    padding: 0.6rem 1.2rem;
+    border: 0;
+    border-radius: 6px;
+    background: #db6218;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.sk-donate__submit:hover,
+.sk-donate__submit:focus-visible {
+    filter: brightness(1.08);
+}
+
+.sk-donate__hint {
+    font-size: 0.82rem;
+    opacity: 0.75;
+    margin-bottom: 0;
+}
+
+@media (max-width: 540px) {
+    .sk-donate__amounts { gap: 0.4rem; }
+    .sk-donate__amount--free input { width: 100%; }
+}
+
+/* ---- Modal nach dem Loeschen eines Inserats (Optik wie das Logout-Modal) ---- */
+
+.sk-donate-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sk-donate-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+}
+
+.sk-donate-modal-box {
+    position: relative;
+    background: #181e27;
+    border-radius: 12px;
+    padding: 36px 40px 28px;
+    max-width: 420px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: skDonateSlideUp 0.3s ease;
+}
+
+@keyframes skDonateSlideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.sk-donate-modal-icon {
+    font-size: 44px;
+    color: #f7931a;
+    margin-bottom: 14px;
+}
+
+.sk-donate-modal-box h3 {
+    color: #fff;
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 8px;
+}
+
+.sk-donate-modal-box p {
+    color: #9aa4b2;
+    font-size: 15px;
+    line-height: 1.5;
+    margin: 0 0 24px;
+}
+
+.sk-donate-modal-amounts {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 18px;
+}
+
+.sk-donate-modal-amount {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: #2b3240;
+    border: 2px solid #2b3240;
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 12px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sk-donate-modal-amount small {
+    font-weight: 500;
+    font-size: 11px;
+    color: #9aa4b2;
+}
+
+.sk-donate-modal-amount:hover,
+.sk-donate-modal-amount:focus-visible {
+    background: #f7931a;
+    border-color: #f7931a;
+    color: #181e27;
+}
+
+.sk-donate-modal-amount:hover small,
+.sk-donate-modal-amount:focus-visible small {
+    color: #181e27;
+}
+
+.sk-donate-modal-close {
+    background: none;
+    border: 0;
+    color: #9aa4b2;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+.sk-donate-modal-close:hover {
+    color: #fff;
+}
+
+@media (max-width: 420px) {
+    .sk-donate-modal-box { padding: 28px 22px 22px; }
+    .sk-donate-modal-amounts { flex-wrap: wrap; }
+}

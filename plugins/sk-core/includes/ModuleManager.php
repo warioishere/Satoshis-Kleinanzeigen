@@ -288,6 +288,15 @@ class ModuleManager {
                         'module_class' => 'SK\Modules\Feed\Module',
                         'categories'   => [ 'Store Management' ],
                     ],
+                    'sk_donations' => [
+                        'id'           => 'sk_donations',
+                        'name'         => __( 'Spenden', 'sk-core' ),
+                        'description'  => __( 'Kostendeckung sichtbar machen und Spenden ueber BTCPay annehmen.', 'sk-core' ),
+                        'thumbnail'    => $thumbnail_dir . '/follow-store.svg',
+                        'module_file'  => SK_CORE_DIR . '/modules' . '/sk-donations/module.php',
+                        'module_class' => 'SK\Modules\Donations\Module',
+                        'categories'   => [ 'Store Management' ],
+                    ],
                     'sk_sponsors' => [
                         'id'           => 'sk_sponsors',
                         'name'         => __( 'Sponsoren', 'sk-core' ),
