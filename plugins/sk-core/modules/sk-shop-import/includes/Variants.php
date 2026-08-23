@@ -119,7 +119,10 @@ final class Variants {
         $allowed  = self::is_allowed();
         $variants = $post_id ? self::get( $post_id ) : [];
         $pack     = self::cheapest_allowed_pack();
-        $currency = Settings::currency()['currency'];
+
+        // Einheit des Inserats — bei importierten Artikeln ist das die
+        // Waehrung aus der Datei, sonst Sats.
+        $currency = PriceUnit::current( $post_id );
 
         include SK_SHOP_IMPORT_PATH . '/templates/variants-field.php';
     }
@@ -143,10 +146,12 @@ final class Variants {
             return;
         }
 
-        $names    = array_map( 'sanitize_text_field', wp_unslash( $_POST['sk_variant_name'] ) );
-        $prices   = isset( $_POST['sk_variant_price'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['sk_variant_price'] ) ) : [];
-        $currency = isset( $_POST['sk_variant_currency'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_POST['sk_variant_currency'] ) ) ) : 'EUR';
-        $currency = in_array( $currency, [ 'EUR', 'CHF' ], true ) ? $currency : 'EUR';
+        $names  = array_map( 'sanitize_text_field', wp_unslash( $_POST['sk_variant_name'] ) );
+        $prices = isset( $_POST['sk_variant_price'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['sk_variant_price'] ) ) : [];
+
+        // Dieselbe Einheit wie der Inseratspreis — zwei Einheiten in einem
+        // Inserat waeren nicht vergleichbar und der "ab"-Preis waere Unsinn.
+        $currency = PriceUnit::posted( $post_id );
 
         $existing = [];
         foreach ( self::get( $post_id ) as $variant ) {
@@ -160,12 +165,18 @@ final class Variants {
                 continue;
             }
 
-            $fiat = Importer::parse_price( (string) ( $prices[ $index ] ?? '' ) );
-            $sats = null;
+            $amount = Importer::parse_price( (string) ( $prices[ $index ] ?? '' ) );
+            $fiat   = null;
+            $sats   = null;
 
-            if ( $fiat !== null && $fiat > 0 ) {
-                $converted = Rate::to_sats( $fiat, $currency );
-                $sats      = is_wp_error( $converted ) ? null : (int) $converted;
+            if ( $amount !== null && $amount > 0 ) {
+                if ( $currency === 'SATS' ) {
+                    $sats = (int) round( $amount );
+                } else {
+                    $fiat      = $amount;
+                    $converted = Rate::to_sats( $fiat, $currency );
+                    $sats      = is_wp_error( $converted ) ? null : (int) $converted;
+                }
             }
 
             $clean[] = [
@@ -186,24 +197,37 @@ final class Variants {
         }
 
         update_post_meta( $post_id, Importer::META_VARIANTS, $clean );
+        update_post_meta( $post_id, Importer::META_FROM, count( $clean ) > 1 ? 1 : 0 );
 
         // Der Inseratspreis ist der guenstigste — daher "ab".
         $lowest = null;
         foreach ( $clean as $variant ) {
-            if ( $variant['sats'] !== null && ( $lowest === null || $variant['sats'] < $lowest ) ) {
-                $lowest = (int) $variant['sats'];
+            if ( $variant['sats'] === null || $variant['sats'] <= 0 ) {
+                continue;
+            }
+            if ( $lowest === null || $variant['sats'] < $lowest['sats'] ) {
+                $lowest = $variant;
             }
         }
 
-        update_post_meta( $post_id, Importer::META_FROM, count( $clean ) > 1 ? 1 : 0 );
+        if ( $lowest === null ) {
+            return;
+        }
 
-        if ( $lowest !== null ) {
-            $product = wc_get_product( $post_id );
-            if ( $product ) {
-                $product->set_regular_price( (string) $lowest );
-                $product->set_price( (string) $lowest );
-                $product->save();
-            }
+        // Bei Fiat denselben Betrag hinterlegen wie der Import: daran haengen
+        // der Klammerzusatz auf der Produktseite und die taegliche
+        // Kursnachfuehrung. Ohne ihn stuende der Sats-Preis handgepflegter
+        // Inserate still, waehrend importierte mitwandern.
+        if ( $lowest['price'] !== null ) {
+            update_post_meta( $post_id, Importer::META_FIAT, $lowest['price'] );
+            update_post_meta( $post_id, Importer::META_CURRENCY, $currency );
+        }
+
+        $product = wc_get_product( $post_id );
+        if ( $product ) {
+            $product->set_regular_price( (string) $lowest['sats'] );
+            $product->set_price( (string) $lowest['sats'] );
+            $product->save();
         }
     }
 }

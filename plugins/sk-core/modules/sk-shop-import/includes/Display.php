@@ -37,10 +37,22 @@ class Display {
 
             echo '<li><span class="sk-variants__name">' . esc_html( $name ) . '</span>';
 
+            $label = '';
+
             if ( $price !== null && $price > 0 ) {
-                echo ' <span class="sk-variants__price">'
-                    . esc_html( self::format_fiat( (float) $price, (string) ( $variant['currency'] ?? 'EUR' ) ) )
-                    . '</span>';
+                $label = self::format_fiat( (float) $price, (string) ( $variant['currency'] ?? 'EUR' ) );
+            } elseif ( ! empty( $variant['sats'] ) ) {
+                // In Sats ausgezeichnet: dann gibt es keinen Fiatbetrag, und
+                // ohne diesen Zweig stuende die Ausfuehrung ganz ohne Preis da.
+                $label = sprintf(
+                    /* translators: %s: amount in sats */
+                    __( '%s Sats', 'sk-core' ),
+                    number_format_i18n( (int) $variant['sats'] )
+                );
+            }
+
+            if ( $label !== '' ) {
+                echo ' <span class="sk-variants__price">' . esc_html( $label ) . '</span>';
             }
 
             echo '</li>';

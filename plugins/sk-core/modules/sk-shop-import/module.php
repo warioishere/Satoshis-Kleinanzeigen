@@ -40,7 +40,7 @@ final class Module {
     }
 
     private function includes() {
-        foreach ( [ 'Dealer', 'Rate', 'Csv', 'Catalog', 'Settings', 'Quota', 'Storage', 'Silence', 'Importer', 'PriceRefresh', 'Variants', 'Display', 'DashboardPage', 'AdminPage' ] as $class ) {
+        foreach ( [ 'Dealer', 'Rate', 'Csv', 'Catalog', 'Settings', 'Quota', 'Storage', 'Silence', 'Importer', 'PriceRefresh', 'Variants', 'PriceUnit', 'Display', 'DashboardPage', 'AdminPage' ] as $class ) {
             require_once SK_SHOP_IMPORT_INCLUDES . '/' . $class . '.php';
         }
     }
@@ -50,6 +50,7 @@ final class Module {
         new PriceRefresh();
         new Display();
         new Variants();
+        new PriceUnit();
 
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue' ], 20 );
 

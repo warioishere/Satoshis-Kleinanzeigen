@@ -267,10 +267,20 @@ do_action( 'sk_dashboard_wrap_before', $post, $post_id );
 
                                         <div class="sk-form-group sk-clearfix sk-price-container">
 
+                                            <?php
+                                            // Ab einem groesseren Paket darf der Preis in Fiat ausgezeichnet
+                                            // werden; dann steht im Feld der Fiatbetrag, nicht der Sats-Preis.
+                                            $sk_price_unit = class_exists( \SK\Modules\ShopImport\PriceUnit::class )
+                                                && \SK\Modules\ShopImport\PriceUnit::is_allowed();
+                                            ?>
                                             <div class="content-half-part regular-price">
                                                 <label for="_regular_price" class="form-label"><?php esc_html_e( 'Price', 'sk-core' ); ?></label>
                                                 <div class="sk-input-group">
-                                                    <span class="sk-input-group-addon"><?php echo esc_html( get_woocommerce_currency_symbol() ); ?></span>
+                                                    <?php if ( $sk_price_unit ) : ?>
+                                                        <?php \SK\Modules\ShopImport\PriceUnit::render_select( $post_id ); ?>
+                                                    <?php else : ?>
+                                                        <span class="sk-input-group-addon"><?php echo esc_html( get_woocommerce_currency_symbol() ); ?></span>
+                                                    <?php endif; ?>
                                                     <?php
                                                     sk_post_input_box(
                                                         $post_id,
@@ -278,6 +288,7 @@ do_action( 'sk_dashboard_wrap_before', $post, $post_id );
                                                         [
                                                             'class'       => 'sk-product-regular-price',
 															'placeholder' => sprintf( '%.0' . get_option( 'woocommerce_price_num_decimals' ) . 'f', 0 ),
+                                                            'value'       => $sk_price_unit ? \SK\Modules\ShopImport\PriceUnit::input_value( $post_id ) : null,
                                                         ],
                                                         'price'
                                                     );
