@@ -288,6 +288,15 @@ class ModuleManager {
                         'module_class' => 'SK\Modules\Feed\Module',
                         'categories'   => [ 'Store Management' ],
                     ],
+                    'sk_sponsors' => [
+                        'id'           => 'sk_sponsors',
+                        'name'         => __( 'Sponsoren', 'sk-core' ),
+                        'description'  => __( 'Sponsorenplätze der Startseite mit Klickmessung über /go/.', 'sk-core' ),
+                        'thumbnail'    => $thumbnail_dir . '/follow-store.svg',
+                        'module_file'  => SK_CORE_DIR . '/modules' . '/sk-sponsors/module.php',
+                        'module_class' => 'SK\Modules\Sponsors\Module',
+                        'categories'   => [ 'Store Management' ],
+                    ],
                 ]
             );
         }

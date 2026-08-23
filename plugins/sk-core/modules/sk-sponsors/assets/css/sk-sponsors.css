@@ -1,0 +1,116 @@
+/*
+ * Sponsorenraster ([sk_sponsors]).
+ *
+ * Das Layout selbst kommt aus der Kadence-Theme-CSS (content.min.css), die auf
+ * jeder Seite geladen wird — hier stehen nur die Regeln, die früher das Plugin
+ * kadence-blocks beigesteuert hat. Dessen Stylesheet wird ohne den Block nicht
+ * mehr eingebunden, deshalb sind die drei relevanten Deklarationen hier
+ * nachgebaut. Optisch ist das Ergebnis identisch zur Blockvariante.
+ */
+
+ul.wp-block-kadence-posts.kb-posts.sk-sponsors {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* Kam bisher als blockspezifisches Inline-CSS (.kb-posts-id-… .kb-post-list-item). */
+.sk-sponsors .kb-post-list-item {
+    display: grid;
+}
+
+.sk-sponsors .loop-entry {
+    box-shadow: 0 15px 25px -10px rgba(0, 0, 0, 0.05);
+    border-radius: 0.25rem;
+}
+
+/* ---- Selbstbedienungsseite /sponsor/<token>/ ---- */
+
+.sk-sponsor-portal {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 2rem 1rem 3rem;
+}
+
+.sk-portal-lead {
+    opacity: 0.8;
+    margin-top: -0.5rem;
+}
+
+.sk-portal-error {
+    border-left: 4px solid #d63638;
+    padding: 0.6rem 0.9rem;
+    background: rgba(214, 54, 56, 0.08);
+}
+
+.sk-portal-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.sk-portal-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 1rem;
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    border-radius: 8px;
+    text-align: center;
+}
+
+.sk-portal-num {
+    font-size: 1.9rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.sk-portal-lbl {
+    font-size: 0.8rem;
+    opacity: 0.75;
+}
+
+.sk-portal-status {
+    font-weight: 600;
+}
+
+.sk-portal-status.is-on::before { content: "● "; color: #008a20; }
+.sk-portal-status.is-off::before { content: "● "; color: #d63638; }
+
+.sk-portal-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 0.75rem;
+    margin: 1rem 0 1.5rem;
+}
+
+.sk-portal-option {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.9rem;
+    border: 1px solid rgba(128, 128, 128, 0.35);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.sk-portal-option:has(input:checked) {
+    border-color: #db6218;
+    box-shadow: 0 0 0 1px #db6218;
+}
+
+.sk-portal-option input[type="number"] {
+    width: 100%;
+}
+
+.sk-portal-submit {
+    font-size: 1.05rem;
+    padding: 0.7rem 1.4rem;
+}
+
+.sk-portal-hint {
+    font-size: 0.85rem;
+    opacity: 0.75;
+    margin-top: 0.6rem;
+}
