@@ -1,0 +1,95 @@
+/*
+ * Uebernommen aus dem Plugin wp-post-image-carousel 2.0.3.
+ * Die responsive-Datei enthielt eigene Anpassungen, die im Plugin-Ordner
+ * lagen und ein Update nicht ueberlebt haetten.
+ */
+
+/* ========== WPPIS Responsive Carousel (Plugin-intern) ========== */
+
+/* Immer gleiche Lücken – 15px, zentral definiert */
+.wppis-slider {
+  --wppis-gap: 15px;
+}
+
+/* Track-Grundlayout */
+.wppis-slider .wppis-track {
+  display: flex;
+  gap: var(--wppis-gap);
+}
+
+/* Slides: keine Umbrüche in der Horizontalen, items behalten eigene Breite */
+.wppis-slider .wppis-slide {
+  box-sizing: border-box;
+  flex: 0 0 auto;            /* kein Flex-Wachstum, einzeilig */
+  scroll-snap-align: start;  /* sauberer Snap beim Scrollen (optional) */
+}
+
+/* Medien und Bilder füllen die Slide-Breite aus, behalten Seitenverhältnis */
+.wppis-slider .wppis-figure,
+.wppis-slider .wppis-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0;
+}
+
+/* Vertical bleibt IMMER vertikal */
+.wppis-slider.vertical .wppis-track {
+  flex-direction: column !important;
+  overflow: visible;          /* kein horizontaler Scroll in vertical */
+}
+
+/* Fixe Lücken auch in vertical */
+.wppis-slider.vertical .wppis-slide {
+  margin: 0;                  /* Lücke kommt über gap */
+}
+
+/* Horizontal ist IMMER einzeilig horizontal scrollend */
+.wppis-slider.horizontal .wppis-track {
+  flex-direction: row !important;
+  overflow-x: auto !important;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;      /* Firefox: schmale Leiste */
+  scroll-snap-type: x proximity; /* optionaler Snap */
+  padding-bottom: 2px;        /* kleine “Luft” für ggf. Scrollbar */
+}
+
+/* Keine prozentbasierten Spalten – Anzahl ergibt sich dynamisch,
+   abhängig von Breite der Slides/Bilder. Die Lücke bleibt fix 15px. */
+.wppis-slider.horizontal .wppis-slide {
+  min-width: auto;            /* keine harte Mindestbreite */
+  margin: 0;                  /* Lücke kommt über gap */
+}
+
+/* Option: Bilder sollen “inhaltliche Höhe steuern”, nicht sprengen */
+.wppis-slider.horizontal .wppis-figure img {
+  object-fit: cover;          /* bei gleichmäßigen Thumbs ok; sonst auf "contain" ändern */
+  /* object-fit: contain;     <- wenn Original-Seitenverhältnisse absolut erhalten bleiben sollen */
+}
+
+/* Ab Desktop (>= 1025px): horizontal ausblenden (wie bisher) */
+@media (min-width: 1025px) {
+  .wppis-slider.horizontal {
+    display: none !important;
+  }
+}
+
+/* Mobile (<= 767px) – keine speziellen Spaltenberechnungen mehr.
+   Wir vertrauen vollständig auf flex:0 0 auto + gap für “so viel passt rein”. */
+@media (max-width: 767px) {
+  .wppis-slider.horizontal .wppis-track {
+    /* schon oben gesetzt; hier optional, falls das Plugin anderes injected */
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Tablet (768–1024px): dito – dynamisch, ohne harte Spaltenzahl */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .wppis-slider.horizontal .wppis-track {
+    flex-direction: row !important;
+    overflow-x: auto !important;
+  }
+}

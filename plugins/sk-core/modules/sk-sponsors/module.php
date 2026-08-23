@@ -50,6 +50,7 @@ final class Module {
         require_once SK_SPONSORS_INCLUDES . '/Notifier.php';
         require_once SK_SPONSORS_INCLUDES . '/Tracker.php';
         require_once SK_SPONSORS_INCLUDES . '/Shortcode.php';
+        require_once SK_SPONSORS_INCLUDES . '/Carousel.php';
         require_once SK_SPONSORS_INCLUDES . '/Migration.php';
         require_once SK_SPONSORS_INCLUDES . '/AdminPage.php';
     }
@@ -71,6 +72,7 @@ final class Module {
         new Portal();
         new Notifier();
         new Shortcode();
+        new Carousel();
 
         add_filter( 'sk_php_dashboard_pages', function ( $pages ) {
             $pages['sponsors'] = new AdminPage();
