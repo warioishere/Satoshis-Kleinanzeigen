@@ -19,7 +19,26 @@
 
     function close() {
         var el = modal();
-        if (el) el.style.display = 'none';
+        if (el) el.classList.remove('is-visible');
+    }
+
+    /**
+     * Einblenden, nachdem sich die Seite gesetzt hat. Ohne die Verzoegerung
+     * erscheint das Modal im selben Moment wie das fertige Dashboard und
+     * wirkt wie ein Aufblitzen.
+     */
+    function reveal() {
+        var el = modal();
+        if (!el) return;
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () { el.classList.add('is-visible'); });
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () { setTimeout(reveal, 550); });
+    } else {
+        setTimeout(reveal, 550);
     }
 
     function openBtcpay(data) {

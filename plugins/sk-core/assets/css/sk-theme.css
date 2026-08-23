@@ -12253,3 +12253,12 @@ div.sk-error { border-left-color: #ef4444; }
 [dir="rtl"] .mapboxgl-map {
   text-align: inherit;
 }
+
+/* Beschreibungs-Editor im Produktformular: heller Text auf dunklem Grund,
+   dieselben Werte wie im Biografie-Editor. Farbe und Grund zusammen setzen —
+   nur eines von beidem ergibt hell auf hell. */
+textarea#post_content,
+textarea.wp-editor-area.post_content {
+    color: #e8ecf0;
+    background-color: #252d38;
+}

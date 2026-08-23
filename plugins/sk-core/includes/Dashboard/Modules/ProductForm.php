@@ -13,6 +13,12 @@ class ProductForm {
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_edit_extras' ], 20 );
         add_filter( 'wp_insert_post_data', [ $this, 'enforce_draft_if_incomplete' ], 10, 2 );
 
+        // Schriftfarbe im Beschreibungs-Editor. Das Feld laeuft im teeny-Modus,
+        // der einen eigenen Filter benutzt — tiny_mce_before_init allein greift
+        // dort nicht.
+        add_filter( 'tiny_mce_before_init',  [ $this, 'description_editor_text_color' ], 10, 2 );
+        add_filter( 'teeny_mce_before_init', [ $this, 'description_editor_text_color' ], 10, 2 );
+
         // P2P Versandkosten-Feld
         add_action( 'sk_process_product_meta', [ $this, 'save_shipping_note' ] );
         add_action( 'woocommerce_single_product_summary', [ $this, 'output_shipping_display' ], 11 );
@@ -340,5 +346,32 @@ class ProductForm {
         }
         update_post_meta( $product_id, '_yoast_wpseo_focuskw', $title );
         return [ 'type' => 'updated', 'message' => sprintf( 'Focus keyword for "%s" synced.', esc_html( $post->post_title ) ) ];
+    }
+
+    /**
+     * Helle Schrift im Beschreibungs-Editor.
+     *
+     * Der visuelle Editor laeuft in einem iframe, den die Seiten-CSS nicht
+     * erreicht — die Farbe muss ueber content_style hinein. Gesetzt wird
+     * ausschliesslich die Schriftfarbe: Der Hintergrund kommt aus dem
+     * Dashboard und bleibt unangetastet.
+     */
+    public function description_editor_text_color( $init, $editor_id ) {
+        if ( 'post_content' !== $editor_id ) {
+            return $init;
+        }
+
+        // Farbe und Grund gehoeren zusammen: Nur die Schrift aufzuhellen wuerde
+        // hell auf hell ergeben, falls der iframe seinen weissen Standardgrund
+        // behaelt. Dieselben Werte wie im Biografie-Editor des Dashboards.
+        $own = 'html, body { background: #252d38; }'
+             . ' body, body p, body li, body h1, body h2, body h3, body h4, body blockquote { color: #e8ecf0; }'
+             . ' body a { color: #F7931A; }';
+
+        $init['content_style'] = isset( $init['content_style'] )
+            ? $init['content_style'] . ' ' . $own
+            : $own;
+
+        return $init;
     }
 }

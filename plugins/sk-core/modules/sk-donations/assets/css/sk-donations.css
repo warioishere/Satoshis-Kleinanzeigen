@@ -125,6 +125,19 @@
     display: flex;
     align-items: center;
     justify-content: center;
+
+    /* Startet unsichtbar. Sonst steht es sofort im fertig geladenen
+       Dashboard und wirkt wie ein Aufblitzen; das Einblenden uebernimmt
+       das Skript kurz nach dem Laden. */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.45s ease, visibility 0s linear 0.45s;
+}
+
+.sk-donate-modal.is-visible {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.45s ease, visibility 0s;
 }
 
 .sk-donate-modal-backdrop {
@@ -143,12 +156,19 @@
     width: 90%;
     text-align: center;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    animation: skDonateSlideUp 0.3s ease;
+    transform: translateY(14px);
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-@keyframes skDonateSlideUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+.sk-donate-modal.is-visible .sk-donate-modal-box {
+    transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sk-donate-modal,
+    .sk-donate-modal .sk-donate-modal-box {
+        transition: none;
+    }
 }
 
 .sk-donate-modal-icon {
