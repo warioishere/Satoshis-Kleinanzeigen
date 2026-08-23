@@ -30,6 +30,8 @@ class AdminPage extends AbstractPage {
         $month_bp  = Donations::sum_btcpay( current_time( 'Y-m-01 00:00:00' ), current_time( 'mysql' ) );
         $since     = Donations::count_since();
         $btcpay_ok = BtcPay::is_configured();
+        $exclude   = implode( ', ', BtcPay::exclude_patterns() );
+        $sources   = $btcpay_ok ? BtcPay::sources( $since ) : [];
         $total     = Donations::received_total();
         $coverage  = Donations::coverage();
         $dashboard  = Placement::dashboard_enabled();
@@ -71,12 +73,19 @@ class AdminPage extends AbstractPage {
         $action = isset( $_POST['sk_donations_action'] ) ? sanitize_text_field( wp_unslash( $_POST['sk_donations_action'] ) ) : '';
         $notice = '';
 
+        if ( $action === 'refresh' ) {
+            BtcPay::flush_cache();
+            $notice = 'refreshed';
+        }
+
         if ( $action === 'save' ) {
             Donations::set_goal( isset( $_POST['sk_donations_goal'] ) ? absint( $_POST['sk_donations_goal'] ) : 0 );
             update_option( Placement::OPTION_DASHBOARD, isset( $_POST['sk_donations_dashboard'] ) ? 1 : 0 );
             update_option( Placement::OPTION_SOLD_MODAL, isset( $_POST['sk_donations_sold_modal'] ) ? 1 : 0 );
             Donations::set_presets( 'modal', isset( $_POST['sk_donations_presets_modal'] ) ? sanitize_text_field( wp_unslash( $_POST['sk_donations_presets_modal'] ) ) : '' );
             Donations::set_presets( 'bar', isset( $_POST['sk_donations_presets_bar'] ) ? sanitize_text_field( wp_unslash( $_POST['sk_donations_presets_bar'] ) ) : '' );
+
+            BtcPay::set_exclude_patterns( isset( $_POST['sk_donations_exclude'] ) ? sanitize_text_field( wp_unslash( $_POST['sk_donations_exclude'] ) ) : '' );
 
             $raw_since = isset( $_POST['sk_donations_since'] ) ? sanitize_text_field( wp_unslash( $_POST['sk_donations_since'] ) ) : '';
             if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $raw_since ) ) {

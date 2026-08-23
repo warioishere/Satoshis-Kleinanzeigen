@@ -14,6 +14,8 @@
  * @var int    $month_bp
  * @var int    $since
  * @var bool   $btcpay_ok
+ * @var string $exclude
+ * @var array  $sources
  * @var string $notice
  * @var array  $orders
  * @var array  $history
@@ -27,6 +29,8 @@ $max      = max( 1, max( $history ) );
 
 <?php if ( $notice === 'saved' ) : ?>
     <div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Gespeichert.', 'sk-core' ); ?></p></div>
+<?php elseif ( $notice === 'refreshed' ) : ?>
+    <div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Zahlen vom BTCPay-Server neu geladen.', 'sk-core' ); ?></p></div>
 <?php endif; ?>
 
 <h2 style="margin-top:0;"><?php esc_html_e( 'Spenden', 'sk-core' ); ?></h2>
@@ -68,8 +72,47 @@ $max      = max( 1, max( $history ) );
         </tbody>
     </table>
     <p style="color:#646970;font-size:12px;">
-        <?php esc_html_e( 'Crowdfund-Zahlungen laufen auf dem BTCPay-Server und berühren WooCommerce nicht; sie werden über die API dazugeholt. Rechnungen in Euro oder Franken bleiben unberücksichtigt, weil ein geschätzter Kurs in einer Zahlenanzeige nichts verloren hat. Die Kontaktdaten-Feewall zählt nicht als Spende.', 'sk-core' ); ?>
+        <?php esc_html_e( 'Crowdfund-Zahlungen laufen auf dem BTCPay-Server und berühren WooCommerce nicht; sie werden über die API dazugeholt. Es gibt keine feste Liste von Crowdfunds — jede bezahlte Rechnung ohne WooCommerce-Bestellnummer zählt, gelöschte Apps stören nicht, neue erscheinen von selbst. Rechnungen in Euro oder Franken bleiben unberücksichtigt, weil ein geschätzter Kurs in einer Zahlenanzeige nichts verloren hat.', 'sk-core' ); ?>
     </p>
+
+    <form method="post" action="<?php echo esc_url( $base_url ); ?>" style="margin-bottom:12px;">
+        <?php wp_nonce_field( 'sk_donations_action', 'sk_donations_nonce' ); ?>
+        <input type="hidden" name="sk_donations_action" value="refresh">
+        <button type="submit" class="button"><?php esc_html_e( 'Zahlen neu laden', 'sk-core' ); ?></button>
+        <span style="color:#646970;font-size:12px;margin-left:6px;">
+            <?php esc_html_e( 'Die Abfrage ist 15 Minuten zwischengespeichert.', 'sk-core' ); ?>
+        </span>
+    </form>
+
+    <?php if ( ! empty( $sources ) ) : ?>
+        <h4 style="margin-bottom:6px;"><?php esc_html_e( 'Was der Server seit dem Stichtag meldet', 'sk-core' ); ?></h4>
+        <table class="widefat striped" style="max-width:560px;">
+            <thead>
+                <tr>
+                    <th><?php esc_html_e( 'Beschreibung', 'sk-core' ); ?></th>
+                    <th style="width:60px;text-align:right;"><?php esc_html_e( 'Zahl.', 'sk-core' ); ?></th>
+                    <th style="width:110px;text-align:right;"><?php esc_html_e( 'Sats', 'sk-core' ); ?></th>
+                    <th style="width:90px;"><?php esc_html_e( 'gezählt', 'sk-core' ); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+            <?php foreach ( $sources as $desc => $row ) : ?>
+                <tr>
+                    <td><?php echo esc_html( $desc ); ?></td>
+                    <td style="text-align:right;"><?php echo (int) $row['n']; ?></td>
+                    <td style="text-align:right;"><?php echo esc_html( number_format_i18n( (int) $row['sats'] ) ); ?></td>
+                    <td>
+                        <?php if ( $row['gezaehlt'] ) : ?>
+                            <span style="color:#008a20;"><?php esc_html_e( 'ja', 'sk-core' ); ?></span>
+                        <?php else : ?>
+                            <span style="color:#646970;"><?php esc_html_e( 'nein', 'sk-core' ); ?></span>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+    <?php endif; ?>
 </div>
 
 <div style="background:#fff;border:1px solid #c3c4c7;padding:14px;max-width:760px;margin-bottom:20px;">
@@ -120,6 +163,14 @@ $max      = max( 1, max( $history ) );
             <?php esc_html_e( 'An anderen Stellen lässt er sich mit dem Shortcode einsetzen:', 'sk-core' ); ?>
             <code>[sk_donation_bar]</code> <?php esc_html_e( 'oder kompakt', 'sk-core' ); ?> <code>[sk_donation_bar compact="yes"]</code>
         </p>
+        <p style="margin-bottom:4px;"><strong><?php esc_html_e( 'Nicht als Spende zählen', 'sk-core' ); ?></strong></p>
+        <p style="margin-top:0;">
+            <input type="text" name="sk_donations_exclude" value="<?php echo esc_attr( $exclude ); ?>" class="large-text" placeholder="Kontaktzugriff, Pay-Wall">
+        </p>
+        <p style="color:#646970;font-size:12px;margin-top:0;">
+            <?php esc_html_e( 'Textbausteine, durch Komma getrennt. Eine Rechnung, deren Beschreibung einen davon enthält, wird übersprungen — gedacht für die Kontaktdaten-Feewall, die Kontaktzugriffe verkauft und keine Spende ist.', 'sk-core' ); ?>
+        </p>
+
         <p style="margin-bottom:4px;"><strong><?php esc_html_e( 'Gezählt wird ab', 'sk-core' ); ?></strong></p>
         <p style="margin-top:0;">
             <input type="date" name="sk_donations_since" value="<?php echo esc_attr( gmdate( 'Y-m-d', $since ) ); ?>">

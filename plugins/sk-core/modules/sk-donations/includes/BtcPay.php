@@ -29,8 +29,28 @@ final class BtcPay {
     /**
      * Beschreibungen, die keine Spende sind: die Kontaktdaten-Feewall
      * verkauft Kontaktzugriffe, das gehört nicht in den Spendentopf.
+     *
+     * Einstellbar statt fest verdrahtet — Crowdfunds kommen und gehen, und
+     * eine Umbenennung der Feewall würde sie sonst still als Spende zählen.
      */
-    const EXCLUDE = [ 'Kontaktzugriff', 'Pay-Wall', 'PayWall' ];
+    const OPTION_EXCLUDE  = 'sk_donations_exclude';
+    const DEFAULT_EXCLUDE = 'Kontaktzugriff, Pay-Wall, PayWall';
+
+    /**
+     * @return string[]
+     */
+    public static function exclude_patterns(): array {
+        $raw   = (string) get_option( self::OPTION_EXCLUDE, self::DEFAULT_EXCLUDE );
+        $parts = array_filter( array_map( 'trim', explode( ',', $raw ) ), static fn( $p ) => $p !== '' );
+
+        return array_values( $parts );
+    }
+
+    public static function set_exclude_patterns( string $raw ): void {
+        $parts = array_filter( array_map( 'trim', explode( ',', $raw ) ), static fn( $p ) => $p !== '' );
+        update_option( self::OPTION_EXCLUDE, implode( ', ', $parts ) );
+        self::flush_cache();
+    }
 
     public static function is_configured(): bool {
         return get_option( 'btcpay_gf_url' ) && get_option( 'btcpay_gf_api_key' ) && get_option( 'btcpay_gf_store_id' );
@@ -131,7 +151,7 @@ final class BtcPay {
             return false;
         }
 
-        foreach ( self::EXCLUDE as $needle ) {
+        foreach ( self::exclude_patterns() as $needle ) {
             if ( stripos( $desc, $needle ) !== false ) {
                 return false;
             }
@@ -157,6 +177,69 @@ final class BtcPay {
         }
 
         return 0;
+    }
+
+    /**
+     * Welche Beschreibungen kommen aktuell vom Server? Fuer die Admin-Anzeige,
+     * damit sichtbar ist, was gezaehlt wird und was nicht.
+     *
+     * @return array<string,array{sats:int,n:int,gezaehlt:bool}>
+     */
+    public static function sources( int $from_ts ): array {
+        if ( ! self::is_configured() ) {
+            return [];
+        }
+
+        $url   = rtrim( (string) get_option( 'btcpay_gf_url' ), '/' );
+        $key   = (string) get_option( 'btcpay_gf_api_key' );
+        $store = (string) get_option( 'btcpay_gf_store_id' );
+
+        $out  = [];
+        $skip = 0;
+
+        for ( $page = 0; $page < 10; $page++ ) {
+            $response = wp_remote_get(
+                $url . "/api/v1/stores/{$store}/invoices?startDate={$from_ts}&take=100&skip={$skip}",
+                [ 'timeout' => 12, 'headers' => [ 'Authorization' => 'token ' . $key ] ]
+            );
+
+            if ( is_wp_error( $response ) || (int) wp_remote_retrieve_response_code( $response ) !== 200 ) {
+                break;
+            }
+
+            $batch = json_decode( wp_remote_retrieve_body( $response ), true );
+            if ( ! is_array( $batch ) || empty( $batch ) ) {
+                break;
+            }
+
+            foreach ( $batch as $invoice ) {
+                if ( ! in_array( (string) ( $invoice['status'] ?? '' ), [ 'Settled', 'Complete' ], true ) ) {
+                    continue;
+                }
+                $meta     = $invoice['metadata'] ?? [];
+                $order_id = (string) ( $meta['orderId'] ?? '' );
+                if ( $order_id !== '' && preg_match( '/^(wc|WC)/', $order_id ) ) {
+                    continue;
+                }
+                $desc = (string) ( $meta['itemDesc'] ?? '' );
+                if ( $desc === '' ) {
+                    $desc = __( '(ohne Beschreibung)', 'sk-core' );
+                }
+
+                $out[ $desc ]['sats']     = ( $out[ $desc ]['sats'] ?? 0 ) + self::sats( $invoice );
+                $out[ $desc ]['n']        = ( $out[ $desc ]['n'] ?? 0 ) + 1;
+                $out[ $desc ]['gezaehlt'] = self::is_donation( $invoice );
+            }
+
+            if ( count( $batch ) < 100 ) {
+                break;
+            }
+            $skip += 100;
+        }
+
+        uasort( $out, static fn( $a, $b ) => $b['sats'] <=> $a['sats'] );
+
+        return $out;
     }
 
     public static function flush_cache(): void {
