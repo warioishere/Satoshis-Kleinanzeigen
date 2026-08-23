@@ -362,6 +362,18 @@ do_action( 'sk_dashboard_wrap_start' );
                     </div>
                 </form>
 
+                <div id="sk-import-progress" class="sk-import-progress" aria-live="polite">
+                    <div class="sk-import-progress__backdrop"></div>
+                    <div class="sk-import-progress__box">
+                        <div class="sk-import-progress__spinner" aria-hidden="true"></div>
+                        <h3><?php esc_html_e( 'Inserate werden angelegt', 'sk-core' ); ?></h3>
+                        <p id="sk-import-progress-text"><?php esc_html_e( 'Das dauert einen Moment.', 'sk-core' ); ?></p>
+                        <p class="sk-import-progress__hint">
+                            <?php esc_html_e( 'Bitte das Fenster offen lassen — Bilder werden dabei aus deinem Shop geladen.', 'sk-core' ); ?>
+                        </p>
+                    </div>
+                </div>
+
             <?php else : ?>
 
                 <div class="sk-section-heading"><h3><?php esc_html_e( 'Katalog hochladen', 'sk-core' ); ?></h3></div>

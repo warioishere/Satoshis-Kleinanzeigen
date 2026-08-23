@@ -128,3 +128,53 @@
     .sk-import-pick__list label { flex-wrap: wrap; }
     .sk-import-pick__meta { flex-basis: 100%; }
 }
+
+/* Ladeanzeige waehrend des Imports — Optik wie die uebrigen Dialoge */
+.sk-import-progress {
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.sk-import-progress.is-visible { display: flex; }
+
+.sk-import-progress__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+}
+
+.sk-import-progress__box {
+    position: relative;
+    background: #181e27;
+    border-radius: 12px;
+    padding: 36px 40px;
+    max-width: 420px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.sk-import-progress__box h3 { color: #fff; font-size: 20px; margin: 0 0 8px; }
+.sk-import-progress__box p { color: #9aa4b2; font-size: 15px; margin: 0 0 6px; }
+.sk-import-progress__hint { font-size: 13px !important; opacity: 0.8; }
+
+.sk-import-progress__spinner {
+    width: 42px;
+    height: 42px;
+    margin: 0 auto 16px;
+    border: 3px solid rgba(247, 147, 26, 0.25);
+    border-top-color: #f7931a;
+    border-radius: 50%;
+    animation: skImportSpin 0.9s linear infinite;
+}
+
+@keyframes skImportSpin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+    .sk-import-progress__spinner { animation-duration: 3s; }
+}

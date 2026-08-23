@@ -61,4 +61,24 @@
     }
 
     update();
+
+    /*
+     * Waehrend des Imports passiert minutenlang sichtbar nichts: Das Formular
+     * wird abgeschickt, der Server legt Inserate an und laedt Bilder nach.
+     * Ohne Rueckmeldung klickt der Verkaeufer ein zweites Mal.
+     */
+    form.addEventListener('submit', function () {
+        var box = document.getElementById('sk-import-progress');
+        var text = document.getElementById('sk-import-progress-text');
+        var n = selected();
+
+        if (text) {
+            text.textContent = n === 1
+                ? '1 Inserat wird angelegt.'
+                : n + ' Inserate werden angelegt.';
+        }
+
+        if (box) box.classList.add('is-visible');
+        if (button) button.disabled = true;
+    });
 }());
