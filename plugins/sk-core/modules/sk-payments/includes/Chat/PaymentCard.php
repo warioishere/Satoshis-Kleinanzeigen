@@ -239,6 +239,12 @@ class PaymentCard {
 		// er die Anbieterknoepfe statt des Bezahlknopfs.
 		$viewer_is_vendor = get_current_user_id() === $vendor_id;
 
+		// Laesst sich der Eingang von selbst pruefen? Dann braucht der Anbieter
+		// den Knopf zum Bestaetigen von Hand nicht.
+		$has_verify = \SK\Modules\Payments\StoreSettings::has_nwc( $vendor_id )
+			|| \SK\Modules\Payments\StoreSettings::has_lndhub( $vendor_id )
+			|| ! empty( $row->verify_url );
+
 		switch ( $marker ) {
 			case 'lightning_invoice':
 				// Anbieter wie Kaeufer duerfen die Karte gelegt haben: Beim
@@ -258,6 +264,7 @@ class PaymentCard {
 				return [
 					'type'            => 'lightning_invoice',
 					'viewer_is_vendor' => $viewer_is_vendor,
+					'has_verify'      => $has_verify,
 					'payment_hash'    => $hash,
 					'amount_sats'     => $amount,
 					'payment_request' => $bolt11,

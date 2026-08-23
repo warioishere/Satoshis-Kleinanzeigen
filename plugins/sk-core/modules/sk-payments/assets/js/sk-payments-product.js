@@ -167,7 +167,9 @@
         html += '</div>';
 
         html += '<div id="skp-lightning-status" style="text-align:center;padding:10px;font-size:13px;color:#5a6a7e;">';
-        html += '<i class="fas fa-spinner fa-spin"></i> Warte auf Zahlung...';
+        html += data.has_verify === false
+            ? '<i class="fas fa-hourglass-half"></i> Bezahlt? Der Anbieter bestätigt den Eingang.'
+            : '<i class="fas fa-spinner fa-spin"></i> Warte auf Zahlung...';
         html += '</div>';
 
         if (data.chat_url) {
@@ -177,7 +179,10 @@
         $('#skp-lightning-content').html(html);
         $('#skp-lightning-modal').css('display', 'flex');
 
-        startLightningPolling(data.payment_hash);
+        // Ohne Pruefmoeglichkeit waere jede Abfrage vergeblich.
+        if (data.has_verify !== false) {
+            startLightningPolling(data.payment_hash);
+        }
     }
 
     var lightningPollTimer = null;
@@ -210,6 +215,12 @@
                     if (res && (res.settled || res.paid || res.status === 'confirmed')) {
                         stopLightningPolling();
                         $('#skp-lightning-status').html('<span style="color:#5cb85c;font-weight:600;">Zahlung eingegangen!</span>');
+                        return;
+                    }
+
+                    if (res && res.has_verify === false) {
+                        stopLightningPolling();
+                        $('#skp-lightning-status').html('<i class="fas fa-hourglass-half"></i> Bezahlt? Der Anbieter bestätigt den Eingang.');
                     }
                 }
             });

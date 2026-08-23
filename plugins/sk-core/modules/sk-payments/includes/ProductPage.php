@@ -344,6 +344,8 @@ class ProductPage {
             'deeplink'        => $data['deeplink'],
             'amount_sats'     => $amount_sats,
             'product_title'   => $title,
+            // Sagt dem Fenster, ob sich der Eingang von selbst pruefen laesst.
+            'has_verify'      => ! empty( $data['has_verify'] ),
             'chat_url'        => add_query_arg( 'chat_id', $chat_id, $dashboard_url ),
         ] );
     }

@@ -180,6 +180,19 @@
         return sentByVendor ? $msg.hasClass('own') : !$msg.hasClass('own');
     }
 
+    /*
+     * Nicht jede Lightning-Adresse kann den Eingang melden (LNURL-verify ist
+     * optional). Ohne diese Moeglichkeit wartet der Kaeufer sonst auf einen
+     * Spinner, der sich nie aendert — bis der Anbieter von Hand bestaetigt.
+     */
+    function waitingLabel(hasVerify, isVendor) {
+        if (hasVerify !== false || isVendor) {
+            // Der Anbieter hat den Knopf darunter, ihm sagt der Satz nichts.
+            return '<i class="fas fa-spinner fa-spin"></i> Warte auf Zahlung…';
+        }
+        return '<i class="fas fa-hourglass-half"></i> Bezahlt? Der Anbieter bestätigt den Eingang.';
+    }
+
     function renderInvoice($msg, data) {
         var paymentHash = hexId(data.payment_hash);
         if (!paymentHash) return;
@@ -197,9 +210,11 @@
         var html = '<div class="skl-invoice">' +
             '<div class="skl-inv-header">⚡ Lightning Invoice — ' + escHtml(satsFormatted) + ' Sats' + escHtml(fiatInfo) + '</div>';
 
-        // QR Code (rendered server-side)
-        html += '<div class="skl-qr-container" style="text-align:center;padding:16px;">' +
-            qrImageTag(data.qr, 220) + '</div>';
+        // QR nur fuer den Kaeufer — der Anbieter bezahlt nichts.
+        if (!isVendor) {
+            html += '<div class="skl-qr-container" style="text-align:center;padding:16px;">' +
+                qrImageTag(data.qr, 220) + '</div>';
+        }
 
         // bolt11 copyable
         html += '<div class="skl-bolt11-wrap">' +
@@ -214,19 +229,27 @@
 
         // Payment status — settled state comes from the server.
         html += '<div class="skl-payment-status" data-payment-hash="' + escAttr(paymentHash) + '" ' +
+            'data-is-vendor="' + (isVendor ? '1' : '0') + '" ' +
             'style="text-align:center;padding:8px;font-size:13px;color:#5a6a7e;">' +
             (data.settled
                 ? '<span style="color:#5cb85c;">✅ Zahlung bestätigt!</span>'
-                : '<i class="fas fa-spinner fa-spin"></i> Warte auf Zahlung…') +
+                : waitingLabel(data.has_verify, isVendor)) +
             '</div>';
 
-        // Vendor: manual confirm button (fallback if no auto-verify)
-        if (isVendor && !data.settled) {
+        // Anbieter: Bestaetigen von Hand nur als Rueckfalltuer. Meldet die
+        // Karte has_verify, prueft die Wallet oder die LNURL-Verify-URL den
+        // Eingang selbst und der Knopf waere nur eine Fehlerquelle.
+        if (isVendor && !data.settled && !data.has_verify) {
             html += '<button class="skl-vendor-confirm-btn" ' +
                 'data-payment-hash="' + escAttr(paymentHash) + '" ' +
                 'data-chat-id="' + escAttr(getChatId()) + '" ' +
                 'style="width:100%;margin-top:8px;background:rgba(40,167,69,0.12);color:#5cb85c;border:1px solid rgba(40,167,69,0.25);padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px;">' +
                 '✓ Zahlung in Wallet erhalten — bestätigen</button>';
+        } else if (isVendor && !data.settled) {
+            // Ohne Knopf bliebe nur ein Spinner — der Anbieter soll wissen,
+            // dass er nichts tun muss.
+            html += '<div style="text-align:center;font-size:12px;color:#5a6a7e;padding:0 8px 4px;">' +
+                'Der Zahlungseingang wird automatisch erkannt.</div>';
         }
 
         html += '</div>';
@@ -431,6 +454,19 @@
                     if (res.settled || res.status === 'confirmed') {
                         stopPaymentPolling(paymentHash);
                         updatePaymentStatus(paymentHash, '✅ Zahlung bestätigt!', true);
+                        return;
+                    }
+
+                    // Meldet der Server, dass sich nichts pruefen laesst, hat
+                    // weiteres Abfragen keinen Zweck.
+                    if (res.has_verify === false) {
+                        stopPaymentPolling(paymentHash);
+                        var forVendor = $('.skl-payment-status[data-payment-hash="' + paymentHash + '"]').data('is-vendor') === 1;
+                        updatePaymentStatus(
+                            paymentHash,
+                            forVendor ? 'Zahlung noch nicht bestätigt.' : 'Bezahlt? Der Anbieter bestätigt den Eingang.',
+                            false
+                        );
                     }
                 }
             });
