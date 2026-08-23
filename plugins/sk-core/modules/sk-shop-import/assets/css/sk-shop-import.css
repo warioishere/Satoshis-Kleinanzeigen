@@ -178,3 +178,29 @@
 @media (prefers-reduced-motion: reduce) {
     .sk-import-progress__spinner { animation-duration: 3s; }
 }
+
+/* Ausfuehrungen im Editor */
+.sk-variants-field__locked,
+.sk-variants-field__kept,
+.sk-variants-field__hint { font-size: 0.88rem; opacity: 0.85; margin: 0 0 0.6rem; }
+
+.sk-variants-rows { list-style: none; padding: 0; margin: 0 0 0.6rem; }
+
+.sk-variants-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.4rem;
+}
+
+.sk-variants-row__name { flex: 1 1 auto; }
+.sk-variants-row__price { flex: 0 0 8rem; }
+.sk-variants-row__remove { flex: 0 0 auto; }
+
+/* Ohne passendes Paket nicht auswaehlbar */
+.sk-import-pick__list li.is-blocked { opacity: 0.55; }
+.sk-import-pick__list li.is-blocked label { cursor: not-allowed; }
+
+@media (max-width: 600px) {
+    .sk-variants-row { flex-wrap: wrap; }
+    .sk-variants-row__price { flex-basis: 100%; }
+}

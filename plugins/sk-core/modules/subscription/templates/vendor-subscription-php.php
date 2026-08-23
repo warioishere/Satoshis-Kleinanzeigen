@@ -257,6 +257,17 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
                                         echo sprintf( '%1$s<br /><strong>%2$s</strong> %3$s', esc_html__( 'For', 'sk-core' ), esc_html( $sub_pack->get_pack_valid_days() ), esc_html__( 'Days', 'sk-core' ) );
                                     }
                                     ?>
+                                    <?php
+                                    // Verkaufsargument: Ausfuehrungen gibt es erst ab einer
+                                    // bestimmten Paketgroesse, die Karte sagt es selbst.
+                                    if ( class_exists( \SK\Modules\ShopImport\Variants::class )
+                                        && \SK\Modules\ShopImport\Variants::pack_allows( (int) get_the_ID() ) ) :
+                                        ?>
+                                        <span class="pack_feature">
+                                            <i class="fas fa-layer-group"></i>
+                                            Shop-Import mit Ausführungen
+                                        </span>
+                                    <?php endif; ?>
                                 </div>
                             </div>
 

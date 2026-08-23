@@ -66,6 +66,14 @@ final class Importer {
 
         $geo = self::vendor_location( $vendor_id );
 
+        // Ohne passendes Paket kein Artikel mit Ausfuehrungen — sonst waere
+        // der Import ein Umweg um die Paketgrenze im Editor.
+        if ( ! Variants::is_allowed( $vendor_id ) ) {
+            $before = count( $items );
+            $items  = array_values( array_filter( $items, static fn( $item ) => empty( $item['variants'] ) ) );
+            $result['skipped'] += $before - count( $items );
+        }
+
         // Auto-Poster pausieren, sonst geht der ganze Katalog als Einzelposts
         // in Telegram, Nostr und den Community-Feed.
         Silence::start();

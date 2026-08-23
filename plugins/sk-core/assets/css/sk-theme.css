@@ -6120,6 +6120,17 @@ ul.product_list_widget li div[style*="font-size: 0.8em"] {
   color: #e8ecf0;
   font-size: 19px;
 }
+/* Merkmal, das nur groessere Pakete haben — hebt sich vom Fliesstext ab. */
+.sk-subscription-content .pack_content_wrapper .product_pack_item .pack_feature {
+  display: block;
+  margin-top: 10px;
+  color: #F7931A;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.sk-subscription-content .pack_content_wrapper .product_pack_item .pack_feature i {
+  margin-right: 6px;
+}
 
 /* ==========================================================
  * Dashboard-Grundlayout — Sidebar und Inhalt als ein Block

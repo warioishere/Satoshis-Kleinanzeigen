@@ -125,6 +125,7 @@ class DashboardPage extends DashboardModule {
         $items = Catalog::build( $csv['headers'], $csv['rows'], $mapping );
 
         // Nur die angehakten uebernehmen. Ohne Auswahl im Formular gilt alles.
+        // Die Paketsperre fuer Ausfuehrungen zieht der Importer selbst.
         $chosen = array_filter( array_map( 'strval', (array) ( $_POST['sk_pick'] ?? [] ) ) );
         if ( ! empty( $chosen ) ) {
             $items = array_values(
@@ -251,6 +252,20 @@ class DashboardPage extends DashboardModule {
             ];
         }
 
+        // Artikel mit Ausfuehrungen sind ohne passendes Paket nicht
+        // importierbar; sie werden markiert statt stillschweigend zu fehlen.
+        $variants_allowed = Variants::is_allowed( $vendor_id );
+        $variants_pack    = $variants_allowed ? null : Variants::cheapest_allowed_pack();
+        $blocked          = 0;
+
+        if ( ! $variants_allowed ) {
+            foreach ( $items as $item ) {
+                if ( ! empty( $item['variants'] ) ) {
+                    $blocked++;
+                }
+            }
+        }
+
         $currency_guess   = Settings::currency( $vendor_id );
         $subscription_url = function_exists( 'sk_get_navigation_url' ) ? sk_get_navigation_url( 'subscription' ) : home_url( '/dashboard/subscription/' );
 
@@ -283,7 +298,10 @@ class DashboardPage extends DashboardModule {
             'result',
             'summary',
             'subscription_url',
-            'currency_guess'
+            'currency_guess',
+            'variants_allowed',
+            'variants_pack',
+            'blocked'
         );
     }
 }

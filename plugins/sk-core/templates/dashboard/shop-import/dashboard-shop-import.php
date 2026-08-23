@@ -25,6 +25,9 @@
  * @var string     $subscription_url
  * @var array      $items
  * @var array      $currency_guess
+ * @var bool       $variants_allowed
+ * @var array|null $variants_pack
+ * @var int        $blocked
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -169,8 +172,25 @@ do_action( 'sk_dashboard_wrap_start' );
                                 );
                                 ?>
                             </li>
-                            <?php if ( $summary['variants'] > 0 ) : ?>
+                            <?php if ( $summary['variants'] > 0 && $variants_allowed ) : ?>
                                 <li><?php printf( esc_html__( 'Bei %d Artikeln werden die Varianten als Ausführungen zusammengefasst, statt eigene Inserate zu werden.', 'sk-core' ), (int) $summary['variants'] ); ?></li>
+                            <?php elseif ( $blocked > 0 ) : ?>
+                                <li>
+                                    <?php
+                                    printf(
+                                        esc_html__( '%d Artikel haben mehrere Ausführungen und werden übersprungen.', 'sk-core' ),
+                                        (int) $blocked
+                                    );
+                                    if ( $variants_pack ) {
+                                        echo ' ';
+                                        printf(
+                                            esc_html__( 'Ausführungen gibt es ab dem Paket %s.', 'sk-core' ),
+                                            esc_html( $variants_pack['name'] )
+                                        );
+                                    }
+                                    ?>
+                                    <a href="<?php echo esc_url( $subscription_url ); ?>"><?php esc_html_e( 'Zu den Abos', 'sk-core' ); ?></a>
+                                </li>
                             <?php endif; ?>
                             <?php if ( $summary['drafts'] > 0 ) : ?>
                                 <li><?php printf( esc_html__( '%d Artikel sind in deinem Shop nicht öffentlich — sie werden als Entwurf angelegt.', 'sk-core' ), (int) $summary['drafts'] ); ?></li>
@@ -227,10 +247,12 @@ do_action( 'sk_dashboard_wrap_start' );
                                 $key   = (string) ( $item['key'] ?? '' );
                                 $price = Importer::parse_price( (string) ( $item['price'] ?? '' ) );
                                 ?>
-                                <li>
+                                <?php $is_blocked = ! $variants_allowed && ! empty( $item['variants'] ); ?>
+                                <li<?php echo $is_blocked ? ' class="is-blocked"' : ''; ?>>
                                     <label>
                                         <input type="checkbox" name="sk_pick[]" value="<?php echo esc_attr( $key ); ?>"
-                                               <?php checked( $limit === 0 || $index < $preset ); ?>>
+                                               <?php disabled( $is_blocked ); ?>
+                                               <?php checked( ! $is_blocked && ( $limit === 0 || $index < $preset ) ); ?>>
                                         <span class="sk-import-pick__name"><?php echo esc_html( $item['name'] ); ?></span>
                                         <span class="sk-import-pick__meta">
                                             <?php if ( $price !== null && $price > 0 ) : ?>
@@ -240,6 +262,9 @@ do_action( 'sk_dashboard_wrap_start' );
                                             <?php endif; ?>
                                             <?php if ( ! empty( $item['variants'] ) ) : ?>
                                                 · <?php printf( esc_html__( '%d Ausführungen', 'sk-core' ), count( $item['variants'] ) ); ?>
+                                                <?php if ( $is_blocked ) : ?>
+                                                    · <strong><?php esc_html_e( 'grösseres Paket nötig', 'sk-core' ); ?></strong>
+                                                <?php endif; ?>
                                             <?php endif; ?>
                                             <?php if ( ! empty( $item['draft'] ) ) : ?>
                                                 · <?php esc_html_e( 'Entwurf', 'sk-core' ); ?>
