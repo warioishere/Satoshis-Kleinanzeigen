@@ -17,13 +17,47 @@ final class Backlink {
     const META_OK      = '_sk_sponsor_backlink_ok';
     const META_CHECKED = '_sk_sponsor_backlink_checked';
 
-    /** Externe Abrufe pro Durchlauf, damit die Admin-Anfrage nicht hängt. */
-    const BATCH = 8;
+    /**
+     * Externe Abrufe pro Durchlauf.
+     *
+     * Grosszuegig genug, dass ein Klick den ganzen Bestand erfasst — bei acht
+     * Stueck blieb der Rest kommentarlos auf "ungeprueft" stehen und der Knopf
+     * wirkte kaputt. Ein Abruf dauert rund eine Sekunde, die Obergrenze
+     * schuetzt nur davor, dass eine sehr lange Liste in ein Server-Zeitlimit
+     * laeuft.
+     */
+    const BATCH = 30;
+
+    /** Sekunden je externem Abruf. */
+    const TIMEOUT = 4;
+
+    /**
+     * Wie viele Sponsoren wurden noch nie geprüft?
+     */
+    public static function unchecked_count(): int {
+        $sponsors = get_posts(
+            [
+                'post_type'      => PostType::POST_TYPE,
+                'post_status'    => [ 'publish', 'draft' ],
+                'posts_per_page' => -1,
+                'fields'         => 'ids',
+            ]
+        );
+
+        $open = 0;
+        foreach ( $sponsors as $id ) {
+            if ( self::status( (int) $id ) === null ) {
+                $open++;
+            }
+        }
+
+        return $open;
+    }
 
     /**
      * Prüft die am längsten nicht geprüften Sponsoren.
      *
-     * @return array{checked:int,ok:int}
+     * @return array{checked:int,ok:int,open:int}
      */
     public static function check_batch(): array {
         $sponsors = get_posts(
@@ -49,7 +83,7 @@ final class Backlink {
 
         $sponsors = array_slice( $sponsors, 0, self::BATCH );
 
-        $result = [ 'checked' => 0, 'ok' => 0 ];
+        $result = [ 'checked' => 0, 'ok' => 0, 'open' => 0 ];
 
         foreach ( $sponsors as $sponsor ) {
             if ( self::check( (int) $sponsor->ID ) ) {
@@ -57,6 +91,8 @@ final class Backlink {
             }
             $result['checked']++;
         }
+
+        $result['open'] = self::unchecked_count();
 
         return $result;
     }
@@ -79,7 +115,7 @@ final class Backlink {
         $response = wp_remote_get(
             $url,
             [
-                'timeout'     => 5,
+                'timeout'     => self::TIMEOUT,
                 'redirection' => 3,
                 'user-agent'  => 'Mozilla/5.0 (compatible; SK-Sponsors-Backlinkcheck/1.0)',
             ]

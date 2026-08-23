@@ -24,6 +24,9 @@ final class Billing {
 
     public function __construct() {
         add_action( self::CRON_HOOK, [ __CLASS__, 'run' ] );
+        // Ruecklinkpruefung laeuft im selben taeglichen Lauf mit, damit die
+        // Spalte auch ohne Knopfdruck aktuell bleibt.
+        add_action( self::CRON_HOOK, [ Backlink::class, 'check_batch' ], 20 );
 
         if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
             wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', self::CRON_HOOK );

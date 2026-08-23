@@ -40,9 +40,14 @@ $base_url = add_query_arg( [ 'page' => 'sk', 'tab' => 'sponsors' ], admin_url( '
 <?php endif; ?>
 
 <?php if ( strpos( $notice, 'backlinks-' ) === 0 ) : ?>
-    <?php list( , $checked, $ok ) = array_pad( explode( '-', $notice ), 3, 0 ); ?>
+    <?php list( , $checked, $ok, $open ) = array_pad( explode( '-', $notice ), 4, 0 ); ?>
     <div class="notice notice-info is-dismissible">
-        <p><?php printf( esc_html__( '%1$d Ziele geprüft, %2$d verlinken zurück.', 'sk-core' ), (int) $checked, (int) $ok ); ?></p>
+        <p>
+            <?php printf( esc_html__( '%1$d Ziele geprüft, %2$d verlinken zurück.', 'sk-core' ), (int) $checked, (int) $ok ); ?>
+            <?php if ( (int) $open > 0 ) : ?>
+                <strong><?php printf( esc_html__( 'Noch %d ungeprüft — bitte erneut klicken.', 'sk-core' ), (int) $open ); ?></strong>
+            <?php endif; ?>
+        </p>
     </div>
 <?php elseif ( $notice === 'billing-on' ) : ?>
     <div class="notice notice-warning is-dismissible"><p><?php esc_html_e( 'Monatliche Abbuchung eingeschaltet. Sponsoren mit Monatsrate verlieren ihren Platz, sobald das Guthaben nicht mehr reicht.', 'sk-core' ); ?></p></div>
@@ -109,7 +114,16 @@ $base_url = add_query_arg( [ 'page' => 'sk', 'tab' => 'sponsors' ], admin_url( '
         <form method="post" action="<?php echo esc_url( $base_url ); ?>" style="display:inline;">
             <?php wp_nonce_field( 'sk_sponsors_action', 'sk_sponsors_nonce' ); ?>
             <input type="hidden" name="sk_sponsors_action" value="check_backlinks">
-            <button type="submit" class="button"><?php esc_html_e( 'Rücklinks prüfen', 'sk-core' ); ?></button>
+            <button type="submit" class="button">
+                <?php
+                if ( $unchecked > 0 ) {
+                    /* translators: %d: number of unchecked sponsors */
+                    printf( esc_html__( 'Rücklinks prüfen (%d offen)', 'sk-core' ), (int) $unchecked );
+                } else {
+                    esc_html_e( 'Rücklinks erneut prüfen', 'sk-core' );
+                }
+                ?>
+            </button>
         </form>
 
         <a class="button button-primary"

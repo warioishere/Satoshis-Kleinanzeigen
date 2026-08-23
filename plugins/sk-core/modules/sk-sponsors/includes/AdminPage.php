@@ -62,6 +62,7 @@ class AdminPage extends AbstractPage {
         $legacy_pending  = $this->legacy_pending_count();
         $notice          = isset( $_GET['sk_sponsors_notice'] ) ? sanitize_text_field( wp_unslash( $_GET['sk_sponsors_notice'] ) ) : '';
         $billing_enabled = Billing::is_enabled();
+        $unchecked       = Backlink::unchecked_count();
 
         // Nach dem Anlegen einer Rechnung den Zahllink zum Weitergeben zeigen.
         $new_invoice = null;
@@ -106,7 +107,7 @@ class AdminPage extends AbstractPage {
 
         if ( $action === 'check_backlinks' ) {
             $result = Backlink::check_batch();
-            $notice = sprintf( 'backlinks-%d-%d', $result['checked'], $result['ok'] );
+            $notice = sprintf( 'backlinks-%d-%d-%d', $result['checked'], $result['ok'], $result['open'] );
         }
 
         if ( $action === 'create_invoice' ) {

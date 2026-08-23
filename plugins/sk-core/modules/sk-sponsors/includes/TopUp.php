@@ -48,7 +48,15 @@ final class TopUp {
 
         $product = new \WC_Product_Simple();
         $product->set_name( __( 'Sponsoren-Guthaben', 'sk-core' ) );
-        $product->set_status( 'publish' );
+        /*
+         * Bewusst "private" statt "publish": Ein veroeffentlichtes Produkt
+         * loest transition_post_status aus, worauf sk-feed einen oeffentlichen
+         * Beitrag im Community-Feed anlegt (AutoPost::on_product_publish) und
+         * die Telegram-/Nostr-Poster anspringen. Das Traegerprodukt ist reine
+         * Buchhaltung und hat dort nichts verloren. Bestellungen koennen es
+         * trotzdem fuehren, weil add_product() den Status nicht prueft.
+         */
+        $product->set_status( 'private' );
         $product->set_catalog_visibility( 'hidden' );
         $product->set_virtual( true );
         $product->set_price( 0 );
