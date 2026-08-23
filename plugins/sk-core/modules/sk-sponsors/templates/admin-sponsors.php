@@ -213,7 +213,6 @@ $base_url = add_query_arg( [ 'page' => 'sk', 'tab' => 'sponsors' ], admin_url( '
                 $rate    = (int) get_post_meta( $sponsor->ID, PostType::META_MONTHLY, true );
                 $balance = (int) get_post_meta( $sponsor->ID, PostType::META_BALANCE, true );
                 $left    = PostType::months_left( (int) $sponsor->ID );
-                $bl      = Backlink::status( (int) $sponsor->ID );
                 ?>
                 <td>
                     <?php if ( $rate > 0 ) : ?>
@@ -231,17 +230,8 @@ $base_url = add_query_arg( [ 'page' => 'sk', 'tab' => 'sponsors' ], admin_url( '
                     <?php endif; ?>
                 </td>
                 <td>
-                    <?php
-                    if ( $bl === 1 ) {
-                        echo '<span style="color:#008a20;">' . esc_html__( 'ja', 'sk-core' ) . '</span>';
-                    } elseif ( $bl === 0 ) {
-                        echo '<span style="color:#d63638;">' . esc_html__( 'nein', 'sk-core' ) . '</span>';
-                    } elseif ( $bl === -1 ) {
-                        echo '<span style="color:#646970;">' . esc_html__( 'nicht prüfbar', 'sk-core' ) . '</span>';
-                    } else {
-                        echo '<span style="color:#646970;">' . esc_html__( 'ungeprüft', 'sk-core' ) . '</span>';
-                    }
-                    ?>
+                    <?php list( $bl_text, $bl_color ) = Backlink::label( (int) $sponsor->ID ); ?>
+                    <span style="color:<?php echo esc_attr( $bl_color ); ?>;"><?php echo esc_html( $bl_text ); ?></span>
                 </td>
                 <td>
                     <?php if ( $url ) : ?>

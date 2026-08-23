@@ -18,6 +18,26 @@ final class Backlink {
     const META_CHECKED = '_sk_sponsor_backlink_checked';
 
     /**
+     * Vom Betreiber von Hand bestaetigter Rueckling.
+     *
+     * Noetig, weil nicht jede Seite von diesem Server aus erreichbar ist:
+     * yourdevice.ch etwa liegt im selben Netz, und der Weg auf dessen
+     * oeffentliche IP wird nicht zurueckgeschleift. Auch Cloudflare-Regeln
+     * koennen serverseitige Abrufe blocken. Ein gesetztes Haekchen gewinnt
+     * gegen die automatische Pruefung.
+     */
+    const META_MANUAL = '_sk_sponsor_backlink_manual';
+
+    /** verlinkt */
+    const OK          = 1;
+    /** verlinkt nicht */
+    const MISSING     = 0;
+    /** prinzipiell nicht pruefbar (Chat- oder Kurzlink) */
+    const UNCHECKABLE = -1;
+    /** Abruf fehlgeschlagen (Timeout, Fehlerstatus) */
+    const UNREACHABLE = -2;
+
+    /**
      * Externe Abrufe pro Durchlauf.
      *
      * Grosszuegig genug, dass ein Klick den ganzen Bestand erfasst — bei acht
@@ -101,6 +121,11 @@ final class Backlink {
      * Holt die Ziel-URL und sucht darin die eigene Domain.
      */
     public static function check( int $sponsor_id ): bool {
+        // Ein von Hand bestaetigter Rueckling wird nicht ueberschrieben.
+        if ( (int) get_post_meta( $sponsor_id, self::META_MANUAL, true ) === 1 ) {
+            return true;
+        }
+
         $url = (string) get_post_meta( $sponsor_id, PostType::META_URL, true );
 
         update_post_meta( $sponsor_id, self::META_CHECKED, current_time( 'mysql' ) );
@@ -108,7 +133,7 @@ final class Backlink {
         // Telegram- und andere Chat-Ziele lassen sich nicht sinnvoll prüfen.
         $host = (string) wp_parse_url( $url, PHP_URL_HOST );
         if ( $url === '' || $host === '' || self::is_unverifiable( $host ) ) {
-            update_post_meta( $sponsor_id, self::META_OK, -1 );
+            update_post_meta( $sponsor_id, self::META_OK, self::UNCHECKABLE );
             return false;
         }
 
@@ -121,8 +146,10 @@ final class Backlink {
             ]
         );
 
+        // Getrennt von UNCHECKABLE: Ein Timeout heisst nicht, dass die Seite
+        // nicht verlinkt — er heisst, dass dieser Server sie nicht erreicht.
         if ( is_wp_error( $response ) || (int) wp_remote_retrieve_response_code( $response ) >= 400 ) {
-            update_post_meta( $sponsor_id, self::META_OK, -1 );
+            update_post_meta( $sponsor_id, self::META_OK, self::UNREACHABLE );
             return false;
         }
 
@@ -132,7 +159,7 @@ final class Backlink {
         $needle = preg_replace( '/^(www|new|staging)\./', '', $own );
 
         $found = $needle !== '' && stripos( $body, $needle ) !== false;
-        update_post_meta( $sponsor_id, self::META_OK, $found ? 1 : 0 );
+        update_post_meta( $sponsor_id, self::META_OK, $found ? self::OK : self::MISSING );
 
         return $found;
     }
@@ -148,11 +175,43 @@ final class Backlink {
     }
 
     /**
-     * 1 = verlinkt, 0 = verlinkt nicht, -1 = nicht prüfbar, null = ungeprüft.
+     * OK / MISSING / UNCHECKABLE / UNREACHABLE, oder null wenn ungeprüft.
      */
     public static function status( int $sponsor_id ): ?int {
+        if ( (int) get_post_meta( $sponsor_id, self::META_MANUAL, true ) === 1 ) {
+            return self::OK;
+        }
+
         $raw = get_post_meta( $sponsor_id, self::META_OK, true );
 
         return $raw === '' ? null : (int) $raw;
+    }
+
+    public static function is_manual( int $sponsor_id ): bool {
+        return (int) get_post_meta( $sponsor_id, self::META_MANUAL, true ) === 1;
+    }
+
+    /**
+     * Beschriftung für die Anzeige.
+     *
+     * @return array{0:string,1:string} Text und Farbe
+     */
+    public static function label( int $sponsor_id ): array {
+        if ( self::is_manual( $sponsor_id ) ) {
+            return [ __( 'ja (bestätigt)', 'sk-core' ), '#008a20' ];
+        }
+
+        switch ( self::status( $sponsor_id ) ) {
+            case self::OK:
+                return [ __( 'ja', 'sk-core' ), '#008a20' ];
+            case self::MISSING:
+                return [ __( 'nein', 'sk-core' ), '#d63638' ];
+            case self::UNCHECKABLE:
+                return [ __( 'nicht prüfbar', 'sk-core' ), '#646970' ];
+            case self::UNREACHABLE:
+                return [ __( 'nicht erreichbar', 'sk-core' ), '#dba617' ];
+            default:
+                return [ __( 'ungeprüft', 'sk-core' ), '#646970' ];
+        }
     }
 }

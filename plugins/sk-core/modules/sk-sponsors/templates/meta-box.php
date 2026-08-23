@@ -4,6 +4,7 @@
  *
  * @var string $url
  * @var string $email
+ * @var bool   $manual
  * @var string $tier
  * @var int    $monthly
  * @var int    $balance
@@ -15,6 +16,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
+use SK\Modules\Sponsors\Backlink;
 use SK\Modules\Sponsors\Billing;
 use SK\Modules\Sponsors\PostType;
 
@@ -48,6 +50,16 @@ $months_left = $monthly > 0 ? (int) floor( $balance / $monthly ) : null;
                 <br><?php esc_html_e( 'Selbstbedienungsseite:', 'sk-core' ); ?>
                 <code><?php echo esc_html( home_url( '/sponsor/' . PostType::token( (int) get_the_ID() ) . '/' ) ); ?></code>
             <?php endif; ?>
+        </p>
+    </div>
+
+    <div>
+        <label style="font-weight:600;">
+            <input type="checkbox" name="sk_sponsor_backlink_manual" value="1" <?php checked( $manual ); ?>>
+            <?php esc_html_e( 'Rücklink von Hand bestätigt', 'sk-core' ); ?>
+        </label>
+        <p class="sk-hint">
+            <?php esc_html_e( 'Setzen, wenn die Seite nachweislich zurückverlinkt, die automatische Prüfung sie aber nicht erreicht — etwa weil sie im selben Netz liegt oder serverseitige Abrufe blockt. Das Häkchen gewinnt gegen die automatische Prüfung.', 'sk-core' ); ?>
         </p>
     </div>
 

@@ -100,6 +100,7 @@ class PostType {
         $url     = (string) get_post_meta( $post->ID, self::META_URL, true );
         $tier    = get_post_meta( $post->ID, self::META_TIER, true ) ?: self::TIER_STANDARD;
         $email   = (string) get_post_meta( $post->ID, self::META_EMAIL, true );
+        $manual  = Backlink::is_manual( (int) $post->ID );
         $monthly = (int) get_post_meta( $post->ID, self::META_MONTHLY, true );
         $balance = (int) get_post_meta( $post->ID, self::META_BALANCE, true );
         $sort    = (string) get_post_meta( $post->ID, self::META_SORT_HINT, true );
@@ -130,6 +131,8 @@ class PostType {
 
         $email = isset( $_POST['sk_sponsor_email'] ) ? sanitize_email( wp_unslash( $_POST['sk_sponsor_email'] ) ) : '';
         update_post_meta( $post_id, self::META_EMAIL, $email );
+
+        update_post_meta( $post_id, Backlink::META_MANUAL, isset( $_POST['sk_sponsor_backlink_manual'] ) ? 1 : 0 );
 
         // Sorgt dafür, dass jeder Sponsor einen Zugang hat, auch die importierten.
         self::token( $post_id );
