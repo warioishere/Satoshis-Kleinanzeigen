@@ -29,9 +29,10 @@ class DashboardPage extends DashboardModule {
             'slug'       => 'shop-import',
             'title'      => __( 'Shop-Import', 'sk-core' ),
             'icon'       => '<i class="fas fa-file-import"></i>',
-            // Direkt hinter "Produkte" (pos 30). Bewusst knapp darueber, damit
-            // sich kein anderes Modul dazwischenschiebt.
-            'pos'        => 30.5,
+            // Direkt hinter "Produkte" (pos 30). Nachkommastellen helfen hier
+            // nicht: sk_nav_sort_by_pos rechnet intval($a-$b), 30.5 gegen 31
+            // ergibt 0 und gilt als gleich.
+            'pos'        => 31,
             'permission' => Dealer::CAP,
             // Pfad statt Rueckruf und Daten ueber template_args — dasselbe
             // Muster wie Merkliste und Gesuche. Die Vorlage bringt dadurch

@@ -13,7 +13,8 @@ class TransactionsPage extends DashboardModule {
             'slug'       => 'lightning-transactions',
             'title'      => 'Käufe/Verkäufe',
             'icon'       => '<i class="fas fa-bolt"></i>',
-            'pos'        => 31,
+            // 32, damit der Shop-Import (31) direkt hinter "Produkte" steht.
+            'pos'        => 32,
             'permission' => 'sk_view_overview_menu',
             'template'   => [ $this, 'render_dashboard' ],
         ];
