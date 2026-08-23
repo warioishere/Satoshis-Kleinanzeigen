@@ -32,14 +32,6 @@ class PhpDashboard implements Hookable {
             file_exists( $css_path ) ? filemtime( $css_path ) : SK_CORE_VERSION
         );
 
-        $js_path = plugin_dir_path( SK_CORE_FILE ) . 'assets/js/sk-php-dashboard-tabs.js';
-        wp_enqueue_script(
-            'sk-php-dashboard-tabs',
-            SK_CORE_ASSETS . '/js/sk-php-dashboard-tabs.js',
-            [],
-            file_exists( $js_path ) ? filemtime( $js_path ) : SK_CORE_VERSION,
-            true
-        );
     }
 
     /**
