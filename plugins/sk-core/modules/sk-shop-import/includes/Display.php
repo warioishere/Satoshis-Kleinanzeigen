@@ -72,6 +72,13 @@ class Display {
             return $html;
         }
 
+        // Nur auf der Inseratsseite selbst. In Kacheln und Slidern steht der
+        // Zusatz sonst hinter jedem Preis und macht die Reihe unruhig — dort
+        // zaehlt der Sats-Betrag, der Fiatbezug gehoert zum Detail.
+        if ( ! is_singular( 'product' ) || $product->get_id() !== get_queried_object_id() ) {
+            return $html;
+        }
+
         $fiat = get_post_meta( $product->get_id(), Importer::META_FIAT, true );
         if ( $fiat === '' || (float) $fiat <= 0 ) {
             return $html;
