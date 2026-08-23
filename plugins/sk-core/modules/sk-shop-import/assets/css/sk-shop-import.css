@@ -333,11 +333,18 @@
     display: flex;
     gap: 12px;
     align-items: flex-start;
-    color: #c4cdd8;
-    font-size: 14px;
-    line-height: 1.55;
-    padding: 9px 0;
+    color: #9aa4b2;
+    font-size: 13.5px;
+    line-height: 1.5;
+    padding: 11px 0;
     border-top: 1px solid #262e3a;
+}
+
+.sk-pack-info__list strong {
+    display: block;
+    margin-bottom: 2px;
+    color: #e8ecf0;
+    font-size: 14.5px;
 }
 
 .sk-pack-info__list li:first-child {

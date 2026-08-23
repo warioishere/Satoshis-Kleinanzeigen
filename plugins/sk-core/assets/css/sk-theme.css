@@ -6120,16 +6120,39 @@ ul.product_list_widget li div[style*="font-size: 0.8em"] {
   color: #e8ecf0;
   font-size: 19px;
 }
-/* Merkmal, das nur groessere Pakete haben — hebt sich vom Fliesstext ab. */
-.sk-subscription-content .pack_content_wrapper .product_pack_item .pack_feature {
+/* Merkmale, die nur groessere Pakete haben. Linksbuendig, obwohl die Karte
+   sonst zentriert ist: fuenf zentrierte Zeilen wechselnder Laenge flattern.
+
+   Der lange Selektor mit `ul.` ist noetig, weil modules/subscription seine
+   Listen mit `.pack_content ul li` bedient — inklusive weisser Trennlinie
+   unter jeder Zeile und zentriertem Text. */
+.sk-subscription-content .pack_content_wrapper .product_pack_item .pack_content ul.pack_features {
+  list-style: none;
+  margin: 14px auto 0;
+  padding: 12px 0 0;
+  border-top: 1px solid rgba(247, 147, 26, 0.2);
+  text-align: left;
   display: block;
-  margin-top: 10px;
-  color: #F7931A;
-  font-size: 15px;
-  line-height: 1.5;
+  width: fit-content;
+  max-width: 100%;
 }
-.sk-subscription-content .pack_content_wrapper .product_pack_item .pack_feature i {
-  margin-right: 6px;
+.sk-subscription-content .pack_content_wrapper .product_pack_item .pack_content ul.pack_features li {
+  color: #F7931A;
+  font-size: 14px;
+  line-height: 1.45;
+  margin: 0 0 6px;
+  padding: 0;
+  border: 0;
+  text-align: left;
+  list-style: none;
+}
+.sk-subscription-content .pack_content_wrapper .product_pack_item .pack_content ul.pack_features li:last-child {
+  margin-bottom: 0;
+}
+.sk-subscription-content .pack_content_wrapper .product_pack_item .pack_content ul.pack_features i {
+  width: 16px;
+  margin-right: 7px;
+  text-align: center;
 }
 .sk-subscription-content .pack_content_wrapper .product_pack_item .pack_feature_more {
   display: inline-block;

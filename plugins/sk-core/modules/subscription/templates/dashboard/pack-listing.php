@@ -61,6 +61,7 @@ use SK\Modules\Subscription\Helper;
                     <span class="sk-sub-active-info__stat-label"><i class="fas fa-clock"></i> Laufzeit</span>
                     <span class="sk-sub-active-info__stat-value"><?php echo esc_html( $laufzeit ); ?></span>
                 </div>
+
             </div>
 
             <?php if ( $is_cancelled ) : ?>
@@ -161,22 +162,25 @@ use SK\Modules\Subscription\Helper;
                                 $pack_validity = $sub_pack->get_pack_valid_days();
                                 echo sprintf( '%1$s<br /><strong>%2$s</strong> %3$s', __( 'For', 'sk-core' ), $pack_validity, __( 'Days', 'sk-core' ) );
                             }
+                            ?>                        </div><!-- .pack_data_option -->
+
+                        <?php
+                        // Verkaufsargument: diese Moeglichkeiten gibt es erst ab einer
+                        // bestimmten Paketgroesse, die Karte zaehlt sie auf.
+                        if ( class_exists( \SK\Modules\ShopImport\Variants::class )
+                            && \SK\Modules\ShopImport\Variants::pack_allows( (int) get_the_ID() ) ) :
                             ?>
-                            <?php
-                            // Verkaufsargument: Ausfuehrungen gibt es erst ab einer
-                            // bestimmten Paketgroesse, die Karte sagt es selbst.
-                            if ( class_exists( \SK\Modules\ShopImport\Variants::class )
-                                && \SK\Modules\ShopImport\Variants::pack_allows( (int) get_the_ID() ) ) :
-                                ?>
-                                <span class="pack_feature">
-                                    <i class="fas fa-layer-group"></i>
-                                    Shop-Import mit Ausführungen
-                                </span>
-                                <button type="button" class="pack_feature_more" data-sk-pack-info>
-                                    Mehr erfahren
-                                </button>
-                            <?php endif; ?>
-                        </div><!-- .pack_data_option -->
+                            <ul class="pack_features">
+                                <li><i class="fas fa-file-import"></i> WooCommerce Produkt Importe</li>
+                                <li><i class="fas fa-layer-group"></i> Variable Produkte</li>
+                                <li><i class="fas fa-bolt"></i> Adaptive Preise in Sats</li>
+                                <li><i class="fas fa-clipboard-list"></i> Verkaufsübersicht</li>
+                                <li><i class="fab fa-bitcoin"></i> Direkte Onchain- &amp; Offchain-Zahlungen</li>
+                            </ul>
+                            <button type="button" class="pack_feature_more" data-sk-pack-info>
+                                Mehr erfahren
+                            </button>
+                        <?php endif; ?>
                     </div><!-- .pack_content -->
 
                     <div class="buy_pack_button">
