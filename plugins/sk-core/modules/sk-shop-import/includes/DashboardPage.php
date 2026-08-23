@@ -120,6 +120,7 @@ class DashboardPage extends DashboardModule {
         }
         Settings::save_category_map( $vendor_id, $map );
         Settings::save_default_category( $vendor_id, (int) ( $_POST['sk_default_cat'] ?? 0 ) );
+        Settings::save_currency( $vendor_id, sanitize_text_field( wp_unslash( $_POST['sk_currency'] ?? '' ) ) );
 
         $items = Catalog::build( $csv['headers'], $csv['rows'], $mapping );
 
@@ -250,6 +251,7 @@ class DashboardPage extends DashboardModule {
             ];
         }
 
+        $currency_guess   = Settings::currency( $vendor_id );
         $subscription_url = function_exists( 'sk_get_navigation_url' ) ? sk_get_navigation_url( 'subscription' ) : home_url( '/dashboard/subscription/' );
 
         $packs        = $quota_block ? Quota::packs_for( (int) $quota_block['needed'] ) : [];
@@ -280,7 +282,8 @@ class DashboardPage extends DashboardModule {
             'rate',
             'result',
             'summary',
-            'subscription_url'
+            'subscription_url',
+            'currency_guess'
         );
     }
 }

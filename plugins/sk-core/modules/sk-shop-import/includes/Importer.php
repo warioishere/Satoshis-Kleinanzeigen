@@ -88,33 +88,40 @@ final class Importer {
             // Was im Shop privat steht, wird hier nicht oeffentlich.
             $row_status = ! empty( $item['draft'] ) ? 'draft' : $status;
 
-            $postarr = [
-                'post_type'    => 'product',
-                'post_status'  => $row_status,
-                'post_title'   => $name,
-                'post_content' => (string) ( $item['description'] ?? '' ),
-                'post_excerpt' => (string) ( $item['short'] ?? '' ),
-                'post_author'  => $vendor_id,
-            ];
-
-            if ( $existing ) {
-                $postarr['ID'] = $existing;
-                $post_id       = wp_update_post( $postarr, true );
-            } else {
-                $post_id = wp_insert_post( $postarr, true );
+            /*
+             * Ueber die WooCommerce-API anlegen, nicht per wp_insert_post.
+             * Ein reiner Beitrag vom Typ "product" bekommt weder den
+             * product_type-Term noch eine Zeile in wc_product_meta_lookup —
+             * er existiert dann in der Datenbank, taucht aber in keiner
+             * Produktliste auf.
+             */
+            try {
+                $product = new \WC_Product_Simple( $existing ?: 0 );
+                $product->set_name( $name );
+                $product->set_description( (string) ( $item['description'] ?? '' ) );
+                $product->set_short_description( (string) ( $item['short'] ?? '' ) );
+                $product->set_status( $row_status );
+                $product->set_catalog_visibility( 'visible' );
+                $post_id = (int) $product->save();
+            } catch ( \Throwable $e ) {
+                $post_id = 0;
+                $error   = $e->getMessage();
             }
 
-            if ( is_wp_error( $post_id ) || ! $post_id ) {
+            if ( ! $post_id ) {
                 $result['errors'][] = sprintf(
                     /* translators: 1: row number, 2: error */
                     __( 'Zeile %1$d: %2$s', 'sk-core' ),
                     (int) $index + 2,
-                    is_wp_error( $post_id ) ? $post_id->get_error_message() : __( 'unbekannter Fehler', 'sk-core' )
+                    $error ?? __( 'Produkt liess sich nicht anlegen', 'sk-core' )
                 );
                 continue;
             }
 
-            $post_id = (int) $post_id;
+            // Den Verkaeufer setzt die Produkt-API nicht.
+            if ( (int) get_post_field( 'post_author', $post_id ) !== $vendor_id ) {
+                wp_update_post( [ 'ID' => $post_id, 'post_author' => $vendor_id ] );
+            }
             $existing ? $result['updated']++ : $result['created']++;
 
             self::apply_price( $post_id, (string) ( $item['price'] ?? '' ), $currency, $result );
@@ -241,8 +248,13 @@ final class Importer {
             return;
         }
 
-        update_post_meta( $post_id, '_regular_price', (string) $sats );
-        update_post_meta( $post_id, '_price', (string) $sats );
+        // Ueber die API, damit wc_product_meta_lookup mitgepflegt wird.
+        $product = wc_get_product( $post_id );
+        if ( $product ) {
+            $product->set_regular_price( (string) $sats );
+            $product->set_price( (string) $sats );
+            $product->save();
+        }
     }
 
     /**
@@ -287,7 +299,15 @@ final class Importer {
             $ids[] = $default;
         }
 
-        if ( ! empty( $ids ) ) {
+        if ( empty( $ids ) ) {
+            return;
+        }
+
+        $product = wc_get_product( $post_id );
+        if ( $product ) {
+            $product->set_category_ids( array_values( array_unique( $ids ) ) );
+            $product->save();
+        } else {
             wp_set_object_terms( $post_id, array_unique( $ids ), 'product_cat' );
         }
     }

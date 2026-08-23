@@ -24,6 +24,7 @@
  * @var array|null $result
  * @var string     $subscription_url
  * @var array      $items
+ * @var array      $currency_guess
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -290,12 +291,15 @@ do_action( 'sk_dashboard_wrap_start' );
                             <label class="sk-w3 sk-control-label" for="sk_currency"><?php esc_html_e( 'Währung deiner Preise', 'sk-core' ); ?></label>
                             <div class="sk-w9">
                                 <select class="sk-form-control" name="sk_currency" id="sk_currency">
-                                    <option value="EUR">EUR</option>
-                                    <option value="CHF">CHF</option>
+                                    <option value="EUR" <?php selected( $currency_guess['currency'], 'EUR' ); ?>>EUR</option>
+                                    <option value="CHF" <?php selected( $currency_guess['currency'], 'CHF' ); ?>>CHF</option>
                                 </select>
-                                <?php if ( ! is_wp_error( $rate ) ) : ?>
-                                    <span class="sk-import-hint"><?php printf( esc_html__( 'Kurs: 1 BTC = %s', 'sk-core' ), esc_html( Display::format_fiat( (float) $rate, 'EUR' ) ) ); ?></span>
-                                <?php endif; ?>
+                                <span class="sk-import-hint">
+                                    <?php echo esc_html( $currency_guess['reason'] ); ?>
+                                    <?php if ( ! is_wp_error( $rate ) ) : ?>
+                                        · <?php printf( esc_html__( 'Kurs: 1 BTC = %s', 'sk-core' ), esc_html( Display::format_fiat( (float) $rate, 'EUR' ) ) ); ?>
+                                    <?php endif; ?>
+                                </span>
                             </div>
                         </div>
 
