@@ -77,10 +77,11 @@ final class Importer {
                 continue;
             }
 
-            $sku = (string) ( $item['sku'] ?? '' );
             // Ohne Artikelnummer waere ein zweiter Import ein Duplikat; der
-            // Titel ist dann der stabilste Ersatz.
-            $key = $vendor_id . ':' . ( $sku !== '' ? $sku : md5( $name ) );
+            // Titel ist dann der stabilste Ersatz. Catalog vergibt denselben
+            // Schluessel, damit die Auswahl im Formular dazu passt.
+            $sku = (string) ( $item['sku'] ?? '' );
+            $key = $vendor_id . ':' . ( (string) ( $item['key'] ?? '' ) !== '' ? $item['key'] : ( $sku !== '' ? $sku : md5( $name ) ) );
 
             $existing = self::find_by_key( $key );
 

@@ -23,6 +23,7 @@
  * @var mixed      $rate
  * @var array|null $result
  * @var string     $subscription_url
+ * @var array      $items
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -142,7 +143,16 @@ do_action( 'sk_dashboard_wrap_start' );
 
             <?php elseif ( $step === 'zuordnen' && $csv ) : ?>
 
-                <form method="post" action="<?php echo esc_url( $url ); ?>">
+                <?php
+                $limit    = ( $quota && $quota['remaining'] !== null ) ? (int) $quota['remaining'] : 0;
+                $preset   = $limit > 0 ? min( $limit, (int) $summary['items'] ) : (int) $summary['items'];
+                ?>
+                <form method="post" action="<?php echo esc_url( $url ); ?>"
+                      class="sk-import-pick"
+                      data-limit="<?php echo (int) $limit; ?>"
+                      data-label-one="<?php esc_attr_e( '%d Inserat importieren', 'sk-core' ); ?>"
+                      data-label-many="<?php esc_attr_e( '%d Inserate importieren', 'sk-core' ); ?>"
+                      data-label-over="<?php esc_attr_e( 'Zu viele für dein Paket', 'sk-core' ); ?>">
                     <?php wp_nonce_field( DashboardPage::NONCE, 'sk_shop_import_nonce' ); ?>
                     <input type="hidden" name="sk_step" value="run">
 
@@ -180,9 +190,64 @@ do_action( 'sk_dashboard_wrap_start' );
                                     (int) $quota['missing']
                                 );
                                 ?>
-                                <a href="<?php echo esc_url( $subscription_url ); ?>"><?php esc_html_e( 'Paket vergrössern', 'sk-core' ); ?></a>
+                                <?php esc_html_e( 'Wähle unten aus, was eingestellt werden soll — oder nimm ein grösseres Paket.', 'sk-core' ); ?>
+                                <a href="<?php echo esc_url( $subscription_url ); ?>"><?php esc_html_e( 'Zu den Abos', 'sk-core' ); ?></a>
                             </div>
                         <?php endif; ?>
+                    </div>
+
+                    <div class="sk-section-heading"><h3><?php esc_html_e( 'Was soll eingestellt werden?', 'sk-core' ); ?></h3></div>
+                    <div class="sk-section-content">
+                        <div class="sk-import-pick__bar">
+                            <label>
+                                <input type="checkbox" id="sk-import-all" <?php checked( $limit === 0 || $preset >= (int) $summary['items'] ); ?>>
+                                <?php esc_html_e( 'alle', 'sk-core' ); ?>
+                            </label>
+
+                            <?php if ( $limit > 0 && (int) $summary['items'] > $limit ) : ?>
+                                <a href="#" id="sk-import-uptolimit"><?php printf( esc_html__( 'nur die ersten %d', 'sk-core' ), (int) $limit ); ?></a>
+                            <?php endif; ?>
+
+                            <span class="sk-import-pick__count">
+                                <strong id="sk-import-count"><?php echo (int) $preset; ?></strong>
+                                <?php
+                                if ( $limit > 0 ) {
+                                    printf( esc_html__( 'von %d möglichen ausgewählt', 'sk-core' ), (int) $limit );
+                                } else {
+                                    esc_html_e( 'ausgewählt', 'sk-core' );
+                                }
+                                ?>
+                            </span>
+                        </div>
+
+                        <ul class="sk-import-pick__list">
+                            <?php foreach ( $items as $index => $item ) : ?>
+                                <?php
+                                $key   = (string) ( $item['key'] ?? '' );
+                                $price = Importer::parse_price( (string) ( $item['price'] ?? '' ) );
+                                ?>
+                                <li>
+                                    <label>
+                                        <input type="checkbox" name="sk_pick[]" value="<?php echo esc_attr( $key ); ?>"
+                                               <?php checked( $limit === 0 || $index < $preset ); ?>>
+                                        <span class="sk-import-pick__name"><?php echo esc_html( $item['name'] ); ?></span>
+                                        <span class="sk-import-pick__meta">
+                                            <?php if ( $price !== null && $price > 0 ) : ?>
+                                                <?php echo esc_html( ( ! empty( $item['from'] ) ? __( 'ab ', 'sk-core' ) : '' ) . number_format_i18n( $price, fmod( $price, 1 ) === 0.0 ? 0 : 2 ) ); ?>
+                                            <?php else : ?>
+                                                <?php esc_html_e( 'kein Preis', 'sk-core' ); ?>
+                                            <?php endif; ?>
+                                            <?php if ( ! empty( $item['variants'] ) ) : ?>
+                                                · <?php printf( esc_html__( '%d Ausführungen', 'sk-core' ), count( $item['variants'] ) ); ?>
+                                            <?php endif; ?>
+                                            <?php if ( ! empty( $item['draft'] ) ) : ?>
+                                                · <?php esc_html_e( 'Entwurf', 'sk-core' ); ?>
+                                            <?php endif; ?>
+                                        </span>
+                                    </label>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
                     </div>
 
                     <?php if ( ! empty( $csv_cats ) ) : ?>
@@ -286,7 +351,9 @@ do_action( 'sk_dashboard_wrap_start' );
                     </details>
 
                     <div class="sk-form-group">
-                        <button type="submit" class="sk-btn sk-btn-theme"><?php printf( esc_html__( '%d Inserate importieren', 'sk-core' ), (int) $summary['items'] ); ?></button>
+                        <button type="submit" id="sk-import-submit" class="sk-btn sk-btn-theme">
+                            <?php printf( esc_html__( '%d Inserate importieren', 'sk-core' ), (int) $preset ); ?>
+                        </button>
                         <a class="sk-btn sk-btn-default" href="<?php echo esc_url( $url ); ?>"><?php esc_html_e( 'Abbrechen', 'sk-core' ); ?></a>
                     </div>
                 </form>

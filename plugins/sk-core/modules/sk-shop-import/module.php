@@ -65,5 +65,13 @@ final class Module {
             [],
             SK_SHOP_IMPORT_VERSION
         );
+
+        wp_enqueue_script(
+            'sk-shop-import',
+            SK_SHOP_IMPORT_URL . '/assets/js/sk-shop-import.js',
+            [],
+            SK_SHOP_IMPORT_VERSION,
+            true
+        );
     }
 }

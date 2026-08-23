@@ -123,8 +123,16 @@ class DashboardPage extends DashboardModule {
 
         $items = Catalog::build( $csv['headers'], $csv['rows'], $mapping );
 
+        // Nur die angehakten uebernehmen. Ohne Auswahl im Formular gilt alles.
+        $chosen = array_filter( array_map( 'strval', (array) ( $_POST['sk_pick'] ?? [] ) ) );
+        if ( ! empty( $chosen ) ) {
+            $items = array_values(
+                array_filter( $items, static fn( $item ) => in_array( (string) ( $item['key'] ?? '' ), $chosen, true ) )
+            );
+        }
+
         // Kontingent gilt auch fuer Haendler — wer mehr einstellen will,
-        // braucht ein groesseres Paket.
+        // braucht ein groesseres Paket oder waehlt weniger aus.
         $quota = Quota::check( $vendor_id, count( $items ) );
         if ( ! $quota['ok'] ) {
             set_transient( 'sk_import_quota_' . $vendor_id, $quota, 600 );

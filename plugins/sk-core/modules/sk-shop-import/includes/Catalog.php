@@ -84,6 +84,10 @@ final class Catalog {
                 $parent['price'] = self::lowest_price( $parent['variants'] );
                 $parent['from']  = true;
             }
+
+            // Derselbe Schluessel, den der Importer zum Wiederfinden benutzt —
+            // damit Auswahlkaestchen und Import garantiert dasselbe meinen.
+            $parent['key'] = $parent['sku'] !== '' ? $parent['sku'] : md5( $parent['name'] );
         }
         unset( $parent );
 
