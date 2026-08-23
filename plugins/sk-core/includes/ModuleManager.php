@@ -288,6 +288,15 @@ class ModuleManager {
                         'module_class' => 'SK\Modules\Feed\Module',
                         'categories'   => [ 'Store Management' ],
                     ],
+                    'sk_contact_clicks' => [
+                        'id'           => 'sk_contact_clicks',
+                        'name'         => __( 'Kontaktklicks', 'sk-core' ),
+                        'description'  => __( 'Misst, ob aus einem Inserat heraus Kontakt aufgenommen wird.', 'sk-core' ),
+                        'thumbnail'    => $thumbnail_dir . '/follow-store.svg',
+                        'module_file'  => SK_CORE_DIR . '/modules' . '/sk-contact-clicks/module.php',
+                        'module_class' => 'SK\Modules\ContactClicks\Module',
+                        'categories'   => [ 'Product Management' ],
+                    ],
                     'sk_donations' => [
                         'id'           => 'sk_donations',
                         'name'         => __( 'Spenden', 'sk-core' ),
