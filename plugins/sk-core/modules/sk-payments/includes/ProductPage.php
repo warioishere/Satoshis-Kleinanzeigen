@@ -162,6 +162,26 @@ class ProductPage {
     }
 
     /**
+     * Wie oft darf ein Konto einen Kauf anstossen?
+     *
+     * Jeder Anlauf kostet etwas: Onchain eine frisch abgeleitete Adresse,
+     * Lightning eine Anfrage an die Wallet des Anbieters.
+     */
+    private static function purchase_rate_allows( int $buyer_id ): bool {
+        return ! function_exists( 'sk_rate_limit' ) || sk_rate_limit( 'sk_buy:' . $buyer_id, 10 );
+    }
+
+    /**
+     * Nur veroeffentlichte Inserate sind kaufbar.
+     *
+     * Ein Entwurf ist fuer niemanden sichtbar; ueber die Kennnummer liesse er
+     * sich sonst trotzdem bestellen und taucht dann samt Titel im Chat auf.
+     */
+    private static function is_purchasable( int $product_id ): bool {
+        return get_post_status( $product_id ) === 'publish';
+    }
+
+    /**
      * Notiz aus der Anfrage — Lieferadresse oder Hinweis fuer den Anbieter.
      */
     private static function posted_note(): string {
@@ -192,16 +212,25 @@ class ProductPage {
     private static function store_order_details( string $payment_hash, string $note, string $variant_name ): void {
         global $wpdb;
 
+        $table = $wpdb->prefix . 'sk_lightning_payments';
+
+        // Ergaenzen, nicht ersetzen: in derselben Spalte liegt spaeter auch
+        // eine Problemmeldung.
+        $existing = $wpdb->get_var(
+            $wpdb->prepare( "SELECT metadata FROM {$table} WHERE payment_hash = %s", $payment_hash )
+        );
+
+        $meta = $existing ? json_decode( $existing, true ) : [];
+        if ( ! is_array( $meta ) ) {
+            $meta = [];
+        }
+
+        $meta['delivery_note'] = $note;
+        $meta['variant']       = $variant_name;
+
         $wpdb->update(
-            $wpdb->prefix . 'sk_lightning_payments',
-            [
-                'metadata' => wp_json_encode(
-                    [
-                        'delivery_note' => $note,
-                        'variant'       => $variant_name,
-                    ]
-                ),
-            ],
+            $table,
+            [ 'metadata' => wp_json_encode( $meta ) ],
             [ 'payment_hash' => $payment_hash ],
             [ '%s' ],
             [ '%s' ]
@@ -264,6 +293,14 @@ class ProductPage {
 
         if ( ! $product ) {
             wp_send_json_error( [ 'message' => 'Inserat nicht gefunden.' ] );
+        }
+
+        if ( ! self::is_purchasable( $product_id ) ) {
+            wp_send_json_error( [ 'message' => 'Dieses Inserat ist nicht kaufbar.' ] );
+        }
+
+        if ( ! self::purchase_rate_allows( $buyer_id ) ) {
+            wp_send_json_error( [ 'message' => 'Zu viele Versuche. Bitte kurz warten.' ] );
         }
 
         $vendor_id   = (int) get_post_field( 'post_author', $product_id );
@@ -399,6 +436,14 @@ class ProductPage {
             wp_send_json_error( [ 'message' => 'Inserat nicht gefunden.' ] );
         }
 
+        if ( ! self::is_purchasable( $product_id ) ) {
+            wp_send_json_error( [ 'message' => 'Dieses Inserat ist nicht kaufbar.' ] );
+        }
+
+        if ( ! self::purchase_rate_allows( $buyer_id ) ) {
+            wp_send_json_error( [ 'message' => 'Zu viele Versuche. Bitte kurz warten.' ] );
+        }
+
         $vendor_id     = (int) get_post_field( 'post_author', $product_id );
         $variant_key   = Variant::posted();
         $product_title = Variant::title( $product, $variant_key );
@@ -429,6 +474,50 @@ class ProductPage {
             wp_send_json_error( [ 'message' => 'Bitte Lieferadresse oder Hinweis angeben.' ] );
         }
 
+        global $wpdb;
+        $table = $wpdb->prefix . 'sk_lightning_payments';
+
+        /*
+         * Offene Bestellung wiederverwenden statt eine neue Adresse abzuleiten.
+         *
+         * Jede Ableitung schiebt den Zaehler am xpub des Anbieters eine Stelle
+         * weiter. Wer den Knopf wiederholt drueckt, treibt ihn sonst ueber die
+         * Luecke, die Wallets beim Wiederherstellen abtasten (ueblich 20) —
+         * eine spaetere Zahlung taucht in der Wallet dann nicht mehr auf. Beim
+         * zweiten Anlauf auf dieselbe Ware bekommt der Kaeufer daher dieselbe
+         * Adresse; das ist ohnehin das erwartete Verhalten.
+         */
+        $open = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT payment_hash, verify_url FROM {$table}
+                 WHERE buyer_id = %d AND product_id = %d AND vendor_id = %d
+                   AND amount_sats = %d AND context = 'onchain' AND status = 'pending'
+                 ORDER BY id DESC LIMIT 1",
+                $buyer_id,
+                $product_id,
+                $vendor_id,
+                $price_sats
+            )
+        );
+
+        if ( $open && ! empty( $open->verify_url ) ) {
+            $address      = (string) $open->verify_url;
+            $payment_hash = (string) $open->payment_hash;
+            $btc_amount   = number_format( $price_sats / 100000000, 8, '.', '' );
+            $bip21        = 'bitcoin:' . $address . '?amount=' . $btc_amount;
+
+            wp_send_json_success( [
+                'address'       => $address,
+                'amount_sats'   => $price_sats,
+                'btc_amount'    => $btc_amount,
+                'payment_hash'  => $payment_hash,
+                'product_title' => $product_title,
+                'chat_url'      => '',
+                'bip21'         => $bip21,
+                'qr'            => QrImage::data_uri( $bip21 ),
+            ] );
+        }
+
         // Derive a fresh address for this buyer.
         $address = StoreSettings::get_next_onchain_address( $vendor_id );
         if ( empty( $address ) ) {
@@ -438,9 +527,6 @@ class ProductPage {
         // Convert sats to BTC for display.
         $btc_amount = number_format( $price_sats / 100000000, 8, '.', '' );
 
-        // Store payment record.
-        global $wpdb;
-        $table = $wpdb->prefix . 'sk_lightning_payments';
         $payment_hash = hash( 'sha256', $address . $buyer_id . $price_sats . microtime( true ) . random_bytes( 8 ) );
 
         $wpdb->insert( $table, [

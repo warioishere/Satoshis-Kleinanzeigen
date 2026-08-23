@@ -149,7 +149,7 @@ class DashboardPage extends DashboardModule {
                 'currency'     => sanitize_text_field( wp_unslash( $_POST['sk_currency'] ?? 'EUR' ) ),
                 'default_cat'  => Settings::default_category( $vendor_id ),
                 'image_cap'    => max( 0, (int) ( $_POST['sk_image_cap'] ?? Importer::DEFAULT_IMAGE_CAP ) ),
-                'status'       => sanitize_key( wp_unslash( $_POST['sk_status'] ?? 'publish' ) ),
+                'status'       => self::import_status(),
                 'source'       => Dealer::shop_url( $vendor_id ),
                 'category_map' => Settings::category_map( $vendor_id ),
             ]
@@ -161,6 +161,30 @@ class DashboardPage extends DashboardModule {
 
         wp_safe_redirect( add_query_arg( 'schritt', 'fertig', $this->url() ) );
         exit;
+    }
+
+    /**
+     * Status der importierten Inserate.
+     *
+     * Nur die beiden Werte, die das Formular anbietet — und muessen neue
+     * Inserate auf dieser Seite geprueft werden, gilt das auch hier. Sonst
+     * waere der Import der Weg an der Pruefung vorbei.
+     */
+    private static function import_status(): string {
+        $wanted = sanitize_key( wp_unslash( $_POST['sk_status'] ?? 'publish' ) ); // phpcs:ignore WordPress.Security.NonceVerification
+
+        if ( ! in_array( $wanted, [ 'publish', 'draft' ], true ) ) {
+            $wanted = 'draft';
+        }
+
+        if ( $wanted === 'publish' && function_exists( 'sk_get_default_product_status' ) ) {
+            $default = sk_get_default_product_status( get_current_user_id() );
+            if ( $default !== 'publish' ) {
+                return $default;
+            }
+        }
+
+        return $wanted;
     }
 
     /**

@@ -95,7 +95,7 @@ final class PriceUnit {
             return;
         }
 
-        $fiat = Importer::parse_price( (string) ( $_POST['_regular_price'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification
+        $fiat = Importer::parse_price( (string) wp_unslash( $_POST['_regular_price'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification
         if ( $fiat === null || $fiat <= 0 ) {
             return;
         }

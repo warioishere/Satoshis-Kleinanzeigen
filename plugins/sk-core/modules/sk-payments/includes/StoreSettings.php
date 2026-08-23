@@ -403,13 +403,38 @@ class StoreSettings {
 
             // Atomic index increment to prevent race condition.
             global $wpdb;
-            $wpdb->query( $wpdb->prepare(
+            $updated = $wpdb->query( $wpdb->prepare(
                 "UPDATE {$wpdb->usermeta} SET meta_value = meta_value + 1
                  WHERE user_id = %d AND meta_key = 'sk_xpub_index'",
                 $vendor_id
             ) );
+
+            // Fehlt die Zeile, gibt es nichts zu erhoehen — dann hier anlegen,
+            // sonst waere der Index gleich -1.
+            if ( ! $updated ) {
+                update_user_meta( $vendor_id, 'sk_xpub_index', 1 );
+            }
+
+            /*
+             * Der Zaehler wird per SQL erhoeht, damit zwei gleichzeitige Kaeufe
+             * nicht dieselbe Stelle bekommen. Am Objekt-Cache geht das aber
+             * vorbei: get_user_meta lieferte danach weiter den alten Wert —
+             * auf dieser Installation 4, waehrend in der Tabelle 6 stand. Jeder
+             * Kaeufer bekam dadurch dieselbe Adresse, obwohl der xpub gerade
+             * dafuer da ist, fuer jede Zahlung eine eigene zu liefern.
+             */
+            wp_cache_delete( $vendor_id, 'user_meta' );
+
             // Read the value AFTER increment — subtract 1 to get the index we just claimed.
-            $index = (int) get_user_meta( $vendor_id, 'sk_xpub_index', true ) - 1;
+            $index = (int) $wpdb->get_var( $wpdb->prepare(
+                "SELECT meta_value FROM {$wpdb->usermeta}
+                 WHERE user_id = %d AND meta_key = 'sk_xpub_index'",
+                $vendor_id
+            ) ) - 1;
+
+            if ( $index < 0 ) {
+                $index = 0;
+            }
 
             $address = Onchain\XpubDerivation::derive_address( $xpub, $index );
             if ( ! is_wp_error( $address ) ) {
