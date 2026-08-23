@@ -293,6 +293,157 @@
                     
                     return $sort;    
                 }
+                
+                
+                
+            
+            
+            /**
+             * Return the available menu locations for post types.
+             *
+             * When $_non_hierarhical_post_types is TRUE, only menu locations
+             * containing at least one custom, non-hierarchical post type are returned.
+             *
+             * @param bool $_non_hierarhical_post_types
+             *
+             * @return array
+             */
+            static function get_available_menu_locations( $_non_hierarhical_post_types = true )
+                {
+                    global $menu;
+
+                    $locations = array();
+
+                    $ignore_post_types = array(
+                        '/^reply$/',
+                        '/^topic$/',
+                        '/^report$/',
+                        '/^status$/',
+                        '/^acf-/',
+                        '/^acfe-/',
+                    );
+
+                    $post_types = get_post_types(
+                        array(
+                            'show_ui' => true,
+                        ),
+                        'objects'
+                    );
+
+                    foreach ( $post_types as $post_type => $post_type_object )
+                    {
+                        /*
+                         * Ignore specific post types / post type patterns.
+                         */
+                        foreach ( $ignore_post_types as $ignore_pattern )
+                        {
+                            if ( preg_match( $ignore_pattern, $post_type ) )
+                                continue 2;
+                        }
+
+                        /*
+                         * When filtering for non-hierarchical custom post types,
+                         * ignore built-in post types and hierarchical post types.
+                         */
+                        if ( $_non_hierarhical_post_types === true )
+                        {
+                            if ( ! empty( $post_type_object->hierarchical ) )
+                                continue;
+                        }
+
+                        $show_in_menu = $post_type_object->show_in_menu;
+
+                        if ( $show_in_menu === false )
+                            continue;
+
+                        /*
+                         * Determine the menu slug.
+                         */
+                        if ( $show_in_menu === true )
+                        {
+                            if ( $post_type === 'post' )
+                                $menu_slug = 'edit.php';
+                            elseif ( $post_type === 'attachment' )
+                                $menu_slug = 'upload.php';
+                            else
+                                $menu_slug = 'edit.php?post_type=' . $post_type;
+                        }
+                        else
+                        {
+                            /*
+                             * The post type is attached to another top-level menu.
+                             */
+                            $menu_slug = $show_in_menu;
+                        }
+
+                        if ( empty( $menu_slug ) )
+                            continue;
+
+                        /*
+                         * If this menu was already found, add this post type
+                         * to the existing location instead of creating a duplicate.
+                         */
+                        if ( isset( $locations[ $menu_slug ] ) )
+                        {
+                            $locations[ $menu_slug ]['post_types'][] = $post_type;
+
+                            continue;
+                        }
+
+                        /*
+                         * Try to retrieve the actual top-level menu title.
+                         */
+                        $menu_title = '';
+
+                        foreach ( $menu as $menu_item )
+                        {
+                            if ( ! isset( $menu_item[2] ) )
+                                continue;
+
+                            if ( $menu_item[2] !== $menu_slug )
+                                continue;
+
+                            $menu_title = isset( $menu_item[0] )
+                                ? $menu_item[0]
+                                : '';
+
+                            break;
+                        }
+
+                        /*
+                         * Fall back to the post type label.
+                         */
+                        if ( empty( $menu_title ) )
+                        {
+                            $menu_title = $post_type_object->labels->menu_name;
+                        }
+
+                        /*
+                         * Clean the menu title.
+                         */
+                        $tags = array( 'p', 'span' );
+
+                        $menu_title = preg_replace(
+                            '#<(' . implode( '|', $tags ) . ')[^>]+>.*?</\1>#s',
+                            '',
+                            $menu_title
+                        );
+
+                        $menu_title = trim(
+                            wp_strip_all_tags( $menu_title )
+                        );
+
+                        $locations[ $menu_slug ] = array(
+                            'slug'       => sanitize_title( $menu_slug ),
+                            'name'       => $menu_title,
+                            'post_type'  => $post_type,
+                            'post_types' => array( $post_type ),
+                            'menu_slug'  => $menu_slug,
+                        );
+                    }
+
+                    return $locations;
+                }
 
             
             

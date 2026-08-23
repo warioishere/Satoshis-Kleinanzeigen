@@ -8,6 +8,8 @@
             
             var $functions;
             
+            var $options_interface  =   FALSE;
+            
             /**
             * Constructor
             * 
@@ -35,6 +37,8 @@
             */
             function init()
                 {
+                    if ( is_admin() )
+                        $this->interface_init();
                     
                     add_action( 'admin_init',                               array ( $this, 'admin_init'), 10 );
                     add_action( 'admin_menu',                               array ( $this, 'add_menu') );
@@ -251,19 +255,30 @@
                 }
             
             
+            
+            /**
+            * Interface object init
+            * 
+            */
+            function interface_init()
+                {
+                    include (CPTPATH . '/include/class.options.php');
+                    
+                    $this->options_interface  =    new CptoOptionsInterface();
+                    $this->options_interface->check_options_update();
+                }
+            
+            
             /**
             * Plugin options menu
             * 
             */
             function plugin_options_menu()
                 {
-                    
-                    include (CPTPATH . '/include/class.options.php');
-                    
-                    $options_interface  =    new CptoOptionsInterface();
-                    $options_interface->check_options_update();
-                    
-                    $hookID   =     add_options_page('Post Types Order', '<img class="menu_pto" src="'. CPTURL .'/images/menu-icon.png" alt="" /> Post Types Order', 'manage_options', 'cpto-options', array($options_interface, 'plugin_options_interface'));
+                     if ( ! $this->options_interface )
+                        return;
+                                        
+                    $hookID   =     add_options_page('Post Types Order', '<img class="menu_pto" src="'. CPTURL .'/images/menu-icon.png" alt="" /> Post Types Order', 'manage_options', 'cpto-options', array( $this->options_interface, 'plugin_options_interface'));
                     add_action('admin_print_styles-' . $hookID ,    array($this, 'admin_options_print_styles'));
                 }    
             
@@ -336,7 +351,7 @@
                     // Localize the script with new data
                     $CPTO_variables = array(
                                                 'post_type'             =>  $screen->post_type,
-                                                'archive_sort_nonce'    =>  wp_create_nonce( 'CPTO_archive_sort_nonce' ) 
+                                                'archive_sort_nonce'    => wp_create_nonce( 'pto-archive-sort:' . $screen->post_type )
                                             );
                     wp_localize_script( 'cpto', 'CPTO', $CPTO_variables );
 
@@ -361,29 +376,85 @@
                                 }
                         }                    
                 }
+                
+                
+            
+            /**
+             * Check whether a post type is enabled for the dedicated Re-Order interface.
+             */
+            function is_reorder_interface_enabled_for_post_type( $post_type )
+                {
+                    $post_type = sanitize_key( $post_type );
+
+                    if ( empty( $post_type ) )
+                        return false;
+
+                    $options        = $this->functions->get_options();
+                    $menu_locations = $this->functions->get_available_menu_locations( true );
+
+                    foreach ( $menu_locations as $location => $menu_location )
+                        {
+                            if (
+                                empty( $menu_location['post_types'] )
+                                || ! in_array( $post_type, $menu_location['post_types'], true )
+                            )
+                                {
+                                    continue;
+                                }
+
+                            return (
+                                ! isset( $options['show_reorder_interfaces'][ $location ] )
+                                || $options['show_reorder_interfaces'][ $location ] === 'show'
+                            );
+                        }
+
+                    return false;
+                }
+                
             
             
             /**
-            * Save the order set through separate interface
-            * 
-            */
-            function saveAjaxOrder() 
+             * Save the order set through the dedicated Re-Order interface.
+             */
+            function saveAjaxOrder()
                 {
-                    
-                    set_time_limit(600);
-                    
                     global $wpdb;
-                    
-                    $nonce      =   $_POST['interface_sort_nonce'];
-                    
-                    //verify the nonce
-                    if (! wp_verify_nonce( $nonce, 'interface_sort_nonce') )
-                        die();
-                        
-                    if ( ! current_user_can( $this->functions->get_required_capability( ) ) )
-                        die();
-                    
+
+                    $post_type = isset( $_POST['post_type'] )
+                        ? sanitize_key( wp_unslash( $_POST['post_type'] ) )
+                        : '';
+
+                    $nonce = isset( $_POST['interface_sort_nonce'] )
+                        ? sanitize_text_field( wp_unslash( $_POST['interface_sort_nonce'] ) )
+                        : '';
+
+                    if ( ! $this->is_reorder_interface_enabled_for_post_type( $post_type ) )
+                        {
+                            wp_send_json_error(
+                                array( 'message' => __( 'Invalid post type.', 'post-types-order' ) ),
+                                400
+                            );
+                        }
+
+                    if ( ! wp_verify_nonce( $nonce, 'pto-interface-sort:' . $post_type ) )
+                        {
+                            wp_send_json_error(
+                                array( 'message' => __( 'You are not allowed to access this area.', 'post-types-order' ) ),
+                                403
+                            );
+                        }
+
+                    if ( ! current_user_can( $this->functions->get_required_capability( $post_type ) ) )
+                        {
+                            wp_send_json_error(
+                                array( 'message' => __( 'You are not allowed to reorder these items.', 'post-types-order' ) ),
+                                403
+                            );
+                        }
+
                     parse_str( sanitize_text_field( wp_unslash( $_POST['order'] ) ) , $data );
+                    
+                    $processed_ids  =   array();
                     
                     if (is_array($data))
                         {
@@ -404,6 +475,8 @@
                                                     $data = apply_filters('pto/save-ajax-order', $data, $key, $id);
                                                     
                                                     $wpdb->update( $wpdb->posts, $data, array('ID' => $id) );
+                                                    
+                                                    $processed_ids[]    =   $id;
                                                 } 
                                         } 
                                     else 
@@ -422,156 +495,366 @@
                                                     $data = apply_filters('pto/save-ajax-order', $data, $key, $id);
                                                     
                                                     $wpdb->update( $wpdb->posts, $data, array('ID' => $id) );
+                                                    
+                                                    $processed_ids[]    =   $id;
                                                 }
                                         }
                                 }
                             
                         }
+
+                    //Anything of the same post type that was left out of this batch (hidden by the 
+                    //reorder screen's display cap, or a brand-new post that was never sorted) is still
+                    //sitting at the default menu_order = 0. Push those to the back instead of letting
+                    //them resurface at the front of the list on the next page load.
+                    $this->park_unordered_items( $processed_ids );
                         
-                    //trigger action completed
-                    do_action('PTO/order_update_complete');
-                    
+                    do_action( 'PTO/order_update_complete' );
+
                     CptoFunctions::site_cache_clear();
+
+                    wp_send_json_success(
+                        array( 'message' => __( 'Items Order Updated', 'post-types-order' ) )
+                    );
                 }
                 
                 
             /**
-            * Save the order set throgh the Archive 
+            * Park items left out of an order-save batch that are still sitting at the
+            * default menu_order = 0, so they don't jump to the front of the list just
+            * because 0 sorts first.
             * 
+            * @param array $processed_ids IDs that were just given a real menu_order.
             */
+            function park_unordered_items( $processed_ids ) 
+                {
+                    global $wpdb;
+                    
+                    $processed_ids  =   array_filter( array_map( 'intval', (array) $processed_ids ) );
+                    
+                    if ( empty( $processed_ids ) )
+                        return;
+                    
+                    //every item in a single save batch belongs to the same post type
+                    $post_type  =   get_post_type( reset( $processed_ids ) );
+                    
+                    if ( empty( $post_type ) )
+                        return;
+                    
+                    $park_at        =   apply_filters( 'pto/park_unordered_items_at', 999999999, $post_type );
+                    
+                    $placeholders   =   implode( ',', array_fill( 0, count( $processed_ids ), '%d' ) );
+                    
+                    $sql            =   "UPDATE {$wpdb->posts}
+                                        SET menu_order = %d
+                                        WHERE post_type = %s
+                                        AND menu_order = 0
+                                        AND ID NOT IN ($placeholders)";
+                    
+                    $params         =   array_merge( array( $park_at, $post_type ), array_values( $processed_ids ) );
+                    
+                    $wpdb->query( $wpdb->prepare( $sql, $params ) );
+                }
+                
+                
+            
+            /**
+             * Save the order set through the archive screen.
+             */
             function saveArchiveAjaxOrder()
                 {
-                    
-                    global $wpdb, $userdata;
-                    
-                    $post_type  =   preg_replace( '/[^a-zA-Z0-9_\-]/', '', sanitize_text_field( wp_unslash( $_POST['post_type'] ) ) );
-                    $paged      =   filter_var ( sanitize_text_field( wp_unslash( $_POST['paged'] ) ), FILTER_SANITIZE_NUMBER_INT);
-                    $nonce      =   ( isset( $_POST['archive_sort_nonce'] ) ) ? sanitize_text_field( wp_unslash( $_POST['archive_sort_nonce'] ) ) : '';
-                    
-                    //verify the nonce
-                    if ( ! wp_verify_nonce( $nonce, 'CPTO_archive_sort_nonce' ) )
-                        die();
-                        
+                    global $wpdb;
+
+                    $post_type = isset( $_POST['post_type'] )
+                        ? sanitize_key( wp_unslash( $_POST['post_type'] ) )
+                        : '';
+
+                    $paged = isset( $_POST['paged'] )
+                        ? max( 1, absint( $_POST['paged'] ) )
+                        : 1;
+
+                    $nonce = isset( $_POST['archive_sort_nonce'] )
+                        ? sanitize_text_field( wp_unslash( $_POST['archive_sort_nonce'] ) )
+                        : '';
+
+                    $post_type_object = get_post_type_object( $post_type );
+
+                    if ( ! $post_type_object )
+                        {
+                            wp_send_json_error(
+                                array( 'message' => __( 'Invalid post type.', 'post-types-order' ) ),
+                                400
+                            );
+                        }
+
+                    if ( ! wp_verify_nonce( $nonce, 'pto-archive-sort:' . $post_type ) )
+                        {
+                            wp_send_json_error(
+                                array( 'message' => __( 'You are not allowed to access this area.', 'post-types-order' ) ),
+                                403
+                            );
+                        }
+
                     if ( ! current_user_can( $this->functions->get_required_capability( $post_type ) ) )
-                        die();
-                    
-                    parse_str( sanitize_text_field( wp_unslash( $_POST['order'] ) ) , $data );
-                    
-                    if (!is_array($data)    ||  count($data)    <   1)
-                        die();
-                    
-                    //retrieve a list of all objects
-                    $results        =   $wpdb->get_results( $wpdb->prepare("SELECT ID FROM ". $wpdb->posts ." 
-                                                            WHERE post_type = %s AND post_status IN ('publish', 'pending', 'draft', 'private', 'future', 'inherit')
-                                                            ORDER BY menu_order, post_date DESC", $post_type) );
-                    
-                    if (!is_array($results)    ||  count($results)    <   1)
-                        die();
-                    
-                    //create the list of ID's
-                    $objects_ids    =   array();
-                    foreach($results    as  $result)
                         {
-                            $objects_ids[]  =   (int)$result->ID;   
+                            wp_send_json_error(
+                                array( 'message' => __( 'You are not allowed to reorder these items.', 'post-types-order' ) ),
+                                403
+                            );
                         }
-                    
-                    global $userdata;
-                    if ( $post_type === 'attachment' )
-                        $objects_per_page   =   get_user_meta( $userdata->ID , 'upload_per_page', TRUE );
-                        else
-                        $objects_per_page   =   get_user_meta( $userdata->ID ,'edit_' .  $post_type  .'_per_page', TRUE );
-                    $objects_per_page   =   apply_filters( "edit_{$post_type}_per_page", $objects_per_page );
-                    if(empty($objects_per_page))
-                        $objects_per_page   =   20;
-                    
-                    $edit_start_at      =   $paged  *   $objects_per_page   -   $objects_per_page;
-                    $index              =   0;
-                    for($i  =   $edit_start_at; $i  <   ($edit_start_at +   $objects_per_page); $i++)
+
+                    $order = isset( $_POST['order'] )
+                        ? sanitize_text_field( wp_unslash( $_POST['order'] ) )
+                        : '';
+
+                    parse_str( $order, $order_data );
+
+                    if (
+                        ! is_array( $order_data )
+                        || ! isset( $order_data['post'] )
+                        || ! is_array( $order_data['post'] )
+                    )
                         {
-                            if(!isset($objects_ids[$i]))
-                                break;
-                                
-                            $objects_ids[$i]    =   (int)$data['post'][$index];
-                            $index++;
+                            wp_send_json_error(
+                                array( 'message' => __( 'Invalid order data.', 'post-types-order' ) ),
+                                400
+                            );
                         }
-                    
-                    //update the menu_order within database
-                    foreach( $objects_ids as $menu_order   =>  $id ) 
+
+                    $results = $wpdb->get_results(
+                        $wpdb->prepare(
+                            "SELECT ID FROM {$wpdb->posts}
+                             WHERE post_type = %s
+                             AND post_status IN ('publish', 'pending', 'draft', 'private', 'future', 'inherit')
+                             ORDER BY menu_order, post_date DESC",
+                            $post_type
+                        )
+                    );
+
+                    if ( ! is_array( $results ) || empty( $results ) )
                         {
-                            //sanitize
-                            $id =   intval ( $id );
-                            
-                            $data = array(
-                                            'menu_order' => $menu_order
-                                            );
-                            
-                            //Deprecated, rely on pto/save-ajax-order
-                            $data = apply_filters('post-types-order_save-ajax-order', $data, $menu_order, $id);
-                            
-                            $data = apply_filters('pto/save-ajax-order', $data, $menu_order, $id);
-                            
-                            $wpdb->update( $wpdb->posts, $data, array('ID' => $id) );
-                            
+                            wp_send_json_error(
+                                array( 'message' => __( 'No items were found.', 'post-types-order' ) ),
+                                400
+                            );
+                        }
+
+                    $object_ids = wp_list_pluck( $results, 'ID' );
+                    $object_ids = array_map( 'absint', $object_ids );
+
+                    $per_page_key = ( $post_type === 'attachment' )
+                        ? 'upload_per_page'
+                        : 'edit_' . $post_type . '_per_page';
+
+                    $objects_per_page = absint(
+                        get_user_meta( get_current_user_id(), $per_page_key, true )
+                    );
+
+                    $objects_per_page = absint(
+                        apply_filters( "edit_{$post_type}_per_page", $objects_per_page )
+                    );
+
+                    if ( $objects_per_page < 1 )
+                        {
+                            $objects_per_page = 20;
+                        }
+
+                    $edit_start_at = ( $paged - 1 ) * $objects_per_page;
+                    $expected_ids  = array_slice( $object_ids, $edit_start_at, $objects_per_page );
+                    $submitted_ids = array();
+
+                    foreach ( $order_data['post'] as $submitted_id )
+                        {
+                            if ( ! is_scalar( $submitted_id ) || absint( $submitted_id ) < 1 )
+                                {
+                                    wp_send_json_error(
+                                        array( 'message' => __( 'Invalid order data.', 'post-types-order' ) ),
+                                        400
+                                    );
+                                }
+
+                            $submitted_ids[] = absint( $submitted_id );
+                        }
+
+                    sort( $expected_ids );
+                    $comparison_ids = $submitted_ids;
+                    sort( $comparison_ids );
+
+                    if (
+                        count( $submitted_ids ) !== count( $expected_ids )
+                        || $comparison_ids !== $expected_ids
+                    )
+                        {
+                            wp_send_json_error(
+                                array( 'message' => __( 'The submitted items do not match this archive page.', 'post-types-order' ) ),
+                                400
+                            );
+                        }
+
+                    array_splice(
+                        $object_ids,
+                        $edit_start_at,
+                        count( $submitted_ids ),
+                        $submitted_ids
+                    );
+
+                    /*
+                     * This handler renumbers the entire post-type sequence, so every
+                     * affected row must be editable before any database write occurs.
+                     */
+                    foreach ( $object_ids as $id )
+                        {
+                            $post = get_post( $id );
+
+                            if (
+                                ! $post
+                                || $post->post_type !== $post_type
+                                || ! current_user_can( 'edit_post', $id )
+                            )
+                                {
+                                    wp_send_json_error(
+                                        array( 'message' => __( 'You cannot reorder one or more items in this archive.', 'post-types-order' ) ),
+                                        403
+                                    );
+                                }
+                        }
+
+                    foreach ( $object_ids as $menu_order => $id )
+                        {
+                            $update_data = array( 'menu_order' => $menu_order );
+
+                            $update_data = apply_filters(
+                                'post-types-order_save-ajax-order',
+                                $update_data,
+                                $menu_order,
+                                $id
+                            );
+
+                            $update_data = apply_filters(
+                                'pto/save-ajax-order',
+                                $update_data,
+                                $menu_order,
+                                $id
+                            );
+
+                            $wpdb->update(
+                                $wpdb->posts,
+                                $update_data,
+                                array( 'ID' => $id )
+                            );
+
                             clean_post_cache( $id );
                         }
-                        
-                    //trigger action completed
-                    do_action('PTO/order_update_complete');
-                    
-                    CptoFunctions::site_cache_clear();                
-                }
-            
 
+                    do_action( 'PTO/order_update_complete' );
+
+                    CptoFunctions::site_cache_clear();
+
+                    wp_send_json_success(
+                        array( 'message' => __( 'Items Order Updated', 'post-types-order' ) )
+                    );
+                }
+
+                
+                
             /**
             * Add the dashboard menus
             * 
             */
-            function add_menu() 
+            function add_menu()
                 {
-                    
                     include_once ( CPTPATH . '/include/class.interface.php' );
-                    include_once ( CPTPATH . '/include/class.walkers.php' );
-                    
+
                     global $userdata;
-                    //put a menu for all custom_type
-                    $post_types = get_post_types();
-                    
-                    $options          =     $this->functions->get_options();
-                    
-                    $PTO_Interface =    new PTO_Interface();
-                    
-                    foreach( $post_types as $post_type_name ) 
+
+                    $options = $this->functions->get_options();
+
+                    $PTO_Interface = new PTO_Interface();
+
+                    /*
+                     * Get the available menu locations and post types.
+                     */
+                    $menu_locations = $this->functions->get_available_menu_locations( true );
+
+                    /*
+                     * Register only one Re-Order submenu per menu location.
+                     */
+                    $registered_menus = array();
+
+                    foreach ( $menu_locations as $location => $menu_location )
+                    {
+                        if ( empty( $menu_location['menu_slug'] ) || empty( $menu_location['post_types'] ) )
+                            continue;
+
+                        /*
+                         * Respect the "Show / Hide re-order interface" option.
+                         *
+                         * IMPORTANT:
+                         * This setting is stored by MENU LOCATION, not post type.
+                         */
+                        if (
+                            isset( $options['show_reorder_interfaces'][ $location ] )
+                            && $options['show_reorder_interfaces'][ $location ] !== 'show'
+                        )
                         {
-                            if ($post_type_name === 'page')
-                                continue;
-                                
-                            //ignore bbpress
-                            if ($post_type_name === 'reply' || $post_type_name === 'topic')
-                                continue;
-                            
-                            if(is_post_type_hierarchical($post_type_name))
-                                continue;
-                                
-                            $post_type_data = get_post_type_object( $post_type_name );
-                            if($post_type_data->show_ui === FALSE)
-                                continue;
-                                
-                            if(isset($options['show_reorder_interfaces'][$post_type_name]) && $options['show_reorder_interfaces'][$post_type_name] !== 'show')
-                                continue;
-                                
-                            $required_capability = $this->functions->get_required_capability ( $post_type_name );
-                            
-                            if ( $post_type_name == 'post' )
-                                $hookID   = add_submenu_page('edit.php', __('Re-Order', 'post-types-order'), __('Re-Order', 'post-types-order'), $required_capability, 'order-post-types-'.$post_type_name, array( $PTO_Interface, 'sort_page') );
-                            elseif ($post_type_name == 'attachment') 
-                                $hookID   = add_submenu_page('upload.php', __('Re-Order', 'post-types-order'), __('Re-Order', 'post-types-order'), $required_capability, 'order-post-types-'.$post_type_name, array( $PTO_Interface, 'sort_page') ); 
-                            else
-                                {
-                                    $hookID   = add_submenu_page('edit.php?post_type='.$post_type_name, __('Re-Order', 'post-types-order'), __('Re-Order', 'post-types-order'), $required_capability, 'order-post-types-'.$post_type_name, array( $PTO_Interface, 'sort_page') );    
-                                }
-                            
-                            add_action('admin_print_styles-' . $hookID ,    array($this, 'admin_reorder_styles'));
+                            continue;
                         }
+
+                        $menu_slug = $menu_location['menu_slug'];
+
+                        /*
+                         * Avoid registering the same parent menu more than once.
+                         */
+                        if ( isset( $registered_menus[ $menu_slug ] ) )
+                            continue;
+
+                        /*
+                         * Find the first valid post type that belongs to this menu.
+                         */
+                        $post_type_name = null;
+
+                        foreach ( $menu_location['post_types'] as $candidate_post_type )
+                        {
+                            $post_type_data = get_post_type_object( $candidate_post_type );
+
+                            if ( ! $post_type_data )
+                                continue;
+
+                            /*
+                             * Do not require the post type setting here.
+                             * Visibility is controlled by the MENU LOCATION setting.
+                             */
+                            $post_type_name = $candidate_post_type;
+                            break;
+                        }
+
+                        if ( empty( $post_type_name ) )
+                            continue;
+
+                        $registered_menus[ $menu_slug ] = true;
+
+                        /*
+                         * Resolve the required capability.
+                         */
+                        $required_capability = $this->functions->get_required_capability( $post_type_name );
+
+                        /*
+                         * Add ONE Re-Order submenu for this menu location.
+                         */
+                        $hookID = add_submenu_page(
+                            $menu_slug,
+                            __( 'Re-Order', 'post-types-order' ),
+                            __( 'Re-Order', 'post-types-order' ),
+                            $required_capability,
+                            'order-post-types-' . $post_type_name,
+                            array( $PTO_Interface, 'sort_page' )
+                        );
+
+                        add_action(
+                            'admin_print_styles-' . $hookID,
+                            array( $this, 'admin_reorder_styles' )
+                        );
+                    }
                 }
                 
             

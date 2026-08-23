@@ -86,46 +86,33 @@
                                 <h2><?php esc_html_e('General', 'post-types-order') ?></h2>                              
                                 <table class="form-table">
                                     <tbody>
+                                        
                                         <tr valign="top">
-                                            <th scope="row" style="text-align: right;"><label><?php esc_html_e('Show / Hide re-order interface', 'post-types-order') ?></label></th>
+                                            <th scope="row" style="text-align: right;"><label><?php esc_html_e('Show / Hide re-order interface', 'advanced-taxonomy-terms-order') ?></label></th>
                                             <td>
-                                                <p><?php esc_html_e("Display the ReOrder interface for the specified post types.", 'post-types-order') ?></p>
+                                                <p><?php esc_html_e("Display the Taxonomy Order interface for the specified post types.", 'advanced-taxonomy-terms-order') ?></p>
                                                 <br />
                                                 <div class="pt-list">
                                                 <?php
-                                                
-                                                    $post_types = get_post_types();
-                                                    foreach( $post_types as $post_type_name ) 
+                                            
+                                                    foreach ( $this->CPTO->functions->get_available_menu_locations() as $location    =>  $location_data )
                                                         {
-                                                            //ignore list
-                                                            $ignore_post_types  =   array(
-                                                                                            'reply',
-                                                                                            'topic',
-                                                                                            'report',
-                                                                                            'status'  
-                                                                                            );
-                                                            
-                                                            if( in_array($post_type_name, $ignore_post_types) )
-                                                                continue;
-                                                            
-                                                            if( is_post_type_hierarchical($post_type_name) )
-                                                                continue;
-                                                                
-                                                            $post_type_data = get_post_type_object( $post_type_name );
-                                                            if($post_type_data->show_ui === FALSE)
-                                                                continue;
+                                                            ?>
+                                                            <p class="pt-item"><label>
+                                                                <select name="show_reorder_interfaces[<?php echo esc_attr ( $location ) ?>]">
+                                                                    <option value="show" <?php if(isset($options['show_reorder_interfaces'][$location]) && $options['show_reorder_interfaces'][$location] == 'show') {echo ' selected="selected"';} ?>><?php esc_html_e( "Show", 'advanced-taxonomy-terms-order' ) ?></option>
+                                                                    <option value="hide" <?php if(isset($options['show_reorder_interfaces'][$location]) && $options['show_reorder_interfaces'][$location] == 'hide') {echo ' selected="selected"';} ?>><?php esc_html_e( "Hide", 'advanced-taxonomy-terms-order' ) ?></option>
+                                                                </select> &nbsp;&nbsp;<?php echo esc_html ( $location_data['name'] ); ?>
+                                                            </label><br />&nbsp;</p>
+                                                            <?php
+                                                        }
+                                                
                                                 ?>
-                                                <p class="pt-item"><label>
-                                                    <select name="show_reorder_interfaces[<?php echo esc_attr($post_type_name) ?>]">
-                                                        <option value="show" <?php if(isset($options['show_reorder_interfaces'][$post_type_name]) && $options['show_reorder_interfaces'][$post_type_name] === 'show') {echo ' selected="selected"';} ?>><?php esc_html_e( "Show", 'post-types-order' ) ?></option>
-                                                        <option value="hide" <?php if(isset($options['show_reorder_interfaces'][$post_type_name]) && $options['show_reorder_interfaces'][$post_type_name] === 'hide') {echo ' selected="selected"';} ?>><?php esc_html_e( "Hide", 'post-types-order' ) ?></option>
-                                                    </select> &nbsp;&nbsp;<?php echo esc_html ( $post_type_data->labels->singular_name ); ?>
-                                                </label><br />&nbsp;</p>
-                                                <?php  } ?>
                                                 </div>
                                             </td>
                                              
                                         </tr>
+                                        
                                         <tr valign="top">
                                             <th scope="row" style="text-align: right;"><label><?php esc_html_e('Minimum Level to use this plugin', 'post-types-order') ?></label></th>
                                             <td>

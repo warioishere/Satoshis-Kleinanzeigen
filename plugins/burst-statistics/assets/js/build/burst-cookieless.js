@@ -90,16 +90,33 @@ const burst_get_cookie = name => {
   const ca = document.cookie.split(';');
   for (let c of ca) {
     c = c.trim();
-    if (c.indexOf(nameEQ) === 0) return Promise.resolve(c.substring(nameEQ.length));
+    if (c.indexOf(nameEQ) === 0) {
+      // An empty value counts as absent. Browsers that stored an empty burst_uid
+      // cookie would otherwise keep reading it back as their identifier.
+      const value = c.substring(nameEQ.length);
+      if (value) return Promise.resolve(value);
+    }
   }
   return Promise.reject(false);
 };
+/**
+ * Check if tracking consent is granted via WP Consent API or consent managers.
+ * @returns {boolean}
+ */
+const burst_has_tracking_consent = () => {
+  if (typeof wp_has_consent === 'function') {
+    return wp_has_consent('statistics');
+  }
+  return true;
+};
+
 /**
  * Set a cookie
  * @param name
  * @param value
  */
 const burst_set_cookie = (name, value) => {
+  if (!burst_has_tracking_consent()) return;
   const path = '/';
   let domain = '';
   let secure = location.protocol === 'https:' ? ';secure' : '';
@@ -114,6 +131,9 @@ const burst_set_cookie = (name, value) => {
  * @returns {boolean}
  */
 const burst_use_cookies = () => {
+  if (!burst_has_tracking_consent()) {
+    return false;
+  }
   if (burst.cache.useCookies !== null) return burst.cache.useCookies;
   const result = navigator.cookieEnabled && !burst.options.cookieless && burst.options.privacy_level !== 'private_mode';
   burst.cache.useCookies = result;
@@ -134,7 +154,7 @@ function burst_enable_cookies() {
  * @returns {Promise}
  */
 const burst_uid = () => {
-  if (burst.cache.uid !== null) return Promise.resolve(burst.cache.uid);
+  if (burst.cache.uid) return Promise.resolve(burst.cache.uid);
   return burst_get_cookie('burst_uid').then(cookie_uid => {
     burst.cache.uid = cookie_uid;
     return cookie_uid;
@@ -147,10 +167,20 @@ const burst_uid = () => {
 };
 /**
  * Generate a random string
+ *
+ * Built with a plain loop on purpose. Legacy libraries that themes still load
+ * (Prototype, MooTools) overwrite Array.from with a single-argument version
+ * that silently ignores the map callback, which turned this into an empty
+ * string and left every visitor on such a site without an identifier.
+ *
  * @returns {string}
  */
 const burst_generate_uid = () => {
-  return Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join(''); // nosemgrep
+  let uid = '';
+  for (let i = 0; i < 32; i++) {
+    uid += Math.floor(Math.random() * 16).toString(16); // nosemgrep
+  }
+  return uid;
 };
 
 const burst_fingerprint = () => {
@@ -262,9 +292,28 @@ const burst_is_do_not_track = () => {
   burst.cache.isDoNotTrack = result;
   return result;
 };
+/**
+ * Debug is enabled by the localized option (BURST_DEBUG) or at runtime by the
+ * auto debug window inline flag, which can override a debug value baked into
+ * the combined script file.
+ * @returns {boolean}
+ */
+const burst_debug_enabled = () => !!( burst.options.debug || window.burst_debug );
+
 const burst_log_tracking_error = ({ status = 0, error = '', data = {} }) => {
-  if ( !burst.options.debug || !burst.tracking.ajaxUrl ) {
+  if ( !burst_debug_enabled() || !burst.tracking.ajaxUrl ) {
     return;
+  }
+
+  // Report at most one error per browser session: when tracking is down every
+  // pageview fails, and each report is a full admin-ajax request.
+  try {
+    if ( sessionStorage.getItem( 'burst_error_reported' ) ) {
+      return;
+    }
+    sessionStorage.setItem( 'burst_error_reported', '1' );
+  } catch ( e ) {
+    // sessionStorage unavailable; report anyway.
   }
 
   fetch(burst.tracking.ajaxUrl, {
@@ -281,7 +330,7 @@ const burst_log_tracking_error = ({ status = 0, error = '', data = {} }) => {
 
 const burst_beacon_request = (payload) => {
   const blob = new Blob([payload], { type: 'application/json' });
-  if ( burst.options.debug ) {
+  if ( burst_debug_enabled() ) {
     fetch( burst.tracking.beacon_url, {
       method: 'POST',
       body: blob,
@@ -361,7 +410,7 @@ async function burst_update_hit(
 	extraData = {},
 ) {
 	await pageIsRendered;
-	if (burst_is_user_agent() || burst_is_do_not_track()) return;
+	if (burst_is_user_agent() || burst_is_do_not_track() || !burst_has_tracking_consent()) return;
 	if (burst.tracking.isInitialHit) {
 		burst_track_hit(extraData);
 		return;
@@ -412,7 +461,7 @@ async function burst_track_hit(extraData = {}) {
     burst_update_hit(false, false, extraData);
     return;
   }
-  if (burst_is_user_agent() || burst_is_do_not_track()) return;
+  if (burst_is_user_agent() || burst_is_do_not_track() || !burst_has_tracking_consent()) return;
 
   if (Date.now() - burst.tracking.lastUpdateTimestamp < 300) return;
 
@@ -586,6 +635,7 @@ function burst_init_events() {
 document.addEventListener('wp_listen_for_consent_change', e => {
   const changed = e.detail;
   if (changed.statistics === 'allow') {
+    burst.cache.useCookies = null;
     burst_init_events();
   }
 });
