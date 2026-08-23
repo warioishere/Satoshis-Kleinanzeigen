@@ -30,6 +30,8 @@ class AdminPage extends AbstractPage {
         $coverage  = Donations::coverage();
         $dashboard  = Placement::dashboard_enabled();
         $sold_modal = Placement::sold_modal_enabled();
+        $p_modal    = implode( ', ', Donations::presets( 'modal' ) );
+        $p_bar      = implode( ', ', Donations::presets( 'bar' ) );
         $notice    = isset( $_GET['sk_donations_notice'] ) ? sanitize_text_field( wp_unslash( $_GET['sk_donations_notice'] ) ) : '';
 
         $orders = wc_get_orders(
@@ -69,6 +71,8 @@ class AdminPage extends AbstractPage {
             Donations::set_goal( isset( $_POST['sk_donations_goal'] ) ? absint( $_POST['sk_donations_goal'] ) : 0 );
             update_option( Placement::OPTION_DASHBOARD, isset( $_POST['sk_donations_dashboard'] ) ? 1 : 0 );
             update_option( Placement::OPTION_SOLD_MODAL, isset( $_POST['sk_donations_sold_modal'] ) ? 1 : 0 );
+            Donations::set_presets( 'modal', isset( $_POST['sk_donations_presets_modal'] ) ? sanitize_text_field( wp_unslash( $_POST['sk_donations_presets_modal'] ) ) : '' );
+            Donations::set_presets( 'bar', isset( $_POST['sk_donations_presets_bar'] ) ? sanitize_text_field( wp_unslash( $_POST['sk_donations_presets_bar'] ) ) : '' );
             $notice = 'saved';
         }
 

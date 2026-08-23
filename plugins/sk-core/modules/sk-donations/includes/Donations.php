@@ -18,6 +18,17 @@ class Donations {
      */
     const DEFAULT_GOAL = 70000;
 
+    /**
+     * Betragsvorschlaege. Getrennt, weil die beiden Orte verschiedene Momente
+     * sind: das Modal fragt spontan nach einem Verkauf, der Balken steht bei
+     * jemandem, der sich ohnehin schon mit den Kosten befasst.
+     */
+    const OPTION_PRESETS_MODAL = 'sk_donations_presets_modal';
+    const OPTION_PRESETS_BAR   = 'sk_donations_presets_bar';
+
+    const DEFAULT_PRESETS_MODAL = '2100,5000,21000';
+    const DEFAULT_PRESETS_BAR   = '5000,21000,100000';
+
     const ORDER_FLAG = '_sk_donation';
     const ORDER_SATS = '_sk_donation_sats';
 
@@ -34,6 +45,41 @@ class Donations {
 
     public static function set_goal( int $sats ): void {
         update_option( self::OPTION_GOAL, max( 0, $sats ) );
+    }
+
+    /**
+     * Betragsvorschlaege als Zahlenliste.
+     *
+     * @param string $where 'modal' oder 'bar'
+     * @return int[]
+     */
+    public static function presets( string $where = 'bar' ): array {
+        $option  = $where === 'modal' ? self::OPTION_PRESETS_MODAL : self::OPTION_PRESETS_BAR;
+        $default = $where === 'modal' ? self::DEFAULT_PRESETS_MODAL : self::DEFAULT_PRESETS_BAR;
+
+        $values = array_map( 'absint', explode( ',', (string) get_option( $option, $default ) ) );
+        $values = array_values( array_filter( $values, static fn( $v ) => $v > 0 ) );
+
+        // Leere oder unbrauchbare Eingabe faellt auf die Voreinstellung zurueck,
+        // sonst stuende das Modal ohne einen einzigen Knopf da.
+        if ( empty( $values ) ) {
+            $values = array_map( 'absint', explode( ',', $default ) );
+        }
+
+        return array_slice( $values, 0, 4 );
+    }
+
+    /**
+     * Eingabe aus dem Admin normalisieren.
+     */
+    public static function set_presets( string $where, string $raw ): void {
+        $values = array_map( 'absint', preg_split( '/[,;\s]+/', trim( $raw ) ) ?: [] );
+        $values = array_values( array_filter( $values, static fn( $v ) => $v > 0 ) );
+        $values = array_slice( $values, 0, 4 );
+
+        $option = $where === 'modal' ? self::OPTION_PRESETS_MODAL : self::OPTION_PRESETS_BAR;
+
+        update_option( $option, implode( ',', $values ) );
     }
 
     /**

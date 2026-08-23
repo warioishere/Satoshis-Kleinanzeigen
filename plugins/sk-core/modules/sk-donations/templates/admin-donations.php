@@ -8,6 +8,8 @@
  * @var int    $coverage
  * @var bool   $dashboard
  * @var bool   $sold_modal
+ * @var string $p_modal
+ * @var string $p_bar
  * @var string $notice
  * @var array  $orders
  * @var array  $history
@@ -70,6 +72,21 @@ $max      = max( 1, max( $history ) );
         </p>
         <p style="color:#646970;font-size:12px;margin-top:0;">
             <?php esc_html_e( 'Einzeln abschaltbar, damit sich nacheinander messen lässt, welche Platzierung etwas bringt.', 'sk-core' ); ?>
+        </p>
+
+        <p style="margin-bottom:4px;"><strong><?php esc_html_e( 'Betragsvorschläge', 'sk-core' ); ?></strong></p>
+        <p style="margin-top:0;">
+            <label style="display:block;margin-bottom:8px;">
+                <?php esc_html_e( 'Im Modal', 'sk-core' ); ?><br>
+                <input type="text" name="sk_donations_presets_modal" value="<?php echo esc_attr( $p_modal ); ?>" class="regular-text" placeholder="2100, 5000, 21000">
+            </label>
+            <label style="display:block;">
+                <?php esc_html_e( 'Im Kostenbalken', 'sk-core' ); ?><br>
+                <input type="text" name="sk_donations_presets_bar" value="<?php echo esc_attr( $p_bar ); ?>" class="regular-text" placeholder="5000, 21000, 100000">
+            </label>
+        </p>
+        <p style="color:#646970;font-size:12px;margin-top:0;">
+            <?php esc_html_e( 'Beträge in Sats, durch Komma getrennt, höchstens vier. Leer lassen setzt die Voreinstellung zurück. Der Kostenbalken hat zusätzlich ein freies Betragsfeld, das Modal bewusst nicht.', 'sk-core' ); ?>
         </p>
         <p style="color:#646970;font-size:12px;margin-top:0;">
             <?php esc_html_e( 'An anderen Stellen lässt er sich mit dem Shortcode einsetzen:', 'sk-core' ); ?>

@@ -57,7 +57,7 @@ class Shortcode extends SkShortcode {
         $coverage  = Donations::coverage();
         $missing   = max( 0, $goal - $received );
         $error     = isset( $_GET['spende'] ) && $_GET['spende'] === 'fehler';
-        $presets   = [ 5000, 21000, 100000 ];
+        $presets   = Donations::presets( 'bar' );
 
         ob_start();
         include SK_DONATIONS_PATH . '/templates/bar.php';

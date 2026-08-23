@@ -8,7 +8,7 @@ defined( 'ABSPATH' ) || exit;
 
 use SK\Modules\Donations\Donations;
 
-$presets = [ 2100, 5000, 21000 ];
+$presets = Donations::presets( 'modal' );
 ?>
 <div id="sk-donate-modal" class="sk-donate-modal">
     <div class="sk-donate-modal-backdrop"></div>
