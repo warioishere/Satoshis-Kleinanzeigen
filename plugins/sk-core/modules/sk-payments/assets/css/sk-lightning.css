@@ -253,3 +253,44 @@
 .sk-lightning-icon {
     color: #F7931A !important;
 }
+
+/* Bestelldetails in der Verkaufsuebersicht: Ausfuehrung und Lieferangabe.
+   Der Anbieter muss dafuer nicht in den Chat wechseln. */
+.skp-order-details {
+    margin: 10px 0 0;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border-left: 2px solid rgba(247, 147, 26, 0.5);
+    border-radius: 0 6px 6px 0;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.skp-order-details__row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.skp-order-details__row + .skp-order-details__row {
+    margin-top: 6px;
+}
+
+.skp-order-details__label {
+    flex: 0 0 8.5rem;
+    color: #5a6a7e;
+}
+
+.skp-order-details__label i {
+    margin-right: 5px;
+}
+
+.skp-order-details__note {
+    color: #e8ecf0;
+    white-space: normal;
+}
+
+@media (max-width: 600px) {
+    .skp-order-details__row { flex-direction: column; gap: 2px; }
+    .skp-order-details__label { flex: 0 0 auto; }
+}

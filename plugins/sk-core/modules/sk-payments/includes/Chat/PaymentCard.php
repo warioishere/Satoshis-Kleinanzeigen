@@ -235,7 +235,12 @@ class PaymentCard {
 
 		switch ( $marker ) {
 			case 'lightning_invoice':
-				if ( $row->context !== 'chat' || $sender_id !== $vendor_id ) {
+				// Anbieter wie Kaeufer duerfen die Karte gelegt haben: Beim
+				// Sofortkauf loest der Kaeufer die Invoice aus. Gefaehrlich
+				// waere nur eine fremde Invoice — die kann es nicht geben,
+				// weil der bolt11 in dieser Zeile immer serverseitig aus der
+				// Wallet des Anbieters stammt.
+				if ( $row->context !== 'chat' || ( $sender_id !== $vendor_id && $sender_id !== $buyer_id ) ) {
 					return null;
 				}
 

@@ -21,6 +21,7 @@
             product_title: $btn.data('product-title'),
             price_sats: $btn.data('price-sats'),
             variant: '',
+            note: '',
             has_ln: $btn.data('has-ln') === 1 || $btn.data('has-ln') === '1',
             has_onchain: $btn.data('has-onchain') === 1 || $btn.data('has-onchain') === '1',
             has_variants: $btn.data('has-variants') === 1 || $btn.data('has-variants') === '1'
@@ -33,7 +34,7 @@
             return;
         }
 
-        proceed();
+        askNote();
     });
 
     /* ─── Ausfuehrungen ─── */
@@ -62,11 +63,37 @@
         pendingData.variant = $choice.val();
         pendingData.price_sats = $choice.data('price-sats');
         $('#skp-variant-modal').hide();
-        proceed();
+        askNote();
     });
 
     $(document).on('click', '#skp-variant-cancel', function () {
         $('#skp-variant-modal').hide();
+        pendingData = null;
+    });
+
+    /* ─── Lieferangabe ─── */
+
+    function askNote() {
+        if (!pendingData) return;
+        $('#skp-note-error').hide();
+        $('#skp-note-modal').css('display', 'flex');
+        $('#skp-note').trigger('focus');
+    }
+
+    $(document).on('click', '#skp-note-confirm', function () {
+        var note = $.trim($('#skp-note').val() || '');
+        if (!note) {
+            $('#skp-note-error').text('Bitte Lieferadresse oder Hinweis angeben.').show();
+            return;
+        }
+
+        pendingData.note = note;
+        $('#skp-note-modal').hide();
+        proceed();
+    });
+
+    $(document).on('click', '#skp-note-cancel', function () {
+        $('#skp-note-modal').hide();
         pendingData = null;
     });
 
@@ -89,37 +116,110 @@
 
     /* ─── Lightning Flow ─── */
 
+    /*
+     * Die Invoice entsteht sofort in der Wallet des Anbieters, der QR-Code
+     * steht im Modal. Der Chat bekommt dieselbe Karte plus die Lieferangabe,
+     * damit die Zahlung auffindbar bleibt und man sich schreiben kann.
+     */
     function startLightning() {
         if (!pendingData) return;
         var $btn = $('.skp-buy-btn');
-        $btn.prop('disabled', true).text('Wird gesendet...');
-
-        // Detect currency.
-        var lang = (navigator.language || '').toLowerCase();
-        var currency = /^(de|fr|it|rm)-ch$/.test(lang) ? 'CHF' : 'EUR';
+        $btn.prop('disabled', true).text('Invoice wird erstellt...');
 
         $.post(SKP.ajaxurl, {
-            action: 'sk_create_purchase_request',
+            action: 'skp_create_lightning_payment',
             nonce: SKP.nonce,
-            vendor_id: pendingData.vendor_id,
+            // Anbieter, Titel und Betrag kommen serverseitig aus dem Inserat.
             product_id: pendingData.product_id,
-            product_title: pendingData.product_title,
-            price_fiat: 0,
-            currency: currency,
-            price_sats: pendingData.price_sats,
-            variant: pendingData.variant
+            variant: pendingData.variant,
+            note: pendingData.note
         }, function (res) {
             $btn.prop('disabled', false).text('Sofortkauf');
-            if (res.success && res.data.chat_url) {
-                window.location.href = res.data.chat_url;
+            if (res.success) {
+                showLightningModal(res.data);
             } else {
-                alert(res.data && res.data.message ? res.data.message : 'Fehler beim Senden der Kaufanfrage.');
+                alert(res.data && res.data.message ? res.data.message : 'Invoice konnte nicht erstellt werden.');
             }
         }).fail(function () {
             $btn.prop('disabled', false).text('Sofortkauf');
             alert('Netzwerkfehler. Bitte erneut versuchen.');
         });
     }
+
+    function showLightningModal(data) {
+        var sats = Number(data.amount_sats).toLocaleString('de-DE');
+        var html = '';
+
+        html += '<div style="text-align:center;margin-bottom:16px;">';
+        html += '<div style="font-size:24px;font-weight:700;color:#f7931a;">' + sats + ' Sats</div>';
+        html += '<div style="font-size:14px;color:#e8ecf0;margin-top:4px;">' + escHtml(data.product_title) + '</div>';
+        html += '</div>';
+
+        if (/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(String(data.qr || ''))) {
+            html += '<div style="margin-bottom:12px;">';
+            html += '<img src="' + escAttr(data.qr) + '" alt="QR" style="display:block;margin:0 auto;max-width:200px;width:100%;border-radius:8px;background:#fff;padding:6px;" />';
+            html += '</div>';
+        }
+
+        html += '<div style="display:flex;gap:8px;margin-bottom:12px;">';
+        html += '<button type="button" class="skp-copy-addr" data-copy="' + escAttr(data.payment_request) + '" style="flex:1;padding:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#e8ecf0;cursor:pointer;font-size:13px;"><i class="fas fa-copy"></i> Invoice kopieren</button>';
+        html += '<a href="' + escAttr(data.deeplink) + '" style="flex:1;padding:8px;background:#f7931a;border:none;border-radius:6px;color:#fff;text-align:center;font-size:13px;text-decoration:none;display:flex;align-items:center;justify-content:center;"><i class="fas fa-bolt"></i>&nbsp;In Wallet öffnen</a>';
+        html += '</div>';
+
+        html += '<div id="skp-lightning-status" style="text-align:center;padding:10px;font-size:13px;color:#5a6a7e;">';
+        html += '<i class="fas fa-spinner fa-spin"></i> Warte auf Zahlung...';
+        html += '</div>';
+
+        if (data.chat_url) {
+            html += '<div style="text-align:center;margin-top:4px;"><a href="' + escAttr(data.chat_url) + '" style="color:#f7931a;font-size:12px;">Chat mit dem Anbieter öffnen</a></div>';
+        }
+
+        $('#skp-lightning-content').html(html);
+        $('#skp-lightning-modal').css('display', 'flex');
+
+        startLightningPolling(data.payment_hash);
+    }
+
+    var lightningPollTimer = null;
+
+    function stopLightningPolling() {
+        if (lightningPollTimer) {
+            clearInterval(lightningPollTimer);
+            lightningPollTimer = null;
+        }
+    }
+
+    function startLightningPolling(paymentHash) {
+        stopLightningPolling();
+        var attempts = 0;
+
+        lightningPollTimer = setInterval(function () {
+            attempts++;
+            if (attempts > 120) {
+                stopLightningPolling();
+                $('#skp-lightning-status').html('<span style="color:#5a6a7e;">Invoice abgelaufen — im Chat neu anfragen.</span>');
+                return;
+            }
+
+            $.ajax({
+                url: SKP.resturl + 'check-payment',
+                method: 'GET',
+                data: { payment_hash: paymentHash },
+                headers: { 'X-WP-Nonce': SKP.restNonce },
+                success: function (res) {
+                    if (res && (res.settled || res.paid || res.status === 'confirmed')) {
+                        stopLightningPolling();
+                        $('#skp-lightning-status').html('<span style="color:#5cb85c;font-weight:600;">Zahlung eingegangen!</span>');
+                    }
+                }
+            });
+        }, 5000);
+    }
+
+    $(document).on('click', '#skp-lightning-close', function () {
+        stopLightningPolling();
+        $('#skp-lightning-modal').hide();
+    });
 
     /* ─── Onchain Flow ─── */
 
@@ -133,7 +233,8 @@
             nonce: SKP.nonce,
             // Vendor, title and price are resolved server-side from the product.
             product_id: pendingData.product_id,
-            variant: pendingData.variant
+            variant: pendingData.variant,
+            note: pendingData.note
         }, function (res) {
             $btn.prop('disabled', false).text('Sofortkauf');
             if (res.success) {

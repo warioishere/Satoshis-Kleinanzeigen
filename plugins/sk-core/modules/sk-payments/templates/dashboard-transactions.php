@@ -249,6 +249,10 @@ do_action( 'sk_dashboard_wrap_start' );
                             $rep_label = 'ab ' . wp_date( 'd.m.Y', strtotime( $p->reputation_at ) );
                         }
 
+                        // Ausfuehrung und Lieferangabe stehen an der Zahlung —
+                        // der Anbieter soll dafuer nicht in den Chat muessen.
+                        $details = \SK\Modules\Payments\ProductPage::order_details( $p->metadata ?? null );
+
                         $can_confirm_delivery = $tab === 'purchases' && $p->status === 'confirmed';
                         $can_dispute = $tab === 'purchases' && $p->status === 'confirmed';
                     ?>
@@ -290,6 +294,23 @@ do_action( 'sk_dashboard_wrap_start' );
                                         <a href="https://mempool.space/tx/<?php echo esc_attr( $p->preimage ); ?>" target="_blank" rel="noopener" style="margin-left:8px;font-size:11px;color:#f7931a;"><i class="fas fa-external-link-alt"></i> TX</a>
                                     <?php endif; ?>
                                 </div>
+
+                                <?php if ( $details['variant'] !== '' || $details['delivery_note'] !== '' ) : ?>
+                                    <div class="skp-order-details">
+                                        <?php if ( $details['variant'] !== '' ) : ?>
+                                            <div class="skp-order-details__row">
+                                                <span class="skp-order-details__label"><i class="fas fa-layer-group"></i> Ausführung</span>
+                                                <span><?php echo esc_html( $details['variant'] ); ?></span>
+                                            </div>
+                                        <?php endif; ?>
+                                        <?php if ( $details['delivery_note'] !== '' ) : ?>
+                                            <div class="skp-order-details__row">
+                                                <span class="skp-order-details__label"><i class="fas fa-truck"></i> Lieferung</span>
+                                                <span class="skp-order-details__note"><?php echo nl2br( esc_html( $details['delivery_note'] ) ); ?></span>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endif; ?>
 
                                 <div class="sk-review-card__footer">
                                     <?php if ( $p->chat_id ) :
