@@ -205,6 +205,45 @@ class DashboardPage extends DashboardModule {
             delete_transient( 'sk_import_quota_' . $vendor_id );
         }
 
+        // Zusammenfassung dessen, was der Import tun wird — das ist die
+        // Information, auf der jemand "ja, mach" entscheidet. Die
+        // Spaltenzuordnung interessiert nur, wenn sie falsch geraten wurde.
+        $summary = [];
+        if ( $items ) {
+            $with_variants = 0;
+            $drafts        = 0;
+            $with_images   = 0;
+            $without_price = 0;
+
+            foreach ( $items as $item ) {
+                if ( ! empty( $item['variants'] ) ) {
+                    $with_variants++;
+                }
+                if ( ! empty( $item['draft'] ) ) {
+                    $drafts++;
+                }
+                if ( trim( (string) ( $item['images'] ?? '' ) ) !== '' ) {
+                    $with_images++;
+                }
+                if ( Importer::parse_price( (string) ( $item['price'] ?? '' ) ) === null ) {
+                    $without_price++;
+                }
+            }
+
+            $summary = [
+                'rows'          => (int) ( $csv['count'] ?? 0 ),
+                'items'         => $item_count,
+                'variants'      => $with_variants,
+                'drafts'        => $drafts,
+                'images'        => $with_images,
+                'without_price' => $without_price,
+                'categories'    => count( $csv_cats ),
+                'unmapped'      => count( array_filter( $mapping, static fn( $i ) => $i < 0 ) ),
+            ];
+        }
+
+        $subscription_url = function_exists( 'sk_get_navigation_url' ) ? sk_get_navigation_url( 'subscription' ) : home_url( '/dashboard/subscription/' );
+
         $packs        = $quota_block ? Quota::packs_for( (int) $quota_block['needed'] ) : [];
         $stay_online  = Quota::listings_stay_online();
         $saved_map    = Settings::category_map( $vendor_id );
@@ -231,7 +270,9 @@ class DashboardPage extends DashboardModule {
             'default_cat',
             'categories',
             'rate',
-            'result'
+            'result',
+            'summary',
+            'subscription_url'
         );
     }
 }

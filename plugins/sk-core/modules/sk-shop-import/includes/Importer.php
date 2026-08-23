@@ -30,8 +30,14 @@ final class Importer {
     const META_FROM = '_sk_price_from';
 
     /**
-     * Bilder je Durchlauf. Ohne Deckel laedt ein Katalog mit 200 Artikeln
-     * hunderte Dateien nach und fuellt die Platte.
+     * Bilder je Produkt. Mehr als eine Handvoll sieht sich ohnehin niemand an,
+     * und jedes Bild ist eine Datei auf der Platte.
+     */
+    const IMAGES_PER_PRODUCT = 5;
+
+    /**
+     * Bilder je Durchlauf. Zweiter Deckel, damit ein Katalog mit 200 Artikeln
+     * nicht tausend Dateien nachlaedt.
      */
     const DEFAULT_IMAGE_CAP = 60;
 
@@ -115,8 +121,8 @@ final class Importer {
             self::apply_variants( $post_id, (array) ( $item['variants'] ?? [] ), $currency, ! empty( $item['from'] ) );
 
             if ( $result['images'] < $image_cap ) {
-                $added            = self::apply_images( $post_id, (string) ( $item['images'] ?? '' ), $image_cap - $result['images'] );
-                $result['images'] += $added;
+                $budget            = min( self::IMAGES_PER_PRODUCT, $image_cap - $result['images'] );
+                $result['images'] += self::apply_images( $post_id, (string) ( $item['images'] ?? '' ), $budget );
             }
 
             foreach ( $geo as $meta_key => $value ) {
