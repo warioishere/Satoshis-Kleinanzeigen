@@ -172,6 +172,9 @@ use SK\Modules\Subscription\Helper;
                                     <i class="fas fa-layer-group"></i>
                                     Shop-Import mit Ausführungen
                                 </span>
+                                <button type="button" class="pack_feature_more" data-sk-pack-info>
+                                    Mehr erfahren
+                                </button>
                             <?php endif; ?>
                         </div><!-- .pack_data_option -->
                     </div><!-- .pack_content -->
@@ -200,6 +203,14 @@ use SK\Modules\Subscription\Helper;
             }
             ?>
         </div><!-- .sk-subscription-content -->
+
+        <?php
+        // Einmal je Seite, nicht je Karte — alle Knoepfe oeffnen dasselbe Modal.
+        if ( class_exists( \SK\Modules\ShopImport\Variants::class ) ) {
+            include SK_SHOP_IMPORT_PATH . '/templates/pack-info-modal.php';
+        }
+        ?>
+
         <?php
     } else {
         echo '<h3>' . __( 'No subscription pack has been found!', 'sk-core' ) . '</h3>';

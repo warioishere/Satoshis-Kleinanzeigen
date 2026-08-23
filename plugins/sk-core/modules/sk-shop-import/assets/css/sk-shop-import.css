@@ -204,3 +204,129 @@
     .sk-variants-row { flex-wrap: wrap; }
     .sk-variants-row__price { flex-basis: 100%; }
 }
+
+/* ==========================================================
+ * Modal auf der Abo-Seite: was der Katalogimport kann
+ *
+ * Optik bewusst wie das Spenden-Modal; hier eigenstaendig, damit die
+ * Abo-Seite nicht vom Spendenmodul abhaengt.
+ * ========================================================== */
+.sk-pack-info {
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+}
+
+.sk-pack-info.is-visible {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.3s ease, visibility 0s;
+}
+
+.sk-pack-info__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+}
+
+.sk-pack-info__box {
+    position: relative;
+    background: #181e27;
+    border-radius: 12px;
+    padding: 32px 36px 26px;
+    max-width: 480px;
+    width: 90%;
+    max-height: 85vh;
+    overflow-y: auto;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    transform: translateY(14px);
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sk-pack-info.is-visible .sk-pack-info__box {
+    transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sk-pack-info,
+    .sk-pack-info .sk-pack-info__box {
+        transition: none;
+    }
+}
+
+.sk-pack-info__icon {
+    font-size: 40px;
+    color: #f7931a;
+    margin-bottom: 12px;
+}
+
+.sk-pack-info__box h3 {
+    color: #fff;
+    font-size: 21px;
+    font-weight: 700;
+    margin: 0 0 10px;
+}
+
+.sk-pack-info__box p {
+    color: #9aa4b2;
+    font-size: 15px;
+    line-height: 1.6;
+    margin: 0 0 18px;
+}
+
+.sk-pack-info__list {
+    list-style: none;
+    margin: 0 0 18px;
+    padding: 0;
+    text-align: left;
+}
+
+.sk-pack-info__list li {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    color: #c4cdd8;
+    font-size: 14px;
+    line-height: 1.55;
+    padding: 9px 0;
+    border-top: 1px solid #262e3a;
+}
+
+.sk-pack-info__list li:first-child {
+    border-top: 0;
+}
+
+.sk-pack-info__list i {
+    flex: 0 0 auto;
+    width: 18px;
+    margin-top: 3px;
+    color: #f7931a;
+    text-align: center;
+}
+
+.sk-pack-info__note {
+    color: #e8ecf0 !important;
+    font-size: 14px !important;
+    margin: 0 0 18px !important;
+}
+
+.sk-pack-info__close {
+    background: none;
+    border: 0;
+    color: #9aa4b2;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 6px 10px;
+}
+
+.sk-pack-info__close:hover {
+    color: #fff;
+}

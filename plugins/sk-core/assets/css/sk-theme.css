@@ -6131,6 +6131,24 @@ ul.product_list_widget li div[style*="font-size: 0.8em"] {
 .sk-subscription-content .pack_content_wrapper .product_pack_item .pack_feature i {
   margin-right: 6px;
 }
+.sk-subscription-content .pack_content_wrapper .product_pack_item .pack_feature_more {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 5px 14px;
+  background: none;
+  border: 1px solid #3a4454;
+  border-radius: 20px;
+  color: #c4cdd8;
+  font-size: 13px;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.sk-subscription-content .pack_content_wrapper .product_pack_item .pack_feature_more:hover,
+.sk-subscription-content .pack_content_wrapper .product_pack_item .pack_feature_more:focus-visible {
+  border-color: #F7931A;
+  color: #F7931A;
+}
 
 /* ==========================================================
  * Dashboard-Grundlayout — Sidebar und Inhalt als ein Block

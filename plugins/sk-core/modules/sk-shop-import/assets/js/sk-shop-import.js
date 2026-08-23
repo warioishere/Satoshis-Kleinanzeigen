@@ -82,3 +82,55 @@
         if (button) button.disabled = true;
     });
 }());
+
+/**
+ * Modal auf der Abo-Seite: was der Katalogimport kann.
+ *
+ * Eigene Funktion, weil der obige Block auf der Abo-Seite gar nicht erst
+ * laeuft — dort gibt es kein Auswahlformular. Klicks laufen ueber document,
+ * damit die Reihenfolge von Skript und Markup egal ist.
+ */
+(function () {
+    'use strict';
+
+    var opener = null;
+
+    function box() {
+        return document.getElementById('sk-pack-info');
+    }
+
+    function close() {
+        var el = box();
+        if (!el || !el.classList.contains('is-visible')) return;
+        el.classList.remove('is-visible');
+        if (opener) {
+            opener.focus();
+            opener = null;
+        }
+    }
+
+    document.addEventListener('click', function (e) {
+        if (!e.target || !e.target.closest) return;
+
+        var trigger = e.target.closest('[data-sk-pack-info]');
+        if (trigger) {
+            var el = box();
+            if (!el) return;
+            e.preventDefault();
+            opener = trigger;
+            el.classList.add('is-visible');
+            var button = el.querySelector('.sk-pack-info__close');
+            if (button) button.focus();
+            return;
+        }
+
+        if (e.target.closest('.sk-pack-info__close') || e.target.closest('.sk-pack-info__backdrop')) {
+            e.preventDefault();
+            close();
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') close();
+    });
+}());

@@ -267,6 +267,9 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
                                             <i class="fas fa-layer-group"></i>
                                             Shop-Import mit Ausführungen
                                         </span>
+                                        <button type="button" class="pack_feature_more" data-sk-pack-info>
+                                            Mehr erfahren
+                                        </button>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -300,6 +303,13 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
                         </div>
                     <?php endwhile; wp_reset_postdata(); ?>
                 </div>
+
+                <?php
+                // Einmal je Seite, nicht je Karte — alle Knoepfe oeffnen dasselbe Modal.
+                if ( class_exists( \SK\Modules\ShopImport\Variants::class ) ) {
+                    include SK_SHOP_IMPORT_PATH . '/templates/pack-info-modal.php';
+                }
+                ?>
 
             <?php else : ?>
                 <h3><?php esc_html_e( 'No subscription pack has been found!', 'sk-core' ); ?></h3>
