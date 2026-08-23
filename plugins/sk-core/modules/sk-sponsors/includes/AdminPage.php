@@ -63,6 +63,8 @@ class AdminPage extends AbstractPage {
         $notice          = isset( $_GET['sk_sponsors_notice'] ) ? sanitize_text_field( wp_unslash( $_GET['sk_sponsors_notice'] ) ) : '';
         $billing_enabled = Billing::is_enabled();
         $unchecked       = Backlink::unchecked_count();
+        $rate_top        = Pricing::list_price( PostType::TIER_TOP );
+        $rate_standard   = Pricing::list_price( PostType::TIER_STANDARD );
 
         // Nach dem Anlegen einer Rechnung den Zahllink zum Weitergeben zeigen.
         $new_invoice = null;
@@ -119,6 +121,19 @@ class AdminPage extends AbstractPage {
             $notice = is_wp_error( $order )
                 ? 'invoice-error'
                 : 'invoice-' . (int) $order->get_id();
+        }
+
+        if ( $action === 'save_rates' ) {
+            Pricing::set_list_price( PostType::TIER_TOP, isset( $_POST['sk_rate_top'] ) ? absint( $_POST['sk_rate_top'] ) : 0 );
+            Pricing::set_list_price( PostType::TIER_STANDARD, isset( $_POST['sk_rate_standard'] ) ? absint( $_POST['sk_rate_standard'] ) : 0 );
+            $notice = 'rates-saved';
+        }
+
+        if ( $action === 'apply_rate_top' || $action === 'apply_rate_standard' ) {
+            $tier      = $action === 'apply_rate_top' ? PostType::TIER_TOP : PostType::TIER_STANDARD;
+            $overwrite = ! empty( $_POST['sk_rate_overwrite'] );
+            $changed   = Pricing::apply_to_tier( $tier, $overwrite );
+            $notice    = 'rates-applied-' . (int) $changed;
         }
 
         if ( $action === 'toggle_billing' ) {

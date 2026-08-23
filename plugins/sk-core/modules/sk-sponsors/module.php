@@ -42,6 +42,7 @@ final class Module {
         require_once SK_SPONSORS_INCLUDES . '/Install.php';
         require_once SK_SPONSORS_INCLUDES . '/PostType.php';
         require_once SK_SPONSORS_INCLUDES . '/Stats.php';
+        require_once SK_SPONSORS_INCLUDES . '/Pricing.php';
         require_once SK_SPONSORS_INCLUDES . '/Billing.php';
         require_once SK_SPONSORS_INCLUDES . '/Backlink.php';
         require_once SK_SPONSORS_INCLUDES . '/TopUp.php';

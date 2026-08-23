@@ -7,6 +7,7 @@ defined( 'ABSPATH' ) || exit;
 
 use SK\Modules\Sponsors\PostType;
 use SK\Modules\Sponsors\Portal;
+use SK\Modules\Sponsors\Pricing;
 use SK\Modules\Sponsors\Stats;
 
 $sponsor = PostType::by_token( (string) get_query_var( Portal::QUERY_VAR ) );
@@ -19,7 +20,7 @@ if ( ! $sponsor ) {
 $sponsor_id = (int) $sponsor->ID;
 $monthly    = (int) get_post_meta( $sponsor_id, PostType::META_MONTHLY, true );
 $balance    = (int) get_post_meta( $sponsor_id, PostType::META_BALANCE, true );
-$rate       = $monthly > 0 ? $monthly : Portal::default_rate();
+$rate       = Pricing::effective_rate( $sponsor_id );
 $months     = PostType::months_left( $sponsor_id );
 $running    = $sponsor->post_status === 'publish' && PostType::is_running( $sponsor_id );
 

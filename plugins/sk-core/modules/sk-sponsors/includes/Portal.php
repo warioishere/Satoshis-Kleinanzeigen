@@ -20,9 +20,6 @@ class Portal {
     const QUERY_VAR = 'sk_sponsor_token';
     const PREFIX    = 'sponsor';
 
-    /** Ersatzrate, solange für einen Sponsor noch keine Monatsrate feststeht. */
-    const OPTION_DEFAULT_RATE = 'sk_sponsors_default_rate';
-
     public function __construct() {
         add_action( 'init', [ $this, 'add_rewrite_rule' ] );
         add_filter( 'query_vars', [ $this, 'add_query_var' ] );
@@ -48,10 +45,6 @@ class Portal {
 
     public static function url_for( int $sponsor_id ): string {
         return home_url( '/' . self::PREFIX . '/' . PostType::token( $sponsor_id ) . '/' );
-    }
-
-    public static function default_rate(): int {
-        return max( 1000, (int) get_option( self::OPTION_DEFAULT_RATE, 25000 ) );
     }
 
     private function current_sponsor(): ?\WP_Post {

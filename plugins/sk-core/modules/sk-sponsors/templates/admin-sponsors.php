@@ -17,6 +17,7 @@ defined( 'ABSPATH' ) || exit;
 use SK\Modules\Sponsors\Backlink;
 use SK\Modules\Sponsors\TopUp;
 use SK\Modules\Sponsors\Billing;
+use SK\Modules\Sponsors\Pricing;
 use SK\Modules\Sponsors\PostType;
 
 $base_url = add_query_arg( [ 'page' => 'sk', 'tab' => 'sponsors' ], admin_url( 'admin.php' ) );
@@ -48,6 +49,12 @@ $base_url = add_query_arg( [ 'page' => 'sk', 'tab' => 'sponsors' ], admin_url( '
                 <strong><?php printf( esc_html__( 'Noch %d ungeprüft — bitte erneut klicken.', 'sk-core' ), (int) $open ); ?></strong>
             <?php endif; ?>
         </p>
+    </div>
+<?php elseif ( $notice === 'rates-saved' ) : ?>
+    <div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Monatsraten gespeichert.', 'sk-core' ); ?></p></div>
+<?php elseif ( strpos( $notice, 'rates-applied-' ) === 0 ) : ?>
+    <div class="notice notice-success is-dismissible">
+        <p><?php printf( esc_html__( 'Listenpreis auf %d Sponsoren übertragen.', 'sk-core' ), (int) substr( $notice, strlen( 'rates-applied-' ) ) ); ?></p>
     </div>
 <?php elseif ( $notice === 'billing-on' ) : ?>
     <div class="notice notice-warning is-dismissible"><p><?php esc_html_e( 'Monatliche Abbuchung eingeschaltet. Sponsoren mit Monatsrate verlieren ihren Platz, sobald das Guthaben nicht mehr reicht.', 'sk-core' ); ?></p></div>
@@ -146,6 +153,43 @@ $base_url = add_query_arg( [ 'page' => 'sk', 'tab' => 'sponsors' ], admin_url( '
     </span>
 </div>
 
+<div style="background:#fff;border:1px solid #c3c4c7;padding:14px;margin-bottom:16px;max-width:760px;">
+    <h3 style="margin-top:0;"><?php esc_html_e( 'Monatsraten (Listenpreise)', 'sk-core' ); ?></h3>
+    <p style="color:#646970;margin-top:0;">
+        <?php esc_html_e( 'Was ein Platz je Stufe kosten soll. Diese Preise werden dem Sponsor auf seiner Seite als Voreinstellung angeboten. Eine am Sponsor hinterlegte Rate geht immer vor.', 'sk-core' ); ?>
+    </p>
+
+    <form method="post" action="<?php echo esc_url( $base_url ); ?>" style="display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;">
+        <?php wp_nonce_field( 'sk_sponsors_action', 'sk_sponsors_nonce' ); ?>
+        <input type="hidden" name="sk_sponsors_action" value="save_rates">
+        <label>
+            <span style="display:block;font-weight:600;"><?php esc_html_e( 'Top (3 Plätze)', 'sk-core' ); ?></span>
+            <input type="number" name="sk_rate_top" min="0" step="1000" value="<?php echo esc_attr( (string) $rate_top ); ?>"> <?php esc_html_e( 'Sats/Monat', 'sk-core' ); ?>
+        </label>
+        <label>
+            <span style="display:block;font-weight:600;"><?php esc_html_e( 'Standard', 'sk-core' ); ?></span>
+            <input type="number" name="sk_rate_standard" min="0" step="1000" value="<?php echo esc_attr( (string) $rate_standard ); ?>"> <?php esc_html_e( 'Sats/Monat', 'sk-core' ); ?>
+        </label>
+        <button type="submit" class="button button-primary"><?php esc_html_e( 'Raten speichern', 'sk-core' ); ?></button>
+    </form>
+
+    <hr style="margin:14px 0;">
+
+    <p style="margin:0 0 8px;color:#646970;">
+        <strong><?php esc_html_e( 'Listenpreis übertragen', 'sk-core' ); ?></strong> —
+        <?php esc_html_e( 'setzt die Rate bei allen Sponsoren einer Stufe, die bisher nichts zahlen. Damit werden aus Gratisplätzen zahlungspflichtige; wirksam wird das erst, wenn die Abbuchung eingeschaltet ist.', 'sk-core' ); ?>
+    </p>
+    <form method="post" action="<?php echo esc_url( $base_url ); ?>" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <?php wp_nonce_field( 'sk_sponsors_action', 'sk_sponsors_nonce' ); ?>
+        <label style="font-size:12px;">
+            <input type="checkbox" name="sk_rate_overwrite" value="1">
+            <?php esc_html_e( 'auch bereits gesetzte Raten überschreiben', 'sk-core' ); ?>
+        </label>
+        <button type="submit" class="button" name="sk_sponsors_action" value="apply_rate_top"><?php esc_html_e( 'auf Top übertragen', 'sk-core' ); ?></button>
+        <button type="submit" class="button" name="sk_sponsors_action" value="apply_rate_standard"><?php esc_html_e( 'auf Standard übertragen', 'sk-core' ); ?></button>
+    </form>
+</div>
+
 <?php if ( $legacy_pending > 0 ) : ?>
     <div class="notice notice-info" style="padding:12px;">
         <p style="margin-top:0;">
@@ -219,6 +263,15 @@ $base_url = add_query_arg( [ 'page' => 'sk', 'tab' => 'sponsors' ], admin_url( '
                         <strong><?php echo esc_html( number_format_i18n( $rate ) ); ?></strong> sats
                     <?php else : ?>
                         <span style="color:#d63638;"><?php esc_html_e( 'zahlt nichts', 'sk-core' ); ?></span>
+                        <div style="color:#646970;font-size:12px;">
+                            <?php
+                            printf(
+                                /* translators: %s: list price in sats */
+                                esc_html__( 'Liste: %s', 'sk-core' ),
+                                esc_html( number_format_i18n( Pricing::list_price( PostType::get_tier( (int) $sponsor->ID ) ) ) )
+                            );
+                            ?>
+                        </div>
                     <?php endif; ?>
                 </td>
                 <td>
