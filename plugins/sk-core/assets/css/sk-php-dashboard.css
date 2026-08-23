@@ -39,6 +39,11 @@
     justify-content: flex-start;
     align-items: flex-end;
     padding-bottom: 0;
+
+    /* Luft zwischen den Reihen, damit sie nicht aneinanderkleben. Nur
+       zwischen den Zeilen, nicht seitlich — die Reiter sollen weiter
+       aneinander anschliessen. */
+    row-gap: 8px;
 }
 
 .wrap.sk-php-dashboard nav.nav-tab-wrapper .nav-tab {
