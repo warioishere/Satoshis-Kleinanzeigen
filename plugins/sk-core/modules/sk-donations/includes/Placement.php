@@ -73,12 +73,27 @@ class Placement {
             SK_DONATIONS_VERSION
         );
 
+        // btcpay.js wird auf dem Verkaeufer-Dashboard bereits von BuyNow
+        // geladen; als Abhaengigkeit angeben, damit die Reihenfolge stimmt,
+        // falls BuyNow einmal abgeschaltet ist.
+        $deps = wp_script_is( 'btcpay_gf_modal_js', 'registered' ) ? [ 'btcpay_gf_modal_js' ] : [];
+
         wp_enqueue_script(
             'sk-donations-sold-modal',
             SK_DONATIONS_URL . '/assets/js/sold-modal.js',
-            [],
+            $deps,
             SK_DONATIONS_VERSION,
             true
+        );
+
+        wp_localize_script(
+            'sk-donations-sold-modal',
+            'skDonate',
+            [
+                'ajaxurl' => admin_url( 'admin-ajax.php' ),
+                'action'  => Donations::AJAX_ACTION,
+                'nonce'   => wp_create_nonce( Donations::AJAX_ACTION ),
+            ]
         );
     }
 

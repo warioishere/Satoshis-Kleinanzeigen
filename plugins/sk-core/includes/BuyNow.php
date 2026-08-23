@@ -158,23 +158,44 @@ final class BuyNow {
          */
         do_action( 'woocommerce_checkout_order_processed', $order_id, $checkout_data, $order );
 
-        $gateways = WC()->payment_gateways()->payment_gateways();
-        if ( ! isset( $gateways['btcpaygf_default'] ) ) {
-            wp_send_json_error( [ 'message' => 'BTCPay Gateway nicht gefunden.' ], 500 );
+        $payment = self::pay_order( $order );
+
+        if ( is_wp_error( $payment ) ) {
+            wp_send_json_error( [ 'message' => $payment->get_error_message() ], 500 );
         }
 
-        $result = $gateways['btcpaygf_default']->process_payment( $order_id );
+        wp_send_json_success( $payment );
+    }
+
+    /**
+     * Bestellung ueber BTCPay bezahlbar machen und die Daten fuer den Dialog
+     * zurueckgeben.
+     *
+     * Ausgelagert, damit andere Module denselben Weg gehen koennen, ohne den
+     * Ablauf nachzubauen — das Spendenmodul nutzt ihn fuer sein Modal.
+     *
+     * @return array{invoiceId:string,orderCompleteLink:string,btcpayUrl:string}|\WP_Error
+     */
+    public static function pay_order( \WC_Order $order ) {
+        $gateways = WC()->payment_gateways()->payment_gateways();
+
+        if ( ! isset( $gateways['btcpaygf_default'] ) ) {
+            return new \WP_Error( 'sk_buynow_gateway', 'BTCPay Gateway nicht gefunden.' );
+        }
+
+        $result = $gateways['btcpaygf_default']->process_payment( $order->get_id() );
 
         if ( empty( $result['invoiceId'] ) ) {
             $order->update_status( 'cancelled', 'BTCPay invoice creation failed.' );
-            wp_send_json_error( [ 'message' => 'BTCPay Invoice konnte nicht erstellt werden.' ], 500 );
+
+            return new \WP_Error( 'sk_buynow_invoice', 'BTCPay Invoice konnte nicht erstellt werden.' );
         }
 
-        wp_send_json_success( [
+        return [
             'invoiceId'         => $result['invoiceId'],
-            'orderCompleteLink' => $result['orderCompleteLink'],
+            'orderCompleteLink' => $result['orderCompleteLink'] ?? $order->get_checkout_order_received_url(),
             'btcpayUrl'         => rtrim( (string) get_option( 'btcpay_gf_url' ), '/' ),
-        ] );
+        ];
     }
 
     public static function enqueue_assets(): void {

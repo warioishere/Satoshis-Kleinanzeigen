@@ -32,7 +32,8 @@ class Donations {
     const ORDER_FLAG = '_sk_donation';
     const ORDER_SATS = '_sk_donation_sats';
 
-    const ACTION = 'sk_donate';
+    const ACTION       = 'sk_donate';
+    const AJAX_ACTION  = 'sk_donate_invoice';
 
     /**
      * Stichtag: Erst ab hier zaehlt Zufluss.
@@ -47,6 +48,9 @@ class Donations {
     public function __construct() {
         add_action( 'admin_post_' . self::ACTION, [ $this, 'handle_form' ] );
         add_action( 'admin_post_nopriv_' . self::ACTION, [ $this, 'handle_form' ] );
+
+        add_action( 'wp_ajax_' . self::AJAX_ACTION, [ $this, 'handle_ajax' ] );
+        add_action( 'wp_ajax_nopriv_' . self::AJAX_ACTION, [ $this, 'handle_ajax' ] );
     }
 
     /**
@@ -260,7 +264,43 @@ class Donations {
     }
 
     /**
+     * Rechnung anlegen und den BTCPay-Dialog vorbereiten.
+     *
+     * Nutzt BuyNow::pay_order() — denselben Weg, den Abos und Boosts gehen.
+     * Damit entfaellt der WooCommerce-Checkout, und die Mechanik existiert nur
+     * einmal.
+     */
+    public function handle_ajax(): void {
+        check_ajax_referer( self::AJAX_ACTION, 'nonce' );
+
+        $sats  = isset( $_POST['sats'] ) ? absint( $_POST['sats'] ) : 0;
+        $order = self::create_invoice( $sats );
+
+        if ( is_wp_error( $order ) ) {
+            wp_send_json_error( [ 'message' => $order->get_error_message() ], 400 );
+        }
+
+        if ( ! class_exists( '\\SK\\Core\\BuyNow' ) ) {
+            // Ohne BuyNow bleibt der normale Bezahlweg ueber die Bestellseite.
+            wp_send_json_success( [ 'payUrl' => $order->get_checkout_payment_url() ] );
+        }
+
+        $payment = \SK\Core\BuyNow::pay_order( $order );
+
+        if ( is_wp_error( $payment ) ) {
+            // Fallback statt Sackgasse: Die Bestellung existiert, sie laesst
+            // sich ueber die normale Bezahlseite weiterhin begleichen.
+            wp_send_json_success( [ 'payUrl' => $order->get_checkout_payment_url() ] );
+        }
+
+        wp_send_json_success( $payment );
+    }
+
+    /**
      * Formular entgegennehmen und zur Zahlung weiterleiten.
+     *
+     * Bleibt als Rueckfallweg bestehen, wenn JavaScript oder der BTCPay-Dialog
+     * nicht verfuegbar sind.
      */
     public function handle_form(): void {
         $referer = wp_get_referer() ?: home_url( '/' );
