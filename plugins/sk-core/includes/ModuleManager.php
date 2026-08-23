@@ -7,7 +7,6 @@ use SK\Core\Traits\ChainableContainer;
 /**
  * SK Pro Modules
  *
- * @property Modules\VendorVerification\Module $vendor_verification Vendor Verification.
  * @property Modules\ProductQA\Module $product_qa Product Qa Module.
  * @property Modules\PayPalMarketplace\Module $paypal_marketplace PayPal.
  * @property Modules\OrderMinMax\Module $order_min_max Order Min Max Module.
