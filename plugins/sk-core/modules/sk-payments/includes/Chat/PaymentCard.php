@@ -181,7 +181,11 @@ class PaymentCard {
 			return null;
 		}
 
-		$price_sats = (int) $product->get_price();
+		// Der Schluessel der Ausfuehrung steht in der Nachricht, der Betrag
+		// dazu kommt aus dem Inserat — genau wie der Grundpreis.
+		$variant_key = isset( $data['variant'] ) ? (string) $data['variant'] : '';
+
+		$price_sats = \SK\Modules\Payments\Variant::price( $product, $variant_key );
 		if ( $price_sats < 1 ) {
 			return null;
 		}
@@ -189,7 +193,7 @@ class PaymentCard {
 		return [
 			'type'          => 'purchase_request',
 			'product_id'    => $chat_product,
-			'product_title' => $product->get_name(),
+			'product_title' => \SK\Modules\Payments\Variant::title( $product, $variant_key ),
 			'price_sats'    => $price_sats,
 		];
 	}

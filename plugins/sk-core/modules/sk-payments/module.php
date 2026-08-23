@@ -46,6 +46,7 @@ final class Module {
         require_once SK_PAYMENTS_INCLUDES . '/StoreSettings.php';
         require_once SK_PAYMENTS_INCLUDES . '/QrImage.php';
         require_once SK_PAYMENTS_INCLUDES . '/ClientIp.php';
+        require_once SK_PAYMENTS_INCLUDES . '/Variant.php';
         require_once SK_PAYMENTS_INCLUDES . '/Admin/AdminPage.php';
         require_once SK_PAYMENTS_INCLUDES . '/Admin/AdminSettings.php';
         require_once SK_PAYMENTS_INCLUDES . '/Chat/PaymentCard.php';

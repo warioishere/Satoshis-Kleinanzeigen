@@ -45,6 +45,7 @@ class ProductPage {
         $price_sats = (int) $product->get_price();
         $product_id = $product->get_id();
         $product_title = $product->get_name();
+        $variants   = Variant::all( $product_id );
 
         ?>
         <div class="skp-buy-wrapper" style="margin:12px 0;">
@@ -56,10 +57,38 @@ class ProductPage {
                     data-price-sats="<?php echo esc_attr( $price_sats ); ?>"
                     data-has-ln="<?php echo $has_ln ? '1' : '0'; ?>"
                     data-has-onchain="<?php echo $has_onchain ? '1' : '0'; ?>"
+                    data-has-variants="<?php echo $variants ? '1' : '0'; ?>"
                     style="background:#f7931a !important;color:#fff !important;border:none !important;padding:10px 24px !important;font-size:16px !important;border-radius:6px !important;cursor:pointer !important;display:inline-flex !important;align-items:center !important;gap:8px !important;">
                 Sofortkauf
             </button>
         </div>
+
+        <?php if ( $variants ) : ?>
+        <!-- Ausfuehrungen: erst waehlen, dann bezahlen -->
+        <div id="skp-variant-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:99999;align-items:center;justify-content:center;">
+            <div style="background:#1a2332;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:24px;max-width:400px;width:90%;max-height:85vh;overflow-y:auto;">
+                <h3 style="margin:0 0 16px;color:#e8ecf0;font-size:18px;"><?php esc_html_e( 'Welche Ausführung?', 'sk-core' ); ?></h3>
+                <?php foreach ( $variants as $index => $variant ) : ?>
+                    <label class="skp-variant-option" style="display:flex;align-items:center;gap:10px;padding:12px 14px;margin-bottom:8px;background:rgba(247,147,26,0.08);border:1px solid rgba(247,147,26,0.25);border-radius:8px;color:#e8ecf0;font-size:15px;cursor:pointer;">
+                        <input type="radio" name="skp_variant" value="<?php echo esc_attr( $variant['key'] ); ?>"
+                               data-price-sats="<?php echo esc_attr( (int) $variant['sats'] ); ?>"
+                               <?php checked( $index, 0 ); ?>
+                               style="margin:0;flex:0 0 auto;accent-color:#f7931a;">
+                        <span style="flex:1 1 auto;"><?php echo esc_html( $variant['name'] ); ?></span>
+                        <span style="flex:0 0 auto;color:#f7931a;font-weight:700;white-space:nowrap;"><?php echo esc_html( Variant::format_sats( (int) $variant['sats'] ) ); ?></span>
+                    </label>
+                <?php endforeach; ?>
+                <button type="button" id="skp-variant-confirm"
+                        style="display:block;width:100%;padding:12px;margin-top:14px;background:#f7931a;border:none;border-radius:8px;color:#fff;font-size:15px;font-weight:600;cursor:pointer;">
+                    <?php esc_html_e( 'Weiter', 'sk-core' ); ?>
+                </button>
+                <button type="button" id="skp-variant-cancel"
+                        style="display:block;width:100%;padding:10px;margin-top:8px;background:none;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#5a6a7e;font-size:14px;cursor:pointer;">
+                    <?php esc_html_e( 'Abbrechen', 'sk-core' ); ?>
+                </button>
+            </div>
+        </div>
+        <?php endif; ?>
 
         <!-- Payment Method Modal -->
         <?php if ( $has_ln && $has_onchain ) : ?>
@@ -146,8 +175,15 @@ class ProductPage {
         }
 
         $vendor_id     = (int) get_post_field( 'post_author', $product_id );
-        $product_title = $product->get_name();
-        $price_sats    = (int) $product->get_price();
+        $variant_key   = Variant::posted();
+        $product_title = Variant::title( $product, $variant_key );
+        $price_sats    = Variant::price( $product, $variant_key );
+
+        // Wer eine Ausfuehrung waehlen kann, muss es auch tun: sonst ginge die
+        // Bestellung zum "ab"-Preis der guenstigsten durch.
+        if ( Variant::all( $product_id ) && ! Variant::find( $product_id, $variant_key ) ) {
+            wp_send_json_error( [ 'message' => 'Bitte eine Ausführung wählen.' ] );
+        }
 
         if ( ! $vendor_id || $price_sats < 1 ) {
             wp_send_json_error( [ 'message' => 'Inserat hat keinen gültigen Preis.' ] );

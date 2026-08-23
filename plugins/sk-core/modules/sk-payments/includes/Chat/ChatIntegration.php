@@ -67,6 +67,14 @@ class ChatIntegration {
         // Vendor and product data come from the product, not from the request.
         $vendor_id     = (int) get_post_field( 'post_author', $product_id );
         $product_title = get_the_title( $product_id );
+        $variant_key   = \SK\Modules\Payments\Variant::posted();
+
+        // Gibt es Ausfuehrungen, muss eine davon gewaehlt sein — sonst waere
+        // unklar, was der Anbieter in Rechnung stellen soll.
+        if ( \SK\Modules\Payments\Variant::all( $product_id )
+            && ! \SK\Modules\Payments\Variant::find( $product_id, $variant_key ) ) {
+            wp_send_json_error( [ 'message' => 'Bitte eine Ausführung wählen.' ] );
+        }
 
         if ( ! $vendor_id ) {
             wp_send_json_error( [ 'message' => 'Kein Anbieter für dieses Inserat.' ] );
@@ -81,6 +89,7 @@ class ChatIntegration {
         $message_data = wp_json_encode( [
             'type'       => 'purchase_request',
             'product_id' => $product_id,
+            'variant'    => $variant_key,
         ] );
 
         $message_text = "[lightning_purchase_request]{$message_data}[/lightning_purchase_request]";

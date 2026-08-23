@@ -20,9 +20,26 @@
             product_id: $btn.data('product-id'),
             product_title: $btn.data('product-title'),
             price_sats: $btn.data('price-sats'),
+            variant: '',
             has_ln: $btn.data('has-ln') === 1 || $btn.data('has-ln') === '1',
-            has_onchain: $btn.data('has-onchain') === 1 || $btn.data('has-onchain') === '1'
+            has_onchain: $btn.data('has-onchain') === 1 || $btn.data('has-onchain') === '1',
+            has_variants: $btn.data('has-variants') === 1 || $btn.data('has-variants') === '1'
         };
+
+        // Gibt es Ausfuehrungen, wird zuerst gewaehlt — welche es ist,
+        // entscheidet den Preis.
+        if (pendingData.has_variants) {
+            $('#skp-variant-modal').css('display', 'flex');
+            return;
+        }
+
+        proceed();
+    });
+
+    /* ─── Ausfuehrungen ─── */
+
+    function proceed() {
+        if (!pendingData) return;
 
         // Only one method available → go directly.
         if (pendingData.has_ln && !pendingData.has_onchain) {
@@ -36,6 +53,21 @@
 
         // Both available → show modal.
         $('#skp-method-modal').css('display', 'flex');
+    }
+
+    $(document).on('click', '#skp-variant-confirm', function () {
+        var $choice = $('input[name="skp_variant"]:checked');
+        if (!$choice.length) return;
+
+        pendingData.variant = $choice.val();
+        pendingData.price_sats = $choice.data('price-sats');
+        $('#skp-variant-modal').hide();
+        proceed();
+    });
+
+    $(document).on('click', '#skp-variant-cancel', function () {
+        $('#skp-variant-modal').hide();
+        pendingData = null;
     });
 
     /* ─── Method Selection Modal ─── */
@@ -74,7 +106,8 @@
             product_title: pendingData.product_title,
             price_fiat: 0,
             currency: currency,
-            price_sats: pendingData.price_sats
+            price_sats: pendingData.price_sats,
+            variant: pendingData.variant
         }, function (res) {
             $btn.prop('disabled', false).text('Sofortkauf');
             if (res.success && res.data.chat_url) {
@@ -99,7 +132,8 @@
             action: 'skp_create_onchain_payment',
             nonce: SKP.nonce,
             // Vendor, title and price are resolved server-side from the product.
-            product_id: pendingData.product_id
+            product_id: pendingData.product_id,
+            variant: pendingData.variant
         }, function (res) {
             $btn.prop('disabled', false).text('Sofortkauf');
             if (res.success) {
@@ -139,7 +173,9 @@
         // QR Code — rendered server-side by QrImage, never by a third party.
         if (/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(String(data.qr || ''))) {
             html += '<div style="text-align:center;margin-bottom:12px;">';
-            html += '<img src="' + escAttr(data.qr) + '" alt="QR" style="max-width:180px;width:100%;border-radius:8px;background:#fff;padding:6px;" />';
+            // display:block + auto margins: das Theme setzt img auf block, damit
+            // laeuft text-align am Elternteil ins Leere und der Code klebt links.
+            html += '<img src="' + escAttr(data.qr) + '" alt="QR" style="display:block;margin:0 auto;max-width:180px;width:100%;border-radius:8px;background:#fff;padding:6px;" />';
             html += '</div>';
         }
 
