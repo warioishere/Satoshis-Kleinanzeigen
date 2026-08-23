@@ -192,6 +192,7 @@ class PaymentCard {
 
 		return [
 			'type'          => 'purchase_request',
+			'viewer_is_vendor' => get_current_user_id() === (int) get_post_field( 'post_author', $chat_product ),
 			'product_id'    => $chat_product,
 			'product_title' => \SK\Modules\Payments\Variant::title( $product, $variant_key ),
 			'price_sats'    => $price_sats,
@@ -233,6 +234,11 @@ class PaymentCard {
 		$status  = (string) $row->status;
 		$settled = in_array( $status, self::SETTLED_STATES, true );
 
+		// Wer die Karte sieht, nicht wer sie geschickt hat: Beim Sofortkauf legt
+		// der Kaeufer die Invoice-Karte, und aus dem Absender abgeleitet bekaeme
+		// er die Anbieterknoepfe statt des Bezahlknopfs.
+		$viewer_is_vendor = get_current_user_id() === $vendor_id;
+
 		switch ( $marker ) {
 			case 'lightning_invoice':
 				// Anbieter wie Kaeufer duerfen die Karte gelegt haben: Beim
@@ -251,6 +257,7 @@ class PaymentCard {
 
 				return [
 					'type'            => 'lightning_invoice',
+					'viewer_is_vendor' => $viewer_is_vendor,
 					'payment_hash'    => $hash,
 					'amount_sats'     => $amount,
 					'payment_request' => $bolt11,
@@ -275,6 +282,7 @@ class PaymentCard {
 
 				return [
 					'type'          => 'onchain_payment',
+					'viewer_is_vendor' => $viewer_is_vendor,
 					'payment_hash'  => $hash,
 					'amount_sats'   => $amount,
 					'address'       => $address,

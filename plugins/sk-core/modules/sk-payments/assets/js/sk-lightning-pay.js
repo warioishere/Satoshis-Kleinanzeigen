@@ -141,7 +141,7 @@
     function renderPurchaseRequest($msg, data) {
         var priceSats = intVal(data.price_sats);
         var satsFormatted = formatSats(priceSats);
-        var isVendor = !$msg.hasClass('own');
+        var isVendor = viewerIsVendor(data, $msg, false);
 
         // Fiat is always derived from the live rate.
         var fiatDisplay = '';
@@ -168,13 +168,25 @@
         $msg.find('.dvc-message-text').html(html);
     }
 
+    /*
+     * Rolle aus der Karte, nicht aus dem Absender: Beim Sofortkauf legt der
+     * Kaeufer die Invoice-Karte selbst, damit stimmt "own" nicht mehr mit
+     * "Anbieter" ueberein. Der Server weiss es, also sagt er es.
+     */
+    function viewerIsVendor(data, $msg, sentByVendor) {
+        if (typeof data.viewer_is_vendor === 'boolean') {
+            return data.viewer_is_vendor;
+        }
+        return sentByVendor ? $msg.hasClass('own') : !$msg.hasClass('own');
+    }
+
     function renderInvoice($msg, data) {
         var paymentHash = hexId(data.payment_hash);
         if (!paymentHash) return;
 
         var amountSats = intVal(data.amount_sats);
         var satsFormatted = formatSats(amountSats);
-        var isVendor = $msg.hasClass('own'); // Vendor sent the invoice
+        var isVendor = viewerIsVendor(data, $msg, true);
 
         var fiatInfo = '';
         var calcFiat = satsToFiat(amountSats);
@@ -253,7 +265,7 @@
 
         var amountSats = intVal(data.amount_sats);
         var satsFormatted = formatSats(amountSats);
-        var isVendor = !$msg.hasClass('own');
+        var isVendor = viewerIsVendor(data, $msg, false);
 
         var html = '<div class="skl-purchase-request">' +
             '<div class="skl-pr-header"><i class="fab fa-bitcoin"></i> Onchain-Kaufanfrage</div>' +
