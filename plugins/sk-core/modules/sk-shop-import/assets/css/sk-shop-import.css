@@ -1,39 +1,22 @@
-/* Shop-Import und Ausführungen */
+/*
+ * Nur das, was das Dashboard-Design nicht ohnehin mitbringt. Kopfzeilen,
+ * Formularzeilen, Knoepfe und Hinweise kommen aus sk-theme.css
+ * (sk-section-heading, sk-form-group, sk-btn, sk-alert).
+ */
 
-.sk-shop-import { max-width: 900px; }
+.sk-import-result { list-style: none; padding: 0; margin: 0 0 1rem; }
+.sk-import-result li { padding: 0.2rem 0; }
 
-.sk-import-note {
-    border-left: 4px solid #646970;
-    padding: 0.6rem 0.9rem;
-    margin: 0 0 1rem;
-    background: rgba(128, 128, 128, 0.08);
-}
-
-.sk-import-note--error { border-color: #d63638; background: rgba(214, 54, 56, 0.08); }
-.sk-import-note--warn  { border-color: #dba617; background: rgba(219, 166, 23, 0.10); }
-
-.sk-import-map { width: 100%; border-collapse: collapse; margin-bottom: 1.4rem; }
-.sk-import-map th { text-align: left; padding: 0.45rem 0.8rem 0.45rem 0; width: 220px; font-weight: 600; vertical-align: top; }
-.sk-import-map td { padding: 0.45rem 0; }
-.sk-import-map select, .sk-import-map input[type="number"] { min-width: 220px; }
-.sk-import-hint { font-size: 0.82rem; opacity: 0.75; margin-left: 0.5rem; }
-
-.sk-import-preview { overflow-x: auto; border: 1px solid rgba(128,128,128,0.3); border-radius: 6px; }
-.sk-import-preview table { border-collapse: collapse; font-size: 0.8rem; white-space: nowrap; }
-.sk-import-preview th, .sk-import-preview td { padding: 0.35rem 0.6rem; border-bottom: 1px solid rgba(128,128,128,0.2); }
-
-.sk-import-result { list-style: none; padding: 0; }
-.sk-import-result li { padding: 0.25rem 0; }
-
-.sk-import-upgrade {
-    border: 1px solid #db6218;
-    border-radius: 10px;
-    padding: 1.4rem;
-}
-
-.sk-import-upgrade__hint { font-weight: 600; }
 .sk-import-packs { list-style: none; padding: 0; margin: 1rem 0; }
-.sk-import-packs li { padding: 0.4rem 0; border-bottom: 1px solid rgba(128,128,128,0.2); }
+.sk-import-packs li { padding: 0.45rem 0; border-bottom: 1px solid rgba(128, 128, 128, 0.25); }
+
+.sk-import-hint { display: inline-block; margin-top: 0.35rem; font-size: 0.85rem; opacity: 0.75; }
+
+/* Die Vorschau darf breit sein, aber nicht die Seite sprengen. */
+.sk-import-preview { overflow-x: auto; border: 1px solid rgba(128, 128, 128, 0.3); border-radius: 6px; }
+.sk-import-preview table { border-collapse: collapse; font-size: 0.8rem; white-space: nowrap; }
+.sk-import-preview th,
+.sk-import-preview td { padding: 0.35rem 0.6rem; border-bottom: 1px solid rgba(128, 128, 128, 0.2); }
 
 /* Ausführungen auf der Produktseite */
 .sk-variants { margin: 1rem 0; }

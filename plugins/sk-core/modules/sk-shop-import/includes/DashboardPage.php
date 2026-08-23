@@ -16,18 +16,28 @@ class DashboardPage extends DashboardModule {
 
     const NONCE = 'sk_shop_import';
 
+    /**
+     * Immer registrieren, nicht nur fuer Haendler.
+     *
+     * Query-Variable und Rewrite-Regel sind global; haengt die Registrierung
+     * am aktuellen Nutzer, existiert die Adresse fuer niemanden und die Seite
+     * meldet "nicht gefunden". Wer sie sehen darf, regelt die Faehigkeit —
+     * die Registry prueft sie sowohl im Menue als auch beim Aufruf.
+     */
     public function config(): ?array {
-        if ( ! is_user_logged_in() || ! Dealer::may_import( get_current_user_id() ) ) {
-            return null;
-        }
-
         return [
-            'slug'          => 'shop-import',
-            'title'         => __( 'Shop-Import', 'sk-core' ),
-            'icon'          => '<i class="fas fa-file-import"></i>',
-            'pos'           => 57,
-            'permission'    => 'sk_view_overview_menu',
-            'template'      => [ $this, 'render' ],
+            'slug'       => 'shop-import',
+            'title'      => __( 'Shop-Import', 'sk-core' ),
+            'icon'       => '<i class="fas fa-file-import"></i>',
+            // Direkt hinter "Produkte" (pos 30). Bewusst knapp darueber, damit
+            // sich kein anderes Modul dazwischenschiebt.
+            'pos'        => 30.5,
+            'permission' => Dealer::CAP,
+            // Pfad statt Rueckruf und Daten ueber template_args — dasselbe
+            // Muster wie Merkliste und Gesuche. Die Vorlage bringt dadurch
+            // die Dashboard-Huelle mit Menue und Containern mit.
+            'template'      => 'dashboard/shop-import/dashboard-shop-import',
+            'template_args' => [ $this, 'view_data' ],
         ];
     }
 
@@ -36,7 +46,9 @@ class DashboardPage extends DashboardModule {
     }
 
     private function url(): string {
-        return function_exists( 'sk_get_navigation_url' ) ? sk_get_navigation_url( 'shop-import' ) : home_url( '/dashboard/shop-import/' );
+        return function_exists( 'sk_get_navigation_url' )
+            ? sk_get_navigation_url( 'shop-import' )
+            : home_url( '/dashboard/shop-import/' );
     }
 
     /**
@@ -141,9 +153,9 @@ class DashboardPage extends DashboardModule {
     }
 
     /**
-     * Seiteninhalt.
+     * Daten fuer die Vorlage. Laeuft vor dem Einbinden, die Vorlage rendert nur.
      */
-    public function render( $query_vars = [] ) {
+    public function view_data( $query_vars = [] ): array {
         $vendor_id = get_current_user_id();
         $step      = isset( $_GET['schritt'] ) ? sanitize_key( wp_unslash( $_GET['schritt'] ) ) : 'start';
         $message   = get_transient( 'sk_import_msg_' . $vendor_id );
@@ -201,6 +213,24 @@ class DashboardPage extends DashboardModule {
         $rate       = Rate::btc_rate( 'EUR' );
         $url        = $this->url();
 
-        include SK_SHOP_IMPORT_PATH . '/templates/dashboard.php';
+        return compact(
+            'step',
+            'url',
+            'message',
+            'csv',
+            'mapping',
+            'items',
+            'item_count',
+            'csv_cats',
+            'quota',
+            'quota_block',
+            'packs',
+            'stay_online',
+            'saved_map',
+            'default_cat',
+            'categories',
+            'rate',
+            'result'
+        );
     }
 }

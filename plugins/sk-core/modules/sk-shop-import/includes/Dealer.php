@@ -27,6 +27,16 @@ final class Dealer {
      * Verkaeufer dort nichts verloren haben. Ein gemeinsames Flag muesste man
      * dafuer spaeter wieder auseinandernehmen.
      */
+    /**
+     * Faehigkeit statt Abfrage im Menue.
+     *
+     * Die Dashboard-Registry prueft "permission" sowohl beim Aufbau des
+     * Menues als auch beim Aufruf der Seite. Ueber eine Faehigkeit am Nutzer
+     * greift beides — und die Route bleibt trotzdem fuer alle registriert,
+     * was noetig ist: Rewrite-Regeln sind global, nicht pro Nutzer.
+     */
+    const CAP = 'sk_import_shop';
+
     const META_VERIFIED    = '_sk_vendor_verified';
     const META_VERIFIED_AT = '_sk_vendor_verified_at';
     const META_VERIFIED_BY = '_sk_vendor_verified_by';
@@ -37,6 +47,7 @@ final class Dealer {
 
     public static function set_enabled( int $user_id, bool $on ): void {
         update_user_meta( $user_id, self::META_ENABLED, $on ? 1 : 0 );
+        self::sync_cap( $user_id );
     }
 
     public static function is_verified( int $user_id ): bool {
@@ -49,6 +60,24 @@ final class Dealer {
         if ( $on ) {
             update_user_meta( $user_id, self::META_VERIFIED_AT, time() );
             update_user_meta( $user_id, self::META_VERIFIED_BY, $by ?: get_current_user_id() );
+        }
+
+        self::sync_cap( $user_id );
+    }
+
+    /**
+     * Faehigkeit an den Stand der beiden Schalter angleichen.
+     */
+    public static function sync_cap( int $user_id ): void {
+        $user = get_user_by( 'id', $user_id );
+        if ( ! $user ) {
+            return;
+        }
+
+        if ( self::may_import( $user_id ) ) {
+            $user->add_cap( self::CAP );
+        } else {
+            $user->remove_cap( self::CAP );
         }
     }
 
