@@ -28,6 +28,31 @@
 .wrap.sk-php-dashboard nav.nav-tab-wrapper {
     margin-bottom: 0;
     border-bottom: 1px solid #c3c4c7;
+
+    /*
+     * Eine Zeile, notfalls seitlich scrollbar. Die Reiter brauchen zusammen
+     * mehr Platz als zur Verfuegung steht; beim Umbruch auf zwei Zeilen sitzt
+     * die zweite Reihe zwischen dem aktiven Reiter und dem Inhalt darunter,
+     * wodurch der aktive Reiter seine Verbindung zum Panel verliert und die
+     * Leiste bei jedem Wechsel unruhig wirkt.
+     */
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: flex-end;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    padding-bottom: 0;
+}
+
+/* Der Scrollbalken soll die Leiste nicht dominieren. */
+.wrap.sk-php-dashboard nav.nav-tab-wrapper::-webkit-scrollbar {
+    height: 6px;
+}
+
+.wrap.sk-php-dashboard nav.nav-tab-wrapper::-webkit-scrollbar-thumb {
+    background: #c3c4c7;
+    border-radius: 3px;
 }
 
 .wrap.sk-php-dashboard nav.nav-tab-wrapper .nav-tab {
@@ -35,6 +60,10 @@
     padding: 8px 16px;
     margin-bottom: -1px;
     border-bottom-color: transparent;
+
+    /* Nicht schrumpfen, nicht umbrechen — sonst entstehen wieder zwei Zeilen. */
+    flex: 0 0 auto;
+    white-space: nowrap;
 }
 
 .wrap.sk-php-dashboard nav.nav-tab-wrapper .nav-tab:hover {
