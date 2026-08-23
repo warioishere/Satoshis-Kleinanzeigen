@@ -26,6 +26,10 @@ class AdminPage extends AbstractPage {
     public function render(): void {
         $goal      = Donations::goal();
         $month     = Donations::received_this_month();
+        $month_wc  = Donations::sum_woocommerce( current_time( 'Y-m-01 00:00:00' ), current_time( 'mysql' ) );
+        $month_bp  = Donations::sum_btcpay( current_time( 'Y-m-01 00:00:00' ), current_time( 'mysql' ) );
+        $since     = Donations::count_since();
+        $btcpay_ok = BtcPay::is_configured();
         $total     = Donations::received_total();
         $coverage  = Donations::coverage();
         $dashboard  = Placement::dashboard_enabled();
@@ -73,6 +77,11 @@ class AdminPage extends AbstractPage {
             update_option( Placement::OPTION_SOLD_MODAL, isset( $_POST['sk_donations_sold_modal'] ) ? 1 : 0 );
             Donations::set_presets( 'modal', isset( $_POST['sk_donations_presets_modal'] ) ? sanitize_text_field( wp_unslash( $_POST['sk_donations_presets_modal'] ) ) : '' );
             Donations::set_presets( 'bar', isset( $_POST['sk_donations_presets_bar'] ) ? sanitize_text_field( wp_unslash( $_POST['sk_donations_presets_bar'] ) ) : '' );
+
+            $raw_since = isset( $_POST['sk_donations_since'] ) ? sanitize_text_field( wp_unslash( $_POST['sk_donations_since'] ) ) : '';
+            if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $raw_since ) ) {
+                Donations::set_count_since( (int) strtotime( $raw_since . ' 00:00:00' ) );
+            }
             $notice = 'saved';
         }
 

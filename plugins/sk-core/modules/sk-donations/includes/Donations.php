@@ -34,9 +34,40 @@ class Donations {
 
     const ACTION = 'sk_donate';
 
+    /**
+     * Stichtag: Erst ab hier zaehlt Zufluss.
+     *
+     * Die Crowdfund-Apps haben 2025 rund 4,1 Mio Sats eingesammelt, fast
+     * alles in Mai, Juli und September der Aufbauphase. Wuerde das mitzaehlen,
+     * stuende der Deckungsbalken dauerhaft auf 100 Prozent und saegte damit
+     * genau die Frage ab, die er stellen soll.
+     */
+    const OPTION_SINCE = 'sk_donations_count_since';
+
     public function __construct() {
         add_action( 'admin_post_' . self::ACTION, [ $this, 'handle_form' ] );
         add_action( 'admin_post_nopriv_' . self::ACTION, [ $this, 'handle_form' ] );
+    }
+
+    /**
+     * Zeitpunkt, ab dem gezaehlt wird. Beim ersten Aufruf auf jetzt gesetzt.
+     */
+    public static function count_since(): int {
+        $ts = (int) get_option( self::OPTION_SINCE, 0 );
+
+        if ( $ts <= 0 ) {
+            // Monatsanfang, nicht "jetzt": Sonst startet der Balken mitten im
+            // Monat bei null und unterschlaegt Zufluss, der schon da ist.
+            $ts = (int) strtotime( current_time( 'Y-m-01 00:00:00' ) );
+            update_option( self::OPTION_SINCE, $ts );
+        }
+
+        return $ts;
+    }
+
+    public static function set_count_since( int $ts ): void {
+        update_option( self::OPTION_SINCE, max( 0, $ts ) );
+        BtcPay::flush_cache();
     }
 
     public static function goal(): int {
@@ -103,6 +134,24 @@ class Donations {
      * abgebrochene Zahlung darf den Balken nicht bewegen.
      */
     public static function sum_between( string $from, string $to ): int {
+        return self::sum_woocommerce( $from, $to ) + self::sum_btcpay( $from, $to );
+    }
+
+    /**
+     * Crowdfund-Zahlungen vom BTCPay-Server, ab dem Stichtag.
+     */
+    public static function sum_btcpay( string $from, string $to ): int {
+        $from_ts = max( (int) strtotime( $from ), self::count_since() );
+        $to_ts   = (int) strtotime( $to );
+
+        if ( $from_ts >= $to_ts ) {
+            return 0;
+        }
+
+        return BtcPay::settled_sats( $from_ts, $to_ts );
+    }
+
+    public static function sum_woocommerce( string $from, string $to ): int {
         $orders = wc_get_orders(
             [
                 'limit'        => -1,

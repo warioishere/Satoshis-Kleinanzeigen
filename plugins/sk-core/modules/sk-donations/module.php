@@ -41,6 +41,7 @@ final class Module {
     }
 
     private function includes() {
+        require_once SK_DONATIONS_INCLUDES . '/BtcPay.php';
         require_once SK_DONATIONS_INCLUDES . '/Donations.php';
         require_once SK_DONATIONS_INCLUDES . '/Shortcode.php';
         require_once SK_DONATIONS_INCLUDES . '/Placement.php';

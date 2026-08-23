@@ -10,6 +10,10 @@
  * @var bool   $sold_modal
  * @var string $p_modal
  * @var string $p_bar
+ * @var int    $month_wc
+ * @var int    $month_bp
+ * @var int    $since
+ * @var bool   $btcpay_ok
  * @var string $notice
  * @var array  $orders
  * @var array  $history
@@ -33,7 +37,7 @@ $max      = max( 1, max( $history ) );
         [ __( 'Diesen Monat', 'sk-core' ), number_format_i18n( $month ) . ' Sats' ],
         [ __( 'Monatsbedarf', 'sk-core' ), number_format_i18n( $goal ) . ' Sats' ],
         [ __( 'Gedeckt', 'sk-core' ), $coverage . ' %' ],
-        [ __( 'Insgesamt', 'sk-core' ), number_format_i18n( $total ) . ' Sats' ],
+        [ __( 'Seit Stichtag', 'sk-core' ), number_format_i18n( $total ) . ' Sats' ],
     ];
     foreach ( $cards as $card ) :
         ?>
@@ -42,6 +46,30 @@ $max      = max( 1, max( $history ) );
             <div style="font-size:22px;font-weight:600;"><?php echo esc_html( $card[1] ); ?></div>
         </div>
     <?php endforeach; ?>
+</div>
+
+<div style="background:#fff;border:1px solid #c3c4c7;padding:14px;max-width:760px;margin-bottom:16px;">
+    <h3 style="margin-top:0;"><?php esc_html_e( 'Woher der Monatsstand kommt', 'sk-core' ); ?></h3>
+    <table class="widefat striped" style="max-width:420px;">
+        <tbody>
+            <tr>
+                <td><?php esc_html_e( 'WooCommerce (Balken, Modal)', 'sk-core' ); ?></td>
+                <td style="text-align:right;"><strong><?php echo esc_html( number_format_i18n( $month_wc ) ); ?></strong> Sats</td>
+            </tr>
+            <tr>
+                <td>
+                    <?php esc_html_e( 'BTCPay-Crowdfund', 'sk-core' ); ?>
+                    <?php if ( ! $btcpay_ok ) : ?>
+                        <span style="color:#d63638;">— <?php esc_html_e( 'nicht konfiguriert', 'sk-core' ); ?></span>
+                    <?php endif; ?>
+                </td>
+                <td style="text-align:right;"><strong><?php echo esc_html( number_format_i18n( $month_bp ) ); ?></strong> Sats</td>
+            </tr>
+        </tbody>
+    </table>
+    <p style="color:#646970;font-size:12px;">
+        <?php esc_html_e( 'Crowdfund-Zahlungen laufen auf dem BTCPay-Server und berühren WooCommerce nicht; sie werden über die API dazugeholt. Rechnungen in Euro oder Franken bleiben unberücksichtigt, weil ein geschätzter Kurs in einer Zahlenanzeige nichts verloren hat. Die Kontaktdaten-Feewall zählt nicht als Spende.', 'sk-core' ); ?>
+    </p>
 </div>
 
 <div style="background:#fff;border:1px solid #c3c4c7;padding:14px;max-width:760px;margin-bottom:20px;">
@@ -92,6 +120,14 @@ $max      = max( 1, max( $history ) );
             <?php esc_html_e( 'An anderen Stellen lässt er sich mit dem Shortcode einsetzen:', 'sk-core' ); ?>
             <code>[sk_donation_bar]</code> <?php esc_html_e( 'oder kompakt', 'sk-core' ); ?> <code>[sk_donation_bar compact="yes"]</code>
         </p>
+        <p style="margin-bottom:4px;"><strong><?php esc_html_e( 'Gezählt wird ab', 'sk-core' ); ?></strong></p>
+        <p style="margin-top:0;">
+            <input type="date" name="sk_donations_since" value="<?php echo esc_attr( gmdate( 'Y-m-d', $since ) ); ?>">
+        </p>
+        <p style="color:#646970;font-size:12px;margin-top:0;">
+            <?php esc_html_e( 'Alles davor bleibt draußen. Die Crowdfunds der Aufbauphase 2025 haben rund 4,1 Mio Sats eingebracht — mitgezählt stünde der Balken dauerhaft auf 100 Prozent.', 'sk-core' ); ?>
+        </p>
+
         <button type="submit" class="button button-primary"><?php esc_html_e( 'Speichern', 'sk-core' ); ?></button>
     </form>
 </div>
