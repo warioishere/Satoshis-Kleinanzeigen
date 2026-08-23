@@ -96,10 +96,16 @@ final class Importer {
              * Produktliste auf.
              */
             try {
+                /*
+                 * wp_slash vor dem Setzen: WooCommerce reicht die Werte an
+                 * wp_insert_post weiter, und das entfernt eine Ebene
+                 * Backslashes. Ohne Slash frisst es jeden Backslash im Text —
+                 * aus "\n" wird ein blosses "n" mitten im Absatz.
+                 */
                 $product = new \WC_Product_Simple( $existing ?: 0 );
-                $product->set_name( $name );
-                $product->set_description( (string) ( $item['description'] ?? '' ) );
-                $product->set_short_description( (string) ( $item['short'] ?? '' ) );
+                $product->set_name( wp_slash( $name ) );
+                $product->set_description( wp_slash( (string) ( $item['description'] ?? '' ) ) );
+                $product->set_short_description( wp_slash( (string) ( $item['short'] ?? '' ) ) );
                 $product->set_status( $row_status );
                 $product->set_catalog_visibility( 'visible' );
                 $post_id = (int) $product->save();

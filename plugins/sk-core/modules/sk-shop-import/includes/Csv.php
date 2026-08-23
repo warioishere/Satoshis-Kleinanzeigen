@@ -164,6 +164,14 @@ final class Csv {
             $value = mb_convert_encoding( $value, 'UTF-8', 'ISO-8859-1' );
         }
 
+        /*
+         * Manche Exporte tragen den Zeilenumbruch als die zwei Zeichen
+         * Backslash und n statt als echten Umbruch — im Beispielexport steht
+         * beides gemischt in derselben Beschreibung. Unbehandelt steht im
+         * Inserat spaeter ein einzelnes "n" in der Zeile.
+         */
+        $value = str_replace( [ '\\r\\n', '\\n', '\\r' ], "\n", $value );
+
         return trim( $value );
     }
 }
