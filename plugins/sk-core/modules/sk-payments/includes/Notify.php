@@ -23,6 +23,7 @@ final class Notify {
 
     public function __construct() {
         add_action( 'sk_order_placed', [ __CLASS__, 'on_order_placed' ] );
+        add_action( 'sk_order_shipped', [ __CLASS__, 'on_shipped' ] );
         add_action( 'sk_payment_confirmed', [ __CLASS__, 'on_confirmed' ], 10, 2 );
     }
 
@@ -120,6 +121,47 @@ final class Notify {
             [ '%s' ],
             [ '%s' ]
         );
+    }
+
+    /**
+     * Ware ist unterwegs — der Kaeufer bekommt die Sendungsverfolgung.
+     *
+     * Ohne diese Mail bliebe die Versandangabe im Dashboard des Anbieters
+     * liegen und der Kaeufer fragte weiter im Chat nach.
+     */
+    public static function on_shipped( string $payment_hash ): void {
+        $payment = self::load( $payment_hash );
+        if ( ! $payment ) {
+            return;
+        }
+
+        $buyer_id = (int) $payment->buyer_id;
+        $ship     = Shipping::get( $payment );
+
+        if ( ! $buyer_id || ! $ship ) {
+            return;
+        }
+
+        $user = get_userdata( $buyer_id );
+        if ( ! $user || ! is_email( $user->user_email ) ) {
+            return;
+        }
+
+        $meta = self::meta( $payment );
+        $via  = $payment->context === 'onchain' ? 'onchain' : 'lightning';
+        $data = self::build( $payment, $meta, $via, true ) + [
+            'versender'      => $ship['label'],
+            'sendungsnummer' => $ship['number'],
+            'sendungslink'   => $ship['url'],
+        ];
+
+        $subject = sprintf(
+            /* translators: %s: product */
+            __( 'Unterwegs: %s', 'sk-core' ),
+            $data['titel']
+        );
+
+        self::send( $user->user_email, $subject, self::render( 'mail-order-shipped', $data ) );
     }
 
     public static function on_confirmed( string $payment_hash, string $via ): void {

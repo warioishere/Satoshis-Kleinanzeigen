@@ -96,3 +96,51 @@
         });
     });
 })();
+
+/**
+ * Versandangabe eintragen.
+ *
+ * Der Anbieter waehlt den Versender und traegt die Nummer ein; bei "Anderer
+ * Versender" tritt ein Feld fuer den vollstaendigen Link an ihre Stelle, damit
+ * die Liste nie eine Sackgasse ist.
+ */
+jQuery(function ($) {
+    'use strict';
+
+    $(document).on('change', '.skp-ship-form__carrier', function () {
+        var $form = $(this).closest('.skp-ship-form');
+        var other = $(this).val() === 'andere';
+        $form.find('.skp-ship-form__url').toggle(other);
+        $form.find('.skp-ship-form__number').attr('placeholder', other ? 'Sendungsnummer (optional)' : 'Sendungsnummer');
+    });
+
+    $(document).on('click', '.skp-ship-form__save', function () {
+        var $btn = $(this);
+        var $form = $btn.closest('.skp-ship-form');
+        var $msg = $form.find('.skp-ship-form__msg');
+
+        $btn.prop('disabled', true).text('Wird gespeichert…');
+        $msg.hide();
+
+        $.post($form.data('ajaxurl'), {
+            action: 'sk_payments_ship',
+            nonce: $form.data('nonce'),
+            payment_hash: $form.data('hash'),
+            carrier: $form.find('.skp-ship-form__carrier').val(),
+            number: $.trim($form.find('.skp-ship-form__number').val()),
+            url: $.trim($form.find('.skp-ship-form__url').val())
+        }, function (res) {
+            if (res && res.success) {
+                // Neu laden statt die Karte im Browser nachzubauen — die
+                // Zeile kommt sonst zweimal aus zwei Quellen.
+                window.location.reload();
+                return;
+            }
+            $btn.prop('disabled', false).text('Speichern');
+            $msg.text((res && res.data && res.data.message) || 'Konnte nicht gespeichert werden.').show();
+        }).fail(function () {
+            $btn.prop('disabled', false).text('Speichern');
+            $msg.text('Verbindungsfehler.').show();
+        });
+    });
+});
