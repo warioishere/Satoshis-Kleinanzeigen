@@ -443,3 +443,50 @@
 @media (max-width: 600px) {
     .skp-ship-form__body > * { flex: 1 1 100%; }
 }
+
+/* Suche und Blaettern in der Verkaufsliste */
+.skp-search {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin: 0 0 16px;
+}
+
+.skp-search input[type="search"] {
+    flex: 1 1 18rem;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    color: #e8ecf0;
+    padding: 8px 12px;
+    font-size: 14px;
+    min-height: 0;
+}
+
+.skp-search__reset {
+    color: #5a6a7e;
+    font-size: 13px;
+    text-decoration: underline;
+}
+
+.skp-pager {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 16px 0 0;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    font-size: 13px;
+}
+
+.skp-pager a {
+    color: #f7931a;
+    white-space: nowrap;
+}
+
+.skp-pager__state {
+    color: #5a6a7e;
+    text-align: center;
+}

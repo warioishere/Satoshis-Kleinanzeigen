@@ -51,9 +51,61 @@ if ( $filter !== 'all' ) {
     $args[]  = $filter;
 }
 
+/*
+ * Suche ueber Artikel, Gegenueber, Referenz und Sendungsnummer.
+ *
+ * Artikel und Namen stehen nicht in dieser Tabelle, deshalb werden die
+ * passenden Kennnummern vorher gesammelt und als IN-Liste angehaengt. Bei
+ * einem Katalog mit ein paar hundert Artikeln ist das billiger als ein JOIN
+ * ueber posts und users bei jedem Seitenaufruf.
+ */
+$skp_search = isset( $_GET['suche'] ) ? trim( sanitize_text_field( wp_unslash( $_GET['suche'] ) ) ) : '';
+$skp_can_search = \SK\Modules\Payments\Notify::is_shop_pack( $user_id );
+
+if ( $skp_search !== '' && $skp_can_search ) {
+    $like = '%' . $wpdb->esc_like( $skp_search ) . '%';
+
+    $post_ids = $wpdb->get_col(
+        $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = 'product' AND post_title LIKE %s", $like )
+    );
+
+    $user_ids = $wpdb->get_col(
+        $wpdb->prepare(
+            "SELECT ID FROM {$wpdb->users} WHERE display_name LIKE %s OR user_login LIKE %s",
+            $like,
+            $like
+        )
+    );
+
+    $partner = $tab === 'sales' ? 'buyer_id' : 'vendor_id';
+    $parts   = [ 'payment_hash LIKE %s', 'metadata LIKE %s' ];
+    $extra   = [ $wpdb->esc_like( $skp_search ) . '%', $like ];
+
+    if ( $post_ids ) {
+        $parts[] = 'product_id IN (' . implode( ',', array_map( 'absint', $post_ids ) ) . ')';
+    }
+    if ( $user_ids ) {
+        $parts[] = $partner . ' IN (' . implode( ',', array_map( 'absint', $user_ids ) ) . ')';
+    }
+
+    $where[] = '(' . implode( ' OR ', $parts ) . ')';
+    $args    = array_merge( $args, $extra );
+}
+
 $where_sql = implode( ' AND ', $where );
-$query     = "SELECT * FROM {$table} WHERE {$where_sql} ORDER BY created_at DESC LIMIT 50";
-$payments  = $wpdb->get_results( $wpdb->prepare( $query, ...$args ) );
+
+// Blaettern statt stiller Abschneidung: die Liste endete bisher nach 50
+// Eintraegen, ohne das irgendwo zu sagen.
+$skp_per_page = 25;
+$skp_page     = max( 1, isset( $_GET['seite'] ) ? (int) $_GET['seite'] : 1 );
+$skp_total    = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE {$where_sql}", ...$args ) );
+$skp_pages    = max( 1, (int) ceil( $skp_total / $skp_per_page ) );
+$skp_page     = min( $skp_page, $skp_pages );
+
+$query    = "SELECT * FROM {$table} WHERE {$where_sql} ORDER BY created_at DESC LIMIT %d OFFSET %d";
+$payments = $wpdb->get_results(
+    $wpdb->prepare( $query, ...array_merge( $args, [ $skp_per_page, ( $skp_page - 1 ) * $skp_per_page ] ) )
+);
 
 $status_labels = [
     'pending'   => [ '🟡', 'Ausstehend' ],
@@ -309,11 +361,28 @@ do_action( 'sk_dashboard_wrap_start' );
                     </div>
                 <?php endif; ?>
 
+                <?php if ( $skp_can_search ) : ?>
+                    <form class="skp-search" method="get" action="<?php echo esc_url( $base_url ); ?>">
+                        <input type="hidden" name="tab" value="<?php echo esc_attr( $tab ); ?>">
+                        <input type="hidden" name="filter" value="<?php echo esc_attr( $filter ); ?>">
+                        <input type="search" name="suche" value="<?php echo esc_attr( $skp_search ); ?>"
+                               placeholder="Artikel, Name, Sendungsnummer oder Referenz">
+                        <button type="submit" class="sk-btn sk-btn-theme sk-btn-sm"><i class="fas fa-magnifying-glass"></i> Suchen</button>
+                        <?php if ( $skp_search !== '' ) : ?>
+                            <a class="skp-search__reset" href="<?php echo esc_url( add_query_arg( [ 'tab' => $tab, 'filter' => $filter ], $base_url ) ); ?>">zurücksetzen</a>
+                        <?php endif; ?>
+                    </form>
+                <?php endif; ?>
+
                 <?php /* ── Transaktions-Liste ── */ ?>
                 <?php if ( empty( $payments ) ) : ?>
                     <div class="sk-reviews-empty">
                         <i class="fas fa-bolt"></i>
-                        <p>Keine Transaktionen gefunden.</p>
+                        <p>
+                            <?php echo $skp_search !== ''
+                                ? 'Nichts gefunden für „' . esc_html( $skp_search ) . '".'
+                                : 'Keine Transaktionen gefunden.'; ?>
+                        </p>
                     </div>
                 <?php else : ?>
                     <ul class="sk-reviews-list">
@@ -478,6 +547,42 @@ do_action( 'sk_dashboard_wrap_start' );
                         </li>
                     <?php endforeach; ?>
                     </ul>
+
+                    <?php if ( $skp_pages > 1 ) : ?>
+                        <div class="skp-pager">
+                            <?php
+                            $skp_link = static function ( int $page ) use ( $base_url, $tab, $filter, $skp_search ) {
+                                return add_query_arg(
+                                    array_filter(
+                                        [
+                                            'tab'    => $tab,
+                                            'filter' => $filter,
+                                            'suche'  => $skp_search,
+                                            'seite'  => $page > 1 ? $page : null,
+                                        ]
+                                    ),
+                                    $base_url
+                                );
+                            };
+                            ?>
+                            <?php if ( $skp_page > 1 ) : ?>
+                                <a href="<?php echo esc_url( $skp_link( $skp_page - 1 ) ); ?>">← Zurück</a>
+                            <?php else : ?>
+                                <span></span>
+                            <?php endif; ?>
+
+                            <span class="skp-pager__state">
+                                Seite <?php echo (int) $skp_page; ?> von <?php echo (int) $skp_pages; ?>
+                                · <?php echo (int) $skp_total; ?> Vorgänge
+                            </span>
+
+                            <?php if ( $skp_page < $skp_pages ) : ?>
+                                <a href="<?php echo esc_url( $skp_link( $skp_page + 1 ) ); ?>">Weiter →</a>
+                            <?php else : ?>
+                                <span></span>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
                 <?php endif; ?>
 
                 <?php endif; /* end commissions/transactions tab switch */ ?>
