@@ -134,3 +134,97 @@
         if (e.key === 'Escape') close();
     });
 }());
+
+/**
+ * Import in Stapeln abarbeiten.
+ *
+ * Der Auftrag liegt auf dem Server, dieser Block holt nur einen Stapel nach
+ * dem anderen ab. Deshalb ueberlebt ein geschlossenes Fenster den Import: die
+ * Seite zeigt beim naechsten Aufruf denselben Stand und macht dort weiter.
+ *
+ * Die Stapelgroesse bestimmt der Server anhand der gemessenen Dauer — ein
+ * Artikel mit fuenf Bildern braucht ein Vielfaches eines Artikels ohne.
+ */
+(function () {
+    'use strict';
+
+    var bar = document.getElementById('sk-import-bar');
+    if (!bar) return;
+
+    var fill = document.getElementById('sk-import-bar-fill');
+    var text = document.getElementById('sk-import-bar-text');
+    var error = document.getElementById('sk-import-bar-error');
+    var button = document.getElementById('sk-import-bar-start');
+
+    var total = parseInt(bar.getAttribute('data-total') || '1', 10);
+    var running = false;
+
+    function paint(done) {
+        var percent = total > 0 ? Math.round((done / total) * 100) : 0;
+        if (fill) fill.style.width = percent + '%';
+        bar.setAttribute('aria-valuenow', String(percent));
+        if (text) {
+            text.textContent = done + ' von ' + total + ' Inseraten angelegt';
+        }
+    }
+
+    function fail(message) {
+        running = false;
+        if (error) {
+            error.textContent = message;
+            error.style.display = '';
+        }
+        if (button) {
+            button.disabled = false;
+            button.style.display = '';
+            button.textContent = 'Erneut versuchen';
+        }
+    }
+
+    function next() {
+        var body = new URLSearchParams();
+        body.append('action', 'sk_shop_import_batch');
+        body.append('nonce', bar.getAttribute('data-nonce') || '');
+
+        fetch(bar.getAttribute('data-ajaxurl'), {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: body.toString()
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                if (!res || !res.success) {
+                    fail((res && res.data && res.data.message) || 'Der Import ist abgebrochen.');
+                    return;
+                }
+
+                total = res.data.total || total;
+                paint(res.data.done);
+
+                if (res.data.fertig) {
+                    window.location.href = res.data.weiter;
+                    return;
+                }
+
+                next();
+            })
+            .catch(function () {
+                fail('Verbindungsfehler. Der Stand ist gespeichert — du kannst fortsetzen.');
+            });
+    }
+
+    function start() {
+        if (running) return;
+        running = true;
+        if (error) error.style.display = 'none';
+        // Waehrend des Laufs weg damit: der Knopf ist nur die Rueckfalltuer,
+        // und ein deaktivierter Knopf faerbt sich im Theme violett.
+        if (button) button.style.display = 'none';
+        next();
+    }
+
+    if (button) button.addEventListener('click', start);
+
+    start();
+}());

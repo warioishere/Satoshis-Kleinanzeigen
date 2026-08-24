@@ -422,3 +422,27 @@
     color: #e8ecf0;
     background: #252d38;
 }
+
+/* Fortschritt des Stapelimports */
+.sk-import-bar {
+    height: 14px;
+    margin: 18px 0 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.sk-import-bar__fill {
+    height: 100%;
+    width: 0;
+    background: #f7931a;
+    border-radius: 8px 0 0 8px;
+    transition: width 0.35s ease;
+}
+
+.sk-import-bar__label {
+    margin: 0 0 14px;
+    font-size: 0.9rem;
+    opacity: 0.85;
+}

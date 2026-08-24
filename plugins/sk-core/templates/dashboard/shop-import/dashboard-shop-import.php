@@ -40,7 +40,7 @@ use SK\Modules\ShopImport\Importer;
 $current = 1;
 if ( $step === 'zuordnen' || $step === 'kontingent' ) {
     $current = 2;
-} elseif ( $step === 'fertig' ) {
+} elseif ( $step === 'fertig' || $step === 'laeuft' ) {
     $current = 3;
 }
 
@@ -103,6 +103,53 @@ do_action( 'sk_dashboard_wrap_start' );
                     <div class="sk-form-group">
                         <a class="sk-btn sk-btn-theme" href="<?php echo esc_url( sk_get_navigation_url( 'products' ) ); ?>"><?php esc_html_e( 'Inserate ansehen', 'sk-core' ); ?></a>
                         <a class="sk-btn sk-btn-default" href="<?php echo esc_url( $url ); ?>"><?php esc_html_e( 'Neuen Import starten', 'sk-core' ); ?></a>
+                    </div>
+                </div>
+
+            <?php elseif ( $step === 'laeuft' && $job ) : ?>
+
+                <?php
+                $job_done  = (int) ( $job['offset'] ?? 0 );
+                $job_total = max( 1, (int) ( $job['total'] ?? 1 ) );
+                ?>
+                <div class="sk-section-heading"><h3><?php esc_html_e( 'Der Import läuft', 'sk-core' ); ?></h3></div>
+                <div class="sk-section-content">
+                    <p>
+                        <?php esc_html_e( 'Die Artikel werden nacheinander angelegt und die Bilder dabei von deinem Shop geholt. Das dauert einen Moment — lass das Fenster offen.', 'sk-core' ); ?>
+                    </p>
+
+                    <div class="sk-import-bar" id="sk-import-bar"
+                         data-done="<?php echo esc_attr( $job_done ); ?>"
+                         data-total="<?php echo esc_attr( $job_total ); ?>"
+                         data-nonce="<?php echo esc_attr( wp_create_nonce( DashboardPage::NONCE ) ); ?>"
+                         data-ajaxurl="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>"
+                         role="progressbar" aria-valuemin="0" aria-valuemax="100"
+                         aria-valuenow="<?php echo esc_attr( (int) round( $job_done / $job_total * 100 ) ); ?>">
+                        <div class="sk-import-bar__fill" id="sk-import-bar-fill"
+                             style="width: <?php echo esc_attr( (int) round( $job_done / $job_total * 100 ) ); ?>%;"></div>
+                    </div>
+
+                    <p class="sk-import-bar__label">
+                        <span id="sk-import-bar-text">
+                            <?php
+                            printf(
+                                /* translators: 1: done, 2: total */
+                                esc_html__( '%1$d von %2$d Inseraten angelegt', 'sk-core' ),
+                                $job_done,
+                                $job_total
+                            );
+                            ?>
+                        </span>
+                    </p>
+
+                    <p id="sk-import-bar-error" class="sk-alert sk-alert-danger" style="display:none;"></p>
+
+                    <div class="sk-form-group">
+                        <button type="button" class="sk-btn sk-btn-theme" id="sk-import-bar-start">
+                            <?php echo $job_done > 0
+                                ? esc_html__( 'Import fortsetzen', 'sk-core' )
+                                : esc_html__( 'Import starten', 'sk-core' ); ?>
+                        </button>
                     </div>
                 </div>
 

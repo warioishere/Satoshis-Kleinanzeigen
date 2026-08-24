@@ -47,7 +47,11 @@ final class Variants {
         $packs = [];
 
         foreach ( $ids as $id ) {
-            if ( (int) get_post_meta( $id, '_no_of_product', true ) >= self::DEFAULT_MIN_PRODUCTS ) {
+            $count = (int) get_post_meta( $id, '_no_of_product', true );
+
+            // -1 heisst unbegrenzt. Ohne diesen Zweig faellt ausgerechnet das
+            // groesste Paket aus der Freischaltung, weil -1 kleiner als 21 ist.
+            if ( $count === -1 || $count >= self::DEFAULT_MIN_PRODUCTS ) {
                 $packs[] = (int) $id;
             }
         }

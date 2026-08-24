@@ -44,6 +44,7 @@ class DashboardPage extends DashboardModule {
 
     protected function register_extras(): void {
         add_action( 'template_redirect', [ $this, 'handle_post' ] );
+        add_action( 'wp_ajax_sk_shop_import_batch', [ $this, 'ajax_batch' ] );
     }
 
     private function url(): string {
@@ -55,6 +56,28 @@ class DashboardPage extends DashboardModule {
     /**
      * Upload und Import entgegennehmen.
      */
+    /**
+     * Einen Stapel abarbeiten. Der Browser ruft das so lange, bis fertig.
+     */
+    public function ajax_batch(): void {
+        check_ajax_referer( self::NONCE, 'nonce' );
+
+        $vendor_id = get_current_user_id();
+        if ( ! $vendor_id || ! Dealer::may_import( $vendor_id ) ) {
+            wp_send_json_error( [ 'message' => __( 'Keine Berechtigung.', 'sk-core' ) ] );
+        }
+
+        $step = Job::step( $vendor_id );
+
+        if ( is_wp_error( $step ) ) {
+            wp_send_json_error( [ 'message' => $step->get_error_message() ] );
+        }
+
+        $step['weiter'] = add_query_arg( 'schritt', 'fertig', $this->url() );
+
+        wp_send_json_success( $step );
+    }
+
     public function handle_post(): void {
         if ( strtoupper( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) !== 'POST' ) {
             return;
@@ -142,8 +165,13 @@ class DashboardPage extends DashboardModule {
             exit;
         }
 
-        $result = Importer::run(
-            $items,
+        // Nicht sofort importieren, sondern einen Auftrag anlegen: die Bilder
+        // machen selbst ein halbes Dutzend Artikel langsamer als PHP erlaubt.
+        Job::create(
+            $vendor_id,
+            $path,
+            $mapping,
+            $chosen,
             [
                 'vendor_id'    => $vendor_id,
                 'currency'     => sanitize_text_field( wp_unslash( $_POST['sk_currency'] ?? 'EUR' ) ),
@@ -152,14 +180,11 @@ class DashboardPage extends DashboardModule {
                 'status'       => self::import_status(),
                 'source'       => Dealer::shop_url( $vendor_id ),
                 'category_map' => Settings::category_map( $vendor_id ),
-            ]
+            ],
+            count( $items )
         );
 
-        set_transient( 'sk_import_result_' . $vendor_id, $result, 600 );
-        Storage::forget( $path );
-        delete_user_meta( $vendor_id, '_sk_import_file' );
-
-        wp_safe_redirect( add_query_arg( 'schritt', 'fertig', $this->url() ) );
+        wp_safe_redirect( add_query_arg( 'schritt', 'laeuft', $this->url() ) );
         exit;
     }
 
@@ -298,6 +323,13 @@ class DashboardPage extends DashboardModule {
         $saved_map    = Settings::category_map( $vendor_id );
         $default_cat  = Settings::default_category( $vendor_id );
 
+        // Ein Auftrag ueberlebt das Schliessen des Fensters. Steht einer offen,
+        // zeigt die Seite ihn an, statt so zu tun, als sei nichts passiert.
+        $job = Job::get( $vendor_id );
+        if ( $job && $step === 'start' ) {
+            $step = 'laeuft';
+        }
+
         $categories = get_terms( [ 'taxonomy' => 'product_cat', 'hide_empty' => false ] );
         $rate       = Rate::btc_rate( 'EUR' );
         $url        = $this->url();
@@ -322,6 +354,7 @@ class DashboardPage extends DashboardModule {
             'result',
             'summary',
             'subscription_url',
+            'job',
             'currency_guess',
             'variants_allowed',
             'variants_pack',
