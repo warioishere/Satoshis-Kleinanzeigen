@@ -52,6 +52,13 @@ defined( 'ABSPATH' ) || exit;
                 </span>
             </li>
             <li>
+                <i class="fas fa-truck"></i>
+                <span>
+                    <strong><?php esc_html_e( 'Sendungsverfolgung', 'sk-core' ); ?></strong>
+                    <?php esc_html_e( 'Du trägst Versender und Sendungsnummer bei der Bestellung ein — neun Anbieter von der Schweizerischen Post bis FedEx stehen zur Auswahl, für alle anderen gibst du den Link direkt an. Der Käufer bekommt daraufhin eine Mail mit Verfolgungslink, und beide Seiten sehen den Stand in der Übersicht. Das spart dir die Rückfragen im Chat.', 'sk-core' ); ?>
+                </span>
+            </li>
+            <li>
                 <i class="fab fa-bitcoin"></i>
                 <span>
                     <strong><?php esc_html_e( 'Direkt an deine Wallet', 'sk-core' ); ?></strong>

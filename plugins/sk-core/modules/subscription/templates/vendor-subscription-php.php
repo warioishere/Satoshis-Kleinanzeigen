@@ -271,6 +271,7 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
                                         <li><i class="fas fa-bolt"></i> Adaptive Preise in Sats</li>
                                         <li><i class="fas fa-chart-bar"></i> Umsatz &amp; CSV-Export</li>
                                         <li><i class="fas fa-envelope"></i> Bestellungen per E-Mail</li>
+                                        <li><i class="fas fa-truck"></i> Sendungsverfolgung</li>
                                     </ul>
                                     <button type="button" class="pack_feature_more" data-sk-pack-info>
                                         Mehr erfahren
