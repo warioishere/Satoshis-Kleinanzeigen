@@ -372,6 +372,10 @@ class ProductPage {
             ]
         );
 
+        // Die Bestellung ist damit vollstaendig: Ausfuehrung, Lieferangabe und
+        // Zahlungszeile stehen. Ob bezahlt wurde, entscheidet sich spaeter.
+        do_action( 'sk_order_placed', (string) $data['payment_hash'] );
+
         $dashboard_url = sk_get_navigation_url( 'vendor-chat' );
 
         wp_send_json_success( [
@@ -587,6 +591,8 @@ class ProductPage {
                 $chat_url = add_query_arg( 'chat_id', $chat_id, $dashboard_url );
             }
         }
+
+        do_action( 'sk_order_placed', $payment_hash );
 
         $bip21 = 'bitcoin:' . $address . '?amount=' . $btc_amount;
 

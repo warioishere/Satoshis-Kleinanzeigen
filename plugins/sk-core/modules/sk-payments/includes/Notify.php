@@ -22,6 +22,7 @@ final class Notify {
     const SHOP_MIN_PRODUCTS = 21;
 
     public function __construct() {
+        add_action( 'sk_order_placed', [ __CLASS__, 'on_order_placed' ] );
         add_action( 'sk_payment_confirmed', [ __CLASS__, 'on_confirmed' ], 10, 2 );
     }
 
@@ -46,20 +47,88 @@ final class Notify {
         return $count === -1 || $count >= self::SHOP_MIN_PRODUCTS;
     }
 
-    public static function on_confirmed( string $payment_hash, string $via ): void {
+    /**
+     * Bestellung eingegangen — noch ohne Zahlung.
+     *
+     * Bewusst sofort und nicht erst nach der Zahlung: so machen es Shops mit
+     * Kartenzahlung auch. Bei Onchain vergehen bis zur Bestaetigung ohnehin
+     * Minuten, und eine Bestellung, die nie bezahlt wird, ist fuer den
+     * Haendler trotzdem eine Information.
+     */
+    public static function on_order_placed( string $payment_hash ): void {
         global $wpdb;
 
-        $table   = $wpdb->prefix . 'sk_lightning_payments';
-        $payment = $wpdb->get_row(
-            $wpdb->prepare( "SELECT * FROM {$table} WHERE payment_hash = %s", $payment_hash )
-        );
-
+        $payment = self::load( $payment_hash );
         if ( ! $payment ) {
             return;
         }
 
+        $vendor_id = (int) $payment->vendor_id;
+
+        // Abgrenzung zum Gratispaket: ein Privatverkaeufer sieht die Anfrage
+        // im Chat, ein Haendler bekommt sie ins Postfach.
+        if ( ! self::is_shop_pack( $vendor_id ) ) {
+            return;
+        }
+
+        $meta = self::meta( $payment );
+        if ( ! empty( $meta['order_mail_sent'] ) ) {
+            return;
+        }
+
+        $via  = $payment->context === 'onchain' ? 'onchain' : 'lightning';
+        $data = self::build( $payment, $meta, $via, true );
+
+        $user = get_userdata( $vendor_id );
+        if ( $user && is_email( $user->user_email ) ) {
+            $subject = sprintf(
+                /* translators: 1: product */
+                __( 'Neue Bestellung: %1$s', 'sk-core' ),
+                $data['titel']
+            );
+
+            self::send( $user->user_email, $subject, self::render( 'mail-order-placed', $data ) );
+        }
+
+        $meta['order_mail_sent'] = current_time( 'mysql' );
+        self::save_meta( $payment_hash, $meta );
+    }
+
+    private static function load( string $payment_hash ): ?object {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'sk_lightning_payments';
+
+        return $wpdb->get_row(
+            $wpdb->prepare( "SELECT * FROM {$table} WHERE payment_hash = %s", $payment_hash )
+        );
+    }
+
+    private static function meta( object $payment ): array {
         $meta = json_decode( (string) $payment->metadata, true );
-        $meta = is_array( $meta ) ? $meta : [];
+
+        return is_array( $meta ) ? $meta : [];
+    }
+
+    private static function save_meta( string $payment_hash, array $meta ): void {
+        global $wpdb;
+
+        $wpdb->update(
+            $wpdb->prefix . 'sk_lightning_payments',
+            [ 'metadata' => wp_json_encode( $meta ) ],
+            [ 'payment_hash' => $payment_hash ],
+            [ '%s' ],
+            [ '%s' ]
+        );
+    }
+
+    public static function on_confirmed( string $payment_hash, string $via ): void {
+        $payment = self::load( $payment_hash );
+        if ( ! $payment ) {
+            return;
+        }
+
+        $meta = self::meta( $payment );
 
         // Zweiter Gurt neben der Statusbedingung: eine erneut bestaetigte
         // Zahlung soll keine zweite Mail ausloesen.
@@ -83,13 +152,7 @@ final class Notify {
         }
 
         $meta['mail_sent'] = current_time( 'mysql' );
-        $wpdb->update(
-            $table,
-            [ 'metadata' => wp_json_encode( $meta ) ],
-            [ 'payment_hash' => $payment_hash ],
-            [ '%s' ],
-            [ '%s' ]
-        );
+        self::save_meta( $payment_hash, $meta );
     }
 
     /**
