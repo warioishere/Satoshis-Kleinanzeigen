@@ -46,3 +46,4 @@ plugins/*/node_modules/
 .env.*
 dokan-lite/
 dokan-pro/
+mu-plugins/sk-staging-mail-guard.php

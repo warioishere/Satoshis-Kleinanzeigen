@@ -48,6 +48,8 @@ final class Module {
         require_once SK_PAYMENTS_INCLUDES . '/ClientIp.php';
         require_once SK_PAYMENTS_INCLUDES . '/Variant.php';
         require_once SK_PAYMENTS_INCLUDES . '/Notify.php';
+        require_once SK_PAYMENTS_INCLUDES . '/Revenue.php';
+        require_once SK_PAYMENTS_INCLUDES . '/RevenueExport.php';
         require_once SK_PAYMENTS_INCLUDES . '/Admin/AdminPage.php';
         require_once SK_PAYMENTS_INCLUDES . '/Admin/AdminSettings.php';
         require_once SK_PAYMENTS_INCLUDES . '/Chat/PaymentCard.php';
@@ -85,6 +87,7 @@ final class Module {
         new StoreSettings();
         new ProductPage();
         new Notify();
+        new RevenueExport();
         new Admin\AdminPage();
         new Dashboard\TransactionsPage();
         new REST\LnurlPayEndpoint();

@@ -222,6 +222,93 @@ do_action( 'sk_dashboard_wrap_start' );
 
                 <?php else : ?>
 
+                <?php
+                /*
+                 * Umsatzauswertung — nur im Shoptarif. Der Fiat-Betrag kommt
+                 * aus dem Kurs bei der Zahlung, nicht aus dem heutigen; nur so
+                 * taugt die Zahl fuer eine Steuererklaerung.
+                 */
+                $skp_shop = \SK\Modules\Payments\Notify::is_shop_pack( $user_id );
+
+                if ( $skp_shop ) :
+                    $skp_role  = $tab === 'purchases' ? 'purchases' : 'sales';
+                    $skp_years = \SK\Modules\Payments\Revenue::years( $user_id, $skp_role );
+                    $skp_year  = isset( $_GET['jahr'] ) ? (int) $_GET['jahr'] : ( $skp_years[0] ?? 0 );
+                    $skp_month = \SK\Modules\Payments\Revenue::months( $user_id, $skp_role, $skp_year ?: null );
+                    ?>
+                    <div class="skp-revenue">
+                        <div class="skp-revenue__head">
+                            <h3>
+                                <i class="fas fa-chart-column"></i>
+                                <?php echo $skp_role === 'purchases' ? 'Ausgaben' : 'Umsatz'; ?>
+                            </h3>
+
+                            <div class="skp-revenue__actions">
+                                <?php if ( count( $skp_years ) > 1 ) : ?>
+                                    <select class="skp-revenue__year" onchange="window.location = this.value;">
+                                        <?php foreach ( $skp_years as $y ) : ?>
+                                            <option value="<?php echo esc_url( add_query_arg( [ 'tab' => $tab, 'jahr' => $y ], $base_url ) ); ?>" <?php selected( $y, $skp_year ); ?>>
+                                                <?php echo esc_html( $y ); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                <?php endif; ?>
+
+                                <a class="sk-btn sk-btn-theme sk-btn-sm"
+                                   href="<?php echo esc_url( \SK\Modules\Payments\RevenueExport::url( $skp_role, $skp_year ?: null ) ); ?>">
+                                    <i class="fas fa-file-csv"></i> Als CSV
+                                </a>
+                            </div>
+                        </div>
+
+                        <?php if ( empty( $skp_month ) ) : ?>
+                            <p class="skp-revenue__empty">Für <?php echo esc_html( $skp_year ?: 'diesen Zeitraum' ); ?> ist noch nichts verbucht.</p>
+                        <?php else : ?>
+                            <?php
+                            $skp_sum_sats = array_sum( array_column( $skp_month, 'sats' ) );
+                            $skp_sum_fiat = array_sum( array_column( $skp_month, 'fiat' ) );
+                            $skp_missing  = array_sum( array_column( $skp_month, 'ohne_kurs' ) );
+                            ?>
+                            <table class="skp-revenue__table">
+                                <thead>
+                                    <tr>
+                                        <th>Monat</th>
+                                        <th class="skp-revenue__num">Vorgänge</th>
+                                        <th class="skp-revenue__num">Sats</th>
+                                        <th class="skp-revenue__num">EUR</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ( $skp_month as $m ) : ?>
+                                        <tr>
+                                            <td><?php echo esc_html( wp_date( 'F Y', strtotime( $m['monat'] . '-01' ) ) ); ?></td>
+                                            <td class="skp-revenue__num"><?php echo (int) $m['anzahl']; ?></td>
+                                            <td class="skp-revenue__num"><?php echo esc_html( number_format( $m['sats'], 0, ',', "'" ) ); ?></td>
+                                            <td class="skp-revenue__num"><?php echo esc_html( number_format( $m['fiat'], 2, ',', "'" ) ); ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th><?php echo esc_html( $skp_year ?: 'Gesamt' ); ?></th>
+                                        <th class="skp-revenue__num"><?php echo (int) array_sum( array_column( $skp_month, 'anzahl' ) ); ?></th>
+                                        <th class="skp-revenue__num"><?php echo esc_html( number_format( $skp_sum_sats, 0, ',', "'" ) ); ?></th>
+                                        <th class="skp-revenue__num"><?php echo esc_html( number_format( $skp_sum_fiat, 2, ',', "'" ) ); ?></th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+
+                            <p class="skp-revenue__note">
+                                Der EUR-Betrag ist zum Kurs im Moment der Zahlung gerechnet, nicht zum heutigen.
+                                Gezählt wird ab dem Tag der Zahlungsbestätigung.
+                                <?php if ( $skp_missing > 0 ) : ?>
+                                    <br><strong><?php echo (int) $skp_missing; ?></strong> Vorgänge ohne erfassten Kurs sind in der EUR-Summe nicht enthalten.
+                                <?php endif; ?>
+                            </p>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+
                 <?php /* ── Transaktions-Liste ── */ ?>
                 <?php if ( empty( $payments ) ) : ?>
                     <div class="sk-reviews-empty">

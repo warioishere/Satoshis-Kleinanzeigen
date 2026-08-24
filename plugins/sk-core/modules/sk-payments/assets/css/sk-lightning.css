@@ -294,3 +294,87 @@
     .skp-order-details__row { flex-direction: column; gap: 2px; }
     .skp-order-details__label { flex: 0 0 auto; }
 }
+
+/* Umsatzauswertung im Shoptarif */
+.skp-revenue {
+    margin: 0 0 22px;
+    padding: 16px 18px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+}
+
+.skp-revenue__head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.skp-revenue__head h3 {
+    margin: 0;
+    font-size: 17px;
+    color: #e8ecf0;
+}
+
+.skp-revenue__head h3 i {
+    color: #f7931a;
+    margin-right: 6px;
+}
+
+.skp-revenue__actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.skp-revenue__year {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    color: #e8ecf0;
+    padding: 6px 10px;
+    min-height: 0;
+}
+
+.skp-revenue__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.skp-revenue__table th,
+.skp-revenue__table td {
+    padding: 7px 10px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.skp-revenue__table thead th {
+    color: #5a6a7e;
+    font-weight: 500;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.skp-revenue__table tfoot th {
+    color: #e8ecf0;
+    border-bottom: 0;
+    border-top: 2px solid rgba(247, 147, 26, 0.35);
+}
+
+.skp-revenue__num {
+    text-align: right !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.skp-revenue__note,
+.skp-revenue__empty {
+    margin: 10px 0 0;
+    color: #5a6a7e;
+    font-size: 12.5px;
+    line-height: 1.5;
+}
