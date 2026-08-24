@@ -38,17 +38,24 @@ defined( 'ABSPATH' ) || exit;
                 </span>
             </li>
             <li>
-                <i class="fas fa-clipboard-list"></i>
+                <i class="fas fa-chart-bar"></i>
                 <span>
-                    <strong><?php esc_html_e( 'Verkaufsübersicht', 'sk-core' ); ?></strong>
-                    <?php esc_html_e( 'Jede Bestellung steht unter Käufe/Verkäufe — mit gewählter Ausführung, Lieferangabe des Käufers und Zahlungsstand. Dafür musst du nicht in den Chat wechseln.', 'sk-core' ); ?>
+                    <strong><?php esc_html_e( 'Umsatz & CSV-Export', 'sk-core' ); ?></strong>
+                    <?php esc_html_e( 'Monatssummen in Sats und Euro, gerechnet mit dem Kurs, der im Moment der Zahlung galt — nicht mit dem heutigen. Genau dieser Wert zählt für die Steuer, und er lässt sich später nicht mehr rekonstruieren. Als CSV-Datei mit Datum, Artikel, Ausführung, Kurs und Betrag herunterladbar, fertig für die Buchhaltung.', 'sk-core' ); ?>
+                </span>
+            </li>
+            <li>
+                <i class="fas fa-envelope"></i>
+                <span>
+                    <strong><?php esc_html_e( 'Bestellungen per E-Mail', 'sk-core' ); ?></strong>
+                    <?php esc_html_e( 'Du bekommst jede Bestellung sofort ins Postfach — mit Ausführung, Betrag und Lieferanschrift, alles zum Packen. Sobald die Zahlung bestätigt ist, folgt eine zweite Mail; erst dann versendest du. Dein Käufer erhält eine Bestellbestätigung. Ohne Paket siehst du Bestellungen nur im Dashboard.', 'sk-core' ); ?>
                 </span>
             </li>
             <li>
                 <i class="fab fa-bitcoin"></i>
                 <span>
-                    <strong><?php esc_html_e( 'Direkte Onchain- & Offchain-Zahlungen', 'sk-core' ); ?></strong>
-                    <?php esc_html_e( 'Der Käufer zahlt per Lightning oder Onchain direkt an deine Wallet. Kein Treuhänder, keine Zwischenstation — hinterlege dazu in den Einstellungen eine Lightning-Adresse, NWC oder einen xpub.', 'sk-core' ); ?>
+                    <strong><?php esc_html_e( 'Direkt an deine Wallet', 'sk-core' ); ?></strong>
+                    <?php esc_html_e( 'Der Käufer zahlt per Lightning oder Onchain direkt an dich. Kein Treuhänder, keine Zwischenstation, keine Verkaufsgebühr — hinterlege dazu eine Lightning-Adresse, NWC oder einen xpub. Das gilt für alle Anbieter, auch ohne Paket.', 'sk-core' ); ?>
                 </span>
             </li>
         </ul>

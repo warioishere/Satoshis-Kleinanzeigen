@@ -174,8 +174,8 @@ use SK\Modules\Subscription\Helper;
                                 <li><i class="fas fa-file-import"></i> WooCommerce Produkt Importe</li>
                                 <li><i class="fas fa-layer-group"></i> Variable Produkte</li>
                                 <li><i class="fas fa-bolt"></i> Adaptive Preise in Sats</li>
-                                <li><i class="fas fa-clipboard-list"></i> Verkaufsübersicht</li>
-                                <li><i class="fab fa-bitcoin"></i> Direkte Onchain- &amp; Offchain-Zahlungen</li>
+                                <li><i class="fas fa-chart-bar"></i> Umsatz &amp; CSV-Export</li>
+                                <li><i class="fas fa-envelope"></i> Bestellungen per E-Mail</li>
                             </ul>
                             <button type="button" class="pack_feature_more" data-sk-pack-info>
                                 Mehr erfahren
