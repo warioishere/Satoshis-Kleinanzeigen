@@ -529,6 +529,9 @@ class ProductPage {
 
         $payment_hash = hash( 'sha256', $address . $buyer_id . $price_sats . microtime( true ) . random_bytes( 8 ) );
 
+        $rate          = LNURL\ExchangeRate::get_btc_eur_rate();
+        $exchange_rate = is_wp_error( $rate ) ? null : $rate;
+
         $wpdb->insert( $table, [
             'vendor_id'       => $vendor_id,
             'buyer_id'        => $buyer_id,
@@ -538,11 +541,15 @@ class ProductPage {
             'payment_request' => 'bitcoin:' . $address . '?amount=' . $btc_amount,
             'status'          => 'pending',
             'context'         => 'onchain',
+            // Kurs mitschreiben wie beim Lightning-Weg: was ein Verkauf in
+            // Franken oder Euro wert war, laesst sich spaeter nicht mehr
+            // rekonstruieren.
+            'exchange_rate'   => $exchange_rate,
             'verify_url'      => $address,
             'buyer_ip_hash'   => ClientIp::hash(),
             'created_at'      => current_time( 'mysql' ),
         ], [
-            '%d', '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s',
+            '%d', '%d', '%d', '%d', '%s', '%s', '%s', '%s', '%f', '%s', '%s', '%s',
         ] );
 
         self::store_order_details( $payment_hash, $note, self::variant_name( $product_id, $variant_key ) );

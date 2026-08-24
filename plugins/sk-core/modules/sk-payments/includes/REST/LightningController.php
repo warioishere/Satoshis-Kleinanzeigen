@@ -397,6 +397,8 @@ class LightningController extends WP_REST_Controller {
             return new WP_Error( 'already_processed', 'Zahlung wurde bereits verarbeitet.', [ 'status' => 400 ] );
         }
 
+        do_action( 'sk_payment_confirmed', (string) $payment_hash, 'vendor' );
+
         return new WP_REST_Response( [ 'status' => 'confirmed', 'confirmed_by' => 'vendor' ], 200 );
     }
 
@@ -552,6 +554,11 @@ class LightningController extends WP_REST_Controller {
                 'confirmed_by' => 'previous',
             ], 200 );
         }
+
+        // Genau hier, nicht frueher: das UPDATE oben greift nur einmal, weil es
+        // auf status='pending' bedingt ist. Damit kann die Benachrichtigung
+        // nicht doppelt rausgehen, auch wenn zwei Pruefungen gleichzeitig laufen.
+        do_action( 'sk_payment_confirmed', (string) $payment->payment_hash, $via );
 
         return new WP_REST_Response( [
             'status'            => 'confirmed',
@@ -889,6 +896,8 @@ class LightningController extends WP_REST_Controller {
                     'error'     => 'Diese Transaktion ist bereits einer anderen Zahlung zugeordnet.',
                 ], 200 );
             }
+
+            do_action( 'sk_payment_confirmed', (string) $payment_hash, 'onchain' );
 
             return new WP_REST_Response( [
                 'status'        => 'confirmed',
