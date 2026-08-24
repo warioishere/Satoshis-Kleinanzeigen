@@ -496,19 +496,19 @@ do_action( 'sk_dashboard_wrap_start' );
 
                                 <div class="sk-review-card__footer">
                                     <div class="skp-card-buttons">
-                                        <?php if ( $skp_show_ship_form ) : ?>
-                                            <button type="button" class="skp-card-btn skp-ship-toggle"
-                                                    data-hash="<?php echo esc_attr( $p->payment_hash ); ?>">
-                                                <i class="fas fa-box"></i> Versand eintragen
-                                            </button>
-                                        <?php endif; ?>
-
                                         <?php if ( $p->chat_id ) :
                                             $chat_url = add_query_arg( 'chat_id', $p->chat_id, sk_get_navigation_url( 'vendor-chat' ) );
                                         ?>
                                             <a href="<?php echo esc_url( $chat_url ); ?>" class="skp-card-btn">
                                                 <i class="fas fa-comments"></i> Chat öffnen
                                             </a>
+                                        <?php endif; ?>
+
+                                        <?php if ( $skp_show_ship_form ) : ?>
+                                            <button type="button" class="skp-card-btn skp-ship-toggle"
+                                                    data-hash="<?php echo esc_attr( $p->payment_hash ); ?>">
+                                                <i class="fas fa-box"></i> Versand eintragen
+                                            </button>
                                         <?php endif; ?>
                                     </div>
 
