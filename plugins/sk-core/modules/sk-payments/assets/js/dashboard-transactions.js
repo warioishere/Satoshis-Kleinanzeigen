@@ -107,6 +107,20 @@
 jQuery(function ($) {
     'use strict';
 
+    // Knopf in der Fusszeile klappt das Formular derselben Karte auf.
+    $(document).on('click', '.skp-ship-toggle', function () {
+        var hash = $(this).data('hash');
+        var $body = $('.skp-ship-form[data-hash="' + hash + '"]').find('.skp-ship-form__body');
+        var open = $body.is('[hidden]');
+
+        $body.prop('hidden', !open);
+        $(this).toggleClass('is-open', open);
+
+        if (open) {
+            $body.find('.skp-ship-form__number').trigger('focus');
+        }
+    });
+
     $(document).on('change', '.skp-ship-form__carrier', function () {
         var $form = $(this).closest('.skp-ship-form');
         var other = $(this).val() === 'andere';

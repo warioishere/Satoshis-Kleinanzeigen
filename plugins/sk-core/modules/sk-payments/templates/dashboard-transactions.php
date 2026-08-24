@@ -259,6 +259,7 @@ do_action( 'sk_dashboard_wrap_start' );
                                             </a>
                                         </div>
                                     </div>
+
                                     <?php endif; ?>
 
                                     <?php if ( $c->status === 'paid' && $c->paid_at ) : ?>
@@ -410,6 +411,13 @@ do_action( 'sk_dashboard_wrap_start' );
                         $details  = \SK\Modules\Payments\ProductPage::order_details( $p->metadata ?? null );
                         $skp_ship = \SK\Modules\Payments\Shipping::get( $p );
 
+                        // Einmal bestimmt, damit Knopf in der Fusszeile und
+                        // Formular darunter nicht auseinanderlaufen koennen.
+                        $skp_show_ship_form = $tab === 'sales'
+                            && $skp_shop
+                            && ! $skp_ship
+                            && in_array( $p->status, [ 'confirmed', 'delivered' ], true );
+
                         $can_confirm_delivery = $tab === 'purchases' && $p->status === 'confirmed';
                         $can_dispute = $tab === 'purchases' && $p->status === 'confirmed';
                     ?>
@@ -485,42 +493,24 @@ do_action( 'sk_dashboard_wrap_start' );
                                     </div>
                                 <?php endif; ?>
 
-                                <?php
-                                /*
-                                 * Versandangabe eintragen — nur der Anbieter, nur im Shoptarif
-                                 * und nur wenn bezahlt wurde. Vorher waere es verfrueht.
-                                 */
-                                if ( $tab === 'sales' && $skp_shop && ! $skp_ship && in_array( $p->status, [ 'confirmed', 'delivered' ], true ) ) :
-                                    ?>
-                                    <details class="skp-ship-form"
-                                             data-hash="<?php echo esc_attr( $p->payment_hash ); ?>"
-                                             data-nonce="<?php echo esc_attr( wp_create_nonce( \SK\Modules\Payments\Shipping::ACTION ) ); ?>"
-                                             data-ajaxurl="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>">
-                                        <summary><i class="fas fa-box"></i> Versand eintragen</summary>
-                                        <div class="skp-ship-form__body">
-                                            <select class="skp-ship-form__carrier">
-                                                <?php foreach ( \SK\Modules\Payments\Shipping::carriers() as $key => $carrier ) : ?>
-                                                    <option value="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $carrier['label'] ); ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                            <input type="text" class="skp-ship-form__number" placeholder="Sendungsnummer">
-                                            <input type="url" class="skp-ship-form__url" placeholder="Link zur Sendungsverfolgung" style="display:none;">
-                                            <button type="button" class="sk-btn sk-btn-theme sk-btn-sm skp-ship-form__save">Speichern</button>
-                                        </div>
-                                        <p class="skp-ship-form__msg" style="display:none;"></p>
-                                    </details>
-                                <?php endif; ?>
 
                                 <div class="sk-review-card__footer">
-                                    <?php if ( $p->chat_id ) :
-                                        $chat_url = add_query_arg( 'chat_id', $p->chat_id, sk_get_navigation_url( 'vendor-chat' ) );
-                                    ?>
-                                        <a href="<?php echo esc_url( $chat_url ); ?>" class="sk-review-card__view-link">
-                                            <i class="fas fa-comments"></i> Chat öffnen
-                                        </a>
-                                    <?php else : ?>
-                                        <span></span>
-                                    <?php endif; ?>
+                                    <div class="skp-card-buttons">
+                                        <?php if ( $skp_show_ship_form ) : ?>
+                                            <button type="button" class="skp-card-btn skp-ship-toggle"
+                                                    data-hash="<?php echo esc_attr( $p->payment_hash ); ?>">
+                                                <i class="fas fa-box"></i> Versand eintragen
+                                            </button>
+                                        <?php endif; ?>
+
+                                        <?php if ( $p->chat_id ) :
+                                            $chat_url = add_query_arg( 'chat_id', $p->chat_id, sk_get_navigation_url( 'vendor-chat' ) );
+                                        ?>
+                                            <a href="<?php echo esc_url( $chat_url ); ?>" class="skp-card-btn">
+                                                <i class="fas fa-comments"></i> Chat öffnen
+                                            </a>
+                                        <?php endif; ?>
+                                    </div>
 
                                     <div class="sk-review-card__actions">
                                         <?php if ( $tab === 'sales' && $p->status === 'pending' ) : ?>
@@ -543,6 +533,31 @@ do_action( 'sk_dashboard_wrap_start' );
                                         <?php endif; ?>
                                     </div>
                                 </div>
+
+                                <?php
+                                /*
+                                 * Versandangabe eintragen — nur der Anbieter, nur im Shoptarif
+                                 * und nur wenn bezahlt wurde. Vorher waere es verfrueht.
+                                 */
+                                if ( $skp_show_ship_form ) :
+                                    ?>
+                                    <div class="skp-ship-form"
+                                         data-hash="<?php echo esc_attr( $p->payment_hash ); ?>"
+                                         data-nonce="<?php echo esc_attr( wp_create_nonce( \SK\Modules\Payments\Shipping::ACTION ) ); ?>"
+                                         data-ajaxurl="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>">
+                                        <div class="skp-ship-form__body" hidden>
+                                            <select class="skp-ship-form__carrier">
+                                                <?php foreach ( \SK\Modules\Payments\Shipping::carriers() as $key => $carrier ) : ?>
+                                                    <option value="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $carrier['label'] ); ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            <input type="text" class="skp-ship-form__number" placeholder="Sendungsnummer">
+                                            <input type="url" class="skp-ship-form__url" placeholder="Link zur Sendungsverfolgung" style="display:none;">
+                                            <button type="button" class="sk-btn sk-btn-theme sk-btn-sm skp-ship-form__save">Speichern</button>
+                                        </div>
+                                        <p class="skp-ship-form__msg" style="display:none;"></p>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </li>
                     <?php endforeach; ?>

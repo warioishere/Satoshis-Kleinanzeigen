@@ -379,30 +379,58 @@
     line-height: 1.5;
 }
 
+/* Zwei gleichwertige Knoepfe in der Fusszeile der Karte. Als Textlinks gingen
+   sie zwischen Betrag und Status unter. */
+.skp-card-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.skp-card-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 16px;
+    background: #f7931a;
+    border: 1px solid #f7931a;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.3;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.skp-card-btn i {
+    color: #fff;
+}
+
+.skp-card-btn:hover,
+.skp-card-btn:focus-visible {
+    background: #e07f0a;
+    border-color: #e07f0a;
+    color: #fff;
+    text-decoration: none;
+}
+
+/* Aufgeklappt: umgekehrt gefaerbt, damit man sieht welcher Knopf offen ist. */
+.skp-card-btn.is-open {
+    background: transparent;
+    border-color: #f7931a;
+    color: #f7931a;
+}
+
+.skp-card-btn.is-open i {
+    color: #f7931a;
+}
+
 /* Versandangabe eintragen */
 .skp-ship-form {
-    margin: 10px 0 0;
     font-size: 13px;
-}
-
-.skp-ship-form > summary {
-    cursor: pointer;
-    color: #9aa4b2;
-    padding: 4px 0;
-    list-style: none;
-}
-
-.skp-ship-form > summary::-webkit-details-marker {
-    display: none;
-}
-
-.skp-ship-form > summary:hover {
-    color: #f7931a;
-}
-
-.skp-ship-form > summary i {
-    margin-right: 6px;
-    color: #f7931a;
 }
 
 .skp-ship-form__body {
