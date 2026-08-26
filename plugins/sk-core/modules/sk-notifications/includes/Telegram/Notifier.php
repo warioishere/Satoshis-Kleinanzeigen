@@ -260,144 +260,24 @@ function telegram_build_caption_and_media($post_id) {
 
     $extra_info = '';
 
-    // Check if feewall plugin is active for this vendor
-    $feewall_active_for_vendor = false;
-    if (class_exists('Contact_Details_Feewall') && get_option('cdf_enabled', 'yes') === 'yes') {
-        if (isset($store_info['cdf_enabled']) && $store_info['cdf_enabled'] === '1') {
-            $feewall_active_for_vendor = true;
-        }
-    }
+    /*
+     * Keine Kontaktdaten in den Kanal.
+     *
+     * Hier standen E-Mail-Adresse, Telefonnummer, Nostr-Schluessel, X-Handle
+     * und Telegram-Name im Klartext — dauerhaft und oeffentlich lesbar, damit
+     * abgreifbar, und an der Seite vorbei. Wer Kontakt aufnehmen will, findet
+     * die Angaben auf dem Inserat, wo sie den Regeln des Anbieters
+     * unterliegen und wo der Klick auch gezaehlt wird. Ein Hinweis darauf
+     * eruebrigt sich — der Link zum Inserat steht ohnehin darunter.
+     */
 
-    // If feewall is active for this vendor, show only "Kontaktdetails: siehe Inserate"
-    if ($feewall_active_for_vendor) {
-        $extra_info = "\n📋 Kontaktdetails: siehe Inserate";
-    } else {
-        // Otherwise, build all contact details as usual
-
-        // Telegram-Handle: KEIN Escaping im Label und NICHT in der URL
-        if (!empty($store_info['telegram']) && !empty($store_info['show_telegram'])) {
-            $handle_clean = ltrim(trim($store_info['telegram']), '@');
-            $handle_label = tn_tg_html_esc('@' . $handle_clean);
-            $handle_url   = tn_tg_html_esc('https://t.me/' . $handle_clean);
-            $extra_info  .= "\n📜 Telegram: <a href=\"$handle_url\">$handle_label</a>";
-        }
-
-        $email_public = false;
-        if (function_exists('dkp_contact_details_is_truthy_flag')) {
-            $email_public = dkp_contact_details_is_truthy_flag($store_info['show_email'] ?? '');
-        } else {
-            $raw_flag = $store_info['show_email'] ?? '';
-            if (is_array($raw_flag)) {
-                $raw_flag = reset($raw_flag);
-            }
-
-            $raw_flag = strtolower((string) $raw_flag);
-            $email_public = in_array($raw_flag, array('1', 'yes', 'on', 'true'), true);
-        }
-
-        $email = '';
-        if ($email_public) {
-            if (function_exists('dkp_contact_details_extract_public_email')) {
-                $email = dkp_contact_details_extract_public_email($store_info);
-            } else {
-                foreach (array('setting_email', 'email', 'store_email') as $email_key) {
-                    if (empty($store_info[$email_key])) {
-                        continue;
-                    }
-
-                    $candidate = sanitize_email((string) $store_info[$email_key]);
-                    if ($candidate === '') {
-                        continue;
-                    }
-
-                    // Skip auto-generated placeholder emails
-                    $is_placeholder = (
-                        strpos($candidate, 'satoshi-') === 0 ||
-                        tn_string_ends_with($candidate, '@nostr.local') ||
-                        tn_string_ends_with($candidate, '@satoshiskleinanzeigen.space')
-                    );
-                    if ($is_placeholder) {
-                        continue;
-                    }
-
-                    $email = $candidate;
-                    break;
-                }
-            }
-
-            if ($email === '' && $user instanceof WP_User && !empty($user->user_email)) {
-                $candidate = sanitize_email($user->user_email);
-                if ($candidate !== '') {
-                    $is_placeholder = false;
-                    if (function_exists('dkp_contact_details_is_placeholder_email')) {
-                        $is_placeholder = dkp_contact_details_is_placeholder_email($candidate);
-                    } else {
-                        $is_placeholder = (
-                            strpos($candidate, 'satoshi-') === 0 ||
-                            tn_string_ends_with($candidate, '@nostr.local') ||
-                            tn_string_ends_with($candidate, '@satoshiskleinanzeigen.space')
-                        );
-                    }
-
-                    if (!$is_placeholder) {
-                        $email = $candidate;
-                    }
-                }
-            }
-        }
-
-        if ($email !== '') {
-            $extra_info .= "\n📧 E-Mail: " . tn_tg_html_esc($email);
-        }
-        // --- Nostr-Handle mit Primal-Link, gekürzt darstellen ---
-        if (!empty($store_info['nostr']) && !empty($store_info['show_nostr'])) {
-            $nostr_raw = trim($store_info['nostr']);
-
-            // Kürzen für Anzeige
-            $nostr_display = substr($nostr_raw, 0, 23) . '...';
-
-            // Primal-Link: npub → nprofile (1:1 erlaubt, Primal akzeptiert beide)
-            // Bei npub bleibt's einfach, sonst kannst du nprofile direkt übernehmen.
-            $nostr_url = "https://primal.net/p/" . $nostr_raw;
-
-            // Klickbarer HTML-Link mit Blitz-Emoji
-            $nostr_label = tn_tg_html_esc($nostr_display);
-            $nostr_href  = tn_tg_html_esc($nostr_url);
-            $extra_info .= "\n⚡️ Nostr: <a href=\"{$nostr_href}\">{$nostr_label}</a>";
-        }
-
-        // --- X/Twitter: nur wenn Feld vorhanden UND öffentlich ---
-        if (!empty($store_info['twitter']) && !empty($store_info['show_twitter'])) {
-            $tw_handle = trim((string)$store_info['twitter']);
-            $tw_handle = ltrim($tw_handle, '@');
-            if ($tw_handle !== '') {
-                // Label HTML-escapen, URL ebenfalls (rawurlencode lässt kein < > & übrig, aber safe)
-                $label_escaped = tn_tg_html_esc('@' . $tw_handle);
-                $url = tn_tg_html_esc('https://x.com/' . rawurlencode($tw_handle));
-                $extra_info .= "\n🐦 X/Twitter: <a href=\"{$url}\">{$label_escaped}</a>";
-            }
-        }
-
-        // --- Telefon: nur wenn Feld vorhanden UND öffentlich ---
-        if (!empty($store_info['phone_number']) && !empty($store_info['show_phone_number'])) {
-            $tel_raw = trim((string)$store_info['phone_number']);
-
-            // Label: so anzeigen, wie der Vendor es eingibt (HTML-escapen)
-            $label_escaped = tn_tg_html_esc($tel_raw);
-
-            // Href: für "tel:" bereinigen (Ziffern + Plus + optionales Präfix)
-            // -> Entfernt Leerzeichen, Klammern, Bindestriche etc.
-            $tel_href = preg_replace('/[^0-9+]/', '', $tel_raw);
-
-            if ($tel_href !== '') {
-                $extra_info .= "\n📞 Telefon: <a href=\"tel:{$tel_href}\">{$label_escaped}</a>";
-            }
-        }
-    }
     // End of feewall check
 
     $permalink = get_permalink($post_id);
-    $caption = "🛒 <b>$title</b>\n\n<b>$price_label $price_str</b>$shipping_str\n\n$short_desc\n\n$extra_info";
+    $caption = "🛒 <b>$title</b>\n\n<b>$price_label $price_str</b>$shipping_str\n\n$short_desc";
+    if ( trim( $extra_info ) !== '' ) {
+        $caption .= "\n\n$extra_info";
+    }
     if ($permalink) {
         $caption .= "\n\nZum Inserat 👉 " . tn_tg_html_esc($permalink);
     }
