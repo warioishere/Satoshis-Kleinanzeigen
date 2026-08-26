@@ -276,30 +276,34 @@ class Module {
      * @param $user_id
      */
     public function set_default_geolocation_data( $user_id ) {
-        $default_locations = sk_get_option( 'location', 'sk_geolocation' );
-
-        if ( ! is_array( $default_locations ) || empty( $default_locations ) ) {
-            $default_locations = array(
-                'latitude'  => '',
-                'longitude' => '',
-                'address'   => '',
-            );
-        }
-
-        update_user_meta( $user_id, 'sk_geo_latitude', $default_locations['latitude'] );
-        update_user_meta( $user_id, 'sk_geo_longitude', $default_locations['longitude'] );
+        /*
+         * Kein Standort ohne Wahl.
+         *
+         * Hier stand der eingestellte Standardstandort und wurde jedem neu
+         * registrierten Verkaeufer als eigener Standort ins Profil geschrieben,
+         * samt oeffentlicher Sichtbarkeit. Genau daraus sind die Altprofile
+         * entstanden, die auf der Karte in Dhaka lagen, ohne dass jemand das je
+         * ausgewaehlt haette — und es wuerde jedes Mal wieder passieren, sobald
+         * unter SK > Geolocation ein Standard eingetragen wird.
+         *
+         * Der Standardstandort ist ausschliesslich der Kartenmittelpunkt. Wer
+         * keinen Ort gewaehlt hat, hat keine Koordinate und erscheint nicht auf
+         * der Karte. Die Sichtbarkeit bleibt vorbelegt, damit ein spaeter
+         * gewaehlter Ort ohne weiteren Schalter erscheint.
+         */
+        update_user_meta( $user_id, 'sk_geo_latitude', '' );
+        update_user_meta( $user_id, 'sk_geo_longitude', '' );
         update_user_meta( $user_id, 'sk_geo_public', 1 );
-        update_user_meta( $user_id, 'sk_geo_address', $default_locations['address'] );
+        update_user_meta( $user_id, 'sk_geo_address', '' );
 
-        $sk_settings   = get_user_meta( $user_id, 'sk_profile_settings', true );
-        $default_location = '';
+        // Auch die versteckten Formularfelder bleiben leer: stuende hier ein
+        // Ort, uebernaehme ihn das Profil beim naechsten Speichern als eigene
+        // Wahl.
+        $sk_settings = get_user_meta( $user_id, 'sk_profile_settings', true );
+        $sk_settings = is_array( $sk_settings ) ? $sk_settings : [];
 
-        if ( ! empty( $default_locations['latitude'] ) && ! empty( $default_locations['longitude'] ) ) {
-            $default_location = $default_locations['latitude'] . ',' . $default_locations['longitude'];
-        }
-
-        $sk_settings['location']     = $default_location;
-        $sk_settings['find_address'] = $default_locations['address'];
+        $sk_settings['location']     = '';
+        $sk_settings['find_address'] = '';
 
         update_user_meta( $user_id, 'sk_profile_settings', $sk_settings );
     }
