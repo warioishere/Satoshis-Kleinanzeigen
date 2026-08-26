@@ -12314,3 +12314,45 @@ textarea.wp-editor-area.post_content {
     color: #e8ecf0;
     background-color: #252d38;
 }
+
+/* ==========================================================
+ * Kontaktsymbole: Wert erscheint erst nach dem Klick
+ *
+ * Vorher stand das Ziel im Quelltext und war ohne Zutun abgreifbar. Der
+ * aufgedeckte Wert steht jetzt neben dem Symbol — dadurch wird die Kachel
+ * breiter, was gewollt ist: man sieht, mit wem man es zu tun hat.
+ * ========================================================== */
+.dkp-contact-icon.is-loading {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.dkp-contact-icon.is-error {
+  color: #e05252;
+}
+
+/* Das Grundsymbol ist ein 36px-Quadrat mit `display: grid` — darin landete
+   der aufgedeckte Wert in einer zweiten Zeile und wurde abgeschnitten.
+   `!important` bei der Breite ist noetig: auf Mobil klemmt
+   `.single-product .dkp-contact-icon` sie mit derselben Waffe fest. */
+.single-product .summary .dkp-contact-icon.is-revealed,
+.dkp-contact-icon.is-revealed {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto !important;
+  min-width: 36px;
+  padding: 0 12px;
+  gap: 8px;
+}
+
+.dkp-contact-icon__value {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dkp-contact-icon.is-blocked {
+  outline: 2px solid rgba(247, 147, 26, 0.6);
+  outline-offset: 2px;
+}

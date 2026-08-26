@@ -35,6 +35,10 @@ class ContactDetails {
         // AJAX validation
         add_action( 'wp_ajax_sk_settings', [ $this, 'ajax_validate_settings' ], 0 );
 
+        // Kontaktwert erst auf Klick herausgeben
+        add_action( 'wp_ajax_sk_reveal_contact', [ $this, 'reveal_contact' ] );
+        add_action( 'wp_ajax_nopriv_sk_reveal_contact', [ $this, 'reveal_contact' ] );
+
         // Publish blocking
         add_action( 'sk_new_product_added', [ $this, 'maybe_force_draft' ], 20, 2 );
         add_action( 'sk_product_updated',   [ $this, 'maybe_force_draft' ], 20, 2 );
@@ -45,6 +49,28 @@ class ContactDetails {
 
     public function enqueue(): void {
         // CSS merged into sk-theme.css (CSS consolidation)
+
+        if ( is_admin() ) {
+            return;
+        }
+
+        wp_enqueue_script(
+            'sk-contact-reveal',
+            SK_CORE_ASSETS . '/js/sk-contact-reveal.js',
+            [],
+            function_exists( 'sk_assets_version' ) ? sk_assets_version( __DIR__ . '/../../../assets' ) : false,
+            true
+        );
+
+        wp_localize_script(
+            'sk-contact-reveal',
+            'skContactReveal',
+            [
+                'ajaxurl' => admin_url( 'admin-ajax.php' ),
+                'nonce'   => wp_create_nonce( 'sk_reveal_contact' ),
+                'fehler'  => __( 'Kontakt konnte nicht geladen werden.', 'sk-core' ),
+            ]
+        );
     }
 
     public function enqueue_font_awesome(): void {
@@ -334,31 +360,172 @@ class ContactDetails {
         echo '<div class="kontakt-hinweis" role="alert">⚠️ Hinweis: Du hast noch keine Kontaktinformationen hinterlegt oder öffentlich gemacht. Es kann sich sonst niemand bei dir auf dein Inserat melden. <a class="kontakt-hinweis__link" href="' . $url . '">Kontaktdaten jetzt festlegen</a></div>';
     }
 
+    /**
+     * Kontaktwert eines Anbieters herausgeben — einer je Anfrage.
+     *
+     * Ersetzt das fertige Ziel im Quelltext. Wer scrapen will, braucht jetzt
+     * einen Aufruf je Anbieter und Kanal statt eines einzigen Seitenabrufs,
+     * und laeuft dabei in die Mengenbegrenzung. Ein entschlossener Angreifer
+     * kommt weiterhin durch — es dauert dann Tage statt Sekunden.
+     */
+    public function reveal_contact(): void {
+        check_ajax_referer( 'sk_reveal_contact', 'nonce' );
+
+        if ( ! $this->reveal_rate_allows() ) {
+            wp_send_json_error( [ 'message' => __( 'Zu viele Anfragen. Bitte kurz warten.', 'sk-core' ) ], 429 );
+        }
+
+        $vendor_id = isset( $_POST['vendor'] ) ? absint( $_POST['vendor'] ) : 0;
+        $channel   = isset( $_POST['channel'] ) ? sanitize_key( wp_unslash( $_POST['channel'] ) ) : '';
+
+        if ( ! $vendor_id || ! function_exists( 'sk_get_store_info' ) ) {
+            wp_send_json_error( [ 'message' => __( 'Anbieter nicht gefunden.', 'sk-core' ) ] );
+        }
+
+        $info = sk_get_store_info( $vendor_id );
+        if ( ! is_array( $info ) || ! in_array( $channel, $this->public_channels( $info ), true ) ) {
+            wp_send_json_error( [ 'message' => __( 'Dieser Kontaktweg ist nicht öffentlich.', 'sk-core' ) ] );
+        }
+
+        switch ( $channel ) {
+            case 'mail':
+                $wert = $this->extract_public_email( $info );
+                $ziel = 'mailto:' . $wert;
+                break;
+
+            case 'tg':
+                $wert = '@' . $this->normalize_contact_value( $info['telegram'], 'telegram' );
+                $ziel = 'https://t.me/' . rawurlencode( ltrim( $wert, '@' ) );
+                break;
+
+            case 'x':
+                $wert = '@' . $this->normalize_contact_value( $info['twitter'], 'twitter' );
+                $ziel = 'https://x.com/' . rawurlencode( ltrim( $wert, '@' ) );
+                break;
+
+            case 'tel':
+                $wert = self::clean_phone( (string) $info['phone_number'] );
+                $ziel = 'tel:' . $wert;
+                break;
+
+            case 'nostr':
+                $wert = preg_replace( '/^nostr:/i', '', trim( (string) $info['nostr'] ) );
+                $ziel = 'https://primal.net/p/' . rawurlencode( $wert );
+                break;
+
+            default:
+                wp_send_json_error( [ 'message' => __( 'Unbekannter Kontaktweg.', 'sk-core' ) ] );
+        }
+
+        wp_send_json_success( [
+            'wert' => $wert,
+            'ziel' => $ziel,
+            // Nostr-Schluessel sind zu lang fuer eine Zeile neben dem Symbol.
+            'kurz' => mb_strlen( $wert ) > 24 ? mb_substr( $wert, 0, 21 ) . '…' : $wert,
+        ] );
+    }
+
+    /**
+     * Wie viele Kontakte darf ein Besucher in der Minute aufdecken?
+     *
+     * Grosszuegig fuer Menschen — eine Shopseite mit zwei Dutzend Anbietern
+     * laesst sich durchklicken —, aber eng genug, dass ein Durchlauf durch
+     * alle Anbieter nicht in einer Sitzung gelingt.
+     */
+    private function reveal_rate_allows(): bool {
+        if ( ! function_exists( 'sk_rate_limit' ) ) {
+            return true;
+        }
+
+        $ip     = isset( $_SERVER['REMOTE_ADDR'] ) ? (string) $_SERVER['REMOTE_ADDR'] : '';
+        $bucket = 'reveal:' . md5( $ip . '|' . wp_salt( 'auth' ) );
+
+        return sk_rate_limit( $bucket, 30 );
+    }
+
     /* ---- Contact icons ---- */
+
+    /**
+     * Welche Kontaktwege ein Anbieter oeffentlich anbietet — ohne die Werte.
+     *
+     * Bewusst nur die Kanaele: Adresse, Nummer und Handle standen bis hierher
+     * fertig im Quelltext jeder Inserats- und Shopseite. Ein einziger Abruf
+     * ohne Anmeldung brachte auf einer Shopseite sieben Telegram-Namen. Der
+     * Wert kommt jetzt erst beim Klick, ueber reveal_contact().
+     *
+     * @return array<int,string> Kanalschluessel
+     */
+    private function public_channels( array $info ): array {
+        $channels = [];
+
+        if ( $this->is_truthy_flag( $info['show_email'] ?? '' ) && $this->extract_public_email( $info ) !== '' ) {
+            $channels[] = 'mail';
+        }
+        if ( ! empty( $info['telegram'] ) && ! empty( $info['show_telegram'] )
+            && $this->normalize_contact_value( $info['telegram'], 'telegram' ) !== '' ) {
+            $channels[] = 'tg';
+        }
+        if ( ! empty( $info['twitter'] ) && ! empty( $info['show_twitter'] )
+            && $this->normalize_contact_value( $info['twitter'], 'twitter' ) !== '' ) {
+            $channels[] = 'x';
+        }
+        if ( ! empty( $info['phone_number'] ) && ! empty( $info['show_phone_number'] )
+            && self::clean_phone( (string) $info['phone_number'] ) !== '' ) {
+            $channels[] = 'tel';
+        }
+        if ( ! empty( $info['nostr'] ) && ! empty( $info['show_nostr'] )
+            && trim( preg_replace( '/^nostr:/i', '', trim( (string) $info['nostr'] ) ) ) !== '' ) {
+            $channels[] = 'nostr';
+        }
+
+        return $channels;
+    }
+
+    private static function clean_phone( string $raw ): string {
+        return preg_replace( '/\s+/', '', (string) preg_replace( '/[^0-9+\s\(\)-]/', '', $raw ) );
+    }
+
+    /** Beschriftung je Kanal — ohne den Wert zu verraten. */
+    private static function channel_label( string $key ): string {
+        $labels = [
+            'mail'  => __( 'E-Mail anzeigen', 'sk-core' ),
+            'tg'    => __( 'Telegram anzeigen', 'sk-core' ),
+            'x'     => __( 'X/Twitter anzeigen', 'sk-core' ),
+            'tel'   => __( 'Telefon anzeigen', 'sk-core' ),
+            'nostr' => __( 'Nostr anzeigen', 'sk-core' ),
+        ];
+
+        return $labels[ $key ] ?? __( 'Kontakt anzeigen', 'sk-core' );
+    }
+
+    private static function channel_icon( string $key ): string {
+        $icons = [
+            'mail'  => 'fa-solid fa-envelope',
+            'tg'    => 'fa-brands fa-telegram',
+            'x'     => 'fa-brands fa-x-twitter',
+            'tel'   => 'fa-solid fa-phone',
+            'nostr' => 'sk-nostr-icon',
+        ];
+
+        return $icons[ $key ] ?? 'fa-solid fa-address-card';
+    }
 
     private function collect_icons( array $info, int $vendor_id = 0, int $product_id = 0, string $context = '' ): array {
         $icons = [];
-        if ( $this->is_truthy_flag( $info['show_email'] ?? '' ) ) {
-            $email = $this->extract_public_email( $info );
-            if ( $email !== '' ) $icons[] = [ 'href' => 'mailto:' . $email, 'title' => 'E-Mail: ' . $email, 'class' => 'fa-solid fa-envelope', 'key' => 'mail' ];
+
+        foreach ( $this->public_channels( $info ) as $key ) {
+            $icons[] = [
+                'href'  => '#',
+                'title' => self::channel_label( $key ),
+                'class' => self::channel_icon( $key ),
+                'key'   => $key,
+                'data'  => [
+                    'sk-contact' => $key,
+                    'vendor'     => $vendor_id,
+                ],
+            ];
         }
-        if ( ! empty( $info['telegram'] ) && ! empty( $info['show_telegram'] ) ) {
-            $h = $this->normalize_contact_value( $info['telegram'], 'telegram' );
-            if ( $h !== '' ) $icons[] = [ 'href' => 'https://t.me/' . rawurlencode( $h ), 'title' => 'Telegram: @' . $h, 'class' => 'fa-brands fa-telegram', 'key' => 'tg' ];
-        }
-        if ( ! empty( $info['twitter'] ) && ! empty( $info['show_twitter'] ) ) {
-            $h = $this->normalize_contact_value( $info['twitter'], 'twitter' );
-            if ( $h !== '' ) $icons[] = [ 'href' => 'https://x.com/' . rawurlencode( $h ), 'title' => 'X/Twitter: @' . $h, 'class' => 'fa-brands fa-x-twitter', 'key' => 'x' ];
-        }
-        if ( ! empty( $info['phone_number'] ) && ! empty( $info['show_phone_number'] ) ) {
-            $tel = preg_replace( '/[^0-9+\s\(\)-]/', '', (string) $info['phone_number'] );
-            $tel = preg_replace( '/\s+/', '', $tel );
-            if ( $tel !== '' ) $icons[] = [ 'href' => 'tel:' . $tel, 'title' => 'Telefon', 'class' => 'fa-solid fa-phone', 'key' => 'tel' ];
-        }
-        if ( ! empty( $info['nostr'] ) && ! empty( $info['show_nostr'] ) ) {
-            $clean = preg_replace( '/^nostr:/i', '', trim( (string) $info['nostr'] ) );
-            if ( $clean !== '' ) $icons[] = [ 'href' => 'https://primal.net/p/' . $clean, 'title' => 'Nostr', 'class' => 'sk-nostr-icon', 'key' => 'nostr' ];
-        }
+
         return apply_filters( 'dkp_contact_icons_collection', $icons, $vendor_id, $product_id, $context );
     }
 
