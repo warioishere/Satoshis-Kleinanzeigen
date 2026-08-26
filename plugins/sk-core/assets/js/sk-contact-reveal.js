@@ -20,7 +20,7 @@
     document.addEventListener('click', function (e) {
         if (!e.target || !e.target.closest) return;
 
-        var icon = e.target.closest('.dkp-contact-icon[data-sk-contact]');
+        var icon = e.target.closest('[data-sk-contact]');
         if (!icon || icon.classList.contains('is-revealed')) return;
 
         e.preventDefault();
@@ -69,17 +69,14 @@
         icon.setAttribute('aria-label', daten.wert);
         icon.removeAttribute('data-sk-contact');
 
-        if (daten.kurz) {
-            // Beschriftung ersetzen, nicht ergaenzen: in der Kontaktliste steht
-            // im Link "anzeigen", daraus wuerde sonst "anzeigen@MattBlox".
-            Array.prototype.slice.call(icon.childNodes).forEach(function (n) {
-                if (n.nodeType === 3) icon.removeChild(n);
-            });
-
-            var span = document.createElement('span');
-            span.className = 'dkp-contact-icon__value';
-            span.textContent = daten.kurz;
-            icon.appendChild(span);
+        /*
+         * In der Kontaktliste ist der Wert die Antwort — dort stand vorher
+         * "anzeigen", das wird ersetzt. Das kompakte Symbol auf einer
+         * Inseratskarte bleibt dagegen ein Symbol: waechst es auf die Breite
+         * eines Handles, schiebt es bei zwei Kontakten die Karte auseinander.
+         */
+        if (icon.classList.contains('dkp-contact-reveal-link')) {
+            wertZeigen(icon, daten.kurz);
         }
 
         // mailto: und tel: brauchen kein neues Fenster und werden nicht geblockt.
@@ -98,9 +95,25 @@
 
         if (fenster) {
             fenster.opener = null;
-        } else {
-            // Blockiert — der Wert steht jetzt da, ein zweiter Klick oeffnet ihn.
-            icon.classList.add('is-blocked');
+            return;
         }
+
+        // Blockiert: jetzt muss der Wert sichtbar werden, sonst weiss niemand,
+        // worauf der zweite Klick fuehrt.
+        icon.classList.add('is-blocked');
+        wertZeigen(icon, daten.kurz);
+    }
+
+    function wertZeigen(icon, kurz) {
+        if (!kurz || icon.querySelector('.dkp-contact-icon__value')) return;
+
+        Array.prototype.slice.call(icon.childNodes).forEach(function (n) {
+            if (n.nodeType === 3) icon.removeChild(n);
+        });
+
+        var span = document.createElement('span');
+        span.className = 'dkp-contact-icon__value';
+        span.textContent = kurz;
+        icon.appendChild(span);
     }
 }());

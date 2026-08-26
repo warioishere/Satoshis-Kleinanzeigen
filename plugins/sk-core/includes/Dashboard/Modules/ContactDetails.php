@@ -16,8 +16,8 @@ class ContactDetails {
         add_action( 'woocommerce_save_account_details', [ $this, 'sync_email_on_account_save' ], 30 );
         add_filter( 'sk_get_store_info',             [ $this, 'normalize_on_load' ], 10, 2 );
 
-        // Store page header
-        add_action( 'sk_store_header_info_fields', [ $this, 'output_store_header_contacts' ], 20 );
+        // Der Kontaktblock der Shopseite wird in store-header.php unter dem
+        // Banner ausgegeben, nicht mehr in der Kopfzeile darin.
 
         // Product tab
         add_filter( 'woocommerce_product_tab_content_seller', [ $this, 'output_product_tab_contacts' ] );
@@ -309,6 +309,25 @@ class ContactDetails {
      * Schluessel bis eben ausgeschrieben im Quelltext. Beide Listen benutzen
      * jetzt denselben Endpunkt.
      */
+    /**
+     * Kontaktliste eines Anbieters als HTML — fuer die Shopseite.
+     *
+     * Wird direkt aus store-header.php aufgerufen, damit der Block unter dem
+     * Banner steht statt in der Kopfzeile darin.
+     */
+    public static function contact_list_html( int $vendor_id, string $css_class = 'sk-store-contact-list' ): string {
+        if ( ! $vendor_id || ! function_exists( 'sk_get_store_info' ) ) {
+            return '';
+        }
+
+        $info = sk_get_store_info( $vendor_id );
+        if ( ! is_array( $info ) ) {
+            return '';
+        }
+
+        return ( new self() )->render_contact_list( $vendor_id, $info, $css_class );
+    }
+
     private function render_contact_list( int $vendor_id, array $info, string $css_class ): string {
         $channels = $this->public_channels( $info );
         if ( empty( $channels ) ) {
@@ -328,7 +347,7 @@ class ContactDetails {
         foreach ( $channels as $key ) {
             $html .= sprintf(
                 '<li><i class="%s" aria-hidden="true"></i> <strong>%s:</strong> '
-                . '<a href="#" class="dkp-contact-icon dkp-contact-reveal-link" data-sk-contact="%s" data-vendor="%d">%s</a></li>',
+                . '<a href="#" class="dkp-contact-reveal-link" data-sk-contact="%s" data-vendor="%d">%s</a></li>',
                 esc_attr( self::channel_icon( $key ) ),
                 esc_html( $namen[ $key ] ?? $key ),
                 esc_attr( $key ),
@@ -338,15 +357,6 @@ class ContactDetails {
         }
 
         return $html . '</ul>';
-    }
-
-    public function output_store_header_contacts( $store_user ): void {
-        $vendor_id = is_object( $store_user ) ? (int) ( $store_user->ID ?? 0 ) : (int) $store_user;
-        $info      = sk_get_store_info( $store_user );
-
-        if ( is_array( $info ) ) {
-            echo $this->render_contact_list( $vendor_id, $info, 'sk-store-custom-fields' ); // phpcs:ignore
-        }
     }
 
     public function output_product_tab_contacts(): void {

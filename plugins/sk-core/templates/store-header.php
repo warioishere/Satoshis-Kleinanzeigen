@@ -73,12 +73,16 @@ if ( 'layout3' === $profile_layout ) {
                                 </li>
                             <?php } ?>
 
-                            <?php if ( ! sk_is_vendor_info_hidden( 'email' ) && $store_user->show_email() ) { ?>
-                                <li class="sk-store-email">
-                                    <i class="far fa-envelope"></i>
-                                    <a href="mailto:<?php echo esc_attr( antispambot( $store_user->get_email() ) ); ?>"><?php echo esc_attr( antispambot( $store_user->get_email() ) ); ?></a>
-                                </li>
-                            <?php } ?>
+                            <?php
+                            /*
+                             * Die E-Mail-Adresse stand hier als mailto-Link im
+                             * Quelltext. antispambot() kodiert nur ein paar
+                             * Zeichen als HTML-Entities — das loest jeder
+                             * Scraper in einer Zeile auf. Sie erscheint jetzt
+                             * unter dem Banner in der Kontaktliste und wird
+                             * erst auf Klick geladen.
+                             */
+                            ?>
 
                             <li class="sk-store-rating">
                                 <i class="fas fa-star"></i>
@@ -107,6 +111,16 @@ if ( 'layout3' === $profile_layout ) {
             </div><!-- .profile-info-summery-wrapper -->
         </div> <!-- .profile-info-box -->
     </div> <!-- .profile-frame -->
+
+    <?php
+    // Kontaktwege unter dem Banner statt darin: im Kopf standen sie zwischen
+    // Adresse und Bewertung und gingen unter, sobald der Anbieter mehr als
+    // einen Weg anbietet.
+    $sk_contacts = \SK\Core\Dashboard\Modules\ContactDetails::contact_list_html( $store_user->get_id() );
+    if ( $sk_contacts !== '' ) {
+        echo '<div class="sk-store-contacts">' . $sk_contacts . '</div>'; // phpcs:ignore
+    }
+    ?>
 
     <?php if ( $store_tabs ) { ?>
         <div class="sk-store-tabs<?php echo esc_attr( $no_banner_class_tabs ); ?>">

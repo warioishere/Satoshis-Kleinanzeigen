@@ -12352,7 +12352,71 @@ textarea.wp-editor-area.post_content {
   white-space: nowrap;
 }
 
+/* Der Aufdeck-Link in der Kontaktliste ist Text, kein Symbolkaestchen —
+   ohne eigene Regel erbt er das 36px-Quadrat der Symbole. */
+.dkp-contact-reveal-link {
+  display: inline;
+  width: auto;
+  height: auto;
+  padding: 0;
+  background: none;
+  border-radius: 0;
+  color: #F7931A;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.dkp-contact-reveal-link:hover,
+.dkp-contact-reveal-link:focus {
+  background: none;
+  transform: none;
+  opacity: 1;
+  color: #ffa938;
+}
+
+.dkp-contact-reveal-link.is-revealed {
+  text-decoration: none;
+}
+
+.dkp-contact-reveal-link .dkp-contact-icon__value {
+  font-weight: 600;
+}
+
 .dkp-contact-icon.is-blocked {
   outline: 2px solid rgba(247, 147, 26, 0.6);
   outline-offset: 2px;
+}
+
+/* Kontaktwege unter dem Shop-Banner */
+.sk-store-contacts {
+  max-width: 1200px;
+  margin: 14px auto 0;
+  padding: 0 16px;
+}
+
+.sk-store-contacts .sk-store-contact-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sk-store-contacts .sk-store-contact-list li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  color: #c4cdd8;
+  font-size: 14px;
+}
+
+.sk-store-contacts .sk-store-contact-list i {
+  color: #F7931A;
+}
+
+.sk-store-contacts .sk-store-contact-list strong {
+  color: #9aa4b2;
+  font-weight: 500;
 }
