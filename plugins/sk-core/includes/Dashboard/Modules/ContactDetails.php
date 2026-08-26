@@ -19,8 +19,9 @@ class ContactDetails {
         // Der Kontaktblock der Shopseite wird in store-header.php unter dem
         // Banner ausgegeben, nicht mehr in der Kopfzeile darin.
 
-        // Product tab
-        add_filter( 'woocommerce_product_tab_content_seller', [ $this, 'output_product_tab_contacts' ] );
+        // Der Anbieter-Reiter wird von sk_product_seller_tab() gefuellt; der
+        // Filter woocommerce_product_tab_content_seller wird nirgends
+        // angewandt und war seit jeher wirkungslos.
 
         // Dashboard hint banner
         add_action( 'sk_dashboard_content_inside_before', [ $this, 'output_dashboard_hint' ] );
@@ -359,19 +360,6 @@ class ContactDetails {
         return $html . '</ul>';
     }
 
-    public function output_product_tab_contacts(): void {
-        global $product;
-
-        $vendor = function_exists( 'sk_get_vendor_by_product' ) ? sk_get_vendor_by_product( $product ) : null;
-        if ( ! $vendor ) {
-            return;
-        }
-
-        $info = sk_get_store_info( $vendor->get_id() );
-        if ( is_array( $info ) ) {
-            echo $this->render_contact_list( (int) $vendor->get_id(), $info, 'kontakt-info-liste' ); // phpcs:ignore
-        }
-    }
 
     public function output_dashboard_hint(): void {
         if ( ! is_user_logged_in() ) return;
