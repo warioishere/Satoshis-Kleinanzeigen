@@ -279,7 +279,19 @@ function telegram_build_caption_and_media($post_id) {
         $caption .= "\n\n$extra_info";
     }
     if ($permalink) {
-        $caption .= "\n\nZum Inserat 👉 " . tn_tg_html_esc($permalink);
+        /*
+         * Die Beschriftung sagt, was einen dort erwartet. Laeuft das
+         * Chatsystem, ist das Anschreiben der Weg — sonst stehen auf dem
+         * Inserat die Kontaktdaten des Anbieters. Ein Direktlink in einen
+         * Chat existiert nicht: der wird per Symbol auf der Inseratsseite
+         * gestartet, deshalb zeigt der Link in beiden Faellen dorthin.
+         */
+        $chat_live = class_exists('SK\\Core\\Dashboard\\Modules\\VendorChat')
+            && \SK\Core\Dashboard\Modules\VendorChat::is_enabled();
+
+        $caption .= $chat_live
+            ? "\n\n💬 Direkt anschreiben 👉 " . tn_tg_html_esc($permalink)
+            : "\n\n📋 Kontaktdetails siehe Inserat 👉 " . tn_tg_html_esc($permalink);
     }
 
     $image_id  = get_post_thumbnail_id($post_id);
