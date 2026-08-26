@@ -70,6 +70,12 @@
         icon.removeAttribute('data-sk-contact');
 
         if (daten.kurz) {
+            // Beschriftung ersetzen, nicht ergaenzen: in der Kontaktliste steht
+            // im Link "anzeigen", daraus wuerde sonst "anzeigen@MattBlox".
+            Array.prototype.slice.call(icon.childNodes).forEach(function (n) {
+                if (n.nodeType === 3) icon.removeChild(n);
+            });
+
             var span = document.createElement('span');
             span.className = 'dkp-contact-icon__value';
             span.textContent = daten.kurz;

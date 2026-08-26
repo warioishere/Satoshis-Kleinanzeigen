@@ -302,50 +302,65 @@ class ContactDetails {
 
     /* ---- Store/product output ---- */
 
+    /**
+     * Kontaktliste eines Anbieters — Kanaele sichtbar, Werte erst auf Klick.
+     *
+     * Zweiter Ausgabeweg neben den Symbolen: hier standen Handle, Nummer und
+     * Schluessel bis eben ausgeschrieben im Quelltext. Beide Listen benutzen
+     * jetzt denselben Endpunkt.
+     */
+    private function render_contact_list( int $vendor_id, array $info, string $css_class ): string {
+        $channels = $this->public_channels( $info );
+        if ( empty( $channels ) ) {
+            return '';
+        }
+
+        $namen = [
+            'mail'  => __( 'E-Mail', 'sk-core' ),
+            'tg'    => __( 'Telegram', 'sk-core' ),
+            'x'     => __( 'Twitter/X', 'sk-core' ),
+            'tel'   => __( 'Telefon', 'sk-core' ),
+            'nostr' => __( 'Nostr', 'sk-core' ),
+        ];
+
+        $html = '<ul class="' . esc_attr( $css_class ) . '" style="list-style:none;padding:0;">';
+
+        foreach ( $channels as $key ) {
+            $html .= sprintf(
+                '<li><i class="%s" aria-hidden="true"></i> <strong>%s:</strong> '
+                . '<a href="#" class="dkp-contact-icon dkp-contact-reveal-link" data-sk-contact="%s" data-vendor="%d">%s</a></li>',
+                esc_attr( self::channel_icon( $key ) ),
+                esc_html( $namen[ $key ] ?? $key ),
+                esc_attr( $key ),
+                $vendor_id,
+                esc_html__( 'anzeigen', 'sk-core' )
+            );
+        }
+
+        return $html . '</ul>';
+    }
+
     public function output_store_header_contacts( $store_user ): void {
-        $info = sk_get_store_info( $store_user );
-        if ( empty( $info['telegram'] ) && empty( $info['twitter'] ) && empty( $info['phone_number'] ) && empty( $info['nostr'] ) ) return;
-        echo '<ul class="sk-store-custom-fields" style="margin-top:10px;list-style:none;padding:0;">';
-        if ( ! empty( $info['telegram'] ) && ! empty( $info['show_telegram'] ) ) {
-            $h = $this->normalize_contact_value( $info['telegram'], 'telegram' );
-            if ( $h !== '' ) echo '<li><i class="fab fa-telegram"></i> <strong>Telegram:</strong> <a href="https://t.me/' . esc_attr( $h ) . '" target="_blank" rel="noopener">@' . esc_html( $h ) . '</a></li>';
+        $vendor_id = is_object( $store_user ) ? (int) ( $store_user->ID ?? 0 ) : (int) $store_user;
+        $info      = sk_get_store_info( $store_user );
+
+        if ( is_array( $info ) ) {
+            echo $this->render_contact_list( $vendor_id, $info, 'sk-store-custom-fields' ); // phpcs:ignore
         }
-        if ( ! empty( $info['twitter'] ) && ! empty( $info['show_twitter'] ) ) {
-            $h = $this->normalize_contact_value( $info['twitter'], 'twitter' );
-            if ( $h !== '' ) echo '<li><i class="fab fa-x-twitter"></i> <strong>Twitter/X:</strong> <a href="https://x.com/' . esc_attr( $h ) . '" target="_blank" rel="noopener">@' . esc_html( $h ) . '</a></li>';
-        }
-        if ( ! empty( $info['phone_number'] ) && ! empty( $info['show_phone_number'] ) ) {
-            echo '<li><i class="fas fa-phone"></i> <strong>Telefon:</strong> ' . esc_html( $info['phone_number'] ) . '</li>';
-        }
-        if ( ! empty( $info['nostr'] ) && ! empty( $info['show_nostr'] ) ) {
-            $clean = preg_replace( '/^nostr:/i', '', (string) $info['nostr'] );
-            $short = esc_html( substr( $clean, 0, 10 ) ) . '…';
-            echo '<li><i class="sk-nostr-icon sk-nostr-icon--inline"></i> <strong>Nostr:</strong> <a href="https://primal.net/p/' . esc_attr( $clean ) . '" target="_blank" rel="noopener"><code>' . $short . '</code></a></li>';
-        }
-        echo '</ul>';
     }
 
     public function output_product_tab_contacts(): void {
         global $product;
-        $vendor = sk_get_vendor_by_product( $product );
-        if ( ! $vendor ) return;
+
+        $vendor = function_exists( 'sk_get_vendor_by_product' ) ? sk_get_vendor_by_product( $product ) : null;
+        if ( ! $vendor ) {
+            return;
+        }
+
         $info = sk_get_store_info( $vendor->get_id() );
-        if ( empty( $info['telegram'] ) && empty( $info['twitter'] ) && empty( $info['phone_number'] ) && empty( $info['nostr'] ) ) return;
-        echo '<ul class="kontakt-info-liste" style="list-style:none;padding:0;">';
-        if ( ! empty( $info['telegram'] ) && ! empty( $info['show_telegram'] ) ) {
-            $h = $this->normalize_contact_value( $info['telegram'], 'telegram' );
-            if ( $h !== '' ) echo '<li><i class="fab fa-telegram"></i> <strong>Telegram:</strong> <a href="https://t.me/' . esc_attr( $h ) . '" target="_blank" rel="noopener">@' . esc_html( $h ) . '</a></li>';
+        if ( is_array( $info ) ) {
+            echo $this->render_contact_list( (int) $vendor->get_id(), $info, 'kontakt-info-liste' ); // phpcs:ignore
         }
-        if ( ! empty( $info['twitter'] ) && ! empty( $info['show_twitter'] ) ) {
-            $h = $this->normalize_contact_value( $info['twitter'], 'twitter' );
-            if ( $h !== '' ) echo '<li><i class="fab fa-x-twitter"></i> <strong>Twitter/X:</strong> <a href="https://x.com/' . esc_attr( $h ) . '" target="_blank" rel="noopener">@' . esc_html( $h ) . '</a></li>';
-        }
-        if ( ! empty( $info['phone_number'] ) && ! empty( $info['show_phone_number'] ) ) echo '<li><i class="fas fa-phone"></i> <strong>Telefon:</strong> ' . esc_html( $info['phone_number'] ) . '</li>';
-        if ( ! empty( $info['nostr'] ) && ! empty( $info['show_nostr'] ) ) {
-            $clean = preg_replace( '/^nostr:/i', '', (string) $info['nostr'] );
-            echo '<li><i class="sk-nostr-icon sk-nostr-icon--inline"></i> <strong>Nostr:</strong> <a href="https://primal.net/p/' . esc_attr( $clean ) . '" target="_blank" rel="noopener">' . esc_html( $clean ) . '</a></li>';
-        }
-        echo '</ul>';
     }
 
     public function output_dashboard_hint(): void {
