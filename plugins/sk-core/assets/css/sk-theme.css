@@ -12331,12 +12331,12 @@ textarea.wp-editor-area.post_content {
   color: #e05252;
 }
 
-/* Das Grundsymbol ist ein 36px-Quadrat mit `display: grid` — darin landete
-   der aufgedeckte Wert in einer zweiten Zeile und wurde abgeschnitten.
+/* Nur wenn wirklich ein Wert danebensteht — sonst bliebe das Symbol nach dem
+   Aufdecken sichtbar breiter, obwohl sich nichts daran geaendert hat.
    `!important` bei der Breite ist noetig: auf Mobil klemmt
    `.single-product .dkp-contact-icon` sie mit derselben Waffe fest. */
-.single-product .summary .dkp-contact-icon.is-revealed,
-.dkp-contact-icon.is-revealed {
+.single-product .summary .dkp-contact-icon.has-value,
+.dkp-contact-icon.has-value {
   display: inline-flex;
   align-items: center;
   justify-content: center;

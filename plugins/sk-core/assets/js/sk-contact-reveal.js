@@ -115,5 +115,8 @@
         span.className = 'dkp-contact-icon__value';
         span.textContent = kurz;
         icon.appendChild(span);
+
+        // Erst mit sichtbarem Wert darf das Kaestchen breiter werden.
+        icon.classList.add('has-value');
     }
 }());
