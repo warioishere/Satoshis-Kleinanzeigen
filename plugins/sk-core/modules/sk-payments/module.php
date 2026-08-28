@@ -94,11 +94,10 @@ final class Module {
         new Dashboard\TransactionsPage();
         new REST\LnurlPayEndpoint();
 
-        // Chat integration: only if VendorChat is active AND chat integration enabled.
+        // Chat integration: only if chat integration is enabled.
         $chat_enabled = sk_get_option( 'sk_lightning_chat_integration', 'sk_lightning', 'on' ) === 'on';
-        $vendor_chat_active = class_exists( 'SK\Core\Dashboard\Modules\VendorChat' ) && get_option( 'dvc_enabled', 'no' ) === 'yes';
 
-        if ( $chat_enabled && $vendor_chat_active ) {
+        if ( $chat_enabled && class_exists( 'SK\Core\Dashboard\Modules\VendorChat' ) ) {
             new Chat\ChatIntegration();
         }
 

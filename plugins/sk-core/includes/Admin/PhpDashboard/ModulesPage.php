@@ -4,9 +4,6 @@ namespace SK\Core\Admin\PhpDashboard;
 
 class ModulesPage extends AbstractPage {
 
-    /** Kennung des Vendor Chat in dieser Uebersicht (kein modules/-Modul). */
-    private const VENDOR_CHAT_ID = 'sk_vendor_chat';
-
     public function get_slug(): string {
         return 'modules';
     }
@@ -32,18 +29,6 @@ class ModulesPage extends AbstractPage {
             $active_modules = sk_ext()->module->get_active_modules();
         }
 
-        // Der Vendor Chat liegt nicht unter modules/, sondern in
-        // includes/Dashboard/Modules und schaltet ueber die Option
-        // dvc_enabled. Er gehoert trotzdem in diese Uebersicht, sonst sucht
-        // man den Schalter vergebens.
-        $all_modules[ self::VENDOR_CHAT_ID ] = [
-            'name'        => __( 'Vendor Chat', 'sk-core' ),
-            'description' => __( 'Nachrichten zwischen Käufer und Verkäufer. Weitere Einstellungen unter Einstellungen → Vendor Chat.', 'sk-core' ),
-        ];
-        if ( \SK\Core\Dashboard\Modules\VendorChat::is_enabled() ) {
-            $active_modules[] = self::VENDOR_CHAT_ID;
-        }
-
         include sk()->plugin_path() . '/templates/admin/php-dashboard/modules.php';
     }
 
@@ -67,11 +52,6 @@ class ModulesPage extends AbstractPage {
 
         $module_id = isset( $_POST['module_id'] ) ? sanitize_text_field( $_POST['module_id'] ) : '';
         $active    = isset( $_POST['active'] ) ? sanitize_text_field( $_POST['active'] ) : '';
-
-        if ( self::VENDOR_CHAT_ID === $module_id ) {
-            update_option( 'dvc_enabled', $active === '1' ? 'yes' : 'no' );
-            wp_send_json_success();
-        }
 
         if ( empty( $module_id ) || ! function_exists( 'sk_ext' ) || ! sk_ext()->module ) {
             wp_send_json_error( 'Invalid request' );

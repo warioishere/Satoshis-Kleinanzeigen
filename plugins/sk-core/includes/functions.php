@@ -2811,17 +2811,6 @@ if ( ! function_exists( 'sk_user_update_to_seller' ) ) {
 
 
 /**
- * Check if a vendor has at least one real public contact method.
- * Single source of truth — delegates to ContactDetails::has_public_contact().
- */
-function sk_vendor_has_public_contact( int $vendor_id ): bool {
-    if ( ! class_exists( \SK\Core\Dashboard\Modules\ContactDetails::class ) ) {
-        return false;
-    }
-    return \SK\Core\Dashboard\Modules\ContactDetails::has_public_contact( $vendor_id );
-}
-
-/**
  * Filter vendor listing to only show vendors with a non-empty store name.
  */
 add_filter( 'sk_seller_listing_args', function ( $args, $requested_data ) {

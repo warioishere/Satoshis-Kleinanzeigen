@@ -278,12 +278,6 @@ add_action('sk_new_product_added', function($post_id, $postdata) {
         return;
     }
 
-    // Vendor must have public contact info (fail-closed: skip if check unavailable)
-    if ( ! function_exists( 'sk_vendor_has_public_contact' ) || ! sk_vendor_has_public_contact( (int) $post->post_author ) ) {
-        nap_log(sprintf('Abbruch #%d: Vendor hat keine öffentlichen Kontaktdaten.', $post_id));
-        return;
-    }
-
     // Bereits gesendet?
     if (get_post_meta($post_id, NAP_META_EVENT_ID, true)) {
         nap_log('Abbruch: bereits ein Nostr-Event vorhanden.');
@@ -302,12 +296,6 @@ add_action('transition_post_status', function($new_status, $old_status, $post) {
     if ($new_status !== 'publish' || $new_status === $old_status) return;
     if (!$post || $post->post_type !== 'product') return;
     if (get_post_meta($post->ID, NAP_META_EVENT_ID, true)) return;
-
-    // Vendor must have public contact info (fail-closed: skip if check unavailable)
-    if ( ! function_exists( 'sk_vendor_has_public_contact' ) || ! sk_vendor_has_public_contact( (int) $post->post_author ) ) {
-        nap_log(sprintf('transition_post_status: SKIP #%d — Vendor hat keine öffentlichen Kontaktdaten.', $post->ID));
-        return;
-    }
 
     global $_nap_shutdown_queue;
     $pid = (int) $post->ID;

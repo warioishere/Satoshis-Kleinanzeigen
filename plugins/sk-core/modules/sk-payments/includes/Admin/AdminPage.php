@@ -102,8 +102,7 @@ class AdminPage {
         $status['cron_registered'] = (bool) wp_next_scheduled( 'sk_recalculate_reputation_scores' );
         $status['cron_next']       = wp_next_scheduled( 'sk_recalculate_reputation_scores' );
 
-        $status['vendor_chat'] = class_exists( 'SK\Core\Dashboard\Modules\VendorChat' )
-            && get_option( 'dvc_enabled', 'no' ) === 'yes';
+        $status['vendor_chat'] = class_exists( 'SK\Core\Dashboard\Modules\VendorChat' );
 
         global $wpdb;
         $status['vendors_with_ln'] = (int) $wpdb->get_var(

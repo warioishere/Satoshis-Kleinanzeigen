@@ -23,9 +23,6 @@ class ContactDetails {
         // Filter woocommerce_product_tab_content_seller wird nirgends
         // angewandt und war seit jeher wirkungslos.
 
-        // Dashboard hint banner
-        add_action( 'sk_dashboard_content_inside_before', [ $this, 'output_dashboard_hint' ] );
-
         // Font Awesome
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_font_awesome' ] );
 
@@ -39,13 +36,6 @@ class ContactDetails {
         // Kontaktwert erst auf Klick herausgeben
         add_action( 'wp_ajax_sk_reveal_contact', [ $this, 'reveal_contact' ] );
         add_action( 'wp_ajax_nopriv_sk_reveal_contact', [ $this, 'reveal_contact' ] );
-
-        // Publish blocking
-        add_action( 'sk_new_product_added', [ $this, 'maybe_force_draft' ], 20, 2 );
-        add_action( 'sk_product_updated',   [ $this, 'maybe_force_draft' ], 20, 2 );
-        add_action( 'sk_bulk_product_status_change', [ $this, 'maybe_force_bulk_draft' ], 99, 2 );
-        add_filter( 'sk_get_default_product_status', [ $this, 'maybe_filter_default_status' ], 20, 3 );
-        add_filter( 'sk_post_status',               [ $this, 'maybe_filter_post_statuses' ], 99, 2 );
     }
 
     public function enqueue(): void {
@@ -135,66 +125,6 @@ class ContactDetails {
             if ( $raw !== '' && is_email( $raw ) && ! $this->is_placeholder_email( $raw ) ) return $raw;
         }
         return '';
-    }
-
-    private function vendor_has_public_contact( int $vendor_id, ?array $info = null ): bool {
-        return self::check_public_contact( $vendor_id, $info );
-    }
-
-    /**
-     * Public static check: does the vendor have at least one real public contact method?
-     * Single source of truth — used by ContactDetails, Telegram, and Nostr plugins.
-     *
-     * @param int        $vendor_id
-     * @param array|null $info  Pre-loaded store info (avoids duplicate DB query when caller already has it).
-     */
-    public static function has_public_contact( int $vendor_id ): bool {
-        return self::check_public_contact( $vendor_id );
-    }
-
-    private static function check_public_contact( int $vendor_id, ?array $info = null ): bool {
-        if ( $vendor_id <= 0 || ! function_exists( 'sk_get_store_info' ) ) return false;
-        if ( ! is_array( $info ) ) $info = sk_get_store_info( $vendor_id );
-        if ( ! is_array( $info ) ) $info = [];
-
-        // Email: must be shown, valid, and not a placeholder
-        $has_email = false;
-        $show_email = $info['show_email'] ?? '';
-        if ( is_array( $show_email ) ) $show_email = reset( $show_email );
-        if ( in_array( strtolower( (string) $show_email ), [ '1', 'yes', 'on', 'true' ], true ) ) {
-            foreach ( [ 'setting_email', 'email', 'store_email' ] as $key ) {
-                if ( ! array_key_exists( $key, $info ) ) continue;
-                $raw = is_array( $info[ $key ] ) ? reset( $info[ $key ] ) : $info[ $key ];
-                $raw = sanitize_email( (string) $raw );
-                if ( $raw === '' || ! is_email( $raw ) ) continue;
-                $email_lower = strtolower( $raw );
-                $is_placeholder = false;
-                foreach ( [ '@satoshiskleinanzeigen.space', '@satoshiskleinanzeigen', '@nostr.local', '@btc.local', '@lightning.local' ] as $suffix ) {
-                    if ( substr( $email_lower, -strlen( $suffix ) ) === $suffix ) { $is_placeholder = true; break; }
-                }
-                if ( ! $is_placeholder ) { $has_email = true; break; }
-            }
-        }
-
-        // Telegram
-        $has_telegram = ! empty( $info['telegram'] ) && ! empty( $info['show_telegram'] ) && trim( (string) $info['telegram'] ) !== '';
-
-        // Twitter/X
-        $has_twitter = ! empty( $info['twitter'] ) && ! empty( $info['show_twitter'] ) && trim( (string) $info['twitter'] ) !== '';
-
-        // Nostr
-        $has_nostr = ! empty( $info['nostr'] ) && ! empty( $info['show_nostr'] ) && trim( (string) $info['nostr'] ) !== '';
-
-        // Phone: must contain a digit, reject "no"/"nein"/"n/a"/"-"
-        $has_phone = false;
-        if ( ! empty( $info['phone_number'] ) && ! empty( $info['show_phone_number'] ) ) {
-            $phone_raw = strtolower( trim( (string) $info['phone_number'] ) );
-            if ( ! in_array( $phone_raw, [ 'no', 'nein', 'n/a', '-' ], true ) && preg_match( '/\d/', $phone_raw ) ) {
-                $has_phone = true;
-            }
-        }
-
-        return (bool) apply_filters( 'dkp_contact_details_vendor_has_public_contact', ( $has_email || $has_telegram || $has_twitter || $has_phone || $has_nostr ), $vendor_id, $info );
     }
 
     private function normalize_settings( array $settings ): array {
@@ -358,19 +288,6 @@ class ContactDetails {
         }
 
         return $html . '</ul>';
-    }
-
-
-    public function output_dashboard_hint(): void {
-        if ( ! is_user_logged_in() ) return;
-        $user_id = get_current_user_id();
-        if ( ! function_exists( 'sk_is_user_seller' ) || ! sk_is_user_seller( $user_id ) ) return;
-        $info = sk_get_store_info( $user_id );
-        if ( $this->vendor_has_public_contact( $user_id, $info ) ) return;
-
-        wp_enqueue_style( 'sk-contact-hint' );
-        $url = esc_url( site_url( '/dashboard/settings/store/' ) );
-        echo '<div class="kontakt-hinweis" role="alert">⚠️ Hinweis: Du hast noch keine Kontaktinformationen hinterlegt oder öffentlich gemacht. Es kann sich sonst niemand bei dir auf dein Inserat melden. <a class="kontakt-hinweis__link" href="' . $url . '">Kontaktdaten jetzt festlegen</a></div>';
     }
 
     /**
@@ -591,16 +508,11 @@ class ContactDetails {
         $p = isset( $_POST ) ? wp_unslash( $_POST ) : [];
         if ( isset( $p['sk_profile_settings'] ) && is_array( $p['sk_profile_settings'] ) ) $p = $p['sk_profile_settings'];
 
-        $telegram = isset( $p['telegram'] )     ? $this->normalize_contact_value( $p['telegram'], 'telegram' ) : '';
-        $twitter  = isset( $p['twitter'] )      ? $this->normalize_contact_value( $p['twitter'], 'twitter' ) : '';
-        $phone    = isset( $p['phone_number'] ) ? trim( (string) $p['phone_number'] ) : '';
-        $nostr    = isset( $p['nostr'] )        ? trim( (string) $p['nostr'] ) : '';
         $email_field = trim( (string) ( $p['setting_email'] ?? wp_unslash( $_POST['setting_email'] ?? '' ) ) );
         $email_san   = $email_field !== '' ? sanitize_email( $email_field ) : '';
 
         $errors = [];
         if ( $email_field !== '' && $email_san === '' ) $errors[] = __( 'Bitte gib eine gültige E-Mail-Adresse ein.', 'sk-core' );
-        $has_contact = $telegram !== '' || $twitter !== '' || $phone !== '' || $nostr !== '' || ( $email_san !== '' && ! $this->is_placeholder_email( $email_san ) );
 
         $stored = sk_get_store_info( $user_id );
         $pic_candidates = [ $p['gravatar'] ?? null, $p['sk_gravatar'] ?? null, $p['icon'] ?? null, $stored['gravatar'] ?? null, $stored['icon'] ?? null ];
@@ -611,70 +523,10 @@ class ContactDetails {
             if ( (string) $val !== '' && (string) $val !== '0' ) { $has_picture = true; break; }
         }
         if ( ! $has_picture ) $errors[] = __( 'Bitte lade ein Profilbild hoch, bevor du speicherst.', 'sk-core' );
-        if ( ! $has_contact ) $errors[] = __( 'Bitte gib mindestens eine Kontaktmethode an (Telegram, Twitter/X, Telefonnummer, Nostr oder E-Mail).', 'sk-core' );
 
         if ( ! empty( $errors ) ) {
             if ( function_exists( 'sk_add_notice' ) ) foreach ( $errors as $msg ) sk_add_notice( $msg, 'error' );
             wp_send_json_error( '⛔️ ' . implode( "\n⛔️ ", $errors ) );
         }
-    }
-
-    /* ---- Publish blocking ---- */
-
-    public function maybe_force_draft( int $product_id, array $data = [] ): void {
-        if ( VendorChat::is_enabled() ) return;
-        if ( $product_id <= 0 || ! is_user_logged_in() ) return;
-        $uid = get_current_user_id();
-        if ( ! function_exists( 'sk_is_user_seller' ) || ! sk_is_user_seller( $uid ) ) return;
-        if ( ! function_exists( 'sk_is_product_author' ) || ! sk_is_product_author( $product_id ) ) return;
-        if ( $this->vendor_has_public_contact( $uid ) ) return;
-        $status = get_post_status( $product_id );
-        if ( ! in_array( $status, [ 'publish', 'pending', 'future', 'private' ], true ) ) return;
-        wp_update_post( [ 'ID' => $product_id, 'post_status' => 'draft' ] );
-        $this->add_publish_block_notice();
-    }
-
-    public function maybe_force_bulk_draft( $status, array $product_ids ): void {
-        if ( VendorChat::is_enabled() ) return;
-        if ( ! is_user_logged_in() ) return;
-        $uid = get_current_user_id();
-        if ( ! function_exists( 'sk_is_user_seller' ) || ! sk_is_user_seller( $uid ) ) return;
-        if ( $this->vendor_has_public_contact( $uid ) ) return;
-        if ( ! in_array( $status, [ 'publish', 'pending', 'future' ], true ) ) return;
-        foreach ( (array) $product_ids as $pid ) {
-            $pid = (int) $pid;
-            if ( $pid <= 0 ) continue;
-            if ( ! function_exists( 'sk_is_product_author' ) || ! sk_is_product_author( $pid ) ) continue;
-            if ( in_array( get_post_status( $pid ), [ 'publish', 'pending', 'future', 'private' ], true ) ) wp_update_post( [ 'ID' => $pid, 'post_status' => 'draft' ] );
-        }
-        $this->add_publish_block_notice();
-    }
-
-    public function maybe_filter_default_status( $status, $seller_id, $is_trusted ) {
-        if ( VendorChat::is_enabled() ) return $status;
-        $sid = (int) ( $seller_id ?: get_current_user_id() );
-        if ( $sid <= 0 || ! function_exists( 'sk_is_user_seller' ) || ! sk_is_user_seller( $sid ) ) return $status;
-        return $this->vendor_has_public_contact( $sid ) ? $status : 'draft';
-    }
-
-    public function maybe_filter_post_statuses( array $statuses, int $product_id ): array {
-        if ( VendorChat::is_enabled() ) return $statuses;
-        if ( ! is_user_logged_in() ) return $statuses;
-        $uid = get_current_user_id();
-        if ( ! function_exists( 'sk_is_user_seller' ) || ! sk_is_user_seller( $uid ) ) return $statuses;
-        if ( $this->vendor_has_public_contact( $uid ) ) return $statuses;
-        unset( $statuses['publish'], $statuses['pending'], $statuses['future'] );
-        if ( ! isset( $statuses['draft'] ) && function_exists( 'sk_get_post_status' ) ) $statuses['draft'] = sk_get_post_status( 'draft' );
-        return $statuses;
-    }
-
-    private function add_publish_block_notice(): void {
-        if ( ! function_exists( 'sk_add_notice' ) ) return;
-        static $notice_added = false;
-        if ( $notice_added ) return;
-        $url = esc_url( site_url( '/dashboard/settings/store/' ) );
-        $message = sprintf( __( 'Veröffentlichung blockiert: Bitte hinterlege in deinem <a href="%s">Shop-Profil</a> mindestens eine Kontaktmethode (z. B. Telegram, Telefonnummer oder eine öffentliche E-Mail-Adresse). Adressen mit @satoshiskleinanzeigen.space zählen nicht.', 'sk-core' ), $url );
-        sk_add_notice( wp_kses_post( $message ), 'error' );
-        $notice_added = true;
     }
 }

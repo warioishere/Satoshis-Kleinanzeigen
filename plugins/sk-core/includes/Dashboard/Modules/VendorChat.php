@@ -17,9 +17,6 @@ use SK\Core\Dashboard\DashboardModule;
 class VendorChat extends DashboardModule {
 
 	public function config(): ?array {
-		if ( ! self::is_enabled() ) {
-			return null;
-		}
 		return [
 			'slug'          => 'vendor-chat',
 			'title'         => __( 'Nachrichten', 'sk-core' ),
@@ -34,23 +31,10 @@ class VendorChat extends DashboardModule {
 	}
 
 	protected function register_extras(): void {
-		// Registered whatever the setting says: existing chats have to keep
-		// cleaning up their message rows, and the settings page is what
-		// switches the feature back on.
 		add_action( 'init',               [ $this, 'register_cpt' ] );
 		add_action( 'init',               [ ChatMessages::class, 'maybe_install' ] );
 		// Custom table rows are not covered by post deletion.
 		add_action( 'before_delete_post', [ $this, 'delete_chat_messages' ] );
-		add_action( 'admin_menu',         [ $this, 'add_admin_menu' ] );
-		add_action( 'admin_init',         [ $this, 'register_settings' ] );
-
-		// Everything below is the running chat. With the feature switched off
-		// the dashboard entry and the product-page icon already disappeared,
-		// but the six write endpoints stayed reachable and every frontend page
-		// still shipped the script together with a valid nonce.
-		if ( ! self::is_enabled() ) {
-			return;
-		}
 
 		// Badge runs AFTER Registry injects at 50 so it can modify the entry.
 		add_filter( 'sk_get_dashboard_nav',         [ $this, 'add_notification_badge' ], 60 );
@@ -333,10 +317,6 @@ class VendorChat extends DashboardModule {
 	 *
 	 */
 	public function output_modal() {
-		if ( ! self::is_enabled() ) {
-			return;
-		}
-
 		if ( ! ( is_product() || is_shop() || is_product_category() || is_product_tag() || sk_is_store_page() ) ) {
 			return;
 		}
@@ -405,93 +385,6 @@ class VendorChat extends DashboardModule {
 	}
 
 	// =========================================================================
-	// Admin settings
-	// =========================================================================
-
-	/**
-	 * Add options page under Settings menu.
-	 *
-	 */
-	public function add_admin_menu() {
-		add_options_page(
-			__( 'SK Vendor Chat Einstellungen', 'sk-core' ),
-			__( 'Vendor Chat', 'sk-core' ),
-			'manage_options',
-			'sk-vendor-chat-settings',
-			[ $this, 'render_settings_page' ]
-		);
-	}
-
-	/**
-	 * Register dvc_enabled setting.
-	 *
-	 */
-	public function register_settings() {
-		register_setting( 'dvc_settings', 'dvc_enabled' );
-	}
-
-	/**
-	 * Render the admin settings page.
-	 *
-	 */
-	public function render_settings_page() {
-		wp_enqueue_style( 'sk-vendor-chat-settings' );
-
-		if ( isset( $_POST['dvc_save_settings'] ) && check_admin_referer( 'dvc_settings_nonce' ) ) {
-			$enabled = isset( $_POST['dvc_enabled'] ) ? 'yes' : 'no';
-			update_option( 'dvc_enabled', $enabled );
-			echo '<div class="notice notice-success is-dismissible"><p>' . __( 'Einstellungen gespeichert.', 'sk-core' ) . '</p></div>';
-		}
-
-		$enabled      = get_option( 'dvc_enabled', 'no' ) === 'yes';
-		$total_chats  = wp_count_posts( 'vendor_chat' );
-		$active_chats = isset( $total_chats->publish ) ? $total_chats->publish : 0;
-		?>
-		<div class="wrap">
-			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
-			<div style="max-width:1200px;">
-				<form method="post" action="">
-					<?php wp_nonce_field( 'dvc_settings_nonce' ); ?>
-					<table class="form-table">
-						<tr>
-							<th scope="row">
-								<label for="dvc_enabled"><?php _e( 'Chat-System Status', 'sk-core' ); ?></label>
-							</th>
-							<td>
-								<label class="dvc-toggle-switch">
-									<input type="checkbox" id="dvc_enabled" name="dvc_enabled" value="yes" <?php checked( $enabled, true ); ?>>
-									<span class="dvc-toggle-slider"></span>
-								</label>
-								<p class="description">
-									<?php if ( $enabled ) : ?>
-										<strong style="color:#46b450;">✓ <?php _e( 'Chat-System ist aktiviert', 'sk-core' ); ?></strong><br>
-										<?php _e( 'Das Chat-Icon wird bei allen Produkten angezeigt (für eingeloggte Nutzer).', 'sk-core' ); ?>
-									<?php else : ?>
-										<strong style="color:#dc3232;">✗ <?php _e( 'Chat-System ist deaktiviert', 'sk-core' ); ?></strong><br>
-										<?php _e( 'Das Chat-Icon wird nicht angezeigt. Bestehende Chats bleiben erhalten.', 'sk-core' ); ?>
-									<?php endif; ?>
-								</p>
-							</td>
-						</tr>
-					</table>
-					<p class="submit">
-						<button type="submit" name="dvc_save_settings" class="button button-primary button-large">
-							<?php _e( 'Einstellungen speichern', 'sk-core' ); ?>
-						</button>
-					</p>
-				</form>
-				<hr>
-				<div style="background:#fff;padding:20px;border:1px solid #ccd0d4;border-radius:4px;margin-top:20px;">
-					<h2><?php _e( 'Statistiken', 'sk-core' ); ?></h2>
-					<p><strong><?php _e( 'Aktive Chats:', 'sk-core' ); ?></strong> <?php echo esc_html( $active_chats ); ?></p>
-					<p><strong><?php _e( 'Plugin Version:', 'sk-core' ); ?></strong> <?php echo esc_html( SK_CORE_VERSION ); ?></p>
-				</div>
-			</div>
-		</div>
-		<?php
-	}
-
-	// =========================================================================
 	// Contact icon
 	// =========================================================================
 
@@ -506,7 +399,10 @@ class VendorChat extends DashboardModule {
 	 * @return array
 	 */
 	public function add_chat_icon( $icons, $vendor_id, $product_id = 0, $context = '' ) {
-		if ( ! self::is_enabled() ) {
+		// Systemprodukte ohne Autor (z. B. das Sponsoren-Guthaben) haben
+		// keinen Anbieter — ein Chatknopf dorthin liefe in "Ungueltige
+		// Anfrage", jetzt wo der Chat der Weg zum Anbieter ist.
+		if ( (int) $vendor_id <= 0 || (int) $product_id <= 0 ) {
 			return $icons;
 		}
 
@@ -768,22 +664,6 @@ class VendorChat extends DashboardModule {
 	// =========================================================================
 	// Helper methods (also exposed as standalone functions at EOF)
 	// =========================================================================
-
-	/**
-	 * Check if chat system is enabled.
-	 *
-	 *
-	 * @return bool
-	 */
-	/**
-	 * Is the chat feature switched on?
-	 *
-	 * Static because other modules gate behaviour on it — a vendor without
-	 * public contact details is still reachable while the chat is running.
-	 */
-	public static function is_enabled(): bool {
-		return get_option( 'dvc_enabled', 'no' ) === 'yes';
-	}
 
 	/**
 	 * Strip payment markers from user supplied message text.

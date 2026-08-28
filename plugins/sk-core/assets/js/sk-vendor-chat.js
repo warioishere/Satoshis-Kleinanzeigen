@@ -9,6 +9,7 @@
 			this.bindEvents();
 			this.autoScrollMessages();
 			this.setupAutoRefresh();
+			this.openFromLink();
 		},
 
 		bindEvents: function () {
@@ -83,6 +84,34 @@
 			var url = new URL(window.location);
 			url.searchParams.set('chat_id', chatId);
 			window.location.href = url.toString();
+		},
+
+		/**
+		 * Direktlink aufs Chatfenster — #chat am Inseratslink.
+		 *
+		 * Der Telegram-Kanal verlinkt so direkt ins Anschreiben. Bewusst als
+		 * Fragment und nicht als Abfrageparameter: das Fragment erreicht den
+		 * Server nie, die Seite kommt also weiter aus dem Cache.
+		 *
+		 * Ausgeloest wird derselbe Klick, den auch das Symbol ausloest — damit
+		 * gelten dieselben Regeln: wer nicht angemeldet ist, sieht das
+		 * Anmeldefenster, und auf dem eigenen Inserat gibt es kein Symbol und
+		 * folglich auch nichts zu oeffnen.
+		 */
+		openFromLink: function () {
+			if (window.location.hash !== '#chat') {
+				return;
+			}
+
+			var $icon = $('.dkp-contact-icons--single .dvc-start-chat-icon').first();
+
+			if (!$icon.length) {
+				$icon = $('.dvc-start-chat-icon').first();
+			}
+
+			if ($icon.length) {
+				$icon.trigger('click');
+			}
 		},
 
 		openChatModal: function (e) {

@@ -85,7 +85,6 @@ class UserOnboarding {
 			$first_name = '';
 		}
 
-		$chat_enabled = VendorChat::is_enabled();
 		?>
 		<div id="uob-modal" class="uob-modal">
 			<div class="uob-modal-content">
@@ -125,8 +124,8 @@ class UserOnboarding {
 						<li>
 							<i class="fas fa-comments"></i>
 							<div>
-								<strong><?php _e( 'Anbieter kontaktieren', 'sk-core' ); ?></strong>
-								<span><?php echo $chat_enabled ? __( 'Per Chat, Telegram, Email oder Telefon', 'sk-core' ) : __( 'Per Telegram, Email, Telefon oder Nostr', 'sk-core' ); ?></span>
+								<strong><?php _e( 'Anbieter anschreiben', 'sk-core' ); ?></strong>
+								<span><?php _e( 'Direkt per Chat auf dem Inserat — ohne Umweg über fremde Dienste', 'sk-core' ); ?></span>
 							</div>
 						</li>
 						<li>
@@ -146,8 +145,8 @@ class UserOnboarding {
 						<li>
 							<i class="fas fa-user-circle"></i>
 							<div>
-								<strong><?php echo $chat_enabled ? __( 'Shop-Profil erstellen und Kontaktdaten hinterlegen (Optional)', 'sk-core' ) : __( 'Shop-Profil und Kontaktdaten erstellen', 'sk-core' ); ?></strong>
-								<span><?php _e( 'Dashboard → Shop Info', 'sk-core' ); ?></span>
+								<strong><?php _e( 'Shop-Profil erstellen', 'sk-core' ); ?></strong>
+								<span><?php _e( 'Dashboard → Shop Info. Anfragen erreichen dich per Chat; eigene Kontaktwege sind freiwillig', 'sk-core' ); ?></span>
 							</div>
 						</li>
 						<li>
@@ -171,14 +170,15 @@ class UserOnboarding {
 				<div class="uob-slide" data-slide="3">
 					<div class="uob-slide-icon"><i class="fas fa-comments"></i></div>
 					<h2><?php _e( 'Kommunikation', 'sk-core' ); ?></h2>
-					<p><?php _e( 'Anbieter können verschiedene Kontaktmethoden anbieten:', 'sk-core' ); ?></p>
+					<p><?php _e( 'Der Chat ist der direkte Weg zum Anbieter — er steht auf jedem Inserat und du brauchst dafür nichts weiter als dein Konto hier.', 'sk-core' ); ?></p>
 					<div class="uob-contact-icons">
-						<?php if ( $chat_enabled ) : ?>
-						<div class="uob-contact-method">
+						<div class="uob-contact-method uob-contact-method--primary">
 							<i class="fas fa-comments uob-icon-chat"></i>
 							<span><?php _e( 'Chat', 'sk-core' ); ?></span>
 						</div>
-						<?php endif; ?>
+					</div>
+					<p class="uob-contact-note"><?php _e( 'Manche Anbieter geben zusätzlich eigene Kontaktwege an:', 'sk-core' ); ?></p>
+					<div class="uob-contact-icons uob-contact-icons--secondary">
 						<div class="uob-contact-method">
 							<i class="fab fa-telegram uob-icon-telegram"></i>
 							<span><?php _e( 'Telegram', 'sk-core' ); ?></span>
@@ -196,11 +196,7 @@ class UserOnboarding {
 							<span><?php _e( 'Nostr', 'sk-core' ); ?></span>
 						</div>
 					</div>
-					<?php if ( $chat_enabled ) : ?>
 					<p class="uob-tip"><i class="fas fa-lightbulb"></i> <?php _e( 'Tipp: Deine Chats findest du im Dashboard unter "Nachrichten"', 'sk-core' ); ?></p>
-					<?php else : ?>
-					<p class="uob-tip"><i class="fas fa-lightbulb"></i> <?php _e( 'Tipp: Kontaktiere Anbieter direkt über deren bevorzugte Kommunikationswege', 'sk-core' ); ?></p>
-					<?php endif; ?>
 					<p class="uob-tip"><i class="fas fa-lightbulb"></i> <?php printf( __( 'Tipp: Folge uns auf <a href="%s" target="_blank" rel="noopener">Nostr</a> oder tritt dem offiziellen <a href="%s" target="_blank" rel="noopener">Telegram Kanal</a> bei', 'sk-core' ), 'https://primal.net/p/nprofile1qqsg3fglunsprjgg0z2efc0qpcshrjkvyksfk9lracjawpuzs0quy8cqxrg92', 'https://t.me/satoshiskleinanzeige' ); ?></p>
 				</div>
 
@@ -461,7 +457,7 @@ class UserOnboarding {
 		if ( sk_module_active( 'sk_feed' ) ) {
 			$benefits[] = __( 'Beiträge auch auf Nostr', 'sk-core' );
 		}
-		if ( sk_module_active( 'sk_nostr_market' ) && VendorChat::is_enabled() ) {
+		if ( sk_module_active( 'sk_nostr_market' ) ) {
 			$benefits[] = __( 'Chat-Nachrichten auch als Nostr-DM', 'sk-core' );
 		}
 		if ( sk_module_active( 'sk_zaps' ) ) {

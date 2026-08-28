@@ -5659,25 +5659,6 @@ a.sk-btn-theme:active,
 
 /*---- Profil Pic Avatar ----*/
 
-/* SK: Kontakt-Hinweis – volle Breite im Content, ohne Layout-Bruch */
-.sk-dashboard .sk-dashboard-content .kontakt-hinweis {
-  width: 100%;
-  box-sizing: border-box;
-  margin: 0 0 20px !important;        /* nur unten Abstand, kein zentrierendes auto */
-  padding: 16px 20px !important;       /* Innenabstand */
-  background-color: #fff3cd;           /* bootstrap-like warning */
-  border: 1px solid #ffeeba;
-  color: #856404;
-  border-radius: 8px;                   /* gleicher Radius wie dein Content */
-  text-align: center;
-}
-
-/* Link-Stil im Banner */
-.sk-dashboard .sk-dashboard-content .kontakt-hinweis a {
-  color: #d9534f;
-  text-decoration: underline;
-}
-
 /* SK: Vendor-Info-Box hübsch machen */
 .single-product .sk-vendor-info-wrap {
   border: 1px solid #2e3846;   /* statt weiß */
@@ -12242,11 +12223,6 @@ div.sk-error { border-left-color: #ef4444; }
   /* Schale */
   .sk-dashboard .sk-dashboard-content {
     padding: var(--sk-dash-shell);
-  }
-
-  /* Boxen innerhalb der Schale */
-  .sk-dashboard .sk-dashboard-content .kontakt-hinweis {
-    padding: var(--sk-dash-card) !important;
   }
 
   .sk-dashboard .sk-settings-field,

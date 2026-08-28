@@ -280,18 +280,12 @@ function telegram_build_caption_and_media($post_id) {
     }
     if ($permalink) {
         /*
-         * Die Beschriftung sagt, was einen dort erwartet. Laeuft das
-         * Chatsystem, ist das Anschreiben der Weg — sonst stehen auf dem
-         * Inserat die Kontaktdaten des Anbieters. Ein Direktlink in einen
-         * Chat existiert nicht: der wird per Symbol auf der Inseratsseite
-         * gestartet, deshalb zeigt der Link in beiden Faellen dorthin.
+         * Direkt ins Anschreiben statt nur aufs Inserat: #chat oeffnet dort
+         * das Chatfenster, als haette der Besucher auf das Symbol geklickt.
+         * Als Fragment und nicht als Abfrageparameter, damit die Seite
+         * weiterhin aus dem Cache kommt — der Server sieht das # nie.
          */
-        $chat_live = class_exists('SK\\Core\\Dashboard\\Modules\\VendorChat')
-            && \SK\Core\Dashboard\Modules\VendorChat::is_enabled();
-
-        $caption .= $chat_live
-            ? "\n\n💬 Direkt anschreiben 👉 " . tn_tg_html_esc($permalink)
-            : "\n\n📋 Kontaktdetails siehe Inserat 👉 " . tn_tg_html_esc($permalink);
+        $caption .= "\n\n💬 Direkt anschreiben 👉 " . tn_tg_html_esc($permalink . '#chat');
     }
 
     $image_id  = get_post_thumbnail_id($post_id);
@@ -667,17 +661,6 @@ function telegram_mark_unavailable_fallback($post_id) {
 global $_tn_shutdown_queue;
 $_tn_shutdown_queue = [];
 
-/**
- * Check if a vendor has at least one real public contact detail.
- * Delegates to the shared sk_vendor_has_public_contact() (ContactDetails single source of truth).
- */
-function tn_vendor_has_contact_info($user_id) {
-    if ( function_exists( 'sk_vendor_has_public_contact' ) ) {
-        return sk_vendor_has_public_contact( (int) $user_id );
-    }
-    return false;
-}
-
 /** Erstversand bei neuem Produkt */
 add_action('sk_new_product_added', 'telegram_queue_on_new_product', 10, 2);
 function telegram_queue_on_new_product($post_id, $postdata) {
@@ -691,10 +674,6 @@ function telegram_queue_on_new_product($post_id, $postdata) {
     }
     if (empty(trim($post->post_title)) || strtolower($post->post_title) === 'auto-draft') {
         error_log("[TG] SKIP #$post_id: title empty or auto-draft");
-        return;
-    }
-    if (!tn_vendor_has_contact_info((int) $post->post_author)) {
-        error_log("[TG] SKIP #$post_id: vendor has no public contact info");
         return;
     }
     if (get_post_meta($post_id, '_telegram_sent', true)) {
@@ -713,7 +692,6 @@ function telegram_queue_on_status_publish($new_status, $old_status, $post) {
     if (!$post || $post->post_type !== 'product') return;
     if (get_post_meta($post->ID, '_telegram_sent', true)) return;
     if (get_post_meta($post->ID, '_telegram_message_id', true)) return;
-    if (!tn_vendor_has_contact_info((int) $post->post_author)) return;
     if (empty(trim($post->post_title)) || strtolower($post->post_title) === 'auto-draft') return;
 
     global $_tn_shutdown_queue;
@@ -730,10 +708,6 @@ function telegram_queue_on_product_update($post_id, $postdata) {
 
     if (!$post || $post->post_status !== 'publish' || $post->post_type !== 'product') {
         error_log("[TG] SKIP update #$post_id: status/type check failed");
-        return;
-    }
-    if (!tn_vendor_has_contact_info((int) $post->post_author)) {
-        error_log("[TG] SKIP update #$post_id: vendor has no public contact info");
         return;
     }
 

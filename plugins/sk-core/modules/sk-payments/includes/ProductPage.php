@@ -558,12 +558,11 @@ class ProductPage {
 
         self::store_order_details( $payment_hash, $note, self::variant_name( $product_id, $variant_key ) );
 
-        // If VendorChat is active, send a message.
+        // If VendorChat is available, send a message.
         $chat_enabled = sk_get_option( 'sk_lightning_chat_integration', 'sk_lightning', 'on' ) === 'on';
-        $vendor_chat_active = class_exists( 'SK\Core\Dashboard\Modules\VendorChat' ) && get_option( 'dvc_enabled', 'no' ) === 'yes';
         $chat_url = '';
 
-        if ( $chat_enabled && $vendor_chat_active ) {
+        if ( $chat_enabled && class_exists( 'SK\Core\Dashboard\Modules\VendorChat' ) ) {
             $chat_id = Chat\ChatIntegration::find_or_create_chat_static( $buyer_id, $vendor_id, $product_id, $product_title );
             if ( ! is_wp_error( $chat_id ) ) {
                 self::remember_note( $buyer_id, $note );

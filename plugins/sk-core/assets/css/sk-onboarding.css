@@ -238,6 +238,23 @@
 	margin: 30px 0;
 }
 
+.uob-contact-icons--secondary {
+	margin: 12px 0 0;
+}
+
+/* Der Chat steht ueber den uebrigen Wegen und wird auch so gezeigt. */
+.uob-contact-method--primary {
+	border: 1px solid #f7931a;
+	background: #33302a;
+}
+
+.uob-contact-note {
+	margin: 24px 0 0 !important;
+	font-size: 13px !important;
+	color: #8c95a3 !important;
+	text-align: center;
+}
+
 .uob-contact-method {
 	display: flex;
 	flex-direction: column;
