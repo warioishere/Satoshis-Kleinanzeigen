@@ -60,8 +60,15 @@ class UserOnboarding {
 			return;
 		}
 
-		wp_enqueue_style( 'sk-onboarding', plugins_url( 'assets/css/sk-onboarding.css', SK_CORE_FILE ), [], SK_CORE_VERSION );
-		wp_enqueue_script( 'sk-onboarding', plugins_url( 'assets/js/sk-onboarding.js', SK_CORE_FILE ), [ 'jquery' ], SK_CORE_VERSION, true );
+		// Nicht SK_CORE_VERSION: die bleibt zwischen Releases stehen, waehrend
+		// sich die Datei aendert — der Browser behielt dann die alte. Wie die
+		// uebrigen Assets ueber den juengsten Zeitstempel im assets-Ordner.
+		$assets_version = function_exists( 'sk_assets_version' )
+			? sk_assets_version( SK_CORE_DIR . '/assets' )
+			: SK_CORE_VERSION;
+
+		wp_enqueue_style( 'sk-onboarding', plugins_url( 'assets/css/sk-onboarding.css', SK_CORE_FILE ), [], $assets_version );
+		wp_enqueue_script( 'sk-onboarding', plugins_url( 'assets/js/sk-onboarding.js', SK_CORE_FILE ), [ 'jquery' ], $assets_version, true );
 		wp_localize_script( 'sk-onboarding', 'uobAjax', [
 			'ajaxurl' => admin_url( 'admin-ajax.php' ),
 			'nonce'   => wp_create_nonce( 'uob_ajax_nonce' ),
