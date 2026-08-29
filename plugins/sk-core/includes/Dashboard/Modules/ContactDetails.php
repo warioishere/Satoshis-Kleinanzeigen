@@ -515,6 +515,8 @@ class ContactDetails {
         if ( $email_field !== '' && $email_san === '' ) $errors[] = __( 'Bitte gib eine gültige E-Mail-Adresse ein.', 'sk-core' );
 
         $stored = sk_get_store_info( $user_id );
+        $stored = is_array( $stored ) ? $stored : [];
+
         $pic_candidates = [ $p['gravatar'] ?? null, $p['sk_gravatar'] ?? null, $p['icon'] ?? null, $stored['gravatar'] ?? null, $stored['icon'] ?? null ];
         $has_picture = false;
         foreach ( $pic_candidates as $val ) {
@@ -523,6 +525,23 @@ class ContactDetails {
             if ( (string) $val !== '' && (string) $val !== '0' ) { $has_picture = true; break; }
         }
         if ( ! $has_picture ) $errors[] = __( 'Bitte lade ein Profilbild hoch, bevor du speicherst.', 'sk-core' );
+
+        /*
+         * Shopname ebenso — dieselbe Frage, die ProfileGuard vor dem
+         * Veroeffentlichen stellt. Stuende sie nur dort, koennte jemand sein
+         * Profil ohne Namen speichern und erst beim Inserieren erfahren, dass
+         * etwas fehlt.
+         *
+         * Geprueft wird der abgeschickte Name, faellt aber auf den
+         * gespeicherten zurueck: das Formular fuer die sozialen Angaben
+         * schickt das Namensfeld gar nicht mit.
+         */
+        $name_raw = $p['store_name'] ?? ( $_POST['store_name'] ?? null );
+        $name     = $name_raw !== null ? sanitize_text_field( (string) $name_raw ) : (string) ( $stored['store_name'] ?? '' );
+
+        if ( ! \SK\Core\Vendor\ProfileGuard::has_shop_name( [ 'store_name' => $name ] ) ) {
+            $errors[] = __( 'Bitte gib deinem Shop einen Namen — der automatisch vergebene zählt nicht.', 'sk-core' );
+        }
 
         if ( ! empty( $errors ) ) {
             if ( function_exists( 'sk_add_notice' ) ) foreach ( $errors as $msg ) sk_add_notice( $msg, 'error' );

@@ -74,20 +74,23 @@ class ProfileGuard {
     /**
      * Ein Shopname, der diesen Namen verdient.
      *
-     * Der automatisch vergebene "satoshi-xxxxx" zaehlt nicht: den traegt jedes
-     * frisch angelegte Konto, er unterscheidet niemanden von niemandem.
+     * Der automatisch vergebene zaehlt nicht: den traegt jedes frisch
+     * angelegte Konto, er unterscheidet niemanden von niemandem. Auf Live
+     * kommt er in zwei Formen vor — fortlaufend nummeriert ("satoshi-104",
+     * die aelteren) und mit fuenf Zufallszeichen ("satoshi-ngbru"). Das
+     * Muster deckt beide ab.
      */
-    private static function has_shop_name( array $info ): bool {
+    public static function has_shop_name( array $info ): bool {
         $name = trim( (string) ( $info['store_name'] ?? '' ) );
 
         if ( $name === '' ) {
             return false;
         }
 
-        return ! preg_match( '/^satoshi-[a-z0-9]{4,8}$/i', $name );
+        return ! preg_match( '/^satoshi-[a-z0-9]{1,8}$/i', $name );
     }
 
-    private static function has_picture( array $info ): bool {
+    public static function has_picture( array $info ): bool {
         foreach ( [ 'gravatar', 'icon' ] as $key ) {
             $wert = $info[ $key ] ?? '';
             $wert = is_array( $wert ) ? reset( $wert ) : $wert;

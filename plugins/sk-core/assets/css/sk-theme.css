@@ -10520,6 +10520,16 @@ body:has(.dvc-modal) .dkp-contact-icons {
 	outline: 2px solid #f7931a;
 	outline-offset: 2px;
 	border-color: #f7931a !important;
+	/*
+	 * Die Farbe muss hier stehen, nicht nur in der Grundregel: Kadence setzt
+	 * textarea:focus{color:var(--global-palette3)} — gleiche Spezifitaet wie
+	 * .dvc-form-group textarea, es entscheidet also die Ladereihenfolge. Auf
+	 * der Shopseite laedt sk-theme.css vor Kadence (Position 4 gegen 8), auf
+	 * der Inseratsseite danach — der Text war deshalb nur dort dunkel, und
+	 * nur waehrend des Tippens. Mit dem :focus davor gewinnt die Regel
+	 * ueber die Spezifitaet, unabhaengig von der Reihenfolge.
+	 */
+	color: #ffffff;
 }
 
 .dvc-modal-actions {
