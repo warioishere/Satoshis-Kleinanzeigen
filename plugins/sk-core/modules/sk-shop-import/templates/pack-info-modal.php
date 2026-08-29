@@ -40,7 +40,7 @@ defined( 'ABSPATH' ) || exit;
             <li>
                 <i class="fas fa-chart-bar"></i>
                 <span>
-                    <strong><?php esc_html_e( 'Umsatz & CSV-Export', 'sk-core' ); ?></strong>
+                    <strong><?php esc_html_e( 'Umsatz & CSV-Export', 'sk-core' ); ?> <span class="sk-pack-info__from"><?php esc_html_e( 'ab Hai', 'sk-core' ); ?></span></strong>
                     <?php esc_html_e( 'Monatssummen in Sats und Euro, gerechnet mit dem Kurs, der im Moment der Zahlung galt — nicht mit dem heutigen. Genau dieser Wert zählt für die Steuer, und er lässt sich später nicht mehr rekonstruieren. Als CSV-Datei mit Datum, Artikel, Ausführung, Kurs und Betrag herunterladbar, fertig für die Buchhaltung.', 'sk-core' ); ?>
                 </span>
             </li>

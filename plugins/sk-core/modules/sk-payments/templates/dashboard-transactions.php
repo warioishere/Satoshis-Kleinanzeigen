@@ -307,10 +307,18 @@ do_action( 'sk_dashboard_wrap_start' );
                                     </select>
                                 <?php endif; ?>
 
+                                <?php
+                                // Der Export gehoert erst ab dem Hai-Paket
+                                // dazu; ohne diese Pruefung stuende hier ein
+                                // Knopf, der mit 403 endet.
+                                if ( class_exists( \SK\Modules\ShopImport\Variants::class )
+                                    && \SK\Modules\ShopImport\Variants::revenue_allowed() ) :
+                                ?>
                                 <a class="sk-btn sk-btn-theme sk-btn-sm"
                                    href="<?php echo esc_url( \SK\Modules\Payments\RevenueExport::url( $skp_role, $skp_year ?: null ) ); ?>">
                                     <i class="fas fa-file-csv"></i> Als CSV
                                 </a>
+                                <?php endif; ?>
                             </div>
                         </div>
 

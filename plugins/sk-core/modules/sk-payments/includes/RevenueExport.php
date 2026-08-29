@@ -38,9 +38,14 @@ final class RevenueExport {
 
         $user_id = get_current_user_id();
 
-        // Dieselbe Grenze wie in der Anzeige.
-        if ( ! Notify::is_shop_pack( $user_id ) ) {
-            wp_die( esc_html__( 'Der Export gehört zum Shoptarif.', 'sk-core' ), '', [ 'response' => 403 ] );
+        /*
+         * Die Auswertung gehoert erst ab dem Hai-Paket dazu, nicht schon ab
+         * Delphin wie Import und Ausfuehrungen — deshalb eine eigene Grenze
+         * und nicht is_shop_pack().
+         */
+        if ( ! class_exists( \SK\Modules\ShopImport\Variants::class )
+            || ! \SK\Modules\ShopImport\Variants::revenue_allowed( $user_id ) ) {
+            wp_die( esc_html__( 'Die Umsatzauswertung gehört ab dem Hai-Paket dazu.', 'sk-core' ), '', [ 'response' => 403 ] );
         }
 
         $role = isset( $_GET['rolle'] ) && $_GET['rolle'] === 'purchases' ? 'purchases' : 'sales';

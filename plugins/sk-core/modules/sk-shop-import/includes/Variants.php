@@ -24,6 +24,16 @@ final class Variants {
     /** Ab dieser Inseratszahl gilt ein Paket als gross genug (Delphin: 21). */
     const DEFAULT_MIN_PRODUCTS = 21;
 
+    /**
+     * Ab wie vielen Produkten die Umsatzauswertung dazugehoert.
+     *
+     * Hoeher als DEFAULT_MIN_PRODUCTS: Import und Ausfuehrungen gibt es ab
+     * Delphin, die Auswertung erst ab Hai. Bewusst ueber die Produktzahl und
+     * nicht ueber den Paketnamen — Pakete lassen sich umbenennen, und eine
+     * feste ID waere nach dem naechsten Anlegen falsch.
+     */
+    const REVENUE_MIN_PRODUCTS = 50;
+
     public function __construct() {
         add_action( 'sk_product_edit_after_pricing_fields', [ $this, 'render_field' ], 10, 2 );
         add_action( 'sk_process_product_meta', [ $this, 'save' ], 20 );
@@ -64,6 +74,33 @@ final class Variants {
      */
     public static function pack_allows( int $pack_id ): bool {
         return $pack_id > 0 && in_array( $pack_id, self::allowed_packs(), true );
+    }
+
+    /**
+     * Gehoert die Umsatzauswertung zu diesem Paket?
+     */
+    public static function revenue_pack_allows( int $pack_id ): bool {
+        if ( $pack_id <= 0 ) {
+            return false;
+        }
+
+        $count = (int) get_post_meta( $pack_id, '_no_of_product', true );
+
+        // -1 heisst unbegrenzt, siehe allowed_packs().
+        return $count === -1 || $count >= self::REVENUE_MIN_PRODUCTS;
+    }
+
+    /**
+     * Gehoert sie zum Paket dieses Verkaeufers?
+     */
+    public static function revenue_allowed( int $vendor_id = 0 ): bool {
+        $vendor_id = $vendor_id ?: get_current_user_id();
+
+        if ( ! $vendor_id ) {
+            return false;
+        }
+
+        return self::revenue_pack_allows( (int) get_user_meta( $vendor_id, 'product_package_id', true ) );
     }
 
     public static function is_allowed( int $vendor_id = 0 ): bool {

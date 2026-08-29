@@ -174,7 +174,9 @@ use SK\Modules\Subscription\Helper;
                                 <li><i class="fas fa-file-import"></i> Woo &amp; Shopify Produkt Import</li>
                                 <li><i class="fas fa-layer-group"></i> Variable Produkte</li>
                                 <li><i class="fas fa-bolt"></i> Adaptive Preise in Sats</li>
-                                <li><i class="fas fa-chart-bar"></i> Umsatz &amp; CSV-Export</li>
+                                <?php if ( \SK\Modules\ShopImport\Variants::revenue_pack_allows( (int) get_the_ID() ) ) : ?>
+                                    <li><i class="fas fa-chart-bar"></i> Umsatz &amp; CSV-Export</li>
+                                <?php endif; ?>
                                 <li><i class="fas fa-envelope"></i> Bestellungen per E-Mail</li>
                                 <li><i class="fas fa-truck"></i> Sendungsverfolgung</li>
                             </ul>
