@@ -84,6 +84,7 @@ class StoreListsFilter {
             'random'        => __( 'Random', 'sk-core' ),
             'top_rated'     => __( 'Top Rated', 'sk-core' ),
             'most_reviewed' => __( 'Most Reviewed', 'sk-core' ),
+            'verified'      => __( 'Verifiziert zuerst', 'sk-core' ),
         ] );
     }
 
@@ -286,6 +287,23 @@ class StoreListsFilter {
                     ON ({$wpdb->users}.ID = review.seller_id)";
         }
 
+        /*
+         * Verifizierte zuerst.
+         *
+         * Verbunden wird ueber das flache Ablaufdatum, nicht ueber die
+         * serialisierte Liste der Adressen — die laesst sich in SQL nicht
+         * sortieren. Abgelaufene Bestaetigungen fallen ueber den Vergleich mit
+         * der aktuellen Zeit von selbst heraus.
+         */
+        if ( 'verified' === $this->orderby ) {
+            $this->query->query_from .= $wpdb->prepare(
+                " LEFT JOIN {$wpdb->usermeta} AS sk_verified
+                    ON ( {$wpdb->users}.ID = sk_verified.user_id
+                         AND sk_verified.meta_key = %s )",
+                \SK\Core\Verification\VerifiedLinks::META_UNTIL
+            );
+        }
+
         // Pro: top_rated sorting
         if ( 'top_rated' === $this->orderby ) {
             $this->query->query_from .= " LEFT JOIN (
@@ -346,6 +364,15 @@ class StoreListsFilter {
         // Pro: top_rated sorting
         if ( 'top_rated' === $this->orderby ) {
             $this->query->query_orderby = 'ORDER BY rating DESC';
+            return;
+        }
+
+        // Bestaetigte zuerst, darunter die neuesten.
+        if ( 'verified' === $this->orderby ) {
+            $this->query->query_orderby = sprintf(
+                'ORDER BY ( sk_verified.meta_value IS NOT NULL AND sk_verified.meta_value > %d ) DESC, ID DESC',
+                time()
+            );
             return;
         }
     }

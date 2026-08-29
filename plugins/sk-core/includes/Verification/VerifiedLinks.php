@@ -31,6 +31,14 @@ final class VerifiedLinks {
     /** User-Meta: der geheime Beleg dieses Nutzers. */
     const META_TOKEN = '_sk_verify_token';
 
+    /**
+     * User-Meta: bis wann die Bestaetigung gilt, als Zeitstempel.
+     *
+     * Abgeleitet aus der Liste, aber flach — die Liste selbst ist serialisiert
+     * und in SQL nicht sinnvoll zu sortieren. Die Anbieterliste ordnet danach.
+     */
+    const META_UNTIL = '_sk_verified_until';
+
     /** verlinkt zurück */
     const OK = 1;
     /** erreichbar, aber kein Beleg gefunden */
@@ -386,5 +394,30 @@ final class VerifiedLinks {
 
     private static function save( int $user_id, array $rows ): void {
         update_user_meta( $user_id, self::META, array_values( $rows ) );
+
+        self::refresh_until( $user_id );
+    }
+
+    /**
+     * Das flache Ablaufdatum nachfuehren.
+     *
+     * Gespeichert wird der spaeteste Ablauf ueber alle bestaetigten Adressen.
+     * Ein Vergleich gegen die aktuelle Zeit genuegt damit in SQL, und eine
+     * abgelaufene Bestaetigung faellt von selbst hinten runter.
+     */
+    private static function refresh_until( int $user_id ): void {
+        $bis = 0;
+
+        foreach ( self::all( $user_id ) as $row ) {
+            if ( $row['status'] === self::OK && $row['confirmed'] > 0 ) {
+                $bis = max( $bis, $row['confirmed'] + self::MAX_AGE );
+            }
+        }
+
+        if ( $bis > 0 ) {
+            update_user_meta( $user_id, self::META_UNTIL, $bis );
+        } else {
+            delete_user_meta( $user_id, self::META_UNTIL );
+        }
     }
 }

@@ -35,6 +35,11 @@ class ProductVendorInfo {
         echo '<div class="produkt-vendor-info">';
         echo '<img class="vendor-avatar" src="' . esc_url( $avatar_url ) . '" alt="" loading="lazy">';
         echo '<a class="vendor-name" href="' . esc_url( $store_url ) . '">@' . $store_name . '</a>';
+
+        if ( function_exists( 'sk_verified_badge' ) ) {
+            echo sk_verified_badge( $vendor_id ); // phpcs:ignore WordPress.Security.EscapeOutput
+        }
+
         echo '</div>';
     }
 }

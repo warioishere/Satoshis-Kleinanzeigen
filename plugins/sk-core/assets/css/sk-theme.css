@@ -12334,9 +12334,21 @@ textarea.wp-editor-area.post_content {
 	gap: 4px;
 	padding: 2px 8px;
 	border-radius: 999px;
-	background: rgba(56, 161, 105, 0.15);
-	color: #38a169;
+	background: rgba(247, 147, 26, 0.15);
+	color: #f7931a;
 	font-size: 13px;
 	font-weight: 600;
 	vertical-align: middle;
+}
+
+/* Auf dem Inserat sitzt es rechts in der Anbieterbox, mittig zur Hoehe. */
+.sk-vendor-info-wrap .sk-verify-badge {
+	margin-left: auto;
+	align-self: center;
+}
+
+/* Auf der Produktkarte im Shop direkt hinter dem Anbieternamen. */
+.produkt-vendor-info .sk-verify-badge {
+	padding: 1px 6px;
+	font-size: 11px;
 }

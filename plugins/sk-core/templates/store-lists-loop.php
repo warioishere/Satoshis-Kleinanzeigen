@@ -35,7 +35,12 @@
                                         <?php do_action( 'sk_seller_listing_after_featured', $seller, $store_info ); ?>
                                     </div>
                                     <div class="store-data">
-                                        <h2><a href="<?php echo esc_attr( $store_url ); ?>"><?php echo esc_html( $store_name ); ?></a> <?php do_action( 'sk_store_list_loop_after_store_name', $vendor ); ?></h2>
+                                        <h2><a href="<?php echo esc_attr( $store_url ); ?>"><?php echo esc_html( $store_name ); ?></a> <?php
+                                            if ( function_exists( 'sk_verified_badge' ) ) {
+                                                echo sk_verified_badge( $vendor->get_id() ); // phpcs:ignore WordPress.Security.EscapeOutput
+                                            }
+                                            do_action( 'sk_store_list_loop_after_store_name', $vendor );
+                                        ?></h2>
 
                                         <?php if ( ! empty( $store_rating['count'] ) ) : ?>
                                             <div class="sk-seller-rating"

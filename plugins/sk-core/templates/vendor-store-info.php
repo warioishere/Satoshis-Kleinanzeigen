@@ -30,4 +30,11 @@
             <p class="sk-ratings-count">(<?php echo esc_html( sprintf( _n( '%s Review', '%s Reviews', $store_rating['count'], 'sk-core' ), esc_html( number_format_i18n( $store_rating['count'] ) ) ) ); ?>)</p>
         <?php endif; ?>
     </div>
+    <?php
+    // Rechts am Ende der Box, mittig zur Hoehe — die Ausrichtung macht das
+    // margin-left:auto in .sk-vendor-info-wrap .sk-verify-badge.
+    if ( function_exists( 'sk_verified_badge' ) ) {
+        echo sk_verified_badge( $vendor->get_id() ); // phpcs:ignore WordPress.Security.EscapeOutput
+    }
+    ?>
 </div>
