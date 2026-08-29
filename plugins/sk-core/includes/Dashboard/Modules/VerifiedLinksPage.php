@@ -20,12 +20,12 @@ class VerifiedLinksPage extends DashboardModule {
 
 	public function config(): ?array {
 		return [
-			'slug'          => 'verifizierung',
+			'slug'          => 'verification',
 			'title'         => __( 'Verifizierung', 'sk-core' ),
 			'icon'          => '<i class="fas fa-circle-check"></i>',
 			'pos'           => 92,
 			'permission'    => 'sk_view_overview_menu',
-			'template'      => 'dashboard/verifizierung/dashboard-verifizierung',
+			'template'      => 'dashboard/verification/dashboard-verification',
 			'template_args' => [ $this, 'view_data' ],
 		];
 	}
@@ -36,8 +36,8 @@ class VerifiedLinksPage extends DashboardModule {
 
 	private function url(): string {
 		return function_exists( 'sk_get_navigation_url' )
-			? sk_get_navigation_url( 'verifizierung' )
-			: home_url( '/dashboard/verifizierung/' );
+			? sk_get_navigation_url( 'verification' )
+			: home_url( '/dashboard/verification/' );
 	}
 
 	public function handle_post(): void {

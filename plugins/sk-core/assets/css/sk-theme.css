@@ -12432,11 +12432,12 @@ textarea.wp-editor-area.post_content {
 
 
 /* === Verifizierung ====================================================== */
+/* Nur das Abzeichen: fuer alles andere gibt es sk-table, sk-form-group,
+   sk-alert und sk-btn im Dashboard schon. */
 .sk-verify-badge {
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
-	margin-left: 6px;
 	padding: 2px 8px;
 	border-radius: 999px;
 	background: rgba(56, 161, 105, 0.15);
@@ -12444,50 +12445,4 @@ textarea.wp-editor-area.post_content {
 	font-size: 13px;
 	font-weight: 600;
 	vertical-align: middle;
-}
-
-.sk-verify-snippet {
-	overflow-x: auto;
-	margin: 8px 0 16px;
-	padding: 12px 14px;
-	background: #181e27;
-	border: 1px solid #2b3240;
-	border-radius: 6px;
-	color: #c5ccd6;
-	font-size: 13px;
-}
-
-.sk-verify-snippet code {
-	background: none;
-	color: inherit;
-	white-space: pre;
-}
-
-.sk-verify-table {
-	width: 100%;
-	margin-bottom: 20px;
-	border-collapse: collapse;
-}
-
-.sk-verify-table th,
-.sk-verify-table td {
-	padding: 10px 8px;
-	border-bottom: 1px solid #2b3240;
-	text-align: left;
-	vertical-align: top;
-}
-
-.sk-verify-ok      { color: #38a169; }
-.sk-verify-warn    { color: #b8860b; }
-.sk-verify-missing { color: #d9534f; }
-
-.sk-verify-inline {
-	display: flex;
-	gap: 8px;
-	flex-wrap: wrap;
-}
-
-.sk-verify-hint {
-	font-size: 13px;
-	color: #8c95a3;
 }
