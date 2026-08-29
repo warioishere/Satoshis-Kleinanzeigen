@@ -532,15 +532,24 @@ class ContactDetails {
          * Profil ohne Namen speichern und erst beim Inserieren erfahren, dass
          * etwas fehlt.
          *
-         * Geprueft wird der abgeschickte Name, faellt aber auf den
-         * gespeicherten zurueck: das Formular fuer die sozialen Angaben
-         * schickt das Namensfeld gar nicht mit.
+         * Nur wenn das Namensfeld auch abgeschickt wurde.
+         *
+         * Es heisst sk_store_name — so schickt es das Formular, und so liest
+         * es Settings::save(). Auf den gespeicherten Namen zurueckzufallen
+         * waere falsch: das Formular fuer die sozialen Angaben schickt das
+         * Feld gar nicht mit, und wer noch keinen Namen hat, sass dann dort
+         * in einer Sackgasse — die Meldung verlangte einen Namen auf einer
+         * Seite ohne Namensfeld. Dass ein Inserat einen Namen braucht,
+         * erzwingt ProfileGuard ohnehin an der richtigen Stelle.
          */
-        $name_raw = $p['store_name'] ?? ( $_POST['store_name'] ?? null );
-        $name     = $name_raw !== null ? sanitize_text_field( (string) $name_raw ) : (string) ( $stored['store_name'] ?? '' );
+        $name_raw = $p['sk_store_name'] ?? $_POST['sk_store_name'] ?? null;
 
-        if ( ! \SK\Core\Vendor\ProfileGuard::has_shop_name( [ 'store_name' => $name ] ) ) {
-            $errors[] = __( 'Bitte gib deinem Shop einen Namen — der automatisch vergebene zählt nicht.', 'sk-core' );
+        if ( $name_raw !== null ) {
+            $name = sanitize_text_field( (string) wp_unslash( $name_raw ) );
+
+            if ( ! \SK\Core\Vendor\ProfileGuard::has_shop_name( [ 'store_name' => $name ] ) ) {
+                $errors[] = __( 'Bitte gib deinem Shop einen Namen — der automatisch vergebene zählt nicht.', 'sk-core' );
+            }
         }
 
         if ( ! empty( $errors ) ) {
