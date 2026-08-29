@@ -122,6 +122,54 @@ class StoreSettings {
         wp_send_json_success( [ 'message' => 'LNDHub-Verbindung erfolgreich' ] );
     }
 
+    /**
+     * Kann diese Adresse eine Zahlung nachweisen?
+     *
+     * LUD-21: die Antwort auf eine Invoice-Anfrage traegt eine verify-Adresse,
+     * ueber die sich spaeter abfragen laesst, ob die Rechnung beglichen wurde.
+     * Ohne sie erfaehrt SK nie, ob gezahlt wurde — und ohne das laesst sich
+     * keine Provision durchsetzen. Die Preimage-Einreichung durch den Kaeufer
+     * beweist zwar dasselbe, setzt aber dessen Mitwirkung voraus und taugt
+     * deshalb nicht als Grundlage.
+     *
+     * Gefragt wird mit dem Mindestbetrag des Anbieters, nicht mit einem festen
+     * Wert: viele lehnen zu kleine Betraege ab, und eine Ablehnung saehe sonst
+     * wie fehlende Unterstuetzung aus.
+     *
+     * @return true|\WP_Error true wenn nachweisbar; WP_Error mit Grund sonst.
+     */
+    public static function check_lud21( string $address ) {
+        $meta = LNURL\Resolver::resolve( $address );
+
+        if ( is_wp_error( $meta ) ) {
+            return new \WP_Error( 'lnaddr_unreachable', $meta->get_error_message() );
+        }
+
+        if ( empty( $meta['callback'] ) ) {
+            return new \WP_Error( 'lnaddr_unreachable', __( 'Die Adresse antwortet nicht wie eine Lightning-Adresse.', 'sk-core' ) );
+        }
+
+        $amount = isset( $meta['minSendable'] ) ? (int) $meta['minSendable'] : 1000;
+        $probe  = LNURL\Resolver::request_invoice( $meta['callback'], max( 1000, $amount ) );
+
+        if ( is_wp_error( $probe ) ) {
+            return new \WP_Error( 'lnaddr_unreachable', $probe->get_error_message() );
+        }
+
+        if ( empty( $probe['verify'] ) ) {
+            return new \WP_Error( 'lnaddr_no_lud21', self::lud21_hint() );
+        }
+
+        return true;
+    }
+
+    /**
+     * Was der Haendler stattdessen tun kann.
+     */
+    private static function lud21_hint(): string {
+        return __( 'Diese Wallet kann nicht bestätigen, ob eine Rechnung bezahlt wurde (LUD-21 fehlt). Ohne diesen Nachweis lässt sich der Verkauf nicht abrechnen. Wallets, die es können: Alby, Blink, Coinos, BTCPay Server. Nicht möglich ist es unter anderem mit Wallet of Satoshi.', 'sk-core' );
+    }
+
     public function ajax_test_lnaddr() {
         check_ajax_referer( 'skp_test_connection', 'nonce' );
         $this->guard_test_endpoint();
@@ -140,7 +188,13 @@ class StoreSettings {
             wp_send_json_error( [ 'message' => $result->get_error_message() ] );
         }
 
-        $msg = 'Adresse gültig';
+        $lud21 = self::check_lud21( $value );
+
+        if ( is_wp_error( $lud21 ) ) {
+            wp_send_json_error( [ 'message' => $lud21->get_error_message() ] );
+        }
+
+        $msg = 'Adresse gültig und nachweisbar';
         if ( ! empty( $result['callback'] ) ) {
             $min = isset( $result['minSendable'] ) ? (int) ceil( $result['minSendable'] / 1000 ) : 0;
             $max = isset( $result['maxSendable'] ) ? (int) floor( $result['maxSendable'] / 1000 ) : 0;
@@ -179,18 +233,33 @@ class StoreSettings {
             return;
         }
 
-        $settings['lightning_address'] = $raw;
+        /*
+         * Ohne LUD-21 wird die Adresse nicht uebernommen.
+         *
+         * Sie zu speichern und nur zu markieren, hiesse: der Haendler bietet
+         * Lightning an, und beim Verkauf stellt sich heraus, dass die Zahlung
+         * nicht nachweisbar ist. Die Ablehnung gehoert an die Stelle, an der
+         * sie sich noch aendern laesst.
+         */
+        $lud21 = self::check_lud21( $raw );
 
-        $lud21_supported = false;
-        $resolve_result = LNURL\Resolver::resolve( $raw );
-        if ( ! is_wp_error( $resolve_result ) && ! empty( $resolve_result['callback'] ) ) {
-            $min_amount = $resolve_result['minSendable'] ?? 1000;
-            $test_invoice = LNURL\Resolver::request_invoice( $resolve_result['callback'], (int) $min_amount );
-            if ( ! is_wp_error( $test_invoice ) && ! empty( $test_invoice['verify'] ) ) {
-                $lud21_supported = true;
+        if ( is_wp_error( $lud21 ) ) {
+            $settings['lightning_address'] = $prev_settings['lightning_address'] ?? '';
+            $settings['lightning_lud21']   = false;
+
+            update_user_meta( $store_id, 'sk_profile_settings', $settings );
+
+            if ( function_exists( 'sk_add_notice' ) ) {
+                sk_add_notice( $lud21->get_error_message(), 'error' );
             }
+
+            set_transient( 'skp_lnaddr_msg_' . $store_id, $lud21->get_error_message(), 120 );
+
+            return;
         }
-        $settings['lightning_lud21'] = $lud21_supported;
+
+        $settings['lightning_address'] = $raw;
+        $settings['lightning_lud21']   = true;
 
         update_user_meta( $store_id, 'sk_profile_settings', $settings );
     }

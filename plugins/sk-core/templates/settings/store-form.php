@@ -446,17 +446,24 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
                        value="<?php echo esc_attr( $ln_address ); ?>"
                        placeholder="user@getalby.com oder lnurl1..." />
                 <p class="description">
-                    Wird als Fallback verwendet wenn weder NWC noch LNDHub verbunden ist.
+                    Wird als Rückfall verwendet, wenn weder NWC noch LNDHub verbunden ist.
+                    Die Adresse muss bestätigen können, ob eine Rechnung bezahlt wurde (LUD-21) —
+                    sonst lässt sich ein Verkauf nicht abrechnen und wir nehmen sie nicht an.
+                    Getestet und geeignet: <strong>Alby</strong>, <strong>Blink</strong>,
+                    <strong>Coinos</strong>, <strong>Stacker.News</strong> und eigene
+                    <strong>BTCPay-Server</strong>. Nicht geeignet sind unter anderem
+                    Wallet of Satoshi, ZBD, Fountain und LNbits.
                 </p>
                 <?php if ( ! empty( $ln_address ) ) : ?>
                     <?php if ( $ln_lud21 ) : ?>
                         <div class="sk-settings-notice sk-settings-notice--ok">
-                            Automatische Zahlungsverifizierung unterstützt (LUD-21)
+                            Zahlungen dieser Adresse lassen sich nachweisen (LUD-21).
                         </div>
                     <?php else : ?>
                         <div class="sk-settings-notice sk-settings-notice--warn">
-                            Keine automatische Verifizierung — Zahlungen müssen manuell bestätigt werden.
-                            Für automatische Verifizierung verwende NWC oder LNDHub (oben) oder einen Service der LUD-21 unterstützt (z.B. Alby, LNbits, Coinos).
+                            Diese Adresse stammt noch aus der Zeit vor der Prüfung und kann eine
+                            Zahlung nicht nachweisen. Bitte hinterlege eine Adresse, die LUD-21
+                            beherrscht, oder verbinde stattdessen NWC.
                         </div>
                     <?php endif; ?>
                 <?php endif; ?>
