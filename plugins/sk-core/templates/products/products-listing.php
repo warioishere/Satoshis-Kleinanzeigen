@@ -34,6 +34,11 @@
             ?>
 
                 <article class="sk-product-listing-area">
+
+                    <div class="sk-review-page-header">
+                        <h2><i class="fas fa-briefcase"></i> <?php esc_html_e( 'Meine Inserate', 'sk-core' ); ?></h2>
+                    </div>
+
                     <?php
                     $one_step_product_create = 'on' === sk_get_option( 'one_step_product_create', 'sk_selling', 'on' );
                     $disable_product_popup   = $one_step_product_create || 'on' === sk_get_option( 'disable_product_popup', 'sk_selling', 'off' );
@@ -61,7 +66,6 @@
                         ?>
 
                         <div class="sk-product-listing-header sk-product-listing-header--stacked">
-                            <h2><?php esc_html_e( 'Meine Inserate', 'sk-core' ); ?></h2>
                             <?php if ( sk_is_seller_enabled( sk_get_current_user_id() ) && current_user_can( 'sk_add_product' ) ) : ?>
                                 <a href="<?php echo esc_url( $new_product_url ); ?>" class="sk-btn sk-btn-btc <?php echo $disable_product_popup ? '' : 'sk-add-new-product'; ?>">
                                     + <?php esc_html_e( 'Inserat erstellen', 'sk-core' ); ?>
