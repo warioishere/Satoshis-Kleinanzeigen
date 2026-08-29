@@ -84,7 +84,7 @@ class StoreListsFilter {
             'random'        => __( 'Random', 'sk-core' ),
             'top_rated'     => __( 'Top Rated', 'sk-core' ),
             'most_reviewed' => __( 'Most Reviewed', 'sk-core' ),
-            'verified'      => __( 'Verifiziert zuerst', 'sk-core' ),
+            'verified'      => __( 'Verifiziert', 'sk-core' ),
         ] );
     }
 
@@ -288,19 +288,22 @@ class StoreListsFilter {
         }
 
         /*
-         * Verifizierte zuerst.
+         * Nur Verifizierte zeigen.
          *
-         * Verbunden wird ueber das flache Ablaufdatum, nicht ueber die
-         * serialisierte Liste der Adressen — die laesst sich in SQL nicht
-         * sortieren. Abgelaufene Bestaetigungen fallen ueber den Vergleich mit
-         * der aktuellen Zeit von selbst heraus.
+         * Ein INNER JOIN statt LEFT JOIN: der Eintrag ist damit Bedingung,
+         * nicht bloss Sortierhilfe. Verbunden wird ueber das flache
+         * Ablaufdatum, nicht ueber die serialisierte Liste der Adressen — die
+         * laesst sich in SQL nicht auswerten. Der Vergleich mit der aktuellen
+         * Zeit sortiert abgelaufene Bestaetigungen gleich mit aus.
          */
         if ( 'verified' === $this->orderby ) {
             $this->query->query_from .= $wpdb->prepare(
-                " LEFT JOIN {$wpdb->usermeta} AS sk_verified
+                " INNER JOIN {$wpdb->usermeta} AS sk_verified
                     ON ( {$wpdb->users}.ID = sk_verified.user_id
-                         AND sk_verified.meta_key = %s )",
-                \SK\Core\Verification\VerifiedLinks::META_UNTIL
+                         AND sk_verified.meta_key = %s
+                         AND sk_verified.meta_value + 0 > %d )",
+                \SK\Core\Verification\VerifiedLinks::META_UNTIL,
+                time()
             );
         }
 
@@ -367,12 +370,9 @@ class StoreListsFilter {
             return;
         }
 
-        // Bestaetigte zuerst, darunter die neuesten.
+        // Gefiltert wird schon im JOIN; hier bleibt die uebliche Reihenfolge.
         if ( 'verified' === $this->orderby ) {
-            $this->query->query_orderby = sprintf(
-                'ORDER BY ( sk_verified.meta_value IS NOT NULL AND sk_verified.meta_value > %d ) DESC, ID DESC',
-                time()
-            );
+            $this->query->query_orderby = 'ORDER BY ID DESC';
             return;
         }
     }
