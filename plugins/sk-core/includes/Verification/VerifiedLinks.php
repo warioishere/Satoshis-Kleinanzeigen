@@ -270,15 +270,6 @@ final class VerifiedLinks {
 
         self::save( $user_id, $rows );
 
-        /**
-         * Ein Nutzer hat eine Adresse bestätigt.
-         *
-         * Der Shop-Import haengt daran seine Freigabe.
-         */
-        if ( $ergebnis === self::OK ) {
-            do_action( 'sk_link_verified', $user_id, $url );
-        }
-
         return $ergebnis;
     }
 

@@ -43,10 +43,9 @@ class DashboardPage extends DashboardModule {
             // nicht: sk_nav_sort_by_pos rechnet intval($a-$b), 30.5 gegen 31
             // ergibt 0 und gilt als gleich.
             'pos'        => 31,
-            // Nicht Dealer::CAP: die Faehigkeit entsteht erst, wenn jemand
-            // importieren darf — dann kaeme aber niemand je auf die Seite,
-            // auf der er sich dafuer bestaetigt. Die Seite steht deshalb
-            // jedem Verkaeufer offen, die Importschritte darin nicht.
+            // Die Seite steht jedem Verkaeufer offen — wer nicht
+            // freigeschaltet ist, findet hier den Weg zur Verifizierung. Die
+            // Importschritte darin pruefen Dealer::may_import().
             'permission' => 'sk_view_overview_menu',
             // Pfad statt Rueckruf und Daten ueber template_args — dasselbe
             // Muster wie Merkliste und Gesuche. Die Vorlage bringt dadurch
@@ -133,7 +132,7 @@ class DashboardPage extends DashboardModule {
              * Damit ist sie Nutzereingabe, anders als beim Rest des Moduls.
              * Der Abruf laeuft deshalb ueber wp_safe_remote_get(), das interne
              * Adressbereiche abweist, und die Seite steht ohnehin nur
-             * freigeschalteten Haendlern offen (Dealer::CAP).
+             * freigeschalteten Haendlern offen (Dealer::may_import()).
              */
             $shop = isset( $_POST['sk_shop_url'] )
                 ? esc_url_raw( trim( wp_unslash( $_POST['sk_shop_url'] ) ) )

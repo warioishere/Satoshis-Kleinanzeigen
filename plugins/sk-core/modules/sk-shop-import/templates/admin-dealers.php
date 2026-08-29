@@ -41,6 +41,7 @@ $base = add_query_arg( [ 'page' => 'sk', 'tab' => 'dealers' ], admin_url( 'admin
             <tr>
                 <th><?php esc_html_e( 'Verkäufer', 'sk-core' ); ?></th>
                 <th style="width:240px;"><?php esc_html_e( 'Shop-Adresse', 'sk-core' ); ?></th>
+                <th style="width:170px;"><?php esc_html_e( 'bestätigte Domain', 'sk-core' ); ?></th>
                 <th style="width:90px;"><?php esc_html_e( 'geprüft', 'sk-core' ); ?></th>
                 <th style="width:110px;"><?php esc_html_e( 'darf importieren', 'sk-core' ); ?></th>
                 <th style="width:150px;"><?php esc_html_e( 'letzter Import', 'sk-core' ); ?></th>
@@ -60,6 +61,23 @@ $base = add_query_arg( [ 'page' => 'sk', 'tab' => 'dealers' ], admin_url( 'admin
                     </td>
                     <td><input type="url" name="shop_url" class="regular-text" style="width:100%;"
                                value="<?php echo esc_attr( Dealer::shop_url( $vendor->ID ) ); ?>" placeholder="https://"></td>
+                    <td>
+                        <?php
+                        /*
+                         * Der Haendler bestaetigt seine Domain selbst und darf
+                         * damit importieren — ohne dass hier ein Haekchen
+                         * gesetzt wird. Ohne diese Spalte sieht es im Admin
+                         * aus, als sei nichts passiert.
+                         */
+                        $sk_hosts = \SK\Core\Verification\VerifiedLinks::confirmed_hosts( $vendor->ID );
+
+                        if ( $sk_hosts ) {
+                            echo '<span style="color:#f7931a;">✓ ' . esc_html( implode( ', ', $sk_hosts ) ) . '</span>';
+                        } else {
+                            echo '<span style="color:#646970;">—</span>';
+                        }
+                        ?>
+                    </td>
                     <td><input type="checkbox" name="verified" value="1" <?php checked( Dealer::is_verified( $vendor->ID ) ); ?>></td>
                     <td><input type="checkbox" name="import" value="1" <?php checked( Dealer::is_enabled( $vendor->ID ) ); ?>></td>
                     <td><?php echo $last ? esc_html( wp_date( 'd.m.Y H:i', $last ) ) : '—'; ?></td>
