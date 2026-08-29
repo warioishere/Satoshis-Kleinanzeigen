@@ -710,6 +710,23 @@ class LightningController extends WP_REST_Controller {
             return new WP_Error( 'forbidden', 'Nur der Käufer kann das Preimage einreichen.', [ 'status' => 403 ] );
         }
 
+        /*
+         * Das Preimage ist der staerkste Nachweis, den es hier gibt: es
+         * entsteht nur, wenn die Zahlung wirklich durchging, und anders als
+         * bei NWC, LNDHub oder LUD-21 antwortet dabei kein Server, den der
+         * Verkaeufer benannt hat.
+         *
+         * Frueher wurde es nur in die Zeile geschrieben — die Zahlung blieb
+         * "pending", sk_payment_confirmed feuerte nie, und es entstand weder
+         * Reputation noch eine Provisionsforderung. Der Beweis lag also da und
+         * bewirkte nichts. Jetzt laeuft er durch denselben settle_payment()
+         * wie die uebrigen Wege, samt dessen Schutz gegen Doppelbestaetigung.
+         */
+        if ( (string) $payment->status === 'pending' ) {
+            return $this->settle_payment( $payment, $preimage, 'preimage' );
+        }
+
+        // Schon bestaetigt: dann fehlt nur noch der Nachweis in der Zeile.
         $wpdb->update(
             $table,
             [
@@ -722,10 +739,10 @@ class LightningController extends WP_REST_Controller {
         );
 
         return new WP_REST_Response( [
-            'status'        => 'verified',
+            'status'        => 'confirmed',
+            'settled'       => true,
             'payment_hash'  => $payment_hash,
-            'preimage'      => strtolower( $preimage ),
-            'sha256_check'  => $computed_hash === strtolower( $payment_hash ),
+            'sha256_check'  => true,
         ], 200 );
     }
 

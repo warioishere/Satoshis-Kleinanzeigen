@@ -225,6 +225,26 @@
         // Deeplink (for buyer)
         if (!isVendor) {
             html += '<a href="' + escAttr(safeUri(data.deeplink)) + '" class="skl-deeplink-btn">⚡ In Wallet öffnen</a>';
+
+            /*
+             * Zahlen mit einer verbundenen Wallet.
+             *
+             * Der Weg ueber QR-Code oder Deeplink verlaesst die Seite — wir
+             * erfahren nie, was passiert ist, und muessen hinterher den Server
+             * des Verkaeufers fragen. Zahlt der Kaeufer dagegen hier, gibt
+             * seine Wallet das Preimage zurueck: der einzige Nachweis, bei dem
+             * niemand dem Verkaeufer glauben muss.
+             *
+             * Nur anbieten, wenn wirklich eine Wallet da ist — ein Knopf, der
+             * beim Klick erklaert, dass er nicht geht, ist schlimmer als
+             * keiner.
+             */
+            if (window.webln) {
+                html += '<button type="button" class="skl-webln-btn" ' +
+                    'data-bolt11="' + escAttr(data.payment_request) + '" ' +
+                    'data-payment-hash="' + escAttr(paymentHash) + '">' +
+                    '⚡ Mit verbundener Wallet zahlen</button>';
+            }
         }
 
         // Payment status — settled state comes from the server.
@@ -424,6 +444,57 @@
         }).fail(function () {
             alert('Netzwerkfehler.');
             $btn.prop('disabled', false).html('⚡ Invoice erstellen');
+        });
+    });
+
+    /* ─── Zahlen mit verbundener Wallet, Nachweis per Preimage ─── */
+
+    $(document).on('click', '.skl-webln-btn', function (e) {
+        e.preventDefault();
+
+        var $btn = $(this);
+        var bolt11 = $btn.data('bolt11');
+        var paymentHash = $btn.data('payment-hash');
+
+        if (!bolt11 || !window.webln) return;
+
+        var urspruenglich = $btn.html();
+        $btn.prop('disabled', true).text('Warte auf Wallet…');
+
+        window.webln.enable().then(function () {
+            return window.webln.sendPayment(bolt11);
+        }).then(function (res) {
+            var preimage = res && res.preimage;
+
+            if (!preimage) {
+                // Gezahlt hat er vermutlich trotzdem — nur ohne Nachweis.
+                // Dann uebernimmt das uebliche Abfragen.
+                $btn.prop('disabled', false).html(urspruenglich);
+                startPaymentPolling(paymentHash);
+                return;
+            }
+
+            return $.ajax({
+                url: SKL.resturl + 'verify-preimage',
+                method: 'POST',
+                data: { payment_hash: paymentHash, preimage: preimage },
+                headers: { 'X-WP-Nonce': SKL.restNonce }
+            }).done(function () {
+                stopPaymentPolling(paymentHash);
+                updatePaymentStatus(paymentHash, '✅ Zahlung bestätigt!', true);
+                $btn.remove();
+            }).fail(function () {
+                // Der Nachweis kam nicht durch — die Zahlung ist deshalb nicht
+                // weg. Zurueck auf den gewohnten Weg.
+                $btn.prop('disabled', false).html(urspruenglich);
+                startPaymentPolling(paymentHash);
+            });
+        }).catch(function (err) {
+            // Abgebrochen oder abgelehnt: kein Fehler, nur nicht gezahlt.
+            $btn.prop('disabled', false).html(urspruenglich);
+            if (err && err.message) {
+                updatePaymentStatus(paymentHash, escHtml(err.message), false);
+            }
         });
     });
 

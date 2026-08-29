@@ -39,8 +39,12 @@ class Calculator {
      * Lightning address. The list said 'lnurl', a value nothing ever wrote —
      * every payment confirmed that way silently built no reputation — and
      * that path is now the only accepted one for Lightning addresses.
+     *
+     * 'preimage' is the strongest of them all: the buyer's wallet hands over a
+     * secret that only exists once the payment really settled. Every other
+     * source ends in a server the vendor named.
      */
-    const VERIFIED_SOURCES = [ 'nwc', 'lndhub', 'lud21', 'onchain' ];
+    const VERIFIED_SOURCES = [ 'nwc', 'lndhub', 'lud21', 'onchain', 'preimage' ];
 
     public static function is_reputation_valid( object $payment ): bool {
         // Reputation claims that Bitcoin actually moved. Only a settled

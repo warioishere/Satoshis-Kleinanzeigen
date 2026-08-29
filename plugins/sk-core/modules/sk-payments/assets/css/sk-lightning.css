@@ -168,8 +168,11 @@
     color: #e8ecf0;
 }
 
-.skl-deeplink-btn {
+.skl-deeplink-btn,
+.skl-webln-btn {
     display: block;
+    width: 100%;
+    box-sizing: border-box;
     text-align: center;
     background: #f7931a;
     color: #fff !important;
@@ -184,6 +187,28 @@
 
 .skl-deeplink-btn:hover {
     background: #e8850f;
+}
+
+/*
+ * Zahlen mit einer verbundenen Wallet: dieselbe Form wie der Deeplink,
+ * aber zurueckhaltender. Der Knopf kommt hinzu, er soll den gewohnten
+ * nicht verdraengen.
+ */
+.skl-webln-btn {
+    background: transparent;
+    color: #f7931a !important;
+    border: 1px solid rgba(247, 147, 26, 0.5);
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.skl-webln-btn:hover {
+    background: rgba(247, 147, 26, 0.12);
+}
+
+.skl-webln-btn:disabled {
+    opacity: 0.6;
+    cursor: default;
 }
 
 .skl-confirm-btn {
