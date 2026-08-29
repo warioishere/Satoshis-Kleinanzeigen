@@ -270,6 +270,19 @@ final class VerifiedLinks {
 
         self::save( $user_id, $rows );
 
+        /**
+         * Eine Adresse wurde bestaetigt.
+         *
+         * Der Shop-Import haengt daran seine Freigabe — der Kern selbst weiss
+         * nichts von Haendlern, deshalb ein Signal statt eines Aufrufs.
+         *
+         * @param int    $user_id
+         * @param string $url
+         */
+        if ( $ergebnis === self::OK ) {
+            do_action( 'sk_link_verified', $user_id, $url );
+        }
+
         return $ergebnis;
     }
 

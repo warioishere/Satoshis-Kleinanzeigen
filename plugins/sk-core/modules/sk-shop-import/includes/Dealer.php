@@ -39,6 +39,21 @@ final class Dealer {
         update_user_meta( $user_id, self::META_ENABLED, $on ? 1 : 0 );
     }
 
+    /**
+     * Nach einer bestaetigten Adresse den Importhaken setzen.
+     *
+     * Die Freigabe folgte bisher allein aus may_import(); im Admin stand die
+     * Box dann leer, obwohl der Haendler importieren darf. Der Haken wird
+     * gesetzt, nie automatisch entfernt — eine abgelaufene Bestaetigung soll
+     * keine Freigabe zuruecknehmen, die der Betreiber vielleicht selbst
+     * gegeben hat. Wegnehmen bleibt seine Entscheidung.
+     */
+    public static function enable_on_verification( int $user_id ): void {
+        if ( $user_id > 0 && ! self::is_enabled( $user_id ) ) {
+            self::set_enabled( $user_id, true );
+        }
+    }
+
     public static function is_verified( int $user_id ): bool {
         return (int) get_user_meta( $user_id, self::META_VERIFIED, true ) === 1;
     }

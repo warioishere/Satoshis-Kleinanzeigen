@@ -79,23 +79,7 @@ $base = add_query_arg( [ 'page' => 'sk', 'tab' => 'dealers' ], admin_url( 'admin
                         ?>
                     </td>
                     <td><input type="checkbox" name="verified" value="1" <?php checked( Dealer::is_verified( $vendor->ID ) ); ?>></td>
-                    <td>
-                        <input type="checkbox" name="import" value="1" <?php checked( Dealer::is_enabled( $vendor->ID ) ); ?>>
-                        <?php
-                        /*
-                         * Ohne diesen Zusatz sieht die Zeile widerspruechlich
-                         * aus: leeres Haekchen neben jemandem, der importieren
-                         * darf. Das Haekchen ist der Weg von Hand, die
-                         * bestaetigte Domain der andere — beide fuehren zur
-                         * Freigabe, und hier steht, welcher gerade greift.
-                         */
-                        if ( ! Dealer::is_enabled( $vendor->ID ) && Dealer::may_import( $vendor->ID ) ) {
-                            echo '<br><span style="color:#f7931a;font-size:11px;">'
-                                . esc_html__( 'darf über bestätigte Domain', 'sk-core' )
-                                . '</span>';
-                        }
-                        ?>
-                    </td>
+                    <td><input type="checkbox" name="import" value="1" <?php checked( Dealer::is_enabled( $vendor->ID ) ); ?>></td>
                     <td><?php echo $last ? esc_html( wp_date( 'd.m.Y H:i', $last ) ) : '—'; ?></td>
                     <td><button type="submit" class="button"><?php esc_html_e( 'Speichern', 'sk-core' ); ?></button></td>
                 </form>

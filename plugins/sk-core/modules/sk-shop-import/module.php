@@ -54,6 +54,9 @@ final class Module {
 
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue' ], 20 );
 
+        // Wer seine Adresse bestaetigt, ist damit zum Import freigeschaltet.
+        add_action( 'sk_link_verified', [ Dealer::class, 'enable_on_verification' ] );
+
         add_filter( 'sk_php_dashboard_pages', function ( $pages ) {
             $pages['dealers'] = new AdminPage();
             return $pages;
