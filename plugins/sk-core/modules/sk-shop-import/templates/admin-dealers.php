@@ -36,12 +36,12 @@ $base = add_query_arg( [ 'page' => 'sk', 'tab' => 'dealers' ], admin_url( 'admin
 <?php if ( empty( $vendors ) ) : ?>
     <p><?php esc_html_e( 'Kein Verkäufer gefunden. Nutze die Suche, um einen freizuschalten.', 'sk-core' ); ?></p>
 <?php else : ?>
-    <table class="wp-list-table widefat fixed striped" style="max-width:1200px;">
+    <table class="wp-list-table widefat fixed striped" style="max-width:1280px;">
         <thead>
             <tr>
                 <th><?php esc_html_e( 'Verkäufer', 'sk-core' ); ?></th>
                 <th style="width:240px;"><?php esc_html_e( 'Shop-Adresse', 'sk-core' ); ?></th>
-                <th style="width:150px;"><?php esc_html_e( 'bestätigte Domain', 'sk-core' ); ?></th>
+                <th style="width:220px;"><?php esc_html_e( 'bestätigter Verweis', 'sk-core' ); ?></th>
                 <th style="width:90px;"><?php esc_html_e( 'geprüft', 'sk-core' ); ?></th>
                 <th style="width:110px;"><?php esc_html_e( 'darf importieren', 'sk-core' ); ?></th>
                 <th style="width:150px;"><?php esc_html_e( 'letzter Import', 'sk-core' ); ?></th>
@@ -69,10 +69,19 @@ $base = add_query_arg( [ 'page' => 'sk', 'tab' => 'dealers' ], admin_url( 'admin
                          * gesetzt wird. Ohne diese Spalte sieht es im Admin
                          * aus, als sei nichts passiert.
                          */
-                        $sk_hosts = \SK\Core\Verification\VerifiedLinks::confirmed_hosts( $vendor->ID );
+                        $sk_links = \SK\Core\Verification\VerifiedLinks::confirmed( $vendor->ID );
 
-                        if ( $sk_hosts ) {
-                            echo '<span style="color:#f7931a;">✓ ' . esc_html( implode( ', ', $sk_hosts ) ) . '</span>';
+                        if ( $sk_links ) {
+                            // Die volle Adresse, nicht nur der Host: nur so
+                            // laesst sich nachsehen, wo der Verweis steht.
+                            foreach ( $sk_links as $sk_link ) {
+                                printf(
+                                    '<div style="margin-bottom:2px;"><span style="color:#f7931a;">✓</span> <a href="%1$s" target="_blank" rel="noopener nofollow" title="%2$s">%3$s</a></div>',
+                                    esc_url( $sk_link['url'] ),
+                                    esc_attr( $sk_link['url'] ),
+                                    esc_html( mb_strimwidth( preg_replace( '#^https?://#', '', $sk_link['url'] ), 0, 34, '…' ) )
+                                );
+                            }
                         } else {
                             echo '<span style="color:#646970;">—</span>';
                         }
