@@ -65,6 +65,19 @@ do_action( 'sk_dashboard_wrap_start' );
 
         <div class="sk-shop-import">
 
+            <?php if ( empty( $may_import ) ) : ?>
+
+                <div class="sk-alert sk-alert-info">
+                    <strong><?php esc_html_e( 'Noch nicht freigeschaltet', 'sk-core' ); ?></strong><br>
+                    <?php esc_html_e( 'Einen ganzen Katalog einzustellen setzt voraus, dass wir wissen, wem der Shop gehört. Bestätige dazu die Adresse deines Shops — du trägst sie ein und setzt dort einen Verweis zurück auf dein Profil. Danach steht der Import hier bereit.', 'sk-core' ); ?>
+                </div>
+
+                <div class="sk-section-content">
+                    <a href="<?php echo esc_url( $verify_url ); ?>" class="sk-btn sk-btn-theme"><?php esc_html_e( 'Zur Verifizierung', 'sk-core' ); ?></a>
+                </div>
+
+            <?php else : ?>
+
             <ol class="sk-import-steps">
                 <?php foreach ( $steps as $number => $label ) : ?>
                     <li class="sk-import-step<?php echo $number === $current ? ' is-current' : ( $number < $current ? ' is-done' : '' ); ?>">
@@ -499,6 +512,8 @@ do_action( 'sk_dashboard_wrap_start' );
                         </div>
                     </form>
                 </div>
+
+            <?php endif; ?>
 
             <?php endif; ?>
         </div>

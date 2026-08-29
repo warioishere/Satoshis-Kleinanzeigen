@@ -460,6 +460,13 @@ class DashboardPage extends DashboardModule {
         // darauf beschraenkt.
         $verified_hosts = \SK\Core\Verification\VerifiedLinks::confirmed_hosts( $vendor_id );
 
+        // Darf er ueberhaupt importieren? Wenn nicht, zeigt die Seite den Weg
+        // dorthin statt eines Formulars, das stumm nichts tut.
+        $may_import   = Dealer::may_import( $vendor_id );
+        $verify_url   = function_exists( 'sk_get_navigation_url' )
+            ? sk_get_navigation_url( 'verification' )
+            : home_url( '/dashboard/verification/' );
+
         return compact(
             'step',
             'url',
@@ -468,6 +475,8 @@ class DashboardPage extends DashboardModule {
             'is_json',
             'shop_url',
             'verified_hosts',
+            'may_import',
+            'verify_url',
             'mapping',
             'items',
             'item_count',
