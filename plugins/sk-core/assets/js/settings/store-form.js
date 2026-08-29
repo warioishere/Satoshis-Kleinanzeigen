@@ -197,7 +197,7 @@ function skStoreToast(message, type) {
     $('input[name="btc_address"]').trigger('input');
     $('input[name="lightning_address"]').trigger('input');
 
-    function skpTest(btn, resultEl, action, dataFn) {
+    function skpTest(btn, resultEl, action, dataFn, onError) {
         btn.on('click', function() {
             var $b = $(this), $r = $(resultEl);
             $b.prop('disabled', true);
@@ -207,7 +207,9 @@ function skStoreToast(message, type) {
                 if (res.success) {
                     $r.html('<span class="skp-test-ok">' + (res.data.message || 'OK') + '</span>');
                 } else {
-                    $r.html('<span class="skp-test-err">' + (res.data && res.data.message ? res.data.message : 'Fehler') + '</span>');
+                    var msg = (res.data && res.data.message) ? res.data.message : 'Fehler';
+                    $r.html('<span class="skp-test-err">' + msg + '</span>');
+                    if (typeof onError === 'function') onError(msg);
                 }
             }).fail(function() {
                 $b.prop('disabled', false);
@@ -230,5 +232,48 @@ function skStoreToast(message, type) {
     });
     skpTest($('#skp-test-lnaddr'), '#skp-test-lnaddr-result', 'skp_test_lnaddr', function() {
         return { value: $('input[name="lightning_address"]').val() };
+    }, function(message) {
+        // Eine abgewiesene Lightning-Adresse braucht mehr als eine rote Zeile:
+        // der Haendler muss wissen, welche Wallet stattdessen geht.
+        skpShowLnaddrModal(message);
     });
+
+    /**
+     * Fenster im Muster des Paket-Infofensters — dieselben Klassen, damit
+     * kein zweites Modal-Design entsteht.
+     */
+    function skpShowLnaddrModal(message) {
+        var el = document.getElementById('skp-lnaddr-reject');
+        if (!el) return;
+
+        if (message) {
+            var reason = el.querySelector('#skp-lnaddr-reject-reason');
+            if (reason) reason.textContent = message;
+        }
+
+        el.classList.add('is-visible');
+        var close = el.querySelector('.sk-pack-info__close');
+        if (close) close.focus();
+    }
+
+    document.addEventListener('click', function (e) {
+        if (!e.target || !e.target.closest) return;
+        if (e.target.closest('#skp-lnaddr-reject .sk-pack-info__close')
+            || e.target.closest('#skp-lnaddr-reject .sk-pack-info__backdrop')) {
+            e.preventDefault();
+            var el = document.getElementById('skp-lnaddr-reject');
+            if (el) el.classList.remove('is-visible');
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Escape') return;
+        var el = document.getElementById('skp-lnaddr-reject');
+        if (el) el.classList.remove('is-visible');
+    });
+
+    // Wurde beim Speichern abgewiesen? Dann gleich beim Laden erklaeren.
+    if (window.skpLnaddrRejected) {
+        skpShowLnaddrModal(window.skpLnaddrRejected);
+    }
 })(jQuery);

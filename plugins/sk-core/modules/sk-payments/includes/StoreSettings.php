@@ -16,6 +16,10 @@ class StoreSettings {
         add_action( 'wp_ajax_skp_test_nwc', [ $this, 'ajax_test_nwc' ] );
         add_action( 'wp_ajax_skp_test_lndhub', [ $this, 'ajax_test_lndhub' ] );
         add_action( 'wp_ajax_skp_test_lnaddr', [ $this, 'ajax_test_lnaddr' ] );
+
+        // Erklaerfenster fuer eine abgewiesene Adresse, plus die Meldung des
+        // letzten Speicherversuchs.
+        add_action( 'wp_footer', [ $this, 'render_reject_modal' ] );
     }
 
     /**
@@ -120,6 +124,34 @@ class StoreSettings {
         }
 
         wp_send_json_success( [ 'message' => 'LNDHub-Verbindung erfolgreich' ] );
+    }
+
+    /**
+     * Erklaerfenster ausgeben — nur auf der Seite mit den Shopdaten.
+     */
+    public function render_reject_modal(): void {
+        if ( ! function_exists( 'sk_is_seller_dashboard' ) || ! sk_is_seller_dashboard() ) {
+            return;
+        }
+
+        global $wp;
+
+        if ( ( $wp->query_vars['settings'] ?? '' ) !== 'store' ) {
+            return;
+        }
+
+        $user_id = get_current_user_id();
+        $message = get_transient( 'skp_lnaddr_msg_' . $user_id );
+
+        if ( $message ) {
+            delete_transient( 'skp_lnaddr_msg_' . $user_id );
+            printf(
+                '<script>window.skpLnaddrRejected = %s;</script>',
+                wp_json_encode( $message )
+            );
+        }
+
+        include SK_PAYMENTS_PATH . '/templates/lnaddr-reject-modal.php';
     }
 
     /**
