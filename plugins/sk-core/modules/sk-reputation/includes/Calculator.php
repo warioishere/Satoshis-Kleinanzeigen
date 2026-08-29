@@ -33,8 +33,14 @@ class Calculator {
      *
      * 'vendor' is the manual button in the seller dashboard — nothing is
      * checked there, so it must never build reputation.
+     *
+     * 'lud21' is what LightningController::settle_payment() actually writes
+     * when a payment was confirmed against the verify URL of the vendor's
+     * Lightning address. The list said 'lnurl', a value nothing ever wrote —
+     * every payment confirmed that way silently built no reputation — and
+     * that path is now the only accepted one for Lightning addresses.
      */
-    const VERIFIED_SOURCES = [ 'nwc', 'lndhub', 'lnurl', 'onchain' ];
+    const VERIFIED_SOURCES = [ 'nwc', 'lndhub', 'lud21', 'onchain' ];
 
     public static function is_reputation_valid( object $payment ): bool {
         // Reputation claims that Bitcoin actually moved. Only a settled
