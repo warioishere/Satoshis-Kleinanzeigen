@@ -266,7 +266,7 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
                                     && \SK\Modules\ShopImport\Variants::pack_allows( (int) get_the_ID() ) ) :
                                     ?>
                                     <ul class="pack_features">
-                                        <li><i class="fas fa-file-import"></i> WooCommerce Produkt Importe</li>
+                                        <li><i class="fas fa-file-import"></i> Woo &amp; Shopify Produkt Import</li>
                                         <li><i class="fas fa-layer-group"></i> Variable Produkte</li>
                                         <li><i class="fas fa-bolt"></i> Adaptive Preise in Sats</li>
                                         <li><i class="fas fa-chart-bar"></i> Umsatz &amp; CSV-Export</li>
