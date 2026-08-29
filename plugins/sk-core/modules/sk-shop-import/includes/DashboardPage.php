@@ -17,6 +17,16 @@ class DashboardPage extends DashboardModule {
     const NONCE = 'sk_shop_import';
 
     /**
+     * Zuletzt geholter Shopify-Shop.
+     *
+     * Bewusst nicht Dealer::META_SHOP_URL: das ist die vom Betreiber
+     * gepflegte Adresse des Haendlers, an der die Herkunftsangabe der
+     * Inserate und die Waehrungserkennung nach Endung haengen. Sie mit einer
+     * Eingabe des Haendlers zu ueberschreiben, verstellt beides still.
+     */
+    const META_FETCH_URL = '_sk_import_shopify_url';
+
+    /**
      * Immer registrieren, nicht nur fuer Haendler.
      *
      * Query-Variable und Rewrite-Regel sind global; haengt die Registrierung
@@ -149,9 +159,8 @@ class DashboardPage extends DashboardModule {
                 Storage::forget( $vorige );
             }
 
-            // Beim naechsten Mal steht die Adresse schon im Feld, und der
-            // Auftrag traegt sie als Herkunft der Inserate.
-            update_user_meta( $vendor_id, Dealer::META_SHOP_URL, $shop );
+            // Beim naechsten Mal steht die Adresse schon im Feld.
+            update_user_meta( $vendor_id, self::META_FETCH_URL, $shop );
 
             update_user_meta( $vendor_id, '_sk_import_file', $path );
             wp_safe_redirect( add_query_arg( 'schritt', 'zuordnen', $this->url() ) );
@@ -240,7 +249,12 @@ class DashboardPage extends DashboardModule {
                 'default_cat'  => Settings::default_category( $vendor_id ),
                 'image_cap'    => max( 0, (int) ( $_POST['sk_image_cap'] ?? Importer::DEFAULT_IMAGE_CAP ) ),
                 'status'       => self::import_status(),
-                'source'       => Dealer::shop_url( $vendor_id ),
+                // Bei einem geholten Katalog ist der geholte Shop die
+                // Herkunft; bei einer Datei bleibt es die Adresse des
+                // Haendlers.
+                'source'       => Source::is_json( $path )
+                    ? (string) get_user_meta( $vendor_id, self::META_FETCH_URL, true )
+                    : Dealer::shop_url( $vendor_id ),
                 'category_map' => Settings::category_map( $vendor_id ),
             ],
             count( $items )
@@ -405,9 +419,11 @@ class DashboardPage extends DashboardModule {
         $categories = get_terms( [ 'taxonomy' => 'product_cat', 'hide_empty' => false ] );
         $rate       = Rate::btc_rate( 'EUR' );
         $url        = $this->url();
-        // Vorbelegung des Eingabefelds: was der Haendler zuletzt geholt hat,
-        // sonst die vom Betreiber hinterlegte Adresse.
-        $shop_url   = Dealer::shop_url( $vendor_id );
+        // Nur das zuletzt Geholte. Die Adresse aus dem Haendlerprofil gehoert
+        // nicht hierher — sie beschreibt den Shop des Haendlers, nicht die
+        // Quelle eines Shopify-Abrufs, und stuende bei einem
+        // WooCommerce-Haendler als Vorschlag da, der nie funktionieren kann.
+        $shop_url   = (string) get_user_meta( $vendor_id, self::META_FETCH_URL, true );
 
         return compact(
             'step',
