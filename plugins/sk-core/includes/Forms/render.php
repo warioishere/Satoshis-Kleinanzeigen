@@ -120,6 +120,9 @@ if ( ! function_exists( 'sk_form_input' ) ) {
 		$placeholder   = $args['placeholder'] ?? '';
 		$required      = ! empty( $args['required'] );
 		$disabled      = ! empty( $args['disabled'] );
+		// Fuer Werte, die der Nutzer kopieren soll: disabled liesse sich in den
+		// meisten Browsern nicht markieren, readonly schon.
+		$readonly      = ! empty( $args['readonly'] );
 		$step          = $args['step'] ?? '';
 		$min           = $args['min'] ?? '';
 		$max           = $args['max'] ?? '';
@@ -137,6 +140,7 @@ if ( ! function_exists( 'sk_form_input' ) ) {
 		if ( $placeholder !== '' ) $attrs .= ' placeholder="' . esc_attr( $placeholder ) . '"';
 		if ( $required )           $attrs .= ' required';
 		if ( $disabled )           $attrs .= ' disabled';
+		if ( $readonly )           $attrs .= ' readonly';
 		if ( $step !== '' )        $attrs .= ' step="' . esc_attr( $step ) . '"';
 		if ( $min !== '' )         $attrs .= ' min="' . esc_attr( $min ) . '"';
 		if ( $max !== '' )         $attrs .= ' max="' . esc_attr( $max ) . '"';
