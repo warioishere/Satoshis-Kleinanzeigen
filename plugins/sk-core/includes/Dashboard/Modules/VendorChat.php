@@ -275,6 +275,10 @@ class VendorChat extends DashboardModule {
 			'id'            => $chat_id,
 			'other_user_id' => $other_user_id,
 			'display_name'  => $this->display_name_for( $other_user_id ),
+			// Name und Bild des Gegenuebers fuehren auf dessen Profil.
+			'other_url'     => $other_id && function_exists( 'sk_get_store_url' )
+				? (string) sk_get_store_url( $other_id )
+				: '',
 			'product_title' => get_the_title( $product_id ),
 			'product_url'   => get_permalink( $product_id ),
 			'is_archived'   => in_array( $user_id, (array) $archived_by ),

@@ -12376,3 +12376,17 @@ textarea.wp-editor-area.post_content {
 	font-weight: 600;
 	vertical-align: middle;
 }
+
+/* Name und Bild des Gegenuebers im Chatkopf fuehren aufs Profil. */
+.dvc-chat-partner {
+	color: inherit;
+	text-decoration: none;
+}
+
+.dvc-chat-partner:hover {
+	color: #f7931a;
+}
+
+.dvc-chat-partner img {
+	display: block;
+}

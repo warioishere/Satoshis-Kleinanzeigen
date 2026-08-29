@@ -13,6 +13,7 @@
  * @var array[]    $active_rows     Sidebar entries, with preview line.
  * @var array[]    $archived_rows   Sidebar entries, without preview line.
  * @var array|null $open_chat       Opened chat, null if none is viewable.
+ *                                  Enthaelt other_url: Profil des Gegenuebers.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -132,9 +133,25 @@ do_action( 'sk_dashboard_wrap_start' );
 					<!-- Chat header -->
 					<div class="dvc-chat-header">
 						<div class="dvc-chat-header-info">
-							<?php echo get_avatar( $open_chat['other_user_id'], 40 ); ?>
+							<?php
+							// Bild und Name fuehren auf das Profil des
+							// Gegenuebers — von hier aus will man wissen,
+							// mit wem man es zu tun hat.
+							$dvc_profil = $open_chat['other_url'] ?? '';
+							?>
+							<?php if ( $dvc_profil !== '' ) : ?>
+								<a class="dvc-chat-partner" href="<?php echo esc_url( $dvc_profil ); ?>"><?php echo get_avatar( $open_chat['other_user_id'], 40 ); ?></a>
+							<?php else : ?>
+								<?php echo get_avatar( $open_chat['other_user_id'], 40 ); ?>
+							<?php endif; ?>
 							<div>
-								<strong><?php echo esc_html( $open_chat['display_name'] ); ?></strong>
+								<strong>
+									<?php if ( $dvc_profil !== '' ) : ?>
+										<a class="dvc-chat-partner" href="<?php echo esc_url( $dvc_profil ); ?>"><?php echo esc_html( $open_chat['display_name'] ); ?></a>
+									<?php else : ?>
+										<?php echo esc_html( $open_chat['display_name'] ); ?>
+									<?php endif; ?>
+								</strong>
 								<div class="dvc-chat-product-link">
 									<a href="<?php echo esc_url( $open_chat['product_url'] ); ?>" target="_blank">
 										<i class="fas fa-box"></i>
