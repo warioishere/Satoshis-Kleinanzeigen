@@ -280,12 +280,16 @@ function telegram_build_caption_and_media($post_id) {
     }
     if ($permalink) {
         /*
-         * Direkt ins Anschreiben statt nur aufs Inserat: #chat oeffnet dort
-         * das Chatfenster, als haette der Besucher auf das Symbol geklickt.
-         * Als Fragment und nicht als Abfrageparameter, damit die Seite
-         * weiterhin aus dem Cache kommt — der Server sieht das # nie.
+         * Beide Wege, nicht einer. Der Grundlink aufs Inserat ist der, den
+         * die meisten wollen — sie schauen erst, bevor sie schreiben.
+         * Darunter der Direkteinstieg ins Anschreiben: #chat oeffnet auf der
+         * Inseratsseite das Chatfenster, als haette der Besucher auf das
+         * Symbol geklickt. Als Fragment und nicht als Abfrageparameter,
+         * damit die Seite weiterhin aus dem Cache kommt — der Server sieht
+         * das # nie.
          */
-        $caption .= "\n\n💬 Direkt anschreiben 👉 " . tn_tg_html_esc($permalink . '#chat');
+        $caption .= "\n\n👉 Zum Inserat: " . tn_tg_html_esc($permalink);
+        $caption .= "\n💬 Direkt anschreiben: " . tn_tg_html_esc($permalink . '#chat');
     }
 
     $image_id  = get_post_thumbnail_id($post_id);
