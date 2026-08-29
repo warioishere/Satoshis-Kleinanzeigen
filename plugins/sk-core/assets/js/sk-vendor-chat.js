@@ -22,6 +22,10 @@
 			// Start chat icon on product page
 			$(document).on('click', '.dvc-start-chat-icon', this.openChatModal);
 
+			// Blockieren / Blockierung aufheben
+			$(document).on('click', '.dvc-block-btn', this.blockUser);
+			$(document).on('click', '.dvc-unblock-btn', this.unblockUser);
+
 			// Modal close
 			$(document).on('click', '.dvc-modal-close', this.closeModal);
 			$(document).on('click', '.dvc-modal', function (e) {
@@ -310,6 +314,54 @@
 			if (html) {
 				$messagesArea.append(html);
 			}
+		},
+
+		blockUser: function (e) {
+			e.preventDefault();
+			e.stopPropagation();
+
+			if (!confirm('Diesen Nutzer blockieren? In dieser Unterhaltung kann danach niemand mehr schreiben.')) {
+				return;
+			}
+
+			DVC.blockRequest('dvc_block_user', $(this).data('chat-id'));
+		},
+
+		unblockUser: function (e) {
+			e.preventDefault();
+			e.stopPropagation();
+
+			DVC.blockRequest('dvc_unblock_user', $(this).data('chat-id'));
+		},
+
+		/** Beide Richtungen laufen gleich: melden, dann neu laden. */
+		blockRequest: function (action, chatId) {
+			if (!chatId) {
+				return;
+			}
+
+			$.ajax({
+				url: dvcAjax.ajaxurl,
+				type: 'POST',
+				data: {
+					action: action,
+					nonce: dvcAjax.nonce,
+					chat_id: chatId,
+				},
+				success: function (response) {
+					if (response.success) {
+						DVC.showNotification(response.data.message, 'success');
+						setTimeout(function () {
+							window.location.reload();
+						}, 800);
+					} else {
+						DVC.showNotification(response.data.message, 'error');
+					}
+				},
+				error: function () {
+					DVC.showNotification('Ein Fehler ist aufgetreten. Bitte versuche es erneut.', 'error');
+				},
+			});
 		},
 
 		archiveChat: function (e) {

@@ -153,6 +153,15 @@ do_action( 'sk_dashboard_wrap_start' );
 									<i class="fas fa-archive"></i>
 								</button>
 							<?php endif; ?>
+							<?php if ( ! empty( $open_chat['blocked_by_me'] ) ) : ?>
+								<button class="dvc-action-btn dvc-unblock-btn" data-chat-id="<?php echo esc_attr( $open_chat['id'] ); ?>" title="<?php esc_attr_e( 'Blockierung aufheben', 'sk-core' ); ?>">
+									<i class="fas fa-user-check"></i>
+								</button>
+							<?php else : ?>
+								<button class="dvc-action-btn dvc-block-btn" data-chat-id="<?php echo esc_attr( $open_chat['id'] ); ?>" title="<?php esc_attr_e( 'Blockieren', 'sk-core' ); ?>">
+									<i class="fas fa-user-slash"></i>
+								</button>
+							<?php endif; ?>
 							<button class="dvc-action-btn dvc-delete-btn" data-chat-id="<?php echo esc_attr( $open_chat['id'] ); ?>" title="<?php esc_attr_e( 'Löschen', 'sk-core' ); ?>">
 								<i class="fas fa-trash"></i>
 							</button>
@@ -193,12 +202,23 @@ do_action( 'sk_dashboard_wrap_start' );
 
 					<!-- Message input -->
 					<div class="dvc-message-input-area">
+						<?php if ( ! empty( $open_chat['is_blocked'] ) ) : ?>
+							<p class="dvc-blocked-notice">
+								<i class="fas fa-user-slash"></i>
+								<?php
+								echo ! empty( $open_chat['blocked_by_me'] )
+									? esc_html__( 'Du hast diesen Nutzer blockiert. In dieser Unterhaltung kann niemand mehr schreiben.', 'sk-core' )
+									: esc_html__( 'In dieser Unterhaltung kann nicht mehr geschrieben werden.', 'sk-core' );
+								?>
+							</p>
+						<?php else : ?>
 						<form class="dvc-send-message-form" data-chat-id="<?php echo esc_attr( $open_chat['id'] ); ?>">
 							<textarea
 								name="message"
 								class="dvc-message-input"
 								placeholder="<?php esc_attr_e( 'Nachricht schreiben...', 'sk-core' ); ?>"
 								rows="3"
+								maxlength="<?php echo esc_attr( \SK\Core\Dashboard\Modules\VendorChat::MAX_MESSAGE_LENGTH ); ?>"
 								required
 							></textarea>
 							<button type="submit" class="dvc-send-btn">
@@ -206,6 +226,7 @@ do_action( 'sk_dashboard_wrap_start' );
 								<?php esc_html_e( 'Senden', 'sk-core' ); ?>
 							</button>
 						</form>
+						<?php endif; ?>
 					</div>
 
 				<?php else : ?>

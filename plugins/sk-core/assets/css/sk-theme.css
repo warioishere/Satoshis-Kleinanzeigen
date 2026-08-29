@@ -10201,6 +10201,29 @@ a.sk-sub-order-action:hover {
 	box-shadow: 0 4px 8px rgba(211, 47, 47, 0.3);
 }
 
+.dvc-action-btn.dvc-block-btn:hover {
+	background: #b8860b;
+	border-color: #b8860b;
+	color: #ffffff;
+	box-shadow: 0 4px 8px rgba(184, 134, 11, 0.3);
+}
+
+/* Statt des Eingabefelds, solange eine Blockierung steht. */
+.dvc-blocked-notice {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	margin: 0;
+	padding: 0.75rem 1rem;
+	background: #2b3240;
+	border: 1px solid #3a4252;
+	border-radius: 8px;
+	color: #c5ccd6;
+	font-size: 14px;
+	text-align: center;
+}
+
 /* === Messages Area ====================================================== */
 .dvc-messages-area {
 	flex: 1;

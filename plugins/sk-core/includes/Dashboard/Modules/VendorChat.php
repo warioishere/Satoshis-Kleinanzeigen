@@ -16,6 +16,20 @@ use SK\Core\Dashboard\DashboardModule;
  */
 class VendorChat extends DashboardModule {
 
+	/** Zeichen je Nachricht. Ein Inseratstext ist kuerzer. */
+	const MAX_MESSAGE_LENGTH = 5000;
+
+	/** Neue Unterhaltungen je Nutzer und Zeitfenster. */
+	const RATE_START_MAX    = 5;
+	const RATE_START_WINDOW = 600;
+
+	/** Nachrichten je Nutzer und Minute. */
+	const RATE_SEND_MAX    = 20;
+	const RATE_SEND_WINDOW = 60;
+
+	/** User-Meta: wen dieser Nutzer blockiert hat. */
+	const BLOCKED_META = '_dvc_blocked_users';
+
 	public function config(): ?array {
 		return [
 			'slug'          => 'vendor-chat',
@@ -49,6 +63,8 @@ class VendorChat extends DashboardModule {
 		add_action( 'wp_ajax_dvc_delete_chat',    [ $this, 'ajax_delete_chat' ] );
 		add_action( 'wp_ajax_dvc_archive_chat',   [ $this, 'ajax_archive_chat' ] );
 		add_action( 'wp_ajax_dvc_unarchive_chat', [ $this, 'ajax_unarchive_chat' ] );
+		add_action( 'wp_ajax_dvc_block_user',     [ $this, 'ajax_block_user' ] );
+		add_action( 'wp_ajax_dvc_unblock_user',   [ $this, 'ajax_unblock_user' ] );
 	}
 
 	// =========================================================================
@@ -253,6 +269,8 @@ class VendorChat extends DashboardModule {
 			];
 		}
 
+		$other_id = (int) $other_user_id;
+
 		return [
 			'id'            => $chat_id,
 			'other_user_id' => $other_user_id,
@@ -260,6 +278,11 @@ class VendorChat extends DashboardModule {
 			'product_title' => get_the_title( $product_id ),
 			'product_url'   => get_permalink( $product_id ),
 			'is_archived'   => in_array( $user_id, (array) $archived_by ),
+			// Wer selbst blockiert hat, kann es zuruecknehmen. Wer blockiert
+			// wurde, sieht nur das geschlossene Eingabefeld — sonst waere die
+			// Sperre eine Mitteilung an den Blockierten.
+			'blocked_by_me' => $other_id && self::has_blocked( (int) $user_id, $other_id ),
+			'is_blocked'    => $other_id && self::is_blocked_between( (int) $user_id, $other_id ),
 			'messages'      => $messages,
 		];
 	}
@@ -287,10 +310,31 @@ class VendorChat extends DashboardModule {
 	// =========================================================================
 
 	/**
-	 * Enqueue CSS + JS on every frontend page (chat modal needed on product pages).
+	 * Skript nur auf den Seiten, auf denen der Chat vorkommt.
+	 *
+	 * Es lag bisher auf jeder Seite des Auftritts, obwohl das Fenster nur auf
+	 * Inserats-, Shop- und Anbieterseiten gerendert wird — und die
+	 * Chatuebersicht im Dashboard braucht es ebenfalls, dort haengen
+	 * Absendeformular und Auffrischung daran.
+	 */
+	private function needs_assets(): bool {
+		if ( function_exists( 'sk_is_seller_dashboard' ) && sk_is_seller_dashboard() ) {
+			return true;
+		}
+
+		return is_product() || is_shop() || is_product_category() || is_product_tag()
+			|| ( function_exists( 'sk_is_store_page' ) && sk_is_store_page() );
+	}
+
+	/**
+	 * Enqueue the chat script where the chat is reachable.
 	 *
 	 */
 	public function enqueue_assets() {
+		if ( ! $this->needs_assets() ) {
+			return;
+		}
+
 		$css_url = SK_CORE_ASSETS . '/css/sk-vendor-chat.css';
 		$js_url  = SK_CORE_ASSETS . '/js/sk-vendor-chat.js';
 		$css_path = SK_CORE_DIR . '/assets/css/sk-vendor-chat.css';
@@ -366,6 +410,7 @@ class VendorChat extends DashboardModule {
 								id="dvc-chat-message"
 								name="message"
 								rows="5"
+								maxlength="<?php echo esc_attr( self::MAX_MESSAGE_LENGTH ); ?>"
 								placeholder="<?php esc_attr_e( 'Schreibe deine Nachricht...', 'sk-core' ); ?>"
 								required
 							></textarea>
@@ -455,11 +500,55 @@ class VendorChat extends DashboardModule {
 			wp_send_json_error( [ 'message' => __( 'Ungültige Anfrage.', 'sk-core' ) ] );
 		}
 
+		/*
+		 * Anbieter und Inserat muessen zusammengehoeren.
+		 *
+		 * Ohne diese Pruefung nahm der Endpunkt jede Kombination an: ein Chat
+		 * mit einem beliebigen Nutzer ohne dessen Inserat, mit sich selbst,
+		 * mit einer nicht vergebenen ID — und als "Produkt" jeder Beitrag,
+		 * dessen Titel dann im Chattitel stand, Entwuerfe fremder Anbieter
+		 * eingeschlossen.
+		 */
+		$product = wc_get_product( $product_id );
+
+		if ( ! $product || get_post_status( $product_id ) !== 'publish' ) {
+			wp_send_json_error( [ 'message' => __( 'Dieses Inserat gibt es nicht.', 'sk-core' ) ] );
+		}
+
+		$owner_id = (int) sk_get_vendor_by_product( $product_id, true );
+
+		if ( ! $owner_id || $owner_id !== $vendor_id ) {
+			wp_send_json_error( [ 'message' => __( 'Dieses Inserat gehört diesem Anbieter nicht.', 'sk-core' ) ] );
+		}
+
+		if ( $vendor_id === $current_user_id ) {
+			wp_send_json_error( [ 'message' => __( 'Du kannst dir nicht selbst schreiben.', 'sk-core' ) ] );
+		}
+
+		if ( ! get_userdata( $vendor_id ) ) {
+			wp_send_json_error( [ 'message' => __( 'Diesen Anbieter gibt es nicht.', 'sk-core' ) ] );
+		}
+
+		if ( self::is_blocked_between( $current_user_id, $vendor_id ) ) {
+			wp_send_json_error( [ 'message' => __( 'Du kannst diesem Anbieter nicht schreiben.', 'sk-core' ) ] );
+		}
+
 		if ( empty( $message ) ) {
 			wp_send_json_error( [ 'message' => __( 'Bitte gib eine Nachricht ein.', 'sk-core' ) ] );
 		}
 
+		if ( ! self::message_length_ok( $message ) ) {
+			wp_send_json_error( [ 'message' => self::too_long_notice() ] );
+		}
+
 		$existing_chat = $this->get_chat_between_users( $current_user_id, $vendor_id, $product_id );
+
+		// Erst zaehlen, wenn feststeht, dass die Anfrage gueltig ist — sonst
+		// verbraucht eine abgewiesene Anfrage das Kontingent des Absenders.
+		// Eine Antwort in eine laufende Unterhaltung ist keine neue Anfrage.
+		if ( ! $existing_chat && ! self::rate_allows( 'start', $current_user_id, self::RATE_START_MAX, self::RATE_START_WINDOW ) ) {
+			wp_send_json_error( [ 'message' => __( 'Du hast gerade viele Anbieter angeschrieben. Bitte warte einen Moment.', 'sk-core' ) ] );
+		}
 
 		if ( $existing_chat ) {
 			$this->add_message_to_chat( $existing_chat->ID, $current_user_id, $message );
@@ -519,9 +608,22 @@ class VendorChat extends DashboardModule {
 			wp_send_json_error( [ 'message' => __( 'Du bist kein Teilnehmer dieses Chats.', 'sk-core' ) ] );
 		}
 
+		$other_user_id = $this->get_other_participant( $chat_id, $current_user_id );
+
+		if ( $other_user_id && self::is_blocked_between( $current_user_id, (int) $other_user_id ) ) {
+			wp_send_json_error( [ 'message' => __( 'In dieser Unterhaltung kann nicht mehr geschrieben werden.', 'sk-core' ) ] );
+		}
+
+		if ( ! self::message_length_ok( $message ) ) {
+			wp_send_json_error( [ 'message' => self::too_long_notice() ] );
+		}
+
+		if ( ! self::rate_allows( 'send', $current_user_id, self::RATE_SEND_MAX, self::RATE_SEND_WINDOW ) ) {
+			wp_send_json_error( [ 'message' => __( 'Zu viele Nachrichten in kurzer Zeit. Bitte warte einen Moment.', 'sk-core' ) ] );
+		}
+
 		$this->add_message_to_chat( $chat_id, $current_user_id, $message );
 
-		$other_user_id = $this->get_other_participant( $chat_id, $current_user_id );
 		if ( $other_user_id ) {
 
 			// Mirror to Nostr DM if both users have Nostr identities.
@@ -659,6 +761,147 @@ class VendorChat extends DashboardModule {
 
 		$this->unarchive_chat( $chat_id, $current_user_id );
 		wp_send_json_success( [ 'message' => __( 'Chat wiederhergestellt.', 'sk-core' ) ] );
+	}
+
+	/**
+	 * AJAX: block the other participant of a chat.
+	 *
+	 * Ueber die Chat-ID statt ueber eine Nutzer-ID: so kann nur blockiert
+	 * werden, mit wem man tatsaechlich eine Unterhaltung hat.
+	 */
+	public function ajax_block_user() {
+		check_ajax_referer( 'dvc_ajax_nonce', 'nonce' );
+
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error( [ 'message' => __( 'Du musst angemeldet sein.', 'sk-core' ) ] );
+		}
+
+		$current_user_id = get_current_user_id();
+		$chat_id         = isset( $_POST['chat_id'] ) ? intval( $_POST['chat_id'] ) : 0;
+
+		if ( ! $chat_id || ! $this->is_participant( $chat_id, $current_user_id ) ) {
+			wp_send_json_error( [ 'message' => __( 'Du bist kein Teilnehmer dieses Chats.', 'sk-core' ) ] );
+		}
+
+		$other_user_id = (int) $this->get_other_participant( $chat_id, $current_user_id );
+
+		if ( ! $other_user_id ) {
+			wp_send_json_error( [ 'message' => __( 'Gegenüber nicht gefunden.', 'sk-core' ) ] );
+		}
+
+		self::block_user( $current_user_id, $other_user_id );
+
+		wp_send_json_success( [ 'message' => __( 'Nutzer blockiert.', 'sk-core' ) ] );
+	}
+
+	/**
+	 * AJAX: lift a block.
+	 */
+	public function ajax_unblock_user() {
+		check_ajax_referer( 'dvc_ajax_nonce', 'nonce' );
+
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error( [ 'message' => __( 'Du musst angemeldet sein.', 'sk-core' ) ] );
+		}
+
+		$current_user_id = get_current_user_id();
+		$chat_id         = isset( $_POST['chat_id'] ) ? intval( $_POST['chat_id'] ) : 0;
+
+		if ( ! $chat_id || ! $this->is_participant( $chat_id, $current_user_id ) ) {
+			wp_send_json_error( [ 'message' => __( 'Du bist kein Teilnehmer dieses Chats.', 'sk-core' ) ] );
+		}
+
+		$other_user_id = (int) $this->get_other_participant( $chat_id, $current_user_id );
+
+		if ( ! $other_user_id ) {
+			wp_send_json_error( [ 'message' => __( 'Gegenüber nicht gefunden.', 'sk-core' ) ] );
+		}
+
+		self::unblock_user( $current_user_id, $other_user_id );
+
+		wp_send_json_success( [ 'message' => __( 'Blockierung aufgehoben.', 'sk-core' ) ] );
+	}
+
+	// =========================================================================
+	// Blockieren
+	// =========================================================================
+
+	/**
+	 * Wen dieser Nutzer blockiert hat.
+	 *
+	 * @return int[]
+	 */
+	public static function blocked_users( int $user_id ): array {
+		$blocked = get_user_meta( $user_id, self::BLOCKED_META, true );
+
+		if ( ! is_array( $blocked ) ) {
+			return [];
+		}
+
+		return array_values( array_unique( array_filter( array_map( 'intval', $blocked ) ) ) );
+	}
+
+	/** Hat $user_id den anderen blockiert? */
+	public static function has_blocked( int $user_id, int $other_id ): bool {
+		return in_array( $other_id, self::blocked_users( $user_id ), true );
+	}
+
+	/**
+	 * Steht zwischen den beiden eine Blockierung — in welcher Richtung auch immer?
+	 *
+	 * Beide Richtungen, weil eine einseitige Sperre eine schiefe Lage ergibt:
+	 * wer blockiert, will die Unterhaltung beendet haben, nicht bloss selbst
+	 * das letzte Wort behalten.
+	 */
+	public static function is_blocked_between( int $a, int $b ): bool {
+		return self::has_blocked( $a, $b ) || self::has_blocked( $b, $a );
+	}
+
+	public static function block_user( int $user_id, int $other_id ): void {
+		if ( ! $user_id || ! $other_id || $user_id === $other_id ) {
+			return;
+		}
+
+		$blocked   = self::blocked_users( $user_id );
+		$blocked[] = $other_id;
+
+		update_user_meta( $user_id, self::BLOCKED_META, array_values( array_unique( $blocked ) ) );
+	}
+
+	public static function unblock_user( int $user_id, int $other_id ): void {
+		$blocked = array_values( array_diff( self::blocked_users( $user_id ), [ $other_id ] ) );
+
+		update_user_meta( $user_id, self::BLOCKED_META, $blocked );
+	}
+
+	// =========================================================================
+	// Mengen- und Laengengrenzen
+	// =========================================================================
+
+	/**
+	 * Darf dieser Nutzer noch schreiben?
+	 *
+	 * Je Nutzer, nicht je IP: angemeldet ist die Kennung ohnehin bekannt, und
+	 * ein Wechsel der Leitung hilft dann nicht weiter.
+	 */
+	private static function rate_allows( string $what, int $user_id, int $max, int $window ): bool {
+		if ( ! function_exists( 'sk_rate_limit' ) ) {
+			return true;
+		}
+
+		return sk_rate_limit( 'dvc_' . $what . ':' . $user_id, $max, $window );
+	}
+
+	private static function message_length_ok( string $message ): bool {
+		return mb_strlen( $message ) <= self::MAX_MESSAGE_LENGTH;
+	}
+
+	private static function too_long_notice(): string {
+		return sprintf(
+			/* translators: %s: Hoechstzahl der Zeichen. */
+			__( 'Deine Nachricht ist zu lang (höchstens %s Zeichen).', 'sk-core' ),
+			number_format_i18n( self::MAX_MESSAGE_LENGTH )
+		);
 	}
 
 	// =========================================================================
