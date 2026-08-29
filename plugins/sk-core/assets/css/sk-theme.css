@@ -12341,6 +12341,17 @@ textarea.wp-editor-area.post_content {
 	vertical-align: middle;
 }
 
+/* Auf der Anbieterseite neben dem Shopnamen: groesser, mit Abstand, und
+   ueber die Flexbox des h1 mittig — vertical-align greift dort nicht, weil
+   .store-name selbst display:flex ist. */
+.store-name .sk-verify-badge {
+	margin-left: 12px;
+	padding: 3px 11px;
+	font-size: 16px;
+	align-self: center;
+	flex: none;
+}
+
 /* Auf dem Inserat sitzt es rechts in der Anbieterbox, mittig zur Hoehe. */
 .sk-vendor-info-wrap .sk-verify-badge {
 	margin-left: auto;
