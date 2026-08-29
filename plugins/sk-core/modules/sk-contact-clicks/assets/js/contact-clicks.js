@@ -58,6 +58,13 @@
         var channel = channelOf(link);
         if (!channel) return;
 
+        /*
+         * Der Chat zaehlt nicht hier. Ein Klick auf sein Symbol oeffnet nur
+         * das Fenster — und bei Ausgeloggten den Anmeldehinweis. Gezaehlt
+         * wird serverseitig, wenn eine Unterhaltung wirklich zustande kommt.
+         */
+        if (channel === 'chat') return;
+
         var body = new URLSearchParams();
         body.append('action', window.skContactClicks.action);
         body.append('nonce', window.skContactClicks.nonce);

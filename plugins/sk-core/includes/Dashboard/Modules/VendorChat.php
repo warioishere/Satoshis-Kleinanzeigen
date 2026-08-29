@@ -580,6 +580,17 @@ class VendorChat extends DashboardModule {
 
 			$this->add_message_to_chat( $chat_id, $current_user_id, $message );
 
+			/*
+			 * Erst hier zaehlt die Kontaktaufnahme, nicht beim Oeffnen des
+			 * Fensters: ein geoeffnetes Modal ist keine Kontaktaufnahme, und
+			 * bei Ausgeloggten war es bisher sogar nur der Anmeldehinweis.
+			 * Nur beim ersten Mal — eine weitere Nachricht in dieselbe
+			 * Unterhaltung ist kein neuer Kontakt.
+			 */
+			if ( class_exists( '\SK\Modules\ContactClicks\Tracker' ) ) {
+				\SK\Modules\ContactClicks\Tracker::record( $product_id, $vendor_id, 'chat', 'single' );
+			}
+
 			wp_send_json_success( [
 				'message' => __( 'Chat erstellt und Nachricht gesendet!', 'sk-core' ),
 				'chat_id' => $chat_id,

@@ -80,9 +80,29 @@ class Tracker {
             }
         }
 
-        $this->count( $product_id, $vendor_id, $channel, $context );
+        self::count( $product_id, $vendor_id, $channel, $context );
 
         wp_send_json_success( null );
+    }
+
+    /**
+     * Kontaktaufnahme von der Serverseite melden.
+     *
+     * Fuer Kanaele, bei denen sich die echte Aufnahme messen laesst statt nur
+     * der Klick auf ein Symbol: der Chat zaehlt, wenn eine Unterhaltung
+     * zustande kommt, nicht wenn jemand das Fenster oeffnet.
+     */
+    public static function record( int $product_id, int $vendor_id, string $channel, string $context = '' ): void {
+        if ( ! in_array( $channel, self::CHANNELS, true ) ) {
+            return;
+        }
+
+        // Der eigene Verkaeufer treibt seine Zahlen nicht selbst hoch.
+        if ( $vendor_id > 0 && $vendor_id === get_current_user_id() ) {
+            return;
+        }
+
+        self::count( $product_id, $vendor_id, $channel, $context );
     }
 
     /**
@@ -110,7 +130,7 @@ class Tracker {
         return true;
     }
 
-    private function count( int $product_id, int $vendor_id, string $channel, string $context ): void {
+    private static function count( int $product_id, int $vendor_id, string $channel, string $context ): void {
         global $wpdb;
 
         $table = $wpdb->prefix . 'sk_contact_clicks';
@@ -128,7 +148,7 @@ class Tracker {
                 $channel,
                 $context,
                 $day,
-                $this->visitor_hash( $day ),
+                self::visitor_hash( $day ),
                 $now,
                 $now
             )
@@ -138,7 +158,7 @@ class Tracker {
     /**
      * Tagesrotierender Besucher-Hash, ohne gespeicherte IP.
      */
-    private function visitor_hash( string $day ): string {
+    private static function visitor_hash( string $day ): string {
         return md5(
             (string) ( $_SERVER['REMOTE_ADDR'] ?? '' )
             . '|' . (string) ( $_SERVER['HTTP_USER_AGENT'] ?? '' )
