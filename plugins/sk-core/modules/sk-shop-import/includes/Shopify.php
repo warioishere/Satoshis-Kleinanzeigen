@@ -18,9 +18,10 @@ defined( 'ABSPATH' ) || exit;
  * nur, was im Online-Store veröffentlicht ist — Entwürfe und archivierte
  * Artikel fehlen, was für einen Katalogimport eher richtig als falsch ist.
  *
- * Die Shopadresse kommt aus dem Händlerprofil, das der Betreiber pflegt
- * (Dealer::shop_url). Sie ist damit keine Nutzereingabe, und der Abruf läuft
- * zusätzlich über wp_safe_remote_get(), das interne Adressbereiche abweist.
+ * Die Shopadresse gibt der Händler selbst ein. Sie ist damit Nutzereingabe;
+ * der Abruf läuft deshalb über wp_safe_remote_get(), das interne
+ * Adressbereiche abweist, geholt wird nur von einer bestätigten Domain, und
+ * die Seite steht ohnehin nur freigeschalteten Händlern offen.
  */
 final class Shopify {
 

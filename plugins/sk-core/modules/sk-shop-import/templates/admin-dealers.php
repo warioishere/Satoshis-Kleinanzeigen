@@ -36,11 +36,10 @@ $base = add_query_arg( [ 'page' => 'sk', 'tab' => 'dealers' ], admin_url( 'admin
 <?php if ( empty( $vendors ) ) : ?>
     <p><?php esc_html_e( 'Kein Verkäufer gefunden. Nutze die Suche, um einen freizuschalten.', 'sk-core' ); ?></p>
 <?php else : ?>
-    <table class="wp-list-table widefat fixed striped" style="max-width:1280px;">
+    <table class="wp-list-table widefat fixed striped" style="max-width:1040px;">
         <thead>
             <tr>
                 <th><?php esc_html_e( 'Verkäufer', 'sk-core' ); ?></th>
-                <th style="width:240px;"><?php esc_html_e( 'Shop-Adresse', 'sk-core' ); ?></th>
                 <th style="width:220px;"><?php esc_html_e( 'bestätigter Verweis', 'sk-core' ); ?></th>
                 <th style="width:90px;"><?php esc_html_e( 'geprüft', 'sk-core' ); ?></th>
                 <th style="width:110px;"><?php esc_html_e( 'darf importieren', 'sk-core' ); ?></th>
@@ -59,8 +58,6 @@ $base = add_query_arg( [ 'page' => 'sk', 'tab' => 'dealers' ], admin_url( 'admin
                         <strong><?php echo esc_html( $vendor->display_name ); ?></strong><br>
                         <span style="color:#646970;font-size:12px;"><?php echo esc_html( $vendor->user_email ); ?></span>
                     </td>
-                    <td><input type="url" name="shop_url" class="regular-text" style="width:100%;"
-                               value="<?php echo esc_attr( Dealer::shop_url( $vendor->ID ) ); ?>" placeholder="https://"></td>
                     <td>
                         <?php
                         /*

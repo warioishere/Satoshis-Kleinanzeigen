@@ -68,8 +68,16 @@ final class Settings {
             return [ 'currency' => $saved, 'reason' => __( 'wie beim letzten Import', 'sk-core' ) ];
         }
 
-        // Endung der Shop-Adresse.
-        $host = (string) wp_parse_url( Dealer::shop_url( $vendor_id ), PHP_URL_HOST );
+        /*
+         * Endung der Shopadresse, die der Haendler beim Abruf eingetragen hat.
+         * Frueher stand hier ein Feld, das der Betreiber je Haendler von Hand
+         * pflegen musste — es tat nichts weiter als diesen Vorschlag, den der
+         * Haendler im Formular ohnehin ueberstimmen kann.
+         */
+        $host = (string) wp_parse_url(
+            (string) get_user_meta( $vendor_id, DashboardPage::META_FETCH_URL, true ),
+            PHP_URL_HOST
+        );
         if ( $host !== '' ) {
             if ( substr( $host, -3 ) === '.ch' ) {
                 return [ 'currency' => 'CHF', 'reason' => __( 'aus deiner Shop-Adresse abgeleitet', 'sk-core' ) ];

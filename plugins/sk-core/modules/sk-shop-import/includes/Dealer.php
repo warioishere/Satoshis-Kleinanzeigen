@@ -14,7 +14,6 @@ defined( 'ABSPATH' ) || exit;
 final class Dealer {
 
     const META_ENABLED  = '_sk_dealer_import';
-    const META_SHOP_URL = '_sk_dealer_shop_url';
     const META_LAST_RUN = '_sk_dealer_last_import';
 
     /**
@@ -87,10 +86,6 @@ final class Dealer {
         }
 
         return self::is_enabled( $user_id ) && self::is_verified( $user_id );
-    }
-
-    public static function shop_url( int $user_id ): string {
-        return (string) get_user_meta( $user_id, self::META_SHOP_URL, true );
     }
 
     /**

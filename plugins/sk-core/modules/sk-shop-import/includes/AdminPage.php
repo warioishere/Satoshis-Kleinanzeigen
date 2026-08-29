@@ -53,8 +53,6 @@ class AdminPage extends AbstractPage {
             Dealer::set_verified( $vendor_id, ! empty( $_POST['verified'] ) );
             Dealer::set_enabled( $vendor_id, ! empty( $_POST['import'] ) );
 
-            $url = isset( $_POST['shop_url'] ) ? esc_url_raw( wp_unslash( $_POST['shop_url'] ) ) : '';
-            update_user_meta( $vendor_id, Dealer::META_SHOP_URL, $url );
         }
 
         wp_safe_redirect(

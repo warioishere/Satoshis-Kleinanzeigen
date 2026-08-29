@@ -19,10 +19,8 @@ class DashboardPage extends DashboardModule {
     /**
      * Zuletzt geholter Shopify-Shop.
      *
-     * Bewusst nicht Dealer::META_SHOP_URL: das ist die vom Betreiber
-     * gepflegte Adresse des Haendlers, an der die Herkunftsangabe der
-     * Inserate und die Waehrungserkennung nach Endung haengen. Sie mit einer
-     * Eingabe des Haendlers zu ueberschreiben, verstellt beides still.
+     * Daran haengen die Herkunftsangabe der importierten Inserate und der
+     * Waehrungsvorschlag nach Endung.
      */
     const META_FETCH_URL = '_sk_import_shopify_url';
 
@@ -279,12 +277,12 @@ class DashboardPage extends DashboardModule {
                 'default_cat'  => Settings::default_category( $vendor_id ),
                 'image_cap'    => max( 0, (int) ( $_POST['sk_image_cap'] ?? Importer::DEFAULT_IMAGE_CAP ) ),
                 'status'       => self::import_status(),
-                // Bei einem geholten Katalog ist der geholte Shop die
-                // Herkunft; bei einer Datei bleibt es die Adresse des
-                // Haendlers.
+                // Herkunft der Inserate: der Shop, aus dem geholt wurde.
+                // Bei einer hochgeladenen Datei gibt es keine — die Datei
+                // sagt nicht, woher sie stammt.
                 'source'       => Source::is_json( $path )
                     ? (string) get_user_meta( $vendor_id, self::META_FETCH_URL, true )
-                    : Dealer::shop_url( $vendor_id ),
+                    : '',
                 'category_map' => Settings::category_map( $vendor_id ),
             ],
             count( $items )
