@@ -3755,32 +3755,6 @@ div.media-sidebar a.edit-attachment {
 .sk-settings-content .sk-settings-area {
   position: relative;
 }
-.sk-settings-content .sk-settings-area .sk-store-settign-header-wrap {
-  width: 70%;
-  float: left;
-}
-.sk-settings-content .sk-settings-area .sk-update-setting-top {
-  width: 30%;
-  float: right;
-}
-.sk-settings-content .sk-settings-area .sk-dashboard-header {
-  margin: 0 0 10px 0;
-  border-bottom: 1px solid #EDEDED;
-  padding: 0 0 10px 0;
-}
-.sk-settings-content .sk-settings-area .sk-dashboard-header h1 {
-  margin: 0 0 0px 0;
-  border-bottom: none;
-}
-.sk-settings-content .sk-settings-area .sk-dashboard-header:after {
-  content: "";
-  display: table;
-  clear: both;
-}
-.sk-settings-content .sk-settings-area h1 {
-  margin: 0px;
-  padding: 0px;
-}
 /* Banner/Gravatar Legacy-CSS removed — styling now lives centrally
  * in .sk-settings-field--media rules (line ~8570+) which work with the
  * sk_form_media_upload() helper output. */
@@ -7765,8 +7739,8 @@ ul.sk-store-custom-fields ul {
   z-index: 2;
 }
 
-/* "Visit Store" link in header */
-.sk-dashboard .sk-store-settign-header-wrap h1 small a {
+/* "Zum öffentlichen Profil" im Seitenkopf der Einstellungen */
+.sk-dashboard .sk-review-page-header h2 small a {
   font-size: 15px;
   color: #F7931A;
   font-weight: 400;
@@ -9486,14 +9460,16 @@ a.sk-sub-order-action:hover {
 
 /* === Page header — force-match .sk-review-page-header from sk-theme == */
 .sk-dashboard-content--merkliste .sk-review-page-header,
-.sk-dashboard-content--verification .sk-review-page-header {
+.sk-dashboard-content--verification .sk-review-page-header,
+.sk-dashboard-content--settings .sk-review-page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 20px;
 }
 .sk-dashboard-content--merkliste .sk-review-page-header h2,
-.sk-dashboard-content--verification .sk-review-page-header h2 {
+.sk-dashboard-content--verification .sk-review-page-header h2,
+.sk-dashboard-content--settings .sk-review-page-header h2 {
   font-size: 22px;
   font-weight: 700;
   color: #e8ecf0;
@@ -9504,7 +9480,8 @@ a.sk-sub-order-action:hover {
   line-height: 1.2;
 }
 .sk-dashboard-content--merkliste .sk-review-page-header h2 i,
-.sk-dashboard-content--verification .sk-review-page-header h2 i {
+.sk-dashboard-content--verification .sk-review-page-header h2 i,
+.sk-dashboard-content--settings .sk-review-page-header h2 i {
   color: #F7931A;
   font-size: 20px;
   display: inline-block;

@@ -23,7 +23,7 @@
     do_action( 'sk_dashboard_settings_content_before' );
     ?>
 
-    <div class="sk-dashboard-content sk-settings-content">
+    <div class="sk-dashboard-content sk-settings-content sk-dashboard-content--settings">
         <?php
 
         /**
