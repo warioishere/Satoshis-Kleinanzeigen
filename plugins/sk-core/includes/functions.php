@@ -2811,6 +2811,38 @@ if ( ! function_exists( 'sk_user_update_to_seller' ) ) {
 
 
 /**
+ * Abzeichen fuer einen Nutzer mit bestaetigter Adresse.
+ *
+ * Zeigt, wo der Nachweis herkommt: der Titel nennt die bestaetigten Hosts,
+ * damit das Abzeichen eine ueberpruefbare Aussage ist und kein Ornament.
+ *
+ * @return string Leer, wenn nichts bestaetigt ist.
+ */
+function sk_verified_badge( int $user_id ): string {
+    if ( ! class_exists( \SK\Core\Verification\VerifiedLinks::class ) ) {
+        return '';
+    }
+
+    $hosts = \SK\Core\Verification\VerifiedLinks::confirmed_hosts( $user_id );
+
+    if ( empty( $hosts ) ) {
+        return '';
+    }
+
+    $hosts = implode( ', ', $hosts );
+
+    return sprintf(
+        '<span class="sk-verify-badge" title="%s"><i class="fas fa-circle-check" aria-hidden="true"></i><span class="screen-reader-text">%s</span></span>',
+        esc_attr( sprintf(
+            /* translators: %s: Liste der bestaetigten Adressen. */
+            __( 'Bestätigt: %s', 'sk-core' ),
+            $hosts
+        ) ),
+        esc_html__( 'verifiziert', 'sk-core' )
+    );
+}
+
+/**
  * Filter vendor listing to only show vendors with a non-empty store name.
  */
 add_filter( 'sk_seller_listing_args', function ( $args, $requested_data ) {

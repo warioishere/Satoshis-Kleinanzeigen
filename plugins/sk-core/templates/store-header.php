@@ -53,6 +53,14 @@ if ( 'layout3' === $profile_layout ) {
                         <?php if ( ! empty( $store_user->get_shop_name() ) && 'default' === $profile_layout ) { ?>
                             <h1 class="store-name">
                                 <?php echo esc_html( $store_user->get_shop_name() ); ?>
+                                <?php
+                                // Inline statt ueber einen Hook: das Abzeichen
+                                // gehoert neben den Namen, nicht in eine
+                                // Erweiterungsstelle.
+                                if ( function_exists( 'sk_verified_badge' ) ) {
+                                    echo sk_verified_badge( $store_user->get_id() ); // phpcs:ignore WordPress.Security.EscapeOutput
+                                }
+                                ?>
                                 <?php do_action( 'sk_store_header_after_store_name', $store_user ); ?>
                             </h1>
                         <?php } ?>

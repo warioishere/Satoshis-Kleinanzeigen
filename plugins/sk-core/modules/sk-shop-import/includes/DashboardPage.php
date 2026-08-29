@@ -43,7 +43,11 @@ class DashboardPage extends DashboardModule {
             // nicht: sk_nav_sort_by_pos rechnet intval($a-$b), 30.5 gegen 31
             // ergibt 0 und gilt als gleich.
             'pos'        => 31,
-            'permission' => Dealer::CAP,
+            // Nicht Dealer::CAP: die Faehigkeit entsteht erst, wenn jemand
+            // importieren darf — dann kaeme aber niemand je auf die Seite,
+            // auf der er sich dafuer bestaetigt. Die Seite steht deshalb
+            // jedem Verkaeufer offen, die Importschritte darin nicht.
+            'permission' => 'sk_view_overview_menu',
             // Pfad statt Rueckruf und Daten ueber template_args — dasselbe
             // Muster wie Merkliste und Gesuche. Die Vorlage bringt dadurch
             // die Dashboard-Huelle mit Menue und Containern mit.
@@ -97,11 +101,15 @@ class DashboardPage extends DashboardModule {
         }
 
         $vendor_id = get_current_user_id();
-        if ( ! $vendor_id || ! Dealer::may_import( $vendor_id ) ) {
+        if ( ! $vendor_id || ! function_exists( 'sk_is_user_seller' ) || ! sk_is_user_seller( $vendor_id ) ) {
             return;
         }
 
         $step = sanitize_key( wp_unslash( $_POST['sk_step'] ?? '' ) );
+
+        if ( ! Dealer::may_import( $vendor_id ) ) {
+            return;
+        }
 
         if ( $step === 'upload' ) {
             $path = Storage::accept( $_FILES['sk_csv'] ?? [], $vendor_id );
@@ -133,6 +141,29 @@ class DashboardPage extends DashboardModule {
 
             if ( $shop === '' || ! in_array( wp_parse_url( $shop, PHP_URL_SCHEME ), [ 'http', 'https' ], true ) ) {
                 set_transient( 'sk_import_msg_' . $vendor_id, __( 'Bitte gib die Adresse deines Shops an, zum Beispiel https://mein-shop.myshopify.com.', 'sk-core' ), 120 );
+                wp_safe_redirect( $this->url() );
+                exit;
+            }
+
+            /*
+             * Geholt wird nur von der Domain, die der Haendler bestaetigt hat.
+             * Sonst waere die Bestaetigung eine Formalie: einmal die eigene
+             * Seite belegen und danach beliebige fremde Kataloge einspielen.
+             *
+             * Wer von Hand freigeschaltet wurde, hat keinen bestaetigten Host
+             * — dort hat der Betreiber ohnehin hingesehen.
+             */
+            if ( \SK\Core\Verification\VerifiedLinks::is_verified( $vendor_id )
+                && ! \SK\Core\Verification\VerifiedLinks::covers( $vendor_id, $shop ) ) {
+                set_transient(
+                    'sk_import_msg_' . $vendor_id,
+                    sprintf(
+                        /* translators: %s: bestätigter Hostname. */
+                        __( 'Du kannst nur von einer Adresse holen, die du bestätigt hast. Bestätigt sind: %s.', 'sk-core' ),
+                        implode( ', ', \SK\Core\Verification\VerifiedLinks::confirmed_hosts( $vendor_id ) )
+                    ),
+                    120
+                );
                 wp_safe_redirect( $this->url() );
                 exit;
             }
@@ -425,6 +456,10 @@ class DashboardPage extends DashboardModule {
         // WooCommerce-Haendler als Vorschlag da, der nie funktionieren kann.
         $shop_url   = (string) get_user_meta( $vendor_id, self::META_FETCH_URL, true );
 
+        // Welche Adressen dieser Haendler bestaetigt hat — der Abruf ist
+        // darauf beschraenkt.
+        $verified_hosts = \SK\Core\Verification\VerifiedLinks::confirmed_hosts( $vendor_id );
+
         return compact(
             'step',
             'url',
@@ -432,6 +467,7 @@ class DashboardPage extends DashboardModule {
             'csv',
             'is_json',
             'shop_url',
+            'verified_hosts',
             'mapping',
             'items',
             'item_count',

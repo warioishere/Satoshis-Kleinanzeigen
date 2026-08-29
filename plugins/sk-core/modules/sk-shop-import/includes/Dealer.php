@@ -84,10 +84,22 @@ final class Dealer {
     /**
      * Darf dieser Verkaeufer einen Katalog hochladen?
      *
-     * Beides noetig: Ein Katalogimport erzeugt hunderte Inserate unter einem
-     * Namen, der fuer echte Ware steht.
+     * Zwei Wege dorthin. Der eine geht ohne Zutun des Betreibers: wer eine
+     * Adresse per Ruecklink bestaetigt hat, darf importieren — was er
+     * einstellt, begrenzt ohnehin sein Paket. Der andere bleibt der bisherige
+     * Weg von Hand; er wird gebraucht, weil sich nicht jede Seite von diesem
+     * Server aus abrufen laesst (siehe VerifiedLinks).
+     *
+     * Ausdruecklich NICHT dasselbe wie is_verified(): eine bestaetigte Domain
+     * beweist Kontrolle ueber eine Domain, nicht dass jemand ein redlicher
+     * Haendler ist. Am Haekchen "geprueft" haengt spaeter der Sofortkauf, bei
+     * dem Geld ohne Treuhand fliesst — das bleibt eine Entscheidung.
      */
     public static function may_import( int $user_id ): bool {
+        if ( \SK\Core\Verification\VerifiedLinks::is_verified( $user_id ) ) {
+            return true;
+        }
+
         return self::is_enabled( $user_id ) && self::is_verified( $user_id );
     }
 

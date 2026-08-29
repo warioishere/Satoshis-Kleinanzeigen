@@ -38,6 +38,7 @@ class ModuleLoader {
         new Modules\LogoutModal();
         new Modules\SmtpConfig();
         new Modules\AccountDeletion();
+        new Modules\VerifiedLinksPage();
 
         add_action( 'admin_init', [ self::class, 'maybe_upgrade_tables' ] );
     }
