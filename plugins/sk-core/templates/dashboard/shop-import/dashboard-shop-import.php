@@ -450,30 +450,30 @@ do_action( 'sk_dashboard_wrap_start' );
 
             <?php else : ?>
 
-                <?php if ( ! empty( $shop_url ) ) : ?>
-                <div class="sk-section-heading"><h3><?php esc_html_e( 'Katalog direkt holen', 'sk-core' ); ?></h3></div>
+                <div class="sk-section-heading"><h3><?php esc_html_e( 'Shopify-Shop', 'sk-core' ); ?></h3></div>
                 <div class="sk-section-content">
-                    <p>
-                        <?php
-                        printf(
-                            /* translators: %s: Adresse des Händlershops. */
-                            esc_html__( 'Läuft dein Shop auf Shopify, holen wir den Katalog direkt von %s — ohne Datei und ohne Spalten zuzuordnen. Ausführungen und Bilder kommen dabei vollständig mit.', 'sk-core' ),
-                            '<strong>' . esc_html( (string) wp_parse_url( $shop_url, PHP_URL_HOST ) ) . '</strong>'
-                        );
-                        ?>
-                    </p>
+                    <p><?php esc_html_e( 'Läuft dein Shop auf Shopify, brauchst du keine Datei: trag die Adresse ein, dann holen wir den Katalog direkt. Ausführungen und Bilder kommen dabei vollständig mit, Spalten musst du keine zuordnen. Im nächsten Schritt siehst du, was passieren würde, bevor etwas angelegt wird.', 'sk-core' ); ?></p>
+
                     <form method="post" action="<?php echo esc_url( $url ); ?>">
                         <?php wp_nonce_field( DashboardPage::NONCE, 'sk_shop_import_nonce' ); ?>
                         <input type="hidden" name="sk_step" value="holen">
+
+                        <div class="sk-form-group sk-clearfix">
+                            <label class="sk-w3 sk-control-label" for="sk_shop_url"><?php esc_html_e( 'Adresse deines Shops', 'sk-core' ); ?></label>
+                            <div class="sk-w9">
+                                <input class="sk-form-control" type="url" name="sk_shop_url" id="sk_shop_url"
+                                       value="<?php echo esc_attr( $shop_url ); ?>"
+                                       placeholder="https://mein-shop.myshopify.com" required>
+                            </div>
+                        </div>
+
                         <div class="sk-form-group">
                             <button type="submit" class="sk-btn sk-btn-theme"><?php esc_html_e( 'Katalog holen', 'sk-core' ); ?></button>
                         </div>
                     </form>
-                    <p class="sk-import-hint">
-                        <?php esc_html_e( 'Klappt das nicht, ist es kein Shopify-Shop oder der Katalog ist dort nicht öffentlich. Dann bleibt der Weg über die Datei.', 'sk-core' ); ?>
-                    </p>
+
+                    <p class="sk-import-hint"><?php esc_html_e( 'Kein Shopify-Shop? Dann nimm den Weg über die Datei darunter.', 'sk-core' ); ?></p>
                 </div>
-                <?php endif; ?>
 
                 <div class="sk-section-heading"><h3><?php esc_html_e( 'Katalog hochladen', 'sk-core' ); ?></h3></div>
                 <div class="sk-section-content">

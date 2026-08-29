@@ -108,7 +108,24 @@ class DashboardPage extends DashboardModule {
         }
 
         if ( $step === 'holen' ) {
-            $shop = Dealer::shop_url( $vendor_id );
+            /*
+             * Die Adresse gibt der Haendler selbst ein — er weiss, wo sein
+             * Shop liegt, der Betreiber muss sie nicht vorher eintragen.
+             *
+             * Damit ist sie Nutzereingabe, anders als beim Rest des Moduls.
+             * Der Abruf laeuft deshalb ueber wp_safe_remote_get(), das interne
+             * Adressbereiche abweist, und die Seite steht ohnehin nur
+             * freigeschalteten Haendlern offen (Dealer::CAP).
+             */
+            $shop = isset( $_POST['sk_shop_url'] )
+                ? esc_url_raw( trim( wp_unslash( $_POST['sk_shop_url'] ) ) )
+                : '';
+
+            if ( $shop === '' || ! in_array( wp_parse_url( $shop, PHP_URL_SCHEME ), [ 'http', 'https' ], true ) ) {
+                set_transient( 'sk_import_msg_' . $vendor_id, __( 'Bitte gib die Adresse deines Shops an, zum Beispiel https://mein-shop.myshopify.com.', 'sk-core' ), 120 );
+                wp_safe_redirect( $this->url() );
+                exit;
+            }
 
             $products = Shopify::fetch( $shop );
 
@@ -131,6 +148,10 @@ class DashboardPage extends DashboardModule {
             if ( $vorige !== '' && Storage::belongs_to( $vorige, $vendor_id ) ) {
                 Storage::forget( $vorige );
             }
+
+            // Beim naechsten Mal steht die Adresse schon im Feld, und der
+            // Auftrag traegt sie als Herkunft der Inserate.
+            update_user_meta( $vendor_id, Dealer::META_SHOP_URL, $shop );
 
             update_user_meta( $vendor_id, '_sk_import_file', $path );
             wp_safe_redirect( add_query_arg( 'schritt', 'zuordnen', $this->url() ) );
@@ -384,8 +405,8 @@ class DashboardPage extends DashboardModule {
         $categories = get_terms( [ 'taxonomy' => 'product_cat', 'hide_empty' => false ] );
         $rate       = Rate::btc_rate( 'EUR' );
         $url        = $this->url();
-        // Nur wenn der Betreiber eine Adresse hinterlegt hat, ist das Holen
-        // ueberhaupt anbietbar.
+        // Vorbelegung des Eingabefelds: was der Haendler zuletzt geholt hat,
+        // sonst die vom Betreiber hinterlegte Adresse.
         $shop_url   = Dealer::shop_url( $vendor_id );
 
         return compact(
