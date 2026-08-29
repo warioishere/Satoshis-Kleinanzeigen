@@ -9088,31 +9088,6 @@ a.sk-sub-order-action:hover {
    Gesuche Dashboard — matches Bewertungen/Rezensionen page style
    ===================================================================== */
 
-/* === Page header — force-match .sk-review-page-header from sk-theme ==
-   Using !important because Kadence h2 rules override without it.        */
-.sk-dashboard-content--gesuche .sk-review-page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-.sk-dashboard-content--gesuche .sk-review-page-header h2 {
-  font-size: 22px;
-  font-weight: 700;
-  color: #e8ecf0;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  line-height: 1.2;
-}
-.sk-dashboard-content--gesuche .sk-review-page-header h2 i {
-  color: #F7931A;
-  font-size: 20px;
-  display: inline-block;
-  visibility: visible;
-}
-
 /* === Outer wrapper =================================================== */
 .gesuche-dashboard-wrapper {
   display: flex;
@@ -9453,10 +9428,15 @@ a.sk-sub-order-action:hover {
 }
 
 /* === Page header — force-match .sk-review-page-header from sk-theme == */
+/* Seitenkopf aller Dashboardseiten. Gescoped und nicht als blosses
+   .sk-review-page-header, weil Kadence die h2-Regeln sonst ueberschreibt —
+   die Modifikatoren geben das noetige Gewicht. Neue Seite: hier eintragen,
+   nicht kopieren. */
 .sk-dashboard-content--merkliste .sk-review-page-header,
 .sk-dashboard-content--verification .sk-review-page-header,
 .sk-dashboard-content--settings .sk-review-page-header,
-.sk-product-listing .sk-review-page-header {
+.sk-product-listing .sk-review-page-header,
+.sk-dashboard-content--gesuche .sk-review-page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -9465,7 +9445,8 @@ a.sk-sub-order-action:hover {
 .sk-dashboard-content--merkliste .sk-review-page-header h2,
 .sk-dashboard-content--verification .sk-review-page-header h2,
 .sk-dashboard-content--settings .sk-review-page-header h2,
-.sk-product-listing .sk-review-page-header h2 {
+.sk-product-listing .sk-review-page-header h2,
+.sk-dashboard-content--gesuche .sk-review-page-header h2 {
   font-size: 22px;
   font-weight: 700;
   color: #e8ecf0;
@@ -9478,7 +9459,8 @@ a.sk-sub-order-action:hover {
 .sk-dashboard-content--merkliste .sk-review-page-header h2 i,
 .sk-dashboard-content--verification .sk-review-page-header h2 i,
 .sk-dashboard-content--settings .sk-review-page-header h2 i,
-.sk-product-listing .sk-review-page-header h2 i {
+.sk-product-listing .sk-review-page-header h2 i,
+.sk-dashboard-content--gesuche .sk-review-page-header h2 i {
   color: #F7931A;
   font-size: 20px;
   display: inline-block;
