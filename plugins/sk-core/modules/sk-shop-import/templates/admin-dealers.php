@@ -36,12 +36,12 @@ $base = add_query_arg( [ 'page' => 'sk', 'tab' => 'dealers' ], admin_url( 'admin
 <?php if ( empty( $vendors ) ) : ?>
     <p><?php esc_html_e( 'Kein Verkäufer gefunden. Nutze die Suche, um einen freizuschalten.', 'sk-core' ); ?></p>
 <?php else : ?>
-    <table class="wp-list-table widefat fixed striped" style="max-width:1000px;">
+    <table class="wp-list-table widefat fixed striped" style="max-width:1200px;">
         <thead>
             <tr>
                 <th><?php esc_html_e( 'Verkäufer', 'sk-core' ); ?></th>
                 <th style="width:240px;"><?php esc_html_e( 'Shop-Adresse', 'sk-core' ); ?></th>
-                <th style="width:170px;"><?php esc_html_e( 'bestätigte Domain', 'sk-core' ); ?></th>
+                <th style="width:150px;"><?php esc_html_e( 'bestätigte Domain', 'sk-core' ); ?></th>
                 <th style="width:90px;"><?php esc_html_e( 'geprüft', 'sk-core' ); ?></th>
                 <th style="width:110px;"><?php esc_html_e( 'darf importieren', 'sk-core' ); ?></th>
                 <th style="width:150px;"><?php esc_html_e( 'letzter Import', 'sk-core' ); ?></th>
