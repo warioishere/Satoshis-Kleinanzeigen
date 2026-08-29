@@ -2,11 +2,15 @@
 /**
  * Verifizierung im Verkäufer-Dashboard.
  *
- * Aufbau wie die Shopdaten unter Einstellungen: dieselbe Huelle
- * (sk-settings-content, sk-settings-area, entry-title im sk-dashboard-header),
- * sk-settings-form als Rahmen, sk-settings-section je Abschnitt und Felder
- * ueber sk_form_input(). An sk-settings-form haengt die dunkle
- * Feldgestaltung — ein sk-form-control ausserhalb dieses Rahmens bliebe weiss.
+ * Kopf wie die uebrigen Menueeintraege (Merkliste, Gesuche): eigener
+ * Modifikator auf sk-dashboard-content und sk-review-page-header mit h2 und
+ * Symbol. Nicht die Settings-Huelle — deren sk-dashboard-header bringt eine
+ * Trennlinie mit und traegt ein h1, das hier zu gross wirkt.
+ *
+ * Der Inhalt darunter ist der der Shopdaten-Seite: sk-settings-form als
+ * Rahmen, sk-settings-section je Karte und Felder ueber sk_form_input(). An
+ * sk-settings-form haengt die dunkle Feldgestaltung — ein sk-form-control
+ * ausserhalb dieses Rahmens bliebe weiss.
  *
  * Variablen kommen aus VerifiedLinksPage::view_data(), registriert als
  * 'template_args'; diese Datei rendert nur.
@@ -32,22 +36,18 @@ do_action( 'sk_dashboard_wrap_start' );
 <div class="sk-dashboard-wrap">
     <?php do_action( 'sk_dashboard_content_before' ); ?>
 
-    <div class="sk-dashboard-content sk-settings-content">
+    <div class="sk-dashboard-content sk-dashboard-content--verification">
         <?php do_action( 'sk_dashboard_content_inside_before' ); ?>
 
-        <article class="sk-settings-area">
-
-        <header class="sk-dashboard-header">
-            <div class="sk-store-settign-header-wrap">
-                <h1 class="entry-title"><?php esc_html_e( 'Verifizierung', 'sk-core' ); ?></h1>
-            </div>
-        </header>
+        <div class="sk-review-page-header">
+            <h2><i class="fas fa-circle-check"></i> <?php esc_html_e( 'Verifizierung', 'sk-core' ); ?></h2>
+        </div>
 
         <?php if ( $message ) : ?>
             <div class="sk-alert <?php echo $verified ? 'sk-alert-success' : 'sk-alert-danger'; ?>"><?php echo esc_html( $message ); ?></div>
         <?php endif; ?>
 
-        <form method="post" action="<?php echo esc_url( $url ); ?>" class="sk-settings-form sk-verify-form">
+        <form method="post" action="<?php echo esc_url( $url ); ?>" class="sk-settings-form">
             <?php wp_nonce_field( VerifiedLinksPage::NONCE, 'sk_verify_nonce' ); ?>
 
             <div class="sk-settings-section">
@@ -166,8 +166,6 @@ do_action( 'sk_dashboard_wrap_start' );
                 <?php endif; ?>
             </div>
         </form>
-
-        </article>
 
         <?php do_action( 'sk_dashboard_content_inside_after' ); ?>
     </div>

@@ -9485,13 +9485,15 @@ a.sk-sub-order-action:hover {
 }
 
 /* === Page header — force-match .sk-review-page-header from sk-theme == */
-.sk-dashboard-content--merkliste .sk-review-page-header {
+.sk-dashboard-content--merkliste .sk-review-page-header,
+.sk-dashboard-content--verification .sk-review-page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 20px;
 }
-.sk-dashboard-content--merkliste .sk-review-page-header h2 {
+.sk-dashboard-content--merkliste .sk-review-page-header h2,
+.sk-dashboard-content--verification .sk-review-page-header h2 {
   font-size: 22px;
   font-weight: 700;
   color: #e8ecf0;
@@ -9501,7 +9503,8 @@ a.sk-sub-order-action:hover {
   gap: 10px;
   line-height: 1.2;
 }
-.sk-dashboard-content--merkliste .sk-review-page-header h2 i {
+.sk-dashboard-content--merkliste .sk-review-page-header h2 i,
+.sk-dashboard-content--verification .sk-review-page-header h2 i {
   color: #F7931A;
   font-size: 20px;
   display: inline-block;
@@ -12445,12 +12448,4 @@ textarea.wp-editor-area.post_content {
 	font-size: 13px;
 	font-weight: 600;
 	vertical-align: middle;
-}
-
-/* Verifizierung: Abschnittstitel kleiner als der Seitentitel und ohne
-   Trennlinie. Nur hier gescoped — .sk-settings-section-title gehoert der
-   Shopdaten-Seite und bleibt dort, wie sie ist. */
-.sk-verify-form .sk-settings-section-title {
-	font-size: 14px;
-	border-bottom: none;
 }
