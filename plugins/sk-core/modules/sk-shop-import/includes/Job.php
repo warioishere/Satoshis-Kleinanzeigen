@@ -69,12 +69,10 @@ final class Job {
      * @return array<int,array>|\WP_Error
      */
     private static function items( array $job ) {
-        $csv = Csv::read( $job['path'] );
-        if ( is_wp_error( $csv ) ) {
-            return $csv;
+        $items = Source::items( $job['path'], $job['mapping'] );
+        if ( is_wp_error( $items ) ) {
+            return $items;
         }
-
-        $items = Catalog::build( $csv['headers'], $csv['rows'], $job['mapping'] );
 
         if ( ! empty( $job['keys'] ) ) {
             $keys  = $job['keys'];

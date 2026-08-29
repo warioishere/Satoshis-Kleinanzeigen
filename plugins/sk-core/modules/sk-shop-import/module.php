@@ -40,7 +40,7 @@ final class Module {
     }
 
     private function includes() {
-        foreach ( [ 'Dealer', 'Rate', 'Csv', 'Catalog', 'Settings', 'Quota', 'Storage', 'Silence', 'Job', 'Importer', 'PriceRefresh', 'Variants', 'PriceUnit', 'Display', 'DashboardPage', 'AdminPage' ] as $class ) {
+        foreach ( [ 'Dealer', 'Rate', 'Csv', 'Catalog', 'Shopify', 'Source', 'Settings', 'Quota', 'Storage', 'Silence', 'Job', 'Importer', 'PriceRefresh', 'Variants', 'PriceUnit', 'Display', 'DashboardPage', 'AdminPage' ] as $class ) {
             require_once SK_SHOP_IMPORT_INCLUDES . '/' . $class . '.php';
         }
     }

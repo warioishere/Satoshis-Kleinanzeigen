@@ -63,6 +63,29 @@ final class Storage {
     }
 
     /**
+     * Einen geholten Katalog ablegen.
+     *
+     * Derselbe Ordner und dasselbe Namensmuster wie beim Upload, damit
+     * belongs_to() auch hier greift und der Auftrag die Datei spaeter
+     * wiederfindet.
+     *
+     * @return string|\WP_Error Pfad
+     */
+    public static function put_catalog( string $json, int $vendor_id ) {
+        if ( trim( $json ) === '' ) {
+            return new \WP_Error( 'sk_catalog_empty', __( 'Der geholte Katalog ist leer.', 'sk-core' ) );
+        }
+
+        $target = self::dir() . '/' . $vendor_id . '-' . wp_generate_password( 16, false, false ) . '.json';
+
+        if ( file_put_contents( $target, $json ) === false ) {
+            return new \WP_Error( 'sk_catalog_write', __( 'Der Katalog liess sich nicht ablegen.', 'sk-core' ) );
+        }
+
+        return $target;
+    }
+
+    /**
      * Gehoert diese Datei diesem Verkaeufer?
      *
      * Ohne die Pruefung koennte ein Verkaeufer ueber einen manipulierten Pfad

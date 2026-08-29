@@ -192,7 +192,7 @@ do_action( 'sk_dashboard_wrap_start' );
                     </div>
                 </div>
 
-            <?php elseif ( $step === 'zuordnen' && $csv ) : ?>
+            <?php elseif ( $step === 'zuordnen' && ( $csv || ! empty( $is_json ) ) ) : ?>
 
                 <?php
                 $limit    = ( $quota && $quota['remaining'] !== null ) ? (int) $quota['remaining'] : 0;
@@ -388,6 +388,7 @@ do_action( 'sk_dashboard_wrap_start' );
                         <input type="hidden" name="sk_image_cap" value="<?php echo (int) ( Importer::IMAGES_PER_PRODUCT * max( 1, $summary['items'] ) ); ?>">
                     </div>
 
+                    <?php if ( empty( $is_json ) ) : ?>
                     <details class="sk-import-advanced">
                         <summary>
                             <?php esc_html_e( 'Spaltenzuordnung ansehen', 'sk-core' ); ?>
@@ -425,6 +426,7 @@ do_action( 'sk_dashboard_wrap_start' );
                             </div>
                         </div>
                     </details>
+                    <?php endif; ?>
 
                     <div class="sk-form-group">
                         <button type="submit" id="sk-import-submit" class="sk-btn sk-btn-theme">
@@ -447,6 +449,31 @@ do_action( 'sk_dashboard_wrap_start' );
                 </div>
 
             <?php else : ?>
+
+                <?php if ( ! empty( $shop_url ) ) : ?>
+                <div class="sk-section-heading"><h3><?php esc_html_e( 'Katalog direkt holen', 'sk-core' ); ?></h3></div>
+                <div class="sk-section-content">
+                    <p>
+                        <?php
+                        printf(
+                            /* translators: %s: Adresse des Händlershops. */
+                            esc_html__( 'Läuft dein Shop auf Shopify, holen wir den Katalog direkt von %s — ohne Datei und ohne Spalten zuzuordnen. Ausführungen und Bilder kommen dabei vollständig mit.', 'sk-core' ),
+                            '<strong>' . esc_html( (string) wp_parse_url( $shop_url, PHP_URL_HOST ) ) . '</strong>'
+                        );
+                        ?>
+                    </p>
+                    <form method="post" action="<?php echo esc_url( $url ); ?>">
+                        <?php wp_nonce_field( DashboardPage::NONCE, 'sk_shop_import_nonce' ); ?>
+                        <input type="hidden" name="sk_step" value="holen">
+                        <div class="sk-form-group">
+                            <button type="submit" class="sk-btn sk-btn-theme"><?php esc_html_e( 'Katalog holen', 'sk-core' ); ?></button>
+                        </div>
+                    </form>
+                    <p class="sk-import-hint">
+                        <?php esc_html_e( 'Klappt das nicht, ist es kein Shopify-Shop oder der Katalog ist dort nicht öffentlich. Dann bleibt der Weg über die Datei.', 'sk-core' ); ?>
+                    </p>
+                </div>
+                <?php endif; ?>
 
                 <div class="sk-section-heading"><h3><?php esc_html_e( 'Katalog hochladen', 'sk-core' ); ?></h3></div>
                 <div class="sk-section-content">

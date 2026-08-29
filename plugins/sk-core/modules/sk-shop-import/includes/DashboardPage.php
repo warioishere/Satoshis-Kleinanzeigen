@@ -107,6 +107,36 @@ class DashboardPage extends DashboardModule {
             exit;
         }
 
+        if ( $step === 'holen' ) {
+            $shop = Dealer::shop_url( $vendor_id );
+
+            $products = Shopify::fetch( $shop );
+
+            if ( is_wp_error( $products ) ) {
+                set_transient( 'sk_import_msg_' . $vendor_id, $products->get_error_message(), 120 );
+                wp_safe_redirect( $this->url() );
+                exit;
+            }
+
+            $path = Storage::put_catalog( (string) wp_json_encode( [ 'products' => $products ] ), $vendor_id );
+
+            if ( is_wp_error( $path ) ) {
+                set_transient( 'sk_import_msg_' . $vendor_id, $path->get_error_message(), 120 );
+                wp_safe_redirect( $this->url() );
+                exit;
+            }
+
+            // Die vorige Quelle liegt sonst als Leiche im Ordner.
+            $vorige = (string) get_user_meta( $vendor_id, '_sk_import_file', true );
+            if ( $vorige !== '' && Storage::belongs_to( $vorige, $vendor_id ) ) {
+                Storage::forget( $vorige );
+            }
+
+            update_user_meta( $vendor_id, '_sk_import_file', $path );
+            wp_safe_redirect( add_query_arg( 'schritt', 'zuordnen', $this->url() ) );
+            exit;
+        }
+
         if ( $step === 'run' ) {
             $this->run_import( $vendor_id );
             exit;
@@ -122,17 +152,22 @@ class DashboardPage extends DashboardModule {
             exit;
         }
 
-        $csv = Csv::read( $path );
-        if ( is_wp_error( $csv ) ) {
-            set_transient( 'sk_import_msg_' . $vendor_id, $csv->get_error_message(), 120 );
-            wp_safe_redirect( $this->url() );
-            exit;
-        }
+        $mapping = [];
 
-        $mapping = Csv::guess_mapping( $csv['headers'] );
-        foreach ( array_keys( Csv::FIELDS ) as $field ) {
-            if ( isset( $_POST[ 'map_' . $field ] ) ) {
-                $mapping[ $field ] = (int) $_POST[ 'map_' . $field ];
+        // Ein geholter Katalog braucht keine Spaltenzuordnung.
+        if ( ! Source::is_json( $path ) ) {
+            $csv = Csv::read( $path );
+            if ( is_wp_error( $csv ) ) {
+                set_transient( 'sk_import_msg_' . $vendor_id, $csv->get_error_message(), 120 );
+                wp_safe_redirect( $this->url() );
+                exit;
+            }
+
+            $mapping = Csv::guess_mapping( $csv['headers'] );
+            foreach ( array_keys( Csv::FIELDS ) as $field ) {
+                if ( isset( $_POST[ 'map_' . $field ] ) ) {
+                    $mapping[ $field ] = (int) $_POST[ 'map_' . $field ];
+                }
             }
         }
 
@@ -145,7 +180,13 @@ class DashboardPage extends DashboardModule {
         Settings::save_default_category( $vendor_id, (int) ( $_POST['sk_default_cat'] ?? 0 ) );
         Settings::save_currency( $vendor_id, sanitize_text_field( wp_unslash( $_POST['sk_currency'] ?? '' ) ) );
 
-        $items = Catalog::build( $csv['headers'], $csv['rows'], $mapping );
+        $items = Source::items( $path, $mapping );
+
+        if ( is_wp_error( $items ) ) {
+            set_transient( 'sk_import_msg_' . $vendor_id, $items->get_error_message(), 120 );
+            wp_safe_redirect( $this->url() );
+            exit;
+        }
 
         // Nur die angehakten uebernehmen. Ohne Auswahl im Formular gilt alles.
         // Die Paketsperre fuer Ausfuehrungen zieht der Importer selbst.
@@ -227,30 +268,40 @@ class DashboardPage extends DashboardModule {
         $mapping = [];
         $path    = (string) get_user_meta( $vendor_id, '_sk_import_file', true );
 
-        if ( $step === 'zuordnen' && $path !== '' && Storage::belongs_to( $path, $vendor_id ) ) {
-            $csv = Csv::read( $path, 5 );
-            if ( ! is_wp_error( $csv ) ) {
-                $mapping = Csv::guess_mapping( $csv['headers'] );
-            } else {
-                $message = $csv->get_error_message();
-                $csv     = null;
-            }
-        }
-
         $items      = [];
         $csv_cats   = [];
         $quota      = null;
         $item_count = 0;
+        $rows       = 0;
+        // Ein geholter Katalog bringt seine Struktur mit; die Zuordnungsmaske
+        // gehoert dann nicht auf die Seite.
+        $is_json    = false;
 
-        if ( $csv ) {
-            // Fuer Vorschau und Kontingentpruefung die ganze Datei lesen, nicht
-            // nur die fuenf Zeilen der Anzeige.
-            $full = Csv::read( $path );
-            if ( ! is_wp_error( $full ) ) {
-                $items      = Catalog::build( $full['headers'], $full['rows'], $mapping );
-                $item_count = count( $items );
-                $csv_cats   = Catalog::categories( $items );
-                $quota      = Quota::check( $vendor_id, $item_count );
+        if ( $step === 'zuordnen' && $path !== '' && Storage::belongs_to( $path, $vendor_id ) ) {
+            $is_json = Source::is_json( $path );
+
+            if ( ! $is_json ) {
+                $csv = Csv::read( $path, 5 );
+                if ( ! is_wp_error( $csv ) ) {
+                    $mapping = Csv::guess_mapping( $csv['headers'] );
+                } else {
+                    $message = $csv->get_error_message();
+                    $csv     = null;
+                }
+            }
+
+            if ( $is_json || $csv ) {
+                $built = Source::items( $path, $mapping );
+
+                if ( is_wp_error( $built ) ) {
+                    $message = $built->get_error_message();
+                } else {
+                    $items      = $built;
+                    $item_count = count( $items );
+                    $csv_cats   = Catalog::categories( $items );
+                    $quota      = Quota::check( $vendor_id, $item_count );
+                    $rows       = Source::count( $path );
+                }
             }
         }
 
@@ -290,7 +341,7 @@ class DashboardPage extends DashboardModule {
             }
 
             $summary = [
-                'rows'          => (int) ( $csv['count'] ?? 0 ),
+                'rows'          => $rows,
                 'items'         => $item_count,
                 'variants'      => $with_variants,
                 'drafts'        => $drafts,
@@ -333,12 +384,17 @@ class DashboardPage extends DashboardModule {
         $categories = get_terms( [ 'taxonomy' => 'product_cat', 'hide_empty' => false ] );
         $rate       = Rate::btc_rate( 'EUR' );
         $url        = $this->url();
+        // Nur wenn der Betreiber eine Adresse hinterlegt hat, ist das Holen
+        // ueberhaupt anbietbar.
+        $shop_url   = Dealer::shop_url( $vendor_id );
 
         return compact(
             'step',
             'url',
             'message',
             'csv',
+            'is_json',
+            'shop_url',
             'mapping',
             'items',
             'item_count',
