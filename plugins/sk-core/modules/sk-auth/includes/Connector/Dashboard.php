@@ -75,7 +75,7 @@ class SK_Auth_Dashboard extends \SK\Core\Dashboard\DashboardModule {
         $show_sync_choice = $original_nostr && $profile_sync->needs_sync_choice($user_id);
 
         ?>
-        <div class="sk-followers-page-header">
+        <div class="sk-review-page-header">
             <h2><i class="fas fa-link"></i> Nostr / LN Linking</h2>
         </div>
 

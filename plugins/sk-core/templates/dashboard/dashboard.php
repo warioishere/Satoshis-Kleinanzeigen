@@ -33,6 +33,10 @@
         do_action( 'sk_dashboard_content_inside_before' );
         ?>
 
+        <div class="sk-review-page-header">
+            <h2><i class="fas fa-tachometer-alt"></i> <?php esc_html_e( 'Übersicht', 'sk-core' ); ?></h2>
+        </div>
+
         <article class="dashboard-content-area">
 
             <?php

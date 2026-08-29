@@ -19,7 +19,7 @@ $order_count = ! empty( $orders_data['total'] ) ? intval( $orders_data['total'] 
 
 <div class="sk-dashboard-subscription-wrap">
 
-    <div class="sk-sub-page-header">
+    <div class="sk-review-page-header">
         <h2><i class="fas fa-layer-group"></i> <?php esc_html_e( 'Abonnements', 'sk-core' ); ?></h2>
     </div>
 

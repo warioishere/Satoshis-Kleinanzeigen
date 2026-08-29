@@ -43,7 +43,7 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
 
         <?php do_action( 'sk_subscription_content_inside_before' ); ?>
 
-        <div class="sk-sub-page-header">
+        <div class="sk-review-page-header">
             <h2><i class="fas fa-layer-group"></i> <?php esc_html_e( 'Abonnements', 'sk-core' ); ?></h2>
         </div>
 

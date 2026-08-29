@@ -18,7 +18,7 @@ do_action( 'sk_dashboard_wrap_start' );
 	<div class="sk-dashboard-content">
 
 		<!-- Page Header -->
-		<div class="sk-feed-page-header">
+		<div class="sk-review-page-header">
 			<h2>
 				<i class="fas fa-rss"></i>
 				<?php esc_html_e( 'Beiträge', 'sk-core' ); ?>

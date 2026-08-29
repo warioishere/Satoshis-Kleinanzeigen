@@ -24,7 +24,7 @@ $followers_url = sk_get_navigation_url( 'followers' );
 
     <div class="sk-dashboard-content">
 
-        <div class="sk-followers-page-header">
+        <div class="sk-review-page-header">
             <h2>
                 <i class="fas fa-heart"></i>
                 <?php esc_html_e( 'Follower', 'sk-core' ); ?>
