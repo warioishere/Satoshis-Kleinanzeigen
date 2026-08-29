@@ -12330,6 +12330,7 @@ textarea.wp-editor-area.post_content {
    sk-alert und sk-btn im Dashboard schon. */
 .sk-verify-badge {
 	display: inline-flex;
+	text-decoration: none;
 	align-items: center;
 	gap: 4px;
 	padding: 2px 8px;

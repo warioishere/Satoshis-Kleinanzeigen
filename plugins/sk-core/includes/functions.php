@@ -2823,21 +2823,38 @@ function sk_verified_badge( int $user_id ): string {
         return '';
     }
 
-    $hosts = \SK\Core\Verification\VerifiedLinks::confirmed_hosts( $user_id );
+    $bestaetigt = \SK\Core\Verification\VerifiedLinks::confirmed( $user_id );
 
-    if ( empty( $hosts ) ) {
+    if ( empty( $bestaetigt ) ) {
         return '';
     }
 
-    $hosts = implode( ', ', $hosts );
+    $hosts = implode( ', ', \SK\Core\Verification\VerifiedLinks::confirmed_hosts( $user_id ) );
+    $ziel  = (string) ( reset( $bestaetigt )['url'] ?? '' );
+
+    $titel = sprintf(
+        /* translators: %s: Liste der bestaetigten Adressen. */
+        __( 'Bestätigt: %s', 'sk-core' ),
+        $hosts
+    );
+
+    /*
+     * Das Abzeichen fuehrt auf die Seite, mit der sich der Anbieter
+     * bestaetigt hat — nachpruefbar statt bloss behauptet. Bei mehreren
+     * Adressen auf die erste; alle stehen im Titel.
+     */
+    if ( $ziel === '' ) {
+        return sprintf(
+            '<span class="sk-verify-badge" title="%s"><i class="fas fa-circle-check" aria-hidden="true"></i><span class="screen-reader-text">%s</span></span>',
+            esc_attr( $titel ),
+            esc_html__( 'verifiziert', 'sk-core' )
+        );
+    }
 
     return sprintf(
-        '<span class="sk-verify-badge" title="%s"><i class="fas fa-circle-check" aria-hidden="true"></i><span class="screen-reader-text">%s</span></span>',
-        esc_attr( sprintf(
-            /* translators: %s: Liste der bestaetigten Adressen. */
-            __( 'Bestätigt: %s', 'sk-core' ),
-            $hosts
-        ) ),
+        '<a class="sk-verify-badge" href="%1$s" target="_blank" rel="noopener nofollow" title="%2$s"><i class="fas fa-circle-check" aria-hidden="true"></i><span class="screen-reader-text">%3$s</span></a>',
+        esc_url( $ziel ),
+        esc_attr( $titel ),
         esc_html__( 'verifiziert', 'sk-core' )
     );
 }
