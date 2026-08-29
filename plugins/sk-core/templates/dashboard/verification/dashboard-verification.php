@@ -2,6 +2,12 @@
 /**
  * Verifizierung im Verkäufer-Dashboard.
  *
+ * Aufbau wie die Shopdaten unter Einstellungen: dieselbe Huelle
+ * (sk-settings-content, sk-settings-area, entry-title im sk-dashboard-header),
+ * sk-settings-form als Rahmen, sk-settings-section je Abschnitt und Felder
+ * ueber sk_form_input(). An sk-settings-form haengt die dunkle
+ * Feldgestaltung — ein sk-form-control ausserhalb dieses Rahmens bliebe weiss.
+ *
  * Variablen kommen aus VerifiedLinksPage::view_data(), registriert als
  * 'template_args'; diese Datei rendert nur.
  *
@@ -26,122 +32,142 @@ do_action( 'sk_dashboard_wrap_start' );
 <div class="sk-dashboard-wrap">
     <?php do_action( 'sk_dashboard_content_before' ); ?>
 
-    <div class="sk-dashboard-content">
+    <div class="sk-dashboard-content sk-settings-content">
         <?php do_action( 'sk_dashboard_content_inside_before' ); ?>
 
-        <div class="sk-review-page-header">
-            <h2><i class="fas fa-circle-check"></i> <?php esc_html_e( 'Verifizierung', 'sk-core' ); ?></h2>
-        </div>
+        <article class="sk-settings-area">
+
+        <header class="sk-dashboard-header">
+            <div class="sk-store-settign-header-wrap">
+                <h1 class="entry-title"><?php esc_html_e( 'Verifizierung', 'sk-core' ); ?></h1>
+            </div>
+        </header>
 
         <?php if ( $message ) : ?>
             <div class="sk-alert <?php echo $verified ? 'sk-alert-success' : 'sk-alert-danger'; ?>"><?php echo esc_html( $message ); ?></div>
         <?php endif; ?>
 
-        <div class="sk-section-heading">
-            <h3><i class="fas fa-shield-halved"></i> <?php esc_html_e( 'Wofür das gut ist', 'sk-core' ); ?></h3>
-        </div>
-        <div class="sk-section-content">
-            <p><?php esc_html_e( 'Zeig, dass eine Seite im Netz wirklich dir gehört: trag sie unten ein und setze dort einen Verweis zurück auf dein Profil. Ist beides da, bekommst du das Abzeichen — und andere sehen, dass du hinter dieser Adresse stehst.', 'sk-core' ); ?></p>
+        <form method="post" action="<?php echo esc_url( $url ); ?>" class="sk-settings-form">
+            <?php wp_nonce_field( VerifiedLinksPage::NONCE, 'sk_verify_nonce' ); ?>
 
-            <?php if ( $verified ) : ?>
-                <p>
-                    <span class="sk-verify-badge"><i class="fas fa-circle-check"></i></span>
-                    <strong><?php esc_html_e( 'Dein Abzeichen ist aktiv.', 'sk-core' ); ?></strong>
-                </p>
-            <?php endif; ?>
-        </div>
+            <div class="sk-settings-section">
+                <div class="sk-settings-section-title">
+                    <?php esc_html_e( 'Dein Abzeichen', 'sk-core' ); ?>
+                </div>
 
-        <div class="sk-section-heading">
-            <h3><i class="fas fa-list-ol"></i> <?php esc_html_e( 'So geht es', 'sk-core' ); ?></h3>
-        </div>
-        <div class="sk-section-content">
-            <div class="sk-form-group sk-clearfix">
-                <label class="sk-w3 sk-control-label" for="sk_verify_snippet"><?php esc_html_e( 'Auf einer Website', 'sk-core' ); ?></label>
-                <div class="sk-w9">
-                    <input class="sk-form-control" type="text" id="sk_verify_snippet" value="<?php echo esc_attr( $snippet ); ?>" readonly onclick="this.select();">
-                    <p class="sk-settings-hint"><?php esc_html_e( 'Diese Zeile in den <head> deiner Seite setzen — sie ist unsichtbar.', 'sk-core' ); ?></p>
+                <div class="sk-settings-field">
+                    <div class="sk-settings-input">
+                        <p><?php esc_html_e( 'Zeig, dass eine Seite im Netz wirklich dir gehört: trag sie unten ein und setze dort einen Verweis zurück auf dein Profil. Ist beides da, bekommst du das Abzeichen — und andere sehen, dass du hinter dieser Adresse stehst.', 'sk-core' ); ?></p>
+                        <?php if ( $verified ) : ?>
+                            <p><span class="sk-verify-badge"><i class="fas fa-circle-check"></i></span> <strong><?php esc_html_e( 'Dein Abzeichen ist aktiv.', 'sk-core' ); ?></strong></p>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
 
-            <div class="sk-form-group sk-clearfix">
-                <label class="sk-w3 sk-control-label" for="sk_verify_token"><?php esc_html_e( 'Auf GitHub und ähnlichem', 'sk-core' ); ?></label>
-                <div class="sk-w9">
-                    <input class="sk-form-control" type="text" id="sk_verify_token" value="<?php echo esc_attr( $token ); ?>" readonly onclick="this.select();">
-                    <p class="sk-settings-hint"><?php esc_html_e( 'Dort überlebt der Verweis das Rendern oft nicht. Schreib stattdessen diesen Beleg irgendwo auf die Seite.', 'sk-core' ); ?></p>
+            <div class="sk-settings-section">
+                <div class="sk-settings-section-title">
+                    <?php esc_html_e( 'So geht es', 'sk-core' ); ?>
+                </div>
+
+                <div class="sk-settings-field">
+                    <label class="sk-settings-label" for="sk_verify_snippet"><?php esc_html_e( 'Auf einer Website', 'sk-core' ); ?></label>
+                    <div class="sk-settings-input">
+                        <input type="text" id="sk_verify_snippet" class="sk-form-control" value="<?php echo esc_attr( $snippet ); ?>" readonly onclick="this.select();">
+                        <p class="sk-settings-hint"><?php esc_html_e( 'Diese Zeile in den <head> deiner Seite setzen — sie ist unsichtbar. Anklicken markiert sie.', 'sk-core' ); ?></p>
+                    </div>
+                </div>
+
+                <div class="sk-settings-field">
+                    <label class="sk-settings-label" for="sk_verify_token"><?php esc_html_e( 'Auf GitHub und ähnlichem', 'sk-core' ); ?></label>
+                    <div class="sk-settings-input">
+                        <input type="text" id="sk_verify_token" class="sk-form-control" value="<?php echo esc_attr( $token ); ?>" readonly onclick="this.select();">
+                        <p class="sk-settings-hint"><?php esc_html_e( 'Dort überlebt der Verweis das Rendern oft nicht. Schreib stattdessen diesen Beleg irgendwo auf die Seite.', 'sk-core' ); ?></p>
+                    </div>
+                </div>
+
+                <div class="sk-settings-field">
+                    <label class="sk-settings-label"><?php esc_html_e( 'Ziel des Verweises', 'sk-core' ); ?></label>
+                    <div class="sk-settings-input">
+                        <p><a href="<?php echo esc_url( $target ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $target ); ?></a></p>
+                    </div>
                 </div>
             </div>
 
-            <div class="sk-form-group sk-clearfix">
-                <label class="sk-w3 sk-control-label"><?php esc_html_e( 'Ziel des Verweises', 'sk-core' ); ?></label>
-                <div class="sk-w9">
-                    <p><a href="<?php echo esc_url( $target ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $target ); ?></a></p>
+            <div class="sk-settings-section">
+                <div class="sk-settings-section-title">
+                    <?php esc_html_e( 'Deine Adressen', 'sk-core' ); ?>
                 </div>
-            </div>
-        </div>
 
-        <div class="sk-section-heading">
-            <h3><i class="fas fa-link"></i> <?php esc_html_e( 'Deine Adressen', 'sk-core' ); ?></h3>
-        </div>
-        <div class="sk-section-content">
-            <?php if ( empty( $links ) ) : ?>
-                <p><?php esc_html_e( 'Noch keine Adresse eingetragen.', 'sk-core' ); ?></p>
-            <?php else : ?>
-                <table class="sk-table">
-                    <thead>
-                        <tr>
-                            <th><?php esc_html_e( 'Adresse', 'sk-core' ); ?></th>
-                            <th><?php esc_html_e( 'Zustand', 'sk-core' ); ?></th>
-                            <th><?php esc_html_e( 'zuletzt geprüft', 'sk-core' ); ?></th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    <?php foreach ( $links as $link ) : ?>
-                        <tr>
-                            <td>
-                                <a href="<?php echo esc_url( $link['url'] ); ?>" target="_blank" rel="noopener nofollow"><?php echo esc_html( $link['host'] ); ?></a>
-                            </td>
-                            <td>
-                                <?php if ( $link['status'] === VerifiedLinks::OK ) : ?>
-                                    <span class="sk-verify-badge"><i class="fas fa-circle-check"></i></span> <?php esc_html_e( 'bestätigt', 'sk-core' ); ?>
-                                <?php elseif ( $link['status'] === VerifiedLinks::UNREACHABLE ) : ?>
-                                    <?php esc_html_e( 'nicht erreichbar', 'sk-core' ); ?>
-                                <?php else : ?>
-                                    <?php esc_html_e( 'kein Verweis gefunden', 'sk-core' ); ?>
-                                <?php endif; ?>
-                            </td>
-                            <td>
-                                <?php echo $link['checked'] ? esc_html( wp_date( 'd.m.Y H:i', (int) $link['checked'] ) ) : '—'; ?>
-                            </td>
-                            <td>
-                                <form method="post" action="<?php echo esc_url( $url ); ?>">
-                                    <?php wp_nonce_field( VerifiedLinksPage::NONCE, 'sk_verify_nonce' ); ?>
-                                    <input type="hidden" name="sk_verify_url" value="<?php echo esc_attr( $link['url'] ); ?>">
-                                    <button type="submit" name="sk_verify_action" value="check" class="sk-btn sk-btn-theme"><?php esc_html_e( 'Erneut prüfen', 'sk-core' ); ?></button>
-                                    <button type="submit" name="sk_verify_action" value="remove" class="sk-btn sk-btn-default"><?php esc_html_e( 'Entfernen', 'sk-core' ); ?></button>
-                                </form>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                    </tbody>
-                </table>
-            <?php endif; ?>
-
-            <?php if ( count( $links ) < $max_links ) : ?>
-                <form method="post" action="<?php echo esc_url( $url ); ?>">
-                    <?php wp_nonce_field( VerifiedLinksPage::NONCE, 'sk_verify_nonce' ); ?>
-                    <div class="sk-form-group sk-clearfix">
-                        <label class="sk-w3 sk-control-label" for="sk_verify_url"><?php esc_html_e( 'Adresse hinzufügen', 'sk-core' ); ?></label>
-                        <div class="sk-w9">
-                            <input class="sk-form-control" type="url" name="sk_verify_url" id="sk_verify_url" placeholder="https://meine-seite.de" required>
+                <?php if ( ! empty( $links ) ) : ?>
+                    <div class="sk-settings-field">
+                        <div class="sk-settings-input">
+                            <table class="sk-table">
+                                <thead>
+                                    <tr>
+                                        <th><?php esc_html_e( 'Adresse', 'sk-core' ); ?></th>
+                                        <th><?php esc_html_e( 'Zustand', 'sk-core' ); ?></th>
+                                        <th><?php esc_html_e( 'zuletzt geprüft', 'sk-core' ); ?></th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                <?php foreach ( $links as $link ) : ?>
+                                    <tr>
+                                        <td><a href="<?php echo esc_url( $link['url'] ); ?>" target="_blank" rel="noopener nofollow"><?php echo esc_html( $link['host'] ); ?></a></td>
+                                        <td>
+                                            <?php if ( $link['status'] === VerifiedLinks::OK ) : ?>
+                                                <span class="sk-verify-badge"><i class="fas fa-circle-check"></i></span> <?php esc_html_e( 'bestätigt', 'sk-core' ); ?>
+                                            <?php elseif ( $link['status'] === VerifiedLinks::UNREACHABLE ) : ?>
+                                                <?php esc_html_e( 'nicht erreichbar', 'sk-core' ); ?>
+                                            <?php else : ?>
+                                                <?php esc_html_e( 'kein Verweis gefunden', 'sk-core' ); ?>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td><?php echo $link['checked'] ? esc_html( wp_date( 'd.m.Y H:i', (int) $link['checked'] ) ) : '—'; ?></td>
+                                        <td>
+                                            <button type="submit" name="sk_verify_action" value="check" class="sk-btn sk-btn-theme" formnovalidate
+                                                onclick="document.getElementById('sk_verify_url').value=<?php echo esc_attr( wp_json_encode( $link['url'] ) ); ?>;"><?php esc_html_e( 'Prüfen', 'sk-core' ); ?></button>
+                                            <button type="submit" name="sk_verify_action" value="remove" class="sk-btn sk-btn-default" formnovalidate
+                                                onclick="document.getElementById('sk_verify_url').value=<?php echo esc_attr( wp_json_encode( $link['url'] ) ); ?>;"><?php esc_html_e( 'Entfernen', 'sk-core' ); ?></button>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                    <div class="sk-form-group">
-                        <button type="submit" name="sk_verify_action" value="add" class="sk-btn sk-btn-theme"><?php esc_html_e( 'Hinzufügen und prüfen', 'sk-core' ); ?></button>
+                <?php endif; ?>
+
+                <?php
+                sk_form_input( [
+                    'type'        => 'url',
+                    'name'        => 'sk_verify_url',
+                    'id'          => 'sk_verify_url',
+                    'value'       => '',
+                    'label'       => __( 'Adresse', 'sk-core' ),
+                    'placeholder' => 'https://meine-seite.de',
+                    'hint'        => count( $links ) >= $max_links
+                        ? sprintf(
+                            /* translators: %d: Hoechstzahl der Adressen. */
+                            __( 'Du hast die Höchstzahl von %d Adressen erreicht. Entferne zuerst eine.', 'sk-core' ),
+                            $max_links
+                        )
+                        : __( 'Trag die Adresse ein und setze dort den Verweis — wir prüfen sofort.', 'sk-core' ),
+                ] );
+                ?>
+
+                <?php if ( count( $links ) < $max_links ) : ?>
+                    <div class="sk-settings-field">
+                        <div class="sk-settings-input">
+                            <button type="submit" name="sk_verify_action" value="add" class="sk-btn sk-btn-theme"><?php esc_html_e( 'Hinzufügen und prüfen', 'sk-core' ); ?></button>
+                        </div>
                     </div>
-                </form>
-            <?php endif; ?>
-        </div>
+                <?php endif; ?>
+            </div>
+        </form>
+
+        </article>
 
         <?php do_action( 'sk_dashboard_content_inside_after' ); ?>
     </div>
