@@ -3067,3 +3067,104 @@ function sk_to_utc_timestamp( ?string $site_local ): int {
 
     return (int) strtotime( get_gmt_from_date( $site_local ) . ' UTC' );
 }
+
+/**
+ * Queue a notice for the current user, shown on the next dashboard page view.
+ *
+ * Eight places called this function, every one of them wrapped in
+ * function_exists() — and it was never defined anywhere, so all of those
+ * messages were dropped without a trace. That included the reason a listing
+ * could not be published and the reason a shop name was refused: the form
+ * returned early, said nothing, and looked like it had simply ignored the user.
+ *
+ * Kept per user and not per request because a save almost always redirects
+ * before anything is rendered.
+ *
+ * @param string $message Message text; limited HTML is allowed.
+ * @param string $type    error | success | warning | info.
+ */
+function sk_add_notice( string $message, string $type = 'success' ): void {
+	$user_id = get_current_user_id();
+
+	if ( ! $user_id || '' === trim( $message ) ) {
+		return;
+	}
+
+	$key     = 'sk_notices_' . $user_id;
+	$notices = get_transient( $key );
+	$notices = is_array( $notices ) ? $notices : [];
+
+	$notices[] = [
+		'message' => $message,
+		'type'    => in_array( $type, [ 'error', 'success', 'warning', 'info' ], true ) ? $type : 'success',
+	];
+
+	set_transient( $key, $notices, 5 * MINUTE_IN_SECONDS );
+}
+
+/**
+ * Read the queued notices and clear them.
+ *
+ * @return array<int, array{message: string, type: string}>
+ */
+function sk_get_notices(): array {
+	$user_id = get_current_user_id();
+
+	if ( ! $user_id ) {
+		return [];
+	}
+
+	$key     = 'sk_notices_' . $user_id;
+	$notices = get_transient( $key );
+
+	if ( ! is_array( $notices ) || empty( $notices ) ) {
+		return [];
+	}
+
+	delete_transient( $key );
+
+	return $notices;
+}
+
+/**
+ * Print the queued notices, at most once per request.
+ *
+ * Hooked to the three points that actually fire inside the content card of the
+ * pages these messages belong to — the dashboard pages, the settings pages and
+ * the listing editor. Deliberately not sk_dashboard_content_before: that one
+ * sits outside the card and turns a notice into a flex sibling of it.
+ */
+function sk_render_notices(): void {
+	static $done = false;
+
+	if ( $done ) {
+		return;
+	}
+
+	$notices = sk_get_notices();
+
+	if ( empty( $notices ) ) {
+		return;
+	}
+
+	$done = true;
+
+	$classes = [
+		'error'   => 'sk-alert-danger',
+		'success' => 'sk-alert-success',
+		'warning' => 'sk-alert-warning',
+		'info'    => 'sk-alert-info',
+	];
+
+	foreach ( $notices as $notice ) {
+		printf(
+			'<div class="sk-alert %s">%s</div>',
+			esc_attr( $classes[ $notice['type'] ] ?? 'sk-alert-info' ),
+			wp_kses_post( $notice['message'] )
+		);
+	}
+}
+
+add_action( 'sk_dashboard_content_inside_before', 'sk_render_notices' );
+add_action( 'sk_settings_content_inside_before', 'sk_render_notices' );
+add_action( 'sk_product_content_inside_area_before', 'sk_render_notices' );

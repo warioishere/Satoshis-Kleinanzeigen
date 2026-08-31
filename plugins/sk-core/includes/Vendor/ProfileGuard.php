@@ -39,6 +39,54 @@ class ProfileGuard {
          */
         add_filter( 'sk_get_default_product_status', [ $this, 'filter_default_status' ], 20, 2 );
         add_filter( 'sk_post_status', [ $this, 'filter_post_statuses' ], 98, 2 );
+
+        /*
+         * Der Hinweis aus add_notice() erreicht nur den, dem ein Inserat
+         * aktiv zurueckgezogen wurde. Im haeufigeren Fall greift schon
+         * filter_default_status(): das Inserat entsteht direkt als Entwurf,
+         * force_draft() laeuft nie, und der Anbieter sieht einen Entwurf ohne
+         * jede Begruendung. Deshalb zusaetzlich ein Hinweis am Zustand statt
+         * am Ereignis — er steht auf der Bearbeiten-Seite, bis das Profil
+         * vollstaendig ist.
+         */
+        add_action( 'sk_product_content_inside_area_before', [ $this, 'show_listing_notice' ] );
+    }
+
+    /**
+     * Warum dieses Inserat nicht online geht.
+     */
+    public function show_listing_notice(): void {
+        $post = get_post();
+
+        if ( ! $post instanceof \WP_Post || 'product' !== $post->post_type ) {
+            return;
+        }
+
+        if ( 'publish' === $post->post_status ) {
+            return;
+        }
+
+        $vendor_id = (int) $post->post_author ?: get_current_user_id();
+
+        if ( $vendor_id !== get_current_user_id() || ! $this->guarded( $vendor_id ) ) {
+            return;
+        }
+
+        $fehlt = self::missing( $vendor_id );
+
+        if ( empty( $fehlt ) ) {
+            return;
+        }
+
+        printf(
+            '<div class="sk-alert sk-alert-warning">%s</div>',
+            wp_kses_post( sprintf(
+                /* translators: 1: Aufzaehlung des Fehlenden, 2: Adresse der Shopdaten. */
+                __( 'Dieses Inserat bleibt ein Entwurf, weil dir noch %1$s fehlt. Trag das in deinem <a href="%2$s">Shop-Profil</a> nach — danach kannst du es veröffentlichen.', 'sk-core' ),
+                implode( __( ' und ', 'sk-core' ), $fehlt ),
+                esc_url( site_url( '/dashboard/settings/store/' ) )
+            ) )
+        );
     }
 
     /**
