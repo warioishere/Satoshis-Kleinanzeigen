@@ -112,6 +112,16 @@ class AntiFraudPage extends AbstractPage {
             $args['added'] = BanSignals::add( $type, $value ) ? 'true' : 'false';
             $args['sub']   = 'signals';
 
+        } elseif ( 'approve_listing' === $action ) {
+            $log_id = isset( $_POST['log_id'] ) ? absint( $_POST['log_id'] ) : 0;
+            $entry  = $log_id ? ReviewLog::get( $log_id ) : null;
+
+            if ( $entry ) {
+                $args['approved'] = \SK\Modules\AntiFraud\KeywordReview::approve( (int) $entry->product_id ) ? 'true' : 'false';
+            }
+
+            $args['sub'] = 'log';
+
         } elseif ( 'delete_log' === $action ) {
             $log_id = isset( $_POST['log_id'] ) ? absint( $_POST['log_id'] ) : 0;
 

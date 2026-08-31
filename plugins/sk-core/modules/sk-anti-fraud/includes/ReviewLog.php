@@ -100,6 +100,22 @@ final class ReviewLog {
         return (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . self::table() );
     }
 
+    /**
+     * Ein einzelner Eintrag, fuer Aktionen die von der Liste ausgehen.
+     */
+    public static function get( int $id ) {
+        global $wpdb;
+
+        if ( ! self::table_exists() ) {
+            return null;
+        }
+
+        return $wpdb->get_row( $wpdb->prepare(
+            'SELECT * FROM ' . self::table() . ' WHERE id = %d',
+            $id
+        ) );
+    }
+
     public static function remove( int $id ): bool {
         global $wpdb;
 

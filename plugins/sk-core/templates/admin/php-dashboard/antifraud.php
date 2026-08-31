@@ -87,9 +87,9 @@ if ( ! defined( 'ABSPATH' ) ) {
                         <th scope="col" style="width:13%;"><?php esc_html_e( 'Zeitpunkt', 'sk-core' ); ?></th>
                         <th scope="col"><?php esc_html_e( 'Inserat', 'sk-core' ); ?></th>
                         <th scope="col" style="width:14%;"><?php esc_html_e( 'Treffer', 'sk-core' ); ?></th>
-                        <th scope="col" style="width:24%;"><?php esc_html_e( 'Anbieter', 'sk-core' ); ?></th>
+                        <th scope="col" style="width:22%;"><?php esc_html_e( 'Anbieter', 'sk-core' ); ?></th>
                         <th scope="col" style="width:12%;"><?php esc_html_e( 'Status heute', 'sk-core' ); ?></th>
-                        <th scope="col" style="width:8%;"><?php esc_html_e( 'Aktion', 'sk-core' ); ?></th>
+                        <th scope="col" style="width:14%;"><?php esc_html_e( 'Aktion', 'sk-core' ); ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -138,6 +138,15 @@ if ( ! defined( 'ABSPATH' ) ) {
                                 <?php endif; ?>
                             </td>
                             <td>
+                                <?php if ( $post_status && 'publish' !== $post_status ) : ?>
+                                    <form method="post" style="margin-bottom:4px;" onsubmit="return confirm('<?php echo esc_js( __( 'Inserat freigeben und veröffentlichen?', 'sk-core' ) ); ?>');">
+                                        <?php wp_nonce_field( 'sk_antifraud_action', 'sk_antifraud_nonce' ); ?>
+                                        <input type="hidden" name="antifraud_action" value="approve_listing">
+                                        <input type="hidden" name="log_id" value="<?php echo esc_attr( $entry->id ); ?>">
+                                        <button type="submit" class="button button-small button-primary"><?php esc_html_e( 'Freigeben', 'sk-core' ); ?></button>
+                                    </form>
+                                <?php endif; ?>
+
                                 <form method="post" onsubmit="return confirm('<?php echo esc_js( __( 'Diesen Protokolleintrag löschen?', 'sk-core' ) ); ?>');">
                                     <?php wp_nonce_field( 'sk_antifraud_action', 'sk_antifraud_nonce' ); ?>
                                     <input type="hidden" name="antifraud_action" value="delete_log">

@@ -33,6 +33,20 @@ class KeywordReview {
     public function __construct() {
         add_action( 'transition_post_status', [ $this, 'check_on_publish' ], 20, 3 );
         add_action( 'sk_dashboard_content_inside_before', [ $this, 'show_vendor_notice' ] );
+
+        /*
+         * Der Hinweis oben erreicht den Anbieter nur, wenn er die
+         * Inseratsliste oeffnet — nach dem Veroeffentlichen landet er aber auf
+         * der Bearbeiten-Seite, und die feuert diesen Haken nicht. Zusammen mit
+         * der Lebensdauer des Transients hiess das: er sieht sein Inserat als
+         * Entwurf und erfaehrt nie, warum. Auf Live hat genau das jemand zwei
+         * Mal am selben Tag erneut veroeffentlicht.
+         *
+         * Deshalb hier ein zweiter Hinweis, der nicht an einem Transient
+         * haengt, sondern am Zustand des Inserats: er steht so lange da, bis
+         * die Pruefung durch ist.
+         */
+        add_action( 'sk_product_content_inside_area_before', [ $this, 'show_listing_notice' ] );
     }
 
     /**
@@ -158,6 +172,29 @@ class KeywordReview {
         $this->notify_admin( $post, $matched );
     }
 
+    /**
+     * Nach der Pruefung freigeben.
+     *
+     * Die Marke wird vor dem Veroeffentlichen gesetzt, sonst hielte
+     * check_on_publish() das Inserat im selben Atemzug wieder zurueck.
+     */
+    public static function approve( int $product_id ): bool {
+        $post = get_post( $product_id );
+
+        if ( ! $post instanceof \WP_Post || 'product' !== $post->post_type ) {
+            return false;
+        }
+
+        update_post_meta( $product_id, self::META_APPROVED, 1 );
+        delete_post_meta( $product_id, self::META_FLAGGED );
+
+        if ( 'publish' !== $post->post_status ) {
+            wp_update_post( [ 'ID' => $product_id, 'post_status' => 'publish' ] );
+        }
+
+        return true;
+    }
+
     // ── Notifications ──────────────────────────────────────────────────────────
 
     private function notify_admin( \WP_Post $post, array $matched ): void {
@@ -193,8 +230,7 @@ class KeywordReview {
     }
 
     /**
-     * Tell the vendor their listing is in review — shown once, right after they
-     * hit publish.
+     * Hinweis direkt nach dem Veroeffentlichen, auf der Inseratsliste.
      */
     public function show_vendor_notice(): void {
         if ( ! is_user_logged_in() ) {
@@ -209,19 +245,58 @@ class KeywordReview {
         }
 
         delete_transient( $key );
+
+        $this->render_notice( (string) $notice['title'] );
+    }
+
+    /**
+     * Hinweis auf der Bearbeiten-Seite, solange die Pruefung laeuft.
+     *
+     * Haengt am Zustand des Inserats statt an einem Transient: wer die Seite
+     * spaeter wieder oeffnet, sieht denselben Hinweis erneut.
+     */
+    public function show_listing_notice(): void {
+        $post = get_post();
+
+        if ( ! $post instanceof \WP_Post || 'product' !== $post->post_type ) {
+            return;
+        }
+
+        if ( (int) $post->post_author !== get_current_user_id() ) {
+            return;
+        }
+
+        if ( ! get_post_meta( $post->ID, self::META_FLAGGED, true ) ) {
+            return;
+        }
+
+        if ( get_post_meta( $post->ID, self::META_APPROVED, true ) ) {
+            return;
+        }
+
+        $this->render_notice( (string) $post->post_title );
+    }
+
+    /**
+     * Die Meldung selbst. Kein eigener Abstand noetig — den bringt .sk-alert mit.
+     */
+    private function render_notice( string $title ): void {
         ?>
-        <div class="sk-alert sk-alert-warning" style="margin-bottom:16px;">
+        <div class="sk-alert sk-alert-warning">
             <i class="fas fa-clock"></i>
             <strong><?php esc_html_e( 'Dein Inserat wird geprüft', 'sk-core' ); ?></strong>
-            <p style="margin:6px 0 0;">
+            <p>
                 <?php
                 printf(
                     /* translators: %s: listing title */
                     esc_html__( '„%s“ wurde als Entwurf gespeichert und muss vor der Veröffentlichung von uns freigegeben werden.', 'sk-core' ),
-                    esc_html( $notice['title'] )
+                    esc_html( $title )
                 );
                 ?>
                 <?php esc_html_e( 'Bei Tickets und ähnlichen Angeboten prüfen wir jedes Inserat manuell, weil sie häufig für Betrug genutzt werden. Das dauert in der Regel nicht lange.', 'sk-core' ); ?>
+            </p>
+            <p>
+                <?php esc_html_e( 'Erneutes Veröffentlichen hilft nicht — das Inserat landet dann wieder als Entwurf hier. Warte einfach ab, wir melden uns.', 'sk-core' ); ?>
             </p>
         </div>
         <?php
