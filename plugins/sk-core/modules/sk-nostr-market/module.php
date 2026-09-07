@@ -190,6 +190,7 @@ final class Module {
         add_action( 'wp_footer', [ $this, 'render_sign_modal' ] );
 
         // "Repost" button on the listing edit screen in the admin area.
+        add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_css' ] );
         add_action( 'add_meta_boxes', [ $this, 'add_repost_box' ] );
         add_action( 'admin_post_sk_nostr_repost', [ $this, 'handle_repost' ] );
         add_action( 'admin_notices', [ $this, 'repost_notice' ] );
@@ -733,6 +734,28 @@ final class Module {
      * Same behavior as the Telegram reposter next to it: a button that sends
      * immediately instead of waiting for the next save.
      */
+    /**
+     * Styles for the Nostr box, on the product screen only.
+     */
+    public function enqueue_admin_css( $hook ): void {
+        if ( ! in_array( $hook, [ 'post.php', 'post-new.php' ], true ) ) {
+            return;
+        }
+
+        $screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+        if ( ! $screen || 'product' !== $screen->post_type ) {
+            return;
+        }
+
+        wp_enqueue_style(
+            'sk-nostr-admin',
+            plugins_url( 'assets/css/nostr-admin.css', SK_NOSTR_MARKET_PATH . '/module.php' ),
+            [],
+            SK_NOSTR_MARKET_VERSION
+        );
+    }
+
     public function add_repost_box(): void {
         add_meta_box(
             'sk_nostr_repost_box',
@@ -764,11 +787,11 @@ final class Module {
             . esc_html__( 'Jetzt auf Nostr posten', 'sk-core' ) . '</a></p>';
 
         if ( $vorhanden ) {
-            echo '<p style="color:#666">' . esc_html__( 'Bereits auf Nostr. Der Knopf ersetzt den bestehenden Beitrag.', 'sk-core' ) . '</p>';
+            echo '<p class="sk-nostr-box-note">' . esc_html__( 'Bereits auf Nostr. Der Knopf ersetzt den bestehenden Beitrag.', 'sk-core' ) . '</p>';
         } elseif ( ! $gewollt ) {
-            echo '<p style="color:#666">' . esc_html__( 'Am Inserat ist Nostr abgewählt. Der Knopf postet trotzdem, einmalig.', 'sk-core' ) . '</p>';
+            echo '<p class="sk-nostr-box-note">' . esc_html__( 'Am Inserat ist Nostr abgewählt. Der Knopf postet trotzdem, einmalig.', 'sk-core' ) . '</p>';
         } else {
-            echo '<p style="color:#666">' . esc_html__( 'Noch nicht auf Nostr.', 'sk-core' ) . '</p>';
+            echo '<p class="sk-nostr-box-note">' . esc_html__( 'Noch nicht auf Nostr.', 'sk-core' ) . '</p>';
         }
 
         self::render_relay_report( (int) $post->ID );
@@ -790,26 +813,26 @@ final class Module {
         $accepted = (array) ( $report['accepted'] ?? [] );
         $rejected = (array) ( $report['rejected'] ?? [] );
 
-        echo '<p style="margin-bottom:4px"><strong>' . esc_html__( 'Relays', 'sk-core' ) . '</strong>';
+        echo '<p class="sk-nostr-relays-title"><strong>' . esc_html__( 'Relays', 'sk-core' ) . '</strong>';
 
         if ( ! empty( $report['time'] ) ) {
-            echo ' <span style="color:#666;font-weight:normal">'
+            echo ' <span class="sk-nostr-relays-time">'
                 . esc_html( wp_date( 'd.m.Y H:i', (int) $report['time'] ) ) . '</span>';
         }
 
-        echo '</p><ul style="margin:0 0 8px">';
+        echo '</p><ul class="sk-nostr-relays">';
 
         foreach ( $accepted as $url ) {
-            echo '<li style="color:#1a7f37">✓ ' . esc_html( self::relay_label( (string) $url ) ) . '</li>';
+            echo '<li class="sk-nostr-relay-ok">✓ ' . esc_html( self::relay_label( (string) $url ) ) . '</li>';
         }
 
         foreach ( $rejected as $url => $reason ) {
-            echo '<li style="color:#b32d2e">✕ ' . esc_html( self::relay_label( (string) $url ) )
-                . ' <span style="color:#666">— ' . esc_html( (string) $reason ) . '</span></li>';
+            echo '<li class="sk-nostr-relay-failed">✕ ' . esc_html( self::relay_label( (string) $url ) )
+                . ' <span class="sk-nostr-relay-reason">— ' . esc_html( (string) $reason ) . '</span></li>';
         }
 
         if ( empty( $accepted ) ) {
-            echo '<li style="color:#b32d2e">' . esc_html__( 'Kein Relay hat das Inserat angenommen.', 'sk-core' ) . '</li>';
+            echo '<li class="sk-nostr-relay-failed">' . esc_html__( 'Kein Relay hat das Inserat angenommen.', 'sk-core' ) . '</li>';
         }
 
         echo '</ul>';

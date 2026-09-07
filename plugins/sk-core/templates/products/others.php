@@ -69,8 +69,16 @@ $post_statuses = sk_get_available_post_status( $post->ID );
              * moment they should learn that — not buried somewhere in
              * settings, but right here where they enable the option.
              */
-            $nostr_uid  = (int) get_current_user_id();
-            $hat_key    = ! empty( get_user_meta( $nostr_uid, 'nostr_public_key', true ) );
+            $nostr_uid = (int) get_current_user_id();
+
+            /*
+             * The marketplace account signs with the marketplace key, which
+             * lives in the configuration rather than on the account. Going by
+             * the user meta alone told it to go and get a key it already has.
+             */
+            $hat_key = ! empty( get_user_meta( $nostr_uid, 'nostr_public_key', true ) )
+                || ( class_exists( '\SK\Modules\NostrMarket\Bridge\ChatBridge' )
+                    && \SK\Modules\NostrMarket\Bridge\ChatBridge::is_platform_account( $nostr_uid ) );
             $linker_url = function_exists( 'sk_get_navigation_url' )
                 ? sk_get_navigation_url( 'auth-connector' )
                 : home_url( '/dashboard/auth-connector/' );

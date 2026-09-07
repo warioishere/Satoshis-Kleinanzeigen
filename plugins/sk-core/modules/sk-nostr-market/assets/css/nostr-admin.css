@@ -1,0 +1,30 @@
+/* Nostr box on the product edit screen. */
+
+.sk-nostr-box-note {
+    color: #646970;
+}
+
+.sk-nostr-relays-title {
+    margin-bottom: 4px;
+}
+
+.sk-nostr-relays-time {
+    color: #646970;
+    font-weight: normal;
+}
+
+.sk-nostr-relays {
+    margin: 0 0 8px;
+}
+
+.sk-nostr-relay-ok {
+    color: #1a7f37;
+}
+
+.sk-nostr-relay-failed {
+    color: #b32d2e;
+}
+
+.sk-nostr-relay-reason {
+    color: #646970;
+}

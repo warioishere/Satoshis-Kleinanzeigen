@@ -46,6 +46,24 @@ class ProductPublisher {
          * Anyone without a key is offered the choice when checking the
          * option. Until then, the listing doesn't go out.
          */
+        /*
+         * The marketplace's own listings are signed with the marketplace
+         * key. That account holds no key of its own — the key lives in the
+         * configuration — so the identity check would turn it away from its
+         * own marketplace.
+         */
+        if ( class_exists( 'SK\Modules\NostrMarket\Bridge\ChatBridge' )
+            && Bridge\ChatBridge::is_platform_account( $vendor_id ) ) {
+            $event_id = EventSender::send( 30402, $data['content'], $data['tags'] );
+
+            if ( $event_id ) {
+                update_post_meta( $post_id, self::META_KEY, $event_id );
+                delete_post_meta( $post_id, '_sk_nostr_market_pending_sign' );
+            }
+
+            return $event_id;
+        }
+
         if ( ! class_exists( 'SK\Modules\Auth\NostrIdentity' ) || ! \SK\Modules\Auth\NostrIdentity::has_identity( $vendor_id ) ) {
             return null;
         }
