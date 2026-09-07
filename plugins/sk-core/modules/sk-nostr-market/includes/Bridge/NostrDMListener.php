@@ -403,6 +403,20 @@ class NostrDMListener {
         }
 
         /*
+         * Our own message, on its way back. It is addressed to one of our
+         * mailboxes, so the poll picks it up like any other, and for a member
+         * whose key we do not hold there is nothing inside we could read to
+         * tell that we wrote it. The id we noted when sending is the only
+         * way to know — and it has to be checked before the message is handed
+         * to the member's browser, or it returns as a stranger's chat.
+         */
+        if ( ChatBridge::was_sent_by_us( $event_id ) ) {
+            self::settle( $event_id );
+
+            return;
+        }
+
+        /*
          * No key held here: only the vendor themselves can open this
          * message. Queue it raw; the rest happens in their browser.
          */
@@ -734,6 +748,18 @@ class NostrDMListener {
         if ( null === $sender_pubkey ) {
             error_log( '[SK Nostr Market Bridge] Seal for ' . substr( $event_id, 0, 12 ) . ' failed signature verification.' );
             return false;
+        }
+
+        /*
+         * A message the browser opened for us that turns out to be ours.
+         * Written from a mailbox we sign for, it belongs in the chat it was
+         * mirrored from, and putting it in a bridge chat would show the
+         * marketplace to a member as an unknown npub writing to them.
+         */
+        $ring = self::key_ring();
+
+        if ( ! empty( $ring[ $sender_pubkey ]['privkey'] ) ) {
+            return true;
         }
 
         $text = self::clean_field( $text, 4000 );

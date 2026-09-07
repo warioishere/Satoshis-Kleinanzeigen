@@ -573,9 +573,36 @@ class ChatBridge {
             \SK\Modules\Auth\NostrIdentity::get_relays()
         ) ) );
 
+        self::remember_sent( (string) $giftWrap->getId() );
+
         $result = \SK\Modules\Auth\RelayPublisher::publish( $giftWrap, $relays );
 
         return ! empty( $result['accepted'] );
+    }
+
+    /**
+     * Note a gift wrap as one of ours before it goes out.
+     *
+     * The poll asks the relays for everything addressed to our mailboxes, and
+     * what we send to a member is addressed to one of those. A wrap for a
+     * member whose key we do not hold cannot be opened here, so there is no
+     * way to see from the outside that we wrote it — the id is the only
+     * handle, and it has to be noted before the message exists anywhere else.
+     *
+     * Without this our own messages came back, were handed to the member's
+     * browser and reappeared as a conversation with a stranger who was us.
+     */
+    private static function remember_sent( string $event_id ): void {
+        if ( preg_match( '/^[0-9a-f]{64}$/i', $event_id ) ) {
+            set_transient( 'sk_nostr_sent_' . substr( strtolower( $event_id ), 0, 32 ), 1, 3 * DAY_IN_SECONDS );
+        }
+    }
+
+    /**
+     * Did this event leave here?
+     */
+    public static function was_sent_by_us( string $event_id ): bool {
+        return (bool) get_transient( 'sk_nostr_sent_' . substr( strtolower( $event_id ), 0, 32 ) );
     }
 
     /**
