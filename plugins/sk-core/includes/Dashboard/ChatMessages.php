@@ -109,6 +109,22 @@ class ChatMessages {
 		// nobody loses an incoming reply by having cleaned up earlier.
 		delete_post_meta( $chat_id, '_dvc_deleted_by' );
 
+		/*
+		 * The unread badge sits in cached dashboard pages, and a message
+		 * arriving for someone is exactly the case the sender's own cache
+		 * bump cannot cover — least of all a Nostr message, which is written
+		 * by the relay poll while nobody is logged in.
+		 */
+		if ( class_exists( PageCache::class ) ) {
+			foreach ( [ '_dvc_participant_1', '_dvc_participant_2' ] as $meta_key ) {
+				$participant = (int) get_post_meta( $chat_id, $meta_key, true );
+
+				if ( $participant && $participant !== (int) $user_id ) {
+					PageCache::bump_user( $participant );
+				}
+			}
+		}
+
 		// Bridge chats mirror vendor replies back to Nostr. This used to hang off
 		// an updated_post_meta hook, which no longer fires now that messages are
 		// not post meta any more.

@@ -180,6 +180,25 @@ final class PageCache {
     }
 
     /**
+     * Invalidate the cached pages of one particular member.
+     *
+     * bump_visitor() marks the session it runs in, which is no use when
+     * something arrives for someone who is not the one making the request:
+     * an incoming message, or the relay poll, which runs from the command
+     * line with nobody logged in at all. The session hash cannot even be
+     * worked out from outside — it comes from the login cookie — so this
+     * counter hangs off the member id and is folded into the same key.
+     *
+     * Without it the unread badge in the header kept its old number until
+     * the cached page aged out, up to five minutes after a message arrived.
+     */
+    public static function bump_user( int $user_id ): void {
+        if ( $user_id > 0 ) {
+            wp_cache_set( 'sk_dcu_' . $user_id, time(), self::GROUP, HOUR_IN_SECONDS );
+        }
+    }
+
+    /**
      * Build the cache key.
      *
      * Two version counters are folded in: one per visitor, bumped when that
@@ -193,6 +212,11 @@ final class PageCache {
         $user_version = (int) wp_cache_get( 'sk_dcv_' . $user_hash, self::GROUP );
         $file_version = (int) wp_cache_get( 'sk_dcv_files', self::GROUP );
 
-        return 'sk_dc_' . $user_hash . '_' . $user_version . '_' . $file_version . '_' . md5( $uri );
+        // A third counter, kept per member rather than per session, so that
+        // something happening to someone can invalidate their pages even
+        // though they are not the one making the request.
+        $member_version = (int) wp_cache_get( 'sk_dcu_' . get_current_user_id(), self::GROUP );
+
+        return 'sk_dc_' . $user_hash . '_' . $user_version . '_' . $member_version . '_' . $file_version . '_' . md5( $uri );
     }
 }
