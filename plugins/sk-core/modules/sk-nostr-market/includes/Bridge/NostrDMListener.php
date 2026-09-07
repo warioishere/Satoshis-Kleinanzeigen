@@ -665,8 +665,7 @@ class NostrDMListener {
         $existing_chat = self::find_bridge_chat( $sender_pubkey );
 
         if ( $existing_chat ) {
-            $admin_id = self::get_admin_user_id();
-            ChatBridge::add_message( $existing_chat, $admin_id, $text, $sender_pubkey );
+            ChatBridge::add_message( $existing_chat, ChatBridge::bridge_user_id(), $text, $sender_pubkey );
             return;
         }
 
@@ -682,7 +681,13 @@ class NostrDMListener {
      *                      marketplace or vendor.
      */
     private static function create_bridge_chat( int $vendor_id, string $nostr_pubkey, int $product_id, string $product_title, string $message, string $inbox = '' ): int {
-        $admin_id = self::get_admin_user_id();
+        // The Nostr side of the chat belongs to the bridge user, never to a
+        // real account: whoever is participant 1 is shown as the sender.
+        $admin_id = ChatBridge::bridge_user_id();
+
+        if ( ! $admin_id ) {
+            return 0;
+        }
 
         // Check for existing bridge chat with this pubkey + vendor.
         $args = [
@@ -866,10 +871,5 @@ class NostrDMListener {
         } catch ( \Exception $e ) {
             return 'npub...' . substr( $hex_pubkey, 0, 8 );
         }
-    }
-
-    private static function get_admin_user_id(): int {
-        $admin = get_user_by( 'email', get_option( 'admin_email' ) );
-        return $admin ? $admin->ID : 1;
     }
 }

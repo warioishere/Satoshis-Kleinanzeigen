@@ -201,8 +201,8 @@ class ChatBridge {
             return;
         }
 
-        // Messages written as the admin are incoming ones.
-        if ( $sender_id === self::get_admin_user_id() ) {
+        // Messages written as the bridge user are incoming ones.
+        if ( self::is_bridge_user( $sender_id ) ) {
             return;
         }
 
@@ -501,8 +501,150 @@ class ChatBridge {
         );
     }
 
-    private static function get_admin_user_id(): int {
-        $admin = get_user_by( 'email', get_option( 'admin_email' ) );
-        return $admin ? $admin->ID : 1;
+    // ── The bridge user and how Nostr contacts are shown ──────────────────
+
+    /** Login of the system user that stands in for Nostr senders. */
+    const BRIDGE_LOGIN = 'sk-nostr-bridge';
+
+    /**
+     * The system user that owns the Nostr side of every bridge chat.
+     *
+     * Incoming messages used to be written as the admin account, so a
+     * stranger's DM showed up under the marketplace's name and logo. The
+     * bridge user has no role, no password anyone knows and no store; what
+     * the vendor sees instead is the sender's npub (see contact_name()).
+     *
+     * Created on first use.
+     */
+    public static function bridge_user_id(): int {
+        static $id = null;
+
+        if ( null !== $id ) {
+            return $id;
+        }
+
+        $user = get_user_by( 'login', self::BRIDGE_LOGIN );
+
+        if ( $user ) {
+            return $id = (int) $user->ID;
+        }
+
+        $host    = (string) wp_parse_url( home_url(), PHP_URL_HOST );
+        $created = wp_insert_user( [
+            'user_login'           => self::BRIDGE_LOGIN,
+            'user_pass'            => wp_generate_password( 64, true, true ),
+            'user_email'           => self::BRIDGE_LOGIN . '@' . ( $host ?: 'localhost' ),
+            'display_name'         => 'Nostr',
+            'role'                 => '',
+            'show_admin_bar_front' => 'false',
+        ] );
+
+        if ( is_wp_error( $created ) ) {
+            error_log( '[SK Nostr Bridge] Bridge user could not be created: ' . $created->get_error_message() );
+            return $id = 0;
+        }
+
+        // The onboarding hook marks every new user; this one never logs in.
+        delete_user_meta( (int) $created, 'uob_show_onboarding' );
+
+        return $id = (int) $created;
+    }
+
+    public static function is_bridge_user( int $user_id ): bool {
+        return $user_id > 0 && $user_id === self::bridge_user_id();
+    }
+
+    /**
+     * Name and link of the Nostr contact behind a bridge chat, or null for
+     * an ordinary chat.
+     *
+     * @return array{name: string, url: string}|null
+     */
+    public static function contact_for_chat( int $chat_id ): ?array {
+        if ( get_post_meta( $chat_id, '_dvc_nostr_bridge', true ) !== '1' ) {
+            return null;
+        }
+
+        $pubkey = (string) get_post_meta( $chat_id, '_dvc_nostr_pubkey', true );
+
+        if ( '' === $pubkey ) {
+            return null;
+        }
+
+        return [
+            'name' => self::contact_name( $pubkey ),
+            'url'  => self::contact_url( $pubkey ),
+        ];
+    }
+
+    /**
+     * How a Nostr sender is named in the chat: shortened npub.
+     *
+     * The npub is the only identity we can vouch for; a profile name from
+     * the relays could say anything, including "Satoshiskleinanzeigen".
+     */
+    public static function contact_name( string $pubkey ): string {
+        $npub = self::npub( $pubkey );
+
+        if ( '' === $npub ) {
+            return 'Nostr';
+        }
+
+        return substr( $npub, 0, 12 ) . '…' . substr( $npub, -4 );
+    }
+
+    /**
+     * Where the vendor can look the sender up.
+     */
+    public static function contact_url( string $pubkey ): string {
+        $npub = self::npub( $pubkey );
+
+        return '' === $npub ? '' : 'https://njump.me/' . $npub;
+    }
+
+    private static function npub( string $pubkey ): string {
+        $pubkey = strtolower( trim( $pubkey ) );
+
+        if ( ! preg_match( '/^[0-9a-f]{64}$/', $pubkey ) || ! class_exists( '\swentel\nostr\Key\Key' ) ) {
+            return '';
+        }
+
+        try {
+            return (string) ( new \swentel\nostr\Key\Key() )->convertPublicKeyToBech32( $pubkey );
+        } catch ( \Throwable $e ) {
+            return '';
+        }
+    }
+
+    /**
+     * Avatar of the bridge user: a plain Nostr mark instead of the Gravatar
+     * default. Hooked on pre_get_avatar_data, so get_avatar() and
+     * get_avatar_url() both pick it up.
+     *
+     * @param array $args
+     * @param mixed $id_or_email
+     * @return array
+     */
+    public static function avatar_data( array $args, $id_or_email ): array {
+        $user_id = 0;
+
+        if ( is_numeric( $id_or_email ) ) {
+            $user_id = (int) $id_or_email;
+        } elseif ( $id_or_email instanceof \WP_User ) {
+            $user_id = (int) $id_or_email->ID;
+        } elseif ( $id_or_email instanceof \WP_Comment ) {
+            $user_id = (int) $id_or_email->user_id;
+        }
+
+        if ( ! $user_id || ! self::is_bridge_user( $user_id ) ) {
+            return $args;
+        }
+
+        // A file, not a data URI: get_avatar() runs the URL through esc_url(),
+        // which drops the data: scheme and leaves an empty src.
+        $args['url']          = plugins_url( 'assets/img/nostr-avatar.svg', SK_NOSTR_MARKET_PATH . '/module.php' );
+        $args['found_avatar'] = true;
+
+        return $args;
     }
 }

@@ -224,10 +224,12 @@ class VendorChat extends DashboardModule {
 				$preview  = $prepared['text'];
 			}
 
+			$nostr = $this->nostr_contact( $id );
+
 			$rows[] = [
 				'id'            => $id,
 				'other_user_id' => $other_user_id,
-				'display_name'  => $this->display_name_for( $other_user_id ),
+				'display_name'  => $nostr ? $nostr['name'] : $this->display_name_for( $other_user_id ),
 				'product_title' => get_the_title( $product_id ),
 				'timestamp'     => $last_message ? (int) $last_message['timestamp'] : null,
 				'preview'       => $preview,
@@ -253,6 +255,8 @@ class VendorChat extends DashboardModule {
 		$product_id    = get_post_meta( $chat_id, '_dvc_product_id', true );
 		$archived_by   = get_post_meta( $chat_id, '_dvc_archived_by', true ) ?: [];
 
+		$nostr = $this->nostr_contact( $chat_id );
+
 		$messages = [];
 		foreach ( $this->get_messages( $chat_id ) as $message ) {
 			// Payment markers never reach the reader as raw text; the card is
@@ -262,7 +266,7 @@ class VendorChat extends DashboardModule {
 			$messages[] = [
 				'user_id'   => $message['user_id'],
 				'is_own'    => $message['user_id'] == $user_id,
-				'name'      => $this->display_name_for( $message['user_id'] ),
+				'name'      => $this->sender_name( $message ),
 				'timestamp' => $message['timestamp'],
 				'text'      => $prepared['text'],
 				'card'      => $prepared['card'],
@@ -271,14 +275,22 @@ class VendorChat extends DashboardModule {
 
 		$other_id = (int) $other_user_id;
 
+		if ( $nostr ) {
+			$display_name = $nostr['name'];
+			$other_url    = $nostr['url'];
+		} else {
+			$display_name = $this->display_name_for( $other_user_id );
+			// Name and picture of the other side lead to their profile.
+			$other_url = $other_id && function_exists( 'sk_get_store_url' )
+				? (string) sk_get_store_url( $other_id )
+				: '';
+		}
+
 		return [
 			'id'            => $chat_id,
 			'other_user_id' => $other_user_id,
-			'display_name'  => $this->display_name_for( $other_user_id ),
-			// Name und Bild des Gegenuebers fuehren auf dessen Profil.
-			'other_url'     => $other_id && function_exists( 'sk_get_store_url' )
-				? (string) sk_get_store_url( $other_id )
-				: '',
+			'display_name'  => $display_name,
+			'other_url'     => $other_url,
 			'product_title' => get_the_title( $product_id ),
 			'product_url'   => get_permalink( $product_id ),
 			'is_archived'   => in_array( $user_id, (array) $archived_by ),
@@ -289,6 +301,42 @@ class VendorChat extends DashboardModule {
 			'is_blocked'    => $other_id && self::is_blocked_between( (int) $user_id, $other_id ),
 			'messages'      => $messages,
 		];
+	}
+
+	/**
+	 * Who sent a message: the Nostr contact for messages that came over the
+	 * bridge, the SK user otherwise.
+	 *
+	 * A bridged message is written as the bridge user and carries the
+	 * sender's pubkey in its own column. Showing the bridge user's name
+	 * there would label a stranger's text with our own name.
+	 *
+	 * @param array $message
+	 * @return string
+	 */
+	private function sender_name( array $message ): string {
+		$pubkey = (string) ( $message['nostr_pubkey'] ?? '' );
+
+		if ( $pubkey !== '' && class_exists( '\SK\Modules\NostrMarket\Bridge\ChatBridge' ) ) {
+			return \SK\Modules\NostrMarket\Bridge\ChatBridge::contact_name( $pubkey );
+		}
+
+		return $this->display_name_for( (int) ( $message['user_id'] ?? 0 ) );
+	}
+
+	/**
+	 * Name and link of the Nostr contact behind a bridge chat, null for an
+	 * ordinary chat.
+	 *
+	 * @param int $chat_id
+	 * @return array|null
+	 */
+	private function nostr_contact( $chat_id ): ?array {
+		if ( ! class_exists( '\SK\Modules\NostrMarket\Bridge\ChatBridge' ) ) {
+			return null;
+		}
+
+		return \SK\Modules\NostrMarket\Bridge\ChatBridge::contact_for_chat( (int) $chat_id );
 	}
 
 	/**
@@ -683,12 +731,8 @@ class VendorChat extends DashboardModule {
 		// replace payment markers with server-verified card data.
 		$messages = $this->get_messages( $chat_id );
 		foreach ( $messages as &$msg ) {
-			$user = get_userdata( $msg['user_id'] );
-			$store_info = sk_get_store_info( $msg['user_id'] );
-			$msg['display_name'] = ( ! empty( $store_info['store_name'] ) )
-				? $store_info['store_name']
-				: ( $user ? $user->display_name : '' );
-			$msg['avatar'] = get_avatar_url( $msg['user_id'], [ 'size' => 32 ] );
+			$msg['display_name'] = $this->sender_name( $msg );
+			$msg['avatar']       = get_avatar_url( $msg['user_id'], [ 'size' => 32 ] );
 
 			$prepared       = self::prepare_message( $msg, $chat_id );
 			$msg['message'] = $prepared['text'];

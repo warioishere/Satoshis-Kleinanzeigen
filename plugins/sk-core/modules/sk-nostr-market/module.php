@@ -35,6 +35,10 @@ final class Module {
         // Settings always load.
         new MarketplaceSettings();
 
+        // Bridge chats that already exist keep rendering correctly while the
+        // module is switched off; this only affects how they are displayed.
+        add_filter( 'pre_get_avatar_data', [ Bridge\ChatBridge::class, 'avatar_data' ], 10, 2 );
+
         if ( sk_get_option( 'sk_nostr_market_enabled', 'sk_nostr_market', 'off' ) !== 'on' ) {
             return;
         }
