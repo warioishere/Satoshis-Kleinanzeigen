@@ -11,15 +11,15 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Nostr Event sender — signs and publishes events to relays.
- * Shared by StallManager, ProductPublisher, and ProductDeleter.
+ * Shared by ProductPublisher and ProductDeleter.
  */
 class EventSender {
 
     /**
      * Create, sign, and send a Nostr event.
      *
-     * @param int    $kind    Event kind (30017, 30018, 5, etc.)
-     * @param string $content Event content (JSON string for NIP-15).
+     * @param int    $kind    Event kind (30402 listing, 5 deletion, 4 DM).
+     * @param string $content Event content.
      * @param array  $tags    Array of tag arrays.
      * @return string|null     Event ID on success, null on failure.
      */
@@ -65,8 +65,11 @@ class EventSender {
                     }
                     $relay->setMessage( $msg );
                     $result = $relay->send();
-                    if ( $result !== false ) {
+
+                    if ( self::relay_accepted( $result ) ) {
                         $sent_any = true;
+                    } else {
+                        error_log( "[SK Nostr Market] Relay {$relay_url} lehnte Event {$event_id} ab: " . self::relay_message( $result ) );
                     }
                 } catch ( \Exception $e ) {
                     error_log( "[SK Nostr Market] Relay {$relay_url} error: " . $e->getMessage() );
@@ -79,6 +82,40 @@ class EventSender {
             error_log( '[SK Nostr Market] Event error: ' . $e->getMessage() );
             return null;
         }
+    }
+
+    /**
+     * Hat das Relay das Ereignis wirklich angenommen?
+     *
+     * Relay::send() liefert immer ein Objekt, nie false — die alte Pruefung
+     * "!== false" wertete deshalb auch ein ablehnendes Relay als Erfolg, und
+     * das Inserat galt als veroeffentlicht, obwohl es niemand genommen hatte.
+     *
+     * Nur ein ausdrueckliches isSuccess=false zaehlt als Ablehnung; alles
+     * Unerwartete gilt als angenommen, damit nichts doppelt gesendet wird.
+     * Dieselbe Pruefung steht im Auto Poster, wo der Fehler zuerst auffiel.
+     *
+     * @param mixed $response
+     */
+    private static function relay_accepted( $response ): bool {
+        if ( is_object( $response ) && property_exists( $response, 'isSuccess' ) ) {
+            return (bool) $response->isSuccess;
+        }
+
+        return $response !== false;
+    }
+
+    /**
+     * Lesbarer Grund einer Ablehnung, fuers Protokoll.
+     *
+     * @param mixed $response
+     */
+    private static function relay_message( $response ): string {
+        if ( is_object( $response ) && property_exists( $response, 'message' ) && $response->message !== '' ) {
+            return (string) $response->message;
+        }
+
+        return 'kein Grund genannt';
     }
 
     /**

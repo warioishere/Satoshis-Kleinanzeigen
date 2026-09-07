@@ -16,7 +16,7 @@ class MarketplaceSettings {
             'id'                   => 'sk_nostr_market',
             'title'                => __( 'SK Nostr Market', 'sk-core' ),
             'icon_url'             => '',
-            'description'          => __( 'NIP-15 Nostr Marketplace', 'sk-core' ),
+            'description'          => __( 'NIP-99 Classified Listings', 'sk-core' ),
             'settings_title'       => __( 'Nostr Marketplace', 'sk-core' ),
             'settings_description' => __( 'Produkte als NIP-99 Classified Listings auf Nostr publishen. Sichtbar auf Amethyst, Shopstr, Coracle, Plebeian Market und jedem NIP-99 Client.', 'sk-core' ),
         ];
@@ -52,14 +52,7 @@ class MarketplaceSettings {
                     'sat' => 'Satoshis (sat)',
                     'btc' => 'Bitcoin (BTC)',
                 ],
-                'desc' => __( 'Währung für Preise in NIP-15 Events.', 'sk-core' ),
-            ],
-            'sk_nostr_market_shipping_regions' => [
-                'name'    => 'sk_nostr_market_shipping_regions',
-                'label'   => __( 'Shipping-Regionen', 'sk-core' ),
-                'type'    => 'text',
-                'default' => 'EU,CH',
-                'desc'    => __( 'Kommaseparierte Ländercodes für Versand.', 'sk-core' ),
+                'desc' => __( 'Währung der Preisangabe. Zwischen Sats und BTC wird umgerechnet.', 'sk-core' ),
             ],
             'sk_nostr_market_relays' => [
                 'name'    => 'sk_nostr_market_relays',
