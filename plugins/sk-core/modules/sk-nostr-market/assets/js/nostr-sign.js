@@ -61,16 +61,26 @@
         titleEl.textContent = current.title || '';
         modal.style.display = 'flex';
 
+        attempt();
+    }
+
+    /**
+     * Erweiterung da? Dann unterschreiben lassen, sonst erklaeren.
+     *
+     * Unter unserem Schluessel wird nicht mehr ersatzweise veroeffentlicht:
+     * ein Inserat traegt den Namen seines Anbieters, oder es geht nicht auf
+     * Nostr.
+     */
+    function attempt() {
         if (!window.nostr) {
             setState('missing', {
                 icon: 'fas fa-triangle-exclamation',
                 heading: 'Keine Nostr-Erweiterung gefunden',
-                text: 'Dein Inserat ist gespeichert und auf der Plattform sichtbar. Ohne Erweiterung können wir es nicht unter deinem Schlüssel veröffentlichen. Du kannst es stattdessen von Satoshis Kleinanzeigen signieren lassen.',
+                text: 'Dein Inserat ist gespeichert und auf der Plattform sichtbar. Für Nostr brauchen wir deine Unterschrift — dein Inserat soll deinen Namen tragen, nicht unseren. Entsperre deine Erweiterung und versuch es erneut.',
                 retry: true,
                 cancelLabel: 'Nicht auf Nostr'
             });
-            retryBtn.textContent = 'Von uns signieren lassen';
-            retryBtn.dataset.mode = 'fallback';
+            retryBtn.textContent = 'Erneut versuchen';
             return;
         }
 
@@ -132,7 +142,6 @@
             cancelLabel: 'Abbrechen'
         });
         retryBtn.textContent = 'Erneut versuchen';
-        retryBtn.dataset.mode = 'retry';
     }
 
     /** Vormerkung loeschen, damit nicht bei jedem Seitenaufruf erneut gefragt wird. */
@@ -144,21 +153,7 @@
         }).always(danach);
     }
 
-    retryBtn.addEventListener('click', function () {
-        if (retryBtn.dataset.mode === 'fallback') {
-            setState('waiting', {
-                icon: 'fas fa-circle-notch',
-                heading: 'Wird veröffentlicht',
-                text: 'Dein Inserat geht unter dem Schlüssel von Satoshis Kleinanzeigen ins Nostr-Netz.',
-                retry: false,
-                cancelLabel: 'Abbrechen'
-            });
-            forget('sk_nostr_market_fallback_sign', next);
-            return;
-        }
-
-        sign();
-    });
+    retryBtn.addEventListener('click', attempt);
 
     cancelBtn.addEventListener('click', function () {
         // Immer erreichbar, auch waehrend gewartet wird: wenn die Erweiterung

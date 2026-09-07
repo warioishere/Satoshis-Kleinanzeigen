@@ -64,11 +64,10 @@ $post_statuses = sk_get_available_post_status( $post->ID );
             /*
              * Hat der Anbieter ueberhaupt eine Nostr-Identitaet?
              *
-             * Ohne eine erscheint sein Inserat unter dem Schluessel des
-             * Marktplatzes, und Kaeufer erreichen ihn nur ueber einen Umweg.
-             * Das ist der Moment, in dem er das erfahren sollte — nicht
-             * irgendwo in den Einstellungen, sondern hier, wo er die Option
-             * einschaltet.
+             * Ohne eine geht sein Inserat gar nicht auf Nostr: unter unserem
+             * Schluessel veroeffentlichen wir nichts fuer ihn. Das ist der
+             * Moment, in dem er das erfahren sollte — nicht irgendwo in den
+             * Einstellungen, sondern hier, wo er die Option einschaltet.
              */
             $nostr_uid  = (int) get_current_user_id();
             $hat_key    = ! empty( get_user_meta( $nostr_uid, 'nostr_public_key', true ) );
@@ -83,14 +82,17 @@ $post_statuses = sk_get_available_post_status( $post->ID );
                 <?php esc_html_e( 'Auf Nostr veröffentlichen', 'sk-core' ); ?>
             </label>
             <p class="sk-settings-hint">
-                <?php esc_html_e( 'Dein Inserat erscheint zusätzlich im Nostr-Netzwerk, sichtbar in Clients wie Amethyst. Du kannst es jederzeit wieder abwählen, dann wird es dort entfernt.', 'sk-core' ); ?>
+                <?php esc_html_e( 'Dein Inserat erscheint zusätzlich im Nostr-Netzwerk unter deinem eigenen Schlüssel, sichtbar in Clients wie Amethyst. Du kannst es jederzeit wieder abwählen, dann wird es dort entfernt.', 'sk-core' ); ?>
             </p>
 
             <?php if ( ! $hat_key ) : ?>
                 <div class="sk-alert sk-alert-info" id="sk-nostr-identity-hint" style="display:none;">
-                    <strong><?php esc_html_e( 'Unter wessen Namen soll es erscheinen?', 'sk-core' ); ?></strong>
+                    <strong><?php esc_html_e( 'Dafür brauchst du einen eigenen Nostr-Schlüssel', 'sk-core' ); ?></strong>
                     <p>
-                        <?php esc_html_e( 'Du hast noch keinen Nostr-Schlüssel. Dein Inserat geht dann unter dem Schlüssel von Satoshis Kleinanzeigen raus. Mit einem eigenen Schlüssel steht dein Name darunter, und Käufer schreiben dich direkt an.', 'sk-core' ); ?>
+                        <?php esc_html_e( 'Auf Nostr trägt jedes Inserat den Namen dessen, der es eingestellt hat. Wir veröffentlichen nichts unter unserem Namen für dich. Ohne eigenen Schlüssel bleibt dein Inserat also hier auf der Plattform, es geht nur nicht ins Nostr-Netz.', 'sk-core' ); ?>
+                    </p>
+                    <p>
+                        <?php esc_html_e( 'Mit eigenem Schlüssel steht dein Name darunter, und Käufer schreiben dich direkt an — die Antwort landet wieder hier in deinem Chat.', 'sk-core' ); ?>
                     </p>
                     <p>
                         <a href="<?php echo esc_url( $linker_url ); ?>" class="sk-btn sk-btn-default">

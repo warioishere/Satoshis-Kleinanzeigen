@@ -41,12 +41,18 @@ class ProductDeleter {
             $tags[] = [ 'a', '30402:' . $pubkey . ':' . $d_tag ];
         }
 
-        // Sign with vendor's key if available.
-        if ( $vendor_id && class_exists( 'SK\Modules\Auth\NostrIdentity' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $vendor_id ) ) {
-            $result = \SK\Modules\Auth\NostrIdentity::publish( $vendor_id, 5, '', $tags );
-        } else {
-            $result = EventSender::send( 5, '', $tags );
+        /*
+         * Nur der Absender kann sein eigenes Ereignis zuruecknehmen. Ein
+         * Loeschereignis vom Marktplatz-Schluessel wuerde ein Relay fuer ein
+         * fremdes Inserat ohnehin verwerfen — frueher wurde es trotzdem
+         * gesendet und als Erfolg verbucht.
+         */
+        if ( ! $vendor_id || ! class_exists( 'SK\Modules\Auth\NostrIdentity' ) || ! \SK\Modules\Auth\NostrIdentity::has_identity( $vendor_id ) ) {
+            error_log( '[SK Nostr Market] Inserat ' . $post_id . ' laesst sich nicht zurueckziehen: kein Schluessel des Anbieters.' );
+            return false;
         }
+
+        $result = \SK\Modules\Auth\NostrIdentity::publish( $vendor_id, 5, '', $tags );
 
         if ( $result !== null ) {
             delete_post_meta( $post_id, ProductPublisher::META_KEY );

@@ -31,12 +31,23 @@ class ProductPublisher {
 
         $vendor_id = (int) get_post_field( 'post_author', $post_id );
 
-        // Prefer vendor's own Nostr key; fall back to marketplace key.
-        if ( class_exists( 'SK\Modules\Auth\NostrIdentity' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $vendor_id ) ) {
-            $event_id = \SK\Modules\Auth\NostrIdentity::publish( $vendor_id, 30402, $data['content'], $data['tags'] );
-        } else {
-            $event_id = EventSender::send( 30402, $data['content'], $data['tags'] );
+        /*
+         * Nur mit dem Schluessel des Anbieters, nie mit dem des Marktplatzes.
+         *
+         * Der Marktplatz-Schluessel ist der SK-Account auf Nostr — derselbe,
+         * mit dem der Auto Poster in den SK-Feed schreibt. Inserate darunter
+         * zu veroeffentlichen hiess: sie stehen unter unserem Namen, Kaeufer
+         * antworten an uns statt an den Anbieter, und die Zuordnung muss aus
+         * dem Text geraten werden.
+         *
+         * Wer keinen Schluessel hat, bekommt beim Anhaken der Option die Wahl
+         * angeboten. Bis dahin geht das Inserat nicht raus.
+         */
+        if ( ! class_exists( 'SK\Modules\Auth\NostrIdentity' ) || ! \SK\Modules\Auth\NostrIdentity::has_identity( $vendor_id ) ) {
+            return null;
         }
+
+        $event_id = \SK\Modules\Auth\NostrIdentity::publish( $vendor_id, 30402, $data['content'], $data['tags'] );
 
         if ( $event_id ) {
             update_post_meta( $post_id, self::META_KEY, $event_id );

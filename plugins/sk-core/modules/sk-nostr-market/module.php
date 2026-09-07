@@ -336,36 +336,13 @@ final class Module {
     /**
      * AJAX: keine Erweiterung da oder Signatur abgelehnt.
      *
-     * Dann geht das Inserat unter dem Schluessel des Marktplatzes raus, so wie
-     * bei allen anderen Anbietern auch. Die Wartemarke faellt in jedem Fall,
-     * sonst wuerde bei jedem Seitenaufruf erneut gefragt.
+     * Frueher ging das Inserat dann unter dem Schluessel des Marktplatzes
+     * raus. Das faellt weg: ein Inserat traegt den Namen seines Anbieters,
+     * oder es geht nicht auf Nostr. Bleibt, die Vormerkung zu loeschen, sonst
+     * wuerde bei jedem Seitenaufruf erneut gefragt.
      */
     public function ajax_fallback_sign(): void {
-        check_ajax_referer( 'sk_nostr_market_sign', 'nonce' );
-
-        $post_id = absint( $_POST['post_id'] ?? 0 );
-
-        if ( ! $post_id || ! current_user_can( 'edit_post', $post_id ) ) {
-            wp_send_json_error( [ 'message' => 'Keine Berechtigung für dieses Inserat.' ] );
-        }
-
-        delete_post_meta( $post_id, '_sk_nostr_market_pending_sign' );
-
-        $data = ProductPublisher::build_event_data( $post_id );
-
-        if ( null === $data ) {
-            wp_send_json_error( [ 'message' => 'Inserat nicht veröffentlichbar.' ] );
-        }
-
-        $event_id = EventSender::send( 30402, $data['content'], $data['tags'] );
-
-        if ( ! $event_id ) {
-            wp_send_json_error( [ 'message' => 'Kein Relay hat das Event akzeptiert.' ] );
-        }
-
-        update_post_meta( $post_id, ProductPublisher::META_KEY, $event_id );
-
-        wp_send_json_success( [ 'event_id' => $event_id ] );
+        $this->ajax_cancel_sign();
     }
 
     /**
