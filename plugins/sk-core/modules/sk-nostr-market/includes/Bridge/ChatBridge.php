@@ -121,36 +121,24 @@ class ChatBridge {
             wp_send_json_error( [ 'message' => 'Keine Zahlungsmethode konfiguriert.' ] );
         }
 
-        // Add invoice to VendorChat.
+        // One text for chat and Nostr. Adding it to the chat mirrors it to the
+        // buyer through mirror_to_nostr() with the right key; a second, direct
+        // send_dm() used to deliver the invoice twice, the copy under the
+        // marketplace key.
         $sats_formatted = number_format( $amount_sats, 0, ',', '.' );
-        $chat_msg = "Invoice erstellt: {$sats_formatted} Sats";
+        $chat_msg = "Zahlung: {$sats_formatted} Sats";
         if ( $product_title ) {
             $chat_msg .= " für {$product_title}";
         }
         if ( $bolt11 ) {
-            $chat_msg .= "\n\nLightning: {$bolt11}";
+            $chat_msg .= "\n\nLightning Invoice:\n{$bolt11}";
         }
         if ( $btc_address ) {
             $btc_amount = number_format( $amount_sats / 100000000, 8, '.', '' );
-            $chat_msg .= "\n\nOnchain: {$btc_address} ({$btc_amount} BTC)";
+            $chat_msg .= "\n\nBitcoin Adresse:\n{$btc_address}\nBetrag: {$btc_amount} BTC";
         }
 
         self::add_message( $chat_id, $vendor_id, $chat_msg, '' );
-
-        // Send invoice as Nostr DM to the buyer.
-        $dm_text = "Zahlung: {$sats_formatted} Sats";
-        if ( $product_title ) {
-            $dm_text .= " für {$product_title}";
-        }
-        if ( $bolt11 ) {
-            $dm_text .= "\n\nLightning Invoice:\n{$bolt11}";
-        }
-        if ( $btc_address ) {
-            $btc_amount = number_format( $amount_sats / 100000000, 8, '.', '' );
-            $dm_text .= "\n\nBitcoin Adresse:\n{$btc_address}\nBetrag: {$btc_amount} BTC";
-        }
-
-        self::send_dm( $nostr_pubkey, $dm_text );
 
         wp_send_json_success( [
             'message'     => 'Invoice erstellt und an Nostr User gesendet.',
@@ -402,20 +390,37 @@ class ChatBridge {
             }
         }
 
-        // Fallback: NIP-04.
-        if ( class_exists( '\swentel\nostr\Encryption\Nip04' ) ) {
-            try {
-                $encrypted = \swentel\nostr\Encryption\Nip04::encrypt( $text, $sender_privkey, $recipient_pubkey );
-                $event_id = EventSender::send( 4, $encrypted, [
-                    [ 'p', $recipient_pubkey ],
-                ] );
-                return $event_id !== null;
-            } catch ( \Throwable $e ) {
-                error_log( '[SK Nostr Bridge] NIP-04 DM failed: ' . $e->getMessage() );
-            }
+        // Fallback: NIP-04, signed with the same key that encrypted it. It
+        // used to go through EventSender::send(), which signs with the
+        // marketplace key: the recipient derived the shared secret from the
+        // wrong pubkey and could not read it.
+        try {
+            return self::send_nip04_dm( $sender_privkey, $recipient_pubkey, $text );
+        } catch ( \Throwable $e ) {
+            error_log( '[SK Nostr Bridge] NIP-04 DM failed: ' . $e->getMessage() );
         }
 
         return false;
+    }
+
+    /**
+     * Send a NIP-04 DM (kind 4), encrypted and signed with the same key.
+     */
+    private static function send_nip04_dm( string $sender_privkey, string $recipient_pubkey, string $text ): bool {
+        if ( ! class_exists( '\swentel\nostr\Encryption\Nip04' ) || ! class_exists( 'SK\Modules\Auth\RelayPublisher' ) ) {
+            return false;
+        }
+
+        $event = new \swentel\nostr\Event\Event();
+        $event->setKind( 4 );
+        $event->setContent( \swentel\nostr\Encryption\Nip04::encrypt( $text, $sender_privkey, $recipient_pubkey ) );
+        $event->addTag( [ 'p', $recipient_pubkey ] );
+        $event->setCreatedAt( time() );
+        ( new \swentel\nostr\Sign\Sign() )->signEvent( $event, $sender_privkey );
+
+        $result = \SK\Modules\Auth\RelayPublisher::publish( $event, \SK\Modules\Auth\NostrIdentity::get_relays() );
+
+        return ! empty( $result['accepted'] );
     }
 
     /**

@@ -29,6 +29,16 @@
 
     var TWO_DAYS = 2 * 24 * 60 * 60;
 
+    /** Wraps opened per page load; each one prompts the extension twice. */
+    var MAX_PER_VISIT = 10;
+
+    /** An error we raised ourselves: the wrap is broken, not the extension. */
+    function broken(message) {
+        var err = new Error(message);
+        err.broken = true;
+        return err;
+    }
+
     function post(data) {
         data.nonce = CFG.nonce;
         return $.post(CFG.ajaxurl, data);
@@ -49,9 +59,17 @@
                 return;
             }
 
-            sequence(res.data.wraps, open).then(sealReplies);
+            sequence(res.data.wraps.slice(0, MAX_PER_VISIT), open).then(sealReplies);
         })
         .fail(sealReplies);
+
+    function parse(raw, what) {
+        try {
+            return JSON.parse(raw);
+        } catch (e) {
+            throw broken(what + ' is not JSON.');
+        }
+    }
 
     function open(wrap) {
         if (Number(wrap.kind) !== 1059) {
@@ -61,16 +79,21 @@
         // Layer 1: against the throwaway key of the wrap.
         return window.nostr.nip44.decrypt(wrap.pubkey, wrap.content)
             .then(function (raw) {
-                var seal = JSON.parse(raw);
+                var seal = parse(raw, 'Seal');
 
                 if (!seal || Number(seal.kind) !== 13 || !seal.pubkey) {
-                    throw new Error('Not a valid seal.');
+                    throw broken('Not a valid seal.');
                 }
 
                 // Layer 2: against the real sender.
                 return window.nostr.nip44.decrypt(seal.pubkey, seal.content)
                     .then(function (rawInner) {
-                        var message = JSON.parse(rawInner);
+                        var message = parse(rawInner, 'Message');
+
+                        // Only NIP-17 text messages become chat text.
+                        if (!message || Number(message.kind) !== 14) {
+                            throw broken('Not a NIP-17 message.');
+                        }
 
                         /*
                          * The seal proves the sender; the innermost layer is
@@ -78,7 +101,7 @@
                          * message.
                          */
                         if (message.pubkey && message.pubkey.toLowerCase() !== seal.pubkey.toLowerCase()) {
-                            throw new Error('Sender in seal and message differ.');
+                            throw broken('Sender in seal and message differ.');
                         }
 
                         return post({
@@ -90,10 +113,18 @@
                     });
             })
             .catch(function (err) {
-                // Not for us or broken: drop it once, otherwise it hangs on
-                // the extension on every page load.
                 console.warn('[SK Nostr] Could not open message:', err && err.message);
-                return drop(wrap.id);
+
+                /*
+                 * A broken wrap is dropped once, otherwise it hangs on the
+                 * extension on every page load. Anything else — the vendor
+                 * declined the prompt, the extension is locked or failed —
+                 * stays queued and is tried again on the next visit; dropping
+                 * it there lost the message for good.
+                 */
+                if (err && err.broken) {
+                    return drop(wrap.id);
+                }
             });
     }
 

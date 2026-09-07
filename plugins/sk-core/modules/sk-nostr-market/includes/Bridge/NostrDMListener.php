@@ -153,7 +153,16 @@ class NostrDMListener {
             return;
         }
 
+        // Every relay we publish to is a relay replies can arrive on: listings
+        // and DMs go out over the login relays, the marketplace over its own.
         $relays = EventSender::get_relays();
+
+        if ( class_exists( 'SK\Modules\Auth\NostrIdentity' ) ) {
+            $relays = array_merge( $relays, \SK\Modules\Auth\NostrIdentity::get_relays() );
+        }
+
+        $relays = array_values( array_unique( array_map( 'strtolower', array_map( 'trim', $relays ) ) ) );
+
         if ( empty( $relays ) ) {
             return;
         }
@@ -716,6 +725,11 @@ class NostrDMListener {
                 return null;
             }
 
+            // Only NIP-17 text messages become chat text.
+            if ( 14 !== (int) ( $nachricht['kind'] ?? 0 ) ) {
+                return null;
+            }
+
             /*
              * Das Siegel beweist den Absender, die innerste Schicht ist nicht
              * signiert. Weichen die beiden ab, hat jemand eine fremde Nachricht
@@ -864,7 +878,13 @@ class NostrDMListener {
             return '';
         }
 
-        $text = sanitize_textarea_field( (string) $value );
+        // Not sanitize_textarea_field(): it strips every %xx sequence, so a
+        // URL with percent-encoding in a DM lost characters. Markup and
+        // control characters go, line breaks and invalid UTF-8 are handled;
+        // the chat escapes on output.
+        $text = wp_check_invalid_utf8( (string) $value );
+        $text = wp_strip_all_tags( $text, false );
+        $text = (string) preg_replace( '/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $text );
 
         if ( class_exists( 'SK\Core\Dashboard\Modules\VendorChat' ) ) {
             $text = \SK\Core\Dashboard\Modules\VendorChat::sanitize_user_message( $text );
