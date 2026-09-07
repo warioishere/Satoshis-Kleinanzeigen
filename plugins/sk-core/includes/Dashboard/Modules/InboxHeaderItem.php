@@ -28,15 +28,34 @@ class InboxHeaderItem {
 	/** Bezeichner des Kopf-Elements. */
 	const ITEM = 'sk-inbox';
 
-	/** Customizer-Bereich hinter dem Zahnrad am Element. */
-	const SECTION = 'sk_customizer_header_inbox';
+	/**
+	 * Bereich hinter dem Zahnrad am Element.
+	 *
+	 * Kadence fuehrt seine Bereiche unter einem kurzen Schluessel und haengt
+	 * beim Registrieren 'kadence_customizer_' davor — der Verweis aus der
+	 * Elementliste muss den langen Namen tragen.
+	 */
+	const SECTION_KEY = 'sk_inbox';
+	const SECTION     = 'kadence_customizer_sk_inbox';
 
 	/** Nur zeigen, wenn wirklich etwas ungelesen ist. */
 	const OPTION_ONLY_UNREAD = 'sk_header_inbox_only_unread';
 
+	/** Aussenabstand, alle vier Seiten. */
+	const OPTION_MARGIN = 'sk_header_inbox_margin';
+
 	public function __construct() {
 		add_filter( 'kadence_theme_customizer_control_choices', [ $this, 'register_choice' ] );
-		add_action( 'customize_register', [ $this, 'register_section' ], 30 );
+		add_filter( 'kadence_theme_customizer_sections', [ $this, 'register_section' ] );
+
+		/*
+		 * Priorität 5: Kadence liest seine Optionsdateien auf 1 ein und baut
+		 * die Bedienelemente auf 10. Dazwischen ist das Fenster, in dem sich
+		 * eigene Einstellungen einreihen lassen.
+		 */
+		add_action( 'customize_register', [ $this, 'register_settings' ], 5 );
+
+		add_action( 'wp_enqueue_scripts', [ $this, 'inline_styles' ], 30 );
 
 		/*
 		 * Kadence rendert ein Kopf-Element ueber get_template_part(). Der
@@ -74,33 +93,171 @@ class InboxHeaderItem {
 	}
 
 	/**
-	 * Der Bereich hinter dem Zahnrad. Ohne ihn liefe der Knopf am Element ins
-	 * Leere.
+	 * Den Bereich in Kadences Verzeichnis eintragen.
 	 *
-	 * @param \WP_Customize_Manager $wp_customize
+	 * @param array $sections
+	 * @return array
 	 */
-	public function register_section( $wp_customize ): void {
-		$wp_customize->add_section( self::SECTION, [
+	public function register_section( $sections ) {
+		if ( ! is_array( $sections ) ) {
+			return $sections;
+		}
+
+		$sections[ self::SECTION_KEY ] = [
 			'title'    => __( 'Postfach', 'sk-core' ),
-			'panel'    => 'kadence_customizer_header',
+			'panel'    => 'header',
 			'priority' => 20,
-		] );
+		];
 
-		$wp_customize->add_setting( self::OPTION_ONLY_UNREAD, [
-			'default'           => 0,
-			'type'              => 'option',
-			'sanitize_callback' => static function ( $wert ) {
-				return $wert ? 1 : 0;
-			},
-			'transport'         => 'refresh',
-		] );
+		return $sections;
+	}
 
-		$wp_customize->add_control( self::OPTION_ONLY_UNREAD, [
-			'section'     => self::SECTION,
-			'label'       => __( 'Nur bei ungelesenen Nachrichten zeigen', 'sk-core' ),
-			'description' => __( 'Sonst steht das Symbol immer da, auch wenn nichts wartet.', 'sk-core' ),
-			'type'        => 'checkbox',
+	/**
+	 * Die Einstellungen des Elements: ein Reiter "Allgemein", einer "Design".
+	 *
+	 * Aufgebaut wie die Suche im Theme — ein Bereich, in dem die Reiter nur
+	 * umschalten, welche Regler sichtbar sind. Das spart den zweiten Bereich,
+	 * den der Warenkorb dafuer braucht.
+	 */
+	public function register_settings(): void {
+		if ( ! class_exists( '\Kadence\Theme_Customizer' ) ) {
+			return;
+		}
+
+		ob_start();
+		?>
+		<div class="kadence-compontent-tabs nav-tab-wrapper wp-clearfix">
+			<a href="#" class="nav-tab kadence-general-tab kadence-compontent-tabs-button nav-tab-active" data-tab="general">
+				<span><?php esc_html_e( 'Allgemein', 'sk-core' ); ?></span>
+			</a>
+			<a href="#" class="nav-tab kadence-design-tab kadence-compontent-tabs-button" data-tab="design">
+				<span><?php esc_html_e( 'Design', 'sk-core' ); ?></span>
+			</a>
+		</div>
+		<?php
+		$reiter = ob_get_clean();
+
+		\Kadence\Theme_Customizer::add_settings( [
+			'sk_header_inbox_tabs'   => [
+				'control_type' => 'kadence_blank_control',
+				'section'      => self::SECTION_KEY,
+				'settings'     => false,
+				'priority'     => 1,
+				'description'  => $reiter,
+			],
+			self::OPTION_ONLY_UNREAD => [
+				'control_type' => 'kadence_switch_control',
+				'section'      => self::SECTION_KEY,
+				'sanitize'     => 'kadence_sanitize_toggle',
+				'priority'     => 6,
+				'default'      => 0,
+				'label'        => __( 'Nur bei ungelesenen Nachrichten zeigen', 'sk-core' ),
+				'context'      => [
+					[
+						'setting' => '__current_tab',
+						'value'   => 'general',
+					],
+				],
+			],
+			self::OPTION_MARGIN      => [
+				'control_type' => 'kadence_measure_control',
+				'section'      => self::SECTION_KEY,
+				'priority'     => 10,
+				'default'      => [
+					'size'   => [ '', '', '', '' ],
+					'unit'   => 'px',
+					'locked' => false,
+				],
+				'label'        => __( 'Aussenabstand', 'sk-core' ),
+				'context'      => [
+					[
+						'setting' => '__current_tab',
+						'value'   => 'design',
+					],
+				],
+				'live_method'  => [
+					[
+						'type'     => 'css',
+						'selector' => '.sk-header-inbox .sk-inbox-link',
+						'property' => 'margin',
+						'pattern'  => '$',
+						'key'      => 'measure',
+					],
+				],
+				'input_attrs'  => [
+					'responsive' => false,
+				],
+			],
 		] );
+	}
+
+	/**
+	 * Einen Wert aus den Theme-Einstellungen holen.
+	 *
+	 * @param string $key
+	 * @param mixed  $fallback
+	 * @return mixed
+	 */
+	private function setting( string $key, $fallback ) {
+		return function_exists( 'Kadence\kadence' ) ? \Kadence\kadence()->option( $key, $fallback ) : $fallback;
+	}
+
+	/**
+	 * Den eingestellten Aussenabstand als CSS-Wert.
+	 *
+	 * Bewusst selbst gerechnet statt ueber render_measure() des Themes: das
+	 * ist eine Innerei der Stil-Komponente, und diese Klasse soll ein
+	 * Theme-Update ueberstehen. Leere Seiten werden zu 0, sonst waere der
+	 * ganze Wert ungueltig.
+	 */
+	private function margin_css(): string {
+		$mass = $this->setting( self::OPTION_MARGIN, [] );
+
+		if ( ! is_array( $mass ) || empty( $mass['size'] ) || ! is_array( $mass['size'] ) ) {
+			return '';
+		}
+
+		$seiten = array_slice( array_pad( $mass['size'], 4, '' ), 0, 4 );
+
+		// Nichts eingetragen: dann auch keine Regel ausgeben.
+		$gesetzt = array_filter( $seiten, static function ( $wert ) {
+			return is_numeric( $wert );
+		} );
+
+		if ( empty( $gesetzt ) ) {
+			return '';
+		}
+
+		/*
+		 * Nur echte Einheiten durchlassen. Zeichen bloss herauszufiltern
+		 * genuegte nicht: aus einem verunglueckten Wert wurde dann zwar nichts
+		 * Gefaehrliches, aber "5pxbodydisplaynone" — eine Regel, die der
+		 * Browser stillschweigend verwirft.
+		 */
+		$erlaubt = [ 'px', 'em', 'rem', '%', 'vh', 'vw' ];
+		$einheit = isset( $mass['unit'] ) ? strtolower( trim( (string) $mass['unit'] ) ) : 'px';
+		$einheit = in_array( $einheit, $erlaubt, true ) ? $einheit : 'px';
+
+		$teile = [];
+
+		foreach ( $seiten as $wert ) {
+			$teile[] = is_numeric( $wert ) ? ( 0 + $wert ) . $einheit : '0';
+		}
+
+		return implode( ' ', $teile );
+	}
+
+	/**
+	 * Den Abstand ins Stylesheet nachreichen.
+	 */
+	public function inline_styles(): void {
+		$margin = $this->margin_css();
+
+		if ( '' === $margin || ! wp_style_is( 'sk-theme', 'enqueued' ) ) {
+			return;
+		}
+
+		wp_add_inline_style( 'sk-theme', '.sk-header-inbox .sk-inbox-link{margin:' . $margin . ';}' );
 	}
 
 	/**
@@ -119,7 +276,7 @@ class InboxHeaderItem {
 
 		$ungelesen = ChatMessages::unread_total( get_current_user_id() );
 
-		if ( 0 === $ungelesen && get_option( self::OPTION_ONLY_UNREAD, 0 ) ) {
+		if ( 0 === $ungelesen && $this->setting( self::OPTION_ONLY_UNREAD, 0 ) ) {
 			return;
 		}
 
