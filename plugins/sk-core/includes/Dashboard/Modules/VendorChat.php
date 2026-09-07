@@ -147,6 +147,8 @@ class VendorChat extends DashboardModule {
 	public function dashboard_view_data( $query_vars = [] ): array {
 		$user_id = get_current_user_id();
 
+		$this->poll_nostr_for_viewer();
+
 		$view    = isset( $_GET['view'] ) ? sanitize_text_field( $_GET['view'] ) : 'active';
 		$chat_id = isset( $_GET['chat_id'] ) ? intval( $_GET['chat_id'] ) : 0;
 
@@ -1077,6 +1079,44 @@ class VendorChat extends DashboardModule {
 		$message = self::sanitize_user_message( $message );
 
 		ChatMessages::append( (int) $chat_id, (int) $user_id, $message );
+	}
+
+	/**
+	 * Fetch incoming Nostr messages while someone is looking at the inbox.
+	 *
+	 * The scheduled poll runs on its own interval, which is fine for a
+	 * mailbox nobody is watching but feels slow to whoever has the page open.
+	 * Opening the inbox therefore triggers a fetch of its own.
+	 *
+	 * Runs after the page has been sent, so it costs the reader nothing, and
+	 * at most once a minute across all visitors — the relays are the same for
+	 * everyone, so a second fetch right after the first would find nothing
+	 * the first did not.
+	 */
+	private function poll_nostr_for_viewer(): void {
+		if ( ! class_exists( 'SK\Modules\NostrMarket\Bridge\ChatBridge' )
+			|| ! class_exists( 'SK\Modules\NostrMarket\Bridge\NostrDMListener' )
+			|| ! \SK\Modules\NostrMarket\Bridge\ChatBridge::is_enabled() ) {
+			return;
+		}
+
+		if ( get_transient( 'sk_nostr_viewer_poll' ) ) {
+			return;
+		}
+
+		set_transient( 'sk_nostr_viewer_poll', 1, MINUTE_IN_SECONDS );
+
+		register_shutdown_function( function () {
+			if ( function_exists( 'fastcgi_finish_request' ) ) {
+				fastcgi_finish_request();
+			}
+
+			try {
+				\SK\Modules\NostrMarket\Bridge\NostrDMListener::poll();
+			} catch ( \Throwable $e ) {
+				error_log( '[SK Nostr Bridge] Inbox poll failed: ' . $e->getMessage() );
+			}
+		} );
 	}
 
 	/**
