@@ -691,7 +691,9 @@ class VendorChat extends DashboardModule {
 		if ( $other_user_id ) {
 
 			// Mirror to Nostr DM if both users have Nostr identities.
-			if ( class_exists( 'SK\Modules\Auth\NostrIdentity' ) && class_exists( 'SK\Modules\NostrMarket\Bridge\ChatBridge' ) ) {
+			if ( class_exists( 'SK\Modules\Auth\NostrIdentity' )
+				&& class_exists( 'SK\Modules\NostrMarket\Bridge\ChatBridge' )
+				&& \SK\Modules\NostrMarket\Bridge\ChatBridge::is_enabled() ) {
 				$recipient_pubkey = \SK\Modules\Auth\NostrIdentity::get_public_key( $other_user_id );
 				if ( $recipient_pubkey && \SK\Modules\Auth\NostrIdentity::has_identity( $current_user_id ) ) {
 					register_shutdown_function( function () use ( $recipient_pubkey, $message, $current_user_id ) {

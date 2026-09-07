@@ -23,8 +23,22 @@ class ChatBridge {
     /** Cap for the reply queue. */
     const REPLIES_MAX = 30;
 
+    /**
+     * Is the DM bridge switched on?
+     *
+     * Both switches: the module and the bridge. The classes are loaded
+     * regardless (settings and chat display need them), and ChatMessages
+     * and VendorChat call into this class whenever it exists. Every path
+     * that sends to a relay checks here, so "off" really means nothing
+     * leaves.
+     */
+    public static function is_enabled(): bool {
+        return sk_get_option( 'sk_nostr_market_enabled', 'sk_nostr_market', 'off' ) === 'on'
+            && sk_get_option( 'sk_nostr_market_bridge_enabled', 'sk_nostr_market', 'off' ) === 'on';
+    }
+
     public static function init(): void {
-        if ( sk_get_option( 'sk_nostr_market_bridge_enabled', 'sk_nostr_market', 'off' ) !== 'on' ) {
+        if ( ! self::is_enabled() ) {
             return;
         }
 
@@ -183,7 +197,7 @@ class ChatBridge {
      * @param string $nostr_pubkey Set when the message CAME from Nostr.
      */
     public static function mirror_to_nostr( int $chat_id, int $sender_id, string $text, string $nostr_pubkey = '' ): void {
-        if ( $text === '' ) {
+        if ( $text === '' || ! self::is_enabled() ) {
             return;
         }
 
@@ -361,6 +375,10 @@ class ChatBridge {
      *                                 marketplace as a silent stand-in.
      */
     public static function send_dm( string $recipient_pubkey, string $text, int $sender_user_id = 0 ): bool {
+        if ( ! self::is_enabled() ) {
+            return false;
+        }
+
         if ( $sender_user_id ) {
             if ( ! class_exists( 'SK\Modules\Auth\NostrIdentity' ) ) {
                 return false;
@@ -430,6 +448,10 @@ class ChatBridge {
      * @param \swentel\nostr\EventInterface $giftWrap
      */
     private static function send_wrap( $giftWrap ): bool {
+        if ( ! self::is_enabled() ) {
+            return false;
+        }
+
         $relays = class_exists( 'SK\Modules\Auth\NostrIdentity' )
             ? \SK\Modules\Auth\NostrIdentity::get_relays()
             : [ 'wss://relay.nostr.band', 'wss://nos.lol' ];
