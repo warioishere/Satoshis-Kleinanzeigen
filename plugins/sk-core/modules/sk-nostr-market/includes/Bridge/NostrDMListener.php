@@ -292,6 +292,18 @@ class NostrDMListener {
             return [];
         }
 
+        // A relay that took a process down is left alone for a while, on
+        // the read side as much as when publishing.
+        $breaker = class_exists( 'SK\Modules\Auth\RelayPublisher' );
+
+        if ( $breaker && \SK\Modules\Auth\RelayPublisher::stalled( $relay_url ) ) {
+            return [];
+        }
+
+        if ( $breaker ) {
+            \SK\Modules\Auth\RelayPublisher::mark_attempt( $relay_url );
+        }
+
         $pubkeys = array_values( array_unique( array_map( 'strtolower', $pubkeys ) ) );
         shuffle( $pubkeys );
 
@@ -431,6 +443,10 @@ class NostrDMListener {
                     // Already gone.
                 }
             }
+        }
+
+        if ( $breaker ) {
+            \SK\Modules\Auth\RelayPublisher::clear_attempt( $relay_url );
         }
 
         return $events;
@@ -743,9 +759,12 @@ class NostrDMListener {
 
         global $wpdb;
 
+        // Oldest account first, so a duplicate — only an admin can create
+        // one — resolves the same way on every run.
         return (int) $wpdb->get_var( $wpdb->prepare(
             "SELECT user_id FROM {$wpdb->usermeta}
              WHERE meta_key = 'nostr_public_key' AND LOWER(meta_value) = %s
+             ORDER BY user_id ASC
              LIMIT 1",
             strtolower( $pubkey )
         ) );

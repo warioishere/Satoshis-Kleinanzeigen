@@ -100,9 +100,18 @@ class Nostr_Login_Handler {
 
         // Save Nostr public key securely
         if ( isset( $_POST['nostr_public_key'] ) ) {
-            $nostr_public_key = sanitize_text_field( wp_unslash( $_POST['nostr_public_key'] ) );
+            $nostr_public_key = strtolower( sanitize_text_field( wp_unslash( $_POST['nostr_public_key'] ) ) );
             if ( $this->is_valid_public_key( $nostr_public_key ) ) {
-                update_user_meta( $user_id, 'nostr_public_key', $nostr_public_key );
+                // One key, one account — the same rule the self-service
+                // paths apply. A key that already belongs to someone else
+                // would make that person's messages route to this account.
+                $holder = $this->get_user_by_public_key( $nostr_public_key );
+
+                if ( $holder && (int) $holder->ID !== (int) $user_id ) {
+                    error_log( '[SK Auth / Nostr] Profile save for user ' . $user_id . ': key already linked to user ' . $holder->ID . ', not saved.' );
+                } else {
+                    update_user_meta( $user_id, 'nostr_public_key', $nostr_public_key );
+                }
             } else {
                 // Handle invalid public key
             }

@@ -47,25 +47,16 @@ class RelayPublisher {
         $event_id = $event->getId();
 
         foreach ( $relays as $url ) {
-            $breaker = 'sk_relay_stalled_' . md5( $url );
-
-            if ( get_transient( $breaker ) ) {
+            if ( self::stalled( $url ) ) {
                 $rejected[ $url ] = 'skipped: an earlier attempt never returned';
                 continue;
             }
 
-            /*
-             * Set before the attempt and cleared after it. Not every failure
-             * comes back as a failure: a relay has taken the whole PHP
-             * process down mid-connection, and such an attempt never reaches
-             * the line that clears this. The marker outlives the crash, so
-             * the next message skips that relay instead of dying with it.
-             */
-            set_transient( $breaker, 1, self::STALL_SKIP );
+            self::mark_attempt( $url );
 
             $result = self::send_one( $url, $payload, $event_id );
 
-            delete_transient( $breaker );
+            self::clear_attempt( $url );
 
             if ( true === $result ) {
                 $accepted[] = $url;
@@ -76,6 +67,40 @@ class RelayPublisher {
         }
 
         return compact( 'accepted', 'rejected' );
+    }
+
+    // ── The circuit breaker, for every place that dials a relay ───────────
+
+    /**
+     * Is this relay left alone after an attempt that never came back?
+     */
+    public static function stalled( string $url ): bool {
+        return (bool) get_transient( self::breaker_key( $url ) );
+    }
+
+    /**
+     * Note an attempt before it starts.
+     *
+     * Not every failure comes back as a failure: a relay has taken the
+     * whole PHP process down mid-connection, and such an attempt never
+     * reaches the line that clears this. The marker outlives the crash, so
+     * the next caller skips that relay instead of dying with it. Publishing
+     * had this from the start; reading (the DM poll, profile and relay-list
+     * lookups) dialled the same relays without it.
+     */
+    public static function mark_attempt( string $url ): void {
+        set_transient( self::breaker_key( $url ), 1, self::STALL_SKIP );
+    }
+
+    /**
+     * The attempt came back, whatever it brought.
+     */
+    public static function clear_attempt( string $url ): void {
+        delete_transient( self::breaker_key( $url ) );
+    }
+
+    private static function breaker_key( string $url ): string {
+        return 'sk_relay_stalled_' . md5( $url );
     }
 
     /**

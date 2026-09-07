@@ -675,10 +675,15 @@ class ChatBridge {
          *
          * Ours stay in the list as a fallback — for recipients who published
          * no list, and for clients that simply query broadly.
+         *
+         * Ours go first. A relay from the recipient's list is a stranger's
+         * choice, and one of them has taken the PHP process down on
+         * connect; with ours ahead of it the wrap is at least stored
+         * somewhere before that can happen, instead of nowhere.
          */
         $relays = array_values( array_unique( array_merge(
-            $recipient_pubkey ? self::dm_relays_for( $recipient_pubkey ) : [],
-            \SK\Modules\Auth\NostrIdentity::get_relays()
+            \SK\Modules\Auth\NostrIdentity::get_relays(),
+            $recipient_pubkey ? self::dm_relays_for( $recipient_pubkey ) : []
         ) ) );
 
         self::remember_sent( (string) $giftWrap->getId() );
@@ -739,6 +744,12 @@ class ChatBridge {
             $newest = 0;
 
             foreach ( \SK\Modules\Auth\NostrIdentity::get_relays() as $relay_url ) {
+                if ( \SK\Modules\Auth\RelayPublisher::stalled( $relay_url ) ) {
+                    continue;
+                }
+
+                \SK\Modules\Auth\RelayPublisher::mark_attempt( $relay_url );
+
                 try {
                     $client = new \WebSocket\Client( $relay_url );
                     $client->setTimeout( 5 );
@@ -797,6 +808,8 @@ class ChatBridge {
                 } catch ( \Throwable $e ) {
                     // Next relay.
                 }
+
+                \SK\Modules\Auth\RelayPublisher::clear_attempt( $relay_url );
             }
         }
 
@@ -1113,6 +1126,8 @@ class ChatBridge {
             'meta_key'    => 'nostr_public_key',
             'meta_value'  => $pubkey,
             'number'      => 1,
+            'orderby'     => 'ID',
+            'order'       => 'ASC',
             'fields'      => 'ID',
             'count_total' => false,
         ] );
@@ -1177,7 +1192,17 @@ class ChatBridge {
         $best    = null;
         $best_at = 0;
 
+        $breaker = class_exists( 'SK\Modules\Auth\RelayPublisher' );
+
         foreach ( EventSender::get_relays() as $relay_url ) {
+            if ( $breaker && \SK\Modules\Auth\RelayPublisher::stalled( $relay_url ) ) {
+                continue;
+            }
+
+            if ( $breaker ) {
+                \SK\Modules\Auth\RelayPublisher::mark_attempt( $relay_url );
+            }
+
             try {
                 $client = new \WebSocket\Client( $relay_url );
                 $client->setTimeout( 5 );
@@ -1212,6 +1237,10 @@ class ChatBridge {
                 $client->disconnect();
             } catch ( \Throwable $e ) {
                 // Next relay.
+            }
+
+            if ( $breaker ) {
+                \SK\Modules\Auth\RelayPublisher::clear_attempt( $relay_url );
             }
 
             if ( null !== $best ) {
