@@ -41,8 +41,19 @@ class InboxHeaderItem {
 	/** Nur zeigen, wenn wirklich etwas ungelesen ist. */
 	const OPTION_ONLY_UNREAD = 'sk_header_inbox_only_unread';
 
-	/** Aussenabstand, alle vier Seiten. */
-	const OPTION_MARGIN = 'sk_header_inbox_margin';
+	/**
+	 * Aussenabstand, alle vier Seiten — je Ansicht eine eigene Einstellung.
+	 *
+	 * Kadence macht einen Regler nicht dadurch geraeteabhaengig, dass er eine
+	 * eigene Umschaltung mitbringt, sondern indem je Ansicht ein eigener
+	 * Regler eingeblendet wird. Welcher, entscheidet der Umschalter unten im
+	 * Kopfbaukasten ueber den Kontext '__device'.
+	 */
+	const OPTION_MARGIN = [
+		'desktop' => 'sk_header_inbox_margin',
+		'tablet'  => 'sk_header_inbox_margin_tablet',
+		'mobile'  => 'sk_header_inbox_margin_mobile',
+	];
 
 	public function __construct() {
 		add_filter( 'kadence_theme_customizer_control_choices', [ $this, 'register_choice' ] );
@@ -159,26 +170,32 @@ class InboxHeaderItem {
 					],
 				],
 			],
-			self::OPTION_MARGIN      => [
+		] );
+
+		// Je Ansicht ein eigener Regler. Sichtbar ist immer nur der, dessen
+		// Ansicht unten gewaehlt ist — deshalb braucht keiner eine eigene
+		// Umschaltung, und die Beschriftung der vier Seiten bleibt stehen.
+		$abstaende = [];
+
+		foreach ( self::OPTION_MARGIN as $ansicht => $schluessel ) {
+			$abstaende[ $schluessel ] = [
 				'control_type' => 'kadence_measure_control',
 				'section'      => self::SECTION_KEY,
 				'priority'     => 10,
-				/*
-				 * Geraeteabhaengig, deshalb je Wert ein Fach pro Ansicht.
-				 * Ohne diese Form nimmt der Regler die Umschaltung unten zwar
-				 * an, schreibt aber immer in dasselbe Fach — die Einstellung
-				 * wirkte dann auf allen Ansichten gleich.
-				 */
 				'default'      => [
-					'size'   => [ 'desktop' => [ '', '', '', '' ] ],
-					'unit'   => [ 'desktop' => 'px' ],
-					'locked' => [ 'desktop' => false ],
+					'size'   => [ '', '', '', '' ],
+					'unit'   => 'px',
+					'locked' => false,
 				],
 				'label'        => __( 'Aussenabstand', 'sk-core' ),
 				'context'      => [
 					[
 						'setting' => '__current_tab',
 						'value'   => 'design',
+					],
+					[
+						'setting' => '__device',
+						'value'   => $ansicht,
 					],
 				],
 				'live_method'  => [
@@ -195,10 +212,12 @@ class InboxHeaderItem {
 					'max'        => [ 'px' => 100, 'em' => 6, 'rem' => 6 ],
 					'step'       => [ 'px' => 1, 'em' => 0.01, 'rem' => 0.01 ],
 					'units'      => [ 'px', 'em', 'rem' ],
-					'responsive' => true,
+					'responsive' => false,
 				],
-			],
-		] );
+			];
+		}
+
+		\Kadence\Theme_Customizer::add_settings( $abstaende );
 	}
 
 	/**
@@ -215,30 +234,24 @@ class InboxHeaderItem {
 	/**
 	 * Der eingestellte Aussenabstand einer Ansicht als CSS-Wert.
 	 *
-	 * Bewusst selbst gerechnet statt ueber render_responsive_measure() des
-	 * Themes: das ist eine Innerei der Stil-Komponente, und diese Klasse soll
-	 * ein Theme-Update ueberstehen.
-	 *
-	 * Die Einheit hat ein eigenes Fach je Ansicht, wird aber oft nur fuer den
-	 * Desktop gefuellt — wer am Handy nur die Zahl aendert, faellt deshalb auf
-	 * die Desktop-Einheit zurueck statt stillschweigend auf Pixel.
+	 * Bewusst selbst gerechnet statt ueber render_measure() des Themes: das
+	 * ist eine Innerei der Stil-Komponente, und diese Klasse soll ein
+	 * Theme-Update ueberstehen.
 	 *
 	 * @param string $ansicht desktop | tablet | mobile
 	 */
 	private function margin_css( string $ansicht ): string {
-		$mass = $this->setting( self::OPTION_MARGIN, [] );
+		if ( ! isset( self::OPTION_MARGIN[ $ansicht ] ) ) {
+			return '';
+		}
+
+		$mass = $this->setting( self::OPTION_MARGIN[ $ansicht ], [] );
 
 		if ( ! is_array( $mass ) || empty( $mass['size'] ) || ! is_array( $mass['size'] ) ) {
 			return '';
 		}
 
-		$groessen = $mass['size'][ $ansicht ] ?? null;
-
-		if ( ! is_array( $groessen ) ) {
-			return '';
-		}
-
-		$seiten = array_slice( array_pad( $groessen, 4, '' ), 0, 4 );
+		$seiten = array_slice( array_pad( $mass['size'], 4, '' ), 0, 4 );
 
 		// Nichts eingetragen: dann auch keine Regel ausgeben.
 		$gesetzt = array_filter( $seiten, static function ( $wert ) {
@@ -249,9 +262,6 @@ class InboxHeaderItem {
 			return '';
 		}
 
-		$einheiten = isset( $mass['unit'] ) && is_array( $mass['unit'] ) ? $mass['unit'] : [];
-		$einheit   = $einheiten[ $ansicht ] ?? ( $einheiten['desktop'] ?? 'px' );
-
 		/*
 		 * Nur echte Einheiten durchlassen. Zeichen bloss herauszufiltern
 		 * genuegte nicht: aus einem verunglueckten Wert wurde dann zwar nichts
@@ -259,7 +269,7 @@ class InboxHeaderItem {
 		 * Browser stillschweigend verwirft.
 		 */
 		$erlaubt = [ 'px', 'em', 'rem', '%', 'vh', 'vw' ];
-		$einheit = strtolower( trim( (string) $einheit ) );
+		$einheit = isset( $mass['unit'] ) ? strtolower( trim( (string) $mass['unit'] ) ) : 'px';
 		$einheit = in_array( $einheit, $erlaubt, true ) ? $einheit : 'px';
 
 		$teile = [];
