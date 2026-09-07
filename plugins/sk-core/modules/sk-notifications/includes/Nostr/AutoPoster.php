@@ -131,7 +131,7 @@ function nap_build_caption(int $product_id): string {
     // Permalink
     $link = get_permalink($product_id);
 
-    // Titelbild (Markdown)
+    // Titelbild
     $img = get_the_post_thumbnail_url($product_id, 'full');
 
     // Preis (wc_price liefert HTML -> erst strip_tags, dann clean)
@@ -144,8 +144,18 @@ function nap_build_caption(int $product_id): string {
         }
     }
 
-    // Bild ganz oben (Markdown) + Text + Link
-    $imgPart = $img ? "![{$title}]({$img})\n\n" : '';
+    /*
+     * Bild als blanke Adresse, nicht als Markdown.
+     *
+     * Eine Notiz (kind 1) ist reiner Text; Markdown steht in keiner Spezifikation.
+     * Clients erkennen eine Bildadresse von selbst und zeigen sie an — bei
+     * "![Titel](adresse)" taten sie genau das mit dem Teil in den Klammern und
+     * liessen "![Titel](" und ")" als Zeichensalat stehen.
+     *
+     * Eigene Zeile, damit die Adresse sauber endet und nicht mit dem Titel
+     * dahinter verklebt.
+     */
+    $imgPart = $img ? "{$img}\n\n" : '';
     $caption = "{$imgPart}{$title}\n\n{$excerpt}\n\n👉 {$link}";
  
     // --- Hashtag anhängen ---
