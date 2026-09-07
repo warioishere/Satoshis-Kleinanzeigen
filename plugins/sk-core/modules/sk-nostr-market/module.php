@@ -416,6 +416,13 @@ final class Module {
             wp_send_json_error( [ 'message' => 'Pubkey stimmt nicht überein.' ] );
         }
 
+        // Nur das Inserat selbst, unter seiner eigenen Kennung. Die
+        // Ereigniskennung wird gleich am Inserat vermerkt und spaeter fuer
+        // das Zurueckziehen benutzt; sie muss zu diesem Inserat gehoeren.
+        if ( 30402 !== ( $signed_event['kind'] ?? 0 ) || ! self::has_d_tag( $signed_event, 'sk-' . $post_id ) ) {
+            wp_send_json_error( [ 'message' => 'Das Ereignis gehört nicht zu diesem Inserat.' ] );
+        }
+
         $event_id = EventSender::send_signed( $signed_event );
 
         if ( ! $event_id ) {
@@ -427,6 +434,19 @@ final class Module {
         delete_post_meta( $post_id, '_sk_nostr_market_pending_sign' );
 
         wp_send_json_success( [ 'event_id' => $event_id ] );
+    }
+
+    /**
+     * Traegt das Ereignis die Kennung ('d') genau dieses Inserats?
+     */
+    private static function has_d_tag( array $event, string $d ): bool {
+        foreach ( (array) ( $event['tags'] ?? [] ) as $tag ) {
+            if ( is_array( $tag ) && 'd' === ( $tag[0] ?? '' ) && $d === ( $tag[1] ?? '' ) ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

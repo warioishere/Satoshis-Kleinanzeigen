@@ -92,17 +92,22 @@ class EventSender {
      * Verteilt wird es ueber dieselbe Schleife und dieselbe Erfolgspruefung
      * wie alles andere.
      *
+     * Kennung und Signatur werden hier geprueft, nicht erst vom Relay. Was
+     * hier ankommt, hat ein Browser geschickt; ohne Pruefung liesse sich
+     * eine beliebige Kennung ins Inserat schreiben.
+     *
      * @param array $signed_event
      * @return string|null Ereigniskennung, wenn ein Relay es angenommen hat.
      */
     public static function send_signed( array $signed_event ): ?string {
-        $event_id = (string) ( $signed_event['id'] ?? '' );
+        $event = self::event_from_array( $signed_event );
 
-        if ( '' === $event_id ) {
+        if ( null === $event ) {
             return null;
         }
 
-        $relays = self::get_relays();
+        $event_id = $event->getId();
+        $relays   = self::get_relays();
 
         if ( empty( $relays ) ) {
             error_log( '[SK Nostr Market] Keine Relays konfiguriert.' );
@@ -113,7 +118,7 @@ class EventSender {
 
         foreach ( $relays as $relay_url ) {
             try {
-                $msg   = new \swentel\nostr\Message\EventMessage( (object) $signed_event );
+                $msg   = new EventMessage( $event );
                 $relay = new Relay( $relay_url );
 
                 if ( method_exists( $relay, 'setTimeout' ) ) {
@@ -134,6 +139,49 @@ class EventSender {
         }
 
         return $sent_any ? $event_id : null;
+    }
+
+    /**
+     * Ein Ereignis aus Rohdaten bauen, wie sie ein Browser schickt.
+     *
+     * Vorher: Kennung muss zum Inhalt passen, Signatur zum Schluessel. Beides
+     * prueft die Bibliothek; die Kennung ist der SHA-256 ueber die
+     * kanonische Form, die Signatur Schnorr ueber die Kennung.
+     *
+     * @param array $raw
+     */
+    private static function event_from_array( array $raw ): ?Event {
+        $hex64 = '/^[0-9a-f]{64}$/';
+
+        if ( ! isset( $raw['id'], $raw['pubkey'], $raw['sig'], $raw['kind'], $raw['created_at'] ) ) {
+            return null;
+        }
+
+        if ( ! is_string( $raw['id'] ) || ! preg_match( $hex64, $raw['id'] )
+            || ! is_string( $raw['pubkey'] ) || ! preg_match( $hex64, $raw['pubkey'] )
+            || ! is_string( $raw['sig'] ) || ! preg_match( '/^[0-9a-f]{128}$/', $raw['sig'] )
+            || ! is_int( $raw['kind'] ) || ! is_int( $raw['created_at'] ) ) {
+            return null;
+        }
+
+        $raw['content'] = isset( $raw['content'] ) && is_string( $raw['content'] ) ? $raw['content'] : '';
+        $raw['tags']    = isset( $raw['tags'] ) && is_array( $raw['tags'] ) ? $raw['tags'] : [];
+
+        try {
+            $event = new Event();
+
+            if ( ! $event->verify( (object) $raw ) ) {
+                error_log( '[SK Nostr Market] Signiertes Ereignis ' . $raw['id'] . ' besteht die Pruefung nicht.' );
+                return null;
+            }
+
+            $event->populate( (object) $raw );
+
+            return $event;
+        } catch ( \Throwable $e ) {
+            error_log( '[SK Nostr Market] Signiertes Ereignis unbrauchbar: ' . $e->getMessage() );
+            return null;
+        }
     }
 
     /**
