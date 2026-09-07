@@ -451,17 +451,46 @@ class ChatBridge {
         $signService = new \swentel\nostr\Sign\Sign();
         $giftWrapSvc = new \swentel\nostr\Nip59\GiftWrapService( $keyService, $signService );
 
-        // Build Kind 14 rumor (NIP-17 DM).
-        $rumor = new \swentel\nostr\Event\Event();
-        $rumor->setKind( 14 );
-        $rumor->setContent( $text );
-        $rumor->addTag( [ 'p', $recipient_pubkey ] );
-        $rumor->setCreatedAt( time() );
+        $sender_pubkey = $keyService->getPublicKey( $sender_privkey );
+        $created_at    = time();
 
-        // Create seal (Kind 13) — encrypted with sender's key.
-        $seal = $giftWrapSvc->createSeal( $rumor, $sender_privkey, $recipient_pubkey );
+        /*
+         * The rumor is unsigned, but it still has to carry the author's
+         * pubkey and its own id. A client checks that the rumor's author
+         * matches the seal's author — that check is what stops anyone from
+         * sealing a message in someone else's name, so a rumor without a
+         * pubkey is dropped, silently and by every client.
+         *
+         * It is assembled here rather than through the library's rumor,
+         * whose unsigned event left pubkey and id empty and added an empty
+         * sig that a rumor must not carry at all.
+         */
+        $rumor = [
+            'id'         => '',
+            'pubkey'     => $sender_pubkey,
+            'created_at' => $created_at,
+            'kind'       => 14,
+            'tags'       => [ [ 'p', $recipient_pubkey ] ],
+            'content'    => $text,
+        ];
 
-        // Create gift wrap (Kind 1059) — encrypted with random one-time key.
+        $rumor['id'] = hash( 'sha256', (string) wp_json_encode(
+            [ 0, $rumor['pubkey'], $rumor['created_at'], $rumor['kind'], $rumor['tags'], $rumor['content'] ],
+            JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+        ) );
+
+        // Seal (kind 13): the rumor encrypted to the recipient, signed by
+        // the sender, so the recipient learns who wrote it.
+        $seal = new \swentel\nostr\Event\Event();
+        $seal->setKind( 13 );
+        $seal->setCreatedAt( $created_at );
+        $seal->setContent( \swentel\nostr\Encryption\Nip44::encrypt(
+            (string) wp_json_encode( $rumor, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ),
+            \swentel\nostr\Encryption\Nip44::getConversationKey( $sender_privkey, $recipient_pubkey )
+        ) );
+        $signService->signEvent( $seal, $sender_privkey );
+
+        // Gift wrap (kind 1059) — the seal under a one-time key.
         $giftWrap = $giftWrapSvc->createGiftWrap( $seal, $recipient_pubkey );
 
         return self::send_wrap( $giftWrap );
