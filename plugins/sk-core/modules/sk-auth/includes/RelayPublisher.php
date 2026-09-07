@@ -22,6 +22,9 @@ class RelayPublisher {
     /** Seconds per relay: connect, send and wait for the OK. */
     const TIMEOUT = 5;
 
+    /** How long a relay is left alone after an attempt that never returned. */
+    const STALL_SKIP = 6 * HOUR_IN_SECONDS;
+
     /**
      * @param EventInterface $event  Signed event.
      * @param string[]       $relays Relay URLs.
@@ -44,7 +47,25 @@ class RelayPublisher {
         $event_id = $event->getId();
 
         foreach ( $relays as $url ) {
+            $breaker = 'sk_relay_stalled_' . md5( $url );
+
+            if ( get_transient( $breaker ) ) {
+                $rejected[ $url ] = 'skipped: an earlier attempt never returned';
+                continue;
+            }
+
+            /*
+             * Set before the attempt and cleared after it. Not every failure
+             * comes back as a failure: a relay has taken the whole PHP
+             * process down mid-connection, and such an attempt never reaches
+             * the line that clears this. The marker outlives the crash, so
+             * the next message skips that relay instead of dying with it.
+             */
+            set_transient( $breaker, 1, self::STALL_SKIP );
+
             $result = self::send_one( $url, $payload, $event_id );
+
+            delete_transient( $breaker );
 
             if ( true === $result ) {
                 $accepted[] = $url;

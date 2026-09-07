@@ -1114,6 +1114,17 @@ class VendorChat extends DashboardModule {
 		}
 
 		register_shutdown_function( function () use ( $recipient_pubkey, $message, $sender_id ) {
+			/*
+			 * Close the response before touching a relay. The message is
+			 * already stored and the sender has been told so; relay traffic
+			 * has taken a worker down before now, and without this the
+			 * sender saw "an error occurred" for a message that had in fact
+			 * been sent and delivered.
+			 */
+			if ( function_exists( 'fastcgi_finish_request' ) ) {
+				fastcgi_finish_request();
+			}
+
 			\SK\Modules\NostrMarket\Bridge\ChatBridge::send_dm( $recipient_pubkey, $message, $sender_id );
 		} );
 	}
