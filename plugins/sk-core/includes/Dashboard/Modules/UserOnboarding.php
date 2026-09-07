@@ -242,6 +242,27 @@ class UserOnboarding {
 								<i class="fas fa-key"></i> <?php _e( 'Ja, Nostr-Identität erstellen', 'sk-core' ); ?>
 							</button>
 							<div id="uob-nostr-status" style="margin-top:8px;font-size:13px;color:#5a6a7e;"></div>
+
+							<?php
+							/*
+							 * Der erzeugte Schluessel gehoert dem Nutzer, also muss er ihn
+							 * einmal zu sehen bekommen. Ohne ihn kann er seine Identitaet
+							 * nirgendwo sonst benutzen — sie waere nur bei uns etwas wert.
+							 *
+							 * Er steht nicht im Markup, sondern wird erst geholt, wenn es
+							 * so weit ist: sonst laege er im HTML jedes Seitenaufrufs.
+							 */
+							?>
+							<div id="uob-nostr-key" style="display:none;margin-top:16px;text-align:left;">
+								<p style="font-size:13px;color:#e06c75;margin:0 0 6px;">
+									<i class="fas fa-exclamation-triangle"></i>
+									<?php _e( 'Schreib diesen Schlüssel auf und bewahre ihn sicher. Er ist deine Identität. Wer ihn hat, ist du. Wir zeigen ihn dir später unter „Nostr/LN Link" wieder, aber verlass dich nicht darauf.', 'sk-core' ); ?>
+								</p>
+								<code id="uob-nsec-value" style="display:block;word-break:break-all;font-size:12px;padding:8px;border-radius:6px;background:rgba(0,0,0,0.25);"></code>
+								<button type="button" class="uob-btn" id="uob-copy-nsec" style="margin-top:8px;">
+									<i class="fas fa-copy"></i> <?php _e( 'Kopieren', 'sk-core' ); ?>
+								</button>
+							</div>
 						</div>
 					<?php else : ?>
 						<p style="text-align:center;color:#5cb85c;font-weight:600;"><i class="fas fa-check-circle"></i> <?php _e( 'Nostr-Identität bereits vorhanden!', 'sk-core' ); ?></p>

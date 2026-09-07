@@ -36,6 +36,13 @@
 			});
 
 			// Nostr Identity creation
+		$(document).on('click', '#uob-copy-nsec', function () {
+			navigator.clipboard.writeText($('#uob-nsec-value').text());
+			var $b = $(this);
+			$b.html('<i class="fas fa-check"></i> Kopiert');
+			setTimeout(function () { $b.html('<i class="fas fa-copy"></i> Kopieren'); }, 2000);
+		});
+
 		$('#uob-create-nostr').on('click', function () {
 			var $btn = $(this);
 			$btn.prop('disabled', true).text('Wird erstellt...');
@@ -50,6 +57,19 @@
 					if (res.success) {
 						$('#uob-nostr-status').html('<span style="color:#5cb85c;"><i class="fas fa-check-circle"></i> ' + res.data.message + '</span>');
 						$btn.hide();
+
+						// Den Schluessel jetzt holen und zeigen. Er steht bewusst
+						// nicht in der Antwort des Erstellens, sondern kommt ueber
+						// denselben Weg wie spaeter unter "Nostr/LN Link".
+						$.post(uobAjax.ajaxurl, {
+							action: 'sk_get_nostr_nsec',
+							nonce: uobAjax.nonce
+						}, function (key) {
+							if (key.success && key.data && key.data.nsec) {
+								$('#uob-nsec-value').text(key.data.nsec);
+								$('#uob-nostr-key').show();
+							}
+						});
 					} else {
 						$('#uob-nostr-status').html('<span style="color:#e06c75;">' + (res.data.message || 'Fehler') + '</span>');
 						$btn.prop('disabled', false).html('<i class="fas fa-key"></i> Erneut versuchen');
