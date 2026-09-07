@@ -1122,6 +1122,16 @@ class VendorChat extends DashboardModule {
 			return;
 		}
 
+		/*
+		 * The scheduled poll normally runs every minute. As long as it does,
+		 * a fetch from here finds nothing it would not have found within
+		 * seconds, and it holds a web worker for the whole relay round trip.
+		 * Only when the schedule has fallen behind is it worth doing.
+		 */
+		if ( (int) get_option( \SK\Modules\NostrMarket\Bridge\NostrDMListener::LAST_SEEN_KEY, 0 ) > time() - MINUTE_IN_SECONDS ) {
+			return;
+		}
+
 		set_transient( 'sk_nostr_viewer_poll', 1, MINUTE_IN_SECONDS );
 
 		register_shutdown_function( function () {

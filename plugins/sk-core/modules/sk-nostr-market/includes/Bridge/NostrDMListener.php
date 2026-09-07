@@ -179,6 +179,8 @@ class NostrDMListener {
     }
 
     private static function poll_locked(): void {
+        self::$new_chats = 0;
+
         $ring = self::key_ring();
 
         if ( empty( $ring ) ) {
@@ -570,8 +572,11 @@ class NostrDMListener {
          * message. Queue it raw; the rest happens in their browser.
          */
         if ( empty( $empfaenger['privkey'] ) ) {
-            self::queue_for_browser( $empfaenger['vendor_id'], $event );
-            self::settle( $event_id );
+            // A full queue keeps the event claimed; it is tried again once
+            // the vendor has made room.
+            if ( self::queue_for_browser( $empfaenger['vendor_id'], $event ) ) {
+                self::settle( $event_id );
+            }
 
             return;
         }
@@ -678,8 +683,11 @@ class NostrDMListener {
          * client: see the listing, reply to the sender.
          */
         if ( $empfaenger['vendor_id'] > 0 ) {
-            self::route_to_vendor( $empfaenger['vendor_id'], $sender_pubkey, $decrypted, $empfaenger['pubkey'] );
-            self::settle( $event_id );
+            // Not delivered — the budget for new chats is spent — stays
+            // claimed and comes round again.
+            if ( self::route_to_vendor( $empfaenger['vendor_id'], $sender_pubkey, $decrypted, $empfaenger['pubkey'] ) ) {
+                self::settle( $event_id );
+            }
 
             return;
         }
@@ -699,8 +707,9 @@ class NostrDMListener {
             $autor = (int) get_post_field( 'post_author', $post_id );
 
             if ( $autor ) {
-                self::create_bridge_chat( $autor, $sender_pubkey, $post_id, get_the_title( $post_id ), self::clean_field( $decrypted, 4000 ), $empfaenger['pubkey'] );
-                self::settle( $event_id );
+                if ( self::create_bridge_chat( $autor, $sender_pubkey, $post_id, get_the_title( $post_id ), self::clean_field( $decrypted, 4000 ), $empfaenger['pubkey'] ) ) {
+                    self::settle( $event_id );
+                }
 
                 return;
             }
@@ -865,15 +874,22 @@ class NostrDMListener {
     /**
      * Deliver a message to the vendor whose mailbox it went to.
      */
-    private static function route_to_vendor( int $vendor_id, string $sender_pubkey, string $text, string $inbox ): void {
+    private static function route_to_vendor( int $vendor_id, string $sender_pubkey, string $text, string $inbox ): bool {
         $text = self::clean_field( $text, 4000 );
 
         if ( '' === $text ) {
-            return;
+            // Nothing to deliver; counts as dealt with.
+            return true;
         }
 
-        self::create_bridge_chat( $vendor_id, $sender_pubkey, 0, '', $text, $inbox );
+        return self::create_bridge_chat( $vendor_id, $sender_pubkey, 0, '', $text, $inbox ) > 0;
     }
+
+    /** New bridge chats one poll may open; the rest wait for the next. */
+    const NEW_CHATS_PER_RUN = 20;
+
+    /** Bridge chats opened in this process. */
+    private static $new_chats = 0;
 
     /** User meta holding queued, still-encrypted messages. */
     const PENDING_META = '_sk_nostr_pending_wraps';
@@ -888,9 +904,9 @@ class NostrDMListener {
      * anyway; only whoever holds the private key can decrypt it, and that
      * key sits in the vendor's browser.
      */
-    private static function queue_for_browser( int $vendor_id, array $event ): void {
+    private static function queue_for_browser( int $vendor_id, array $event ): bool {
         if ( $vendor_id <= 0 ) {
-            return;
+            return true;
         }
 
         $offen = get_user_meta( $vendor_id, self::PENDING_META, true );
@@ -900,8 +916,19 @@ class NostrDMListener {
 
         foreach ( $offen as $vorhanden ) {
             if ( ( $vorhanden['id'] ?? '' ) === $id ) {
-                return;
+                return true;
             }
+        }
+
+        /*
+         * A full queue takes nothing more. Dropping the oldest to make room
+         * let a burst of throwaway senders push a real message out, and
+         * the poll had already marked it as delivered; it was gone for
+         * good. The message stays on the relay instead and is fetched
+         * again once the vendor has opened some of the queue.
+         */
+        if ( count( $offen ) >= self::PENDING_MAX ) {
+            return false;
         }
 
         $offen[] = [
@@ -911,13 +938,9 @@ class NostrDMListener {
             'content' => (string) ( $event['content'] ?? '' ),
         ];
 
-        // Oldest goes first, otherwise the meta grows unbounded when the
-        // vendor never checks in.
-        if ( count( $offen ) > self::PENDING_MAX ) {
-            $offen = array_slice( $offen, -self::PENDING_MAX );
-        }
-
         update_user_meta( $vendor_id, self::PENDING_META, $offen );
+
+        return true;
     }
 
     /**
@@ -1193,6 +1216,18 @@ class NostrDMListener {
             ChatBridge::add_message( $chat_id, $admin_id, $message, $nostr_pubkey );
             return $chat_id;
         }
+
+        /*
+         * A new conversation costs a post, its meta and a name lookup, and
+         * every throwaway key is a new conversation. Only so many per run;
+         * the event behind the next one stays claimed and is delivered a
+         * few minutes later, so a burst is spread out rather than dropped.
+         */
+        if ( self::$new_chats >= self::NEW_CHATS_PER_RUN ) {
+            return 0;
+        }
+
+        self::$new_chats++;
 
         // Create new bridge chat.
         $npub  = self::pubkey_to_npub( $nostr_pubkey );

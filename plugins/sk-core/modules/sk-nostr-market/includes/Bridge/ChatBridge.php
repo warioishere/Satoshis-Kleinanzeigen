@@ -991,15 +991,36 @@ class ChatBridge {
             return;
         }
 
-        update_post_meta( $chat_id, self::NAME_META, self::resolve_contact_name( $pubkey ) );
+        $name = self::resolve_contact_name( $pubkey );
+
+        // Not looked up this time: the next message asks again.
+        if ( null === $name ) {
+            return;
+        }
+
+        update_post_meta( $chat_id, self::NAME_META, $name );
         update_post_meta( $chat_id, self::NAME_TIME_META, time() );
     }
 
     /**
-     * Store name if the pubkey belongs to an SK account, otherwise the name
-     * from the Kind 0 profile on the relays. Empty if neither is known.
+     * Relay lookups for contact names in one process.
+     *
+     * A lookup goes to every configured relay and waits up to five seconds
+     * on each. Forty strangers in one poll meant forty such round trips in
+     * a row, all inside the poll — a flood of throwaway senders could keep
+     * a worker busy for as long as it liked. Whatever is over the budget
+     * shows its npub until a later message brings the name.
      */
-    private static function resolve_contact_name( string $pubkey ): string {
+    const NAME_LOOKUPS_PER_RUN = 10;
+
+    /**
+     * Store name if the pubkey belongs to an SK account, otherwise the name
+     * from the Kind 0 profile on the relays. Empty if neither is known,
+     * null when the relays were not asked because the budget is used up.
+     */
+    private static function resolve_contact_name( string $pubkey ): ?string {
+        static $lookups = 0;
+
         $users = get_users( [
             'meta_key'    => 'nostr_public_key',
             'meta_value'  => $pubkey,
@@ -1020,6 +1041,12 @@ class ChatBridge {
 
             return self::clean_contact_name( $name );
         }
+
+        if ( $lookups >= self::NAME_LOOKUPS_PER_RUN ) {
+            return null;
+        }
+
+        $lookups++;
 
         return self::clean_contact_name( self::fetch_profile_name( $pubkey ) );
     }
