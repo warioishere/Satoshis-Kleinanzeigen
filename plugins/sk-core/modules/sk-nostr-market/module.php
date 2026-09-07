@@ -77,7 +77,20 @@ final class Module {
             $vendor_id
         ) );
 
-        if ( empty( $pending ) ) {
+        // Withdrawals wait in user meta: their product may be gone already.
+        $pending_delete = [];
+        $vendor_pubkey  = strtolower( (string) get_user_meta( $vendor_id, 'nostr_public_key', true ) );
+
+        foreach ( ProductDeleter::pending_for( $vendor_id ) as $entry ) {
+            $pending_delete[] = [
+                'post_id'  => (int) $entry['post_id'],
+                'event_id' => (string) $entry['event_id'],
+                'title'    => (string) ( $entry['title'] ?? '' ),
+                'tags'     => ProductDeleter::tags( (string) $entry['event_id'], $vendor_pubkey, 'sk-' . (int) $entry['post_id'] ),
+            ];
+        }
+
+        if ( empty( $pending ) && empty( $pending_delete ) ) {
             return;
         }
 
@@ -95,7 +108,7 @@ final class Module {
             }
         }
 
-        if ( empty( $pending_data ) ) {
+        if ( empty( $pending_data ) && empty( $pending_delete ) ) {
             return;
         }
 
@@ -115,9 +128,10 @@ final class Module {
         );
 
         wp_localize_script( 'sk-nostr-sign', 'skNostrMarket', [
-            'ajaxurl'     => admin_url( 'admin-ajax.php' ),
-            'nonce'       => wp_create_nonce( 'sk_nostr_market_sign' ),
-            'pendingSign' => $pending_data,
+            'ajaxurl'       => admin_url( 'admin-ajax.php' ),
+            'nonce'         => wp_create_nonce( 'sk_nostr_market_sign' ),
+            'pendingSign'   => $pending_data,
+            'pendingDelete' => $pending_delete,
         ] );
     }
 
@@ -169,6 +183,8 @@ final class Module {
         add_action( 'wp_ajax_sk_nostr_drop_reply', [ $this, 'ajax_drop_reply' ] );
         add_action( 'wp_ajax_sk_nostr_market_fallback_sign', [ $this, 'ajax_fallback_sign' ] );
         add_action( 'wp_ajax_sk_nostr_market_cancel_sign', [ $this, 'ajax_cancel_sign' ] );
+        add_action( 'wp_ajax_sk_nostr_market_publish_signed_delete', [ $this, 'ajax_publish_signed_delete' ] );
+        add_action( 'wp_ajax_sk_nostr_market_cancel_delete', [ $this, 'ajax_cancel_delete' ] );
         add_action( 'wp_footer', [ $this, 'render_sign_modal' ] );
 
         // Knopf "Erneut posten" auf der Inseratsseite im Adminbereich.
@@ -500,6 +516,72 @@ final class Module {
     }
 
     /**
+     * AJAX: a Kind 5 the vendor signed in the browser to withdraw a listing.
+     *
+     * The event must reference a withdrawal from the vendor's own queue; the
+     * queue entry, not the browser, says which event id may be withdrawn.
+     */
+    public function ajax_publish_signed_delete(): void {
+        check_ajax_referer( 'sk_nostr_market_sign', 'nonce' );
+
+        if ( ! is_user_logged_in() ) {
+            wp_send_json_error( [ 'message' => 'Nicht angemeldet.' ] );
+        }
+
+        $vendor_id    = get_current_user_id();
+        $signed_event = json_decode( (string) wp_unslash( $_POST['signed_event'] ?? '' ), true );
+
+        if ( empty( $signed_event ) || ! is_array( $signed_event ) ) {
+            wp_send_json_error( [ 'message' => 'Fehlende Parameter.' ] );
+        }
+
+        $vendor_pubkey = get_user_meta( $vendor_id, 'nostr_public_key', true );
+
+        if ( empty( $vendor_pubkey ) || ( $signed_event['pubkey'] ?? '' ) !== $vendor_pubkey ) {
+            wp_send_json_error( [ 'message' => 'Pubkey stimmt nicht überein.' ] );
+        }
+
+        $target = '';
+
+        foreach ( (array) ( $signed_event['tags'] ?? [] ) as $tag ) {
+            if ( is_array( $tag ) && 'e' === ( $tag[0] ?? '' ) && is_string( $tag[1] ?? null ) ) {
+                $target = $tag[1];
+                break;
+            }
+        }
+
+        if ( 5 !== ( $signed_event['kind'] ?? 0 ) || '' === $target || null === ProductDeleter::pending_entry( $vendor_id, $target ) ) {
+            wp_send_json_error( [ 'message' => 'Das Ereignis gehört zu keinem offenen Rückzug.' ] );
+        }
+
+        if ( ! EventSender::send_signed( $signed_event ) ) {
+            wp_send_json_error( [ 'message' => 'Kein Relay hat das Event akzeptiert.' ] );
+        }
+
+        ProductDeleter::forget_pending( $vendor_id, $target );
+
+        wp_send_json_success();
+    }
+
+    /**
+     * AJAX: the vendor declines to sign a withdrawal.
+     */
+    public function ajax_cancel_delete(): void {
+        check_ajax_referer( 'sk_nostr_market_sign', 'nonce' );
+
+        if ( ! is_user_logged_in() ) {
+            wp_send_json_error( [ 'message' => 'Nicht angemeldet.' ] );
+        }
+
+        ProductDeleter::forget_pending(
+            get_current_user_id(),
+            sanitize_text_field( (string) wp_unslash( $_POST['event_id'] ?? '' ) )
+        );
+
+        wp_send_json_success();
+    }
+
+    /**
      * Does the event carry the 'd' tag of exactly this product?
      */
     private static function has_d_tag( array $event, string $d ): bool {
@@ -622,7 +704,20 @@ final class Module {
             return;
         }
 
-        self::queue( $post_id, 'delete' );
+        // Capture what the deletion needs now. The queue runs at shutdown,
+        // and on before_delete_post the meta has been dropped with the post
+        // by then — a permanent delete never sent a Kind 5.
+        $event_id = (string) get_post_meta( (int) $post_id, ProductPublisher::META_KEY, true );
+
+        if ( '' === $event_id ) {
+            return;
+        }
+
+        self::queue( (int) $post_id, 'delete', [
+            'event_id'  => $event_id,
+            'vendor_id' => (int) $post->post_author,
+            'title'     => (string) $post->post_title,
+        ] );
     }
 
     /**
@@ -688,17 +783,20 @@ final class Module {
             wp_die( esc_html__( 'Sicherheitsprüfung fehlgeschlagen.', 'sk-core' ) );
         }
 
-        if ( ProductPublisher::has_event( $post_id ) ) {
-            ProductDeleter::delete( $post_id );
+        // A vendor with their own extension signs in the browser; the server
+        // cannot post for them. Mark the listing and tell the admin so.
+        if ( self::vendor_wants_self_sign( (int) get_post_field( 'post_author', $post_id ) ) ) {
+            update_post_meta( $post_id, '_sk_nostr_market_pending_sign', '1' );
+            $status = 'pending';
+        } else {
+            if ( ProductPublisher::has_event( $post_id ) ) {
+                ProductDeleter::delete( $post_id );
+            }
+
+            $status = ProductPublisher::publish( $post_id ) ? '1' : '0';
         }
 
-        $event_id = ProductPublisher::publish( $post_id );
-
-        wp_safe_redirect( add_query_arg(
-            'sk_nostr_repost',
-            $event_id ? '1' : '0',
-            get_edit_post_link( $post_id, 'url' )
-        ) );
+        wp_safe_redirect( add_query_arg( 'sk_nostr_repost', $status, get_edit_post_link( $post_id, 'url' ) ) );
         exit;
     }
 
@@ -707,18 +805,26 @@ final class Module {
             return;
         }
 
-        $ok = '1' === $_GET['sk_nostr_repost'];
+        $status = (string) $_GET['sk_nostr_repost'];
 
-        printf(
-            '<div class="notice %s is-dismissible"><p>%s</p></div>',
-            $ok ? 'notice-success' : 'notice-error',
-            esc_html( $ok
-                ? __( 'Nostr: Inserat gesendet.', 'sk-core' )
-                : __( 'Nostr: Senden fehlgeschlagen. Grund steht im Fehlerprotokoll.', 'sk-core' ) )
-        );
+        if ( 'pending' === $status ) {
+            $class = 'notice-info';
+            $text  = __( 'Nostr: Der Anbieter signiert selbst. Das Inserat wird beim nächsten Besuch seiner Erweiterung vorgelegt.', 'sk-core' );
+        } elseif ( '1' === $status ) {
+            $class = 'notice-success';
+            $text  = __( 'Nostr: Inserat gesendet.', 'sk-core' );
+        } else {
+            $class = 'notice-error';
+            $text  = __( 'Nostr: Senden fehlgeschlagen. Grund steht im Fehlerprotokoll.', 'sk-core' );
+        }
+
+        printf( '<div class="notice %s is-dismissible"><p>%s</p></div>', esc_attr( $class ), esc_html( $text ) );
     }
 
-    private static function queue( int $post_id, string $action ) {
+    /**
+     * @param array $extra Data captured now for the shutdown handler.
+     */
+    private static function queue( int $post_id, string $action, array $extra = [] ) {
         // Deduplicate.
         foreach ( self::$shutdown_queue as $item ) {
             if ( $item['post_id'] === $post_id && $item['action'] === $action ) {
@@ -726,7 +832,7 @@ final class Module {
             }
         }
 
-        self::$shutdown_queue[] = [
+        self::$shutdown_queue[] = $extra + [
             'post_id' => $post_id,
             'action'  => $action,
         ];
@@ -772,7 +878,7 @@ final class Module {
                     break;
 
                 case 'delete':
-                    ProductDeleter::delete( $item['post_id'] );
+                    ProductDeleter::delete( $item['post_id'], (string) ( $item['event_id'] ?? '' ), (int) ( $item['vendor_id'] ?? 0 ), (string) ( $item['title'] ?? '' ) );
                     break;
             }
         }

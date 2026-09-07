@@ -1,21 +1,31 @@
 /**
- * SK Nostr Market — Unterschreiben mit der eigenen Nostr-Erweiterung.
+ * SK Nostr Market — signing with the vendor's own Nostr extension.
  *
- * Anbieter, die sich ueber eine Erweiterung anmelden, geben uns nur ihren
- * oeffentlichen Schluessel. Ihr Inserat kann deshalb niemand ausser ihnen
- * selbst signieren — das passiert hier, direkt nach dem Speichern.
+ * Vendors who log in through an extension give us only their public key.
+ * Nobody but them can sign their listing, and nobody but them can withdraw
+ * it: both happen here, right after the page loads, one item at a time.
  *
- * Frueher lief das lautlos im Hintergrund und meldete sich nur auf der
- * Entwicklerkonsole. Wer nicht wusste, dass er auf ein Fenster seiner
- * Erweiterung warten sollte, verstand nicht, was gerade geschieht. Deshalb
- * jetzt ein sichtbares Wartefenster, aus dem man jederzeit wieder herauskommt.
+ * Two queues arrive from the server: listings waiting to be published
+ * (pendingSign, kind 30402) and withdrawals waiting to be sent
+ * (pendingDelete, kind 5). A visible modal explains what the extension is
+ * about to ask, and the vendor can always get out of it.
  */
 (function ($) {
     'use strict';
 
     var SKN = window.skNostrMarket || {};
 
-    if (!SKN.pendingSign || !SKN.pendingSign.length) {
+    var items = [];
+
+    (SKN.pendingSign || []).forEach(function (p) {
+        items.push({ type: 'sign', data: p });
+    });
+
+    (SKN.pendingDelete || []).forEach(function (d) {
+        items.push({ type: 'delete', data: d });
+    });
+
+    if (!items.length) {
         return;
     }
 
@@ -48,37 +58,42 @@
         modal.style.display = 'none';
     }
 
-    /** Das naechste wartende Inserat vornehmen, sonst schliessen. */
+    /** Take the next waiting item, or close. */
     function next() {
-        if (index >= SKN.pendingSign.length) {
+        if (index >= items.length) {
             close();
             return;
         }
 
-        current = SKN.pendingSign[index];
+        current = items[index];
         index += 1;
 
-        titleEl.textContent = current.title || '';
+        titleEl.textContent = current.data.title || '';
         modal.style.display = 'flex';
 
         attempt();
     }
 
+    function isDelete() {
+        return current && current.type === 'delete';
+    }
+
     /**
-     * Erweiterung da? Dann unterschreiben lassen, sonst erklaeren.
+     * Extension there? Then ask for the signature, otherwise explain.
      *
-     * Unter unserem Schluessel wird nicht mehr ersatzweise veroeffentlicht:
-     * ein Inserat traegt den Namen seines Anbieters, oder es geht nicht auf
-     * Nostr.
+     * Nothing is published under our key as a stand-in: a listing carries
+     * its vendor's name, or it does not go to Nostr.
      */
     function attempt() {
         if (!window.nostr) {
             setState('missing', {
                 icon: 'fas fa-triangle-exclamation',
                 heading: 'Keine Nostr-Erweiterung gefunden',
-                text: 'Dein Inserat ist gespeichert und auf der Plattform sichtbar. Für Nostr brauchen wir deine Unterschrift — dein Inserat soll deinen Namen tragen, nicht unseren. Entsperre deine Erweiterung und versuch es erneut.',
+                text: isDelete()
+                    ? 'Dein Inserat ist hier entfernt, auf Nostr steht es noch. Zum Zurückziehen brauchen wir deine Unterschrift. Entsperre deine Erweiterung und versuch es erneut.'
+                    : 'Dein Inserat ist gespeichert und auf der Plattform sichtbar. Für Nostr brauchen wir deine Unterschrift — dein Inserat soll deinen Namen tragen, nicht unseren. Entsperre deine Erweiterung und versuch es erneut.',
                 retry: true,
-                cancelLabel: 'Nicht auf Nostr'
+                cancelLabel: isDelete() ? 'Auf Nostr lassen' : 'Nicht auf Nostr'
             });
             retryBtn.textContent = 'Erneut versuchen';
             return;
@@ -90,36 +105,52 @@
     function sign() {
         setState('waiting', {
             icon: 'fas fa-circle-notch',
-            heading: 'Warten auf deine Signatur',
-            text: 'Deine Nostr-Erweiterung fragt gleich nach deiner Unterschrift. Danach geht dein Inserat unter deinem eigenen Schlüssel ins Nostr-Netz.',
+            heading: isDelete() ? 'Warten auf deine Signatur zum Zurückziehen' : 'Warten auf deine Signatur',
+            text: isDelete()
+                ? 'Deine Nostr-Erweiterung fragt gleich nach deiner Unterschrift. Danach wird dein Inserat aus dem Nostr-Netz zurückgezogen.'
+                : 'Deine Nostr-Erweiterung fragt gleich nach deiner Unterschrift. Danach geht dein Inserat unter deinem eigenen Schlüssel ins Nostr-Netz.',
             retry: false,
             cancelLabel: 'Abbrechen'
         });
 
-        var event = {
-            kind: 30402,
-            created_at: Math.floor(Date.now() / 1000),
-            content: current.content,
-            tags: current.tags
-        };
+        var event = isDelete()
+            ? {
+                kind: 5,
+                created_at: Math.floor(Date.now() / 1000),
+                content: '',
+                tags: current.data.tags
+            }
+            : {
+                kind: 30402,
+                created_at: Math.floor(Date.now() / 1000),
+                content: current.data.content,
+                tags: current.data.tags
+            };
 
         window.nostr.signEvent(event).then(function (signed) {
             if (!signed || !signed.id) {
                 throw new Error('Die Erweiterung hat nichts zurückgegeben.');
             }
 
-            return $.post(SKN.ajaxurl, {
-                action: 'sk_nostr_market_publish_signed',
+            var post = {
+                action: isDelete() ? 'sk_nostr_market_publish_signed_delete' : 'sk_nostr_market_publish_signed',
                 nonce: SKN.nonce,
-                post_id: current.post_id,
                 signed_event: JSON.stringify(signed)
-            });
+            };
+
+            if (!isDelete()) {
+                post.post_id = current.data.post_id;
+            }
+
+            return $.post(SKN.ajaxurl, post);
         }).then(function (res) {
             if (res && res.success) {
                 setState('done', {
                     icon: 'fas fa-circle-check',
-                    heading: 'Signiert und veröffentlicht',
-                    text: 'Dein Inserat ist unter deinem eigenen Schlüssel im Nostr-Netz.',
+                    heading: isDelete() ? 'Zurückgezogen' : 'Signiert und veröffentlicht',
+                    text: isDelete()
+                        ? 'Dein Inserat ist aus dem Nostr-Netz zurückgezogen.'
+                        : 'Dein Inserat ist unter deinem eigenen Schlüssel im Nostr-Netz.',
                     retry: false,
                     cancelLabel: 'Schliessen'
                 });
@@ -133,32 +164,40 @@
         });
     }
 
-    function fail(grund) {
+    function fail(reason) {
         setState('error', {
             icon: 'fas fa-triangle-exclamation',
             heading: 'Signieren fehlgeschlagen',
-            text: grund + ' Dein Inserat ist gespeichert und auf der Plattform sichtbar — nur auf Nostr ist es noch nicht.',
+            text: reason + (isDelete()
+                ? ' Auf Nostr steht das Inserat noch.'
+                : ' Dein Inserat ist gespeichert und auf der Plattform sichtbar — nur auf Nostr ist es noch nicht.'),
             retry: true,
             cancelLabel: 'Abbrechen'
         });
         retryBtn.textContent = 'Erneut versuchen';
     }
 
-    /** Vormerkung loeschen, damit nicht bei jedem Seitenaufruf erneut gefragt wird. */
-    function forget(action, danach) {
-        $.post(SKN.ajaxurl, {
-            action: action,
-            nonce: SKN.nonce,
-            post_id: current.post_id
-        }).always(danach);
+    /** Drop the queue entry so the next page load does not ask again. */
+    function forget(then) {
+        var post = { nonce: SKN.nonce };
+
+        if (isDelete()) {
+            post.action = 'sk_nostr_market_cancel_delete';
+            post.event_id = current.data.event_id;
+        } else {
+            post.action = 'sk_nostr_market_cancel_sign';
+            post.post_id = current.data.post_id;
+        }
+
+        $.post(SKN.ajaxurl, post).always(then);
     }
 
     retryBtn.addEventListener('click', attempt);
 
     cancelBtn.addEventListener('click', function () {
-        // Immer erreichbar, auch waehrend gewartet wird: wenn die Erweiterung
-        // haengt, ist das der einzige Weg hier heraus.
-        forget('sk_nostr_market_cancel_sign', next);
+        // Always reachable, also while waiting: if the extension hangs, this
+        // is the only way out.
+        forget(next);
     });
 
     next();
