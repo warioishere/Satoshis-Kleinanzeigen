@@ -151,6 +151,9 @@ final class Module {
 
         // Signieren im Browser, fuer Anbieter mit eigener Nostr-Erweiterung.
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_signing_js' ] );
+
+        // Auswahl der Identitaet im Inseratsformular.
+        add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_identity_js' ] );
         add_action( 'wp_ajax_sk_nostr_market_fallback_sign', [ $this, 'ajax_fallback_sign' ] );
         add_action( 'wp_ajax_sk_nostr_market_cancel_sign', [ $this, 'ajax_cancel_sign' ] );
         add_action( 'wp_footer', [ $this, 'render_sign_modal' ] );
@@ -193,6 +196,46 @@ final class Module {
         }
 
         return ! \SK\Modules\Auth\NostrIdentity::has_identity( $vendor_id );
+    }
+
+    /**
+     * Das Skript fuer die Identitaetsauswahl im Inseratsformular.
+     *
+     * Nur fuer Anbieter ohne eigenen Schluessel — alle anderen sehen den
+     * Kasten gar nicht, dann braucht es auch das Skript nicht.
+     */
+    public function enqueue_identity_js(): void {
+        if ( ! is_user_logged_in() ) {
+            return;
+        }
+
+        $user_id = get_current_user_id();
+
+        if ( ! empty( get_user_meta( $user_id, 'nostr_public_key', true ) ) ) {
+            return;
+        }
+
+        if ( ! function_exists( 'sk_is_user_seller' ) || ! sk_is_user_seller( $user_id ) ) {
+            return;
+        }
+
+        wp_enqueue_script(
+            'sk-nostr-identity',
+            plugins_url( 'assets/js/nostr-identity.js', SK_NOSTR_MARKET_PATH . '/module.php' ),
+            [ 'jquery' ],
+            SK_NOSTR_MARKET_VERSION,
+            true
+        );
+
+        wp_localize_script( 'sk-nostr-identity', 'skNostrIdentity', [
+            'ajaxurl'     => admin_url( 'admin-ajax.php' ),
+            // Dieselbe Aktion wie im Onboarding, also derselbe Nonce.
+            'nonce'       => wp_create_nonce( 'uob_ajax_nonce' ),
+            'i18nWorking' => __( 'Wird erstellt…', 'sk-core' ),
+            'i18nRetry'   => __( 'Erneut versuchen', 'sk-core' ),
+            'i18nCopy'    => __( 'Kopieren', 'sk-core' ),
+            'i18nCopied'  => __( 'Kopiert', 'sk-core' ),
+        ] );
     }
 
     /**
