@@ -484,6 +484,36 @@ class NostrDMListener {
         }
 
         /*
+         * An answer to something we mirrored out of a conversation that
+         * already exists here. Both ends are known at this point — the sender
+         * by their key, the mailbox by whose it is — so the message belongs
+         * in the chat those two are already having.
+         *
+         * Without this a reply had nowhere to go: the chat it answers is an
+         * ordinary one between two members, not a bridge chat, and the search
+         * for a bridge chat came up empty. The message was logged as
+         * unroutable and dropped.
+         */
+        $absender_user = self::user_for_pubkey( $sender_pubkey );
+
+        if ( $absender_user ) {
+            $postfach_owner = $empfaenger['vendor_id'] > 0
+                ? $empfaenger['vendor_id']
+                : ChatBridge::PLATFORM_USER_ID;
+
+            $chat_id = self::chat_between( $absender_user, $postfach_owner );
+
+            if ( $chat_id ) {
+                // The pubkey marks it as arriving from Nostr, which keeps the
+                // outgoing mirror from sending it straight back.
+                ChatBridge::add_message( $chat_id, $absender_user, self::clean_field( $decrypted, 4000 ), $sender_pubkey );
+                self::settle( $event_id );
+
+                return;
+            }
+        }
+
+        /*
          * If the message went to a vendor's mailbox, that already settles who
          * is meant — even for the very first message and without a listing
          * being named. That's exactly the path a buyer takes in their
@@ -521,6 +551,54 @@ class NostrDMListener {
         // Plain text message — try to route to a vendor.
         self::handle_message( $decrypted, $sender_pubkey, $event_id );
         self::settle( $event_id );
+    }
+
+    /**
+     * The member behind a Nostr key, if it belongs to one of ours.
+     *
+     * @return int User id, or 0 for someone we don't know.
+     */
+    private static function user_for_pubkey( string $pubkey ): int {
+        if ( ! preg_match( '/^[0-9a-f]{64}$/i', $pubkey ) ) {
+            return 0;
+        }
+
+        global $wpdb;
+
+        return (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT user_id FROM {$wpdb->usermeta}
+             WHERE meta_key = 'nostr_public_key' AND LOWER(meta_value) = %s
+             LIMIT 1",
+            strtolower( $pubkey )
+        ) );
+    }
+
+    /**
+     * The chat two members already share, newest first.
+     *
+     * @return int Chat id, or 0 when they have none.
+     */
+    private static function chat_between( int $one, int $other ): int {
+        if ( ! $one || ! $other || $one === $other ) {
+            return 0;
+        }
+
+        global $wpdb;
+
+        return (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT p.ID FROM {$wpdb->posts} p
+             INNER JOIN {$wpdb->postmeta} a ON a.post_id = p.ID AND a.meta_key = '_dvc_participant_1'
+             INNER JOIN {$wpdb->postmeta} b ON b.post_id = p.ID AND b.meta_key = '_dvc_participant_2'
+             WHERE p.post_type = 'vendor_chat' AND p.post_status = 'publish'
+               AND ( ( a.meta_value = %d AND b.meta_value = %d )
+                  OR ( a.meta_value = %d AND b.meta_value = %d ) )
+             ORDER BY p.ID DESC
+             LIMIT 1",
+            $one,
+            $other,
+            $other,
+            $one
+        ) );
     }
 
     /**
