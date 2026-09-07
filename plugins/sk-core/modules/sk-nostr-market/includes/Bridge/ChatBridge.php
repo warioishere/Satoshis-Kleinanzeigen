@@ -358,7 +358,7 @@ class ChatBridge {
             $seal_event = ( new \swentel\nostr\Event\Event() )->populate( (object) $seal );
             $svc        = new \swentel\nostr\Nip59\GiftWrapService( new \swentel\nostr\Key\Key(), new \swentel\nostr\Sign\Sign() );
             $wrap       = $svc->createGiftWrap( $seal_event, $eintrag['to'] );
-            $sent       = self::send_wrap( $wrap );
+            $sent       = self::send_wrap( $wrap, (string) $eintrag['to'] );
         } catch ( \Throwable $e ) {
             error_log( '[SK Nostr Bridge] Wrapping reply ' . $reply_id . ' failed: ' . $e->getMessage() );
             return false;
@@ -493,7 +493,7 @@ class ChatBridge {
         // Gift wrap (kind 1059) — the seal under a one-time key.
         $giftWrap = $giftWrapSvc->createGiftWrap( $seal, $recipient_pubkey );
 
-        return self::send_wrap( $giftWrap );
+        return self::send_wrap( $giftWrap, $recipient_pubkey );
     }
 
     /**
@@ -501,7 +501,7 @@ class ChatBridge {
      *
      * @param \swentel\nostr\EventInterface $giftWrap
      */
-    private static function send_wrap( $giftWrap ): bool {
+    private static function send_wrap( $giftWrap, string $recipient_pubkey = '' ): bool {
         if ( ! self::is_enabled() ) {
             return false;
         }
@@ -510,9 +510,103 @@ class ChatBridge {
             return false;
         }
 
-        $result = \SK\Modules\Auth\RelayPublisher::publish( $giftWrap, \SK\Modules\Auth\NostrIdentity::get_relays() );
+        /*
+         * A private message has to go where the recipient reads them, and
+         * that is the list they published, not ours. Sending only to our own
+         * relays is why gift wraps arrived nowhere: the relays we write to
+         * and the ones a client watches for DMs need not overlap at all.
+         *
+         * Ours stay in the list as a fallback — for recipients who published
+         * no list, and for clients that simply query broadly.
+         */
+        $relays = array_values( array_unique( array_merge(
+            $recipient_pubkey ? self::dm_relays_for( $recipient_pubkey ) : [],
+            \SK\Modules\Auth\NostrIdentity::get_relays()
+        ) ) );
+
+        $result = \SK\Modules\Auth\RelayPublisher::publish( $giftWrap, $relays );
 
         return ! empty( $result['accepted'] );
+    }
+
+    /**
+     * The relays where a recipient reads private messages (NIP-17, kind 10050).
+     *
+     * Looked up on our own relays, since that is where a published list is
+     * most likely to be found, and remembered for a while: the list changes
+     * rarely, and a round trip per message would show up as a delay.
+     *
+     * @return string[] Relay URLs, empty when the recipient published none.
+     */
+    private static function dm_relays_for( string $pubkey ): array {
+        $cache_key = 'sk_nostr_dm_relays_' . substr( $pubkey, 0, 24 );
+        $cached    = get_transient( $cache_key );
+
+        if ( is_array( $cached ) ) {
+            return $cached;
+        }
+
+        $relays = [];
+
+        if ( class_exists( '\WebSocket\Client' ) ) {
+            $newest = 0;
+
+            foreach ( \SK\Modules\Auth\NostrIdentity::get_relays() as $relay_url ) {
+                try {
+                    $client = new \WebSocket\Client( $relay_url );
+                    $client->setTimeout( 5 );
+
+                    $sub = bin2hex( random_bytes( 8 ) );
+                    $client->text( wp_json_encode( [ 'REQ', $sub, [ 'authors' => [ $pubkey ], 'kinds' => [ 10050 ], 'limit' => 1 ] ] ) );
+
+                    $start = time();
+
+                    while ( time() - $start < 5 ) {
+                        $data = json_decode( $client->receive()->getContent(), true );
+
+                        if ( ! is_array( $data ) ) {
+                            continue;
+                        }
+
+                        if ( 'EOSE' === ( $data[0] ?? '' ) ) {
+                            break;
+                        }
+
+                        if ( 'EVENT' !== ( $data[0] ?? '' ) || ! is_array( $data[2] ?? null ) ) {
+                            continue;
+                        }
+
+                        $event = $data[2];
+
+                        if ( strtolower( (string) ( $event['pubkey'] ?? '' ) ) !== strtolower( $pubkey )
+                            || (int) ( $event['created_at'] ?? 0 ) <= $newest ) {
+                            continue;
+                        }
+
+                        $newest = (int) $event['created_at'];
+                        $relays = [];
+
+                        foreach ( (array) ( $event['tags'] ?? [] ) as $tag ) {
+                            if ( 'relay' === ( $tag[0] ?? '' ) && ! empty( $tag[1] )
+                                && preg_match( '#^wss?://\S+$#i', (string) $tag[1] ) ) {
+                                $relays[] = untrailingslashit( (string) $tag[1] );
+                            }
+                        }
+                    }
+
+                    $client->text( wp_json_encode( [ 'CLOSE', $sub ] ) );
+                    $client->disconnect();
+                } catch ( \Throwable $e ) {
+                    // Next relay.
+                }
+            }
+        }
+
+        $relays = array_values( array_unique( $relays ) );
+
+        set_transient( $cache_key, $relays, HOUR_IN_SECONDS );
+
+        return $relays;
     }
 
     /**
