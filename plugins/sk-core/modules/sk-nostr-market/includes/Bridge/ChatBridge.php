@@ -298,7 +298,7 @@ class ChatBridge {
          * that pubkey under our name.
          */
         if ( class_exists( 'SK\Modules\Auth\NostrIdentity' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $sender_id ) ) {
-            self::send_dm( $recipient, $text, $sender_id );
+            self::send_dm( $recipient, $text, $sender_id, $chat_id );
             return;
         }
 
@@ -314,7 +314,7 @@ class ChatBridge {
         $store_info  = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( $sender_id ) : [];
         $vendor_name = $store_info['store_name'] ?? ( get_userdata( $sender_id )->display_name ?? 'Vendor' );
 
-        self::send_dm( $recipient, "{$vendor_name}: {$text}" );
+        self::send_dm( $recipient, "{$vendor_name}: {$text}", 0, $chat_id );
     }
 
     /**
@@ -379,7 +379,7 @@ class ChatBridge {
      *
      * @return bool True if a relay accepted the wrap.
      */
-    public static function deliver_sealed( int $vendor_id, string $reply_id, array $seal ): bool {
+    public static function deliver_sealed( int $vendor_id, string $reply_id, array $seal, string $rumor_id = '' ): bool {
         $eintrag = null;
 
         foreach ( self::pending_replies_for( $vendor_id ) as $e ) {
@@ -421,6 +421,12 @@ class ChatBridge {
 
         if ( $sent ) {
             self::forget_reply( $vendor_id, $reply_id );
+
+            // The browser built the message and knows its id; the chat
+            // comes from the queue entry, never from the browser.
+            if ( preg_match( '/^[0-9a-f]{64}$/i', $rumor_id ) ) {
+                SeenEvents::remember_rumor( strtolower( $rumor_id ), (int) ( $eintrag['chat_id'] ?? 0 ) );
+            }
         }
 
         return $sent;
@@ -436,8 +442,11 @@ class ChatBridge {
      *                                 the marketplace key. A user without a
      *                                 key held here gets false, never the
      *                                 marketplace as a silent stand-in.
+     * @param int    $chat_id          Chat the message is mirrored from; a
+     *                                 reply naming the message is routed
+     *                                 back there. 0 when there is none.
      */
-    public static function send_dm( string $recipient_pubkey, string $text, int $sender_user_id = 0 ): bool {
+    public static function send_dm( string $recipient_pubkey, string $text, int $sender_user_id = 0, int $chat_id = 0 ): bool {
         if ( ! self::is_enabled() ) {
             return false;
         }
@@ -459,7 +468,7 @@ class ChatBridge {
         // Try NIP-17 Gift Wrap (NIP-59 + NIP-44).
         if ( class_exists( '\swentel\nostr\Nip59\GiftWrapService' ) ) {
             try {
-                return self::send_gift_wrap_dm( $sender_privkey, $recipient_pubkey, $text );
+                return self::send_gift_wrap_dm( $sender_privkey, $recipient_pubkey, $text, $chat_id );
             } catch ( \Throwable $e ) {
                 error_log( '[SK Nostr Bridge] NIP-17 DM failed, falling back to NIP-04: ' . $e->getMessage() );
             }
@@ -501,7 +510,7 @@ class ChatBridge {
     /**
      * Send a NIP-17 private DM using NIP-59 Gift Wrap.
      */
-    private static function send_gift_wrap_dm( string $sender_privkey, string $recipient_pubkey, string $text ): bool {
+    private static function send_gift_wrap_dm( string $sender_privkey, string $recipient_pubkey, string $text, int $chat_id = 0 ): bool {
         $keyService  = new \swentel\nostr\Key\Key();
         $signService = new \swentel\nostr\Sign\Sign();
         $giftWrapSvc = new \swentel\nostr\Nip59\GiftWrapService( $keyService, $signService );
@@ -533,6 +542,11 @@ class ChatBridge {
             [ 0, $rumor['pubkey'], $rumor['created_at'], $rumor['kind'], $rumor['tags'], $rumor['content'] ],
             JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
         ) );
+
+        // A reply that names this message finds its way back to the chat.
+        if ( $chat_id > 0 ) {
+            SeenEvents::remember_rumor( $rumor['id'], $chat_id );
+        }
 
         // Seal (kind 13): the rumor encrypted to the recipient, signed by
         // the sender, so the recipient learns who wrote it.

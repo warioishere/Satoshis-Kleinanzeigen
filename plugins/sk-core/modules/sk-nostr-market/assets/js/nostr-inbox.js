@@ -108,7 +108,10 @@
                             action: 'sk_nostr_deliver_decrypted',
                             event_id: wrap.id,
                             seal: JSON.stringify(seal),
-                            text: message.content || ''
+                            text: message.content || '',
+                            // A reply names the message it answers; the
+                            // server routes it into that chat.
+                            tags: JSON.stringify(Array.isArray(message.tags) ? message.tags : [])
                         });
                     });
             })
@@ -187,7 +190,9 @@
                 return post({
                     action: 'sk_nostr_deliver_sealed',
                     reply_id: reply.id,
-                    seal: JSON.stringify(signed)
+                    seal: JSON.stringify(signed),
+                    // So a reply naming this message finds its chat again.
+                    rumor_id: rumor.id
                 });
             })
             .catch(function (err) {

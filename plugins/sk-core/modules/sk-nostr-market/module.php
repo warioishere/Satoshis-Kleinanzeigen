@@ -333,8 +333,9 @@ final class Module {
         $event_id = sanitize_text_field( (string) wp_unslash( $_POST['event_id'] ?? '' ) );
         $seal     = json_decode( (string) wp_unslash( $_POST['seal'] ?? '' ), true );
         $text     = (string) wp_unslash( $_POST['text'] ?? '' );
+        $tags     = json_decode( (string) wp_unslash( $_POST['tags'] ?? '' ), true );
 
-        $ok = is_array( $seal ) && Bridge\NostrDMListener::deliver_decrypted( get_current_user_id(), $event_id, $seal, $text );
+        $ok = is_array( $seal ) && Bridge\NostrDMListener::deliver_decrypted( get_current_user_id(), $event_id, $seal, $text, is_array( $tags ) ? $tags : [] );
 
         if ( ! $ok ) {
             wp_send_json_error( [ 'message' => 'Nachricht nicht zustellbar.' ] );
@@ -370,8 +371,9 @@ final class Module {
 
         $reply_id = sanitize_text_field( (string) wp_unslash( $_POST['reply_id'] ?? '' ) );
         $seal     = json_decode( (string) wp_unslash( $_POST['seal'] ?? '' ), true );
+        $rumor_id = sanitize_text_field( (string) wp_unslash( $_POST['rumor_id'] ?? '' ) );
 
-        $ok = is_array( $seal ) && Bridge\ChatBridge::deliver_sealed( get_current_user_id(), $reply_id, $seal );
+        $ok = is_array( $seal ) && Bridge\ChatBridge::deliver_sealed( get_current_user_id(), $reply_id, $seal, $rumor_id );
 
         if ( ! $ok ) {
             wp_send_json_error( [ 'message' => 'Antwort nicht gesendet.' ] );

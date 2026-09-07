@@ -664,12 +664,7 @@ class NostrDMListener {
                 ? $empfaenger['vendor_id']
                 : ChatBridge::PLATFORM_USER_ID;
 
-            $chat_id = self::chat_between( $absender_user, $postfach_owner );
-
-            if ( $chat_id ) {
-                // The pubkey marks it as arriving from Nostr, which keeps the
-                // outgoing mirror from sending it straight back.
-                ChatBridge::add_message( $chat_id, $absender_user, self::clean_field( $decrypted, 4000 ), $sender_pubkey );
+            if ( self::deliver_to_member( $absender_user, $sender_pubkey, $postfach_owner, $inner_tags, $decrypted ) ) {
                 self::settle( $event_id );
 
                 return;
@@ -737,31 +732,124 @@ class NostrDMListener {
     }
 
     /**
-     * The chat two members already share, newest first.
+     * Put a member's message into the conversation it answers.
      *
-     * @return int Chat id, or 0 when they have none.
+     * @param int    $member Who wrote it, by their account.
+     * @param string $pubkey Their key, as the message arrived under.
+     * @param int    $owner  Whose mailbox it went to.
+     * @param array  $tags   Tags of the message; a reply names what it answers.
+     * @param string $text   Plaintext.
+     * @return bool True when it was delivered.
      */
-    private static function chat_between( int $one, int $other ): int {
-        if ( ! $one || ! $other || $one === $other ) {
-            return 0;
+    private static function deliver_to_member( int $member, string $pubkey, int $owner, array $tags, string $text ): bool {
+        $text = self::clean_field( $text, 4000 );
+
+        if ( '' === $text ) {
+            return false;
+        }
+
+        $target = self::chat_for_reply( $member, $pubkey, $owner, $tags );
+
+        if ( null === $target ) {
+            return false;
+        }
+
+        /*
+         * In a chat between two members the message is theirs; in a bridge
+         * chat the Nostr side is the bridge user and the pubkey names the
+         * sender. Either way the pubkey marks it as arriving from Nostr,
+         * which keeps the outgoing mirror from sending it straight back.
+         */
+        if ( $target['bridge'] ) {
+            ChatBridge::refresh_contact_name( $target['id'], $pubkey );
+            ChatBridge::add_message( $target['id'], ChatBridge::bridge_user_id(), $text, $pubkey );
+        } else {
+            ChatBridge::add_message( $target['id'], $member, $text, $pubkey );
+        }
+
+        return true;
+    }
+
+    /**
+     * The chat a member's Nostr message belongs in.
+     *
+     * First choice: the message it answers. Everything mirrored out of a
+     * chat is noted under its id, and a client that replies to a specific
+     * message names it in an "e" tag — that settles the chat, whatever
+     * else the two have going.
+     *
+     * Otherwise the conversation with the most recent message, among the
+     * chats the two members share and the bridge chat under this sender's
+     * key: a reply follows the last thing that was said, not the chat that
+     * happens to have the highest id.
+     *
+     * @return array{id: int, bridge: bool}|null
+     */
+    private static function chat_for_reply( int $member, string $pubkey, int $owner, array $tags ): ?array {
+        if ( ! $member || ! $owner || $member === $owner ) {
+            return null;
+        }
+
+        $bridge = ChatBridge::bridge_user_id();
+
+        $ours = static function ( int $chat_id ) use ( $member, $owner, $bridge, $pubkey ): ?array {
+            if ( 'vendor_chat' !== get_post_type( $chat_id ) || 'publish' !== get_post_status( $chat_id ) ) {
+                return null;
+            }
+
+            $p1 = (int) get_post_meta( $chat_id, '_dvc_participant_1', true );
+            $p2 = (int) get_post_meta( $chat_id, '_dvc_participant_2', true );
+
+            if ( ( $p1 === $member && $p2 === $owner ) || ( $p1 === $owner && $p2 === $member ) ) {
+                return [ 'id' => $chat_id, 'bridge' => false ];
+            }
+
+            if ( $bridge && $p1 === $bridge && $p2 === $owner
+                && '1' === get_post_meta( $chat_id, '_dvc_nostr_bridge', true )
+                && strtolower( (string) get_post_meta( $chat_id, '_dvc_nostr_pubkey', true ) ) === $pubkey ) {
+                return [ 'id' => $chat_id, 'bridge' => true ];
+            }
+
+            return null;
+        };
+
+        foreach ( $tags as $tag ) {
+            if ( ! is_array( $tag ) || 'e' !== ( $tag[0] ?? '' ) || ! is_string( $tag[1] ?? null )
+                || ! preg_match( '/^[0-9a-f]{64}$/i', $tag[1] ) ) {
+                continue;
+            }
+
+            $chat_id = SeenEvents::chat_for_rumor( strtolower( $tag[1] ) );
+
+            if ( $chat_id && null !== ( $hit = $ours( $chat_id ) ) ) {
+                return $hit;
+            }
         }
 
         global $wpdb;
 
-        return (int) $wpdb->get_var( $wpdb->prepare(
+        $chat_id = (int) $wpdb->get_var( $wpdb->prepare(
             "SELECT p.ID FROM {$wpdb->posts} p
              INNER JOIN {$wpdb->postmeta} a ON a.post_id = p.ID AND a.meta_key = '_dvc_participant_1'
              INNER JOIN {$wpdb->postmeta} b ON b.post_id = p.ID AND b.meta_key = '_dvc_participant_2'
+             LEFT JOIN {$wpdb->postmeta} k ON k.post_id = p.ID AND k.meta_key = '_dvc_nostr_pubkey'
+             LEFT JOIN {$wpdb->postmeta} t ON t.post_id = p.ID AND t.meta_key = '_dvc_last_message_time'
              WHERE p.post_type = 'vendor_chat' AND p.post_status = 'publish'
                AND ( ( a.meta_value = %d AND b.meta_value = %d )
-                  OR ( a.meta_value = %d AND b.meta_value = %d ) )
-             ORDER BY p.ID DESC
+                  OR ( a.meta_value = %d AND b.meta_value = %d )
+                  OR ( a.meta_value = %d AND b.meta_value = %d AND LOWER( k.meta_value ) = %s ) )
+             ORDER BY CAST( COALESCE( t.meta_value, '0' ) AS UNSIGNED ) DESC, p.ID DESC
              LIMIT 1",
-            $one,
-            $other,
-            $other,
-            $one
+            $member,
+            $owner,
+            $owner,
+            $member,
+            $bridge,
+            $owner,
+            $pubkey
         ) );
+
+        return $chat_id ? $ours( $chat_id ) : null;
     }
 
     /**
@@ -875,8 +963,10 @@ class NostrDMListener {
      * @param array $seal The seal as the browser took it out of the wrap:
      *                    id, pubkey, sig, kind, created_at, tags, content
      *                    (still encrypted).
+     * @param array $tags Tags of the innermost message, as the browser read
+     *                    them; a reply names what it answers.
      */
-    public static function deliver_decrypted( int $vendor_id, string $event_id, array $seal, string $text ): bool {
+    public static function deliver_decrypted( int $vendor_id, string $event_id, array $seal, string $text, array $tags = [] ): bool {
         $bekannt = false;
 
         foreach ( self::pending_for( $vendor_id ) as $e ) {
@@ -915,6 +1005,14 @@ class NostrDMListener {
 
         if ( '' === $text ) {
             return false;
+        }
+
+        // A member answering something mirrored out of a chat they share
+        // with this vendor — the same routing as for mailboxes we open here.
+        $absender_user = self::user_for_pubkey( $sender_pubkey );
+
+        if ( $absender_user && self::deliver_to_member( $absender_user, $sender_pubkey, $vendor_id, $tags, $text ) ) {
+            return true;
         }
 
         $inbox = strtolower( (string) get_user_meta( $vendor_id, 'nostr_public_key', true ) );

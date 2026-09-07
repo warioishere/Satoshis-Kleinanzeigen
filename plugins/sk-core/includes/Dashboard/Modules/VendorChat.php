@@ -624,7 +624,7 @@ class VendorChat extends DashboardModule {
 
 		if ( $existing_chat ) {
 			$this->add_message_to_chat( $existing_chat->ID, $current_user_id, $message );
-			$this->mirror_message_to_nostr( (int) $vendor_id, $current_user_id, $message );
+			$this->mirror_message_to_nostr( (int) $vendor_id, $current_user_id, $message, (int) $existing_chat->ID );
 			wp_send_json_success( [
 				'message' => __( 'Nachricht gesendet!', 'sk-core' ),
 				'chat_id' => $existing_chat->ID,
@@ -648,7 +648,7 @@ class VendorChat extends DashboardModule {
 			update_post_meta( $chat_id, '_dvc_archived_by',   [] );
 
 			$this->add_message_to_chat( $chat_id, $current_user_id, $message );
-			$this->mirror_message_to_nostr( (int) $vendor_id, $current_user_id, $message );
+			$this->mirror_message_to_nostr( (int) $vendor_id, $current_user_id, $message, (int) $chat_id );
 
 			/*
 			 * The contact only counts here, not when the window is opened:
@@ -709,7 +709,7 @@ class VendorChat extends DashboardModule {
 
 		$this->add_message_to_chat( $chat_id, $current_user_id, $message );
 
-		$this->mirror_message_to_nostr( (int) $other_user_id, $current_user_id, $message );
+		$this->mirror_message_to_nostr( (int) $other_user_id, $current_user_id, $message, (int) $chat_id );
 
 		wp_send_json_success( [ 'message' => __( 'Nachricht gesendet!', 'sk-core' ) ] );
 	}
@@ -1151,8 +1151,10 @@ class VendorChat extends DashboardModule {
 	 * @param int    $recipient_id Who the message is for.
 	 * @param int    $sender_id    Who wrote it.
 	 * @param string $message      The text as stored.
+	 * @param int    $chat_id      The chat it was written in, so a reply
+	 *                             from Nostr can find its way back there.
 	 */
-	private function mirror_message_to_nostr( int $recipient_id, int $sender_id, string $message ): void {
+	private function mirror_message_to_nostr( int $recipient_id, int $sender_id, string $message, int $chat_id = 0 ): void {
 		if ( ! $recipient_id
 			|| ! class_exists( 'SK\Modules\Auth\NostrIdentity' )
 			|| ! class_exists( 'SK\Modules\NostrMarket\Bridge\ChatBridge' )
@@ -1171,7 +1173,7 @@ class VendorChat extends DashboardModule {
 			return;
 		}
 
-		register_shutdown_function( function () use ( $recipient_pubkey, $message, $sender_id ) {
+		register_shutdown_function( function () use ( $recipient_pubkey, $message, $sender_id, $chat_id ) {
 			/*
 			 * Close the response before touching a relay. The message is
 			 * already stored and the sender has been told so; relay traffic
@@ -1183,7 +1185,7 @@ class VendorChat extends DashboardModule {
 				fastcgi_finish_request();
 			}
 
-			\SK\Modules\NostrMarket\Bridge\ChatBridge::send_dm( $recipient_pubkey, $message, $sender_id );
+			\SK\Modules\NostrMarket\Bridge\ChatBridge::send_dm( $recipient_pubkey, $message, $sender_id, $chat_id );
 		} );
 	}
 

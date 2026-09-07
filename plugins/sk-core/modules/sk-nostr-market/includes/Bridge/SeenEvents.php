@@ -20,7 +20,7 @@ defined( 'ABSPATH' ) || exit;
  */
 class SeenEvents {
 
-    const DB_VERSION     = '1';
+    const DB_VERSION     = '2';
     const VERSION_OPTION = 'sk_nostr_seen_events_db_version';
 
     /** Taken by a poll; not yet known to have reached its destination. */
@@ -31,6 +31,12 @@ class SeenEvents {
 
     /** A wrap this site sent out; it is our own when it comes back. */
     const STATE_SENT = 2;
+
+    /**
+     * The message inside a wrap we sent, with the chat it was mirrored
+     * from. A reply that names it (NIP-17 "e" tag) belongs in that chat.
+     */
+    const STATE_RUMOR = 3;
 
     /** An unsettled claim older than this may be taken over — the earlier attempt failed. */
     const RETRY_AFTER = 5 * MINUTE_IN_SECONDS;
@@ -59,6 +65,7 @@ class SeenEvents {
                 state TINYINT UNSIGNED NOT NULL DEFAULT 0,
                 created_at BIGINT NOT NULL DEFAULT 0,
                 seen_at BIGINT NOT NULL,
+                chat_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
                 PRIMARY KEY  (event_id),
                 KEY seen_at (seen_at)
             ) {$wpdb->get_charset_collate()};"
@@ -149,6 +156,48 @@ class SeenEvents {
             self::STATE_SENT,
             $now,
             $now
+        ) );
+    }
+
+    /**
+     * Note which chat a mirrored message came from, under the id of the
+     * message itself (the rumor, kind 14), not of the wrap around it: the
+     * reply names the message.
+     */
+    public static function remember_rumor( string $rumor_id, int $chat_id ): void {
+        if ( $chat_id <= 0 ) {
+            return;
+        }
+
+        self::maybe_install();
+
+        global $wpdb;
+
+        $now = time();
+
+        $wpdb->query( $wpdb->prepare(
+            'INSERT INTO ' . self::table() . ' (event_id, state, created_at, seen_at, chat_id) VALUES (%s, %d, %d, %d, %d)
+             ON DUPLICATE KEY UPDATE state = VALUES(state), seen_at = VALUES(seen_at), chat_id = VALUES(chat_id)',
+            $rumor_id,
+            self::STATE_RUMOR,
+            $now,
+            $now,
+            $chat_id
+        ) );
+    }
+
+    /**
+     * The chat a message of ours was mirrored from, or 0.
+     */
+    public static function chat_for_rumor( string $rumor_id ): int {
+        self::maybe_install();
+
+        global $wpdb;
+
+        return (int) $wpdb->get_var( $wpdb->prepare(
+            'SELECT chat_id FROM ' . self::table() . ' WHERE event_id = %s AND state = %d',
+            $rumor_id,
+            self::STATE_RUMOR
         ) );
     }
 
