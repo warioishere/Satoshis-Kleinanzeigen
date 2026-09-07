@@ -5,7 +5,7 @@ namespace SK\Modules\Donations;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Spendenlogik: Ziel, Stand, Rechnung, Gutschrift.
+ * Donation logic: goal, current total, invoice, credit.
  */
 class Donations {
 
@@ -13,15 +13,15 @@ class Donations {
     const OPTION_PRODUCT = 'sk_donations_product_id';
 
     /**
-     * Voreinstellung aus der eigenen Spendenseite: "210.000 Sats decken
-     * unsere Hosting- und Wartungskosten für drei Monate".
+     * Default from our own donations page: "210,000 sats cover our
+     * hosting and maintenance costs for three months".
      */
     const DEFAULT_GOAL = 70000;
 
     /**
-     * Betragsvorschlaege. Getrennt, weil die beiden Orte verschiedene Momente
-     * sind: das Modal fragt spontan nach einem Verkauf, der Balken steht bei
-     * jemandem, der sich ohnehin schon mit den Kosten befasst.
+     * Amount presets. Kept separate because the two spots are different
+     * moments: the modal asks spontaneously after a sale, the bar is shown
+     * to someone who's already engaging with the costs anyway.
      */
     const OPTION_PRESETS_MODAL = 'sk_donations_presets_modal';
     const OPTION_PRESETS_BAR   = 'sk_donations_presets_bar';
@@ -36,12 +36,12 @@ class Donations {
     const AJAX_ACTION  = 'sk_donate_invoice';
 
     /**
-     * Stichtag: Erst ab hier zaehlt Zufluss.
+     * Cutoff date: inflow only counts from here on.
      *
-     * Die Crowdfund-Apps haben 2025 rund 4,1 Mio Sats eingesammelt, fast
-     * alles in Mai, Juli und September der Aufbauphase. Wuerde das mitzaehlen,
-     * stuende der Deckungsbalken dauerhaft auf 100 Prozent und saegte damit
-     * genau die Frage ab, die er stellen soll.
+     * The crowdfund apps collected roughly 4.1M sats in 2025, almost all of
+     * it in May, July and September of the build-up phase. If that counted
+     * too, the coverage bar would permanently sit at 100 percent, cutting
+     * off exactly the question it's meant to ask.
      */
     const OPTION_SINCE = 'sk_donations_count_since';
 
@@ -54,14 +54,14 @@ class Donations {
     }
 
     /**
-     * Zeitpunkt, ab dem gezaehlt wird. Beim ersten Aufruf auf jetzt gesetzt.
+     * Point in time from which counting starts. Set to now on first call.
      */
     public static function count_since(): int {
         $ts = (int) get_option( self::OPTION_SINCE, 0 );
 
         if ( $ts <= 0 ) {
-            // Monatsanfang, nicht "jetzt": Sonst startet der Balken mitten im
-            // Monat bei null und unterschlaegt Zufluss, der schon da ist.
+            // Start of month, not "now": otherwise the bar would start at
+            // zero mid-month and hide inflow that already came in.
             $ts = (int) strtotime( current_time( 'Y-m-01 00:00:00' ) );
             update_option( self::OPTION_SINCE, $ts );
         }
@@ -83,9 +83,9 @@ class Donations {
     }
 
     /**
-     * Betragsvorschlaege als Zahlenliste.
+     * Amount presets as a list of numbers.
      *
-     * @param string $where 'modal' oder 'bar'
+     * @param string $where 'modal' or 'bar'
      * @return int[]
      */
     public static function presets( string $where = 'bar' ): array {
@@ -95,8 +95,8 @@ class Donations {
         $values = array_map( 'absint', explode( ',', (string) get_option( $option, $default ) ) );
         $values = array_values( array_filter( $values, static fn( $v ) => $v > 0 ) );
 
-        // Leere oder unbrauchbare Eingabe faellt auf die Voreinstellung zurueck,
-        // sonst stuende das Modal ohne einen einzigen Knopf da.
+        // Empty or unusable input falls back to the default,
+        // otherwise the modal would end up with not a single button.
         if ( empty( $values ) ) {
             $values = array_map( 'absint', explode( ',', $default ) );
         }
@@ -105,7 +105,7 @@ class Donations {
     }
 
     /**
-     * Eingabe aus dem Admin normalisieren.
+     * Normalize input from the admin.
      */
     public static function set_presets( string $where, string $raw ): void {
         $values = array_map( 'absint', preg_split( '/[,;\s]+/', trim( $raw ) ) ?: [] );
@@ -118,7 +118,7 @@ class Donations {
     }
 
     /**
-     * Im laufenden Kalendermonat eingegangene Spenden.
+     * Donations received in the current calendar month.
      */
     public static function received_this_month(): int {
         return self::sum_between(
@@ -132,17 +132,17 @@ class Donations {
     }
 
     /**
-     * Summe bezahlter Spendenbestellungen in einem Zeitraum.
+     * Sum of paid donation orders in a time range.
      *
-     * Gezählt werden nur Bestellungen, die auch bezahlt sind — eine
-     * abgebrochene Zahlung darf den Balken nicht bewegen.
+     * Only orders that are actually paid are counted — an aborted
+     * payment must not move the bar.
      */
     public static function sum_between( string $from, string $to ): int {
         return self::sum_woocommerce( $from, $to ) + self::sum_btcpay( $from, $to );
     }
 
     /**
-     * Crowdfund-Zahlungen vom BTCPay-Server, ab dem Stichtag.
+     * Crowdfund payments from the BTCPay server, from the cutoff date onward.
      */
     public static function sum_btcpay( string $from, string $to ): int {
         $from_ts = max( (int) strtotime( $from ), self::count_since() );
@@ -176,7 +176,7 @@ class Donations {
     }
 
     /**
-     * Deckungsgrad in Prozent, gedeckelt bei 100 für die Balkenbreite.
+     * Coverage percentage, capped at 100 for the bar width.
      */
     public static function coverage(): int {
         $goal = self::goal();
@@ -188,11 +188,11 @@ class Donations {
     }
 
     /**
-     * Verstecktes Trägerprodukt.
+     * Hidden carrier product.
      *
-     * "private" statt "publish", sonst legt sk-feed beim Anlegen einen
-     * öffentlichen Beitrag im Community-Feed an und die Telegram-/Nostr-Poster
-     * springen an.
+     * "private" instead of "publish", otherwise sk-feed creates a public
+     * post in the community feed when it's created, and the
+     * Telegram/Nostr posters kick in.
      */
     public static function product_id(): int {
         $id = (int) get_option( self::OPTION_PRODUCT );
@@ -264,11 +264,11 @@ class Donations {
     }
 
     /**
-     * Rechnung anlegen und den BTCPay-Dialog vorbereiten.
+     * Create the invoice and prepare the BTCPay dialog.
      *
-     * Nutzt BuyNow::pay_order() — denselben Weg, den Abos und Boosts gehen.
-     * Damit entfaellt der WooCommerce-Checkout, und die Mechanik existiert nur
-     * einmal.
+     * Uses BuyNow::pay_order() — the same path subscriptions and boosts
+     * take. This skips the WooCommerce checkout, and the mechanism only
+     * exists once.
      */
     public function handle_ajax(): void {
         check_ajax_referer( self::AJAX_ACTION, 'nonce' );
@@ -281,15 +281,15 @@ class Donations {
         }
 
         if ( ! class_exists( '\\SK\\Core\\BuyNow' ) ) {
-            // Ohne BuyNow bleibt der normale Bezahlweg ueber die Bestellseite.
+            // Without BuyNow, the normal payment path via the order page remains.
             wp_send_json_success( [ 'payUrl' => $order->get_checkout_payment_url() ] );
         }
 
         $payment = \SK\Core\BuyNow::pay_order( $order );
 
         if ( is_wp_error( $payment ) ) {
-            // Fallback statt Sackgasse: Die Bestellung existiert, sie laesst
-            // sich ueber die normale Bezahlseite weiterhin begleichen.
+            // Fallback instead of a dead end: the order exists and can
+            // still be settled via the normal payment page.
             wp_send_json_success( [ 'payUrl' => $order->get_checkout_payment_url() ] );
         }
 
@@ -297,10 +297,10 @@ class Donations {
     }
 
     /**
-     * Formular entgegennehmen und zur Zahlung weiterleiten.
+     * Accept the form submission and redirect to payment.
      *
-     * Bleibt als Rueckfallweg bestehen, wenn JavaScript oder der BTCPay-Dialog
-     * nicht verfuegbar sind.
+     * Remains as a fallback path for when JavaScript or the BTCPay dialog
+     * are unavailable.
      */
     public function handle_form(): void {
         $referer = wp_get_referer() ?: home_url( '/' );

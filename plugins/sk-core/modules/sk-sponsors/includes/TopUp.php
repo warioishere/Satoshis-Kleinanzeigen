@@ -5,21 +5,21 @@ namespace SK\Modules\Sponsors;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Guthaben per BTCPay aufladen.
+ * Top up balance via BTCPay.
  *
- * Geht denselben Weg wie Boosts und Abo-Pakete: eine WooCommerce-Bestellung
- * auf ein verstecktes Trägerprodukt, bezahlt über das vorhandene BTCPay-
- * Gateway. Ist die Bestellung bezahlt, wird der Betrag dem Sponsorenguthaben
- * gutgeschrieben.
+ * Follows the same path as boosts and subscription packages: a WooCommerce
+ * order for a hidden carrier product, paid through the existing BTCPay
+ * gateway. Once the order is paid, the amount is credited to the sponsor
+ * balance.
  *
- * Bewusst KEIN Abo-Plugin: In Bitcoin gibt es keine Lastschrift, ein Abo
- * erzeugt am Ende ebenfalls nur eine Rechnung, die jemand manuell bezahlt.
- * Das Guthaben ist die Abo-Mechanik — es wird einmal gefüllt und monatlich
- * verbraucht (siehe Billing).
+ * Deliberately NOT a subscription plugin: Bitcoin has no direct debit, and a
+ * subscription would ultimately just generate an invoice someone pays
+ * manually anyway. The balance IS the subscription mechanic — it gets topped
+ * up once and consumed monthly (see Billing).
  *
- * Sponsoren sind Firmen ohne Benutzerkonto auf der Seite. Deshalb erzeugt der
- * Betreiber die Rechnung und verschickt den Zahllink; niemand muss sich
- * registrieren.
+ * Sponsors are companies without a user account on the site. That's why the
+ * operator creates the invoice and sends the payment link; nobody needs to
+ * register.
  */
 final class TopUp {
 
@@ -29,15 +29,15 @@ final class TopUp {
     const ORDER_CREDITED   = '_sk_sponsor_topup_credited';
 
     public function __construct() {
-        // Beide Haken, weil je nach Gateway mal der eine, mal der andere
-        // feuert. Die Gutschrift ist gegen Doppelbuchung abgesichert.
+        // Both hooks, because depending on the gateway sometimes one fires,
+        // sometimes the other. Crediting is guarded against double-booking.
         add_action( 'woocommerce_payment_complete', [ __CLASS__, 'credit_from_order' ], 20, 1 );
         add_action( 'woocommerce_order_status_completed', [ __CLASS__, 'credit_from_order' ], 20, 1 );
         add_action( 'woocommerce_order_status_processing', [ __CLASS__, 'credit_from_order' ], 20, 1 );
     }
 
     /**
-     * Verstecktes Trägerprodukt, bei Bedarf angelegt.
+     * Hidden carrier product, created on demand.
      */
     public static function product_id(): int {
         $id = (int) get_option( self::OPTION_PRODUCT );
@@ -49,12 +49,12 @@ final class TopUp {
         $product = new \WC_Product_Simple();
         $product->set_name( __( 'Sponsoren-Guthaben', 'sk-core' ) );
         /*
-         * Bewusst "private" statt "publish": Ein veroeffentlichtes Produkt
-         * loest transition_post_status aus, worauf sk-feed einen oeffentlichen
-         * Beitrag im Community-Feed anlegt (AutoPost::on_product_publish) und
-         * die Telegram-/Nostr-Poster anspringen. Das Traegerprodukt ist reine
-         * Buchhaltung und hat dort nichts verloren. Bestellungen koennen es
-         * trotzdem fuehren, weil add_product() den Status nicht prueft.
+         * Deliberately "private" instead of "publish": a published product
+         * triggers transition_post_status, which makes sk-feed create a
+         * public post in the community feed (AutoPost::on_product_publish)
+         * and kicks off the Telegram/Nostr posters. The carrier product is
+         * pure bookkeeping and has no business there. Orders can still carry
+         * it regardless, because add_product() doesn't check the status.
          */
         $product->set_status( 'private' );
         $product->set_catalog_visibility( 'hidden' );
@@ -70,7 +70,7 @@ final class TopUp {
     }
 
     /**
-     * Rechnung über einen Guthabenbetrag erstellen.
+     * Create an invoice for a balance amount.
      *
      * @return \WC_Order|\WP_Error
      */
@@ -94,8 +94,8 @@ final class TopUp {
             $order = wc_create_order();
             $order->add_product( $product, 1 );
 
-            // Der Preis steht am Trägerprodukt auf 0 — der Betrag kommt aus
-            // der Position, sonst wäre jede Rechnung über 0 Sats.
+            // The carrier product's price is 0 — the amount comes from the
+            // line item, otherwise every invoice would be for 0 sats.
             foreach ( $order->get_items() as $item ) {
                 $item->set_subtotal( $sats );
                 $item->set_total( $sats );
@@ -136,7 +136,7 @@ final class TopUp {
     }
 
     /**
-     * Bezahlte Rechnung dem Guthaben gutschreiben.
+     * Credit a paid invoice to the balance.
      */
     public static function credit_from_order( $order_id ): void {
         $order = wc_get_order( $order_id );
@@ -151,8 +151,8 @@ final class TopUp {
             return;
         }
 
-        // Drei Haken können für dieselbe Bestellung feuern — ohne diese
-        // Sperre würde das Guthaben mehrfach gutgeschrieben.
+        // Three hooks can fire for the same order — without this guard the
+        // balance would be credited multiple times.
         if ( (int) $order->get_meta( self::ORDER_CREDITED ) === 1 ) {
             return;
         }
@@ -185,7 +185,7 @@ final class TopUp {
     }
 
     /**
-     * Offene Guthabenrechnungen eines Sponsors.
+     * A sponsor's open balance invoices.
      *
      * @return \WC_Order[]
      */

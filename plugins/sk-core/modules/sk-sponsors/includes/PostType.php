@@ -5,12 +5,12 @@ namespace SK\Modules\Sponsors;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Post-Type sk_sponsor — ein Sponsor je Eintrag.
+ * Post type sk_sponsor — one sponsor per entry.
  *
- * Bewusst nicht öffentlich: Ein Sponsor hat keine eigene Seite und kein
- * Archiv, er ist eine Kachel mit Logo, Text und Ziel-URL. Deshalb public =
- * false und publicly_queryable = false, aber show_ui = true, damit der
- * normale WordPress-Editor für Logo und Beschreibung nutzbar bleibt.
+ * Deliberately not public: a sponsor has no page of its own and no archive,
+ * it's a tile with logo, text, and target URL. Hence public = false and
+ * publicly_queryable = false, but show_ui = true, so the normal WordPress
+ * editor stays usable for the logo and description.
  */
 class PostType {
 
@@ -22,23 +22,23 @@ class PostType {
     const META_EXPIRES  = '_sk_sponsor_expires';
     const META_LEGACY   = '_sk_sponsor_legacy_post_id';
 
-    /** Kontaktadresse für Guthaben-Erinnerungen. */
+    /** Contact address for balance reminders. */
     const META_EMAIL    = '_sk_sponsor_email';
 
-    /** Geheimer Zugang zur Selbstbedienungsseite (kein Benutzerkonto nötig). */
+    /** Secret access to the self-service page (no user account needed). */
     const META_TOKEN    = '_sk_sponsor_token';
 
-    /** Monatsrate in Sats — bestimmt den Rang. */
+    /** Monthly rate in sats — determines the rank. */
     const META_MONTHLY  = '_sk_sponsor_monthly_sats';
 
-    /** Vorkasse in Sats — bestimmt die Laufzeit. */
+    /** Prepayment in sats — determines the runtime. */
     const META_BALANCE  = '_sk_sponsor_balance_sats';
 
     /**
-     * Reihenfolge unter gleicher Monatsrate.
+     * Order among sponsors with the same monthly rate.
      *
-     * Übernimmt die alte Rangzahl aus wp-post-rank, damit die Startseite
-     * unverändert aussieht, solange niemand zahlt (dann sind alle Raten 0).
+     * Carries over the old rank number from wp-post-rank, so the homepage
+     * looks unchanged as long as nobody pays (in which case all rates are 0).
      */
     const META_SORT_HINT = '_sk_sponsor_sort_hint';
 
@@ -73,9 +73,9 @@ class PostType {
                 'has_archive'        => false,
                 'rewrite'            => false,
                 'show_ui'            => true,
-                // Der Eintrag haengt an der SK-Seite "Sponsoren", nicht im
-                // Hauptmenue: PhpDashboard baut das SK-Untermenue selbst auf
-                // und wuerde einen CPT-Eintrag ohnehin wieder entfernen.
+                // The entry hangs off the SK page "Sponsoren", not the main
+                // menu: PhpDashboard builds the SK submenu itself and would
+                // remove a CPT entry there again anyway.
                 'show_in_menu'       => false,
                 'show_in_rest'       => false,
                 'supports'           => [ 'title', 'editor', 'thumbnail' ],
@@ -106,8 +106,8 @@ class PostType {
         $sort    = (string) get_post_meta( $post->ID, self::META_SORT_HINT, true );
         $starts  = (string) get_post_meta( $post->ID, self::META_STARTS, true );
         $expires = (string) get_post_meta( $post->ID, self::META_EXPIRES, true );
-        // Beim Anlegen existiert noch kein Slug; dann den Platzhalter zeigen,
-        // statt in der Vorlage erneut auf den Post zuzugreifen.
+        // No slug exists yet when creating a new one; show the placeholder
+        // then, instead of accessing the post again in the template.
         $slug    = $post->post_name !== '' ? $post->post_name : 'slug';
 
         wp_nonce_field( 'sk_sponsor_save', 'sk_sponsor_nonce' );
@@ -134,7 +134,7 @@ class PostType {
 
         update_post_meta( $post_id, Backlink::META_MANUAL, isset( $_POST['sk_sponsor_backlink_manual'] ) ? 1 : 0 );
 
-        // Sorgt dafür, dass jeder Sponsor einen Zugang hat, auch die importierten.
+        // Makes sure every sponsor has access, including imported ones.
         self::token( $post_id );
 
         $tier = isset( $_POST['sk_sponsor_tier'] ) && $_POST['sk_sponsor_tier'] === self::TIER_TOP
@@ -148,8 +148,8 @@ class PostType {
 
         foreach ( [ self::META_STARTS => 'sk_sponsor_starts', self::META_EXPIRES => 'sk_sponsor_expires' ] as $meta => $field ) {
             $raw = isset( $_POST[ $field ] ) ? sanitize_text_field( wp_unslash( $_POST[ $field ] ) ) : '';
-            // Nur echte Datumsangaben speichern, sonst leert ein Tippfehler
-            // die Laufzeit still und der Sponsor verschwindet von der Seite.
+            // Only save actual dates, otherwise a typo silently clears the
+            // runtime and the sponsor disappears from the page.
             update_post_meta( $post_id, $meta, preg_match( '/^\d{4}-\d{2}-\d{2}$/', $raw ) ? $raw : '' );
         }
     }
@@ -201,12 +201,12 @@ class PostType {
     }
 
     /**
-     * Aktive Sponsoren einer Stufe, beste Gewichtung zuerst.
+     * Active sponsors of a tier, best-weighted first.
      *
-     * Laufzeit, Stufe und Sortierung werden in PHP ausgewertet statt in einer
-     * meta_query. Bei rund zwei Dutzend Sponsoren kostet das nichts, und es
-     * vermeidet die Falle, dass ein Eintrag ohne gesetztes Gewicht durch den
-     * INNER JOIN von "meta_key" still aus der Liste fliegt.
+     * Runtime, tier, and sorting are evaluated in PHP instead of via a
+     * meta_query. With about two dozen sponsors this costs nothing, and it
+     * avoids the trap of an entry without a set weight silently falling out
+     * of the list via the INNER JOIN of "meta_key".
      *
      * @return \WP_Post[]
      */
@@ -244,11 +244,11 @@ class PostType {
     }
 
     /**
-     * Geheimer Token für die Selbstbedienungsseite, bei Bedarf erzeugt.
+     * Secret token for the self-service page, generated on demand.
      *
-     * Sponsoren sind Firmen ohne Benutzerkonto. Statt sie zu registrieren,
-     * bekommen sie eine unrat­bare Adresse — dieselbe Logik wie bei einem
-     * WooCommerce-Zahllink.
+     * Sponsors are companies without a user account. Instead of registering
+     * them, they get an unguessable address — the same logic as a
+     * WooCommerce payment link.
      */
     public static function token( int $post_id ): string {
         $token = (string) get_post_meta( $post_id, self::META_TOKEN, true );
@@ -287,11 +287,11 @@ class PostType {
     }
 
     /**
-     * Rangfolge: Monatsrate zuerst, dann die alte Rangzahl, dann der Titel.
+     * Ranking: monthly rate first, then the old rank number, then the title.
      *
-     * Die Rate entscheidet — nicht das Guthaben. Sonst stuende der oben, der
-     * am meisten eingezahlt und am wenigsten pro Monat abgemacht hat, und die
-     * guenstigste Strategie waere, die Rate moeglichst klein zu halten.
+     * The rate decides — not the balance. Otherwise whoever paid in the
+     * most and agreed to the smallest monthly rate would end up on top, and
+     * the cheapest strategy would be to keep the rate as small as possible.
      */
     public static function compare_rank( \WP_Post $a, \WP_Post $b ): int {
         $ma = (int) get_post_meta( $a->ID, self::META_MONTHLY, true );
@@ -310,11 +310,11 @@ class PostType {
     }
 
     /**
-     * Reicht das Guthaben noch fuer diesen Monat?
+     * Is the balance still enough for this month?
      *
-     * Eine Rate von 0 ist ein Gratisplatz und laeuft nie aus — sonst wuerden
-     * beim Einschalten der Abrechnung schlagartig alle Bestandssponsoren von
-     * der Seite fliegen, weil deren Guthaben 0 ist.
+     * A rate of 0 is a free placement and never expires — otherwise turning
+     * on billing would instantly drop all existing sponsors from the page,
+     * since their balance is 0.
      */
     public static function has_credit( int $post_id ): bool {
         $monthly = (int) get_post_meta( $post_id, self::META_MONTHLY, true );
@@ -326,7 +326,7 @@ class PostType {
     }
 
     /**
-     * Verbleibende volle Monate, oder null bei einem Gratisplatz.
+     * Remaining full months, or null for a free placement.
      */
     public static function months_left( int $post_id ): ?int {
         $monthly = (int) get_post_meta( $post_id, self::META_MONTHLY, true );
@@ -338,7 +338,7 @@ class PostType {
     }
 
     /**
-     * Leere Datumsfelder bedeuten "unbefristet" — nur gesetzte Grenzen greifen.
+     * Empty date fields mean "unlimited" — only set boundaries take effect.
      */
     public static function is_running( int $post_id, string $today = '' ): bool {
         $today   = $today ?: wp_date( 'Y-m-d' );
@@ -352,7 +352,7 @@ class PostType {
             return false;
         }
 
-        // Greift erst, wenn die Abrechnung eingeschaltet ist.
+        // Only kicks in once billing is turned on.
         if ( Billing::is_enabled() && ! self::has_credit( $post_id ) ) {
             return false;
         }

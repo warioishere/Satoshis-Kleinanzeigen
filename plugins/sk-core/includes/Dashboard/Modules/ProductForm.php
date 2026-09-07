@@ -13,21 +13,21 @@ class ProductForm {
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_edit_extras' ], 20 );
         add_filter( 'wp_insert_post_data', [ $this, 'enforce_draft_if_incomplete' ], 10, 2 );
 
-        // Schriftfarbe im Beschreibungs-Editor. Das Feld laeuft im teeny-Modus,
-        // der einen eigenen Filter benutzt — tiny_mce_before_init allein greift
-        // dort nicht.
+        // Text color in the description editor. This field runs in teeny
+        // mode, which uses its own filter — tiny_mce_before_init alone
+        // doesn't apply there.
         add_filter( 'tiny_mce_before_init',  [ $this, 'description_editor_text_color' ], 10, 2 );
         add_filter( 'teeny_mce_before_init', [ $this, 'description_editor_text_color' ], 10, 2 );
 
-        // P2P Versandkosten-Feld
+        // P2P shipping cost field
         add_action( 'sk_process_product_meta', [ $this, 'save_shipping_note' ] );
         add_action( 'woocommerce_single_product_summary', [ $this, 'output_shipping_display' ], 11 );
 
-        // Sats Converter
+        // Sats converter
         add_action( 'admin_menu', [ $this, 'sats_converter_admin_menu' ] );
         add_action( 'admin_init', [ $this, 'sats_converter_register_settings' ] );
 
-        // SEO Autofill (Yoast Focus Keyword)
+        // SEO autofill (Yoast focus keyword)
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_seo_autofill' ] );
         add_action( 'admin_menu', [ $this, 'seo_autofill_admin_menu' ] );
     }
@@ -97,7 +97,7 @@ class ProductForm {
     }
 
 
-    /* ---- P2P Versandkosten ---- */
+    /* ---- P2P shipping cost ---- */
 
     public function save_shipping_note( int $post_id ): void {
         if ( isset( $_POST['p2p_shipping_note'] ) ) {
@@ -349,21 +349,21 @@ class ProductForm {
     }
 
     /**
-     * Helle Schrift im Beschreibungs-Editor.
+     * Light text in the description editor.
      *
-     * Der visuelle Editor laeuft in einem iframe, den die Seiten-CSS nicht
-     * erreicht — die Farbe muss ueber content_style hinein. Gesetzt wird
-     * ausschliesslich die Schriftfarbe: Der Hintergrund kommt aus dem
-     * Dashboard und bleibt unangetastet.
+     * The visual editor runs inside an iframe that the page CSS doesn't
+     * reach — the color has to go in via content_style. Only the text
+     * color is set: the background comes from the dashboard and is left
+     * untouched.
      */
     public function description_editor_text_color( $init, $editor_id ) {
         if ( 'post_content' !== $editor_id ) {
             return $init;
         }
 
-        // Farbe und Grund gehoeren zusammen: Nur die Schrift aufzuhellen wuerde
-        // hell auf hell ergeben, falls der iframe seinen weissen Standardgrund
-        // behaelt. Dieselben Werte wie im Biografie-Editor des Dashboards.
+        // Color and background belong together: lightening just the text
+        // would produce light-on-light if the iframe keeps its default
+        // white background. Same values as the dashboard's bio editor.
         $own = 'html, body { background: #252d38; }'
              . ' body, body p, body li, body h1, body h2, body h3, body h4, body blockquote { color: #e8ecf0; }'
              . ' body a { color: #F7931A; }';

@@ -26,10 +26,10 @@ jQuery(function ($) {
     });
 
     /**
-     * Gleicher Endpunkt, anderer Ort: auf der Nostr/LN-Link-Seite. Nach dem
-     * Anlegen wird neu geladen, damit der Abschnitt mit npub, Schluessel-Export
-     * und "Identitaet loeschen" erscheint — der rendert serverseitig nur, wenn
-     * bereits eine Identitaet existiert.
+     * Same endpoint, different location: on the Nostr/LN link page. After
+     * creation the page reloads so the section with npub, key export, and
+     * "delete identity" shows up — it only renders server-side when an
+     * identity already exists.
      */
     $('#sk-nostr-create').on('click', function () {
         var $btn = $(this);

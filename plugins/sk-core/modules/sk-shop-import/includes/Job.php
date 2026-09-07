@@ -5,32 +5,33 @@ namespace SK\Modules\ShopImport;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Import in Stapeln statt in einem Rutsch.
+ * Import in batches instead of all at once.
  *
- * Der Import kostet vor allem Zeit für die Bilder — je Artikel bis zu fünf
- * Downloads von einem fremden Server. Sechs Artikel brauchten damit schon
- * über fünfzehn Sekunden; ein Katalog mit zweihundert läuft unweigerlich in
- * die Zeitgrenze von PHP, und der Verkäufer sieht eine weisse Seite.
+ * The import mainly costs time for images — up to five downloads per item
+ * from a foreign server. Six items already took over fifteen seconds; a
+ * 200-item catalog inevitably hits PHP's time limit, and the vendor sees a
+ * blank page.
  *
- * Deshalb liegt hier nur der Auftrag: Datei, Zuordnung, Auswahl und wie weit
- * er gediehen ist. Der Browser holt einen Stapel nach dem anderen ab und kann
- * dabei anzeigen, wo es steht.
+ * That's why only the job itself lives here: file, mapping, selection, and
+ * how far it has progressed. The browser fetches one batch after another
+ * and can show the progress along the way.
  *
- * Bewusst werden nicht die Artikel selbst gespeichert, sondern nur ihre
- * Schlüssel: ein Katalog mit Beschreibungen sprengt sonst den Transient.
+ * Deliberately, the items themselves aren't stored, only their keys: a
+ * catalog with descriptions would otherwise blow past the transient size
+ * limit.
  */
 final class Job {
 
     const TRANSIENT = 'sk_import_job_';
 
-    /** Wie lange ein Stapel höchstens rechnen darf. */
+    /** Maximum time a batch may take to process. */
     const BUDGET = 10;
 
-    /** Grenzen für die Stapelgrösse, die sich am gemessenen Tempo ausrichtet. */
+    /** Bounds for the batch size, which adjusts to the measured speed. */
     const MIN_BATCH = 1;
     const MAX_BATCH = 20;
 
-    /** Auftrag lebt lange genug für einen grossen Katalog. */
+    /** Job lives long enough for a large catalog. */
     const TTL = 2 * HOUR_IN_SECONDS;
 
     public static function create( int $vendor_id, string $path, array $mapping, array $keys, array $args, int $total ): void {
@@ -43,9 +44,9 @@ final class Job {
                 'args'    => $args,
                 'offset'  => 0,
                 'total'   => $total,
-                // Klein anfangen: der erste Stapel weiss noch nicht, wie
-                // teuer ein Artikel ist. Mit drei Artikeln lag er gemessen bei
-                // 15 Sekunden — zu nah an der Zeitgrenze.
+                // Start small: the first batch doesn't yet know how
+                // expensive an item is. With three items, it measured at
+                // 15 seconds — too close to the time limit.
                 'batch'   => 1,
                 'result'  => [ 'created' => 0, 'updated' => 0, 'skipped' => 0, 'images' => 0, 'errors' => [] ],
             ],
@@ -64,7 +65,7 @@ final class Job {
     }
 
     /**
-     * Artikel aus der Datei neu aufbauen und auf die Auswahl eindampfen.
+     * Rebuild items from the file and narrow them down to the selection.
      *
      * @return array<int,array>|\WP_Error
      */
@@ -85,7 +86,7 @@ final class Job {
     }
 
     /**
-     * Einen Stapel abarbeiten.
+     * Process one batch.
      *
      * @return array{done:int,total:int,fertig:bool,result:array}|\WP_Error
      */
@@ -121,8 +122,8 @@ final class Job {
             $job['result'][ $key ] += (int) ( $result[ $key ] ?? 0 );
         }
         if ( ! empty( $result['errors'] ) ) {
-            // Nur die ersten Meldungen behalten — bei einem kaputten Katalog
-            // waere die Liste sonst laenger als der Katalog selbst.
+            // Keep only the first messages — with a broken catalog, the
+            // list would otherwise end up longer than the catalog itself.
             $job['result']['errors'] = array_slice(
                 array_merge( $job['result']['errors'], $result['errors'] ),
                 0,
@@ -132,10 +133,10 @@ final class Job {
 
         $job['offset'] += count( $slice );
 
-        // Naechste Stapelgroesse am gemessenen Tempo ausrichten.
-        // Mit Sicherheitsabschlag: die Artikel eines Katalogs sind unterschiedlich
-        // teuer, und ein zu grosser Stapel laeuft in die Zeitgrenze statt nur
-        // laenger zu dauern.
+        // Adjust the next batch size to the measured speed.
+        // With a safety margin: items in a catalog vary in cost, and too
+        // large a batch would hit the time limit instead of just taking
+        // longer.
         $per_item     = $elapsed / count( $slice );
         $job['batch'] = (int) max( self::MIN_BATCH, min( self::MAX_BATCH, floor( self::BUDGET * 0.7 / $per_item ) ) );
 

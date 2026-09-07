@@ -168,11 +168,10 @@ final class BuyNow {
     }
 
     /**
-     * Bestellung ueber BTCPay bezahlbar machen und die Daten fuer den Dialog
-     * zurueckgeben.
+     * Make an order payable via BTCPay and return the data for the dialog.
      *
-     * Ausgelagert, damit andere Module denselben Weg gehen koennen, ohne den
-     * Ablauf nachzubauen — das Spendenmodul nutzt ihn fuer sein Modal.
+     * Extracted so other modules can follow the same path without
+     * rebuilding the flow — the donations module uses it for its modal.
      *
      * @return array{invoiceId:string,orderCompleteLink:string,btcpayUrl:string}|\WP_Error
      */

@@ -75,7 +75,7 @@ final class Voting {
 		if ( ! $product || $product->post_type !== 'product' || $product->post_status !== 'publish' ) {
 			return false;
 		}
-		// Vendor darf nicht für eigene Produkte voten.
+		// A vendor may not vote on their own products.
 		if ( (int) $product->post_author === $user_id ) {
 			return false;
 		}

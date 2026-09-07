@@ -7,7 +7,7 @@ use SK\Core\Admin\PhpDashboard\AbstractPage;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * SK → Spenden.
+ * SK → Donations.
  */
 class AdminPage extends AbstractPage {
 
@@ -50,7 +50,7 @@ class AdminPage extends AbstractPage {
             ]
         );
 
-        // Zwölf Monate Verlauf, ältester zuerst.
+        // Twelve months of history, oldest first.
         $history = [];
         for ( $i = 11; $i >= 0; $i-- ) {
             $start = gmdate( 'Y-m-01 00:00:00', strtotime( "-{$i} months", current_time( 'timestamp' ) ) );

@@ -5,14 +5,14 @@ namespace SK\Modules\Payments;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Ausführungen eines Inserats beim Sofortkauf.
+ * Variants of a listing for instant purchase.
  *
- * Der Käufer schickt nur den Schlüssel seiner Wahl, nie einen Betrag: Der
- * Preis wird hier aus dem Inserat nachgeschlagen. Sonst liesse sich jede
- * Ausführung für einen Satoshi bestellen.
+ * The buyer only sends the key of their choice, never an amount: the price
+ * is looked up here from the listing. Otherwise any variant could be
+ * ordered for one satoshi.
  *
- * Die Daten kommen aus dem Import-Modul. Ist es abgeschaltet, gibt es keine
- * Ausführungen und alles verhält sich wie zuvor.
+ * The data comes from the import module. If it is disabled, there are no
+ * variants and everything behaves as before.
  */
 final class Variant {
 
@@ -26,7 +26,7 @@ final class Variant {
 
         $variants = \SK\Modules\ShopImport\Variants::get( $product_id );
 
-        // Ohne eigenen Sats-Betrag ist eine Ausfuehrung nicht bestellbar.
+        // Without its own sats amount, a variant is not orderable.
         return array_values(
             array_filter(
                 $variants,
@@ -52,7 +52,7 @@ final class Variant {
     }
 
     /**
-     * Preis der gewählten Ausführung, sonst der Inseratspreis.
+     * Price of the chosen variant, otherwise the listing price.
      */
     public static function price( \WC_Product $product, string $key ): int {
         $variant = self::find( $product->get_id(), $key );
@@ -61,8 +61,8 @@ final class Variant {
     }
 
     /**
-     * Bezeichnung des Inserats, um die Ausführung ergänzt — damit im Chat und
-     * auf der Zahlungskarte steht, was tatsächlich bestellt wurde.
+     * Listing title, extended with the variant — so the chat and the payment
+     * card show what was actually ordered.
      */
     public static function title( \WC_Product $product, string $key ): string {
         $variant = self::find( $product->get_id(), $key );
@@ -75,7 +75,7 @@ final class Variant {
     }
 
     /**
-     * Schlüssel aus der Anfrage, roh und ungeprüft — die Prüfung macht find().
+     * Key from the request, raw and unvalidated — find() does the validation.
      */
     public static function posted(): string {
         return isset( $_POST['variant'] ) // phpcs:ignore WordPress.Security.NonceVerification

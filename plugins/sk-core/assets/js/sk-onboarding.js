@@ -58,9 +58,9 @@
 						$('#uob-nostr-status').html('<span style="color:#5cb85c;"><i class="fas fa-check-circle"></i> ' + res.data.message + '</span>');
 						$btn.hide();
 
-						// Den Schluessel jetzt holen und zeigen. Er steht bewusst
-						// nicht in der Antwort des Erstellens, sondern kommt ueber
-						// denselben Weg wie spaeter unter "Nostr/LN Link".
+						// Fetch and show the key now. It's deliberately not
+						// included in the creation response, but comes via
+						// the same path used later under "Nostr/LN Link".
 						$.post(uobAjax.ajaxurl, {
 							action: 'sk_get_nostr_nsec',
 							nonce: uobAjax.nonce

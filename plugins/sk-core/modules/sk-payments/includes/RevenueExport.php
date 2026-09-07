@@ -5,7 +5,7 @@ namespace SK\Modules\Payments;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Umsatzliste als Datei zum Herunterladen.
+ * Revenue list as a downloadable file.
  */
 final class RevenueExport {
 
@@ -39,9 +39,9 @@ final class RevenueExport {
         $user_id = get_current_user_id();
 
         /*
-         * Die Auswertung gehoert erst ab dem Hai-Paket dazu, nicht schon ab
-         * Delphin wie Import und Ausfuehrungen — deshalb eine eigene Grenze
-         * und nicht is_shop_pack().
+         * The report is only included starting with the Hai package, not
+         * already with Delphin like import and variants — hence its own
+         * gate instead of is_shop_pack().
          */
         if ( ! class_exists( \SK\Modules\ShopImport\Variants::class )
             || ! \SK\Modules\ShopImport\Variants::revenue_allowed( $user_id ) ) {

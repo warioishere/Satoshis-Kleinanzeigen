@@ -165,8 +165,8 @@ use SK\Modules\Subscription\Helper;
                             ?>                        </div><!-- .pack_data_option -->
 
                         <?php
-                        // Verkaufsargument: diese Moeglichkeiten gibt es erst ab einer
-                        // bestimmten Paketgroesse, die Karte zaehlt sie auf.
+                        // Selling point: these capabilities only exist from a certain
+                        // pack size upward, the card lists them out.
                         if ( class_exists( \SK\Modules\ShopImport\Variants::class )
                             && \SK\Modules\ShopImport\Variants::pack_allows( (int) get_the_ID() ) ) :
                             ?>
@@ -212,7 +212,7 @@ use SK\Modules\Subscription\Helper;
         </div><!-- .sk-subscription-content -->
 
         <?php
-        // Einmal je Seite, nicht je Karte — alle Knoepfe oeffnen dasselbe Modal.
+        // Once per page, not per card — all buttons open the same modal.
         if ( class_exists( \SK\Modules\ShopImport\Variants::class ) ) {
             include SK_SHOP_IMPORT_PATH . '/templates/pack-info-modal.php';
         }

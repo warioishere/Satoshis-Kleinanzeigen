@@ -64,8 +64,8 @@ class ProductPage {
             </button>
         </div>
 
-        <!-- Lieferangaben: bezahlt wird sofort, der Anbieter muss trotzdem
-             wissen, wohin die Ware geht. -->
+        <!-- Delivery details: payment happens immediately, but the vendor
+             still needs to know where the goods are going. -->
         <div id="skp-note-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:99999;align-items:center;justify-content:center;">
             <div style="background:#1a2332;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:24px;max-width:420px;width:90%;">
                 <h3 style="margin:0 0 8px;color:#e8ecf0;font-size:18px;"><?php esc_html_e( 'Wohin geht die Bestellung?', 'sk-core' ); ?></h3>
@@ -87,7 +87,7 @@ class ProductPage {
             </div>
         </div>
 
-        <!-- Lightning-Zahlung -->
+        <!-- Lightning payment -->
         <div id="skp-lightning-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:99999;align-items:center;justify-content:center;">
             <div style="background:#1a2332;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:24px;max-width:400px;width:90%;max-height:85vh;overflow-y:auto;">
                 <h3 style="margin:0 0 16px;color:#e8ecf0;font-size:18px;"><i class="fas fa-bolt" style="color:#f7931a;"></i> <?php esc_html_e( 'Lightning-Zahlung', 'sk-core' ); ?></h3>
@@ -100,7 +100,7 @@ class ProductPage {
         </div>
 
         <?php if ( $variants ) : ?>
-        <!-- Ausfuehrungen: erst waehlen, dann bezahlen -->
+        <!-- Variants: choose first, then pay -->
         <div id="skp-variant-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:99999;align-items:center;justify-content:center;">
             <div style="background:#1a2332;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:24px;max-width:400px;width:90%;max-height:85vh;overflow-y:auto;">
                 <h3 style="margin:0 0 16px;color:#e8ecf0;font-size:18px;"><?php esc_html_e( 'Welche Ausführung?', 'sk-core' ); ?></h3>
@@ -162,27 +162,27 @@ class ProductPage {
     }
 
     /**
-     * Wie oft darf ein Konto einen Kauf anstossen?
+     * How often may an account trigger a purchase?
      *
-     * Jeder Anlauf kostet etwas: Onchain eine frisch abgeleitete Adresse,
-     * Lightning eine Anfrage an die Wallet des Anbieters.
+     * Every attempt costs something: onchain a freshly derived address,
+     * Lightning a request to the vendor's wallet.
      */
     private static function purchase_rate_allows( int $buyer_id ): bool {
         return ! function_exists( 'sk_rate_limit' ) || sk_rate_limit( 'sk_buy:' . $buyer_id, 10 );
     }
 
     /**
-     * Nur veroeffentlichte Inserate sind kaufbar.
+     * Only published listings are purchasable.
      *
-     * Ein Entwurf ist fuer niemanden sichtbar; ueber die Kennnummer liesse er
-     * sich sonst trotzdem bestellen und taucht dann samt Titel im Chat auf.
+     * A draft is invisible to everyone; without this check it could still be
+     * ordered via its ID and would then show up with its title in the chat.
      */
     private static function is_purchasable( int $product_id ): bool {
         return get_post_status( $product_id ) === 'publish';
     }
 
     /**
-     * Notiz aus der Anfrage — Lieferadresse oder Hinweis fuer den Anbieter.
+     * Note from the request — delivery address or hint for the vendor.
      */
     private static function posted_note(): string {
         $note = isset( $_POST['note'] ) // phpcs:ignore WordPress.Security.NonceVerification
@@ -193,7 +193,7 @@ class ProductPage {
     }
 
     /**
-     * Zuletzt genutzte Angabe, damit sie beim naechsten Kauf schon dasteht.
+     * Last used entry, so it is already prefilled on the next purchase.
      */
     public static function saved_note( int $user_id ): string {
         return (string) get_user_meta( $user_id, 'sk_last_delivery_note', true );
@@ -204,18 +204,18 @@ class ProductPage {
     }
 
     /**
-     * Lieferangabe und Ausfuehrung an der Zahlungszeile ablegen.
+     * Store delivery details and variant on the payment row.
      *
-     * In die vorhandene metadata-Spalte, damit die Verkaufsuebersicht die
-     * Angaben zeigen kann, ohne dass der Anbieter den Chat durchsuchen muss.
+     * Written into the existing metadata column, so the sales overview can
+     * show the details without the vendor having to search the chat.
      */
     private static function store_order_details( string $payment_hash, string $note, string $variant_name ): void {
         global $wpdb;
 
         $table = $wpdb->prefix . 'sk_lightning_payments';
 
-        // Ergaenzen, nicht ersetzen: in derselben Spalte liegt spaeter auch
-        // eine Problemmeldung.
+        // Merge, don't replace: this same column later also holds an issue
+        // report.
         $existing = $wpdb->get_var(
             $wpdb->prepare( "SELECT metadata FROM {$table} WHERE payment_hash = %s", $payment_hash )
         );
@@ -250,7 +250,7 @@ class ProductPage {
     }
 
     /**
-     * Name der gewaehlten Ausfuehrung, leer wenn es keine gibt.
+     * Name of the chosen variant, empty if there is none.
      */
     private static function variant_name( int $product_id, string $key ): string {
         $variant = Variant::find( $product_id, $key );
@@ -259,7 +259,7 @@ class ProductPage {
     }
 
     /**
-     * Bestellung samt Lieferangabe in den Chat schreiben.
+     * Write the order along with the delivery details into the chat.
      */
     private static function post_order_note( int $chat_id, int $buyer_id, string $title, int $sats, string $note ): void {
         $text = sprintf(
@@ -274,11 +274,11 @@ class ProductPage {
     }
 
     /**
-     * Sofortkauf ueber Lightning.
+     * Instant purchase via Lightning.
      *
-     * Die Invoice entsteht in der Wallet des Anbieters ueber denselben Weg,
-     * den der Anbieter im Chat nutzt — der Kaeufer loest sie nur aus. Deshalb
-     * kann hier keine fremde Invoice untergeschoben werden.
+     * The invoice is created in the vendor's wallet through the same path
+     * the vendor uses in chat — the buyer only triggers it. That means no
+     * foreign invoice can be slipped in here.
      */
     public function ajax_create_lightning_payment() {
         check_ajax_referer( 'sk_lightning_nonce', 'nonce' );
@@ -354,8 +354,8 @@ class ProductPage {
         self::store_order_details( $data['payment_hash'], $note, self::variant_name( $product_id, $variant_key ) );
         self::post_order_note( (int) $chat_id, $buyer_id, $title, $amount_sats, $note );
 
-        // Dieselbe Karte wie im Chat, damit die Invoice auffindbar bleibt,
-        // wenn der Kaeufer das Fenster schliesst.
+        // Same card as in chat, so the invoice stays findable if the buyer
+        // closes the window.
         $card = wp_json_encode( [
             'type'         => 'lightning_invoice',
             'payment_hash' => $data['payment_hash'],
@@ -366,14 +366,14 @@ class ProductPage {
             "[lightning_invoice]{$card}[/lightning_invoice]",
             [
                 'card_type'    => 'lightning_invoice',
-                // Ohne den Hash findet die Karte ihre Zahlungszeile nicht und
-                // wird stillschweigend gar nicht gezeigt.
+                // Without the hash the card can't find its payment row and
+                // silently isn't shown at all.
                 'payment_hash' => $data['payment_hash'],
             ]
         );
 
-        // Die Bestellung ist damit vollstaendig: Ausfuehrung, Lieferangabe und
-        // Zahlungszeile stehen. Ob bezahlt wurde, entscheidet sich spaeter.
+        // The order is now complete: variant, delivery details and payment
+        // row are all in place. Whether it gets paid is decided later.
         do_action( 'sk_order_placed', (string) $data['payment_hash'] );
 
         $dashboard_url = sk_get_navigation_url( 'vendor-chat' );
@@ -385,7 +385,7 @@ class ProductPage {
             'deeplink'        => $data['deeplink'],
             'amount_sats'     => $amount_sats,
             'product_title'   => $title,
-            // Sagt dem Fenster, ob sich der Eingang von selbst pruefen laesst.
+            // Tells the window whether receipt can be checked automatically.
             'has_verify'      => ! empty( $data['has_verify'] ),
             'chat_url'        => add_query_arg( 'chat_id', $chat_id, $dashboard_url ),
         ] );
@@ -453,8 +453,8 @@ class ProductPage {
         $product_title = Variant::title( $product, $variant_key );
         $price_sats    = Variant::price( $product, $variant_key );
 
-        // Wer eine Ausfuehrung waehlen kann, muss es auch tun: sonst ginge die
-        // Bestellung zum "ab"-Preis der guenstigsten durch.
+        // Anyone who can choose a variant also has to: otherwise the order
+        // would go through at the "starting from" price of the cheapest one.
         if ( Variant::all( $product_id ) && ! Variant::find( $product_id, $variant_key ) ) {
             wp_send_json_error( [ 'message' => 'Bitte eine Ausführung wählen.' ] );
         }
@@ -471,8 +471,8 @@ class ProductPage {
             wp_send_json_error( [ 'message' => 'Anbieter akzeptiert keine Onchain-Zahlungen.' ] );
         }
 
-        // Auch hier: bezahlt wird sofort, der Anbieter braucht trotzdem eine
-        // Lieferangabe.
+        // Same here: payment happens immediately, but the vendor still needs
+        // delivery details.
         $note = self::posted_note();
         if ( $note === '' ) {
             wp_send_json_error( [ 'message' => 'Bitte Lieferadresse oder Hinweis angeben.' ] );
@@ -482,14 +482,14 @@ class ProductPage {
         $table = $wpdb->prefix . 'sk_lightning_payments';
 
         /*
-         * Offene Bestellung wiederverwenden statt eine neue Adresse abzuleiten.
+         * Reuse an open order instead of deriving a new address.
          *
-         * Jede Ableitung schiebt den Zaehler am xpub des Anbieters eine Stelle
-         * weiter. Wer den Knopf wiederholt drueckt, treibt ihn sonst ueber die
-         * Luecke, die Wallets beim Wiederherstellen abtasten (ueblich 20) —
-         * eine spaetere Zahlung taucht in der Wallet dann nicht mehr auf. Beim
-         * zweiten Anlauf auf dieselbe Ware bekommt der Kaeufer daher dieselbe
-         * Adresse; das ist ohnehin das erwartete Verhalten.
+         * Every derivation advances the counter on the vendor's xpub by one
+         * step. Repeatedly pressing the button would otherwise push it past
+         * the gap that wallets scan when restoring (usually 20) — a later
+         * payment would then no longer show up in the wallet. So on a second
+         * attempt at the same item the buyer gets the same address; that is
+         * the expected behavior anyway.
          */
         $open = $wpdb->get_row(
             $wpdb->prepare(
@@ -545,9 +545,8 @@ class ProductPage {
             'payment_request' => 'bitcoin:' . $address . '?amount=' . $btc_amount,
             'status'          => 'pending',
             'context'         => 'onchain',
-            // Kurs mitschreiben wie beim Lightning-Weg: was ein Verkauf in
-            // Franken oder Euro wert war, laesst sich spaeter nicht mehr
-            // rekonstruieren.
+            // Record the rate the same as for the Lightning path: what a sale
+            // was worth in francs or euros can't be reconstructed later.
             'exchange_rate'   => $exchange_rate,
             'verify_url'      => $address,
             'buyer_ip_hash'   => ClientIp::hash(),

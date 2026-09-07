@@ -5,32 +5,32 @@ namespace SK\Modules\ShopImport;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Ausführungen eines Inserats — bearbeitbar ab einem grösseren Paket.
+ * Variants of a listing — editable from a larger package upward.
  *
- * Bewusst keine WooCommerce-Varianten: Deren Auswahl steckt im
- * Warenkorb-Formular, und das ist im Katalogmodus abgeschaltet. Was der
- * Käufer braucht, ist die Information „gibt es in drei Ausführungen, ab
- * 169 Franken" — kaufen kann er ohnehin nicht über den Warenkorb, er meldet
- * sich beim Verkäufer.
+ * Deliberately not WooCommerce variations: their selection lives in the
+ * cart form, which is disabled in catalog mode. What the buyer needs is
+ * the information "available in three variants, starting at 169 francs" —
+ * they can't buy through the cart anyway, they contact the seller.
  *
- * Der Datensatz ist derselbe, den auch der Import schreibt, samt Schlüssel
- * und eigenem Sats-Betrag je Ausführung.
+ * The data record is the same one the import writes, including the key
+ * and its own sats amount per variant.
  */
 final class Variants {
 
-    /** Pakete, die Ausführungen erlauben. Leer = aus der Paketgrösse abgeleitet. */
+    /** Packages that allow variants. Empty = derived from package size. */
     const OPTION_PACKS = 'sk_variants_packs';
 
-    /** Ab dieser Inseratszahl gilt ein Paket als gross genug (Delphin: 21). */
+    /** From this listing count a package counts as large enough (Delphin: 21). */
     const DEFAULT_MIN_PRODUCTS = 21;
 
     /**
-     * Ab wie vielen Produkten die Umsatzauswertung dazugehoert.
+     * From how many products the revenue report is included.
      *
-     * Hoeher als DEFAULT_MIN_PRODUCTS: Import und Ausfuehrungen gibt es ab
-     * Delphin, die Auswertung erst ab Hai. Bewusst ueber die Produktzahl und
-     * nicht ueber den Paketnamen — Pakete lassen sich umbenennen, und eine
-     * feste ID waere nach dem naechsten Anlegen falsch.
+     * Higher than DEFAULT_MIN_PRODUCTS: import and variants are available
+     * from Delphin upward, the report only from Hai upward. Deliberately
+     * based on the product count and not the package name — packages can
+     * be renamed, and a fixed ID would become wrong after the next one is
+     * created.
      */
     const REVENUE_MIN_PRODUCTS = 50;
 
@@ -41,7 +41,7 @@ final class Variants {
     }
 
     /**
-     * Pakete, die Ausführungen erlauben.
+     * Packages that allow variants.
      *
      * @return int[]
      */
@@ -59,8 +59,8 @@ final class Variants {
         foreach ( $ids as $id ) {
             $count = (int) get_post_meta( $id, '_no_of_product', true );
 
-            // -1 heisst unbegrenzt. Ohne diesen Zweig faellt ausgerechnet das
-            // groesste Paket aus der Freischaltung, weil -1 kleiner als 21 ist.
+            // -1 means unlimited. Without this branch, the largest package
+            // would be the one excluded from unlocking, because -1 is less than 21.
             if ( $count === -1 || $count >= self::DEFAULT_MIN_PRODUCTS ) {
                 $packs[] = (int) $id;
             }
@@ -70,14 +70,14 @@ final class Variants {
     }
 
     /**
-     * Erlaubt dieses Paket Ausfuehrungen? Fuer die Paketkarte im Abo-Bereich.
+     * Does this package allow variants? For the package card in the subscription area.
      */
     public static function pack_allows( int $pack_id ): bool {
         return $pack_id > 0 && in_array( $pack_id, self::allowed_packs(), true );
     }
 
     /**
-     * Gehoert die Umsatzauswertung zu diesem Paket?
+     * Does the revenue report belong to this package?
      */
     public static function revenue_pack_allows( int $pack_id ): bool {
         if ( $pack_id <= 0 ) {
@@ -86,12 +86,12 @@ final class Variants {
 
         $count = (int) get_post_meta( $pack_id, '_no_of_product', true );
 
-        // -1 heisst unbegrenzt, siehe allowed_packs().
+        // -1 means unlimited, see allowed_packs().
         return $count === -1 || $count >= self::REVENUE_MIN_PRODUCTS;
     }
 
     /**
-     * Gehoert sie zum Paket dieses Verkaeufers?
+     * Does it belong to this vendor's package?
      */
     public static function revenue_allowed( int $vendor_id = 0 ): bool {
         $vendor_id = $vendor_id ?: get_current_user_id();
@@ -113,7 +113,7 @@ final class Variants {
     }
 
     /**
-     * Name des günstigsten Pakets, das Ausführungen erlaubt — für den Hinweis.
+     * Name of the cheapest package that allows variants — for the notice.
      */
     public static function cheapest_allowed_pack(): ?array {
         $best = null;
@@ -161,15 +161,15 @@ final class Variants {
         $variants = $post_id ? self::get( $post_id ) : [];
         $pack     = self::cheapest_allowed_pack();
 
-        // Einheit des Inserats — bei importierten Artikeln ist das die
-        // Waehrung aus der Datei, sonst Sats.
+        // Unit of the listing — for imported items this is the currency
+        // from the file, otherwise sats.
         $currency = PriceUnit::current( $post_id );
 
         include SK_SHOP_IMPORT_PATH . '/templates/variants-field.php';
     }
 
     /**
-     * Ausführungen speichern.
+     * Save variants.
      */
     public function save( $post_id ): void {
         $post_id = (int) $post_id;
@@ -177,8 +177,8 @@ final class Variants {
             return;
         }
 
-        // Ohne passendes Paket wird nichts geschrieben — und Vorhandenes
-        // bleibt unangetastet, statt beim Speichern still zu verschwinden.
+        // Without a matching package, nothing is written — and any existing
+        // data stays untouched instead of silently disappearing on save.
         if ( ! self::is_allowed() ) {
             return;
         }
@@ -190,8 +190,8 @@ final class Variants {
         $names  = array_map( 'sanitize_text_field', wp_unslash( $_POST['sk_variant_name'] ) );
         $prices = isset( $_POST['sk_variant_price'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['sk_variant_price'] ) ) : [];
 
-        // Dieselbe Einheit wie der Inseratspreis — zwei Einheiten in einem
-        // Inserat waeren nicht vergleichbar und der "ab"-Preis waere Unsinn.
+        // Same unit as the listing price — two units in one listing wouldn't
+        // be comparable, and the "from" price would be nonsensical.
         $currency = PriceUnit::posted( $post_id );
 
         $existing = [];
@@ -221,8 +221,8 @@ final class Variants {
             }
 
             $clean[] = [
-                // Vorhandenen Schluessel behalten, damit spaetere Verweise —
-                // etwa ein Sofortkauf ueber sk_payments — nicht ins Leere gehen.
+                // Keep the existing key so later references — e.g. an instant
+                // purchase via sk_payments — don't point into thin air.
                 'key'      => $existing[ $name ] ?? substr( md5( $name ), 0, 12 ),
                 'name'     => $name,
                 'price'    => $fiat,
@@ -240,7 +240,7 @@ final class Variants {
         update_post_meta( $post_id, Importer::META_VARIANTS, $clean );
         update_post_meta( $post_id, Importer::META_FROM, count( $clean ) > 1 ? 1 : 0 );
 
-        // Der Inseratspreis ist der guenstigste — daher "ab".
+        // The listing price is the cheapest one — hence "from".
         $lowest = null;
         foreach ( $clean as $variant ) {
             if ( $variant['sats'] === null || $variant['sats'] <= 0 ) {
@@ -255,10 +255,10 @@ final class Variants {
             return;
         }
 
-        // Bei Fiat denselben Betrag hinterlegen wie der Import: daran haengen
-        // der Klammerzusatz auf der Produktseite und die taegliche
-        // Kursnachfuehrung. Ohne ihn stuende der Sats-Preis handgepflegter
-        // Inserate still, waehrend importierte mitwandern.
+        // For fiat, store the same amount as the import: the parenthetical
+        // note on the product page and the daily rate update both depend on
+        // it. Without it, the sats price of manually maintained listings
+        // would stand still while imported ones keep moving with the rate.
         if ( $lowest['price'] !== null ) {
             update_post_meta( $post_id, Importer::META_FIAT, $lowest['price'] );
             update_post_meta( $post_id, Importer::META_CURRENCY, $currency );

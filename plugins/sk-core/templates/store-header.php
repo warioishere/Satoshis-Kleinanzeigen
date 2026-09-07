@@ -54,9 +54,9 @@ if ( 'layout3' === $profile_layout ) {
                             <h1 class="store-name">
                                 <?php echo esc_html( $store_user->get_shop_name() ); ?>
                                 <?php
-                                // Inline statt ueber einen Hook: das Abzeichen
-                                // gehoert neben den Namen, nicht in eine
-                                // Erweiterungsstelle.
+                                // Inline instead of via a hook: the badge
+                                // belongs next to the name, not in an
+                                // extension point.
                                 if ( function_exists( 'sk_verified_badge' ) ) {
                                     echo sk_verified_badge( $store_user->get_id() ); // phpcs:ignore WordPress.Security.EscapeOutput
                                 }
@@ -83,12 +83,12 @@ if ( 'layout3' === $profile_layout ) {
 
                             <?php
                             /*
-                             * Die E-Mail-Adresse stand hier als mailto-Link im
-                             * Quelltext. antispambot() kodiert nur ein paar
-                             * Zeichen als HTML-Entities — das loest jeder
-                             * Scraper in einer Zeile auf. Sie erscheint jetzt
-                             * unter dem Banner in der Kontaktliste und wird
-                             * erst auf Klick geladen.
+                             * The email address used to sit here as a mailto
+                             * link in the source. antispambot() only encodes
+                             * a few characters as HTML entities — any scraper
+                             * decodes that in one line. It now appears below
+                             * the banner in the contact list and is only
+                             * loaded on click.
                              */
                             ?>
 
@@ -121,9 +121,9 @@ if ( 'layout3' === $profile_layout ) {
     </div> <!-- .profile-frame -->
 
     <?php
-    // Kontaktwege unter dem Banner statt darin: im Kopf standen sie zwischen
-    // Adresse und Bewertung und gingen unter, sobald der Anbieter mehr als
-    // einen Weg anbietet.
+    // Contact methods below the banner instead of inside it: in the header
+    // they sat between address and rating and got lost as soon as the
+    // vendor offered more than one method.
     $sk_contacts = \SK\Core\Dashboard\Modules\ContactDetails::contact_list_html( $store_user->get_id() );
     if ( $sk_contacts !== '' ) {
         echo '<div class="sk-store-contacts">' . $sk_contacts . '</div>'; // phpcs:ignore

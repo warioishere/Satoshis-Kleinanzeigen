@@ -7,11 +7,11 @@ defined( 'ABSPATH' ) || exit;
 final class Install {
 
     /**
-     * Eine Zeile je Inserat, Kanal, Tag und Besucher.
+     * One row per listing, channel, day and visitor.
      *
-     * Damit liefert dieselbe Tabelle beide Groessen: SUM(clicks) sind alle
-     * Klicks, COUNT(*) die eindeutigen. Der Besucher-Hash rotiert taeglich und
-     * enthaelt keine IP.
+     * This way the same table yields both metrics: SUM(clicks) is all
+     * clicks, COUNT(*) the unique ones. The visitor hash rotates daily and
+     * contains no IP.
      */
     public static function install(): void {
         global $wpdb;

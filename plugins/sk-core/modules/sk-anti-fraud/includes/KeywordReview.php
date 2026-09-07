@@ -35,16 +35,15 @@ class KeywordReview {
         add_action( 'sk_dashboard_content_inside_before', [ $this, 'show_vendor_notice' ] );
 
         /*
-         * Der Hinweis oben erreicht den Anbieter nur, wenn er die
-         * Inseratsliste oeffnet — nach dem Veroeffentlichen landet er aber auf
-         * der Bearbeiten-Seite, und die feuert diesen Haken nicht. Zusammen mit
-         * der Lebensdauer des Transients hiess das: er sieht sein Inserat als
-         * Entwurf und erfaehrt nie, warum. Auf Live hat genau das jemand zwei
-         * Mal am selben Tag erneut veroeffentlicht.
+         * The notice above only reaches the vendor if they open the listing
+         * list — but after publishing they land on the edit page, and that
+         * doesn't fire this hook. Combined with the transient's lifetime,
+         * this meant they saw their listing as a draft and never found out
+         * why. On live, exactly this led someone to republish twice on the
+         * same day.
          *
-         * Deshalb hier ein zweiter Hinweis, der nicht an einem Transient
-         * haengt, sondern am Zustand des Inserats: er steht so lange da, bis
-         * die Pruefung durch ist.
+         * Hence a second notice here that doesn't depend on a transient but
+         * on the listing's state: it stays there until the review is done.
          */
         add_action( 'sk_product_content_inside_area_before', [ $this, 'show_listing_notice' ] );
     }
@@ -173,10 +172,10 @@ class KeywordReview {
     }
 
     /**
-     * Nach der Pruefung freigeben.
+     * Approve after review.
      *
-     * Die Marke wird vor dem Veroeffentlichen gesetzt, sonst hielte
-     * check_on_publish() das Inserat im selben Atemzug wieder zurueck.
+     * The flag is set before publishing, otherwise check_on_publish() would
+     * hold the listing back again in the same breath.
      */
     public static function approve( int $product_id ): bool {
         $post = get_post( $product_id );
@@ -230,7 +229,7 @@ class KeywordReview {
     }
 
     /**
-     * Hinweis direkt nach dem Veroeffentlichen, auf der Inseratsliste.
+     * Notice shown right after publishing, on the listing list.
      */
     public function show_vendor_notice(): void {
         if ( ! is_user_logged_in() ) {
@@ -250,10 +249,10 @@ class KeywordReview {
     }
 
     /**
-     * Hinweis auf der Bearbeiten-Seite, solange die Pruefung laeuft.
+     * Notice on the edit page while the review is in progress.
      *
-     * Haengt am Zustand des Inserats statt an einem Transient: wer die Seite
-     * spaeter wieder oeffnet, sieht denselben Hinweis erneut.
+     * Depends on the listing's state rather than a transient: whoever
+     * reopens the page later sees the same notice again.
      */
     public function show_listing_notice(): void {
         $post = get_post();
@@ -278,7 +277,7 @@ class KeywordReview {
     }
 
     /**
-     * Die Meldung selbst. Kein eigener Abstand noetig — den bringt .sk-alert mit.
+     * The notice itself. No extra spacing needed — .sk-alert already provides it.
      */
     private function render_notice( string $title ): void {
         ?>

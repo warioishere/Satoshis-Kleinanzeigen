@@ -120,8 +120,8 @@ if ( ! function_exists( 'sk_form_input' ) ) {
 		$placeholder   = $args['placeholder'] ?? '';
 		$required      = ! empty( $args['required'] );
 		$disabled      = ! empty( $args['disabled'] );
-		// Fuer Werte, die der Nutzer kopieren soll: disabled liesse sich in den
-		// meisten Browsern nicht markieren, readonly schon.
+		// For values the user is meant to copy: disabled can't be selected
+		// in most browsers, but readonly can.
 		$readonly      = ! empty( $args['readonly'] );
 		$step          = $args['step'] ?? '';
 		$min           = $args['min'] ?? '';

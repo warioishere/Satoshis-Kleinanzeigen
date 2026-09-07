@@ -54,20 +54,20 @@ $post_statuses = sk_get_available_post_status( $post->ID );
 
         <?php
         /*
-         * Nostr: entschieden wird es hier am Inserat, nicht mehr zusaetzlich
-         * im Anbieterprofil. Vorgabe ist aus — in ein fremdes Netz zu
-         * veroeffentlichen sollte nicht ungefragt geschehen.
+         * Nostr: the decision is made here on the listing, no longer
+         * additionally on the vendor profile. Default is off — publishing to
+         * a foreign network shouldn't happen without being asked.
          */
         if ( sk_module_active( 'sk_nostr_market' ) && sk_get_option( 'sk_nostr_market_enabled', 'sk_nostr_market', 'off' ) === 'on' ) :
             $nostr_checked = get_post_meta( $post_id, '_sk_nostr_market_post', true ) === '1';
 
             /*
-             * Hat der Anbieter ueberhaupt eine Nostr-Identitaet?
+             * Does the vendor even have a Nostr identity?
              *
-             * Ohne eine geht sein Inserat gar nicht auf Nostr: unter unserem
-             * Schluessel veroeffentlichen wir nichts fuer ihn. Das ist der
-             * Moment, in dem er das erfahren sollte — nicht irgendwo in den
-             * Einstellungen, sondern hier, wo er die Option einschaltet.
+             * Without one, their listing can't go on Nostr at all: we won't
+             * publish anything for them under our own key. This is the
+             * moment they should learn that — not buried somewhere in
+             * settings, but right here where they enable the option.
              */
             $nostr_uid  = (int) get_current_user_id();
             $hat_key    = ! empty( get_user_meta( $nostr_uid, 'nostr_public_key', true ) );

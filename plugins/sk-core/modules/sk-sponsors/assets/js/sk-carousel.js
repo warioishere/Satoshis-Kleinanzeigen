@@ -1,5 +1,5 @@
 /*
- * Uebernommen aus dem Plugin wp-post-image-carousel 2.0.3.
+ * Adopted from the plugin wp-post-image-carousel 2.0.3.
  */
 
 (function(){
@@ -26,7 +26,7 @@
       } catch(_) {}
       return; // no sliding logic for vertical; layout/CSS remain untouched
     }
-// Sliding: horizontal nutzt Breite des Viewports; vertikal nutzt Höhe des Viewports
+// Sliding: horizontal uses the viewport width; vertical uses the viewport height
     function stepSize(){ return dir === 'vertical' ? root.clientHeight : root.clientWidth; }
 
     var offset = 0;

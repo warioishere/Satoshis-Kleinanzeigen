@@ -5,39 +5,39 @@ namespace SK\Modules\ShopImport;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Katalog eines Shopify-Shops über /products.json holen.
+ * Fetch a Shopify shop's catalog via /products.json.
  *
- * Der Weg über die CSV bleibt der allgemeine — er ist der einzige für
- * WooCommerce und der Rückfall, wenn ein Shop diesen Endpunkt abgeschaltet
- * hat. Für Shopify lohnt der zweite Weg trotzdem: dort liegen Ausführungen
- * und Bilder verschachtelt im Produkt, während die CSV sie flachklopft und
- * über den Handle wieder zusammengesucht werden müssten. Eine Zuordnung von
- * Spalten entfällt damit ebenso wie das Raten.
+ * The CSV path remains the general one — it's the only option for
+ * WooCommerce, and the fallback when a shop has this endpoint disabled.
+ * For Shopify, the second path still pays off: there, variants and images
+ * are nested inside the product, while the CSV flattens them and they'd
+ * have to be reassembled via the handle. This removes both column mapping
+ * and guessing.
  *
- * Der Endpunkt ist öffentlich, es braucht also keine Zugangsdaten. Er zeigt
- * nur, was im Online-Store veröffentlicht ist — Entwürfe und archivierte
- * Artikel fehlen, was für einen Katalogimport eher richtig als falsch ist.
+ * The endpoint is public, so no credentials are needed. It only shows
+ * what's published in the online store — drafts and archived items are
+ * missing, which is more correct than not for a catalog import.
  *
- * Die Shopadresse gibt der Händler selbst ein. Sie ist damit Nutzereingabe;
- * der Abruf läuft deshalb über wp_safe_remote_get(), das interne
- * Adressbereiche abweist, geholt wird nur von einer bestätigten Domain, und
- * die Seite steht ohnehin nur freigeschalteten Händlern offen.
+ * The dealer enters the shop URL themselves. It is therefore user input;
+ * the fetch runs via wp_safe_remote_get(), which rejects internal address
+ * ranges, fetching only happens from a confirmed domain, and the page is
+ * open only to enabled dealers anyway.
  */
 final class Shopify {
 
-    /** Höchstzahl je Abruf; mehr gibt Shopify nicht heraus. */
+    /** Maximum per fetch; Shopify doesn't give out more. */
     const PER_PAGE = 250;
 
-    /** Notbremse gegen einen endlos blätternden Katalog. */
+    /** Safety brake against a catalog that keeps paging forever. */
     const MAX_PAGES = 20;
 
-    /** Sekunden je Abruf. */
+    /** Seconds per fetch. */
     const TIMEOUT = 20;
 
     /**
-     * Adresse des Katalogs zu einer Shopadresse.
+     * The catalog URL for a shop URL.
      *
-     * @return string Leer, wenn sich daraus keine brauchbare Adresse ergibt.
+     * @return string Empty if no usable URL can be derived from it.
      */
     public static function catalog_url( string $shop_url, int $page = 1 ): string {
         $shop_url = trim( $shop_url );
@@ -46,7 +46,7 @@ final class Shopify {
             return '';
         }
 
-        // Ohne Schema wird die Adresse von wp_parse_url als Pfad gelesen.
+        // Without a scheme, wp_parse_url would read the URL as a path.
         if ( ! preg_match( '#^https?://#i', $shop_url ) ) {
             $shop_url = 'https://' . ltrim( $shop_url, '/' );
         }
@@ -64,9 +64,9 @@ final class Shopify {
     }
 
     /**
-     * Den ganzen Katalog holen, Seite für Seite.
+     * Fetch the whole catalog, page by page.
      *
-     * @return array<int,array>|\WP_Error Rohe Produkte, wie Shopify sie liefert.
+     * @return array<int,array>|\WP_Error Raw products, as Shopify delivers them.
      */
     public static function fetch( string $shop_url ) {
         if ( self::catalog_url( $shop_url ) === '' ) {
@@ -95,7 +95,7 @@ final class Shopify {
                 return new \WP_Error(
                     'sk_shopify_http',
                     sprintf(
-                        /* translators: %d: HTTP-Statuscode. */
+                        /* translators: %d: HTTP status code. */
                         __( 'Der Shop antwortet mit Status %d. Entweder ist es kein Shopify-Shop, oder der Katalog ist dort nicht öffentlich.', 'sk-core' ),
                         $code
                     )
@@ -116,7 +116,7 @@ final class Shopify {
 
             $products = array_merge( $products, $batch );
 
-            // Eine nicht volle Seite ist die letzte.
+            // A page that isn't full is the last one.
             if ( count( $batch ) < self::PER_PAGE ) {
                 break;
             }
@@ -130,10 +130,10 @@ final class Shopify {
     }
 
     /**
-     * Rohe Shopify-Produkte in die Form bringen, die der Importer erwartet.
+     * Bring raw Shopify products into the shape the importer expects.
      *
-     * Dieselben Schlüssel wie Catalog::build() — Importer, Job, Quota und
-     * Variants merken dadurch nicht, aus welcher Quelle ein Artikel stammt.
+     * The same keys as Catalog::build() — this way, Importer, Job, Quota,
+     * and Variants don't notice which source an item came from.
      *
      * @param array<int,array> $products
      * @return array<int,array>
@@ -166,14 +166,14 @@ final class Shopify {
                 'categories'  => self::category( $product ),
                 'images'      => self::images( $product ),
                 'parent'      => '',
-                // Der Endpunkt gibt ohnehin nur Veröffentlichtes heraus; die
-                // Prüfung bleibt, falls ein Shop das Feld doch einmal leer lässt.
+                // The endpoint gives out only published items anyway; the
+                // check stays in case a shop leaves the field empty regardless.
                 'draft'       => empty( $product['published_at'] ),
                 'variants'    => $variants,
             ];
 
             if ( empty( $variants ) ) {
-                // Ein Produkt ohne echte Auswahl trägt den Preis selbst.
+                // A product without a real selection carries its own price.
                 $item['price'] = is_array( $first ) ? trim( (string) ( $first['price'] ?? '' ) ) : '';
             } else {
                 $item['price'] = self::lowest_price( $variants );
@@ -189,12 +189,12 @@ final class Shopify {
     }
 
     /**
-     * Ausführungen eines Produkts.
+     * A product's variants.
      *
-     * Shopify legt auch für ein Produkt ohne Auswahl eine Variante an, die
-     * dann "Default Title" heisst. Die ist keine Ausführung, sondern das
-     * Produkt selbst — würde man sie übernehmen, trüge jedes einzelne
-     * Inserat eine sinnlose Ausführung dieses Namens.
+     * Shopify creates a variant even for a product with no real selection,
+     * named "Default Title". That isn't a variant, it's the product
+     * itself — carrying it over would give every single listing a
+     * meaningless variant with that name.
      *
      * @return array<int,array{name:string,price:string,sku:string}>
      */
@@ -233,7 +233,7 @@ final class Shopify {
     }
 
     /**
-     * Bilder als kommagetrennte Liste — die Form, die apply_images() liest.
+     * Images as a comma-separated list — the format apply_images() reads.
      */
     private static function images( array $product ): string {
         $urls = [];
@@ -250,12 +250,12 @@ final class Shopify {
     }
 
     /**
-     * Was bei Shopify einer Kategorie am nächsten kommt.
+     * Whatever comes closest to a category in Shopify.
      *
-     * product_type ist das Feld, mit dem ein Shop sein Sortiment gliedert
-     * ("ASIC", "Upgrade Kit"). Fehlt es, dient das erste Schlagwort als
-     * Anhaltspunkt — die Zuordnung auf eine SK-Kategorie trifft ohnehin der
-     * Händler im Formular.
+     * product_type is the field a shop uses to organize its range ("ASIC",
+     * "Upgrade Kit"). If it's missing, the first tag serves as a clue —
+     * the mapping to an SK category is decided by the dealer in the form
+     * anyway.
      */
     private static function category( array $product ): string {
         $type = trim( (string) ( $product['product_type'] ?? '' ) );

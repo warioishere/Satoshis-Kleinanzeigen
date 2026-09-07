@@ -7,12 +7,12 @@ use SK\Core\Abstracts\SkShortcode;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * [sk_sponsors] — Sponsorenraster für die Startseite.
+ * [sk_sponsors] — sponsor grid for the homepage.
  *
- * Beispiele:
+ * Examples:
  *   [sk_sponsors tier="top" limit="3" heading="Top Unterstützer"]
  *   [sk_sponsors tier="standard" heading="Alle Unterstützer"]
- *   [sk_sponsors]                          (alle, Top zuerst)
+ *   [sk_sponsors]                          (all, top tier first)
  */
 class Shortcode extends SkShortcode {
 
@@ -39,8 +39,8 @@ class Shortcode extends SkShortcode {
                 'tier'    => '',
                 'limit'   => 0,
                 'heading' => '',
-                // 0 = wie bisher: beide Bloecke standen auf drei Spalten
-                // (grid-lg-col-3). Ein gesetzter Wert gewinnt.
+                // 0 = as before: both blocks were fixed at three columns
+                // (grid-lg-col-3). An explicitly set value wins.
                 'columns' => 0,
             ],
             $atts,

@@ -8,8 +8,8 @@ defined( 'ABSPATH' ) || exit;
  * Check Bitcoin blockchain for incoming payments.
  *
  * Priority:
- *   1. Fulcrum (Electrum Protocol via SSL) — eigener Server, kein Rate-Limit
- *   2. mempool.space REST API — öffentlicher Fallback
+ *   1. Fulcrum (Electrum Protocol via SSL) — our own server, no rate limit
+ *   2. mempool.space REST API — public fallback
  */
 class BlockchainChecker {
 
@@ -101,7 +101,7 @@ class BlockchainChecker {
         );
 
         if ( ! $socket ) {
-            return new \WP_Error( 'fulcrum_connect', "Fulcrum-Verbindung fehlgeschlagen: {$errstr}" );
+            return new \WP_Error( 'fulcrum_connect', "Fulcrum connection failed: {$errstr}" );
         }
 
         stream_set_timeout( $socket, self::FULCRUM_TIMEOUT );
@@ -209,7 +209,7 @@ class BlockchainChecker {
 
         $written = @fwrite( $socket, $request );
         if ( $written === false ) {
-            return new \WP_Error( 'fulcrum_write', 'Fulcrum: Schreibfehler.' );
+            return new \WP_Error( 'fulcrum_write', 'Fulcrum: write error.' );
         }
 
         $response_line = @fgets( $socket, 1048576 ); // 1MB max line.
@@ -218,16 +218,16 @@ class BlockchainChecker {
             if ( ! empty( $info['timed_out'] ) ) {
                 return new \WP_Error( 'fulcrum_timeout', 'Fulcrum: Timeout.' );
             }
-            return new \WP_Error( 'fulcrum_read', 'Fulcrum: Lesefehler.' );
+            return new \WP_Error( 'fulcrum_read', 'Fulcrum: read error.' );
         }
 
         $response = json_decode( $response_line, true );
         if ( ! is_array( $response ) ) {
-            return new \WP_Error( 'fulcrum_parse', 'Fulcrum: Ungültige Response.' );
+            return new \WP_Error( 'fulcrum_parse', 'Fulcrum: invalid response.' );
         }
 
         if ( isset( $response['error'] ) ) {
-            $msg = $response['error']['message'] ?? 'Unbekannter Fehler';
+            $msg = $response['error']['message'] ?? 'Unknown error';
             return new \WP_Error( 'fulcrum_error', "Fulcrum: {$msg}" );
         }
 
@@ -290,7 +290,7 @@ class BlockchainChecker {
             return 'a914' . $hash . '87';
         }
 
-        return new \WP_Error( 'unknown_address', 'Unbekanntes Adressformat.' );
+        return new \WP_Error( 'unknown_address', 'Unknown address format.' );
     }
 
     /**
@@ -302,7 +302,7 @@ class BlockchainChecker {
 
         $sep = strrpos( $address, '1' );
         if ( $sep === false || $sep < 1 ) {
-            return new \WP_Error( 'bech32_invalid', 'Ungültiges bech32-Format.' );
+            return new \WP_Error( 'bech32_invalid', 'Invalid bech32 format.' );
         }
 
         $data_part = substr( $address, $sep + 1 );
@@ -313,13 +313,13 @@ class BlockchainChecker {
         for ( $i = 0, $len = strlen( $data_no_checksum ); $i < $len; $i++ ) {
             $pos = strpos( $charset, $data_no_checksum[ $i ] );
             if ( $pos === false ) {
-                return new \WP_Error( 'bech32_char', 'Ungültiges bech32-Zeichen.' );
+                return new \WP_Error( 'bech32_char', 'Invalid bech32 character.' );
             }
             $values[] = $pos;
         }
 
         if ( empty( $values ) ) {
-            return new \WP_Error( 'bech32_empty', 'Leere bech32-Daten.' );
+            return new \WP_Error( 'bech32_empty', 'Empty bech32 data.' );
         }
 
         $version = $values[0];
@@ -327,7 +327,7 @@ class BlockchainChecker {
 
         $program_bytes = self::convert_bits( $program_5bit, 5, 8, false );
         if ( $program_bytes === null ) {
-            return new \WP_Error( 'bech32_convert', 'bech32 Bit-Konvertierung fehlgeschlagen.' );
+            return new \WP_Error( 'bech32_convert', 'bech32 bit conversion failed.' );
         }
 
         $program = '';
@@ -375,7 +375,7 @@ class BlockchainChecker {
         for ( $i = 0; $i < strlen( $input ); $i++ ) {
             $pos = strpos( $alphabet, $input[ $i ] );
             if ( $pos === false ) {
-                return new \WP_Error( 'base58_invalid', 'Ungültiges Base58-Zeichen.' );
+                return new \WP_Error( 'base58_invalid', 'Invalid Base58 character.' );
             }
             $num = gmp_add( gmp_mul( $num, gmp_init( 58 ) ), gmp_init( $pos ) );
         }
@@ -396,7 +396,7 @@ class BlockchainChecker {
         $expected = substr( hash( 'sha256', hash( 'sha256', $payload, true ), true ), 0, 4 );
 
         if ( $checksum !== $expected ) {
-            return new \WP_Error( 'base58_checksum', 'Base58Check Prüfsumme ungültig.' );
+            return new \WP_Error( 'base58_checksum', 'Base58Check checksum invalid.' );
         }
 
         return $payload;
@@ -430,7 +430,7 @@ class BlockchainChecker {
 
         $txs = json_decode( wp_remote_retrieve_body( $response ), true );
         if ( ! is_array( $txs ) ) {
-            return new \WP_Error( 'mempool_parse', 'Ungültige Response von mempool.space' );
+            return new \WP_Error( 'mempool_parse', 'Invalid response from mempool.space' );
         }
 
         $since_ts = self::to_timestamp( $since );

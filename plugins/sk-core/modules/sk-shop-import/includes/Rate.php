@@ -5,11 +5,11 @@ namespace SK\Modules\ShopImport;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Fiat nach Sats.
+ * Fiat to Sats.
  *
- * Nutzt die vorhandene Kursabfrage aus sk-payments (mempool.space mit Yadio
- * als Rückfall). Das Modul kann abgeschaltet sein — die Klassendatei wird
- * deshalb bei Bedarf direkt geladen, statt sie nachzubauen.
+ * Uses the existing rate lookup from sk-payments (mempool.space with Yadio
+ * as a fallback). That module can be disabled — so the class file is
+ * loaded directly on demand instead of duplicating it.
  */
 final class Rate {
 
@@ -42,7 +42,7 @@ final class Rate {
     }
 
     /**
-     * Aktueller Kurs, nur zur Anzeige.
+     * Current rate, for display only.
      *
      * @return float|\WP_Error
      */

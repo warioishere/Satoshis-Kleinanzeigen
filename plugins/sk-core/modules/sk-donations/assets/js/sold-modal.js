@@ -1,12 +1,12 @@
 /**
- * Spenden-Modal nach dem Loeschen eines Inserats.
+ * Donation modal after deleting a listing.
  *
- * Alle Klicks laufen ueber document, nicht ueber Referenzen auf das Modal:
- * Das Skript wird im Footer vor dem Modal ausgegeben, ein getElementById beim
- * Laden liefert deshalb null und die Behandlung waere still tot.
+ * All clicks go through document, not through references to the modal:
+ * the script is output in the footer before the modal, so a getElementById
+ * at load time would return null and the handler would be silently dead.
  *
- * Bezahlt wird ueber denselben BTCPay-Dialog wie Abos und Boosts. Faellt er
- * aus, fuehrt payUrl auf die normale Bezahlseite — kein Klick ins Leere.
+ * Payment goes through the same BTCPay dialog as subscriptions and boosts.
+ * If it fails, payUrl leads to the normal payment page — never a dead click.
  */
 (function () {
     'use strict';
@@ -23,9 +23,9 @@
     }
 
     /**
-     * Einblenden, nachdem sich die Seite gesetzt hat. Ohne die Verzoegerung
-     * erscheint das Modal im selben Moment wie das fertige Dashboard und
-     * wirkt wie ein Aufblitzen.
+     * Fade in after the page has settled. Without the delay, the modal
+     * appears at the same moment as the finished dashboard and looks
+     * like a flash.
      */
     function reveal() {
         var el = modal();

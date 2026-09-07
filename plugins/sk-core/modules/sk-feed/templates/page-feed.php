@@ -1,6 +1,6 @@
 <?php
 /**
- * Community Feed — eigenständiges Template.
+ * Community Feed — standalone template.
  * Three-column layout: Compose left, Feed center, Trending right.
  */
 

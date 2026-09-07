@@ -752,9 +752,9 @@ function sk_get_post_status( $status = '' ) {
         'sk_get_post_status', [
             'publish' => __( 'Online', 'sk-core' ),
             'draft'   => __( 'Draft', 'sk-core' ),
-            // Ein noch nicht gespeichertes Inserat hat auto-draft. Ohne
-            // Eintrag lieferte sk_get_post_status() dafuer einen leeren String
-            // und die Status-Pille im Produktformular blieb leer.
+            // A listing that hasn't been saved yet has auto-draft status.
+            // Without this entry, sk_get_post_status() returned an empty
+            // string for it and the status pill in the product form stayed blank.
             'auto-draft' => __( 'Draft', 'sk-core' ),
             'pending' => __( 'Pending Review', 'sk-core' ),
             'future'  => __( 'Scheduled', 'sk-core' ),
@@ -1096,8 +1096,8 @@ add_action( 'login_init', 'sk_redirect_to_register' );
  * @return bool
  */
 function sk_is_seller_enabled( $user_id ): bool {
-    // Der dritte Parameter von get_user_meta() ist $single, kein Standardwert —
-    // 'no' hat hier nur zufaellig als truthy gewirkt.
+    // The third parameter of get_user_meta() is $single, not a default value —
+    // 'no' only happened to act as truthy here.
     return apply_filters(
         'sk_is_seller_enabled',
         'yes' === get_user_meta( $user_id, 'sk_enable_selling', true )
@@ -2818,12 +2818,12 @@ if ( ! function_exists( 'sk_user_update_to_seller' ) ) {
 
 
 /**
- * Abzeichen fuer einen Nutzer mit bestaetigter Adresse.
+ * Badge for a user with a verified address.
  *
- * Zeigt, wo der Nachweis herkommt: der Titel nennt die bestaetigten Hosts,
- * damit das Abzeichen eine ueberpruefbare Aussage ist und kein Ornament.
+ * Shows where the proof comes from: the title names the verified hosts, so
+ * the badge is a checkable claim rather than mere decoration.
  *
- * @return string Leer, wenn nichts bestaetigt ist.
+ * @return string Empty if nothing is verified.
  */
 function sk_verified_badge( int $user_id ): string {
     if ( ! class_exists( \SK\Core\Verification\VerifiedLinks::class ) ) {
@@ -2840,15 +2840,15 @@ function sk_verified_badge( int $user_id ): string {
     $ziel  = (string) ( reset( $bestaetigt )['url'] ?? '' );
 
     $titel = sprintf(
-        /* translators: %s: Liste der bestaetigten Adressen. */
+        /* translators: %s: list of verified addresses. */
         __( 'Bestätigt: %s', 'sk-core' ),
         $hosts
     );
 
     /*
-     * Das Abzeichen fuehrt auf die Seite, mit der sich der Anbieter
-     * bestaetigt hat — nachpruefbar statt bloss behauptet. Bei mehreren
-     * Adressen auf die erste; alle stehen im Titel.
+     * The badge links to the page the vendor used to verify — checkable
+     * rather than merely claimed. With multiple addresses it links to the
+     * first one; all of them appear in the title.
      */
     if ( $ziel === '' ) {
         return sprintf(

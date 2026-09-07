@@ -1,6 +1,6 @@
 <?php
 /**
- * Dashboard template: Lightning Käufe/Verkäufe
+ * Dashboard template: Lightning purchases/sales
  *
  * Follows the same wrapper/card structure as Gesuche, Merkliste & Rezensionen.
  */
@@ -52,12 +52,12 @@ if ( $filter !== 'all' ) {
 }
 
 /*
- * Suche ueber Artikel, Gegenueber, Referenz und Sendungsnummer.
+ * Search across item, counterparty, reference and tracking number.
  *
- * Artikel und Namen stehen nicht in dieser Tabelle, deshalb werden die
- * passenden Kennnummern vorher gesammelt und als IN-Liste angehaengt. Bei
- * einem Katalog mit ein paar hundert Artikeln ist das billiger als ein JOIN
- * ueber posts und users bei jedem Seitenaufruf.
+ * Items and names aren't stored in this table, so the matching IDs are
+ * collected beforehand and appended as an IN list. For a catalog with a
+ * few hundred items, that is cheaper than a JOIN across posts and users
+ * on every page load.
  */
 $skp_search = isset( $_GET['suche'] ) ? trim( sanitize_text_field( wp_unslash( $_GET['suche'] ) ) ) : '';
 $skp_can_search = \SK\Modules\Payments\Notify::is_shop_pack( $user_id );
@@ -94,8 +94,8 @@ if ( $skp_search !== '' && $skp_can_search ) {
 
 $where_sql = implode( ' AND ', $where );
 
-// Blaettern statt stiller Abschneidung: die Liste endete bisher nach 50
-// Eintraegen, ohne das irgendwo zu sagen.
+// Paginate instead of silently truncating: the list used to end after 50
+// entries without saying so anywhere.
 $skp_per_page = 25;
 $skp_page     = max( 1, isset( $_GET['seite'] ) ? (int) $_GET['seite'] : 1 );
 $skp_total    = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE {$where_sql}", ...$args ) );
@@ -131,7 +131,7 @@ do_action( 'sk_dashboard_wrap_start' );
         <div class="skl-dashboard-wrapper">
             <div class="skl-dashboard-inner">
 
-                <?php /* ── Tab-Auswahl (Verkäufe / Käufe) ── */ ?>
+                <?php /* ── Tab selection (sales / purchases) ── */ ?>
                 <?php if ( $is_vendor ) : ?>
                 <div class="sk-review-status-filter">
                     <a href="<?php echo esc_url( add_query_arg( [ 'tab' => 'sales', 'filter' => 'all' ], $base_url ) ); ?>"
@@ -163,7 +163,7 @@ do_action( 'sk_dashboard_wrap_start' );
                 </div>
                 <?php endif; ?>
 
-                <?php /* ── Status-Filter (nicht bei Kommissionen) ── */ ?>
+                <?php /* ── Status filter (not for commissions) ── */ ?>
                 <?php if ( $tab !== 'commissions' ) : ?>
                 <div class="sk-review-status-filter">
                     <?php
@@ -186,7 +186,7 @@ do_action( 'sk_dashboard_wrap_start' );
                 </div>
                 <?php endif; ?>
 
-                <?php /* ── Kommissionen Tab ── */ ?>
+                <?php /* ── Commissions tab ── */ ?>
                 <?php if ( $tab === 'commissions' ) :
                     $com_table = $wpdb->prefix . 'sk_commissions';
                     $com_table_exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $com_table ) );
@@ -277,9 +277,9 @@ do_action( 'sk_dashboard_wrap_start' );
 
                 <?php
                 /*
-                 * Umsatzauswertung — nur im Shoptarif. Der Fiat-Betrag kommt
-                 * aus dem Kurs bei der Zahlung, nicht aus dem heutigen; nur so
-                 * taugt die Zahl fuer eine Steuererklaerung.
+                 * Revenue report — shop plan only. The fiat amount comes from
+                 * the rate at the time of payment, not today's; only that way
+                 * is the number usable for a tax return.
                  */
                 $skp_shop = \SK\Modules\Payments\Notify::is_shop_pack( $user_id );
 
@@ -308,9 +308,9 @@ do_action( 'sk_dashboard_wrap_start' );
                                 <?php endif; ?>
 
                                 <?php
-                                // Der Export gehoert erst ab dem Hai-Paket
-                                // dazu; ohne diese Pruefung stuende hier ein
-                                // Knopf, der mit 403 endet.
+                                // The export is only included starting with
+                                // the Hai package; without this check there
+                                // would be a button here that ends in a 403.
                                 if ( class_exists( \SK\Modules\ShopImport\Variants::class )
                                     && \SK\Modules\ShopImport\Variants::revenue_allowed() ) :
                                 ?>
@@ -383,7 +383,7 @@ do_action( 'sk_dashboard_wrap_start' );
                     </form>
                 <?php endif; ?>
 
-                <?php /* ── Transaktions-Liste ── */ ?>
+                <?php /* ── Transaction list ── */ ?>
                 <?php if ( empty( $payments ) ) : ?>
                     <div class="sk-reviews-empty">
                         <i class="fas fa-bolt"></i>
@@ -414,13 +414,13 @@ do_action( 'sk_dashboard_wrap_start' );
                             $rep_label = 'ab ' . wp_date( 'd.m.Y', strtotime( $p->reputation_at ) );
                         }
 
-                        // Ausfuehrung und Lieferangabe stehen an der Zahlung —
-                        // der Anbieter soll dafuer nicht in den Chat muessen.
+                        // Variant and delivery details are stored on the payment —
+                        // the vendor shouldn't have to dig through the chat for them.
                         $details  = \SK\Modules\Payments\ProductPage::order_details( $p->metadata ?? null );
                         $skp_ship = \SK\Modules\Payments\Shipping::get( $p );
 
-                        // Einmal bestimmt, damit Knopf in der Fusszeile und
-                        // Formular darunter nicht auseinanderlaufen koennen.
+                        // Determined once, so the button in the footer and the
+                        // form below it can't drift out of sync.
                         $skp_show_ship_form = $tab === 'sales'
                             && $skp_shop
                             && ! $skp_ship
@@ -544,8 +544,8 @@ do_action( 'sk_dashboard_wrap_start' );
 
                                 <?php
                                 /*
-                                 * Versandangabe eintragen — nur der Anbieter, nur im Shoptarif
-                                 * und nur wenn bezahlt wurde. Vorher waere es verfrueht.
+                                 * Enter shipping details — vendor only, shop plan only,
+                                 * and only once paid. Before that it would be premature.
                                  */
                                 if ( $skp_show_ship_form ) :
                                     ?>

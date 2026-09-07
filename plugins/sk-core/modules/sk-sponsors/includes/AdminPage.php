@@ -7,7 +7,7 @@ use SK\Core\Admin\PhpDashboard\AbstractPage;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * SK → Sponsoren: Liste, Klickzahlen, Import der Bestandssponsoren.
+ * SK → Sponsors: list, click counts, import of existing sponsors.
  */
 class AdminPage extends AbstractPage {
 
@@ -43,9 +43,9 @@ class AdminPage extends AbstractPage {
         $clicks       = Stats::by_sponsor( $from, $to );
         $total_clicks = Stats::total_clicks( $from, $to );
 
-        // Anzeige in derselben Reihenfolge wie auf der Startseite: erst die
-        // Top-Stufe, darin nach Monatsrate. compare_rank ist dieselbe Logik,
-        // die das Frontend benutzt — zwei Kopien wuerden auseinanderlaufen.
+        // Display in the same order as on the homepage: top tier first,
+        // sorted by monthly rate within it. compare_rank is the same logic
+        // the frontend uses — two copies would drift apart over time.
         usort(
             $sponsors,
             static function ( $a, $b ) {
@@ -66,7 +66,7 @@ class AdminPage extends AbstractPage {
         $rate_top        = Pricing::list_price( PostType::TIER_TOP );
         $rate_standard   = Pricing::list_price( PostType::TIER_STANDARD );
 
-        // Nach dem Anlegen einer Rechnung den Zahllink zum Weitergeben zeigen.
+        // After creating an invoice, show the payment link to hand over.
         $new_invoice = null;
         if ( strpos( $notice, 'invoice-' ) === 0 ) {
             $order_id = (int) substr( $notice, strlen( 'invoice-' ) );
@@ -75,8 +75,8 @@ class AdminPage extends AbstractPage {
             }
         }
 
-        // Was die Flaeche derzeit einbringt und was sie einbringen wuerde,
-        // wenn alle zahlten — die Luecke ist das eigentliche Argument.
+        // What the placement currently brings in and what it would bring in
+        // if everyone paid — the gap is the actual argument.
         $monthly_income = 0;
         $paying         = 0;
         foreach ( $sponsors as $sponsor ) {
@@ -155,11 +155,11 @@ class AdminPage extends AbstractPage {
     }
 
     /**
-     * Wie viele Altbeiträge sind noch nicht importiert?
+     * How many legacy posts have not been imported yet?
      *
-     * Maßgeblich ist dieselbe Auswahl wie beim Import (Ziel-URL vorhanden),
-     * sonst meldet die Seite "alles importiert", während der Import noch etwas
-     * zu tun hätte.
+     * Uses the same selection criteria as the import (target URL present),
+     * otherwise the page would report "everything imported" while the
+     * import would still have something to do.
      */
     private function legacy_pending_count(): int {
         $legacy = Migration::legacy_posts();

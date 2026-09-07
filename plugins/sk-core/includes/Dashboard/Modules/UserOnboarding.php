@@ -24,11 +24,11 @@ class UserOnboarding {
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
 
 		// Dashboard banner for existing users who missed onboarding.
-		// content_before feuert INNERHALB von .sk-dashboard-wrap, also direkt neben
-		// Sidebar und Inhalt. Der Banner wurde dadurch zum dritten Flex-Kind und
-		// nahm dem Inhalt die Breite (1440px: Sidebar 220 | Banner 639 | Inhalt 476).
-		// inside_before rendert ihn oberhalb des Inhalts, wie den Kontakt-Hinweis
-		// aus ContactDetails.
+		// content_before fires INSIDE .sk-dashboard-wrap, right next to the
+		// sidebar and content. That turned the banner into a third flex child
+		// and ate into the content's width (1440px: sidebar 220 | banner 639
+		// | content 476). inside_before renders it above the content instead,
+		// like the contact notice from ContactDetails.
 		add_action( 'sk_dashboard_content_inside_before', [ $this, 'nostr_identity_banner' ] );
 	}
 
@@ -60,9 +60,10 @@ class UserOnboarding {
 			return;
 		}
 
-		// Nicht SK_CORE_VERSION: die bleibt zwischen Releases stehen, waehrend
-		// sich die Datei aendert — der Browser behielt dann die alte. Wie die
-		// uebrigen Assets ueber den juengsten Zeitstempel im assets-Ordner.
+		// Not SK_CORE_VERSION: that stays the same between releases while
+		// the file itself changes — the browser would then keep the old
+		// one. Like the other assets, versioned via the newest timestamp
+		// in the assets folder.
 		$assets_version = function_exists( 'sk_assets_version' )
 			? sk_assets_version( SK_CORE_DIR . '/assets' )
 			: SK_CORE_VERSION;
@@ -245,12 +246,12 @@ class UserOnboarding {
 
 							<?php
 							/*
-							 * Der erzeugte Schluessel gehoert dem Nutzer, also muss er ihn
-							 * einmal zu sehen bekommen. Ohne ihn kann er seine Identitaet
-							 * nirgendwo sonst benutzen — sie waere nur bei uns etwas wert.
+							 * The generated key belongs to the user, so they need to see it
+							 * at least once. Without it, they can't use their identity
+							 * anywhere else — it would only be worth anything here with us.
 							 *
-							 * Er steht nicht im Markup, sondern wird erst geholt, wenn es
-							 * so weit ist: sonst laege er im HTML jedes Seitenaufrufs.
+							 * It's not in the markup, but fetched only when it's actually
+							 * needed: otherwise it would sit in the HTML of every page view.
 							 */
 							?>
 							<div id="uob-nostr-key" style="display:none;margin-top:16px;text-align:left;">
@@ -320,7 +321,7 @@ class UserOnboarding {
 
 		$user_id = get_current_user_id();
 
-		// "Später" auf dem Nostr-Banner — nur Banner dismissen, Onboarding-State nicht verändern.
+		// "Later" on the Nostr banner — just dismiss the banner, don't change the onboarding state.
 		if ( ! empty( $_POST['dismiss_nostr'] ) ) {
 			update_user_meta( $user_id, 'sk_nostr_banner_dismissed', 1 );
 			wp_send_json_success( [ 'message' => 'Banner dismissed.' ] );
@@ -412,10 +413,10 @@ class UserOnboarding {
 	}
 
 	/**
-	 * Skript und Konfiguration fuer das Anlegen einer Nostr-Identitaet.
+	 * Script and config for creating a Nostr identity.
 	 *
-	 * Wird vom Banner und von der Nostr/LN-Link-Seite gebraucht — beide rufen
-	 * denselben Endpunkt `sk_create_nostr_identity` mit demselben Nonce.
+	 * Needed by both the banner and the Nostr/LN link page — both call the
+	 * same `sk_create_nostr_identity` endpoint with the same nonce.
 	 */
 	public static function enqueue_nostr_script(): void {
 		$js_path = SK_CORE_DIR . '/assets/js/dashboard/nostr-banner.js';
@@ -446,10 +447,10 @@ class UserOnboarding {
 			return;
 		}
 
-		// Auf der Nostr/LN-Link-Seite waere der Banner doppelt: dort steht die
-		// Aktion selbst. isset() statt get_query_var(), weil die Rewrite-Regel
-		// die Query-Var auf '' setzt und get_query_var() das nicht von "nicht
-		// gesetzt" unterscheiden kann.
+		// On the Nostr/LN link page the banner would be redundant: the
+		// action itself is right there. isset() instead of get_query_var(),
+		// because the rewrite rule sets the query var to '' and
+		// get_query_var() can't tell that apart from "not set".
 		global $wp;
 		if ( isset( $wp->query_vars['auth-connector'] ) ) {
 			return;
@@ -464,8 +465,8 @@ class UserOnboarding {
 		if ( \SK\Modules\Auth\NostrIdentity::has_pubkey( $user_id ) ) {
 			return;
 		}
-		// User hat manuell einen npub in den Store-Settings eingetragen — auch ohne
-		// verknüpften Account eine bewusste Nostr-Präsenz, nicht mehr nerven.
+		// User manually entered an npub in the store settings — even without
+		// a linked account that's a deliberate Nostr presence, stop nagging.
 		$profile_settings = get_user_meta( $user_id, 'sk_profile_settings', true );
 		if ( is_array( $profile_settings ) && ! empty( $profile_settings['nostr'] ) ) {
 			return;
@@ -473,10 +474,10 @@ class UserOnboarding {
 		if ( get_user_meta( $user_id, 'sk_nostr_banner_dismissed', true ) ) {
 			return;
 		}
-		// Nur nennen, was auf dieser Installation auch wirklich laeuft. Die
-		// Nostr-Module lassen sich einzeln abschalten — auf Live sind
-		// sk_nostr_market, sk_zaps und sk_reputation aus, ein Versprechen
-		// "deine Inserate erscheinen auf Nostr" waere dort schlicht falsch.
+		// Only mention what actually runs on this installation. The Nostr
+		// modules can be toggled individually — on live, sk_nostr_market,
+		// sk_zaps, and sk_reputation are off, so a promise like "your
+		// listings appear on Nostr" would simply be wrong there.
 		$benefits = [];
 
 		if ( sk_module_active( 'sk_nostr_market' ) ) {
@@ -501,7 +502,7 @@ class UserOnboarding {
 				<p style="margin:4px 0 0;font-size:13px;">
 					<?php
 					printf(
-						/* translators: %s: Aufzaehlung der Funktionen, die eine Nostr-Identitaet freischaltet. */
+						/* translators: %s: list of features a Nostr identity unlocks. */
 						esc_html__( 'Damit möglich: %s.', 'sk-core' ),
 						esc_html( wp_sprintf_l( '%l', $benefits ) )
 					);
@@ -511,7 +512,7 @@ class UserOnboarding {
 					<?php
 					if ( $connector_url ) {
 						printf(
-							/* translators: %s: Link zur Seite Nostr/LN Link. */
+							/* translators: %s: link to the Nostr/LN Link page. */
 							wp_kses( __( 'Du hast schon einen Nostr-Account? Dann verknüpfe diesen unter <a href="%s">Nostr/LN Link</a>, statt hier einen neuen anzulegen.', 'sk-core' ), [ 'a' => [ 'href' => [] ] ] ),
 							esc_url( $connector_url )
 						);

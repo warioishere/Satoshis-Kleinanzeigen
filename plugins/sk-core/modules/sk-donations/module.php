@@ -5,18 +5,18 @@ namespace SK\Modules\Donations;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * SK Donations — Spenden mit sichtbarer Kostendeckung.
+ * SK Donations — donations with visible cost coverage.
  *
- * Ausgangslage (August 2026): Die Seite /spenden wurde in 90 Tagen 35 mal
- * aufgerufen, bei 10.637 Seitenaufrufen insgesamt; gespendet wurde dreimal,
- * alles am selben Tag im September 2025. Ein weiterer Link auf diese Seite
- * würde daran nichts ändern.
+ * Starting point (August 2026): the /spenden page was viewed 35 times in
+ * 90 days, out of 10,637 page views total; donations happened three times,
+ * all on the same day in September 2025. Another link to this page
+ * wouldn't change that.
  *
- * Deshalb ist die Bitte hier kein Link, sondern ein Element: Es nennt den
- * Monatsbedarf, den aktuellen Stand und bietet die Beträge direkt an. Bezahlt
- * wird über dieselbe Strecke wie Abos, Boosts und Sponsorenguthaben —
- * WooCommerce plus BTCPay —, damit jede Spende erfasst wird und der Balken
- * sich von selbst bewegt.
+ * That's why the ask here isn't a link but an element: it states the
+ * monthly need, the current total, and offers the amounts directly.
+ * Payment goes through the same path as subscriptions, boosts and sponsor
+ * credit — WooCommerce plus BTCPay — so every donation is captured and
+ * the bar moves on its own.
  */
 final class Module {
 

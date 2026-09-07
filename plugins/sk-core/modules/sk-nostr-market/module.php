@@ -163,13 +163,13 @@ final class Module {
         add_action( 'wp_trash_post', [ $this, 'on_product_deleted' ] );
         add_action( 'before_delete_post', [ $this, 'on_product_deleted' ] );
 
-        // Signieren im Browser, fuer Anbieter mit eigener Nostr-Erweiterung.
+        // Browser signing, for vendors with their own Nostr extension.
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_signing_js' ] );
 
-        // Auswahl der Identitaet im Inseratsformular.
+        // Identity selection in the listing form.
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_identity_js' ] );
 
-        // Nachrichten, die nur der Anbieter selbst oeffnen kann.
+        // Messages only the vendor themselves can open.
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_inbox_js' ] );
         add_action( 'wp_ajax_sk_nostr_pending_wraps', [ $this, 'ajax_pending_wraps' ] );
         add_action( 'wp_ajax_sk_nostr_deliver_decrypted', [ $this, 'ajax_deliver_decrypted' ] );
@@ -183,7 +183,7 @@ final class Module {
         add_action( 'wp_ajax_sk_nostr_market_cancel_delete', [ $this, 'ajax_cancel_delete' ] );
         add_action( 'wp_footer', [ $this, 'render_sign_modal' ] );
 
-        // Knopf "Erneut posten" auf der Inseratsseite im Adminbereich.
+        // "Repost" button on the listing edit screen in the admin area.
         add_action( 'add_meta_boxes', [ $this, 'add_repost_box' ] );
         add_action( 'admin_post_sk_nostr_repost', [ $this, 'handle_repost' ] );
         add_action( 'admin_notices', [ $this, 'repost_notice' ] );
@@ -197,19 +197,18 @@ final class Module {
     }
 
     /**
-     * Muss dieser Anbieter sein Inserat selbst signieren?
+     * Does this vendor have to sign their listing themselves?
      *
-     * Genau dann, wenn er einen eigenen Nostr-Schluessel mitbringt, wir ihn
-     * aber nicht haben — also bei Anmeldung ueber eine Nostr-Erweiterung. Sein
-     * privater Schluessel verlaesst dabei nie seinen Browser, also koennen wir
-     * in seinem Namen nichts signieren und muessen ihn fragen.
+     * Exactly when they bring their own Nostr key but we don't hold it —
+     * i.e. when logging in via a Nostr extension. Their private key never
+     * leaves their browser in that case, so we can't sign anything on their
+     * behalf and have to ask them.
      *
-     * Wer sich seine Identitaet beim Onboarding erzeugen liess, faellt nicht
-     * darunter: dessen Schluessel liegt verschluesselt bei uns, da signiert der
-     * Server ohne Rueckfrage.
+     * Anyone who had their identity generated during onboarding is excluded:
+     * their key sits with us encrypted, so the server signs without asking.
      *
-     * Frueher hing das an einer Einstellung, die nirgends geschrieben wurde —
-     * die Pruefung war damit immer falsch und der ganze Weg tot.
+     * This used to hinge on a setting that was never written anywhere — the
+     * check was therefore always false and the whole path dead.
      */
     public static function vendor_wants_self_sign( int $vendor_id ): bool {
         if ( empty( get_user_meta( $vendor_id, 'nostr_public_key', true ) ) ) {
@@ -224,10 +223,10 @@ final class Module {
     }
 
     /**
-     * Das Skript fuer die Identitaetsauswahl im Inseratsformular.
+     * The script for identity selection in the listing form.
      *
-     * Nur fuer Anbieter ohne eigenen Schluessel — alle anderen sehen den
-     * Kasten gar nicht, dann braucht es auch das Skript nicht.
+     * Only for vendors without their own key — everyone else never sees the
+     * box, so they don't need the script either.
      */
     public function enqueue_identity_js(): void {
         if ( ! is_user_logged_in() ) {
@@ -254,7 +253,7 @@ final class Module {
 
         wp_localize_script( 'sk-nostr-identity', 'skNostrIdentity', [
             'ajaxurl'     => admin_url( 'admin-ajax.php' ),
-            // Dieselbe Aktion wie im Onboarding, also derselbe Nonce.
+            // Same action as in onboarding, so the same nonce.
             'nonce'       => wp_create_nonce( 'uob_ajax_nonce' ),
             'i18nWorking' => __( 'Wird erstellt…', 'sk-core' ),
             'i18nRetry'   => __( 'Erneut versuchen', 'sk-core' ),
@@ -296,10 +295,10 @@ final class Module {
     }
 
     /**
-     * AJAX: was fuer den angemeldeten Anbieter zu oeffnen ist.
+     * AJAX: what needs opening for the logged-in vendor.
      *
-     * Die Ereignisse sind verschluesselt und lagen ohnehin offen auf den
-     * Relays — hier wird nichts preisgegeben, was nicht schon oeffentlich war.
+     * The events are encrypted and sat openly on the relays anyway — nothing
+     * is disclosed here that wasn't already public.
      */
     public function ajax_pending_wraps(): void {
         check_ajax_referer( 'sk_nostr_inbox', 'nonce' );
@@ -314,7 +313,7 @@ final class Module {
     }
 
     /**
-     * AJAX: eine im Browser geoeffnete Nachricht entgegennehmen.
+     * AJAX: accept a message opened in the browser.
      */
     public function ajax_deliver_decrypted(): void {
         check_ajax_referer( 'sk_nostr_inbox', 'nonce' );
@@ -392,7 +391,7 @@ final class Module {
     }
 
     /**
-     * AJAX: eine vorgemerkte Nachricht verwerfen, die sich nicht oeffnen liess.
+     * AJAX: discard a queued message that could not be opened.
      */
     public function ajax_drop_wrap(): void {
         check_ajax_referer( 'sk_nostr_inbox', 'nonce' );
@@ -410,11 +409,12 @@ final class Module {
     }
 
     /**
-     * Das Wartefenster fuer die Unterschrift.
+     * The waiting modal for the signature.
      *
-     * Steht nur im Dokument, wenn wirklich etwas wartet — das JavaScript wird
-     * unter derselben Bedingung geladen. Sichtbar wird es erst durch das
-     * Skript, damit es ohne JavaScript nicht als toter Kasten stehenbleibt.
+     * Only present in the document when something is actually waiting — the
+     * JavaScript is loaded under the same condition. It's only made visible
+     * by the script, so it doesn't sit there as a dead box without
+     * JavaScript.
      */
     public function render_sign_modal(): void {
         if ( ! wp_script_is( 'sk-nostr-sign', 'enqueued' ) ) {
@@ -440,11 +440,11 @@ final class Module {
     }
 
     /**
-     * AJAX: der Anbieter bricht ab.
+     * AJAX: the vendor cancels.
      *
-     * Die Wartemarke faellt, sonst wuerde bei jedem Seitenaufruf erneut
-     * gefragt. Das Inserat bleibt auf der Plattform, nur auf Nostr geht es
-     * nicht — beim naechsten Speichern wird wieder gefragt.
+     * The pending marker is cleared, otherwise it would ask again on every
+     * page load. The listing stays on the platform, it just doesn't go to
+     * Nostr — the next save asks again.
      */
     public function ajax_cancel_sign(): void {
         check_ajax_referer( 'sk_nostr_market_sign', 'nonce' );
@@ -461,9 +461,9 @@ final class Module {
     }
 
     /**
-     * AJAX: ein vom Anbieter signiertes Ereignis entgegennehmen und verteilen.
+     * AJAX: accept an event signed by the vendor and distribute it.
      *
-     * Signiert wurde es im Browser ueber window.nostr.signEvent() (NIP-07).
+     * It was signed in the browser via window.nostr.signEvent() (NIP-07).
      */
     public function ajax_publish_signed_event(): void {
         check_ajax_referer( 'sk_nostr_market_sign', 'nonce' );
@@ -476,10 +476,10 @@ final class Module {
         }
 
         /*
-         * Ohne diese Pruefung konnte ein angemeldeter Nutzer eine fremde
-         * Inseratsnummer schicken und dort die Ereigniskennung ueberschreiben.
-         * Der Abgleich des Schluessels allein genuegt nicht — er sagt nur, wer
-         * signiert hat, nicht wem das Inserat gehoert.
+         * Without this check, a logged-in user could send someone else's
+         * listing id and overwrite the event id stored there. Matching the
+         * key alone isn't enough — it only says who signed, not who owns the
+         * listing.
          */
         if ( ! current_user_can( 'edit_post', $post_id ) ) {
             wp_send_json_error( [ 'message' => 'Keine Berechtigung für dieses Inserat.' ] );
@@ -591,12 +591,12 @@ final class Module {
     }
 
     /**
-     * AJAX: keine Erweiterung da oder Signatur abgelehnt.
+     * AJAX: no extension available, or the signature was declined.
      *
-     * Frueher ging das Inserat dann unter dem Schluessel des Marktplatzes
-     * raus. Das faellt weg: ein Inserat traegt den Namen seines Anbieters,
-     * oder es geht nicht auf Nostr. Bleibt, die Vormerkung zu loeschen, sonst
-     * wuerde bei jedem Seitenaufruf erneut gefragt.
+     * This used to make the listing go out under the marketplace's key.
+     * That's gone: a listing carries its vendor's name, or it doesn't go to
+     * Nostr at all. What remains is clearing the pending marker, otherwise
+     * it would ask again on every page load.
      */
     public function ajax_fallback_sign(): void {
         $this->ajax_cancel_sign();
@@ -612,14 +612,14 @@ final class Module {
     }
 
     /**
-     * Soll dieses Inserat auf Nostr?
+     * Should this listing go to Nostr?
      *
-     * Entschieden wird das am Inserat selbst, unter "Weitere Optionen".
-     * Frueher stand darueber noch ein Schalter im Anbieterprofil; wer den
-     * uebersah, verstand nicht, warum das Kaestchen am Inserat nichts tat.
+     * Decided on the listing itself, under "More options". There used to
+     * also be a switch in the vendor profile above it; anyone who missed
+     * that didn't understand why the checkbox on the listing did nothing.
      *
-     * Vorgabe ist aus: Veroeffentlichen in ein fremdes Netz ist nichts, was
-     * ungefragt passieren sollte.
+     * Default is off: publishing to an outside network is nothing that
+     * should happen without being asked.
      */
     public static function product_wants_nostr( int $post_id ): bool {
         return get_post_meta( $post_id, '_sk_nostr_market_post', true ) === '1';
@@ -652,8 +652,8 @@ final class Module {
         }
 
         if ( $new_status === 'publish' && in_array( $old_status, [ 'draft', 'pending', 'auto-draft' ], true ) ) {
-            // Diese Pruefung fehlte: ein Entwurf, der veroeffentlicht wurde,
-            // ging auf Nostr, auch wenn das Kaestchen am Inserat leer war.
+            // This check was missing: a draft that got published went to
+            // Nostr even when the checkbox on the listing was unchecked.
             if ( ! self::product_wants_nostr( $post->ID ) ) {
                 return;
             }
@@ -676,14 +676,14 @@ final class Module {
         $vorhanden = ProductPublisher::has_event( $post_id );
 
         /*
-         * Das Kaestchen wird auf Prioritaet 5 gespeichert, also vor diesem
-         * Aufruf — der Stand hier ist der neue.
+         * The checkbox is saved at priority 5, i.e. before this call — the
+         * state read here is the new one.
          *
-         * Doppelte Posts kann es dabei nicht geben: veroeffentlicht wird nur,
-         * wenn noch kein Ereignis vermerkt ist, und beim Abschalten wird das
-         * bestehende geloescht und der Vermerk entfernt. Wer aus- und wieder
-         * einschaltet, bekommt ein neues Ereignis unter derselben Kennung
-         * ('d'), das die Clients ersetzen statt danebenzulegen.
+         * There can be no duplicate posts here: publishing only happens when
+         * no event is recorded yet, and turning it off deletes the existing
+         * one and removes the record. Anyone who turns it off and back on
+         * gets a new event under the same id ('d'), which clients replace
+         * rather than duplicate.
          */
         if ( $gewollt && ! $vorhanden ) {
             self::queue( $post_id, 'publish' );
@@ -717,10 +717,10 @@ final class Module {
     }
 
     /**
-     * Kasten auf der Inseratsseite im Adminbereich.
+     * Box on the listing edit screen in the admin area.
      *
-     * Gleiche Bedienung wie beim Telegram-Reposter nebenan: ein Knopf, der
-     * sofort sendet, statt auf den naechsten Speichervorgang zu warten.
+     * Same behavior as the Telegram reposter next to it: a button that sends
+     * immediately instead of waiting for the next save.
      */
     public function add_repost_box(): void {
         add_meta_box(
@@ -762,11 +762,11 @@ final class Module {
     }
 
     /**
-     * Sofort posten, ohne auf einen Speichervorgang zu warten.
+     * Post immediately, without waiting for a save.
      *
-     * Ein bestehender Beitrag wird vorher geloescht. Bei Kind 30402 ersetzt
-     * ihn ein neuer mit derselben Kennung ohnehin; das Loeschen ist fuer
-     * Clients gedacht, die ersetzbare Ereignisse nicht sauber behandeln.
+     * An existing event is deleted first. For kind 30402 a new one with the
+     * same id would replace it anyway; the delete is meant for clients that
+     * don't handle replaceable events cleanly.
      */
     public function handle_repost(): void {
         $post_id = isset( $_GET['post_id'] ) ? absint( $_GET['post_id'] ) : 0;
@@ -852,11 +852,10 @@ final class Module {
                 case 'publish':
                 case 'update':
                     /*
-                     * Bringt der Anbieter seinen Schluessel selbst mit, koennen
-                     * wir hier nicht signieren — er liegt in seinem Browser.
-                     * Statt unter unserem Namen zu veroeffentlichen, wird das
-                     * Inserat vorgemerkt; beim naechsten Seitenaufruf fragt die
-                     * Erweiterung nach seiner Unterschrift.
+                     * If the vendor brings their own key, we can't sign here —
+                     * it sits in their browser. Instead of publishing under
+                     * our name, the listing is queued; on the next page load
+                     * the extension asks for their signature.
                      */
                     $autor = (int) get_post_field( 'post_author', $item['post_id'] );
 

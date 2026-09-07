@@ -5,21 +5,22 @@ namespace SK\Modules\ShopImport;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Macht aus CSV-Zeilen eine Liste von Inseraten.
+ * Turns CSV rows into a list of listings.
  *
- * Ein WooCommerce-Export enthaelt drei Sorten Zeilen: eigenstaendige Produkte
- * (simple), Elternprodukte (variable) und deren Varianten (variation). Wuerde
- * man alle importieren, stuende dieselbe Ware mehrfach im Marktplatz — im
- * Beispielexport waren 42 von 70 Zeilen Varianten.
+ * A WooCommerce export contains three kinds of rows: standalone products
+ * (simple), parent products (variable), and their variations (variation). If
+ * all of them were imported, the same item would end up listed multiple
+ * times in the marketplace — in the sample export, 42 of 70 rows were
+ * variations.
  *
- * Varianten werden deshalb nicht zu eigenen Inseraten, sondern als Ausfuehrungen
- * an ihr Elternprodukt gehaengt. Ein variables Produkt hat selbst keinen Preis;
- * seiner wird der guenstigste Variantenpreis.
+ * Variations therefore don't become their own listings but are attached to
+ * their parent product as variants. A variable product has no price of its
+ * own; it gets the lowest variant price instead.
  */
 final class Catalog {
 
     /**
-     * @return array<int,array> Inserate mit Schluesseln
+     * @return array<int,array> Listings with keys
      *                          sku,name,description,short,price,categories,
      *                          images,variants,draft
      */
@@ -49,11 +50,11 @@ final class Catalog {
                 'categories'  => $get( $row, 'categories' ),
                 'images'      => $get( $row, 'images' ),
                 'parent'      => $get( $row, 'parent' ),
-                // Im Export steht 1 fuer veroeffentlicht und -1 fuer privat.
+                // In the export, 1 means published and -1 means private.
                 'draft'       => $get( $row, 'published' ) !== '' && $get( $row, 'published' ) !== '1',
             ];
 
-            // "variation" und "variation, virtual" beide erfassen.
+            // Catch both "variation" and "variation, virtual".
             if ( strpos( $type, 'variation' ) !== false ) {
                 $variations[] = $item;
                 continue;
@@ -62,8 +63,8 @@ final class Catalog {
             $parents[] = $item;
         }
 
-        // Varianten ihren Eltern zuordnen. Der Export verweist ueber die
-        // Artikelnummer oder ueber "id:<ID>".
+        // Match variations to their parents. The export refers to them via
+        // the SKU or via "id:<ID>".
         foreach ( $parents as &$parent ) {
             $parent['variants'] = [];
 
@@ -79,14 +80,14 @@ final class Catalog {
                 ];
             }
 
-            // Ein variables Produkt traegt keinen eigenen Preis.
+            // A variable product doesn't carry its own price.
             if ( $parent['price'] === '' && ! empty( $parent['variants'] ) ) {
                 $parent['price'] = self::lowest_price( $parent['variants'] );
                 $parent['from']  = true;
             }
 
-            // Derselbe Schluessel, den der Importer zum Wiederfinden benutzt —
-            // damit Auswahlkaestchen und Import garantiert dasselbe meinen.
+            // The same key the importer uses to look this item back up —
+            // so the checkbox and the import are guaranteed to mean the same thing.
             $parent['key'] = $parent['sku'] !== '' ? $parent['sku'] : md5( $parent['name'] );
         }
         unset( $parent );
@@ -108,7 +109,7 @@ final class Catalog {
     }
 
     /**
-     * Aus "Bitbox 02 - Bitcoin only" wird "Bitcoin only".
+     * "Bitbox 02 - Bitcoin only" becomes "Bitcoin only".
      */
     private static function variant_label( array $variation, array $parent ): string {
         $label = $variation['name'];
@@ -133,7 +134,7 @@ final class Catalog {
     }
 
     /**
-     * Kategorienamen, die im Export vorkommen — Grundlage der Zuordnung.
+     * Category names that occur in the export — the basis for mapping.
      *
      * @return string[]
      */

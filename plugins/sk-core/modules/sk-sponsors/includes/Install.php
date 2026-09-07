@@ -7,12 +7,12 @@ defined( 'ABSPATH' ) || exit;
 final class Install {
 
     /**
-     * Eine Zeile je Sponsor, Tag und Besucher.
+     * One row per sponsor, day, and visitor.
      *
-     * Damit liefert dieselbe Tabelle beide Zahlen, die man zum Verkaufen
-     * braucht: SUM(clicks) sind alle Klicks, COUNT(*) sind die eindeutigen.
-     * Der Besucher-Hash rotiert täglich (siehe Tracker::visitor_hash), er ist
-     * also kein tagübergreifendes Merkmal und speichert keine IP.
+     * This way the same table delivers both numbers needed for selling:
+     * SUM(clicks) is all clicks, COUNT(*) is the unique ones. The visitor
+     * hash rotates daily (see Tracker::visitor_hash), so it's not a
+     * cross-day identifier and stores no IP.
      */
     public static function install(): void {
         global $wpdb;
@@ -38,8 +38,8 @@ final class Install {
 
         dbDelta( $sql );
 
-        // Jede Guthabenbewegung wird protokolliert — ohne Beleg laesst sich
-        // einem zahlenden Partner nicht erklaeren, wofuer abgebucht wurde.
+        // Every balance movement is logged — without a record, a paying
+        // partner can't be shown what was deducted and why.
         $ledger = $wpdb->prefix . 'sk_sponsor_ledger';
 
         $sql_ledger = "CREATE TABLE {$ledger} (

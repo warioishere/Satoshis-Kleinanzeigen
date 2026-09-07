@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || exit;
 class ChatIntegration {
 
     public function __construct() {
-        // Button wird von ProductPage gerendert — hier nur Chat-spezifische AJAX + Assets.
+        // The button is rendered by ProductPage — this only handles chat-specific AJAX + assets.
         add_action( 'wp_ajax_sk_create_purchase_request', [ $this, 'ajax_create_purchase_request' ] );
         add_action( 'wp_ajax_sk_create_lightning_invoice', [ $this, 'ajax_create_lightning_invoice' ] );
         add_action( 'wp_ajax_sk_confirm_payment', [ $this, 'ajax_confirm_payment' ] );
@@ -69,8 +69,8 @@ class ChatIntegration {
         $product_title = get_the_title( $product_id );
         $variant_key   = \SK\Modules\Payments\Variant::posted();
 
-        // Gibt es Ausfuehrungen, muss eine davon gewaehlt sein — sonst waere
-        // unklar, was der Anbieter in Rechnung stellen soll.
+        // If variants exist, one of them must be selected — otherwise it
+        // would be unclear what the vendor is supposed to charge for.
         if ( \SK\Modules\Payments\Variant::all( $product_id )
             && ! \SK\Modules\Payments\Variant::find( $product_id, $variant_key ) ) {
             wp_send_json_error( [ 'message' => 'Bitte eine Ausführung wählen.' ] );

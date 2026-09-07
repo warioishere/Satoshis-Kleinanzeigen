@@ -7,47 +7,48 @@ use SK\Core\Dashboard\DashboardModule;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Verkäufer-Dashboard: Katalog hochladen und importieren.
+ * Vendor dashboard: upload and import a catalog.
  *
- * Erscheint nur bei freigeschalteten Händlern — für die übrigen 480 Konten
- * gibt es den Eintrag gar nicht.
+ * Only appears for enabled dealers — for the remaining 480 accounts, the
+ * menu entry doesn't exist at all.
  */
 class DashboardPage extends DashboardModule {
 
     const NONCE = 'sk_shop_import';
 
     /**
-     * Zuletzt geholter Shopify-Shop.
+     * Most recently fetched Shopify shop.
      *
-     * Daran haengen die Herkunftsangabe der importierten Inserate und der
-     * Waehrungsvorschlag nach Endung.
+     * The origin label of imported listings and the currency suggestion
+     * (based on the domain suffix) both hang off this.
      */
     const META_FETCH_URL = '_sk_import_shopify_url';
 
     /**
-     * Immer registrieren, nicht nur fuer Haendler.
+     * Always register, not just for dealers.
      *
-     * Query-Variable und Rewrite-Regel sind global; haengt die Registrierung
-     * am aktuellen Nutzer, existiert die Adresse fuer niemanden und die Seite
-     * meldet "nicht gefunden". Wer sie sehen darf, regelt die Faehigkeit —
-     * die Registry prueft sie sowohl im Menue als auch beim Aufruf.
+     * The query variable and rewrite rule are global; if registration
+     * depended on the current user, the URL would exist for no one and the
+     * page would report "not found". Who is allowed to see it is governed
+     * by the capability — the registry checks it both in the menu and on
+     * the actual request.
      */
     public function config(): ?array {
         return [
             'slug'       => 'shop-import',
             'title'      => __( 'Shop-Import', 'sk-core' ),
             'icon'       => '<i class="fas fa-file-import"></i>',
-            // Direkt hinter "Produkte" (pos 30). Nachkommastellen helfen hier
-            // nicht: sk_nav_sort_by_pos rechnet intval($a-$b), 30.5 gegen 31
-            // ergibt 0 und gilt als gleich.
+            // Right after "Products" (pos 30). Decimal positions don't help
+            // here: sk_nav_sort_by_pos computes intval($a-$b), and 30.5
+            // against 31 yields 0, counting as equal.
             'pos'        => 31,
-            // Die Seite steht jedem Verkaeufer offen — wer nicht
-            // freigeschaltet ist, findet hier den Weg zur Verifizierung. Die
-            // Importschritte darin pruefen Dealer::may_import().
+            // The page is open to every vendor — anyone not yet enabled
+            // finds the path to verification here. The import steps inside
+            // it check Dealer::may_import().
             'permission' => 'sk_view_overview_menu',
-            // Pfad statt Rueckruf und Daten ueber template_args — dasselbe
-            // Muster wie Merkliste und Gesuche. Die Vorlage bringt dadurch
-            // die Dashboard-Huelle mit Menue und Containern mit.
+            // Path instead of a callback, with data via template_args — the
+            // same pattern as the watchlist and inquiries. This way the
+            // template brings the dashboard shell with menu and containers.
             'template'      => 'dashboard/shop-import/dashboard-shop-import',
             'template_args' => [ $this, 'view_data' ],
         ];
@@ -65,10 +66,10 @@ class DashboardPage extends DashboardModule {
     }
 
     /**
-     * Upload und Import entgegennehmen.
+     * Accept upload and import.
      */
     /**
-     * Einen Stapel abarbeiten. Der Browser ruft das so lange, bis fertig.
+     * Process one batch. The browser keeps calling this until done.
      */
     public function ajax_batch(): void {
         check_ajax_referer( self::NONCE, 'nonce' );
@@ -124,13 +125,13 @@ class DashboardPage extends DashboardModule {
 
         if ( $step === 'holen' ) {
             /*
-             * Die Adresse gibt der Haendler selbst ein — er weiss, wo sein
-             * Shop liegt, der Betreiber muss sie nicht vorher eintragen.
+             * The dealer enters the URL themselves — they know where their
+             * shop is, the operator doesn't need to register it beforehand.
              *
-             * Damit ist sie Nutzereingabe, anders als beim Rest des Moduls.
-             * Der Abruf laeuft deshalb ueber wp_safe_remote_get(), das interne
-             * Adressbereiche abweist, und die Seite steht ohnehin nur
-             * freigeschalteten Haendlern offen (Dealer::may_import()).
+             * This makes it user input, unlike the rest of the module. The
+             * fetch therefore goes through wp_safe_remote_get(), which
+             * rejects internal address ranges, and the page is open only to
+             * enabled dealers anyway (Dealer::may_import()).
              */
             $shop = isset( $_POST['sk_shop_url'] )
                 ? esc_url_raw( trim( wp_unslash( $_POST['sk_shop_url'] ) ) )
@@ -143,19 +144,20 @@ class DashboardPage extends DashboardModule {
             }
 
             /*
-             * Geholt wird nur von der Domain, die der Haendler bestaetigt hat.
-             * Sonst waere die Bestaetigung eine Formalie: einmal die eigene
-             * Seite belegen und danach beliebige fremde Kataloge einspielen.
+             * Fetching only happens from the domain the dealer has
+             * confirmed. Otherwise confirmation would be a mere formality:
+             * claim your own site once, then import arbitrary foreign
+             * catalogs afterward.
              *
-             * Wer von Hand freigeschaltet wurde, hat keinen bestaetigten Host
-             * — dort hat der Betreiber ohnehin hingesehen.
+             * Anyone enabled manually has no confirmed host — the operator
+             * has already looked at that case directly.
              */
             if ( \SK\Core\Verification\VerifiedLinks::is_verified( $vendor_id )
                 && ! \SK\Core\Verification\VerifiedLinks::covers( $vendor_id, $shop ) ) {
                 set_transient(
                     'sk_import_msg_' . $vendor_id,
                     sprintf(
-                        /* translators: %s: bestätigter Hostname. */
+                        /* translators: %s: confirmed hostname. */
                         __( 'Du kannst nur von einer Adresse holen, die du bestätigt hast. Bestätigt sind: %s.', 'sk-core' ),
                         implode( ', ', \SK\Core\Verification\VerifiedLinks::confirmed_hosts( $vendor_id ) )
                     ),
@@ -181,13 +183,13 @@ class DashboardPage extends DashboardModule {
                 exit;
             }
 
-            // Die vorige Quelle liegt sonst als Leiche im Ordner.
+            // Otherwise the previous source would linger as a dead file.
             $vorige = (string) get_user_meta( $vendor_id, '_sk_import_file', true );
             if ( $vorige !== '' && Storage::belongs_to( $vorige, $vendor_id ) ) {
                 Storage::forget( $vorige );
             }
 
-            // Beim naechsten Mal steht die Adresse schon im Feld.
+            // Next time, the URL will already be pre-filled in the field.
             update_user_meta( $vendor_id, self::META_FETCH_URL, $shop );
 
             update_user_meta( $vendor_id, '_sk_import_file', $path );
@@ -212,7 +214,7 @@ class DashboardPage extends DashboardModule {
 
         $mapping = [];
 
-        // Ein geholter Katalog braucht keine Spaltenzuordnung.
+        // A fetched catalog doesn't need a column mapping.
         if ( ! Source::is_json( $path ) ) {
             $csv = Csv::read( $path );
             if ( is_wp_error( $csv ) ) {
@@ -229,7 +231,7 @@ class DashboardPage extends DashboardModule {
             }
         }
 
-        // Kategorie-Zuordnung sichern, damit sie beim naechsten Import steht.
+        // Save the category mapping so it's already there for the next import.
         $map = [];
         foreach ( (array) ( $_POST['cat_map'] ?? [] ) as $name => $term ) {
             $map[ sanitize_text_field( wp_unslash( $name ) ) ] = (int) $term;
@@ -246,8 +248,8 @@ class DashboardPage extends DashboardModule {
             exit;
         }
 
-        // Nur die angehakten uebernehmen. Ohne Auswahl im Formular gilt alles.
-        // Die Paketsperre fuer Ausfuehrungen zieht der Importer selbst.
+        // Only take the checked ones. With no selection in the form, everything applies.
+        // The pack lock for variants is enforced by the importer itself.
         $chosen = array_filter( array_map( 'strval', (array) ( $_POST['sk_pick'] ?? [] ) ) );
         if ( ! empty( $chosen ) ) {
             $items = array_values(
@@ -255,8 +257,8 @@ class DashboardPage extends DashboardModule {
             );
         }
 
-        // Kontingent gilt auch fuer Haendler — wer mehr einstellen will,
-        // braucht ein groesseres Paket oder waehlt weniger aus.
+        // The quota applies to dealers too — anyone wanting to list more
+        // needs a bigger pack or has to select fewer items.
         $quota = Quota::check( $vendor_id, count( $items ) );
         if ( ! $quota['ok'] ) {
             set_transient( 'sk_import_quota_' . $vendor_id, $quota, 600 );
@@ -264,8 +266,8 @@ class DashboardPage extends DashboardModule {
             exit;
         }
 
-        // Nicht sofort importieren, sondern einen Auftrag anlegen: die Bilder
-        // machen selbst ein halbes Dutzend Artikel langsamer als PHP erlaubt.
+        // Don't import right away, create a job instead: the images alone
+        // make even half a dozen items slower than PHP's time limit allows.
         Job::create(
             $vendor_id,
             $path,
@@ -277,9 +279,9 @@ class DashboardPage extends DashboardModule {
                 'default_cat'  => Settings::default_category( $vendor_id ),
                 'image_cap'    => max( 0, (int) ( $_POST['sk_image_cap'] ?? Importer::DEFAULT_IMAGE_CAP ) ),
                 'status'       => self::import_status(),
-                // Herkunft der Inserate: der Shop, aus dem geholt wurde.
-                // Bei einer hochgeladenen Datei gibt es keine — die Datei
-                // sagt nicht, woher sie stammt.
+                // Origin of the listings: the shop they were fetched from.
+                // For an uploaded file there is none — the file doesn't
+                // say where it came from.
                 'source'       => Source::is_json( $path )
                     ? (string) get_user_meta( $vendor_id, self::META_FETCH_URL, true )
                     : '',
@@ -293,11 +295,11 @@ class DashboardPage extends DashboardModule {
     }
 
     /**
-     * Status der importierten Inserate.
+     * Status of the imported listings.
      *
-     * Nur die beiden Werte, die das Formular anbietet — und muessen neue
-     * Inserate auf dieser Seite geprueft werden, gilt das auch hier. Sonst
-     * waere der Import der Weg an der Pruefung vorbei.
+     * Only the two values the form offers — and if new listings on this
+     * site need review, that applies here too. Otherwise the import would
+     * be a way around review.
      */
     private static function import_status(): string {
         $wanted = sanitize_key( wp_unslash( $_POST['sk_status'] ?? 'publish' ) ); // phpcs:ignore WordPress.Security.NonceVerification
@@ -317,7 +319,7 @@ class DashboardPage extends DashboardModule {
     }
 
     /**
-     * Daten fuer die Vorlage. Laeuft vor dem Einbinden, die Vorlage rendert nur.
+     * Data for the template. Runs before inclusion; the template only renders.
      */
     public function view_data( $query_vars = [] ): array {
         $vendor_id = get_current_user_id();
@@ -336,8 +338,8 @@ class DashboardPage extends DashboardModule {
         $quota      = null;
         $item_count = 0;
         $rows       = 0;
-        // Ein geholter Katalog bringt seine Struktur mit; die Zuordnungsmaske
-        // gehoert dann nicht auf die Seite.
+        // A fetched catalog brings its own structure; the mapping form
+        // doesn't belong on the page then.
         $is_json    = false;
 
         if ( $step === 'zuordnen' && $path !== '' && Storage::belongs_to( $path, $vendor_id ) ) {
@@ -378,9 +380,9 @@ class DashboardPage extends DashboardModule {
             delete_transient( 'sk_import_quota_' . $vendor_id );
         }
 
-        // Zusammenfassung dessen, was der Import tun wird — das ist die
-        // Information, auf der jemand "ja, mach" entscheidet. Die
-        // Spaltenzuordnung interessiert nur, wenn sie falsch geraten wurde.
+        // Summary of what the import will do — this is the information a
+        // person decides "yes, go" on. The column mapping only matters
+        // when it was guessed wrong.
         $summary = [];
         if ( $items ) {
             $with_variants = 0;
@@ -415,8 +417,8 @@ class DashboardPage extends DashboardModule {
             ];
         }
 
-        // Artikel mit Ausfuehrungen sind ohne passendes Paket nicht
-        // importierbar; sie werden markiert statt stillschweigend zu fehlen.
+        // Items with variants can't be imported without a matching pack;
+        // they get flagged instead of silently going missing.
         $variants_allowed = Variants::is_allowed( $vendor_id );
         $variants_pack    = $variants_allowed ? null : Variants::cheapest_allowed_pack();
         $blocked          = 0;
@@ -437,8 +439,8 @@ class DashboardPage extends DashboardModule {
         $saved_map    = Settings::category_map( $vendor_id );
         $default_cat  = Settings::default_category( $vendor_id );
 
-        // Ein Auftrag ueberlebt das Schliessen des Fensters. Steht einer offen,
-        // zeigt die Seite ihn an, statt so zu tun, als sei nichts passiert.
+        // A job survives closing the browser window. If one is pending, the
+        // page shows it instead of pretending nothing happened.
         $job = Job::get( $vendor_id );
         if ( $job && $step === 'start' ) {
             $step = 'laeuft';
@@ -447,18 +449,18 @@ class DashboardPage extends DashboardModule {
         $categories = get_terms( [ 'taxonomy' => 'product_cat', 'hide_empty' => false ] );
         $rate       = Rate::btc_rate( 'EUR' );
         $url        = $this->url();
-        // Nur das zuletzt Geholte. Die Adresse aus dem Haendlerprofil gehoert
-        // nicht hierher — sie beschreibt den Shop des Haendlers, nicht die
-        // Quelle eines Shopify-Abrufs, und stuende bei einem
-        // WooCommerce-Haendler als Vorschlag da, der nie funktionieren kann.
+        // Only the most recently fetched one. The URL from the dealer
+        // profile doesn't belong here — it describes the dealer's shop,
+        // not the source of a Shopify fetch, and would show up as a
+        // suggestion for a WooCommerce dealer that could never work.
         $shop_url   = (string) get_user_meta( $vendor_id, self::META_FETCH_URL, true );
 
-        // Welche Adressen dieser Haendler bestaetigt hat — der Abruf ist
-        // darauf beschraenkt.
+        // Which hosts this dealer has confirmed — the fetch is restricted
+        // to those.
         $verified_hosts = \SK\Core\Verification\VerifiedLinks::confirmed_hosts( $vendor_id );
 
-        // Darf er ueberhaupt importieren? Wenn nicht, zeigt die Seite den Weg
-        // dorthin statt eines Formulars, das stumm nichts tut.
+        // Is he even allowed to import? If not, the page shows the path
+        // there instead of a form that silently does nothing.
         $may_import   = Dealer::may_import( $vendor_id );
         $verify_url   = function_exists( 'sk_get_navigation_url' )
             ? sk_get_navigation_url( 'verification' )

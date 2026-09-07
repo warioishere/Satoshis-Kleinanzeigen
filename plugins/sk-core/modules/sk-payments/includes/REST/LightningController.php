@@ -555,9 +555,9 @@ class LightningController extends WP_REST_Controller {
             ], 200 );
         }
 
-        // Genau hier, nicht frueher: das UPDATE oben greift nur einmal, weil es
-        // auf status='pending' bedingt ist. Damit kann die Benachrichtigung
-        // nicht doppelt rausgehen, auch wenn zwei Pruefungen gleichzeitig laufen.
+        // Right here, not earlier: the UPDATE above only fires once because it
+        // is conditioned on status='pending'. That way the notification can't
+        // go out twice, even if two checks run at the same time.
         do_action( 'sk_payment_confirmed', (string) $payment->payment_hash, $via );
 
         return new WP_REST_Response( [
@@ -711,22 +711,22 @@ class LightningController extends WP_REST_Controller {
         }
 
         /*
-         * Das Preimage ist der staerkste Nachweis, den es hier gibt: es
-         * entsteht nur, wenn die Zahlung wirklich durchging, und anders als
-         * bei NWC, LNDHub oder LUD-21 antwortet dabei kein Server, den der
-         * Verkaeufer benannt hat.
+         * The preimage is the strongest proof available here: it only comes
+         * into existence if the payment truly went through, and unlike with
+         * NWC, LNDHub, or LUD-21, no server named by the seller answers for
+         * it.
          *
-         * Frueher wurde es nur in die Zeile geschrieben — die Zahlung blieb
-         * "pending", sk_payment_confirmed feuerte nie, und es entstand weder
-         * Reputation noch eine Provisionsforderung. Der Beweis lag also da und
-         * bewirkte nichts. Jetzt laeuft er durch denselben settle_payment()
-         * wie die uebrigen Wege, samt dessen Schutz gegen Doppelbestaetigung.
+         * It used to just be written into the row — the payment stayed
+         * "pending", sk_payment_confirmed never fired, and neither reputation
+         * nor a commission claim was created. The proof sat there and did
+         * nothing. Now it runs through the same settle_payment() as the other
+         * paths, including its protection against double confirmation.
          */
         if ( (string) $payment->status === 'pending' ) {
             return $this->settle_payment( $payment, $preimage, 'preimage' );
         }
 
-        // Schon bestaetigt: dann fehlt nur noch der Nachweis in der Zeile.
+        // Already confirmed: then only the proof is still missing from the row.
         $wpdb->update(
             $table,
             [

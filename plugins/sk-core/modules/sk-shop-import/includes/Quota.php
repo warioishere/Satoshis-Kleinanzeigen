@@ -5,18 +5,18 @@ namespace SK\Modules\ShopImport;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Prüft vor dem Import, ob das Paket reicht.
+ * Checks before import whether the pack is enough.
  *
- * Händler sind bewusst NICHT vom Kontingent ausgenommen: Wer 28 Artikel
- * hochladen will, sieht damit unmittelbar, wofür ein grösseres Paket gut ist.
- * Das ist der wirksamste Verkaufsanlass, den der Import mitbringt.
+ * Dealers are deliberately NOT exempt from the quota: anyone wanting to
+ * upload 28 items sees immediately what a bigger pack is good for. This
+ * is the most effective sales trigger the import brings with it.
  */
 final class Quota {
 
     /**
-     * Wie viele Inserate darf dieser Verkäufer noch anlegen?
+     * How many more listings may this vendor create?
      *
-     * @return int|null null = unbegrenzt oder nicht ermittelbar
+     * @return int|null null = unlimited or undeterminable
      */
     public static function remaining( int $vendor_id ): ?int {
         if ( ! class_exists( '\SK\Modules\Subscription\Helper' ) ) {
@@ -29,7 +29,7 @@ final class Quota {
             return null;
         }
 
-        // Unbegrenzte Pakete melden je nach Konfiguration einen Text.
+        // Unlimited packs report a text string depending on configuration.
         if ( ! is_numeric( $remaining ) ) {
             return null;
         }
@@ -38,7 +38,7 @@ final class Quota {
     }
 
     /**
-     * Reicht das Kontingent für so viele Inserate?
+     * Is the quota enough for this many listings?
      *
      * @return array{ok:bool,remaining:?int,needed:int,missing:int}
      */
@@ -60,7 +60,7 @@ final class Quota {
     }
 
     /**
-     * Pakete, die für so viele Inserate reichen — günstigstes zuerst.
+     * Packs that are enough for this many listings — cheapest first.
      *
      * @return array<int,array{id:int,name:string,price:int,products:int,days:int}>
      */
@@ -98,10 +98,10 @@ final class Quota {
     }
 
     /**
-     * Bleiben Inserate nach Ablauf des Pakets online?
+     * Do listings stay online after the pack expires?
      *
-     * Steuert den Hinweis im Upgrade-Dialog — und der muss stimmen, sonst ist
-     * es ein Versprechen, das die Plattform nicht hält.
+     * Controls the notice in the upgrade dialog — and it has to be
+     * accurate, or it's a promise the platform doesn't keep.
      */
     public static function listings_stay_online(): bool {
         $option = get_option( 'sk_product_subscription', [] );

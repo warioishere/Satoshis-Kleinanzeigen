@@ -5,11 +5,11 @@ namespace SK\Modules\ShopImport;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Ablage der hochgeladenen Dateien.
+ * Storage for uploaded files.
  *
- * Eigener Ordner unter uploads mit Zufallsnamen und Zugriffssperre: Ein
- * Shop-Katalog ist Geschaeftsdaten und gehoert nicht oeffentlich abrufbar
- * ins Web, nur weil er zufaellig unter uploads liegt.
+ * A dedicated folder under uploads with random names and access lockdown:
+ * a shop catalog is business data and shouldn't be publicly reachable on
+ * the web just because it happens to live under uploads.
  */
 final class Storage {
 
@@ -23,7 +23,7 @@ final class Storage {
             wp_mkdir_p( $dir );
         }
 
-        // Zugriff sperren, so gut es die Serverkonfiguration zulaesst.
+        // Lock down access as far as the server configuration allows.
         if ( ! file_exists( $dir . '/.htaccess' ) ) {
             file_put_contents( $dir . '/.htaccess', "Require all denied\n<IfModule !mod_authz_core.c>\nDeny from all\n</IfModule>\n" );
         }
@@ -35,9 +35,9 @@ final class Storage {
     }
 
     /**
-     * Hochgeladene Datei uebernehmen.
+     * Accept the uploaded file.
      *
-     * @return string|\WP_Error Pfad
+     * @return string|\WP_Error Path
      */
     public static function accept( array $file, int $vendor_id ) {
         if ( ! isset( $file['tmp_name'] ) || ! is_uploaded_file( $file['tmp_name'] ) ) {
@@ -63,13 +63,12 @@ final class Storage {
     }
 
     /**
-     * Einen geholten Katalog ablegen.
+     * Store a fetched catalog.
      *
-     * Derselbe Ordner und dasselbe Namensmuster wie beim Upload, damit
-     * belongs_to() auch hier greift und der Auftrag die Datei spaeter
-     * wiederfindet.
+     * Same folder and same naming pattern as for uploads, so belongs_to()
+     * applies here too and the job can find the file again later.
      *
-     * @return string|\WP_Error Pfad
+     * @return string|\WP_Error Path
      */
     public static function put_catalog( string $json, int $vendor_id ) {
         if ( trim( $json ) === '' ) {
@@ -86,10 +85,10 @@ final class Storage {
     }
 
     /**
-     * Gehoert diese Datei diesem Verkaeufer?
+     * Does this file belong to this vendor?
      *
-     * Ohne die Pruefung koennte ein Verkaeufer ueber einen manipulierten Pfad
-     * die Datei eines anderen einlesen.
+     * Without this check, a vendor could read another vendor's file via a
+     * manipulated path.
      */
     public static function belongs_to( string $path, int $vendor_id ): bool {
         $real = realpath( $path );

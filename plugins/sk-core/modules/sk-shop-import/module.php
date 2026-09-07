@@ -5,17 +5,17 @@ namespace SK\Modules\ShopImport;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * SK Shop Import — Händlerkataloge als Inserate.
+ * SK Shop Import — dealer catalogs as listings.
  *
- * Ein Partnershop exportiert in seinem eigenen WooCommerce eine CSV und lädt
- * sie hier hoch. Bewusst CSV statt REST-API: keine Zugangsdaten, keine
- * dauerhafte Verbindung, kein stiller Ausfall eines Abgleichs.
+ * A partner shop exports a CSV from its own WooCommerce and uploads it here.
+ * Deliberately CSV instead of a REST API: no credentials, no persistent
+ * connection, no silent sync failure.
  *
- * Varianten werden zu Ausführungen des Elternprodukts zusammengefasst — im
- * Beispielexport waren 42 von 70 Zeilen Varianten, die als eigene Inserate
- * dieselbe Ware mehrfach gezeigt hätten. Preise kommen in Fiat herein, werden
- * in Sats umgerechnet und täglich am Kurs nachgeführt; der Fiat-Betrag bleibt
- * die Wahrheit.
+ * Variations are merged into variants of the parent product — in the sample
+ * export, 42 of 70 rows were variations that as separate listings would have
+ * shown the same item multiple times. Prices come in as fiat, are converted
+ * to sats, and updated daily with the exchange rate; the fiat amount remains
+ * the source of truth.
  */
 final class Module {
 
@@ -54,7 +54,7 @@ final class Module {
 
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue' ], 20 );
 
-        // Wer seine Adresse bestaetigt, ist damit zum Import freigeschaltet.
+        // Confirming their address unlocks the import for them.
         add_action( 'sk_link_verified', [ Dealer::class, 'enable_on_verification' ] );
 
         add_filter( 'sk_php_dashboard_pages', function ( $pages ) {

@@ -5,7 +5,7 @@ namespace SK\Modules\ShopImport;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Ausführungen und Fiat-Preis auf der Produktseite.
+ * Variants and fiat price on the product page.
  */
 class Display {
 
@@ -15,7 +15,7 @@ class Display {
     }
 
     /**
-     * Ausführungen als Liste — ohne Auswahlfeld, ohne Warenkorb.
+     * Variants as a list — no select field, no cart.
      */
     public function variants(): void {
         global $product;
@@ -42,8 +42,8 @@ class Display {
             if ( $price !== null && $price > 0 ) {
                 $label = self::format_fiat( (float) $price, (string) ( $variant['currency'] ?? 'EUR' ) );
             } elseif ( ! empty( $variant['sats'] ) ) {
-                // In Sats ausgezeichnet: dann gibt es keinen Fiatbetrag, und
-                // ohne diesen Zweig stuende die Ausfuehrung ganz ohne Preis da.
+                // Priced in Sats: there's no fiat amount then, and without
+                // this branch the variant would show up with no price at all.
                 $label = sprintf(
                     /* translators: %s: amount in sats */
                     __( '%s Sats', 'sk-core' ),
@@ -62,19 +62,21 @@ class Display {
     }
 
     /**
-     * Hinterlegten Fiat-Preis bevorzugen.
+     * Prefer the stored fiat price.
      *
-     * Ohne das zeigt der Umrechner den zurückgerechneten Betrag — aus 169 €
-     * wird dann 168,97 €, was wie ein Fehler aussieht statt wie ein Preis.
+     * Without this, the converter shows the back-converted amount — 169 €
+     * would then become 168.97 €, which looks like an error rather than a
+     * price.
      */
     public function price_html( $html, $product ) {
         if ( ! $product instanceof \WC_Product ) {
             return $html;
         }
 
-        // Nur auf der Inseratsseite selbst. In Kacheln und Slidern steht der
-        // Zusatz sonst hinter jedem Preis und macht die Reihe unruhig — dort
-        // zaehlt der Sats-Betrag, der Fiatbezug gehoert zum Detail.
+        // Only on the listing page itself. In tiles and sliders, this
+        // suffix would otherwise trail every price and clutter the row —
+        // there, the Sats amount is what counts, the fiat reference
+        // belongs on the detail page.
         if ( ! is_singular( 'product' ) || $product->get_id() !== get_queried_object_id() ) {
             return $html;
         }

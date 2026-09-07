@@ -7,47 +7,47 @@ use SK\Core\Dashboard\ChatMessages;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Postfach im Seitenkopf, als Element des Kadence-Kopfbaukastens.
+ * Inbox in the site header, as an element of the Kadence header builder.
  *
- * Bewusst kein fest eingebauter Menuepunkt: Kadence setzt den Kopf aus
- * Elementen zusammen, die sich im Customizer in Reihen und Spalten ziehen
- * lassen — Logo, Suche, Warenkorb. Das Postfach reiht sich dort ein, damit
- * sich seine Position an echten Geraeten entscheiden laesst und nicht hier.
+ * Deliberately not a hard-coded menu item: Kadence assembles the header from
+ * elements that can be dragged into rows and columns in the Customizer —
+ * logo, search, cart. The inbox joins that list so its position can be
+ * decided on real devices, not here.
  *
- * Auf dem Handy ist das keine Feinheit. Die obere Reihe traegt bereits das bis
- * zu 233 px breite Logo und das 66 px grosse Profilbild: auf einem 360 px
- * breiten Bildschirm bleiben davon 31 px uebrig, auf 320 px gar nichts. Die
- * zweite Reihe hat dagegen ueber 200 px frei — welche Spalte dort die richtige
- * ist, ist Geschmackssache und gehoert deshalb in den Customizer.
+ * On mobile that isn't a nicety. The top row already carries a logo up to
+ * 233 px wide and a 66 px profile picture: on a 360 px wide screen that
+ * leaves 31 px, and on 320 px nothing at all. The second row, by contrast,
+ * has over 200 px free — which column is the right one there is a matter of
+ * taste, and therefore belongs in the Customizer.
  *
- * Derselbe Bezeichner steht in beiden Listen, wie es Kadence bei der Suche
- * selbst haelt; Desktop- und Handykopf zeigen dieselbe Vorlage.
+ * The same identifier appears in both lists, the way Kadence itself does it
+ * for search; the desktop and mobile headers render the same template.
  */
 class InboxHeaderItem {
 
-	/** Bezeichner des Kopf-Elements. */
+	/** Identifier of the header element. */
 	const ITEM = 'sk-inbox';
 
 	/**
-	 * Bereich hinter dem Zahnrad am Element.
+	 * Section behind the gear icon on the element.
 	 *
-	 * Kadence fuehrt seine Bereiche unter einem kurzen Schluessel und haengt
-	 * beim Registrieren 'kadence_customizer_' davor — der Verweis aus der
-	 * Elementliste muss den langen Namen tragen.
+	 * Kadence keeps its sections under a short key and prepends
+	 * 'kadence_customizer_' when registering — the reference from the
+	 * element list must carry the long name.
 	 */
 	const SECTION_KEY = 'sk_inbox';
 	const SECTION     = 'kadence_customizer_sk_inbox';
 
-	/** Nur zeigen, wenn wirklich etwas ungelesen ist. */
+	/** Only show when there's actually something unread. */
 	const OPTION_ONLY_UNREAD = 'sk_header_inbox_only_unread';
 
 	/**
-	 * Aussenabstand, alle vier Seiten — je Ansicht eine eigene Einstellung.
+	 * Outer margin, all four sides — one setting per viewport.
 	 *
-	 * Kadence macht einen Regler nicht dadurch geraeteabhaengig, dass er eine
-	 * eigene Umschaltung mitbringt, sondern indem je Ansicht ein eigener
-	 * Regler eingeblendet wird. Welcher, entscheidet der Umschalter unten im
-	 * Kopfbaukasten ueber den Kontext '__device'.
+	 * Kadence doesn't make a control device-aware by giving it its own
+	 * toggle; instead a separate control is shown per viewport. Which one
+	 * is decided by the switcher at the bottom of the header builder via
+	 * the '__device' context.
 	 */
 	const OPTION_MARGIN = [
 		'desktop' => 'sk_header_inbox_margin',
@@ -60,26 +60,26 @@ class InboxHeaderItem {
 		add_filter( 'kadence_theme_customizer_sections', [ $this, 'register_section' ] );
 
 		/*
-		 * Priorität 5: Kadence liest seine Optionsdateien auf 1 ein und baut
-		 * die Bedienelemente auf 10. Dazwischen ist das Fenster, in dem sich
-		 * eigene Einstellungen einreihen lassen.
+		 * Priority 5: Kadence loads its option files at 1 and builds the
+		 * controls at 10. In between is the window where custom settings
+		 * can slot in.
 		 */
 		add_action( 'customize_register', [ $this, 'register_settings' ], 5 );
 
 		add_action( 'wp_enqueue_scripts', [ $this, 'inline_styles' ], 30 );
 
 		/*
-		 * Kadence rendert ein Kopf-Element ueber get_template_part(). Der
-		 * Aufruf feuert zuerst diesen Haken und sucht die Datei danach im
-		 * Theme — sie fehlt dort, also bleibt es bei unserer Ausgabe. So
-		 * braucht es keine Datei im Theme, die ein Theme-Update ueberleben
-		 * muesste.
+		 * Kadence renders a header element via get_template_part(). That
+		 * call fires this hook first and then looks for the file in the
+		 * theme — it's missing there, so our output is used instead. That
+		 * way no file is needed in the theme, which would have to survive
+		 * a theme update.
 		 */
 		add_action( 'get_template_part_template-parts/header/' . self::ITEM, [ $this, 'render' ] );
 	}
 
 	/**
-	 * Das Element im Kopfbaukasten anbieten — fuer Desktop und Handy.
+	 * Offer the element in the header builder — for desktop and mobile.
 	 *
 	 * @param array $choices
 	 * @return array
@@ -104,7 +104,7 @@ class InboxHeaderItem {
 	}
 
 	/**
-	 * Den Bereich in Kadences Verzeichnis eintragen.
+	 * Register the section in Kadence's directory.
 	 *
 	 * @param array $sections
 	 * @return array
@@ -124,11 +124,11 @@ class InboxHeaderItem {
 	}
 
 	/**
-	 * Die Einstellungen des Elements: ein Reiter "Allgemein", einer "Design".
+	 * The element's settings: one "General" tab, one "Design" tab.
 	 *
-	 * Aufgebaut wie die Suche im Theme — ein Bereich, in dem die Reiter nur
-	 * umschalten, welche Regler sichtbar sind. Das spart den zweiten Bereich,
-	 * den der Warenkorb dafuer braucht.
+	 * Built like the theme's search — a single section where the tabs only
+	 * toggle which controls are visible. That saves the second section the
+	 * cart needs for the same purpose.
 	 */
 	public function register_settings(): void {
 		if ( ! class_exists( '\Kadence\Theme_Customizer' ) ) {
@@ -172,9 +172,9 @@ class InboxHeaderItem {
 			],
 		] );
 
-		// Je Ansicht ein eigener Regler. Sichtbar ist immer nur der, dessen
-		// Ansicht unten gewaehlt ist — deshalb braucht keiner eine eigene
-		// Umschaltung, und die Beschriftung der vier Seiten bleibt stehen.
+		// A separate control per viewport. Only the one whose viewport is
+		// selected below is ever visible — so none needs its own toggle,
+		// and the label for the four sides stays the same.
 		$abstaende = [];
 
 		foreach ( self::OPTION_MARGIN as $ansicht => $schluessel ) {
@@ -221,7 +221,7 @@ class InboxHeaderItem {
 	}
 
 	/**
-	 * Einen Wert aus den Theme-Einstellungen holen.
+	 * Read a value from the theme settings.
 	 *
 	 * @param string $key
 	 * @param mixed  $fallback
@@ -232,11 +232,11 @@ class InboxHeaderItem {
 	}
 
 	/**
-	 * Der eingestellte Aussenabstand einer Ansicht als CSS-Wert.
+	 * The configured outer margin of a viewport as a CSS value.
 	 *
-	 * Bewusst selbst gerechnet statt ueber render_measure() des Themes: das
-	 * ist eine Innerei der Stil-Komponente, und diese Klasse soll ein
-	 * Theme-Update ueberstehen.
+	 * Deliberately computed here instead of via the theme's render_measure():
+	 * that's an internal of the style component, and this class is meant to
+	 * survive a theme update.
 	 *
 	 * @param string $ansicht desktop | tablet | mobile
 	 */
@@ -253,7 +253,7 @@ class InboxHeaderItem {
 
 		$seiten = array_slice( array_pad( $mass['size'], 4, '' ), 0, 4 );
 
-		// Nichts eingetragen: dann auch keine Regel ausgeben.
+		// Nothing set: then don't output a rule either.
 		$gesetzt = array_filter( $seiten, static function ( $wert ) {
 			return is_numeric( $wert );
 		} );
@@ -263,10 +263,10 @@ class InboxHeaderItem {
 		}
 
 		/*
-		 * Nur echte Einheiten durchlassen. Zeichen bloss herauszufiltern
-		 * genuegte nicht: aus einem verunglueckten Wert wurde dann zwar nichts
-		 * Gefaehrliches, aber "5pxbodydisplaynone" — eine Regel, die der
-		 * Browser stillschweigend verwirft.
+		 * Only let real units through. Just filtering out characters wasn't
+		 * enough: a malformed value would then not turn into anything
+		 * dangerous, but into "5pxbodydisplaynone" — a rule the browser
+		 * silently discards.
 		 */
 		$erlaubt = [ 'px', 'em', 'rem', '%', 'vh', 'vw' ];
 		$einheit = isset( $mass['unit'] ) ? strtolower( trim( (string) $mass['unit'] ) ) : 'px';
@@ -282,19 +282,18 @@ class InboxHeaderItem {
 	}
 
 	/**
-	 * Den Abstand ins Stylesheet nachreichen, je Ansicht eine Regel.
+	 * Add the margin to the stylesheet, one rule per viewport.
 	 *
-	 * Jede Ansicht bekommt eine eigene Bedingung, auch der Desktop. Das ist
-	 * der Unterschied zum Theme, das den Desktopwert unbedingt ausgibt und die
-	 * anderen daraufsetzt: dort erbt das Handy den Desktopwert, solange nichts
-	 * eingetragen ist. Hier soll jede Ansicht fuer sich stehen — ein am
-	 * Desktop gesetzter Abstand hat das Handy sonst mitgezogen, obwohl dort
-	 * nichts eingetragen war.
+	 * Each viewport gets its own condition, including desktop. That's the
+	 * difference from the theme, which always outputs the desktop value and
+	 * layers the others on top: there, mobile inherits the desktop value as
+	 * long as nothing is set. Here, each viewport is meant to stand on its
+	 * own — otherwise a margin set on desktop would drag along into mobile
+	 * even though nothing was set there.
 	 *
-	 * Die Bereiche ueberschneiden sich nur bei Tablet und Handy; deshalb steht
-	 * das Handy hinten und gewinnt dort. Die Umbruchpunkte kommen ueber
-	 * dieselben Filter wie bei Kadence, damit eine verschobene Grenze auch
-	 * hier gilt.
+	 * The ranges only overlap for tablet and mobile; that's why mobile
+	 * comes last and wins there. The breakpoints come from the same filters
+	 * Kadence uses, so a shifted boundary applies here too.
 	 */
 	public function inline_styles(): void {
 		if ( ! wp_style_is( 'sk-theme', 'enqueued' ) ) {
@@ -327,7 +326,7 @@ class InboxHeaderItem {
 	}
 
 	/**
-	 * Adresse der Chatuebersicht.
+	 * URL of the chat overview.
 	 */
 	private function chat_url(): string {
 		return function_exists( 'sk_get_navigation_url' )
@@ -348,7 +347,7 @@ class InboxHeaderItem {
 
 		$titel = $ungelesen > 0
 			? sprintf(
-				/* translators: %d: Anzahl ungelesener Nachrichten. */
+				/* translators: %d: number of unread messages. */
 				_n( '%d ungelesene Nachricht', '%d ungelesene Nachrichten', $ungelesen, 'sk-core' ),
 				$ungelesen
 			)

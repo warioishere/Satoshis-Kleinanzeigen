@@ -5,23 +5,23 @@ namespace SK\Modules\Payments;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Versandangabe zu einer Bestellung.
+ * Shipping details for an order.
  *
- * Bewusst kein neuer Zahlungsstatus: die Statusspalte steuert Reputation und
- * Provision, und ihre Übergänge sind gegen Doppelbuchung abgesichert. Ein
- * Zwischenzustand dort wäre ein Eingriff in den Zahlungsablauf für etwas, das
- * mit Geld nichts zu tun hat. Die Angabe liegt deshalb bei den übrigen
- * Bestelldetails an der Zahlung.
+ * Deliberately not a new payment status: the status column drives reputation
+ * and commission, and its transitions are guarded against double-booking. An
+ * intermediate state there would mean interfering with the payment flow for
+ * something that has nothing to do with money. The details are therefore
+ * stored alongside the other order details on the payment row.
  *
- * Die Versenderliste stammt nicht aus dem Dokan-Erbe — die kannte achtzehn
- * Anbieter, davon zwei für den deutschsprachigen Raum, und hatte URL-Vorlagen,
- * die teils ins Leere führen. Diese hier ist auf DACH zugeschnitten.
+ * The carrier list is not inherited from the Dokan legacy — that one knew
+ * eighteen carriers, two of them for German-speaking countries, with URL
+ * templates that partly led nowhere. This one is tailored to DACH.
  */
 final class Shipping {
 
     const ACTION = 'sk_payments_ship';
 
-    /** Platzhalter in den Vorlagen. */
+    /** Placeholder in the templates. */
     const TOKEN = '{nummer}';
 
     public function __construct() {
@@ -29,15 +29,15 @@ final class Shipping {
     }
 
     /**
-     * Versender mit Vorlage für die Sendungsverfolgung.
+     * Carriers with a template for tracking.
      *
-     * Geprüft am 24.08.2026: Post CH, Post AT, DHL, Hermes und FedEx
-     * antworten. DPD und UPS liessen sich von diesem Server nicht abrufen,
-     * GLS blockt den Pfad gegen automatische Zugriffe — deren Vorlagen sind
-     * die offiziell dokumentierten, aber ungeprüft.
+     * Checked on 2026-08-24: Post CH, Post AT, DHL, Hermes and FedEx respond.
+     * DPD and UPS could not be reached from this server, GLS blocks the path
+     * against automated access — their templates are the officially
+     * documented ones, but unverified.
      *
-     * Führt eine Vorlage doch einmal ins Leere, bleibt die Angabe trotzdem
-     * brauchbar: Versender und Nummer stehen im Klartext daneben.
+     * If a template does lead nowhere, the details remain usable anyway:
+     * carrier and number are shown in plain text next to it.
      *
      * @return array<string,array{label:string,url:string}>
      */
@@ -83,7 +83,7 @@ final class Shipping {
     }
 
     /**
-     * Versandangabe einer Zahlung.
+     * Shipping details of a payment.
      *
      * @return array{carrier:string,label:string,number:string,url:string,at:string}|null
      */
@@ -137,7 +137,7 @@ final class Shipping {
 
         $payment = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE payment_hash = %s", $hash ) );
 
-        // Nur der Anbieter dieser Zahlung, und nur im Shoptarif.
+        // Only the vendor of this payment, and only on the shop plan.
         if ( ! $payment || (int) $payment->vendor_id !== get_current_user_id() ) {
             wp_send_json_error( [ 'message' => __( 'Keine Berechtigung für diese Bestellung.', 'sk-core' ) ] );
         }

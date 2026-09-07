@@ -5,64 +5,65 @@ namespace SK\Core\Verification;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Bestätigte Verweise — die Vertrauensebene der Plattform.
+ * Verified links — the platform's trust layer.
  *
- * Wer eine Seite besitzt, kann das belegen: er trägt sie hier ein und setzt
- * dort einen Verweis zurück auf sein SK-Profil. Erst beides zusammen trägt.
- * Der Eintrag hier sagt "dieses Konto beansprucht diese Adresse", der Verweis
- * dort sagt "diese Adresse gehört zu diesem Konto". Eine Richtung allein wäre
- * wertlos: einen Verweis auf ein fremdes Profil kann jeder setzen, und eine
- * Behauptung ohne Gegenprobe ist keine.
+ * Whoever owns a site can prove it: they enter it here and place a link back
+ * to their SK profile there. Only both together carry weight. The entry here
+ * says "this account claims this URL", the link there says "this URL belongs
+ * to this account". Either direction alone would be worthless: anyone can put
+ * a link to someone else's profile, and a claim without a counter-check isn't
+ * one.
  *
- * Bewusst im Kern und nicht im Shop-Import: die Bestätigung ist eine Aussage
- * über den Nutzer, nicht über einen Katalogimport. Sie trägt das Abzeichen am
- * Profil, und der Import fragt sie nur ab. Läge sie im Importmodul, fände sie
- * niemand, der kein Händler ist — und die Ebene könnte nie wachsen.
+ * Deliberately in the core and not in the shop import: the confirmation is a
+ * statement about the user, not about a catalog import. It carries the badge
+ * on the profile, and the import only reads it. If it lived in the import
+ * module, no one who isn't a merchant would find it — and the trust layer
+ * could never grow.
  *
- * Was sie beweist: Kontrolle über eine Adresse. Nicht mehr. Eine
- * Wegwerf-Domain ist schnell registriert, ein Abzeichen ersetzt deshalb keine
- * Prüfung durch einen Menschen, wo es um Geld geht.
+ * What it proves: control over a URL. Nothing more. A throwaway domain is
+ * registered quickly, so a badge is no substitute for a human check where
+ * money is involved.
  */
 final class VerifiedLinks {
 
-    /** User-Meta: Liste der beanspruchten Adressen. */
+    /** User meta: list of claimed URLs. */
     const META = '_sk_verified_links';
 
-    /** User-Meta: der geheime Beleg dieses Nutzers. */
+    /** User meta: this user's secret token. */
     const META_TOKEN = '_sk_verify_token';
 
     /**
-     * User-Meta: bis wann die Bestaetigung gilt, als Zeitstempel.
+     * User meta: how long the confirmation is valid, as a timestamp.
      *
-     * Abgeleitet aus der Liste, aber flach — die Liste selbst ist serialisiert
-     * und in SQL nicht sinnvoll zu sortieren. Die Anbieterliste ordnet danach.
+     * Derived from the list, but flat — the list itself is serialized and
+     * can't be sorted meaningfully in SQL. The vendor list orders by this.
      */
     const META_UNTIL = '_sk_verified_until';
 
-    /** verlinkt zurück */
+    /** links back */
     const OK = 1;
-    /** erreichbar, aber kein Beleg gefunden */
+    /** reachable, but no proof found */
     const MISSING = 0;
-    /** Abruf fehlgeschlagen — sagt nichts über den Beleg aus */
+    /** fetch failed — says nothing about the proof */
     const UNREACHABLE = -2;
 
-    /** Wie lange eine Bestätigung gilt. Adressen wechseln den Besitzer. */
+    /** How long a confirmation stays valid. Domains change owners. */
     const MAX_AGE = 90 * DAY_IN_SECONDS;
 
-    /** Sekunden je Abruf. */
+    /** Seconds per fetch. */
     const TIMEOUT = 8;
 
-    /** Höchstens so viel vom Dokument durchsuchen. */
+    /** Search at most this much of the document. */
     const MAX_BODY = 512000;
 
-    /** Mehr Adressen braucht niemand, und es begrenzt die Abrufe. */
+    /** No one needs more URLs, and it caps the fetches. */
     const MAX_LINKS = 5;
 
     /**
-     * Das Ziel, auf das ein Verweis zeigen muss.
+     * The target a link must point to.
      *
-     * Die Shopseite, wo es eine gibt — sie ist die öffentliche Seite des
-     * Kontos. Sonst die Autorenseite.
+     * The shop page, where there is one — it's the account's public page.
+     * Otherwise the author archive page.
      */
     public static function target_url( int $user_id ): string {
         if ( function_exists( 'sk_get_store_url' ) ) {
@@ -77,12 +78,12 @@ final class VerifiedLinks {
     }
 
     /**
-     * Der geheime Beleg für Orte, an denen kein rel="me" überlebt.
+     * The secret token for places where no rel="me" survives.
      *
-     * GitHub etwa entfernt beim Rendern von Markdown die rel-Angabe, ein
-     * README kann den Verweis also gar nicht führen. Ein unrätselbarer
-     * Textbaustein geht überall — und weil er nicht zu erraten ist, kann ihn
-     * auch niemand versehentlich auf seiner Seite stehen haben.
+     * GitHub, for instance, strips the rel attribute when rendering Markdown,
+     * so a README can't carry the link at all. An unguessable string of text
+     * works everywhere — and because it can't be guessed, no one can have it
+     * on their page by accident either.
      */
     public static function token( int $user_id ): string {
         $token = (string) get_user_meta( $user_id, self::META_TOKEN, true );
@@ -95,13 +96,13 @@ final class VerifiedLinks {
         return $token;
     }
 
-    /** Der Schnipsel für den <head> einer eigenen Seite. */
+    /** The snippet for the <head> of one's own page. */
     public static function snippet( int $user_id ): string {
         return '<link rel="me" href="' . esc_url( self::target_url( $user_id ) ) . '">';
     }
 
     /**
-     * Alle Einträge eines Nutzers.
+     * All entries of a user.
      *
      * @return array<int,array{url:string,host:string,status:int,checked:int,confirmed:int}>
      */
@@ -132,7 +133,7 @@ final class VerifiedLinks {
     }
 
     /**
-     * Nur die gültigen: bestätigt und nicht zu alt.
+     * Only the valid ones: confirmed and not too old.
      *
      * @return array<int,array>
      */
@@ -150,10 +151,10 @@ final class VerifiedLinks {
     }
 
     /**
-     * Die bestätigten Hosts, jeder einmal.
+     * The confirmed hosts, each once.
      *
-     * Zwei Adressen auf derselben Domain sind eine Domain — in der Anzeige
-     * stand sie sonst doppelt.
+     * Two URLs on the same domain count as one domain — otherwise it would
+     * show up twice in the display.
      *
      * @return string[]
      */
@@ -161,16 +162,16 @@ final class VerifiedLinks {
         return array_values( array_unique( wp_list_pluck( self::confirmed( $user_id ), 'host' ) ) );
     }
 
-    /** Trägt dieser Nutzer das Abzeichen? */
+    /** Does this user carry the badge? */
     public static function is_verified( int $user_id ): bool {
         return ! empty( self::confirmed( $user_id ) );
     }
 
     /**
-     * Ist diese Adresse durch eine Bestätigung gedeckt?
+     * Is this URL covered by a confirmation?
      *
-     * Verglichen wird der Host, nicht der genaue Pfad: wer example.com
-     * bestätigt hat, hat die Domain belegt, nicht eine einzelne Unterseite.
+     * The comparison is by host, not the exact path: whoever confirmed
+     * example.com has claimed the domain, not a single subpage.
      */
     public static function covers( int $user_id, string $url ): bool {
         $host = self::host( $url );
@@ -189,7 +190,7 @@ final class VerifiedLinks {
     }
 
     /**
-     * Eine Adresse aufnehmen. Prüft noch nicht.
+     * Add a URL. Does not check it yet.
      *
      * @return true|\WP_Error
      */
@@ -216,7 +217,7 @@ final class VerifiedLinks {
             return new \WP_Error(
                 'sk_verify_max',
                 sprintf(
-                    /* translators: %d: Höchstzahl der Adressen. */
+                    /* translators: %d: maximum number of URLs. */
                     __( 'Mehr als %d Adressen gehen nicht. Entferne zuerst eine.', 'sk-core' ),
                     self::MAX_LINKS
                 )
@@ -230,7 +231,7 @@ final class VerifiedLinks {
         return true;
     }
 
-    /** Eine Adresse wieder entfernen. */
+    /** Remove a URL again. */
     public static function remove( int $user_id, string $url ): void {
         $ziel = self::normalize( $url );
         $rows = [];
@@ -245,9 +246,9 @@ final class VerifiedLinks {
     }
 
     /**
-     * Eine Adresse prüfen und das Ergebnis festhalten.
+     * Check a URL and record the result.
      *
-     * @return int Einer der drei Zustände.
+     * @return int One of the three states.
      */
     public static function check( int $user_id, string $url ): int {
         $ziel     = self::normalize( $url );
@@ -271,10 +272,11 @@ final class VerifiedLinks {
         self::save( $user_id, $rows );
 
         /**
-         * Eine Adresse wurde bestaetigt.
+         * A URL was confirmed.
          *
-         * Der Shop-Import haengt daran seine Freigabe — der Kern selbst weiss
-         * nichts von Haendlern, deshalb ein Signal statt eines Aufrufs.
+         * The shop import hooks its approval to this — the core itself
+         * knows nothing about merchants, hence a signal instead of a direct
+         * call.
          *
          * @param int    $user_id
          * @param string $url
@@ -287,12 +289,12 @@ final class VerifiedLinks {
     }
 
     /**
-     * Der eigentliche Abruf.
+     * The actual fetch.
      *
-     * Zwei Belege werden anerkannt: ein `rel="me"` auf die eigene Profilseite
-     * — der saubere Weg für eine eigene Website — und der geheime
-     * Textbaustein irgendwo im Dokument, für Orte wie GitHub, die rel beim
-     * Rendern entfernen.
+     * Two kinds of proof are accepted: a `rel="me"` pointing to the user's
+     * own profile page — the clean approach for a personal website — and the
+     * secret token somewhere in the document, for places like GitHub that
+     * strip rel when rendering.
      */
     private static function probe( int $user_id, string $url ): int {
         $response = wp_safe_remote_get(
@@ -304,8 +306,8 @@ final class VerifiedLinks {
             ]
         );
 
-        // Getrennt von MISSING: ein Timeout heisst nicht, dass der Beleg
-        // fehlt — er heisst, dass dieser Server die Seite nicht erreicht.
+        // Kept separate from MISSING: a timeout doesn't mean the proof is
+        // missing — it means this server couldn't reach the page.
         if ( is_wp_error( $response ) || (int) wp_remote_retrieve_response_code( $response ) >= 400 ) {
             return self::UNREACHABLE;
         }
@@ -324,10 +326,10 @@ final class VerifiedLinks {
     }
 
     /**
-     * Steht im Dokument ein rel="me" auf genau diese Adresse?
+     * Does the document contain a rel="me" pointing to exactly this URL?
      *
-     * Bewusst nicht die blosse Suche nach der Domain im Quelltext: daran
-     * haengt ein Abzeichen, und eine beliebige Erwähnung ist kein Anspruch.
+     * Deliberately not just searching the source for the domain: a badge
+     * hinges on this, and a random mention isn't a claim.
      */
     public static function links_back( string $body, string $target ): bool {
         $ziel = self::normalize( $target );
@@ -345,7 +347,7 @@ final class VerifiedLinks {
                 continue;
             }
 
-            // rel darf mehrere Werte tragen: rel="me noopener".
+            // rel may carry multiple values: rel="me noopener".
             $werte = preg_split( '/\s+/', mb_strtolower( trim( $rel[1] ) ) );
 
             if ( ! is_array( $werte ) || ! in_array( 'me', $werte, true ) ) {
@@ -365,8 +367,8 @@ final class VerifiedLinks {
     }
 
     /**
-     * Adressen vergleichbar machen: Schema, www und Schrägstrich am Ende
-     * sollen keinen Unterschied machen.
+     * Make URLs comparable: scheme, www, and a trailing slash shouldn't make
+     * a difference.
      */
     private static function normalize( string $url ): string {
         $url = trim( $url );
@@ -383,7 +385,7 @@ final class VerifiedLinks {
         return $host === '' ? '' : $host . $path;
     }
 
-    /** Host einer Adresse, ohne www. */
+    /** Host of a URL, without www. */
     public static function host( string $url ): string {
         $url = trim( $url );
 
@@ -403,11 +405,11 @@ final class VerifiedLinks {
     }
 
     /**
-     * Das flache Ablaufdatum nachfuehren.
+     * Keep the flat expiry date up to date.
      *
-     * Gespeichert wird der spaeteste Ablauf ueber alle bestaetigten Adressen.
-     * Ein Vergleich gegen die aktuelle Zeit genuegt damit in SQL, und eine
-     * abgelaufene Bestaetigung faellt von selbst hinten runter.
+     * The latest expiry across all confirmed URLs is what gets stored. That
+     * makes a comparison against the current time sufficient in SQL, and an
+     * expired confirmation drops out on its own.
      */
     private static function refresh_until( int $user_id ): void {
         $bis = 0;

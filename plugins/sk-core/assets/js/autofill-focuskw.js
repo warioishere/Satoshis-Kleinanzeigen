@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  // Kandidaten-Selektoren für Titel-Input
+  // Candidate selectors for the title input
   var TITLE_SELECTORS = [
     'input#post_title',
     'input[name="post_title"]',
@@ -9,7 +9,7 @@
     'input[name="product_title"]'
   ];
 
-  // Yoast-Fokus-Keyword-Feld im Vendor Dashboard
+  // Yoast focus keyword field in the vendor dashboard
   var FOCUSKW_SELECTOR = 'input#_yoast_wpseo_focuskw';
 
   function $(sel) { return document.querySelector(sel); }
@@ -25,9 +25,9 @@
   function initOnce() {
     var titleEl   = findTitleInput();
     var focusEl   = $(FOCUSKW_SELECTOR);
-    if (!titleEl || !focusEl) return false; // noch nicht da
+    if (!titleEl || !focusEl) return false; // not present yet
 
-    // Wenn User im SEO-Feld tippt, nie wieder automatisch überschreiben
+    // Once the user types in the SEO field, never auto-overwrite it again
     var userTouched = false;
     var isSyncing   = false;
     focusEl.addEventListener('input', function () {
@@ -51,17 +51,17 @@
       isSyncing = false;
     };
 
-    // Beim Laden sicherstellen, dass Fokus-Keyword dem Titel entspricht
+    // On load, ensure the focus keyword matches the title
     syncFocusWithTitle();
 
-    // Solange der User das SEO-Feld nicht verändert hat, dem Titel folgen
+    // Follow the title as long as the user hasn't changed the SEO field
     var updateFromTitle = function () {
       syncFocusWithTitle();
     };
     titleEl.addEventListener('input', updateFromTitle, { passive: true });
     titleEl.addEventListener('blur', updateFromTitle, { passive: true });
 
-    // Sicherheit: vor dem Absenden, falls leer
+    // Safety net: sync before submit in case it's still empty
     var form = titleEl.closest('form') || focusEl.closest('form');
     if (form) {
       form.addEventListener('submit', function () {
@@ -72,11 +72,11 @@
     return true;
   }
 
-  // Warten bis DOM & evtl. Ajax-Blöcke da sind
+  // Wait until the DOM and any Ajax-loaded blocks are present
   function boot() {
     if (initOnce()) return;
 
-    // Falls die Felder spät gerendert werden: kurz pollen
+    // In case the fields render late: poll briefly
     var tries = 0, maxTries = 40; // ~4s
     var iv = setInterval(function () {
       tries++;

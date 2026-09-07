@@ -1,7 +1,7 @@
 <?php
 /**
- * Erklärt, was ein Shop ab diesem Paket machen kann.
- * Optik bewusst wie das Spenden-Modal nach dem Löschen eines Inserats.
+ * Explains what a shop can do from this package upward.
+ * Look and feel deliberately matches the donation modal shown after deleting a listing.
  */
 
 defined( 'ABSPATH' ) || exit;

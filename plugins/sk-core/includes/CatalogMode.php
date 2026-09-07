@@ -5,8 +5,8 @@ namespace SK\Core;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Globaler Katalog-Modus — versteckt plattformweit den "In den Warenkorb"-Button
- * und optional den Preis. Settings unter Admin → SK → Verkaufsoptionen.
+ * Global catalog mode — hides the "Add to cart" button platform-wide, and
+ * optionally the price. Settings under Admin → SK → Selling options.
  */
 final class CatalogMode {
 
@@ -28,8 +28,9 @@ final class CatalogMode {
     }
 
     /**
-     * Platform-Produkte (Abo-Pakete + Werbe-Boosts-Basisproduct) laufen direkt
-     * an Satoshis Kleinanzeigen via BTCPay — nicht Teil vom Katalog-Modus.
+     * Platform products (subscription packs + the advertising boost base
+     * product) go straight to Satoshis Kleinanzeigen via BTCPay — not part
+     * of catalog mode.
      */
     private static function is_platform_product( $product ): bool {
         if ( ! $product ) {
@@ -68,8 +69,8 @@ final class CatalogMode {
     }
 
     /**
-     * woocommerce_is_purchasable=false macht Produkte auch unsichtbar (out-of-stock
-     * check). Wir wollen sie sichtbar halten, nur den Button wegnehmen.
+     * woocommerce_is_purchasable=false also makes products invisible (out-of-stock
+     * check). We want to keep them visible, just remove the button.
      */
     public static function keep_visible( $visible, $product_id ) {
         return true;

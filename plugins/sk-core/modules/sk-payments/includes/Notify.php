@@ -5,20 +5,19 @@ namespace SK\Modules\Payments;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * E-Mail bei bestätigtem Zahlungseingang.
+ * Email on confirmed incoming payment.
  *
- * Bis hierher erfuhr ein Verkäufer von einem Verkauf nur, wenn er ins
- * Dashboard schaute — im ganzen Zahlungsmodul stand kein einziges wp_mail
- * ausserhalb der Provisionsmahnung. Bei drei Inseraten geht das, bei einem
- * Katalog nicht.
+ * Until now, a seller only learned about a sale by checking the dashboard —
+ * the entire payments module didn't have a single wp_mail outside the
+ * commission reminder. That works for three listings, not for a catalog.
  *
- * Ausgelöst wird am Statuswechsel auf „bestätigt". Der ist per SQL an
- * `status = 'pending'` gebunden und greift deshalb genau einmal, auch wenn
- * zwei Prüfungen gleichzeitig laufen.
+ * Triggered on the status change to "confirmed". That's bound via SQL to
+ * `status = 'pending'` and therefore fires exactly once, even when two
+ * checks run at the same time.
  */
 final class Notify {
 
-    /** Ab dieser Inseratszahl gilt ein Paket als Shoptarif (Delphin). */
+    /** From this many listings, a package counts as the shop tier (Delphin). */
     const SHOP_MIN_PRODUCTS = 21;
 
     public function __construct() {
@@ -28,10 +27,10 @@ final class Notify {
     }
 
     /**
-     * Hat der Anbieter ein Paket ab Delphin?
+     * Does the vendor have a package at Delphin tier or above?
      *
-     * Dieselbe Regel wie beim Katalogimport. Bewusst hier noch einmal, damit
-     * die Benachrichtigung nicht davon abhängt, ob das Importmodul läuft.
+     * Same rule as for the catalog import. Deliberately duplicated here so
+     * the notification doesn't depend on the import module being active.
      */
     public static function is_shop_pack( int $vendor_id ): bool {
         if ( class_exists( \SK\Modules\ShopImport\Variants::class ) ) {
@@ -49,12 +48,12 @@ final class Notify {
     }
 
     /**
-     * Bestellung eingegangen — noch ohne Zahlung.
+     * Order received — not paid yet.
      *
-     * Bewusst sofort und nicht erst nach der Zahlung: so machen es Shops mit
-     * Kartenzahlung auch. Bei Onchain vergehen bis zur Bestaetigung ohnehin
-     * Minuten, und eine Bestellung, die nie bezahlt wird, ist fuer den
-     * Haendler trotzdem eine Information.
+     * Deliberately immediate rather than only after payment: that's how
+     * card-payment shops do it too. With onchain, minutes pass until
+     * confirmation anyway, and an order that never gets paid is still useful
+     * information for the merchant.
      */
     public static function on_order_placed( string $payment_hash ): void {
         global $wpdb;
@@ -66,8 +65,8 @@ final class Notify {
 
         $vendor_id = (int) $payment->vendor_id;
 
-        // Abgrenzung zum Gratispaket: ein Privatverkaeufer sieht die Anfrage
-        // im Chat, ein Haendler bekommt sie ins Postfach.
+        // Distinction from the free package: a private seller sees the
+        // request in chat, a merchant gets it in their inbox.
         if ( ! self::is_shop_pack( $vendor_id ) ) {
             return;
         }
@@ -124,10 +123,10 @@ final class Notify {
     }
 
     /**
-     * Ware ist unterwegs — der Kaeufer bekommt die Sendungsverfolgung.
+     * Goods are on the way — the buyer gets the tracking information.
      *
-     * Ohne diese Mail bliebe die Versandangabe im Dashboard des Anbieters
-     * liegen und der Kaeufer fragte weiter im Chat nach.
+     * Without this email, the shipping details would sit unnoticed in the
+     * vendor's dashboard and the buyer would keep asking in chat.
      */
     public static function on_shipped( string $payment_hash ): void {
         $payment = self::load( $payment_hash );
@@ -172,8 +171,8 @@ final class Notify {
 
         $meta = self::meta( $payment );
 
-        // Zweiter Gurt neben der Statusbedingung: eine erneut bestaetigte
-        // Zahlung soll keine zweite Mail ausloesen.
+        // Second safeguard next to the status condition: a payment confirmed
+        // again should not trigger a second email.
         if ( ! empty( $meta['mail_sent'] ) ) {
             return;
         }
@@ -186,9 +185,9 @@ final class Notify {
 
         self::send_to_vendor( $vendor_id, $data, $shop );
 
-        // Die Bestellbestätigung an den Käufer gehört zum Shoptarif: sie ist
-        // das, was einen Kauf beim Händler von einem privaten Handel
-        // unterscheidet.
+        // The order confirmation to the buyer belongs to the shop tier: it's
+        // what distinguishes a purchase from a merchant from a private
+        // trade.
         if ( $shop && $buyer_id ) {
             self::send_to_buyer( $buyer_id, $data );
         }
@@ -198,11 +197,11 @@ final class Notify {
     }
 
     /**
-     * Alles zusammentragen, was in beiden Mails vorkommt.
+     * Gather everything that appears in both emails.
      */
     private static function build( object $payment, array $meta, string $via, bool $shop ): array {
         $product_id = (int) $payment->product_id;
-        // Faellt das Inserat weg, darf der Betreff nicht leer bleiben.
+        // If the listing is gone, the subject must not stay empty.
         $title = $product_id ? (string) get_the_title( $product_id ) : '';
         if ( trim( $title ) === '' ) {
             $title = __( 'Inserat', 'sk-core' );
@@ -231,10 +230,10 @@ final class Notify {
     }
 
     /**
-     * Fiat-Betrag aus dem Kurs, der bei der Zahlung galt.
+     * Fiat amount from the rate that applied at the time of payment.
      *
-     * Nicht der Tageskurs beim Mailversand — sonst stünde in der Mail ein
-     * anderer Betrag als in der Verkaufsübersicht.
+     * Not the day's rate at the time of sending — otherwise the email would
+     * show a different amount than the sales overview.
      */
     private static function fiat( int $sats, $rate ): string {
         $rate = (float) $rate;

@@ -1,13 +1,13 @@
 /**
- * Kontaktweg erst auf Klick holen.
+ * Fetch the contact channel only on click.
  *
- * Adresse, Nummer und Handle stehen nicht mehr im Quelltext — ein Abruf der
- * Shopseite brachte vorher alle Telegram-Namen auf einmal. Der Wert kommt nun
- * einzeln aus einer Abfrage, die mengenbegrenzt ist.
+ * Address, number, and handle no longer live in the page source — fetching
+ * the shop page used to expose all Telegram handles at once. The value is
+ * now fetched individually through a rate-limited request.
  *
- * Nach der Antwort ist die Nutzergeste abgelaufen, ein neues Fenster wird
- * deshalb oft blockiert. Darum wird der Wert zusaetzlich sichtbar gemacht:
- * klappt das Oeffnen nicht, steht der Kontakt trotzdem da und ist anklickbar.
+ * By the time the response arrives, the user gesture has expired, so a new
+ * window is often blocked. That's why the value is also made visible: if
+ * opening fails, the contact is still shown and clickable.
  */
 (function () {
     'use strict';
@@ -70,26 +70,26 @@
         icon.removeAttribute('data-sk-contact');
 
         /*
-         * In der Kontaktliste ist der Wert die Antwort — dort stand vorher
-         * "anzeigen", das wird ersetzt. Das kompakte Symbol auf einer
-         * Inseratskarte bleibt dagegen ein Symbol: waechst es auf die Breite
-         * eines Handles, schiebt es bei zwei Kontakten die Karte auseinander.
+         * In the contact list, the value is the answer — it used to say
+         * "show" there, which this replaces. The compact icon on a listing
+         * card, however, stays an icon: if it grew to the width of a handle,
+         * two contacts would push the card apart.
          */
         if (icon.classList.contains('dkp-contact-reveal-link')) {
             wertZeigen(icon, daten.kurz);
         }
 
-        // mailto: und tel: brauchen kein neues Fenster und werden nicht geblockt.
+        // mailto: and tel: don't need a new window and aren't blocked.
         if (daten.ziel.indexOf('mailto:') === 0 || daten.ziel.indexOf('tel:') === 0) {
             window.location.href = daten.ziel;
             return;
         }
 
         /*
-         * Ohne 'noopener' in den Fensteroptionen: mit der Angabe liefert
-         * window.open immer null, auch wenn das Fenster aufgeht — die Blockade
-         * liesse sich dann nicht von einem Erfolg unterscheiden. Die Trennung
-         * zum Aufrufer wird stattdessen danach gesetzt.
+         * Deliberately without 'noopener' in the window options: with it,
+         * window.open always returns null, even when the window actually
+         * opens — that would make a block indistinguishable from success.
+         * The severance from the opener is set afterward instead.
          */
         var fenster = window.open(daten.ziel, '_blank');
 
@@ -98,8 +98,8 @@
             return;
         }
 
-        // Blockiert: jetzt muss der Wert sichtbar werden, sonst weiss niemand,
-        // worauf der zweite Klick fuehrt.
+        // Blocked: the value now needs to become visible, otherwise no one
+        // knows what the second click leads to.
         icon.classList.add('is-blocked');
         wertZeigen(icon, daten.kurz);
     }
@@ -116,7 +116,7 @@
         span.textContent = kurz;
         icon.appendChild(span);
 
-        // Erst mit sichtbarem Wert darf das Kaestchen breiter werden.
+        // The box may only widen once the value is visible.
         icon.classList.add('has-value');
     }
 }());

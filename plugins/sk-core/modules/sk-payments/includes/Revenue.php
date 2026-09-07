@@ -5,23 +5,23 @@ namespace SK\Modules\Payments;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Umsatzauswertung in Fiat.
+ * Revenue report in fiat.
  *
- * Der Betrag in Franken oder Euro entsteht nicht aus dem heutigen Kurs,
- * sondern aus dem, der bei der Zahlung galt — er steht an jeder Zahlung.
- * Genau das macht die Auswertung für eine Steuererklärung überhaupt
- * brauchbar: der Wert im Moment des Zuflusses zählt, und er lässt sich
- * später nicht mehr rekonstruieren.
+ * The amount in francs or euros is not derived from today's rate, but from
+ * the rate that applied at the time of payment — it is stored with every
+ * payment. That's exactly what makes the report usable for a tax return at
+ * all: the value at the moment funds arrived counts, and it can no longer
+ * be reconstructed later.
  *
- * Maßgeblich ist der Tag der Bestätigung, nicht der Bestellung — vorher ist
- * kein Geld geflossen.
+ * The date of confirmation is what matters, not the date of the order —
+ * before that, no money has moved.
  */
 final class Revenue {
 
-    /** Zahlungen, bei denen Geld angekommen ist. */
+    /** Payments where the money has arrived. */
     const SETTLED = [ 'confirmed', 'delivered' ];
 
-    /** Angekommen, aber bestritten — getrennt ausweisen statt stillschweigend mitzählen. */
+    /** Arrived, but disputed — report separately instead of silently counting it in. */
     const DISPUTED = 'disputed';
 
     private static function table(): string {
@@ -31,10 +31,10 @@ final class Revenue {
     }
 
     /**
-     * Fiat-Betrag einer Zahlung.
+     * Fiat amount of a payment.
      *
-     * @return float|null null = kein Kurs erfasst, dann darf hier auch keine
-     *                   Zahl stehen, sonst waere die Summe still falsch.
+     * @return float|null null = no rate recorded, so no number may be shown
+     *                   here either, otherwise the total would be silently wrong.
      */
     public static function fiat( int $sats, $rate ): ?float {
         $rate = (float) $rate;
@@ -43,9 +43,9 @@ final class Revenue {
     }
 
     /**
-     * Monatssummen.
+     * Monthly totals.
      *
-     * @param string $role 'sales' oder 'purchases'
+     * @param string $role 'sales' or 'purchases'
      *
      * @return array<int,array{monat:string,anzahl:int,sats:int,fiat:float,ohne_kurs:int}>
      */
@@ -78,7 +78,7 @@ final class Revenue {
     }
 
     /**
-     * Einzelne Zahlungen, so wie sie in den Export gehören.
+     * Individual payments, formatted the way they belong in the export.
      *
      * @return array<int,array>
      */
@@ -129,7 +129,7 @@ final class Revenue {
     }
 
     /**
-     * Jahre, für die es Zahlungen gibt.
+     * Years for which payments exist.
      *
      * @return int[]
      */
@@ -154,13 +154,13 @@ final class Revenue {
     }
 
     /**
-     * Zeilen als CSV, mit Semikolon — so öffnet Excel die Datei hierzulande
-     * ohne Zutun in Spalten.
+     * Rows as CSV, with semicolons — that's how Excel here opens the file
+     * into columns without any extra steps.
      */
     public static function csv( array $rows ): string {
         $out = fopen( 'php://temp', 'r+' );
 
-        fwrite( $out, "\xEF\xBB\xBF" ); // BOM, sonst zerlegt Excel die Umlaute
+        fwrite( $out, "\xEF\xBB\xBF" ); // BOM, otherwise Excel mangles the umlauts
 
         fputcsv(
             $out,

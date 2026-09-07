@@ -5,13 +5,13 @@ namespace SK\Modules\ContactClicks;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Nimmt Kontaktklicks entgegen und zählt sie.
+ * Receives contact clicks and counts them.
  */
 class Tracker {
 
     const ACTION = 'sk_contact_click';
 
-    /** Nur diese Kanäle werden angenommen — der Rest ist Rauschen. */
+    /** Only these channels are accepted — the rest is noise. */
     const CHANNELS = [ 'tg', 'nostr', 'mail', 'tel', 'x', 'chat', 'web' ];
 
     public function __construct() {
@@ -21,7 +21,7 @@ class Tracker {
     }
 
     public function enqueue(): void {
-        // Nur dort laden, wo Kontaktsymbole ueberhaupt vorkommen.
+        // Only load where contact icons can actually occur.
         if ( ! function_exists( 'is_woocommerce' ) ) {
             return;
         }
@@ -49,7 +49,7 @@ class Tracker {
     }
 
     public function handle(): void {
-        // Beacons erwarten keine Antwort; trotzdem sauber abschliessen.
+        // Beacons don't expect a response; still finish cleanly.
         if ( ! check_ajax_referer( self::ACTION, 'nonce', false ) ) {
             wp_send_json_error( null, 403 );
         }
@@ -74,7 +74,7 @@ class Tracker {
             }
             $vendor_id = (int) $post->post_author;
 
-            // Der eigene Verkaeufer soll seine Zahlen nicht selbst hochtreiben.
+            // A seller shouldn't be able to inflate their own numbers.
             if ( $vendor_id === get_current_user_id() ) {
                 wp_send_json_success( null );
             }
@@ -86,18 +86,18 @@ class Tracker {
     }
 
     /**
-     * Kontaktaufnahme von der Serverseite melden.
+     * Report a contact from the server side.
      *
-     * Fuer Kanaele, bei denen sich die echte Aufnahme messen laesst statt nur
-     * der Klick auf ein Symbol: der Chat zaehlt, wenn eine Unterhaltung
-     * zustande kommt, nicht wenn jemand das Fenster oeffnet.
+     * For channels where the actual contact can be measured instead of just
+     * an icon click: chat counts when a conversation comes about, not when
+     * someone opens the window.
      */
     public static function record( int $product_id, int $vendor_id, string $channel, string $context = '' ): void {
         if ( ! in_array( $channel, self::CHANNELS, true ) ) {
             return;
         }
 
-        // Der eigene Verkaeufer treibt seine Zahlen nicht selbst hoch.
+        // A seller doesn't inflate their own numbers.
         if ( $vendor_id > 0 && $vendor_id === get_current_user_id() ) {
             return;
         }
@@ -106,7 +106,7 @@ class Tracker {
     }
 
     /**
-     * Zaehlt dieser Aufruf als echter Klick?
+     * Does this call count as a genuine click?
      */
     private function is_countable(): bool {
         $agent = trim( (string) ( $_SERVER['HTTP_USER_AGENT'] ?? '' ) );
@@ -156,7 +156,7 @@ class Tracker {
     }
 
     /**
-     * Tagesrotierender Besucher-Hash, ohne gespeicherte IP.
+     * Daily-rotating visitor hash, without a stored IP.
      */
     private static function visitor_hash( string $day ): string {
         return md5(

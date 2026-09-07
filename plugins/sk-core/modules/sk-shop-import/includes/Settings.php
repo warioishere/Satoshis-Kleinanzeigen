@@ -5,11 +5,11 @@ namespace SK\Modules\ShopImport;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Zuordnung der Shop-Kategorien zu den eigenen.
+ * Mapping of shop categories to our own.
  *
- * Je Verkäufer gespeichert: Zwei Shops nennen dieselbe Ware verschieden, eine
- * gemeinsame Tabelle würde sich gegenseitig überschreiben. Beim zweiten Import
- * steht die Zuordnung dadurch schon da.
+ * Stored per vendor: two shops call the same item something different, and
+ * a shared table would keep overwriting itself. This way, the mapping is
+ * already there by the second import.
  */
 final class Settings {
 
@@ -18,7 +18,7 @@ final class Settings {
     const META_CURRENCY     = '_sk_import_currency';
 
     /**
-     * @return array<string,int> Shop-Kategorie (klein) => term_id
+     * @return array<string,int> Shop category (lowercase) => term_id
      */
     public static function category_map( int $vendor_id = 0 ): array {
         $vendor_id = $vendor_id ?: get_current_user_id();
@@ -51,12 +51,12 @@ final class Settings {
     }
 
     /**
-     * Waehrung des Shops.
+     * The shop's currency.
      *
-     * Aus der Datei ist sie nicht zu holen: Ein WooCommerce-Export enthaelt
-     * keine Waehrungsspalte, weil die Waehrung dort eine Shop-Einstellung ist
-     * und kein Feld je Produkt. Deshalb wird abgeleitet — und die einmal
-     * getroffene Wahl gemerkt, die weiss es besser als jede Heuristik.
+     * It can't be pulled from the file: a WooCommerce export contains no
+     * currency column, because there the currency is a shop setting, not
+     * a per-product field. So it's inferred — and once a choice has been
+     * made, it's remembered, since that knows better than any heuristic.
      *
      * @return array{currency:string,reason:string}
      */
@@ -69,10 +69,10 @@ final class Settings {
         }
 
         /*
-         * Endung der Shopadresse, die der Haendler beim Abruf eingetragen hat.
-         * Frueher stand hier ein Feld, das der Betreiber je Haendler von Hand
-         * pflegen musste — es tat nichts weiter als diesen Vorschlag, den der
-         * Haendler im Formular ohnehin ueberstimmen kann.
+         * Suffix of the shop URL the dealer entered when fetching. This
+         * used to be a field the operator had to maintain by hand per
+         * dealer — it did nothing more than this suggestion, which the
+         * dealer can override in the form anyway.
          */
         $host = (string) wp_parse_url(
             (string) get_user_meta( $vendor_id, DashboardPage::META_FETCH_URL, true ),
@@ -87,7 +87,7 @@ final class Settings {
             }
         }
 
-        // Standort des Verkaeufers.
+        // Vendor's location.
         $place = mb_strtolower( (string) get_user_meta( $vendor_id, 'sk_geo_address', true ), 'UTF-8' );
         foreach ( [ 'schweiz', 'switzerland', 'suisse', 'svizzera' ] as $needle ) {
             if ( $place !== '' && strpos( $place, $needle ) !== false ) {

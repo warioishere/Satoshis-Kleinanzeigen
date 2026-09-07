@@ -1,6 +1,6 @@
 <?php
 /**
- * Mail an den Käufer: die Bestellung ist unterwegs.
+ * Mail to the buyer: the order is on its way.
  *
  * @var array $data
  */

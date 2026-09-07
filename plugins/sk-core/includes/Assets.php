@@ -588,9 +588,9 @@ class Assets {
             $this->sk_dashboard_scripts();
         }
 
-        // Weiche Uebergaenge zwischen Dashboard-Seiten. Bewusst nur hier: eine
-        // Cross-Document View Transition greift nur, wenn beide Seiten die
-        // Regel mitbringen, also bleibt der oeffentliche Teil unveraendert.
+        // Soft transitions between dashboard pages. Deliberately only here: a
+        // cross-document view transition only applies when both pages carry
+        // the rule, so the public part stays unaffected.
         if ( sk_is_seller_dashboard() ) {
             wp_enqueue_style( 'sk-dashboard-transitions' );
         }

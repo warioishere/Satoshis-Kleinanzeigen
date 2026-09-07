@@ -5,20 +5,19 @@ namespace SK\Modules\ShopImport;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Schaltet die Auto-Poster waehrend eines Imports stumm.
+ * Silences the auto posters during an import.
  *
- * Ein Katalog mit 28 Artikeln loeste sonst 28 Telegram-Nachrichten, 28
- * Nostr-Beitraege und 28 Feed-Eintraege auf einen Schlag aus. Das ist fuer
- * jeden Kanal Spam — und es ist kein Grenzfall, sondern der Normalfall beim
- * Import.
+ * A 28-item catalog would otherwise trigger 28 Telegram messages, 28 Nostr
+ * posts, and 28 feed entries all at once. That's spam for every channel —
+ * and it's not an edge case, it's the normal case during an import.
  *
- * Entfernt werden gezielt nur Rueckrufe aus sk-notifications und sk-feed.
- * Ein pauschales remove_all_actions() auf save_post_product wuerde auch
- * WooCommerce treffen, das dort seine Nachschlagetabellen pflegt.
+ * Only callbacks from sk-notifications and sk-feed are removed, and
+ * deliberately so. A blanket remove_all_actions() on save_post_product
+ * would also hit WooCommerce, which maintains its lookup tables there.
  */
 final class Silence {
 
-    /** Haken, an denen die Poster haengen. */
+    /** Hooks the posters are attached to. */
     const HOOKS = [
         'transition_post_status',
         'save_post',
@@ -28,15 +27,15 @@ final class Silence {
     ];
 
     /**
-     * Module, deren Rueckrufe pausiert werden — alles, was beim
-     * Veroeffentlichen nach draussen sendet.
+     * Modules whose callbacks get paused — everything that sends outward
+     * on publish.
      *
-     * sk-nostr-market gehoert dazu: Es haengt ebenfalls an
-     * transition_post_status und wuerde den ganzen Katalog auf
-     * Nostr-Marktplaetze schieben.
+     * sk-nostr-market belongs here: it also hooks into
+     * transition_post_status and would push the whole catalog out to
+     * Nostr marketplaces.
      *
-     * Bewusst NICHT dabei ist sk-anti-fraud — dessen Pruefungen sollen auch
-     * bei einem Import laufen.
+     * Deliberately NOT included is sk-anti-fraud — its checks should still
+     * run during an import too.
      */
     const MODULES = [ 'sk-notifications', 'sk-feed', 'sk-nostr-market' ];
 
@@ -90,7 +89,7 @@ final class Silence {
     }
 
     /**
-     * Stammt dieser Rueckruf aus einem der Poster-Module?
+     * Does this callback come from one of the poster modules?
      */
     private static function is_poster( $callback ): bool {
         try {

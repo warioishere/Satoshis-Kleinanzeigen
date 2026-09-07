@@ -169,9 +169,9 @@
     }
 
     /*
-     * Rolle aus der Karte, nicht aus dem Absender: Beim Sofortkauf legt der
-     * Kaeufer die Invoice-Karte selbst, damit stimmt "own" nicht mehr mit
-     * "Anbieter" ueberein. Der Server weiss es, also sagt er es.
+     * Role from the card, not from the sender: with instant buy, the buyer
+     * creates the invoice card themselves, so "own" no longer matches
+     * "vendor". The server knows, so it tells us.
      */
     function viewerIsVendor(data, $msg, sentByVendor) {
         if (typeof data.viewer_is_vendor === 'boolean') {
@@ -181,13 +181,14 @@
     }
 
     /*
-     * Nicht jede Lightning-Adresse kann den Eingang melden (LNURL-verify ist
-     * optional). Ohne diese Moeglichkeit wartet der Kaeufer sonst auf einen
-     * Spinner, der sich nie aendert — bis der Anbieter von Hand bestaetigt.
+     * Not every Lightning address can report the incoming payment (LNURL
+     * verify is optional). Without that capability, the buyer would
+     * otherwise wait on a spinner that never changes — until the vendor
+     * confirms manually.
      */
     function waitingLabel(hasVerify, isVendor) {
         if (hasVerify !== false || isVendor) {
-            // Der Anbieter hat den Knopf darunter, ihm sagt der Satz nichts.
+            // The vendor has the button below, this sentence tells them nothing.
             return '<i class="fas fa-spinner fa-spin"></i> Warte auf Zahlung…';
         }
         return '<i class="fas fa-hourglass-half"></i> Bezahlt? Der Anbieter bestätigt den Eingang.';
@@ -210,7 +211,7 @@
         var html = '<div class="skl-invoice">' +
             '<div class="skl-inv-header">⚡ Lightning Invoice — ' + escHtml(satsFormatted) + ' Sats' + escHtml(fiatInfo) + '</div>';
 
-        // QR nur fuer den Kaeufer — der Anbieter bezahlt nichts.
+        // QR only for the buyer — the vendor pays nothing.
         if (!isVendor) {
             html += '<div class="skl-qr-container" style="text-align:center;padding:16px;">' +
                 qrImageTag(data.qr, 220) + '</div>';
@@ -227,17 +228,17 @@
             html += '<a href="' + escAttr(safeUri(data.deeplink)) + '" class="skl-deeplink-btn">⚡ In Wallet öffnen</a>';
 
             /*
-             * Zahlen mit einer verbundenen Wallet.
+             * Paying with a connected wallet.
              *
-             * Der Weg ueber QR-Code oder Deeplink verlaesst die Seite — wir
-             * erfahren nie, was passiert ist, und muessen hinterher den Server
-             * des Verkaeufers fragen. Zahlt der Kaeufer dagegen hier, gibt
-             * seine Wallet das Preimage zurueck: der einzige Nachweis, bei dem
-             * niemand dem Verkaeufer glauben muss.
+             * The QR code or deeplink path leaves the page — we never learn
+             * what happened and have to ask the seller's server afterward.
+             * If the buyer pays here instead, their wallet returns the
+             * preimage: the only proof where nobody has to take the
+             * seller's word for it.
              *
-             * Nur anbieten, wenn wirklich eine Wallet da ist — ein Knopf, der
-             * beim Klick erklaert, dass er nicht geht, ist schlimmer als
-             * keiner.
+             * Only offer this when a wallet is actually present — a button
+             * that explains on click that it doesn't work is worse than no
+             * button at all.
              */
             if (window.webln) {
                 html += '<button type="button" class="skl-webln-btn" ' +
@@ -256,9 +257,9 @@
                 : waitingLabel(data.has_verify, isVendor)) +
             '</div>';
 
-        // Anbieter: Bestaetigen von Hand nur als Rueckfalltuer. Meldet die
-        // Karte has_verify, prueft die Wallet oder die LNURL-Verify-URL den
-        // Eingang selbst und der Knopf waere nur eine Fehlerquelle.
+        // Vendor: manual confirmation only as a fallback door. If the card
+        // reports has_verify, the wallet or the LNURL verify URL checks the
+        // incoming payment itself and the button would only be a source of error.
         if (isVendor && !data.settled && !data.has_verify) {
             html += '<button class="skl-vendor-confirm-btn" ' +
                 'data-payment-hash="' + escAttr(paymentHash) + '" ' +
@@ -266,8 +267,8 @@
                 'style="width:100%;margin-top:8px;background:rgba(40,167,69,0.12);color:#5cb85c;border:1px solid rgba(40,167,69,0.25);padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px;">' +
                 '✓ Zahlung in Wallet erhalten — bestätigen</button>';
         } else if (isVendor && !data.settled) {
-            // Ohne Knopf bliebe nur ein Spinner — der Anbieter soll wissen,
-            // dass er nichts tun muss.
+            // Without a button there'd only be a spinner — the vendor should
+            // know they don't have to do anything.
             html += '<div style="text-align:center;font-size:12px;color:#5a6a7e;padding:0 8px 4px;">' +
                 'Der Zahlungseingang wird automatisch erkannt.</div>';
         }
@@ -447,7 +448,7 @@
         });
     });
 
-    /* ─── Zahlen mit verbundener Wallet, Nachweis per Preimage ─── */
+    /* ─── Pay with connected wallet, proof via preimage ─── */
 
     $(document).on('click', '.skl-webln-btn', function (e) {
         e.preventDefault();
@@ -467,8 +468,8 @@
             var preimage = res && res.preimage;
 
             if (!preimage) {
-                // Gezahlt hat er vermutlich trotzdem — nur ohne Nachweis.
-                // Dann uebernimmt das uebliche Abfragen.
+                // They likely still paid — just without proof. The usual
+                // polling takes over in that case.
                 $btn.prop('disabled', false).html(urspruenglich);
                 startPaymentPolling(paymentHash);
                 return;
@@ -484,13 +485,13 @@
                 updatePaymentStatus(paymentHash, '✅ Zahlung bestätigt!', true);
                 $btn.remove();
             }).fail(function () {
-                // Der Nachweis kam nicht durch — die Zahlung ist deshalb nicht
-                // weg. Zurueck auf den gewohnten Weg.
+                // The proof didn't go through — the payment isn't gone
+                // because of that. Fall back to the usual path.
                 $btn.prop('disabled', false).html(urspruenglich);
                 startPaymentPolling(paymentHash);
             });
         }).catch(function (err) {
-            // Abgebrochen oder abgelehnt: kein Fehler, nur nicht gezahlt.
+            // Cancelled or rejected: not an error, just unpaid.
             $btn.prop('disabled', false).html(urspruenglich);
             if (err && err.message) {
                 updatePaymentStatus(paymentHash, escHtml(err.message), false);
@@ -528,8 +529,8 @@
                         return;
                     }
 
-                    // Meldet der Server, dass sich nichts pruefen laesst, hat
-                    // weiteres Abfragen keinen Zweck.
+                    // If the server reports that nothing can be checked,
+                    // further polling serves no purpose.
                     if (res.has_verify === false) {
                         stopPaymentPolling(paymentHash);
                         var forVendor = $('.skl-payment-status[data-payment-hash="' + paymentHash + '"]').data('is-vendor') === 1;

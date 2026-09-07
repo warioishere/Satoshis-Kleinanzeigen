@@ -22,7 +22,7 @@
 			// Start chat icon on product page
 			$(document).on('click', '.dvc-start-chat-icon', this.openChatModal);
 
-			// Blockieren / Blockierung aufheben
+			// Block / unblock
 			$(document).on('click', '.dvc-block-btn', this.blockUser);
 			$(document).on('click', '.dvc-unblock-btn', this.unblockUser);
 
@@ -91,16 +91,15 @@
 		},
 
 		/**
-		 * Direktlink aufs Chatfenster — #chat am Inseratslink.
+		 * Direct link into the chat window — #chat on the listing link.
 		 *
-		 * Der Telegram-Kanal verlinkt so direkt ins Anschreiben. Bewusst als
-		 * Fragment und nicht als Abfrageparameter: das Fragment erreicht den
-		 * Server nie, die Seite kommt also weiter aus dem Cache.
+		 * The Telegram channel links straight into the message composer this
+		 * way. Deliberately a fragment and not a query parameter: the fragment
+		 * never reaches the server, so the page still comes from cache.
 		 *
-		 * Ausgeloest wird derselbe Klick, den auch das Symbol ausloest — damit
-		 * gelten dieselben Regeln: wer nicht angemeldet ist, sieht das
-		 * Anmeldefenster, und auf dem eigenen Inserat gibt es kein Symbol und
-		 * folglich auch nichts zu oeffnen.
+		 * Triggers the same click that the icon also triggers — so the same
+		 * rules apply: whoever isn't logged in sees the login window, and on
+		 * their own listing there's no icon and consequently nothing to open.
 		 */
 		openFromLink: function () {
 			if (window.location.hash !== '#chat') {
@@ -334,7 +333,7 @@
 			DVC.blockRequest('dvc_unblock_user', $(this).data('chat-id'));
 		},
 
-		/** Beide Richtungen laufen gleich: melden, dann neu laden. */
+		/** Both directions work the same: report, then reload. */
 		blockRequest: function (action, chatId) {
 			if (!chatId) {
 				return;

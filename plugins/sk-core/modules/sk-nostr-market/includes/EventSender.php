@@ -24,18 +24,18 @@ class EventSender {
     public static function send( int $kind, string $content, array $tags ): ?string {
         $privkey = self::get_privkey();
         if ( ! $privkey ) {
-            error_log( '[SK Nostr Market] Kein Private Key konfiguriert.' );
+            error_log( '[SK Nostr Market] No private key configured.' );
             return null;
         }
 
         $relays = self::get_relays();
         if ( empty( $relays ) ) {
-            error_log( '[SK Nostr Market] Keine Relays konfiguriert.' );
+            error_log( '[SK Nostr Market] No relays configured.' );
             return null;
         }
 
         if ( ! class_exists( '\swentel\nostr\Event\Event' ) ) {
-            error_log( '[SK Nostr Market] Nostr PHP Library nicht gefunden.' );
+            error_log( '[SK Nostr Market] Nostr PHP library not found.' );
             return null;
         }
 
@@ -76,19 +76,18 @@ class EventSender {
     }
 
     /**
-     * Ein bereits signiertes Ereignis an die Relays geben.
+     * Hand an already-signed event to the relays.
      *
-     * Fuer Inserate, die der Anbieter selbst im Browser signiert hat: den
-     * Schluessel bekommen wir dabei nie zu sehen, nur das fertige Ereignis.
-     * Verteilt wird es ueber dieselbe Schleife und dieselbe Erfolgspruefung
-     * wie alles andere.
+     * For listings the vendor signed themselves in the browser: we never get
+     * to see the key, only the finished event. It's distributed through the
+     * same loop and the same success check as everything else.
      *
      * Id and signature are verified here, not left to the relay. The input
      * comes from a browser; without the check an arbitrary id could be
      * written into the product meta.
      *
      * @param array $signed_event
-     * @return string|null Ereigniskennung, wenn ein Relay es angenommen hat.
+     * @return string|null Event id, if a relay accepted it.
      */
     public static function send_signed( array $signed_event ): ?string {
         $event = self::event_from_array( $signed_event );
@@ -100,7 +99,7 @@ class EventSender {
         $relays = self::get_relays();
 
         if ( empty( $relays ) ) {
-            error_log( '[SK Nostr Market] Keine Relays konfiguriert.' );
+            error_log( '[SK Nostr Market] No relays configured.' );
             return null;
         }
 
@@ -161,10 +160,10 @@ class EventSender {
     /**
      * Get the Nostr private key (reuses Auto Poster's key), always as hex.
      *
-     * Der Schluessel darf als nsec hinterlegt sein — auf Live ist er das.
-     * Sign::signEvent() wandelt das selbst um, Key::getPublicKey() nicht: dort
-     * warf ein nsec einen ValueError. Deshalb wird hier einmal zentral
-     * normalisiert, damit jeder Aufrufer Hex bekommt.
+     * The key may be stored as an nsec — on Live it is. Sign::signEvent()
+     * converts that itself, but Key::getPublicKey() does not: there an nsec
+     * threw a ValueError. So it's normalized centrally here once, so every
+     * caller gets hex.
      */
     public static function get_privkey(): ?string {
         // Priority: wp-config constant → Auto Poster setting → filter.
@@ -191,7 +190,7 @@ class EventSender {
     }
 
     /**
-     * Einen Schluessel auf 64 Hex-Zeichen bringen, oder null.
+     * Bring a key to 64 hex characters, or null.
      */
     private static function to_hex( string $key ): ?string {
         $key = trim( $key );
@@ -208,7 +207,7 @@ class EventSender {
                     return strtolower( (string) $hex );
                 }
             } catch ( \Throwable $e ) {
-                error_log( '[SK Nostr Market] nsec liess sich nicht umwandeln: ' . $e->getMessage() );
+                error_log( '[SK Nostr Market] nsec could not be converted: ' . $e->getMessage() );
             }
         }
 
@@ -225,15 +224,15 @@ class EventSender {
         }
 
         /*
-         * \Throwable, nicht \Exception: die Bibliothek wirft bei einem
-         * unbrauchbaren Schluessel einen ValueError, und der ist ein Error.
-         * Er lief deshalb bis in die Einstellungsseite durch und riss sie mit.
+         * \Throwable, not \Exception: the library throws a ValueError on an
+         * unusable key, and that's an Error. It used to propagate all the way
+         * up into the settings page and take it down with it.
          */
         try {
             $key = new \swentel\nostr\Key\Key();
             return $key->getPublicKey( $privkey );
         } catch ( \Throwable $e ) {
-            error_log( '[SK Nostr Market] Pubkey liess sich nicht ableiten: ' . $e->getMessage() );
+            error_log( '[SK Nostr Market] Pubkey could not be derived: ' . $e->getMessage() );
             return null;
         }
     }

@@ -1,5 +1,5 @@
 /**
- * Zeilen fuer Ausfuehrungen hinzufuegen und entfernen.
+ * Add and remove rows for variants.
  */
 (function () {
     'use strict';
@@ -13,8 +13,8 @@
         var copy = li.cloneNode(true);
         copy.querySelectorAll('input').forEach(function (i) {
             i.value = '';
-            // Sonst erbt die neue Zeile die Betraege der ersten und fuellt
-            // sich beim naechsten Wechsel der Einheit von selbst.
+            // Otherwise the new row would inherit the first row's amounts and
+            // fill itself in again on the next unit switch.
             i.removeAttribute('data-sats');
             i.removeAttribute('data-fiat');
         });
@@ -37,8 +37,8 @@
         var button = e.target.closest('.sk-variants-row__remove');
         if (!button) return;
 
-        // Die letzte Zeile nicht entfernen, sondern leeren — sonst laesst sich
-        // ohne Neuladen keine neue mehr anlegen.
+        // Clear the last row instead of removing it — otherwise no new row
+        // could be added without reloading.
         if (list.querySelectorAll('.sk-variants-row').length > 1) {
             button.closest('.sk-variants-row').remove();
         } else {
@@ -48,12 +48,12 @@
 }());
 
 /**
- * Einheit des Inseratspreises umschalten.
+ * Switch the listing price's unit.
  *
- * Der eingetragene Betrag wechselt mit: bliebe beim Wechsel von CHF auf Sats
- * die 49.90 stehen, waere aus einem Inserat fuer 80'000 Sats stillschweigend
- * eines fuer 50 geworden. Was einmal eingetippt wurde, wird gemerkt, damit
- * ein Hin und Her nichts verliert.
+ * The entered amount switches along with it: if 49.90 stayed put when
+ * switching from CHF to Sats, a listing for 80,000 Sats would silently
+ * become one for 50. Anything typed in once is remembered, so switching
+ * back and forth loses nothing.
  */
 (function () {
     'use strict';

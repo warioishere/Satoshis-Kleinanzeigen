@@ -90,10 +90,10 @@ function sk_product_get_row_action( $post, $format_html = true ) {
     }
 
     foreach ( $row_action as $key => $action ) {
-        // Kein "|" zwischen den Aktionen: auf dem Desktop steht es in #444 auf
-        // dunklem Grund und ist unsichtbar, auf Mobile werden die Aktionen zu
-        // gestapelten Knoepfen und der Trenner haengt als Strich daneben.
-        // Den Abstand setzt das Stylesheet ueber .row-actions > span.
+        // No "|" between the actions: on desktop it sits as #444 on a dark
+        // background and is invisible, and on mobile the actions become
+        // stacked buttons with the separator hanging next to them as a stray
+        // dash. The stylesheet sets the spacing via .row-actions > span.
         $row_action_html[ $key ] = sprintf( '<span class="%s"><a href="%s" %s>%s</a></span>', $action['class'], esc_url( $action['url'] ), isset( $action['other'] ) ? $action['other'] : '', $action['title'] );
     }
 

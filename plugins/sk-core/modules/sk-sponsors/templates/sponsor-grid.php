@@ -1,13 +1,12 @@
 <?php
 /**
- * Sponsorenraster für [sk_sponsors].
+ * Sponsor grid for [sk_sponsors].
  *
- * Gibt bewusst dieselbe Struktur und dieselben Klassen aus wie der frühere
- * kadence/posts-Block, damit das Aussehen unverändert bleibt: Das Raster
- * (grid-cols, grid-lg-col-3, content-bg, loop-entry, kadence-thumbnail-ratio-1-1)
- * kommt aus der Theme-CSS, die auf jeder Seite geladen wird. Nur die wenigen
- * Regeln, die sonst das Blocks-Plugin beisteuern würde, liegen in
- * assets/css/sk-sponsors.css.
+ * Deliberately outputs the same structure and classes as the former
+ * kadence/posts block, so the look stays unchanged: the grid (grid-cols,
+ * grid-lg-col-3, content-bg, loop-entry, kadence-thumbnail-ratio-1-1) comes
+ * from the theme CSS, which loads on every page. Only the few rules the
+ * blocks plugin would otherwise contribute live in assets/css/sk-sponsors.css.
  *
  * @var \WP_Post[] $sponsors
  * @var string     $heading

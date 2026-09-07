@@ -277,28 +277,28 @@ class Module {
      */
     public function set_default_geolocation_data( $user_id ) {
         /*
-         * Kein Standort ohne Wahl.
+         * No location without a choice.
          *
-         * Hier stand der eingestellte Standardstandort und wurde jedem neu
-         * registrierten Verkaeufer als eigener Standort ins Profil geschrieben,
-         * samt oeffentlicher Sichtbarkeit. Genau daraus sind die Altprofile
-         * entstanden, die auf der Karte in Dhaka lagen, ohne dass jemand das je
-         * ausgewaehlt haette — und es wuerde jedes Mal wieder passieren, sobald
-         * unter SK > Geolocation ein Standard eingetragen wird.
+         * This used to write the configured default location into every
+         * newly registered seller's profile as their own location, public
+         * visibility included. That's exactly how the legacy profiles came
+         * about that showed up on the map in Dhaka, without anyone ever
+         * having chosen that — and it would happen again every time a
+         * default is set under SK > Geolocation.
          *
-         * Der Standardstandort ist ausschliesslich der Kartenmittelpunkt. Wer
-         * keinen Ort gewaehlt hat, hat keine Koordinate und erscheint nicht auf
-         * der Karte. Die Sichtbarkeit bleibt vorbelegt, damit ein spaeter
-         * gewaehlter Ort ohne weiteren Schalter erscheint.
+         * The default location is solely the map center. Whoever hasn't
+         * chosen a place has no coordinates and doesn't appear on the map.
+         * Visibility stays pre-enabled so that a location chosen later shows
+         * up without needing another toggle.
          */
         update_user_meta( $user_id, 'sk_geo_latitude', '' );
         update_user_meta( $user_id, 'sk_geo_longitude', '' );
         update_user_meta( $user_id, 'sk_geo_public', 1 );
         update_user_meta( $user_id, 'sk_geo_address', '' );
 
-        // Auch die versteckten Formularfelder bleiben leer: stuende hier ein
-        // Ort, uebernaehme ihn das Profil beim naechsten Speichern als eigene
-        // Wahl.
+        // The hidden form fields stay empty too: if a place were set here,
+        // the profile would adopt it as the user's own choice on the next
+        // save.
         $sk_settings = get_user_meta( $user_id, 'sk_profile_settings', true );
         $sk_settings = is_array( $sk_settings ) ? $sk_settings : [];
 

@@ -1,5 +1,5 @@
 /*
- * Uebernommen aus dem Plugin wp-post-image-carousel 2.0.3.
+ * Adopted from the plugin wp-post-image-carousel 2.0.3.
  */
 
 (function() {
@@ -9,13 +9,13 @@
 
   function initWppisCarousel() {
     document.querySelectorAll('.wppis-slider').forEach(slider => {
-      // CSS-Variable für Lücke sicher setzen (falls Styles früher geladen wurden)
+      // Set the gap CSS variable defensively (in case styles loaded earlier)
       slider.style.setProperty('--wppis-gap', GAP_PX + 'px');
 
       const track = slider.querySelector('.wppis-track');
       if (!track) return;
 
-      // Für horizontale Slider: einzeilig, scrollbar, Lücke fixieren
+      // For horizontal sliders: single row, scrollable, fixed gap
       if (slider.classList.contains('horizontal')) {
         track.style.display = 'flex';
         track.style.flexDirection = 'row';
@@ -27,7 +27,7 @@
         track.style.flexWrap = 'nowrap';
       }
 
-      // Für vertikale Slider: Spalte, keine horizontale Scrollerei
+      // For vertical sliders: column layout, no horizontal scrolling
       if (slider.classList.contains('vertical')) {
         track.style.display = 'flex';
         track.style.flexDirection = 'column';
@@ -35,15 +35,15 @@
         track.style.overflow = 'visible';
       }
 
-      // Slides auf "flex: 0 0 auto" setzen, damit keine Wraps entstehen
+      // Set slides to "flex: 0 0 auto" so no wraps occur
       track.querySelectorAll('.wppis-slide').forEach(slide => {
         slide.style.boxSizing = 'border-box';
         slide.style.flex = '0 0 auto';
-        slide.style.margin = '0'; // Lücke über gap
+        slide.style.margin = '0'; // spacing comes from gap
         slide.style.scrollSnapAlign = 'start';
       });
 
-      // Bilder responsiv halten
+      // Keep images responsive
       track.querySelectorAll('.wppis-figure, .wppis-figure img').forEach(el => {
         el.style.display = 'block';
         el.style.width = '100%';
@@ -53,13 +53,13 @@
     });
   }
 
-  // Init auf DOMContentLoaded + nach evtl. Ajax-Loads (falls Plugin nachlädt)
+  // Init on DOMContentLoaded + after any Ajax loads (in case the plugin lazy-loads)
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initWppisCarousel);
   } else {
     initWppisCarousel();
   }
 
-  // Optional: Wenn das Plugin Slides dynamisch lädt, kannst du hier auf eigene Events hören
+  // Optional: if the plugin loads slides dynamically, you can listen for its own events here
   // document.addEventListener('wppis:updated', initWppisCarousel);
 })();

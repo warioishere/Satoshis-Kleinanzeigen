@@ -1,6 +1,6 @@
 <?php
 /**
- * Mail an den Anbieter: Bestellung eingegangen, Zahlung noch offen.
+ * Mail to the vendor: order received, payment still pending.
  *
  * @var array $data
  */

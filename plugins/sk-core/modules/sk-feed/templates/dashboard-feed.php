@@ -1,6 +1,6 @@
 <?php
 /**
- * Vendor Dashboard — Feed Posts (Beiträge).
+ * Vendor Dashboard — Feed Posts.
  * Follows the exact same pattern as follow-store/views/vendor-dashboard.php.
  *
  * @var array $posts      Array of WP_Post objects.

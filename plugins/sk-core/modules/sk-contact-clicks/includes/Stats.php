@@ -5,11 +5,12 @@ namespace SK\Modules\ContactClicks;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Auswertung der Kontaktklicks.
+ * Analysis of contact clicks.
  *
- * "clicks" ist die Summe aller Klicks, "unique" die Zahl der Besucher-Tage.
- * Fuer die Frage, ob ein Inserat Kontakte erzeugt, ist die zweite Zahl die
- * belastbarere — mehrfaches Klicken derselben Person zaehlt darin einmal.
+ * "clicks" is the sum of all clicks, "unique" the number of visitor-days.
+ * For the question of whether a listing generates contacts, the second
+ * number is the more reliable one — repeated clicks from the same person
+ * count once in it.
  */
 final class Stats {
 
@@ -27,9 +28,9 @@ final class Stats {
 
         $row = $wpdb->get_row(
             $wpdb->prepare(
-                // DISTINCT, sonst zaehlt eine Person doppelt, die am selben
-                // Tag zwei Kanaele benutzt. Der Hash rotiert taeglich, ueber
-                // mehrere Tage sind das folglich Besuchertage, keine Koepfe.
+                // DISTINCT, otherwise a person who uses two channels on the
+                // same day is counted twice. The hash rotates daily, so over
+                // multiple days these are visitor-days, not headcounts.
                 'SELECT COALESCE(SUM(clicks),0) c, COUNT(DISTINCT visitor_hash, click_day) u FROM ' . self::table() . ' WHERE click_day BETWEEN %s AND %s',
                 $from,
                 $to
@@ -97,7 +98,7 @@ final class Stats {
     }
 
     /**
-     * Kontakte je Tag, aeltester Tag zuerst.
+     * Contacts per day, oldest day first.
      *
      * @return array<string,int>
      */
@@ -123,11 +124,11 @@ final class Stats {
     }
 
     /**
-     * Aufrufe aller Inserate insgesamt.
+     * Total views across all listings.
      *
-     * Kommt aus dem vorhandenen Zaehler (postmeta "pageview") und ist deshalb
-     * kumulativ, nicht auf den Zeitraum begrenzt — taugt also nur fuer eine
-     * grobe Einordnung, nicht fuer eine exakte Quote.
+     * Comes from the existing counter (postmeta "pageview") and is therefore
+     * cumulative, not limited to the time range — so it's only good for a
+     * rough estimate, not an exact ratio.
      */
     public static function total_views(): int {
         global $wpdb;

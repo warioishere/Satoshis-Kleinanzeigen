@@ -5,23 +5,23 @@ namespace SK\Core\Vendor;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Kein Inserat ohne Shopnamen und Profilbild.
+ * No listing without a shop name and profile picture.
  *
- * Bis der Kontaktzwang fiel, erzwang der sich nebenbei mit: wer nichts
- * hinterlegt hatte, konnte nicht veröffentlichen, und das Formular für die
- * Shopdaten verlangte im selben Zug Name und Bild. Mit dem Kontaktzwang ging
- * diese mittelbare Wirkung verloren — ein frisch angelegtes Konto konnte unter
- * "satoshi-cU8uP" und ohne Bild inserieren.
+ * Until the mandatory-contact requirement was removed, it enforced this as a
+ * side effect: whoever hadn't filled those in couldn't publish, because the
+ * shop-data form required a name and picture at the same time. Once that
+ * requirement was dropped, this indirect effect was lost — a freshly created
+ * account could list under "satoshi-cU8uP" and without a picture.
  *
- * Beides ist keine Formalie: Der Shopname ist das, woran Käufer einen Anbieter
- * wiedererkennen und woran im Telegram-Kanal Vertrauen hängt, und ein Konto
- * ohne Bild und ohne Namen ist für einen Betrachter nicht von einem
- * Wegwerfkonto zu unterscheiden.
+ * Neither is a formality: the shop name is what buyers recognize a vendor by
+ * and what trust in the Telegram channel hinges on, and an account with no
+ * picture and no name is indistinguishable from a throwaway account to a
+ * viewer.
  *
- * Bewusst dieselben Nahtstellen wie SuspensionGuard, nur mit einer anderen
- * Frage — und bewusst nur eine Sperre fürs Veröffentlichen: Dashboard und
- * Entwürfe bleiben erreichbar, sonst käme niemand mehr dorthin, wo er das
- * Fehlende nachträgt.
+ * Deliberately uses the same seams as SuspensionGuard, just with a different
+ * question — and deliberately only blocks publishing: the dashboard and
+ * drafts stay reachable, otherwise no one could get back to where they fill
+ * in what's missing.
  */
 class ProfileGuard {
 
@@ -31,29 +31,29 @@ class ProfileGuard {
         add_action( 'sk_bulk_product_status_change', [ $this, 'force_bulk_draft' ], 6, 2 );
 
         /*
-         * Priorität 20, nicht 6: Products::new_product_status haengt auf 10
-         * und macht aus allem, was nicht schon "publish" ist, den in den
-         * Einstellungen hinterlegten Status — ein frueher gesetztes "draft"
-         * waere danach wieder weg. Die Kontaktsperre lief aus demselben Grund
-         * auf 20.
+         * Priority 20, not 6: Products::new_product_status hooks at 10 and
+         * turns anything that isn't already "publish" into the status
+         * configured in the settings — a "draft" set earlier would be
+         * overwritten again. The old contact-lock ran at 20 for the same
+         * reason.
          */
         add_filter( 'sk_get_default_product_status', [ $this, 'filter_default_status' ], 20, 2 );
         add_filter( 'sk_post_status', [ $this, 'filter_post_statuses' ], 98, 2 );
 
         /*
-         * Der Hinweis aus add_notice() erreicht nur den, dem ein Inserat
-         * aktiv zurueckgezogen wurde. Im haeufigeren Fall greift schon
-         * filter_default_status(): das Inserat entsteht direkt als Entwurf,
-         * force_draft() laeuft nie, und der Anbieter sieht einen Entwurf ohne
-         * jede Begruendung. Deshalb zusaetzlich ein Hinweis am Zustand statt
-         * am Ereignis — er steht auf der Bearbeiten-Seite, bis das Profil
-         * vollstaendig ist.
+         * The notice from add_notice() only reaches someone whose listing was
+         * actively pulled back. In the more common case, filter_default_status()
+         * already applies: the listing is created as a draft straight away,
+         * force_draft() never runs, and the vendor sees a draft with no
+         * explanation at all. Hence an additional notice tied to the state
+         * rather than the event — it stays on the edit page until the profile
+         * is complete.
          */
         add_action( 'sk_product_content_inside_area_before', [ $this, 'show_listing_notice' ] );
     }
 
     /**
-     * Warum dieses Inserat nicht online geht.
+     * Why this listing isn't going live.
      */
     public function show_listing_notice(): void {
         $post = get_post();
@@ -81,7 +81,7 @@ class ProfileGuard {
         printf(
             '<div class="sk-alert sk-alert-warning">%s</div>',
             wp_kses_post( sprintf(
-                /* translators: 1: Aufzaehlung des Fehlenden, 2: Adresse der Shopdaten. */
+                /* translators: 1: list of what's missing, 2: URL of the shop data page. */
                 __( 'Dieses Inserat bleibt ein Entwurf, weil dir noch %1$s fehlt. Trag das in deinem <a href="%2$s">Shop-Profil</a> nach — danach kannst du es veröffentlichen.', 'sk-core' ),
                 implode( __( ' und ', 'sk-core' ), $fehlt ),
                 esc_url( site_url( '/dashboard/settings/store/' ) )
@@ -90,9 +90,9 @@ class ProfileGuard {
     }
 
     /**
-     * Was diesem Anbieter noch fehlt.
+     * What this vendor is still missing.
      *
-     * @return string[] Leer, wenn alles da ist.
+     * @return string[] Empty if everything is present.
      */
     public static function missing( int $vendor_id ): array {
         if ( $vendor_id <= 0 || ! function_exists( 'sk_get_store_info' ) ) {
@@ -120,13 +120,13 @@ class ProfileGuard {
     }
 
     /**
-     * Ein Shopname, der diesen Namen verdient.
+     * A shop name that deserves the name.
      *
-     * Der automatisch vergebene zaehlt nicht: den traegt jedes frisch
-     * angelegte Konto, er unterscheidet niemanden von niemandem. Auf Live
-     * kommt er in zwei Formen vor — fortlaufend nummeriert ("satoshi-104",
-     * die aelteren) und mit fuenf Zufallszeichen ("satoshi-ngbru"). Das
-     * Muster deckt beide ab.
+     * The auto-assigned one doesn't count: every freshly created account
+     * carries it, so it distinguishes no one from anyone. On live it appears
+     * in two forms — sequentially numbered ("satoshi-104", the older ones)
+     * and with five random characters ("satoshi-ngbru"). The pattern covers
+     * both.
      */
     public static function has_shop_name( array $info ): bool {
         $name = trim( (string) ( $info['store_name'] ?? '' ) );
@@ -152,7 +152,7 @@ class ProfileGuard {
     }
 
     /**
-     * Ein einzelnes Inserat wieder auf Entwurf setzen.
+     * Set a single listing back to draft.
      *
      * @param int   $product_id
      * @param array $data
@@ -180,7 +180,7 @@ class ProfileGuard {
     }
 
     /**
-     * Dasselbe fuer die Massenaktion im Dashboard.
+     * The same for the bulk action in the dashboard.
      *
      * @param string $status
      * @param array  $product_ids
@@ -212,7 +212,7 @@ class ProfileGuard {
     }
 
     /**
-     * Neue Inserate starten als Entwurf, solange das Profil unfertig ist.
+     * New listings start as drafts as long as the profile is incomplete.
      */
     public function filter_default_status( $status, $seller_id = 0 ) {
         $seller_id = (int) ( $seller_id ?: get_current_user_id() );
@@ -221,7 +221,7 @@ class ProfileGuard {
     }
 
     /**
-     * "Veroeffentlichen" verschwindet aus der Auswahl.
+     * "Publish" disappears from the selection.
      */
     public function filter_post_statuses( $statuses, $product_id = 0 ) {
         $statuses = (array) $statuses;
@@ -239,7 +239,7 @@ class ProfileGuard {
         return $statuses;
     }
 
-    /** Betrifft die Sperre diesen Nutzer? */
+    /** Does the lock apply to this user? */
     private function guarded( int $vendor_id ): bool {
         if ( $vendor_id <= 0 ) {
             return false;
@@ -269,7 +269,7 @@ class ProfileGuard {
 
         sk_add_notice(
             wp_kses_post( sprintf(
-                /* translators: 1: Aufzaehlung des Fehlenden, 2: Adresse der Shopdaten. */
+                /* translators: 1: list of what's missing, 2: URL of the shop data page. */
                 __( 'Veröffentlichung blockiert: Dir fehlt noch %1$s. Trag das in deinem <a href="%2$s">Shop-Profil</a> nach, dann kannst du dein Inserat veröffentlichen.', 'sk-core' ),
                 implode( __( ' und ', 'sk-core' ), $fehlt ),
                 esc_url( site_url( '/dashboard/settings/store/' ) )

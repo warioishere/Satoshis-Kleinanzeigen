@@ -225,8 +225,8 @@ class Gesuche extends DashboardModule {
             return [];
         }
 
-        // Slot erst nach der Nonce-Pruefung ziehen, damit verworfene
-        // Requests das Kontingent nicht aufbrauchen.
+        // Only consume a slot after the nonce check, so rejected requests
+        // don't eat into the quota.
         if ( ! sk_rate_limit( 'gesuch-create:' . $user_id, 5, HOUR_IN_SECONDS ) ) {
             return [ [ 'type' => 'warning', 'text' => 'Du kannst höchstens 5 Gesuche pro Stunde veröffentlichen. Bitte versuche es später erneut.' ] ];
         }

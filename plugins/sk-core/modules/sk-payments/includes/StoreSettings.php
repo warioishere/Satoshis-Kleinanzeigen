@@ -7,7 +7,7 @@ defined( 'ABSPATH' ) || exit;
 class StoreSettings {
 
     public function __construct() {
-        // Felder werden direkt im store-form.php Template gerendert (kein Hook nötig).
+        // Fields are rendered directly in the store-form.php template (no hook needed).
         add_action( 'sk_store_profile_saved', [ $this, 'save_field' ], 15, 3 );
 
         // AJAX test handlers.
@@ -17,8 +17,8 @@ class StoreSettings {
         add_action( 'wp_ajax_skp_test_lndhub', [ $this, 'ajax_test_lndhub' ] );
         add_action( 'wp_ajax_skp_test_lnaddr', [ $this, 'ajax_test_lnaddr' ] );
 
-        // Erklaerfenster fuer eine abgewiesene Adresse, plus die Meldung des
-        // letzten Speicherversuchs.
+        // Explanation modal for a rejected address, plus the message from the
+        // last save attempt.
         add_action( 'wp_footer', [ $this, 'render_reject_modal' ] );
     }
 
@@ -127,7 +127,7 @@ class StoreSettings {
     }
 
     /**
-     * Erklaerfenster ausgeben — nur auf der Seite mit den Shopdaten.
+     * Output the explanation modal — only on the page with the shop data.
      */
     public function render_reject_modal(): void {
         if ( ! function_exists( 'sk_is_seller_dashboard' ) || ! sk_is_seller_dashboard() ) {
@@ -155,20 +155,20 @@ class StoreSettings {
     }
 
     /**
-     * Kann diese Adresse eine Zahlung nachweisen?
+     * Can this address prove a payment?
      *
-     * LUD-21: die Antwort auf eine Invoice-Anfrage traegt eine verify-Adresse,
-     * ueber die sich spaeter abfragen laesst, ob die Rechnung beglichen wurde.
-     * Ohne sie erfaehrt SK nie, ob gezahlt wurde — und ohne das laesst sich
-     * keine Provision durchsetzen. Die Preimage-Einreichung durch den Kaeufer
-     * beweist zwar dasselbe, setzt aber dessen Mitwirkung voraus und taugt
-     * deshalb nicht als Grundlage.
+     * LUD-21: the response to an invoice request carries a verify URL that
+     * can later be queried to check whether the invoice was settled. Without
+     * it, SK never learns whether payment happened — and without that, no
+     * commission can be enforced. The buyer submitting a preimage proves the
+     * same thing, but requires their cooperation and is therefore not
+     * suitable as a basis.
      *
-     * Gefragt wird mit dem Mindestbetrag des Anbieters, nicht mit einem festen
-     * Wert: viele lehnen zu kleine Betraege ab, und eine Ablehnung saehe sonst
-     * wie fehlende Unterstuetzung aus.
+     * The probe uses the vendor's minimum amount, not a fixed value: many
+     * wallets reject amounts that are too small, and a rejection would
+     * otherwise look like a lack of support.
      *
-     * @return true|\WP_Error true wenn nachweisbar; WP_Error mit Grund sonst.
+     * @return true|\WP_Error true if provable; WP_Error with reason otherwise.
      */
     public static function check_lud21( string $address ) {
         $meta = LNURL\Resolver::resolve( $address );
@@ -196,7 +196,7 @@ class StoreSettings {
     }
 
     /**
-     * Was der Haendler stattdessen tun kann.
+     * What the merchant can do instead.
      */
     private static function lud21_hint(): string {
         return __( 'Diese Wallet kann nicht bestätigen, ob eine Rechnung bezahlt wurde (LUD-21 fehlt). Ohne diesen Nachweis lässt sich der Verkauf nicht abrechnen. Wallets, die es können: Alby, Blink, Coinos, BTCPay Server. Nicht möglich ist es unter anderem mit Wallet of Satoshi.', 'sk-core' );
@@ -266,12 +266,12 @@ class StoreSettings {
         }
 
         /*
-         * Ohne LUD-21 wird die Adresse nicht uebernommen.
+         * Without LUD-21, the address is not adopted.
          *
-         * Sie zu speichern und nur zu markieren, hiesse: der Haendler bietet
-         * Lightning an, und beim Verkauf stellt sich heraus, dass die Zahlung
-         * nicht nachweisbar ist. Die Ablehnung gehoert an die Stelle, an der
-         * sie sich noch aendern laesst.
+         * Saving it and merely flagging it would mean: the merchant offers
+         * Lightning, and only at the point of sale does it turn out the
+         * payment can't be proven. The rejection belongs at the point where
+         * it can still be changed.
          */
         $lud21 = self::check_lud21( $raw );
 
@@ -510,19 +510,19 @@ class StoreSettings {
                 $vendor_id
             ) );
 
-            // Fehlt die Zeile, gibt es nichts zu erhoehen — dann hier anlegen,
-            // sonst waere der Index gleich -1.
+            // If the row is missing, there is nothing to increment — so create
+            // it here, otherwise the index would end up as -1.
             if ( ! $updated ) {
                 update_user_meta( $vendor_id, 'sk_xpub_index', 1 );
             }
 
             /*
-             * Der Zaehler wird per SQL erhoeht, damit zwei gleichzeitige Kaeufe
-             * nicht dieselbe Stelle bekommen. Am Objekt-Cache geht das aber
-             * vorbei: get_user_meta lieferte danach weiter den alten Wert —
-             * auf dieser Installation 4, waehrend in der Tabelle 6 stand. Jeder
-             * Kaeufer bekam dadurch dieselbe Adresse, obwohl der xpub gerade
-             * dafuer da ist, fuer jede Zahlung eine eigene zu liefern.
+             * The counter is incremented via SQL so two concurrent purchases
+             * don't get the same slot. But that bypasses the object cache:
+             * get_user_meta kept returning the old value afterward — 4 on
+             * this installation, while the table already held 6. Every buyer
+             * therefore got the same address, even though the whole point of
+             * the xpub is to hand out a fresh one for each payment.
              */
             wp_cache_delete( $vendor_id, 'user_meta' );
 

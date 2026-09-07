@@ -1,6 +1,6 @@
 <?php
 /**
- * Selbstbedienungsseite eines Sponsors: /sponsor/<token>/
+ * Sponsor self-service page: /sponsor/<token>/
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -121,8 +121,8 @@ get_header();
         </form>
 
         <script>
-        // Ein freier Betrag soll den Monatsauswahlwert ersetzen, nicht daneben
-        // stehen — sonst kaeme beim Absenden die Voreinstellung mit.
+        // A custom amount should replace the month-selection value, not sit
+        // alongside it — otherwise the preset would also be submitted.
         ( function () {
             var form = document.querySelector( '.sk-portal-form' );
             if ( ! form ) { return; }

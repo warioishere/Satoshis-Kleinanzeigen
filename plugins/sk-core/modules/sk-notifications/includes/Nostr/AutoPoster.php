@@ -18,7 +18,7 @@ use swentel\nostr\Sign\Sign;
 use SK\Modules\Auth\RelayPublisher;
 
 /**
- * Logging (nur wenn WP_DEBUG true ist)
+ * Logging (only when WP_DEBUG is true)
  */
 function nap_log(string $msg): void {
     if (defined('WP_DEBUG') && WP_DEBUG) {
@@ -33,24 +33,24 @@ function nap_log(string $msg): void {
  */
 function nap_publish(Event $note, array $relays, string $prefix = ''): bool {
     if (!class_exists(RelayPublisher::class)) {
-        nap_log($prefix . 'RelayPublisher (sk_auth) nicht geladen.');
+        nap_log($prefix . 'RelayPublisher (sk_auth) not loaded.');
         return false;
     }
 
     $result = RelayPublisher::publish($note, $relays);
 
     foreach ($result['accepted'] as $url) {
-        nap_log(sprintf('%sEvent %s an Relay %s gesendet.', $prefix, $note->getId(), $url));
+        nap_log(sprintf('%sEvent %s sent to relay %s.', $prefix, $note->getId(), $url));
     }
     foreach ($result['rejected'] as $url => $reason) {
-        nap_log(sprintf('%sRelay %s nahm Event %s nicht an: %s', $prefix, $url, $note->getId(), $reason));
+        nap_log(sprintf('%sRelay %s rejected event %s: %s', $prefix, $url, $note->getId(), $reason));
     }
 
     return !empty($result['accepted']);
 }
 
 /**
- * Optionen lesen (mit Defaults). Only the private key is still read from
+ * Read options (with defaults). Only the private key is still read from
  * here; relays and the switch live in the Nostr section of the SK settings.
  */
 function nap_get_options(): array {
@@ -62,8 +62,8 @@ function nap_get_options(): array {
 }
 
 /**
- * Privkey auflösen (Konstante > Option > Filter)
- * Rückgabe: string|false
+ * Resolve the private key (constant > option > filter).
+ * Returns: string|false
  */
 function nap_resolve_private_key() {
     if (defined('NAP_NOSTR_PRIVKEY') && NAP_NOSTR_PRIVKEY) {
@@ -73,7 +73,7 @@ function nap_resolve_private_key() {
     $key  = trim((string)($opts['private_key'] ?? ''));
     if ($key !== '') return $key;
 
-    // externe Quellen erlauben
+    // allow external sources
     $key = apply_filters('nap_nostr_private_key', '');
     return $key ? $key : false;
 }
@@ -91,41 +91,41 @@ function nap_get_relays(): array {
 }
 
 /**
- * Minimalschlanker Cleaner:
- * - Entities -> echte Zeichen (ENT_HTML5, UTF-8)
- * - NBSP (0xC2 0xA0) -> normales Leerzeichen
- * - Tags raus
- * - Mehrfachspaces glätten + trim
+ * Minimal, lightweight cleaner:
+ * - Entities -> real characters (ENT_HTML5, UTF-8)
+ * - NBSP (0xC2 0xA0) -> normal space
+ * - Strip tags
+ * - Collapse repeated spaces + trim
  */
 function nap_clean_text(string $s): string {
     $s = html_entity_decode($s, ENT_QUOTES | ENT_HTML5, 'UTF-8');
     $s = str_replace("\xC2\xA0", ' ', $s);              // NBSP -> Space
-    $s = wp_strip_all_tags($s);                         // Tags entfernen
-    $s = trim(preg_replace('/[ \t]+/u', ' ', $s));      // Mehrfachspaces glätten
+    $s = wp_strip_all_tags($s);                         // strip tags
+    $s = trim(preg_replace('/[ \t]+/u', ' ', $s));      // collapse repeated spaces
     return $s;
 }
 
 /**
- * Caption bauen (filterbar) – jetzt mit Clean-Schritt gegen &nbsp; &amp; etc.
+ * Build the caption (filterable) – now with a clean step against &nbsp; &amp; etc.
  */
 function nap_build_caption(int $product_id): string {
-    // Titel + Inhalt cleanen (Entities raus, NBSP -> Space, Tags weg)
+    // Clean title + content (strip entities, NBSP -> space, strip tags)
     $raw_title   = get_the_title($product_id);
     $title       = nap_clean_text((string)$raw_title);
 
     $raw_content = get_post_field('post_content', $product_id);
     $content     = nap_clean_text((string)$raw_content);
 
-    // Kurztext (50 Worte)
+    // Short text (50 words)
     $excerpt = wp_trim_words($content, 50, '...');
 
     // Permalink
     $link = get_permalink($product_id);
 
-    // Titelbild
+    // Featured image
     $img = get_the_post_thumbnail_url($product_id, 'full');
 
-    // Preis (wc_price liefert HTML -> erst strip_tags, dann clean)
+    // Price (wc_price returns HTML -> strip_tags first, then clean)
     if (function_exists('wc_get_product')) {
         $p = wc_get_product($product_id);
         if ($p && $p->get_price() !== '') {
@@ -136,20 +136,20 @@ function nap_build_caption(int $product_id): string {
     }
 
     /*
-     * Bild als blanke Adresse, nicht als Markdown.
+     * Image as a bare URL, not as Markdown.
      *
-     * Eine Notiz (kind 1) ist reiner Text; Markdown steht in keiner Spezifikation.
-     * Clients erkennen eine Bildadresse von selbst und zeigen sie an — bei
-     * "![Titel](adresse)" taten sie genau das mit dem Teil in den Klammern und
-     * liessen "![Titel](" und ")" als Zeichensalat stehen.
+     * A note (kind 1) is plain text; Markdown isn't part of any spec.
+     * Clients recognize an image URL on their own and display it — with
+     * "![Title](url)" they did exactly that with the part in parentheses
+     * and left "![Title](" and ")" behind as garbled characters.
      *
-     * Eigene Zeile, damit die Adresse sauber endet und nicht mit dem Titel
-     * dahinter verklebt.
+     * On its own line, so the URL ends cleanly and doesn't run into the
+     * title after it.
      */
     $imgPart = $img ? "{$img}\n\n" : '';
     $caption = "{$imgPart}{$title}\n\n{$excerpt}\n\n👉 {$link}";
  
-    // --- Hashtag anhängen ---
+    // --- Append hashtag ---
     $caption .= "\n\n#satoshiskleinanzeigen";
 
     return apply_filters('nap_nostr_caption', $caption, $product_id);
@@ -162,10 +162,10 @@ function nap_build_caption(int $product_id): string {
  */
 
 /**
- * HAUPT-HOOK: auf sk_new_product_added
+ * MAIN HOOK: on sk_new_product_added
  * - Fires AFTER all product meta (price, image, categories) is saved
  * - Actual relay sending is deferred to PHP shutdown so the page responds instantly
- * - Nur wenn noch kein Nostr-Event fuer das Produkt existiert (Duplikatschutz)
+ * - Only when no Nostr event exists yet for the product (duplicate protection)
  */
 global $_nap_shutdown_queue;
 $_nap_shutdown_queue = [];
@@ -180,9 +180,9 @@ add_action('sk_new_product_added', function($post_id, $postdata) {
         return;
     }
 
-    // Bereits gesendet?
+    // Already sent?
     if (get_post_meta($post_id, NAP_META_EVENT_ID, true)) {
-        nap_log('Abbruch: bereits ein Nostr-Event vorhanden.');
+        nap_log('Aborting: a Nostr event already exists.');
         return;
     }
 
@@ -218,19 +218,19 @@ register_shutdown_function(function() {
     }
 
     if (!class_exists(Event::class)) {
-        nap_log('Nostr library (swentel/nostr) nicht gefunden.');
+        nap_log('Nostr library (swentel/nostr) not found.');
         return;
     }
 
     $privkey = nap_resolve_private_key();
     if (!$privkey) {
-        nap_log('Privater Schluessel nicht gesetzt. Abbruch.');
+        nap_log('Private key not set. Aborting.');
         return;
     }
 
     $relays = nap_get_relays();
     if (empty($relays)) {
-        nap_log('Keine Relays konfiguriert. Abbruch.');
+        nap_log('No relays configured. Aborting.');
         return;
     }
 
@@ -244,7 +244,7 @@ register_shutdown_function(function() {
         // pulled it since. Events on relays cannot be taken back, so this check
         // matters more here than anywhere else.
         if (get_post_status($post_id) !== 'publish') {
-            nap_log(sprintf('SHUTDOWN SKIP #%d — nicht mehr veroeffentlicht.', $post_id));
+            nap_log(sprintf('SHUTDOWN SKIP #%d — no longer published.', $post_id));
             continue;
         }
 
@@ -258,7 +258,7 @@ register_shutdown_function(function() {
             $signer = new Sign();
             $signer->signEvent($note, $privkey);
         } catch (\Throwable $e) {
-            nap_log('Fehler beim Erstellen/Signieren des Events: ' . $e->getMessage());
+            nap_log('Error creating/signing the event: ' . $e->getMessage());
             continue;
         }
 
@@ -269,7 +269,7 @@ register_shutdown_function(function() {
             update_post_meta($post_id, NAP_META_EVENT_ID, $eventId);
             update_post_meta($post_id, '_nap_nostr_relays', $relays);
         } else {
-            nap_log(sprintf('Kein Relay akzeptierte das Event %s. Meta wird NICHT gesetzt.', $eventId));
+            nap_log(sprintf('No relay accepted the event %s. Meta is NOT set.', $eventId));
         }
     }
 });
@@ -282,19 +282,19 @@ register_shutdown_function(function() {
  */
 function nap_force_send_product( int $post_id ): bool {
     if (!class_exists(Event::class)) {
-        nap_log('Force send: Nostr library nicht gefunden.');
+        nap_log('Force send: Nostr library not found.');
         return false;
     }
 
     $privkey = nap_resolve_private_key();
     if (!$privkey) {
-        nap_log('Force send: Privater Schluessel nicht gesetzt.');
+        nap_log('Force send: private key not set.');
         return false;
     }
 
     $relays = nap_get_relays();
     if (empty($relays)) {
-        nap_log('Force send: Keine Relays konfiguriert.');
+        nap_log('Force send: no relays configured.');
         return false;
     }
 
@@ -308,7 +308,7 @@ function nap_force_send_product( int $post_id ): bool {
         $signer = new Sign();
         $signer->signEvent($note, $privkey);
     } catch (\Throwable $e) {
-        nap_log('Force send: Fehler beim Erstellen/Signieren: ' . $e->getMessage());
+        nap_log('Force send: error creating/signing: ' . $e->getMessage());
         return false;
     }
 
@@ -323,7 +323,7 @@ function nap_force_send_product( int $post_id ): bool {
     return $sent_any;
 }
 
-// Meta-Box mit "Jetzt an Nostr senden"-Button
+// Meta box with a "Post to Nostr now" button
 add_action('add_meta_boxes', function(){
     add_meta_box('nap_resend_box', 'Nostr', function($post){
         if ($post->post_type !== 'product') return;

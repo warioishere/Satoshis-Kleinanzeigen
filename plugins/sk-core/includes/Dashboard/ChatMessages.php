@@ -225,11 +225,11 @@ class ChatMessages {
 	 * Mark everything currently in the chat as read for this user.
 	 */
 	/**
-	 * Ungelesene Nachrichten eines Nutzers ueber alle Chats hinweg.
+	 * Unread messages for a user across all chats.
 	 *
-	 * Eine Stelle fuer beide Anzeigen — das Abzeichen im Dashboardmenue und
-	 * das Postfach im Seitenkopf. Zwei getrennte Zaehlungen waeren frueher oder
-	 * spaeter uneinig darueber, ob da nun etwas liegt oder nicht.
+	 * One single place for both displays — the badge in the dashboard menu
+	 * and the inbox in the page header. Two separate counts would sooner or
+	 * later disagree about whether there's anything there or not.
 	 */
 	public static function unread_total( int $user_id ): int {
 		$chat_ids = self::chat_ids_for_participant( $user_id );
@@ -266,12 +266,12 @@ class ChatMessages {
 		update_user_meta( $user_id, self::READ_META, $markers );
 
 		/*
-		 * Das Abzeichen im Seitenkopf steht auf jeder Dashboardseite, und die
-		 * liegen bis zu fuenf Minuten im Seitencache. Ohne diesen Anstoss
-		 * zeigte es dort weiter eine Zahl, die es gerade nicht mehr gibt.
+		 * The badge in the page header appears on every dashboard page, and
+		 * those pages sit in the page cache for up to five minutes. Without
+		 * this nudge it would keep showing a number that no longer exists.
 		 *
-		 * Die Pruefung ist keine Zierde: diese Klasse laeuft in den Tests
-		 * allein, ohne den Rest des Dashboards.
+		 * The class_exists check isn't decoration: this class runs in the
+		 * tests on its own, without the rest of the dashboard.
 		 */
 		if ( class_exists( PageCache::class ) ) {
 			PageCache::bump_visitor();

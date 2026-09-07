@@ -1,6 +1,6 @@
 <?php
 /**
- * Admin template: Kommissions-Übersicht
+ * Admin template: commission overview
  */
 defined( 'ABSPATH' ) || exit;
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * Mail an den Anbieter: Zahlung eingegangen.
+ * Mail to the vendor: payment received.
  *
  * @var array $data
  */

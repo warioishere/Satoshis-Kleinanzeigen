@@ -1,7 +1,7 @@
 <?php
 /**
- * Single Feed Post — eigenständiges Template.
- * Kein Kadence-Wrapper, kein Shortcode. Content 100% self-contained.
+ * Single Feed Post — standalone template.
+ * No Kadence wrapper, no shortcode. Content 100% self-contained.
  */
 
 defined( 'ABSPATH' ) || exit;

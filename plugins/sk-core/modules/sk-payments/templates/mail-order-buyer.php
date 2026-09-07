@@ -1,6 +1,6 @@
 <?php
 /**
- * Mail an den Käufer: Bestellbestätigung.
+ * Mail to the buyer: order confirmation.
  *
  * @var array $data
  */

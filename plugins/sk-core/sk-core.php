@@ -59,11 +59,11 @@ sk_ext();
 // Auto-assign free vendor pack.
 \SK\Core\FreePack::init();
 
-// Globaler Katalog-Modus (hide add-to-cart + optional price).
+// Global catalog mode (hide add-to-cart + optional price).
 add_action( 'init', [ \SK\Core\CatalogMode::class, 'init' ], 20 );
 add_action( 'init', [ \SK\Core\Antispam::class, 'init' ], 20 );
 
-// Seiten-Cache leeren wenn Inhalte gelöscht oder versteckt werden.
+// Clear the page cache when content is deleted or hidden.
 \SK\Core\PageCache::init();
 
 // Buy Now — direct BTCPay checkout for subscriptions & boosts.
@@ -72,14 +72,14 @@ add_action( 'init', [ \SK\Core\Antispam::class, 'init' ], 20 );
 // Vendor avatar + name on product cards.
 \SK\Core\ProductVendorInfo::init();
 
-// "Rezension(en)" → "Kommentar(e)" auf Produktseiten (Tab, Form, Headings).
-// Rezension = feminin (die), Kommentar = maskulin (der) — Artikel mit umtauschen,
-// sonst Grammatik-Fehler à la "die erste Kommentar".
+// "Rezension(en)" → "Kommentar(e)" on product pages (tab, form, headings).
+// Rezension is feminine (die), Kommentar is masculine (der) — the article
+// needs swapping too, otherwise you get a grammar error like "die erste Kommentar".
 add_filter( 'gettext', function ( $translation, $text, $domain ) {
     if ( $domain !== 'woocommerce' ) {
         return $translation;
     }
-    // strtr matched longest substring first → längere Phrasen vor kurzen.
+    // strtr matches the longest substring first → longer phrases before shorter ones.
     $map = [
         'Schreibe die erste Rezension für' => 'Schreibe den ersten Kommentar zu',
         'die erste Rezension'              => 'den ersten Kommentar',

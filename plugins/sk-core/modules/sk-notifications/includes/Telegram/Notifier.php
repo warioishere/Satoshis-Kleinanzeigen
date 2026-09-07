@@ -8,7 +8,7 @@
  */
 
 // =========================
-// == Grundeinstellungen  ==
+// == Base settings       ==
 // =========================
 
 if (!defined('TELEGRAM_REPOST_ON_REPUBLISH')) {
@@ -133,7 +133,7 @@ function tn_ensure_telegram_compatible_image($image_url) {
 }
 
 // =====================
-// == Admin-Einstellungen
+// == Admin settings
 // =====================
 function telegram_notification_settings_menu() {
     add_options_page(
@@ -197,18 +197,18 @@ function tn_tg_html_esc($text) {
 }
 
 /**
- * Baue Caption & Bilddaten für Telegram.
- * KEINE "Mehr Bilder..."-Zeile und KEIN Pfeil/Permalink im Caption-Text.
- * Der Link hängt am Ende des Beitrags.
+ * Build caption & image data for Telegram.
+ * NO "more images..." line and NO arrow/permalink in the caption text.
+ * The link is appended at the end of the post.
  */
 function telegram_build_caption_and_media($post_id) {
     error_log('[TG] telegram_build_caption_and_media: ENTER post_id=' . $post_id);
     $title_raw    = get_the_title($post_id);
-    $title_clean  = tn_clean_text((string)$title_raw);     // Entities weg + NBSP -> Space
-    $title        = tn_tg_html_esc($title_clean);          // HTML-escape, asterisks bleiben literal
+    $title_clean  = tn_clean_text((string)$title_raw);     // strip entities + NBSP -> Space
+    $title        = tn_tg_html_esc($title_clean);          // HTML-escape, asterisks stay literal
     error_log('[TG] telegram_build_caption_and_media: title_raw=' . substr($title_raw, 0, 100) . ' title_clean=' . substr($title_clean, 0, 100));
 
-    // HTML-Entities (z. B. &nbsp; &amp; &quot;) entfernen und NBSP in normale Leerzeichen wandeln
+    // Remove HTML entities (e.g. &nbsp; &amp; &quot;) and convert NBSP to normal spaces
     $full_desc_raw = get_post_field('post_content', $post_id);
     $full_desc_raw = html_entity_decode($full_desc_raw, ENT_QUOTES | ENT_HTML5, 'UTF-8');
     $full_desc_raw = str_replace("\xC2\xA0", ' ', $full_desc_raw); // NBSP -> Space
@@ -254,21 +254,22 @@ function telegram_build_caption_and_media($post_id) {
     $price_str = (is_numeric($price_raw)) ? number_format((float)$price_raw, 0, '.', "'") . ' Sats' : 'Preis nicht verfügbar';
 
     $shipping_note_raw   = get_post_meta($post_id, '_p2p_shipping_note', true);
-    $shipping_note_clean = tn_clean_text((string)$shipping_note_raw); // Entities & NBSP weg
+    $shipping_note_clean = tn_clean_text((string)$shipping_note_raw); // strip entities & NBSP
     $shipping_note       = tn_tg_html_esc($shipping_note_clean);
     $shipping_str        = !empty($shipping_note) ? "\n\n<b>Versand: $shipping_note</b>" : '';
 
     $extra_info = '';
 
     /*
-     * Keine Kontaktdaten in den Kanal.
+     * No contact details in the channel.
      *
-     * Hier standen E-Mail-Adresse, Telefonnummer, Nostr-Schluessel, X-Handle
-     * und Telegram-Name im Klartext — dauerhaft und oeffentlich lesbar, damit
-     * abgreifbar, und an der Seite vorbei. Wer Kontakt aufnehmen will, findet
-     * die Angaben auf dem Inserat, wo sie den Regeln des Anbieters
-     * unterliegen und wo der Klick auch gezaehlt wird. Ein Hinweis darauf
-     * eruebrigt sich — der Link zum Inserat steht ohnehin darunter.
+     * This used to contain the email address, phone number, Nostr key,
+     * X handle and Telegram name in plain text — permanently and publicly
+     * readable, therefore scrapable, and bypassing the platform. Anyone who
+     * wants to make contact finds the details on the listing, where they're
+     * subject to the vendor's rules and where the click is also counted. A
+     * note pointing to that is unnecessary — the link to the listing is
+     * right below anyway.
      */
 
     // End of feewall check
@@ -280,13 +281,12 @@ function telegram_build_caption_and_media($post_id) {
     }
     if ($permalink) {
         /*
-         * Beide Wege, nicht einer. Der Grundlink aufs Inserat ist der, den
-         * die meisten wollen — sie schauen erst, bevor sie schreiben.
-         * Darunter der Direkteinstieg ins Anschreiben: #chat oeffnet auf der
-         * Inseratsseite das Chatfenster, als haette der Besucher auf das
-         * Symbol geklickt. Als Fragment und nicht als Abfrageparameter,
-         * damit die Seite weiterhin aus dem Cache kommt — der Server sieht
-         * das # nie.
+         * Both paths, not just one. The plain link to the listing is what
+         * most people want — they look first before writing. Below it, a
+         * direct entry into the chat: #chat opens the chat window on the
+         * listing page, as if the visitor had clicked the icon. As a
+         * fragment, not a query parameter, so the page still comes from
+         * cache — the server never sees the #.
          */
         $caption .= "\n\n👉 Zum Inserat: " . tn_tg_html_esc($permalink);
         $caption .= "\n💬 Direkt anschreiben: " . tn_tg_html_esc($permalink . '#chat');
@@ -304,12 +304,12 @@ function telegram_build_caption_and_media($post_id) {
     );
 }
 
-/** Telegram API Wrapper mit sanftem Retry */
+/** Telegram API wrapper with gentle retry */
 function telegram_api_post($endpoint, $body) {
     $attempts = 0;
-    $delay = 0.5; // Sekunden
+    $delay = 0.5; // seconds
 
-    // Logging: endpoint und body type
+    // Logging: endpoint and body type
     error_log('[TG] telegram_api_post: endpoint=' . $endpoint);
     error_log('[TG] telegram_api_post: body type=' . gettype($body) . ' size=' . strlen(json_encode($body)));
 
@@ -351,10 +351,10 @@ function telegram_api_post($endpoint, $body) {
 }
 
 // =======================
-// == Senden & Editieren ==
+// == Send & edit        ==
 // =======================
 
-/** Senden und Metadaten speichern */
+/** Send and save metadata */
 function telegram_send_message($post_id) {
     error_log('[TG] telegram_send_message: ENTER post_id=' . $post_id);
 
@@ -424,7 +424,7 @@ function telegram_send_message($post_id) {
     }
 }
 
-/** Edit je nach Typ und Änderung */
+/** Edit depending on type and change */
 function telegram_edit_message_for_update($post_id) {
     $bot_token = get_option('telegram_bot_token');
     $chat_id   = get_option('telegram_chat_id');
@@ -446,7 +446,7 @@ function telegram_edit_message_for_update($post_id) {
     if ($orig_type === 'photo') {
         if ($image_url) {
             if ($image_id && $image_id !== $sent_img_id) {
-                // Bildwechsel -> editMessageMedia
+                // Image change -> editMessageMedia
                 $endpoint = "https://api.telegram.org/bot{$bot_token}/editMessageMedia";
                 $media = array(
                     'type'       => 'photo',
@@ -465,7 +465,7 @@ function telegram_edit_message_for_update($post_id) {
                     error_log('[Telegram] editMessageMedia failed: ' . (is_wp_error($resp) ? $resp->get_error_message() : wp_remote_retrieve_body($resp)));
                 }
             } else {
-                // Nur Caption editieren
+                // Only edit the caption
                 $endpoint = "https://api.telegram.org/bot{$bot_token}/editMessageCaption";
                 $resp = telegram_api_post($endpoint, array(
                     'chat_id'      => $chat_id,
@@ -478,7 +478,7 @@ function telegram_edit_message_for_update($post_id) {
                 }
             }
         } else {
-            // Foto -> Text geht nicht per Edit -> Delete + Re-Send
+            // Photo -> text isn't possible via edit -> delete + re-send
             if (telegram_delete_message_for_edit($post_id)) {
                 if (telegram_send_message($post_id)) {
                     update_post_meta($post_id, '_telegram_message_type', 'text');
@@ -492,7 +492,7 @@ function telegram_edit_message_for_update($post_id) {
 
     if ($orig_type === 'text') {
         if ($image_url) {
-            // Text -> Foto -> Delete + Resend
+            // Text -> photo -> delete + resend
             if (telegram_delete_message_for_edit($post_id)) {
                 if (telegram_send_message($post_id)) {
                     update_post_meta($post_id, '_telegram_message_type', 'photo');
@@ -501,7 +501,7 @@ function telegram_edit_message_for_update($post_id) {
                 }
             }
         } else {
-            // Text-Edit
+            // Text edit
             $endpoint = "https://api.telegram.org/bot{$bot_token}/editMessageText";
             $resp = telegram_api_post($endpoint, array(
                 'chat_id'      => $chat_id,
@@ -536,10 +536,10 @@ function telegram_edit_message_for_update($post_id) {
 }
 
 // =============================
-// == Löschen (Unpublish/Trash) ==
+// == Delete (Unpublish/Trash) ==
 // =============================
 
-/** Unpublish/Trash/Delete -> deleteMessage, sonst Fallback-Reply */
+/** Unpublish/Trash/Delete -> deleteMessage, otherwise fallback reply */
 function telegram_delete_message_unpublish($post_id) {
     $post = get_post($post_id);
     if (!$post || $post->post_type !== 'product') return false;
@@ -577,7 +577,7 @@ function telegram_delete_message_unpublish($post_id) {
     }
 }
 
-/** Delete für Edit-Flows (Typwechsel) – Flags bleiben erhalten */
+/** Delete for edit flows (type change) – flags are preserved */
 function telegram_delete_message_for_edit($post_id) {
     $post = get_post($post_id);
     if (!$post || $post->post_type !== 'product') return false;
@@ -608,7 +608,7 @@ function telegram_delete_message_for_edit($post_id) {
     }
 }
 
-/** Fallback-Reply "nicht mehr verfügbar" */
+/** Fallback reply "no longer available" */
 function telegram_mark_unavailable_fallback($post_id) {
     $post = get_post($post_id);
     if (!$post || $post->post_type !== 'product') return false;
@@ -649,7 +649,7 @@ function telegram_mark_unavailable_fallback($post_id) {
 }
 
 // ========================
-// == Hooks / Event-Flow ==
+// == Hooks / event flow ==
 // ========================
 
 /**
@@ -665,7 +665,7 @@ function telegram_mark_unavailable_fallback($post_id) {
 global $_tn_shutdown_queue;
 $_tn_shutdown_queue = [];
 
-/** Erstversand bei neuem Produkt */
+/** Initial send for a new product */
 add_action('sk_new_product_added', 'telegram_queue_on_new_product', 10, 2);
 function telegram_queue_on_new_product($post_id, $postdata) {
     global $_tn_shutdown_queue;
@@ -703,7 +703,7 @@ function telegram_queue_on_status_publish($new_status, $old_status, $post) {
     error_log("[TG] QUEUED for shutdown send #{$post->ID} (status transition: {$old_status} → publish)");
 }
 
-/** Bei Produkt-Update: Erstversand nachholen oder Edit senden */
+/** On product update: catch up on initial send, or send an edit */
 add_action('sk_product_updated', 'telegram_queue_on_product_update', 10, 2);
 function telegram_queue_on_product_update($post_id, $postdata) {
     global $_tn_shutdown_queue;
@@ -819,7 +819,7 @@ add_action('transition_post_status', function($new_status, $old_status, $post){
     }
 }, 10, 3);
 
-/** Marker bei Re-Publish nur entfernen (kein Auto-Repost) */
+/** On re-publish, just remove the marker (no auto-repost) */
 add_action('transition_post_status', function($new_status, $old_status, $post){
     if ($post->post_type !== 'product') return;
     if ($new_status === 'publish') {
@@ -830,7 +830,7 @@ add_action('transition_post_status', function($new_status, $old_status, $post){
 function tn_product_ready_min($post_id){
     $p = get_post($post_id);
     if (!$p || $p->post_type !== 'product' || $p->post_status !== 'publish') return false;
-    return true; // einfach gehalten; kannst du später erweitern (Preis etc.)
+    return true; // kept simple; can be extended later (price etc.)
 }
 
 add_action('tn_try_send_telegram_event', function($post_id, $attempt){
@@ -863,16 +863,16 @@ add_action('tn_try_send_telegram_event', function($post_id, $attempt){
 }, 10, 2);
 
 
-// B) Generischer save_post (für ALLE Post-Types)
+// B) Generic save_post (for ALL post types)
 add_action('save_post', function ($post_id, $post, $update) {
     if (empty($post) || !is_object($post)) return;
     error_log("[TG] save_post fired type={$post->post_type} update=" . (int)$update . " id={$post_id}");
 }, 10, 3);
 
-// C) Produktspezifisch: save_post_product (genau unser Hook)
+// C) Product-specific: save_post_product (exactly our hook)
 add_action('save_post_product', function ($post_id, $post, $update) {
     error_log("[TG] save_post_product fired update=" . (int)$update . " id={$post_id} status={$post->post_status}");
-}, 9, 3); // vor deinen Blöcken, damit du sicher was siehst
+}, 9, 3); // before the other blocks, so you're sure to see something
 
 add_action('save_post', function($post_id, $post, $update){
     if (!is_object($post)) return;
@@ -893,9 +893,9 @@ add_action('sk_after_save_product', function($product_id){
     error_log("[TG] sk_after_save_product fired for #$product_id");
 }, 10, 1);
 
-// === Admin-Metabox: Telegram neu posten ===
-// Admin-Handler: tg_force_resend
-// Meta-Box mit "Jetzt an Telegram senden"-Button
+// === Admin meta box: repost to Telegram ===
+// Admin handler: tg_force_resend
+// Meta box with a "Post to Telegram now" button
 add_action('add_meta_boxes', function(){
     add_meta_box('tg_resend_box', 'Telegram', function($post){
         if ($post->post_type !== 'product') return;
@@ -916,7 +916,7 @@ add_action('admin_notices', function(){
         .'</p></div>';
 });
 
-// Admin-Handler: tg_force_resend
+// Admin handler: tg_force_resend
 add_action('admin_post_tg_force_resend', function(){
     error_log('[TG] admin_post_tg_force_resend: ENTER');
 
@@ -927,7 +927,7 @@ add_action('admin_post_tg_force_resend', function(){
 
     if (!current_user_can('edit_post', $post_id)) { error_log('[TG] admin: ABORT no capability'); wp_die('Keine Berechtigung.'); }
 
-    // Nonce prüfen
+    // Verify nonce
     $nonce_ok = isset($_GET['_wpnonce']) && wp_verify_nonce($_GET['_wpnonce'], 'tg_force_resend_nonce_'.$post_id);
     error_log('[TG] admin: nonce_ok=' . ($nonce_ok ? '1' : '0'));
     if (!$nonce_ok) { error_log('[TG] admin: ABORT nonce'); wp_die('Sicherheitscheck fehlgeschlagen.'); }
@@ -939,12 +939,12 @@ add_action('admin_post_tg_force_resend', function(){
     if ($post->post_type !== 'product') { error_log('[TG] admin: ABORT not product'); wp_die('Kein Produkt.'); }
     if ($post->post_status !== 'publish') { error_log('[TG] admin: ABORT not publish'); wp_die('Produkt ist nicht veröffentlicht.'); }
 
-    // Mini-Selftest: Bot-Token/Chat-ID da?
+    // Mini self-test: bot token/chat id present?
     $bot_token = get_option('telegram_bot_token'); 
     $chat_id   = get_option('telegram_chat_id');
     error_log('[TG] admin: bot_token='.( $bot_token ? 'SET' : 'EMPTY' ).' chat_id='. ( $chat_id ?: 'EMPTY' ));
 
-    // 0) Telegram getMe zur Erreichbarkeit testen (ohne Secrets zu loggen)
+    // 0) Test reachability via Telegram getMe (without logging secrets)
     if ($bot_token) {
         $probe = wp_remote_get("https://api.telegram.org/bot{$bot_token}/getMe", ['timeout'=>10]);
         if (is_wp_error($probe)) {
@@ -956,7 +956,7 @@ add_action('admin_post_tg_force_resend', function(){
         }
     }
 
-    // 1) vorhandenen TG-Post löschen
+    // 1) delete existing TG post
     $had_msg = get_post_meta($post_id, '_telegram_message_id', true);
     error_log('[TG] admin: had_msg='.($had_msg ?: 'none'));
     if ($had_msg) {
@@ -964,14 +964,14 @@ add_action('admin_post_tg_force_resend', function(){
         error_log('[TG] admin: delete_message_for_edit result='.($del?'OK':'FAIL'));
     }
 
-    // 2) Flags resetten
+    // 2) reset flags
     delete_post_meta($post_id, '_telegram_message_id');
     delete_post_meta($post_id, '_telegram_sent');
     delete_post_meta($post_id, '_telegram_image_sent');
     delete_post_meta($post_id, '_telegram_job_scheduled');
     delete_post_meta($post_id, '_telegram_deleted');
 
-    // 3) senden
+    // 3) send
     error_log("[TG] admin: SEND NOW #$post_id");
     $ok = telegram_send_message($post_id);
     error_log('[TG] admin: SEND result='.($ok?'OK':'FAIL'));
@@ -996,7 +996,7 @@ add_action('admin_post_tg_force_resend', function(){
 });
 
 // =========================
-// == Boost / Highlight ==
+// == Boost / Highlight   ==
 // =========================
 // When a vendor boosts their listing (product-adv module), it is reposted to
 // the central Telegram channel — fresh reach, which is the point of a boost.

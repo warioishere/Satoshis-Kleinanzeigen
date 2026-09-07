@@ -98,16 +98,16 @@
 })();
 
 /**
- * Versandangabe eintragen.
+ * Enter shipping details.
  *
- * Der Anbieter waehlt den Versender und traegt die Nummer ein; bei "Anderer
- * Versender" tritt ein Feld fuer den vollstaendigen Link an ihre Stelle, damit
- * die Liste nie eine Sackgasse ist.
+ * The vendor picks the carrier and enters the tracking number; for "Other
+ * carrier" a field for the full link takes its place, so the carrier list
+ * is never a dead end.
  */
 jQuery(function ($) {
     'use strict';
 
-    // Knopf in der Fusszeile klappt das Formular derselben Karte auf.
+    // Button in the footer expands the form of the same card.
     $(document).on('click', '.skp-ship-toggle', function () {
         var hash = $(this).data('hash');
         var $body = $('.skp-ship-form[data-hash="' + hash + '"]').find('.skp-ship-form__body');
@@ -145,8 +145,8 @@ jQuery(function ($) {
             url: $.trim($form.find('.skp-ship-form__url').val())
         }, function (res) {
             if (res && res.success) {
-                // Neu laden statt die Karte im Browser nachzubauen — die
-                // Zeile kommt sonst zweimal aus zwei Quellen.
+                // Reload instead of rebuilding the card in the browser — the
+                // row would otherwise come from two sources at once.
                 window.location.reload();
                 return;
             }

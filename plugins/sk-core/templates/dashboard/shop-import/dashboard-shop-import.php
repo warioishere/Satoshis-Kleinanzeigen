@@ -1,9 +1,9 @@
 <?php
 /**
- * Shop-Import im Verkäufer-Dashboard.
+ * Shop import in the vendor dashboard.
  *
- * Variablen kommen aus DashboardPage::view_data(), registriert als
- * 'template_args'; diese Datei rendert nur.
+ * Variables come from DashboardPage::view_data(), registered as
+ * 'template_args'; this file only renders.
  *
  * @var string     $step
  * @var string     $url

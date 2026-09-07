@@ -5,12 +5,12 @@ namespace SK\Modules\Sponsors;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Klickzählung und Weiterleitung unter /go/<slug>.
+ * Click counting and redirect under /go/<slug>.
  *
- * Ohne belastbare Klickzahlen lässt sich ein Sponsorenplatz nicht verkaufen —
- * deshalb zählt diese Klasse nicht nur, sondern filtert auch: Bots, Prefetches
- * und HEAD-Anfragen zählen nicht, und mehrfaches Klicken derselben Person am
- * selben Tag erhöht zwar die Klick-, nicht aber die Besucherzahl.
+ * Without solid click numbers you can't sell a sponsor slot — so this class
+ * doesn't just count, it also filters: bots, prefetches, and HEAD requests
+ * don't count, and repeated clicks by the same person on the same day
+ * increase the click count but not the visitor count.
  */
 class Tracker {
 
@@ -38,7 +38,7 @@ class Tracker {
     }
 
     /**
-     * Ziel-URL eines Sponsors, über die Zählung geleitet.
+     * A sponsor's target URL, routed through the counter.
      */
     public static function link_for( \WP_Post $sponsor ): string {
         return home_url( '/' . self::PREFIX . '/' . $sponsor->post_name . '/' );
@@ -67,7 +67,7 @@ class Tracker {
 
         nocache_headers();
         header( 'X-Robots-Tag: noindex, nofollow', true );
-        // Kein wp_safe_redirect: das Ziel ist absichtlich extern.
+        // No wp_safe_redirect: the target is deliberately external.
         wp_redirect( $url, 302 );
         exit;
     }
@@ -78,7 +78,7 @@ class Tracker {
     }
 
     /**
-     * Zählt dieser Aufruf als echter Klick?
+     * Does this request count as a genuine click?
      */
     private function is_countable(): bool {
         $method = strtoupper( $_SERVER['REQUEST_METHOD'] ?? 'GET' );
@@ -86,7 +86,7 @@ class Tracker {
             return false;
         }
 
-        // Browser holen Links teils im Voraus. Das ist kein Klick.
+        // Browsers sometimes prefetch links ahead of time. That's not a click.
         if ( ! empty( $_SERVER['HTTP_PURPOSE'] ) || ! empty( $_SERVER['HTTP_X_PURPOSE'] ) || ! empty( $_SERVER['HTTP_SEC_PURPOSE'] ) ) {
             return false;
         }
@@ -119,8 +119,8 @@ class Tracker {
         $now   = current_time( 'mysql' );
         $day   = current_time( 'Y-m-d' );
 
-        // INSERT ... ON DUPLICATE KEY nutzt den UNIQUE-Index aus Install und
-        // braucht deshalb weder Vorab-SELECT noch Sperre.
+        // INSERT ... ON DUPLICATE KEY uses the UNIQUE index from Install and
+        // therefore needs neither a prior SELECT nor a lock.
         $wpdb->query(
             $wpdb->prepare(
                 "INSERT INTO {$table} (sponsor_id, click_day, visitor_hash, clicks, first_seen, last_seen)
@@ -136,12 +136,12 @@ class Tracker {
     }
 
     /**
-     * Tagesrotierender Besucher-Hash.
+     * Daily-rotating visitor hash.
      *
-     * Es wird keine IP gespeichert, und weil das Datum im Hash steckt, lässt
-     * sich derselbe Besucher über Tage hinweg nicht wiedererkennen. Für die
-     * Frage "wie viele Menschen haben geklickt" reicht das, für Profilbildung
-     * nicht — was auf dieser Plattform der richtige Kompromiss ist.
+     * No IP is stored, and because the date is baked into the hash, the same
+     * visitor can't be recognized across days. That's enough to answer "how
+     * many people clicked", but not enough for profiling — which is the
+     * right trade-off for this platform.
      */
     private function visitor_hash( string $day ): string {
         $ip    = (string) ( $_SERVER['REMOTE_ADDR'] ?? '' );

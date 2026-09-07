@@ -1,19 +1,19 @@
 <?php
 /**
- * Verifizierung im Verkäufer-Dashboard.
+ * Verification in the vendor dashboard.
  *
- * Kopf wie die uebrigen Menueeintraege (Merkliste, Gesuche): eigener
- * Modifikator auf sk-dashboard-content und sk-review-page-header mit h2 und
- * Symbol. Nicht die Settings-Huelle — deren sk-dashboard-header bringt eine
- * Trennlinie mit und traegt ein h1, das hier zu gross wirkt.
+ * Header like the other menu entries (watchlist, requests): its own
+ * modifier on sk-dashboard-content and sk-review-page-header with an h2 and
+ * icon. Not the settings shell — its sk-dashboard-header brings a divider
+ * and carries an h1, which would look too big here.
  *
- * Der Inhalt darunter ist der der Shopdaten-Seite: sk-settings-form als
- * Rahmen, sk-settings-section je Karte und Felder ueber sk_form_input(). An
- * sk-settings-form haengt die dunkle Feldgestaltung — ein sk-form-control
- * ausserhalb dieses Rahmens bliebe weiss.
+ * The content below it is that of the shop data page: sk-settings-form as
+ * the frame, sk-settings-section per card, and fields via sk_form_input().
+ * The dark field styling hangs off sk-settings-form — an sk-form-control
+ * outside that frame would stay white.
  *
- * Variablen kommen aus VerifiedLinksPage::view_data(), registriert als
- * 'template_args'; diese Datei rendert nur.
+ * Variables come from VerifiedLinksPage::view_data(), registered as
+ * 'template_args'; this file only renders.
  *
  * @var string  $url
  * @var mixed   $message
@@ -149,7 +149,7 @@ do_action( 'sk_dashboard_wrap_start' );
                     'placeholder' => 'https://meine-seite.de',
                     'hint'        => count( $links ) >= $max_links
                         ? sprintf(
-                            /* translators: %d: Hoechstzahl der Adressen. */
+                            /* translators: %d: maximum number of addresses. */
                             __( 'Du hast die Höchstzahl von %d Adressen erreicht. Entferne zuerst eine.', 'sk-core' ),
                             $max_links
                         )

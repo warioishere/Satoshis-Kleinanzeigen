@@ -5,11 +5,11 @@ namespace SK\Modules\Sponsors;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Auswertung der Klicktabelle.
+ * Evaluation of the click table.
  *
- * "clicks" ist die Summe aller Klicks, "unique" die Zahl der Besucher-Tage.
- * Für ein Angebot an einen Sponsor ist die zweite Zahl die ehrlichere, weil
- * mehrfaches Klicken derselben Person darin nur einmal zählt.
+ * "clicks" is the sum of all clicks, "unique" is the number of visitor-days.
+ * For a pitch to a sponsor, the second number is the more honest one, since
+ * repeated clicks by the same person only count once there.
  */
 final class Stats {
 
@@ -44,7 +44,7 @@ final class Stats {
     }
 
     /**
-     * Klicks aller Sponsoren im Zeitraum, indiziert nach sponsor_id.
+     * Clicks for all sponsors in the period, indexed by sponsor_id.
      *
      * @return array<int,array{clicks:int,unique:int}>
      */
@@ -75,7 +75,7 @@ final class Stats {
     }
 
     /**
-     * Klicks je Monat für einen Sponsor, ältester Monat zuerst.
+     * Clicks per month for a sponsor, oldest month first.
      *
      * @return array<string,int> [ 'YYYY-MM' => clicks ]
      */

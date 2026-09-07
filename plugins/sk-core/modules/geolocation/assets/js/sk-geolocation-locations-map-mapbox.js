@@ -144,8 +144,8 @@
         renderInfo: function (info) {
             if (typeof info === 'string') info = JSON.parse(info);
             var html = SkGeo.info_window_template;
-            // Global replace: jeder Platzhalter kann mehrfach im Template stehen
-            // (z.B. {title} als alt-Attribut + sichtbarer Linktext).
+            // Global replace: each placeholder can appear multiple times in
+            // the template (e.g. {title} as an alt attribute + visible link text).
             for (var key in info) {
                 html = html.split('{' + key + '}').join(info[key] == null ? '' : info[key]);
             }

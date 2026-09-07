@@ -5,18 +5,18 @@ namespace SK\Modules\ShopImport;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Hält die Sats-Preise von Fiat-Inseraten aktuell.
+ * Keeps the Sats prices of fiat listings up to date.
  *
- * Ein Shop rechnet in Euro. Würde der beim Import errechnete Sats-Betrag
- * stehen bleiben, wäre ein 169-Euro-Artikel nach ein paar Prozent
- * Kursbewegung sichtbar falsch ausgezeichnet. Der Fiat-Betrag ist die
- * Wahrheit, der Sats-Betrag wird nachgeführt.
+ * A shop prices in euros. If the Sats amount computed at import time just
+ * stayed put, a 169-euro item would end up visibly mispriced after a few
+ * percent of rate movement. The fiat amount is the source of truth, the
+ * Sats amount gets refreshed to match.
  */
 final class PriceRefresh {
 
     const HOOK = 'sk_shop_import_refresh_prices';
 
-    /** Pro Lauf, damit ein grosser Katalog den Cron nicht sprengt. */
+    /** Per run, so a large catalog doesn't blow past the cron's time budget. */
     const BATCH = 200;
 
     public function __construct() {
@@ -57,7 +57,7 @@ final class PriceRefresh {
 
             $sats = Rate::to_sats( $fiat, $currency );
             if ( is_wp_error( $sats ) ) {
-                // Kursquelle weg: lieber der alte Preis als gar keiner.
+                // Rate source unavailable: better the old price than none at all.
                 break;
             }
 
@@ -75,8 +75,8 @@ final class PriceRefresh {
     }
 
     /**
-     * Auch die Ausfuehrungen mitziehen — sonst stimmt der Sofortkauf spaeter
-     * fuer die Hauptausfuehrung, aber nicht fuer die uebrigen.
+     * Refresh the variants too — otherwise instant checkout would later be
+     * correct for the main variant but not for the rest.
      */
     private static function refresh_variants( int $post_id, string $currency ): void {
         $variants = get_post_meta( $post_id, Importer::META_VARIANTS, true );

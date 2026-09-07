@@ -1,9 +1,9 @@
 <?php
 /**
- * Template: ⚡ LN Reputation — öffentliche Proof-Seite auf /store/vendorx/lightning-proof/
+ * Template: LN reputation — public proof page at /store/vendorx/lightning-proof/
  *
- * Zeigt alle verifizierten Lightning-Zahlungen mit Payment-Hashes und bolt11 Invoices.
- * Jeder kann die Invoices dekodieren und Betrag + Ziel prüfen.
+ * Shows all verified Lightning payments with payment hashes and bolt11 invoices.
+ * Anyone can decode the invoices and check amount + destination.
  * Don't trust, verify.
  */
 
@@ -57,7 +57,7 @@ get_header( 'shop' );
 
             <div id="store-lightning-proof-wrapper" style="padding:20px 0;">
 
-                <!-- Zusammenfassung -->
+                <!-- Summary -->
                 <div style="background:#1e2b3c;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:24px;margin-bottom:24px;">
                     <h2 style="margin:0 0 16px;font-size:20px;color:#e8ecf0;">
                         ⚡ Lightning Reputation
@@ -92,7 +92,7 @@ get_header( 'shop' );
                     </div>
                 </div>
 
-                <!-- Transaktions-Liste -->
+                <!-- Transaction list -->
                 <?php if ( ! empty( $proofs ) ) : ?>
                 <div style="background:#1e2b3c;border:1px solid rgba(255,255,255,0.07);border-radius:10px;overflow:hidden;">
                     <div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.07);">
@@ -188,7 +188,7 @@ get_header( 'shop' );
                 </div>
                 <?php endif; ?>
 
-                <!-- Anleitung -->
+                <!-- Instructions -->
                 <div style="margin-top:24px;padding:20px;background:#1e2b3c;border:1px solid rgba(255,255,255,0.07);border-radius:10px;">
                     <h3 style="margin:0 0 12px;font-size:16px;color:#e8ecf0;"><i class="fas fa-info-circle" style="color:#5a6a7e;"></i> So verifizierst du selbst</h3>
 

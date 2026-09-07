@@ -1,9 +1,9 @@
-/* Mobile: Klick auf Hauptkategorie öffnet/schließt Unterkategorien.
-   Desktop bleibt bei deinem :hover-CSS. */
+/* Mobile: clicking the main category opens/closes subcategories.
+   Desktop keeps using the existing :hover CSS. */
 (function () {
   const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
 
-  // Erstes Untermenü im Top-Item (robust gegen Klassenänderungen)
+  // First submenu inside the top item (robust against class changes)
   function getSubmenu(topItem) {
     return topItem.querySelector(':scope > .wc-block-product-categories-list--depth-1')
         || topItem.querySelector(':scope > ul');
@@ -15,9 +15,9 @@
     });
   }
 
-  // Klick-Delegation
+  // Click delegation
   document.addEventListener('click', function (e) {
-    // Außerhalb: alle schließen (nur Mobile)
+    // Outside click: close all (mobile only)
     const list = e.target.closest('.wc-block-product-categories-list');
     if (!list) {
       if (isMobile()) {
@@ -26,29 +26,29 @@
       return;
     }
 
-    if (!isMobile()) return; // Desktop: nix tun (Hover regelt)
+    if (!isMobile()) return; // Desktop: do nothing (hover handles it)
 
-    // Direktes Top-Item?
+    // Direct top item?
     const topItem = e.target.closest('.wc-block-product-categories-list > .wc-block-product-categories-list-item');
     if (!topItem) return;
 
     const submenu = getSubmenu(topItem);
-    if (!submenu) return; // keine Unterkategorien -> normaler Link
+    if (!submenu) return; // no subcategories -> normal link
 
-    // Klicks im Untermenü normal durchlassen
+    // Let clicks inside the submenu pass through normally
     if (submenu.contains(e.target)) return;
 
-    // Auf Hauptlink geklickt? Dann Navigation unterbinden und toggeln
+    // Clicked on the main link? Then prevent navigation and toggle
     const clickedA = e.target.closest('a');
     const topLink = topItem.querySelector(':scope > a');
     if (clickedA && topLink && (clickedA === topLink || topLink.contains(clickedA))) {
       e.preventDefault();
     }
 
-    // Andere offene schließen
+    // Close other open ones
     closeAllOpen(list, topItem);
 
     // Toggle
     topItem.classList.toggle('open');
-  }, { passive: true }); // passive: true -> Scroll bleibt smooth
+  }, { passive: true }); // passive: true -> scrolling stays smooth
 })();

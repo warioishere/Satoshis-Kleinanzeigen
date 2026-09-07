@@ -7,11 +7,11 @@ use SK\Core\Abstracts\SkShortcode;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * [sk_donation_bar] — Kostendeckung und Betragsknöpfe.
+ * [sk_donation_bar] — cost coverage and amount buttons.
  *
- * Attribute:
- *   compact="yes"  schmalere Variante ohne Einleitungstext
- *   heading="..."  eigene Überschrift
+ * Attributes:
+ *   compact="yes"  narrower variant without intro text
+ *   heading="..."  custom heading
  */
 class Shortcode extends SkShortcode {
 
@@ -46,8 +46,8 @@ class Shortcode extends SkShortcode {
     }
 
     /**
-     * Auch direkt aufrufbar, damit Platzierungen keinen Shortcode
-     * durch do_shortcode schicken müssen.
+     * Also callable directly, so placements don't have to run a
+     * shortcode through do_shortcode.
      */
     public static function render( bool $compact = false, string $heading = '' ): string {
         wp_enqueue_style( 'sk-donations' );

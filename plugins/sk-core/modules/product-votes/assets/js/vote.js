@@ -38,7 +38,7 @@
                 if (!$cold.find('[data-role=cold]').length) $cold.append('<span class="sk-pv-count" data-role="cold">' + data.cold + '</span>');
                 else $cold.find('[data-role=cold]').text(data.cold);
             } else {
-                // Vote zurückgenommen, Total wieder 0 → Badges entfernen
+                // Vote withdrawn, total back to 0 → remove badges
                 $widget.find('.sk-pv-count').remove();
             }
         }).fail(function (xhr) {

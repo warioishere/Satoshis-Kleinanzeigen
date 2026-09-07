@@ -23,10 +23,10 @@ class NostrDMListener {
         }
 
         /*
-         * Der Filter MUSS vor dem Einplanen stehen. Sonst kennt WordPress das
-         * Intervall in dem Moment noch nicht, wp_schedule_event() liefert
-         * false, und weil init() bei jedem Aufruf dieselbe Reihenfolge
-         * durchlaeuft, wurde die Abfrage nie eingeplant — die Bruecke lief nie.
+         * The filter MUST be registered before scheduling. Otherwise WordPress
+         * does not yet know the interval at that moment, wp_schedule_event()
+         * returns false, and since init() runs the same order on every call,
+         * the poll was never scheduled — the bridge never ran.
          */
         add_filter( 'cron_schedules', [ __CLASS__, 'add_cron_interval' ] );
 
@@ -46,19 +46,19 @@ class NostrDMListener {
     }
 
     /**
-     * Alle Postfaecher, die wir abfragen — Marktplatz und Anbieter.
+     * All mailboxes we poll — marketplace and vendors.
      *
-     * Inserate von Anbietern mit eigenem Schluessel erscheinen unter deren
-     * Namen. Wer darauf antwortet, schreibt folglich an deren Postfach, nicht
-     * an unseres. Bisher wurde nur das Marktplatz-Postfach abgefragt: die
-     * Antwort kam bei einem Schluessel an, den niemand las, und war weg.
+     * Listings from vendors with their own key appear under their name.
+     * Whoever replies therefore writes to their mailbox, not ours. Until now
+     * only the marketplace mailbox was polled: the reply arrived at a key
+     * nobody read, and was lost.
      *
-     * Der Empfaenger ist zugleich die Zuordnung. Wer auf das Inserat eines
-     * Anbieters antwortet, landet bei genau diesem Anbieter, ohne dass die
-     * Nachricht sagen muss, um welches Inserat es geht.
+     * The recipient doubles as the routing. Whoever replies to a vendor's
+     * listing ends up with that exact vendor, without the message having to
+     * say which listing it's about.
      *
-     * Ein Eintrag ohne privkey heisst: wir kennen das Postfach, koennen es
-     * aber nicht oeffnen — das muss der Anbieter selbst tun.
+     * An entry without a privkey means: we know the mailbox but cannot open
+     * it — that's for the vendor to do themselves.
      *
      * @return array<string, array{privkey: ?string, vendor_id: int}>
      */
@@ -111,11 +111,10 @@ class NostrDMListener {
         }
 
         /*
-         * Anbieter, die sich ueber eine Erweiterung anmelden: wir haben nur
-         * ihren oeffentlichen Schluessel. Ihr Postfach koennen wir abfragen —
-         * die Nachrichten liegen offen auf den Relays —, aber nicht oeffnen.
-         * Sie werden vorgemerkt und spaeter im Browser des Anbieters
-         * entschluesselt.
+         * Vendors who log in via a browser extension: we only have their
+         * public key. We can poll their mailbox — the messages sit openly on
+         * the relays — but cannot open it. They're queued and decrypted later
+         * in the vendor's browser.
          */
         $nur_pubkey = $wpdb->get_col(
             "SELECT DISTINCT user_id FROM {$wpdb->usermeta}
@@ -164,12 +163,12 @@ class NostrDMListener {
         $last_seen = (int) get_option( self::LAST_SEEN_KEY, time() - 300 );
 
         /*
-         * Zwei Tage zurueckschauen statt ab dem letzten Stand.
+         * Look back two days instead of starting from the last checkpoint.
          *
-         * Ein Gift Wrap traegt nach NIP-59 absichtlich einen verwuerfelten
-         * Zeitstempel, bis zu zwei Tage in der Vergangenheit. Ein Fenster ab
-         * dem letzten Stand haette solche Nachrichten dauerhaft uebersehen.
-         * Dass dabei Bekanntes erneut kommt, faengt die Dublettenpruefung ab.
+         * Per NIP-59, a gift wrap deliberately carries a randomized timestamp,
+         * up to two days in the past. A window starting at the last checkpoint
+         * would permanently miss such messages. The duplicate check catches
+         * anything already-known that comes around again.
          */
         $since = max( 0, $last_seen - 2 * DAY_IN_SECONDS );
 
@@ -186,8 +185,8 @@ class NostrDMListener {
             }
         }
 
-        // Der Fortschritt haengt an der Uhr, nicht an den Zeitstempeln der
-        // Ereignisse — die eines Gift Wraps sind erfunden.
+        // Progress is tied to the clock, not to event timestamps — a gift
+        // wrap's timestamp is made up.
         update_option( self::LAST_SEEN_KEY, time() );
     }
 
@@ -339,7 +338,7 @@ class NostrDMListener {
      * Process a single incoming DM.
      */
     /**
-     * An welches unserer Postfaecher ging das Ereignis?
+     * Which of our mailboxes did the event go to?
      *
      * @param array<string, array{privkey: string, vendor_id: int}> $ring
      * @return array{pubkey: string, privkey: string, vendor_id: int}|null
@@ -375,9 +374,9 @@ class NostrDMListener {
         }
 
         /*
-         * Dublettenpruefung zuerst, und auf die aeussere Kennung. Das Fenster
-         * reicht zwei Tage zurueck, also kommt Bekanntes bei jedem Lauf erneut
-         * vorbei; die Marke muss deshalb laenger halten als das Fenster.
+         * Duplicate check first, and on the outer id. The window reaches two
+         * days back, so anything already-known comes by again on every run;
+         * the marker therefore has to last longer than the window.
          */
         $processed_key = 'sk_dm_' . substr( $event_id, 0, 32 );
 
@@ -387,8 +386,8 @@ class NostrDMListener {
 
         set_transient( $processed_key, 1, 3 * DAY_IN_SECONDS );
 
-        // Das Relay liefert nach unserem Filter nur Eigenes, aber verlassen
-        // wir uns nicht darauf.
+        // The relay should only return our own messages per our filter, but
+        // we don't rely on that.
         $empfaenger = self::recipient_from_tags( $event, $ring );
 
         if ( null === $empfaenger ) {
@@ -396,8 +395,8 @@ class NostrDMListener {
         }
 
         /*
-         * Kein Schluessel bei uns: nur der Anbieter selbst kann diese
-         * Nachricht oeffnen. Roh vormerken, den Rest erledigt sein Browser.
+         * No key held here: only the vendor themselves can open this
+         * message. Queue it raw; the rest happens in their browser.
          */
         if ( empty( $empfaenger['privkey'] ) ) {
             self::queue_for_browser( $empfaenger['vendor_id'], $event );
@@ -446,7 +445,7 @@ class NostrDMListener {
 
         $sender_pubkey = strtolower( $sender_pubkey );
 
-        // Eigene Nachrichten ueberspringen — auch die eines Anbieters an sich selbst.
+        // Skip our own messages — including a vendor's message to themselves.
         if ( isset( $ring[ $sender_pubkey ] ) ) {
             return;
         }
@@ -456,10 +455,10 @@ class NostrDMListener {
         }
 
         /*
-         * Ging die Nachricht an das Postfach eines Anbieters, ist damit klar,
-         * wer gemeint ist — auch bei der allerersten Nachricht und ohne dass
-         * ein Inserat genannt wird. Genau das ist der Weg, den ein Kaeufer in
-         * seinem Client nimmt: Inserat sehen, auf den Absender antworten.
+         * If the message went to a vendor's mailbox, that already settles who
+         * is meant — even for the very first message and without a listing
+         * being named. That's exactly the path a buyer takes in their
+         * client: see the listing, reply to the sender.
          */
         if ( $empfaenger['vendor_id'] > 0 ) {
             self::route_to_vendor( $empfaenger['vendor_id'], $sender_pubkey, $decrypted, $empfaenger['pubkey'] );
@@ -467,13 +466,13 @@ class NostrDMListener {
         }
 
         /*
-         * Ans Marktplatz-Postfach geschrieben. Dort steht kein Anbieter im
-         * Empfaenger, also muss die Nachricht selbst sagen, worum es geht:
-         * ueber eine Verweis-Markierung auf das Inserat, sonst ueber dessen
-         * Adresse oder Kennung im Text.
+         * Written to the marketplace mailbox. There's no vendor in the
+         * recipient here, so the message itself has to say what it's about:
+         * via a reference tag to the listing, otherwise via its URL or id in
+         * the text.
          *
-         * Das betrifft die grosse Mehrheit — nur wer einen eigenen Schluessel
-         * hat, bekommt ein eigenes Postfach.
+         * This covers the large majority — only someone with their own key
+         * gets their own mailbox.
          */
         $post_id = self::listing_from_message( $inner_tags, $decrypted );
 
@@ -491,7 +490,7 @@ class NostrDMListener {
     }
 
     /**
-     * Eine Nachricht dem Anbieter zustellen, an dessen Postfach sie ging.
+     * Deliver a message to the vendor whose mailbox it went to.
      */
     private static function route_to_vendor( int $vendor_id, string $sender_pubkey, string $text, string $inbox ): void {
         $text = self::clean_field( $text, 4000 );
@@ -503,18 +502,18 @@ class NostrDMListener {
         self::create_bridge_chat( $vendor_id, $sender_pubkey, 0, '', $text, $inbox );
     }
 
-    /** Nutzermeta mit den vorgemerkten, noch verschluesselten Nachrichten. */
+    /** User meta holding queued, still-encrypted messages. */
     const PENDING_META = '_sk_nostr_pending_wraps';
 
-    /** Mehr als das hebt niemand auf. */
+    /** Nobody keeps more than this. */
     const PENDING_MAX = 30;
 
     /**
-     * Eine Nachricht vormerken, die nur ihr Empfaenger oeffnen kann.
+     * Queue a message that only its recipient can open.
      *
-     * Gespeichert wird das rohe Ereignis, so wie es vom Relay kam. Es ist
-     * ohnehin oeffentlich; entschluesseln kann es nur, wer den privaten
-     * Schluessel hat, und der liegt im Browser des Anbieters.
+     * The raw event is stored exactly as it came from the relay. It's public
+     * anyway; only whoever holds the private key can decrypt it, and that
+     * key sits in the vendor's browser.
      */
     private static function queue_for_browser( int $vendor_id, array $event ): void {
         if ( $vendor_id <= 0 ) {
@@ -539,8 +538,8 @@ class NostrDMListener {
             'content' => (string) ( $event['content'] ?? '' ),
         ];
 
-        // Aeltestes zuerst weg, sonst waechst das Meta unbegrenzt, wenn der
-        // Anbieter nie vorbeischaut.
+        // Oldest goes first, otherwise the meta grows unbounded when the
+        // vendor never checks in.
         if ( count( $offen ) > self::PENDING_MAX ) {
             $offen = array_slice( $offen, -self::PENDING_MAX );
         }
@@ -549,7 +548,7 @@ class NostrDMListener {
     }
 
     /**
-     * Die vorgemerkten Nachrichten eines Anbieters.
+     * The queued messages of a vendor.
      */
     public static function pending_for( int $vendor_id ): array {
         $offen = get_user_meta( $vendor_id, self::PENDING_META, true );
@@ -558,7 +557,7 @@ class NostrDMListener {
     }
 
     /**
-     * Eine vorgemerkte Nachricht abhaken.
+     * Remove a message from the queue.
      */
     public static function forget_pending( int $vendor_id, string $event_id ): void {
         $offen = self::pending_for( $vendor_id );
@@ -667,18 +666,18 @@ class NostrDMListener {
     }
 
     /**
-     * Ein Gift Wrap (NIP-59) auspacken.
+     * Unwrap a Gift Wrap (NIP-59).
      *
-     * Drei Schichten: aussen das Kind 1059 mit einem Wegwerfschluessel als
-     * Absender, darin versiegelt (Kind 13) der echte Absender, und darin die
-     * eigentliche Nachricht (Kind 14). Beide Schichten sind mit NIP-44
-     * verschluesselt, jede gegen einen anderen Gegenschluessel.
+     * Three layers: outermost is kind 1059 with a throwaway key as sender,
+     * inside that the seal (kind 13) with the real sender, and inside that
+     * the actual message (kind 14). Both layers are encrypted with NIP-44,
+     * each against a different counterpart key.
      *
-     * Der Absender darf nur aus der innersten Schicht kommen: der aeussere
-     * Schluessel ist Einwegware und sagt nichts darueber, wer geschrieben hat.
+     * The sender may only be taken from the innermost layer: the outer key
+     * is single-use and says nothing about who actually wrote it.
      *
-     * Die Bibliothek kann Gift Wraps nur bauen, nicht oeffnen — deshalb hier
-     * von Hand.
+     * The library can only build gift wraps, not open them — hence this is
+     * done by hand here.
      *
      * @return array{pubkey: string, content: string, tags: array}|null
      */
@@ -695,7 +694,7 @@ class NostrDMListener {
         }
 
         try {
-            // Schicht 1: gegen den Wegwerfschluessel des Umschlags.
+            // Layer 1: against the wrap's throwaway key.
             $schluessel = \swentel\nostr\Encryption\Nip44::getConversationKey( $privkey, strtolower( $aeusserer ) );
             $siegel     = json_decode( \swentel\nostr\Encryption\Nip44::decrypt( $inhalt, $schluessel ), true );
 
@@ -709,7 +708,7 @@ class NostrDMListener {
                 return null;
             }
 
-            // Schicht 2: gegen den echten Absender.
+            // Layer 2: against the real sender.
             $schluessel2 = \swentel\nostr\Encryption\Nip44::getConversationKey( $privkey, strtolower( $absender ) );
             $nachricht   = json_decode( \swentel\nostr\Encryption\Nip44::decrypt( (string) ( $siegel['content'] ?? '' ), $schluessel2 ), true );
 
@@ -723,12 +722,11 @@ class NostrDMListener {
             }
 
             /*
-             * Das Siegel beweist den Absender, die innerste Schicht ist nicht
-             * signiert. Weichen die beiden ab, hat jemand eine fremde Nachricht
-             * untergeschoben.
+             * The seal proves the sender; the innermost layer isn't signed.
+             * If the two diverge, someone has slipped in a foreign message.
              */
             if ( isset( $nachricht['pubkey'] ) && strtolower( (string) $nachricht['pubkey'] ) !== strtolower( $absender ) ) {
-                error_log( '[SK Nostr Market Bridge] Gift Wrap: Absender im Siegel und in der Nachricht weichen ab.' );
+                error_log( '[SK Nostr Market Bridge] Gift Wrap: sender in seal and in message diverge.' );
                 return null;
             }
 
@@ -738,7 +736,7 @@ class NostrDMListener {
                 'tags'    => is_array( $nachricht['tags'] ?? null ) ? $nachricht['tags'] : [],
             ];
         } catch ( \Throwable $e ) {
-            error_log( '[SK Nostr Market Bridge] Gift Wrap liess sich nicht oeffnen: ' . $e->getMessage() );
+            error_log( '[SK Nostr Market Bridge] Gift Wrap could not be opened: ' . $e->getMessage() );
             return null;
         }
     }
@@ -805,8 +803,8 @@ class NostrDMListener {
         $npub  = self::pubkey_to_npub( $nostr_pubkey );
         $titel = 'Nostr: ' . substr( $npub, 0, 16 ) . '...';
 
-        // Eine Anfrage ohne Inseratsbezug ist der Normalfall, wenn jemand im
-        // Client einfach auf den Absender antwortet.
+        // An inquiry without a listing reference is the normal case when
+        // someone in their client simply replies to the sender.
         if ( '' !== $product_title ) {
             $titel .= ' → ' . $product_title;
         }
@@ -890,20 +888,21 @@ class NostrDMListener {
     }
 
     /**
-     * Aus einer Nachricht ans Marktplatz-Postfach das gemeinte Inserat lesen.
+     * Read the intended listing from a message sent to the marketplace
+     * mailbox.
      *
-     * Drei Wege, in dieser Reihenfolge:
+     * Three ways, in this order:
      *
-     * 1. Eine "a"-Markierung, wie sie ein Client setzt, der sich auf ein
-     *    Inserat bezieht: "30402:<pubkey>:<kennung>".
-     * 2. Die Adresse des Inserats im Text — sie steht in jedem unserer
-     *    Inserate unter "Inserat:", wird also oft mitzitiert.
-     * 3. Die blosse Kennung "sk-<nummer>" irgendwo im Text.
+     * 1. An "a" tag, as set by a client referring to a listing:
+     *    "30402:<pubkey>:<id>".
+     * 2. The listing's URL in the text — it appears in every one of our
+     *    listings under "Inserat:", so it's often quoted back.
+     * 3. The bare id "sk-<number>" anywhere in the text.
      *
-     * Ohne Treffer bleibt die Nachricht unzustellbar; wir raten nicht.
+     * Without a match, the message stays undeliverable; we don't guess.
      *
-     * @param array  $tags Markierungen der Nachricht.
-     * @param string $text Klartext der Nachricht.
+     * @param array  $tags Tags of the message.
+     * @param string $text Plaintext of the message.
      */
     private static function listing_from_message( array $tags, string $text ): int {
         foreach ( $tags as $tag ) {
@@ -922,7 +921,7 @@ class NostrDMListener {
             }
         }
 
-        // Adresse des Inserats, wie sie in unserem Inseratstext steht.
+        // The listing's URL, as it appears in our listing text.
         if ( preg_match_all( '#https?://[^\s<>"\']+#i', $text, $treffer ) ) {
             foreach ( $treffer[0] as $url ) {
                 $id = url_to_postid( $url );
@@ -945,11 +944,10 @@ class NostrDMListener {
     }
 
     /**
-     * Eine Inseratskennung in eine Nummer uebersetzen.
+     * Translate a listing reference into a numeric id.
      *
-     * Unsere Inserate tragen "sk-<ID>" in der d-Markierung. "product-<ID>"
-     * stammt aus der NIP-15-Zeit und wird der Vollstaendigkeit halber noch
-     * akzeptiert.
+     * Our listings carry "sk-<ID>" in the d tag. "product-<ID>" is a
+     * holdover from the NIP-15 era and is still accepted for completeness.
      */
     private static function product_ref_to_id( string $ref ): int {
         $ref = trim( $ref );

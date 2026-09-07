@@ -5,15 +5,16 @@ namespace SK\Modules\Sponsors;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * SK Sponsors — Sponsorenflächen der Startseite als eigenes Modul.
+ * SK Sponsors — homepage sponsor slots as their own module.
  *
- * Ersetzt die Konstruktion aus Beiträgen der Kategorie "sponsoren" plus den
- * Fremd-Plugins wp-post-image-carousel (Ziel-URL in _wppic_image_link) und
- * wp-post-rank (Reihenfolge in _post_rank) durch einen eigenen Post-Type.
+ * Replaces the old construction of posts in the "sponsoren" category plus
+ * the third-party plugins wp-post-image-carousel (target URL in
+ * _wppic_image_link) and wp-post-rank (order in _post_rank) with a
+ * dedicated post type.
  *
- * Neu gegenüber der alten Lösung ist die Klickmessung: Sponsorenlinks zeigen
- * auf /go/<slug> und werden dort gezählt, bevor weitergeleitet wird. Ohne
- * diese Zahlen lässt sich ein Platz nicht verkaufen.
+ * New compared to the old solution is click tracking: sponsor links point
+ * to /go/<slug> and are counted there before redirecting. Without these
+ * numbers a slot can't be sold.
  */
 final class Module {
 
@@ -59,7 +60,7 @@ final class Module {
         if ( get_option( 'sk_sponsors_db_version' ) !== $this->version ) {
             Install::install();
             update_option( 'sk_sponsors_db_version', $this->version );
-            // Die /go/-Regel existiert erst nach einem Flush.
+            // The /go/ rule only exists after a flush.
             update_option( 'sk_rewrite_rules_needs_flashing', 'yes' );
         }
     }

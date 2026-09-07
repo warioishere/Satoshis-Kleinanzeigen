@@ -5,33 +5,32 @@ namespace SK\Modules\Donations;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Liest bezahlte Spenden direkt vom BTCPay-Server.
+ * Reads paid donations directly from the BTCPay server.
  *
- * Notwendig, weil die Crowdfund-Apps auf dem BTCPay-Server laufen und
- * WooCommerce nie berühren. Ohne diese Klasse zeigte die Statistik nur den
- * kleineren Teil: Über Crowdfund kamen seit 2025 rund 4,1 Mio Sats herein,
- * über WooCommerce 215.000.
+ * Necessary because the crowdfund apps run on the BTCPay server and never
+ * touch WooCommerce. Without this class the stats would show only the
+ * smaller part: since 2025, crowdfunding brought in roughly 4.1M sats,
+ * WooCommerce 215,000.
  *
- * Gezählt wird ausdrücklich nur ab einem Stichtag (Donations::count_since).
- * Die grossen Summen aus der Aufbauphase 2025 sind Vergangenheit und würden
- * den Deckungsbalken dauerhaft auf 100 Prozent stehen lassen.
+ * Counting explicitly starts only from a cutoff date (Donations::count_since).
+ * The large sums from the 2025 build-up phase are past and would otherwise
+ * keep the coverage bar permanently at 100 percent.
  *
- * Zugangsdaten stammen vom WooCommerce-BTCPay-Plugin. Wird der Schlüssel dort
- * erneuert, greift diese Abfrage nicht mehr — deshalb ist jeder Fehler
- * unkritisch: Es wird 0 zurückgegeben und die WooCommerce-Zahlen stehen
- * weiterhin.
+ * Credentials come from the WooCommerce BTCPay plugin. If the key is renewed
+ * there, this query stops working — which is why every failure is
+ * non-critical: it returns 0 and the WooCommerce figures still stand.
  */
 final class BtcPay {
 
-    /** Wie lange ein Abrufergebnis zwischengespeichert wird. */
+    /** How long a fetch result is cached. */
     const CACHE_TTL = 900;
 
     /**
-     * Beschreibungen, die keine Spende sind: die Kontaktdaten-Feewall
-     * verkauft Kontaktzugriffe, das gehört nicht in den Spendentopf.
+     * Descriptions that are not a donation: the contact-details feewall
+     * sells contact access, which doesn't belong in the donation pot.
      *
-     * Einstellbar statt fest verdrahtet — Crowdfunds kommen und gehen, und
-     * eine Umbenennung der Feewall würde sie sonst still als Spende zählen.
+     * Configurable instead of hardcoded — crowdfunds come and go, and a
+     * rename of the feewall would otherwise silently count as a donation.
      */
     const OPTION_EXCLUDE  = 'sk_donations_exclude';
     const DEFAULT_EXCLUDE = 'Kontaktzugriff, Pay-Wall, PayWall';
@@ -57,7 +56,7 @@ final class BtcPay {
     }
 
     /**
-     * Summe der bezahlten Crowdfund-Spenden in einem Zeitraum.
+     * Sum of paid crowdfund donations in a time range.
      */
     public static function settled_sats( int $from_ts, int $to_ts ): int {
         if ( ! self::is_configured() ) {
@@ -85,7 +84,7 @@ final class BtcPay {
     }
 
     /**
-     * Bezahlte Rechnungen, die tatsächlich Spenden sind.
+     * Paid invoices that are actually donations.
      *
      * @return array<int,array>
      */
@@ -97,8 +96,7 @@ final class BtcPay {
         $out  = [];
         $skip = 0;
 
-        // Seitenweise, aber gedeckelt: eine Endlosschleife darf einen
-        // Seitenaufruf nicht blockieren.
+        // Paged, but capped: an infinite loop must never block a page request.
         for ( $page = 0; $page < 10; $page++ ) {
             $response = wp_remote_get(
                 $url . "/api/v1/stores/{$store}/invoices?startDate={$from_ts}&take=100&skip={$skip}",
@@ -139,8 +137,8 @@ final class BtcPay {
 
         $meta = $invoice['metadata'] ?? [];
 
-        // Alles mit WooCommerce-Bestellnummer zaehlt bereits ueber WooCommerce
-        // mit — sonst stuende jede Spende doppelt in der Summe.
+        // Anything with a WooCommerce order number is already counted via
+        // WooCommerce — otherwise every donation would be counted twice.
         $order_id = (string) ( $meta['orderId'] ?? '' );
         if ( $order_id !== '' && preg_match( '/^(wc|WC)/', $order_id ) ) {
             return false;
@@ -161,9 +159,8 @@ final class BtcPay {
     }
 
     /**
-     * Betrag in Sats. EUR- und CHF-Rechnungen werden nicht umgerechnet —
-     * ein geschaetzter Kurs waere in einer Zahlenanzeige schlimmer als eine
-     * fehlende Zahl.
+     * Amount in sats. EUR and CHF invoices are not converted — an estimated
+     * exchange rate would be worse in a numeric display than a missing figure.
      */
     private static function sats( array $invoice ): int {
         $amount   = (float) ( $invoice['amount'] ?? 0 );
@@ -180,8 +177,8 @@ final class BtcPay {
     }
 
     /**
-     * Welche Beschreibungen kommen aktuell vom Server? Fuer die Admin-Anzeige,
-     * damit sichtbar ist, was gezaehlt wird und was nicht.
+     * Which descriptions currently come from the server? For the admin
+     * display, so it's visible what's counted and what isn't.
      *
      * @return array<string,array{sats:int,n:int,gezaehlt:bool}>
      */

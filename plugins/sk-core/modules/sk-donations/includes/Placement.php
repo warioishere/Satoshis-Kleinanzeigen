@@ -5,12 +5,12 @@ namespace SK\Modules\Donations;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Wo die Spendenbitte erscheint. Jede Platzierung ist einzeln abschaltbar,
- * damit sich nacheinander messen lässt, welche etwas bringt.
+ * Where the donation prompt appears. Each placement can be toggled
+ * individually, so it's possible to measure one at a time which one works.
  *
- * Hintergrund: Die Seite /spenden wurde in 90 Tagen 35 mal aufgerufen und hat
- * seit September 2025 keine Spende mehr gebracht. Mehr Links auf dieselbe
- * Seite ändern daran nichts — es geht um den Moment, in dem gefragt wird.
+ * Background: the /spenden page was viewed 35 times in 90 days and hasn't
+ * brought in a donation since September 2025. More links to the same page
+ * wouldn't change that — it's about the moment the question is asked.
  */
 class Placement {
 
@@ -33,7 +33,7 @@ class Placement {
     }
 
     /**
-     * Kostenbalken am Ende des Verkäufer-Dashboards.
+     * Cost bar at the end of the seller dashboard.
      */
     public function dashboard(): void {
         if ( ! self::dashboard_enabled() || ! is_user_logged_in() ) {
@@ -41,17 +41,17 @@ class Placement {
         }
 
         echo '<div class="sk-donate-dashboard-slot">';
-        echo Shortcode::render( true ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Vorlage escaped selbst.
+        echo Shortcode::render( true ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- template escapes itself.
         echo '</div>';
     }
 
     /**
-     * Wurde gerade ein Inserat gelöscht?
+     * Was a listing just deleted?
      *
-     * Der Löschvorgang leitet auf /dashboard/products/?message=product_deleted
-     * um (Dashboard\Templates\Products::handle_delete_product). Das ist der
-     * wahrscheinlichste Moment eines erfolgreichen Verkaufs — und damit der
-     * einzige, in dem eine Spendenfrage nicht aufdringlich wirkt.
+     * The deletion redirects to /dashboard/products/?message=product_deleted
+     * (Dashboard\Templates\Products::handle_delete_product). That's the most
+     * likely moment of a successful sale — and thus the only one in which a
+     * donation ask doesn't feel intrusive.
      */
     private function just_deleted_product(): bool {
         if ( ! is_user_logged_in() ) {
@@ -73,9 +73,9 @@ class Placement {
             SK_DONATIONS_VERSION
         );
 
-        // btcpay.js wird auf dem Verkaeufer-Dashboard bereits von BuyNow
-        // geladen; als Abhaengigkeit angeben, damit die Reihenfolge stimmt,
-        // falls BuyNow einmal abgeschaltet ist.
+        // btcpay.js is already loaded on the seller dashboard by BuyNow;
+        // declare it as a dependency so the order is correct if BuyNow
+        // is ever disabled.
         $deps = wp_script_is( 'btcpay_gf_modal_js', 'registered' ) ? [ 'btcpay_gf_modal_js' ] : [];
 
         wp_enqueue_script(

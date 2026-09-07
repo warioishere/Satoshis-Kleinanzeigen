@@ -181,8 +181,8 @@ class PaymentCard {
 			return null;
 		}
 
-		// Der Schluessel der Ausfuehrung steht in der Nachricht, der Betrag
-		// dazu kommt aus dem Inserat — genau wie der Grundpreis.
+		// The variant key sits in the message, the corresponding amount
+		// comes from the product — exactly like the base price.
 		$variant_key = isset( $data['variant'] ) ? (string) $data['variant'] : '';
 
 		$price_sats = \SK\Modules\Payments\Variant::price( $product, $variant_key );
@@ -234,24 +234,24 @@ class PaymentCard {
 		$status  = (string) $row->status;
 		$settled = in_array( $status, self::SETTLED_STATES, true );
 
-		// Wer die Karte sieht, nicht wer sie geschickt hat: Beim Sofortkauf legt
-		// der Kaeufer die Invoice-Karte, und aus dem Absender abgeleitet bekaeme
-		// er die Anbieterknoepfe statt des Bezahlknopfs.
+		// Who views the card, not who sent it: with instant buy, the buyer
+		// creates the invoice card, and derived from the sender they'd get
+		// the vendor buttons instead of the pay button.
 		$viewer_is_vendor = get_current_user_id() === $vendor_id;
 
-		// Laesst sich der Eingang von selbst pruefen? Dann braucht der Anbieter
-		// den Knopf zum Bestaetigen von Hand nicht.
+		// Can the incoming payment be verified on its own? Then the vendor
+		// doesn't need the manual confirm button.
 		$has_verify = \SK\Modules\Payments\StoreSettings::has_nwc( $vendor_id )
 			|| \SK\Modules\Payments\StoreSettings::has_lndhub( $vendor_id )
 			|| ! empty( $row->verify_url );
 
 		switch ( $marker ) {
 			case 'lightning_invoice':
-				// Anbieter wie Kaeufer duerfen die Karte gelegt haben: Beim
-				// Sofortkauf loest der Kaeufer die Invoice aus. Gefaehrlich
-				// waere nur eine fremde Invoice — die kann es nicht geben,
-				// weil der bolt11 in dieser Zeile immer serverseitig aus der
-				// Wallet des Anbieters stammt.
+				// Either vendor or buyer may have posted the card: with
+				// instant buy, the buyer triggers the invoice. The only
+				// dangerous case would be a foreign invoice — which can't
+				// happen, because the bolt11 in this row always comes
+				// server-side from the vendor's wallet.
 				if ( $row->context !== 'chat' || ( $sender_id !== $vendor_id && $sender_id !== $buyer_id ) ) {
 					return null;
 				}

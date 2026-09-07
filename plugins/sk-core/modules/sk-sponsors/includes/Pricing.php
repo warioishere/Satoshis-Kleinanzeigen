@@ -5,18 +5,18 @@ namespace SK\Modules\Sponsors;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Listenpreise je Stufe.
+ * List prices per tier.
  *
- * Der Listenpreis ist das, was ein Platz kosten soll — er wird dem Sponsor im
- * Portal als Voreinstellung angeboten und im Admin als Soll angezeigt. Die
- * tatsächlich vereinbarte Rate steht am Sponsor selbst
- * (PostType::META_MONTHLY) und geht immer vor.
+ * The list price is what a placement is supposed to cost — it's offered to
+ * the sponsor in the portal as a default and shown in the admin as the
+ * target. The actually agreed rate lives on the sponsor itself
+ * (PostType::META_MONTHLY) and always takes precedence.
  *
- * Bewusst getrennt: Ein Sponsor mit Rate 0 zahlt nichts und läuft nie ab,
- * auch wenn für seine Stufe ein Listenpreis hinterlegt ist. Würde der
- * Listenpreis automatisch greifen, bekämen alle Bestandssponsoren beim
- * Einschalten der Abrechnung eine Rate und verlören mangels Guthaben sofort
- * ihren Platz.
+ * Deliberately kept separate: a sponsor with a rate of 0 pays nothing and
+ * never expires, even if a list price is set for their tier. If the list
+ * price applied automatically, all existing sponsors would get a rate the
+ * moment billing was turned on and would instantly lose their placement for
+ * lack of balance.
  */
 final class Pricing {
 
@@ -27,7 +27,7 @@ final class Pricing {
     const DEFAULT_STANDARD = 8000;
 
     /**
-     * Listenpreis einer Stufe in Sats.
+     * List price of a tier in sats.
      */
     public static function list_price( string $tier ): int {
         if ( $tier === PostType::TIER_TOP ) {
@@ -43,10 +43,10 @@ final class Pricing {
     }
 
     /**
-     * Was für diesen Sponsor gilt: seine eigene Rate, sonst der Listenpreis.
+     * What applies to this sponsor: their own rate, otherwise the list price.
      *
-     * Für das Portal gedacht — dort braucht es immer einen Betrag, auch wenn
-     * der Sponsor bisher nichts zahlt.
+     * Intended for the portal — it always needs an amount there, even if the
+     * sponsor hasn't paid anything so far.
      */
     public static function effective_rate( int $sponsor_id ): int {
         $own = (int) get_post_meta( $sponsor_id, PostType::META_MONTHLY, true );
@@ -58,12 +58,12 @@ final class Pricing {
     }
 
     /**
-     * Listenpreis auf alle Sponsoren einer Stufe übertragen.
+     * Apply the list price to all sponsors of a tier.
      *
-     * Nur auf ausdrücklichen Knopfdruck: das macht aus Gratisplätzen
-     * zahlungspflichtige.
+     * Only on an explicit button click: this turns free placements into
+     * paying ones.
      *
-     * @return int Zahl der geänderten Sponsoren
+     * @return int number of changed sponsors
      */
     public static function apply_to_tier( string $tier, bool $overwrite_existing = false ): int {
         $price = self::list_price( $tier );

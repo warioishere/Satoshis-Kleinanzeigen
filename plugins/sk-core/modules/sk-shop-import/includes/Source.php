@@ -5,25 +5,25 @@ namespace SK\Modules\ShopImport;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Aus einer abgelegten Datei Artikel machen — gleich welcher Herkunft.
+ * Turn a stored file into items — regardless of its origin.
  *
- * Drei Stellen brauchen denselben Schritt: die Vorschau im Dashboard, das
- * Anlegen des Auftrags und jeder Stapel, den der Auftrag später abarbeitet.
- * Stünde die Fallunterscheidung dreimal da, liefe sie irgendwann auseinander
- * — die Vorschau zeigte dann etwas anderes als der Import tut.
+ * Three places need the same step: the dashboard preview, creating the
+ * job, and every batch the job later processes. If the case distinction
+ * lived in three places, it would eventually drift apart — the preview
+ * would then show something different from what the import actually does.
  */
 final class Source {
 
-    /** Ein geholter Shopify-Katalog liegt als JSON, ein Export als CSV. */
+    /** A fetched Shopify catalog is stored as JSON, an export as CSV. */
     public static function is_json( string $path ): bool {
         return strtolower( (string) pathinfo( $path, PATHINFO_EXTENSION ) ) === 'json';
     }
 
     /**
-     * Artikel aus der Datei.
+     * Items from the file.
      *
-     * @param string $path    Abgelegte Datei.
-     * @param array  $mapping Nur für CSV; JSON braucht keine Zuordnung.
+     * @param string $path    Stored file.
+     * @param array  $mapping Only for CSV; JSON needs no mapping.
      * @return array<int,array>|\WP_Error
      */
     public static function items( string $path, array $mapping = [] ) {
@@ -43,10 +43,10 @@ final class Source {
     }
 
     /**
-     * Wie viele Zeilen beziehungsweise Produkte die Quelle enthält.
+     * How many rows or products the source contains.
      *
-     * Für die Zusammenfassung im Formular: "aus 89 Zeilen wurden 26 Inserate"
-     * ist die Angabe, an der jemand merkt, ob etwas verschluckt wurde.
+     * For the summary in the form: "89 rows became 26 listings" is the
+     * figure that lets someone notice if something got swallowed.
      */
     public static function count( string $path ): int {
         if ( self::is_json( $path ) ) {
@@ -61,7 +61,7 @@ final class Source {
     }
 
     /**
-     * Rohe Produkte aus einer abgelegten Katalogdatei.
+     * Raw products from a stored catalog file.
      *
      * @return array<int,array>|\WP_Error
      */

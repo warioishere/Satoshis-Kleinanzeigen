@@ -84,8 +84,8 @@ class NostrRelaySync {
 
                     $kind = (int) ( $event['kind'] ?? 0 );
 
-                    // Kind 1 notes sind absichtlich NICHT hier: Nostr → SK ist
-                    // Einbahnstraße. Nur SK → Nostr (via Feed-Post-Publish).
+                    // Kind 1 notes are intentionally NOT handled here: Nostr → SK is
+                    // a one-way street. Only SK → Nostr (via feed post publish).
                     if ( 0 === $kind ) {
                         self::handle_profile_update( $user_id, $event );
                     } elseif ( 9735 === $kind ) {
@@ -107,8 +107,8 @@ class NostrRelaySync {
 
     /**
      * Fetch Kind 0 profile + Kind 9735 zap-receipt events from a relay.
-     * Kind 1 notes werden absichtlich nicht abgefragt — wir syncen nur
-     * Profil-Updates und Zap-Empfänge, keine Timeline-Inhalte.
+     * Kind 1 notes are intentionally not queried — we only sync profile
+     * updates and zap receipts, no timeline content.
      */
     private static function fetch_events( string $relay_url, array $pubkeys, int $since ): array {
         $context = stream_context_create( [
@@ -246,7 +246,7 @@ class NostrRelaySync {
                 $current_banner = $store_info['banner'] ?? '';
                 if ( $banner_url !== $current_banner ) {
                     $store_info['banner'] = $banner_url;
-                    // skdar_profile_settings wird nirgends gelesen — der Sync lief ins Leere.
+                    // skdar_profile_settings is never read anywhere — this sync went nowhere.
                     update_user_meta( $user_id, 'sk_profile_settings', $store_info );
                     $updated = true;
                 }

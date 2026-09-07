@@ -134,9 +134,9 @@ do_action( 'sk_dashboard_wrap_start' );
 					<div class="dvc-chat-header">
 						<div class="dvc-chat-header-info">
 							<?php
-							// Bild und Name fuehren auf das Profil des
-							// Gegenuebers — von hier aus will man wissen,
-							// mit wem man es zu tun hat.
+							// Image and name link to the profile of the
+							// other party — from here you want to know
+							// who you're dealing with.
 							$dvc_profil = $open_chat['other_url'] ?? '';
 							?>
 							<?php if ( $dvc_profil !== '' ) : ?>

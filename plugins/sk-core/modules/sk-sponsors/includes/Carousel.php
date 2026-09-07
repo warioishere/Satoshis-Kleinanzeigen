@@ -7,34 +7,34 @@ use SK\Core\Abstracts\SkShortcode;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * [sk_sponsor_carousel] — Sponsorenslider für Shopseite und Seitenleiste.
+ * [sk_sponsor_carousel] — sponsor slider for the shop page and sidebar.
  *
- * Ersatz für [post_image_carousel] des Plugins wp-post-image-carousel. Jenes
- * fragt veröffentlichte Blogbeiträge ab; seit die Sponsoren als eigener
- * Post-Type geführt werden und die Altbeiträge auf Entwurf stehen, lief es ins
- * Leere.
+ * Replacement for [post_image_carousel] from the wp-post-image-carousel
+ * plugin. That one queries published blog posts; since sponsors are now
+ * managed as their own post type and the legacy posts sit in draft, it came
+ * up empty.
  *
- * Das Markup ist bewusst identisch zum Plugin (wppis-slider, wppis-track,
- * wppis-slide, wppis-link, wppis-figure) und die Voreinstellungen kommen aus
- * dessen Option — damit bleiben Aussehen und Verhalten unverändert, inklusive
- * der Slider-Mechanik aus carousel.js.
+ * The markup is deliberately identical to the plugin's (wppis-slider,
+ * wppis-track, wppis-slide, wppis-link, wppis-figure) and the defaults come
+ * from its option — so appearance and behavior stay unchanged, including the
+ * slider mechanics from carousel.js.
  *
- * Ein Unterschied ist Absicht: Die Links laufen über /go/, werden also gezählt
- * wie überall sonst.
+ * One difference is intentional: the links go through /go/, so they're
+ * counted like everywhere else.
  */
 class Carousel extends SkShortcode {
 
     protected $shortcode = 'sk_sponsor_carousel';
 
-    /** Einstellungen des Plugins, damit Abstände und Größen gleich bleiben. */
+    /** Plugin settings, so spacing and sizes stay the same. */
     const PLUGIN_OPTION = 'wppic_settings';
 
     /**
-     * Eigene Kopien der Slider-Assets.
+     * Our own copies of the slider assets.
      *
-     * Uebernommen aus wp-post-image-carousel; die responsive-Dateien trugen
-     * bereits eigene Anpassungen, die im Plugin-Ordner lagen und ein Update
-     * nicht ueberlebt haetten. Damit ist das Plugin entbehrlich.
+     * Adopted from wp-post-image-carousel; the responsive files already
+     * carried their own customizations, which lived in the plugin folder
+     * and wouldn't have survived an update. This makes the plugin obsolete.
      */
     public static function enqueue_assets(): void {
         wp_enqueue_style(
@@ -90,7 +90,7 @@ class Carousel extends SkShortcode {
 
         $sponsors = PostType::get_active( $tier, max( 1, (int) $a['posts'] ) );
 
-        // Ohne Logo keine Kachel — sonst entstehen leere Slides.
+        // No logo, no tile — otherwise empty slides would appear.
         $sponsors = array_values(
             array_filter( $sponsors, static fn( $s ) => has_post_thumbnail( $s->ID ) )
         );

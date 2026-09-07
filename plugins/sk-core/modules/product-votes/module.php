@@ -5,9 +5,10 @@ namespace SK\Modules\ProductVotes;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * SK Product Votes — Hot/Cold Voting on Vendor-Produkten.
+ * SK Product Votes — Hot/Cold voting on vendor products.
  *
- * Nur qualifizierte Accounts dürfen voten; Aggregat erst ab Threshold sichtbar.
+ * Only qualified accounts may vote; the aggregate is only visible once a
+ * threshold is reached.
  */
 final class Module {
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * SK → Händler.
+ * SK → Dealers.
  *
  * @var \WP_User[] $vendors
  * @var string $notice
@@ -61,16 +61,16 @@ $base = add_query_arg( [ 'page' => 'sk', 'tab' => 'dealers' ], admin_url( 'admin
                     <td>
                         <?php
                         /*
-                         * Der Haendler bestaetigt seine Domain selbst und darf
-                         * damit importieren — ohne dass hier ein Haekchen
-                         * gesetzt wird. Ohne diese Spalte sieht es im Admin
-                         * aus, als sei nichts passiert.
+                         * The dealer confirms their own domain and is thereby
+                         * allowed to import — without a checkbox being set
+                         * here. Without this column, it would look in the
+                         * admin as if nothing had happened.
                          */
                         $sk_links = \SK\Core\Verification\VerifiedLinks::confirmed( $vendor->ID );
 
                         if ( $sk_links ) {
-                            // Die volle Adresse, nicht nur der Host: nur so
-                            // laesst sich nachsehen, wo der Verweis steht.
+                            // The full address, not just the host: only this way
+                            // can you check where the link actually points.
                             foreach ( $sk_links as $sk_link ) {
                                 printf(
                                     '<div style="margin-bottom:2px;"><span style="color:#f7931a;">✓</span> <a href="%1$s" target="_blank" rel="noopener nofollow" title="%2$s">%3$s</a></div>',

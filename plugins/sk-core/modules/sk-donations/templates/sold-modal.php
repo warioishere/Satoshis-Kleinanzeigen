@@ -1,7 +1,7 @@
 <?php
 /**
- * Kleines Modal nach dem Löschen eines Inserats.
- * Optik bewusst wie das Logout-Modal.
+ * Small modal after deleting a listing.
+ * Look deliberately matches the logout modal.
  */
 
 defined( 'ABSPATH' ) || exit;

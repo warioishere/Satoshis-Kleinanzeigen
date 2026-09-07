@@ -7,7 +7,7 @@ use SK\Core\Admin\PhpDashboard\AbstractPage;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * SK → Händler: prüfen und für den Katalogimport freischalten.
+ * SK → Dealers: review and enable for catalog import.
  */
 class AdminPage extends AbstractPage {
 

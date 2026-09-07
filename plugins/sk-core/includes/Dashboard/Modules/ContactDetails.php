@@ -16,12 +16,12 @@ class ContactDetails {
         add_action( 'woocommerce_save_account_details', [ $this, 'sync_email_on_account_save' ], 30 );
         add_filter( 'sk_get_store_info',             [ $this, 'normalize_on_load' ], 10, 2 );
 
-        // Der Kontaktblock der Shopseite wird in store-header.php unter dem
-        // Banner ausgegeben, nicht mehr in der Kopfzeile darin.
+        // The shop page's contact block is output in store-header.php below
+        // the banner, no longer in the header itself.
 
-        // Der Anbieter-Reiter wird von sk_product_seller_tab() gefuellt; der
-        // Filter woocommerce_product_tab_content_seller wird nirgends
-        // angewandt und war seit jeher wirkungslos.
+        // The seller tab is filled by sk_product_seller_tab(); the
+        // woocommerce_product_tab_content_seller filter is applied nowhere
+        // and has always been a no-op.
 
         // Font Awesome
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_font_awesome' ] );
@@ -33,7 +33,7 @@ class ContactDetails {
         // AJAX validation
         add_action( 'wp_ajax_sk_settings', [ $this, 'ajax_validate_settings' ], 0 );
 
-        // Kontaktwert erst auf Klick herausgeben
+        // Only reveal the contact value on click
         add_action( 'wp_ajax_sk_reveal_contact', [ $this, 'reveal_contact' ] );
         add_action( 'wp_ajax_nopriv_sk_reveal_contact', [ $this, 'reveal_contact' ] );
     }
@@ -187,7 +187,7 @@ class ContactDetails {
             }
         }
 
-        // Store slug (Shop-URL)
+        // Store slug (shop URL)
         if ( ! empty( $_POST['store_slug'] ) ) {
             $new_slug = sanitize_title( wp_unslash( $_POST['store_slug'] ) );
             $user_with_slug = get_user_by( 'slug', $new_slug );
@@ -234,17 +234,17 @@ class ContactDetails {
     /* ---- Store/product output ---- */
 
     /**
-     * Kontaktliste eines Anbieters — Kanaele sichtbar, Werte erst auf Klick.
+     * A vendor's contact list — channels visible, values only revealed on click.
      *
-     * Zweiter Ausgabeweg neben den Symbolen: hier standen Handle, Nummer und
-     * Schluessel bis eben ausgeschrieben im Quelltext. Beide Listen benutzen
-     * jetzt denselben Endpunkt.
+     * Second output path alongside the icons: this used to have handle,
+     * number, and key spelled out in the page source. Both lists now use
+     * the same endpoint.
      */
     /**
-     * Kontaktliste eines Anbieters als HTML — fuer die Shopseite.
+     * A vendor's contact list as HTML — for the shop page.
      *
-     * Wird direkt aus store-header.php aufgerufen, damit der Block unter dem
-     * Banner steht statt in der Kopfzeile darin.
+     * Called directly from store-header.php so the block sits below the
+     * banner instead of inside the header.
      */
     public static function contact_list_html( int $vendor_id, string $css_class = 'sk-store-contact-list' ): string {
         if ( ! $vendor_id || ! function_exists( 'sk_get_store_info' ) ) {
@@ -291,12 +291,13 @@ class ContactDetails {
     }
 
     /**
-     * Kontaktwert eines Anbieters herausgeben — einer je Anfrage.
+     * Reveal a vendor's contact value — one per request.
      *
-     * Ersetzt das fertige Ziel im Quelltext. Wer scrapen will, braucht jetzt
-     * einen Aufruf je Anbieter und Kanal statt eines einzigen Seitenabrufs,
-     * und laeuft dabei in die Mengenbegrenzung. Ein entschlossener Angreifer
-     * kommt weiterhin durch — es dauert dann Tage statt Sekunden.
+     * Replaces the ready-made target that used to sit in the page source.
+     * Anyone wanting to scrape now needs one call per vendor and channel
+     * instead of a single page fetch, and runs into the rate limit doing
+     * so. A determined attacker still gets through — it just takes days
+     * instead of seconds.
      */
     public function reveal_contact(): void {
         check_ajax_referer( 'sk_reveal_contact', 'nonce' );
@@ -350,17 +351,17 @@ class ContactDetails {
         wp_send_json_success( [
             'wert' => $wert,
             'ziel' => $ziel,
-            // Nostr-Schluessel sind zu lang fuer eine Zeile neben dem Symbol.
+            // Nostr keys are too long for a line next to the icon.
             'kurz' => mb_strlen( $wert ) > 24 ? mb_substr( $wert, 0, 21 ) . '…' : $wert,
         ] );
     }
 
     /**
-     * Wie viele Kontakte darf ein Besucher in der Minute aufdecken?
+     * How many contacts may a visitor reveal per minute?
      *
-     * Grosszuegig fuer Menschen — eine Shopseite mit zwei Dutzend Anbietern
-     * laesst sich durchklicken —, aber eng genug, dass ein Durchlauf durch
-     * alle Anbieter nicht in einer Sitzung gelingt.
+     * Generous for humans — a shop page with a couple dozen vendors can
+     * still be clicked through — but tight enough that sweeping through
+     * every vendor doesn't succeed in a single session.
      */
     private function reveal_rate_allows(): bool {
         if ( ! function_exists( 'sk_rate_limit' ) ) {
@@ -376,14 +377,15 @@ class ContactDetails {
     /* ---- Contact icons ---- */
 
     /**
-     * Welche Kontaktwege ein Anbieter oeffentlich anbietet — ohne die Werte.
+     * Which contact channels a vendor offers publicly — without the values.
      *
-     * Bewusst nur die Kanaele: Adresse, Nummer und Handle standen bis hierher
-     * fertig im Quelltext jeder Inserats- und Shopseite. Ein einziger Abruf
-     * ohne Anmeldung brachte auf einer Shopseite sieben Telegram-Namen. Der
-     * Wert kommt jetzt erst beim Klick, ueber reveal_contact().
+     * Deliberately only the channels: up to now, address, number, and
+     * handle sat spelled out in the page source of every listing and shop
+     * page. A single unauthenticated fetch of a shop page exposed seven
+     * Telegram handles. The value now only comes on click, via
+     * reveal_contact().
      *
-     * @return array<int,string> Kanalschluessel
+     * @return array<int,string> Channel keys
      */
     private function public_channels( array $info ): array {
         $channels = [];
@@ -415,7 +417,7 @@ class ContactDetails {
         return preg_replace( '/\s+/', '', (string) preg_replace( '/[^0-9+\s\(\)-]/', '', $raw ) );
     }
 
-    /** Beschriftung je Kanal — ohne den Wert zu verraten. */
+    /** Label per channel — without giving away the value. */
     private static function channel_label( string $key ): string {
         $labels = [
             'mail'  => __( 'E-Mail anzeigen', 'sk-core' ),
@@ -527,20 +529,20 @@ class ContactDetails {
         if ( ! $has_picture ) $errors[] = __( 'Bitte lade ein Profilbild hoch, bevor du speicherst.', 'sk-core' );
 
         /*
-         * Shopname ebenso — dieselbe Frage, die ProfileGuard vor dem
-         * Veroeffentlichen stellt. Stuende sie nur dort, koennte jemand sein
-         * Profil ohne Namen speichern und erst beim Inserieren erfahren, dass
-         * etwas fehlt.
+         * Same for the shop name — the same question ProfileGuard asks
+         * before publishing. If it were checked only there, someone could
+         * save their profile without a name and only find out something is
+         * missing when creating a listing.
          *
-         * Nur wenn das Namensfeld auch abgeschickt wurde.
+         * Only if the name field was actually submitted.
          *
-         * Es heisst sk_store_name — so schickt es das Formular, und so liest
-         * es Settings::save(). Auf den gespeicherten Namen zurueckzufallen
-         * waere falsch: das Formular fuer die sozialen Angaben schickt das
-         * Feld gar nicht mit, und wer noch keinen Namen hat, sass dann dort
-         * in einer Sackgasse — die Meldung verlangte einen Namen auf einer
-         * Seite ohne Namensfeld. Dass ein Inserat einen Namen braucht,
-         * erzwingt ProfileGuard ohnehin an der richtigen Stelle.
+         * It's called sk_store_name — that's what the form sends, and what
+         * Settings::save() reads. Falling back to the stored name would be
+         * wrong: the social-details form doesn't send this field at all,
+         * and anyone who doesn't have a name yet would then be stuck there
+         * — the notice demanded a name on a page with no name field. That a
+         * listing needs a name is enforced by ProfileGuard in the right
+         * place anyway.
          */
         $name_raw = $p['sk_store_name'] ?? $_POST['sk_store_name'] ?? null;
 

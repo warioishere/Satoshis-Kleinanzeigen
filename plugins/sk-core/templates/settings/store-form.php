@@ -6,12 +6,12 @@
  * Save handlers remain in their original plugin files via sk_store_profile_saved.
  *
  * Sections (in order):
- *   1. Profil (banner, gravatar)
- *   2. Anbieter-Informationen (store name, store category, address, map)
- *   3. Kontaktdaten (email, telegram, twitter, phone, nostr, paywall)
- *   4. Biografie
- *   5. Katalog-Modus (conditional)
- *   6. Store-Link (slug)
+ *   1. Profile (banner, gravatar)
+ *   2. Vendor info (store name, store category, address, map)
+ *   3. Contact details (email, telegram, twitter, phone, nostr, paywall)
+ *   4. Biography
+ *   5. Catalog mode (conditional)
+ *   6. Store link (slug)
  */
 
 $current_user_obj = get_userdata( $current_user );

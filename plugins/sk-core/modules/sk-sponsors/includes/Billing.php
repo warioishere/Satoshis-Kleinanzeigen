@@ -5,16 +5,16 @@ namespace SK\Modules\Sponsors;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Monatliche Abbuchung vom Sponsorenguthaben.
+ * Monthly deduction from the sponsor balance.
  *
- * Standardmäßig ABGESCHALTET (Option sk_sponsors_billing_enabled). Solange sie
- * aus ist, passiert nichts: keine Abbuchung, und is_running() prüft das
- * Guthaben nicht. So kann die Sponsorenfläche produktiv laufen, bevor über
- * Preise entschieden ist.
+ * DISABLED by default (option sk_sponsors_billing_enabled). As long as it's
+ * off, nothing happens: no deduction, and is_running() doesn't check the
+ * balance. This lets the sponsor placement run in production before pricing
+ * has been decided.
  *
- * Abgerechnet wird pro Kalendermonat, nicht per Zeitintervall: Der Lauf merkt
- * sich je Sponsor den zuletzt abgerechneten Monat. Damit bucht ein doppelt
- * ausgelöster Cron nicht zweimal ab, und ein ausgefallener Cron holt nach.
+ * Billed per calendar month, not per time interval: the run remembers the
+ * last billed month per sponsor. This way a double-triggered cron doesn't
+ * charge twice, and a missed cron catches up.
  */
 final class Billing {
 
@@ -24,8 +24,8 @@ final class Billing {
 
     public function __construct() {
         add_action( self::CRON_HOOK, [ __CLASS__, 'run' ] );
-        // Ruecklinkpruefung laeuft im selben taeglichen Lauf mit, damit die
-        // Spalte auch ohne Knopfdruck aktuell bleibt.
+        // The backlink check runs in the same daily run so the column
+        // stays current without a manual click.
         add_action( self::CRON_HOOK, [ Backlink::class, 'check_batch' ], 20 );
 
         if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
@@ -38,7 +38,7 @@ final class Billing {
     }
 
     /**
-     * Bucht für jeden zahlenden Sponsor die Monatsrate ab.
+     * Charges the monthly rate for every paying sponsor.
      *
      * @return array{charged:int,sats:int,exhausted:int}
      */
@@ -62,11 +62,11 @@ final class Billing {
         foreach ( $sponsors as $sponsor ) {
             $monthly = (int) get_post_meta( $sponsor->ID, PostType::META_MONTHLY, true );
             if ( $monthly <= 0 ) {
-                continue; // Gratisplatz.
+                continue; // Free placement.
             }
 
             if ( (string) get_post_meta( $sponsor->ID, self::META_LAST_MONTH, true ) === $month ) {
-                continue; // In diesem Monat schon abgerechnet.
+                continue; // Already billed this month.
             }
 
             $balance = (int) get_post_meta( $sponsor->ID, PostType::META_BALANCE, true );
@@ -84,8 +84,8 @@ final class Billing {
             if ( $rest < $monthly ) {
                 $result['exhausted']++;
                 /**
-                 * Das Guthaben reicht nicht mehr für den nächsten Monat.
-                 * Hier lässt sich später eine Erinnerung anhängen.
+                 * The balance is no longer enough for the next month.
+                 * A reminder can be hooked in here later.
                  */
                 do_action( 'sk_sponsors_balance_low', (int) $sponsor->ID, $rest, $monthly );
             }
@@ -95,7 +95,7 @@ final class Billing {
     }
 
     /**
-     * Guthaben aufladen (Vorkasse).
+     * Top up balance (prepayment).
      */
     public static function top_up( int $sponsor_id, int $sats, string $note = '' ): int {
         $sats = max( 0, $sats );
@@ -111,10 +111,10 @@ final class Billing {
     }
 
     /**
-     * Jede Guthabenbewegung wird protokolliert.
+     * Every balance movement is logged.
      *
-     * Ohne Beleg lässt sich einem zahlenden Partner nicht erklären, wofür sein
-     * Guthaben verbraucht wurde — und Streit darüber ist teurer als die Tabelle.
+     * Without a record, a paying partner can't be shown what their balance
+     * was spent on — and a dispute about that is more costly than the table.
      */
     public static function log( int $sponsor_id, int $delta, int $balance_after, string $note ): void {
         global $wpdb;

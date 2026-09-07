@@ -1,6 +1,6 @@
 <?php
 /**
- * Ausführungen im Produkteditor.
+ * Variants in the product editor.
  *
  * @var int    $post_id
  * @var bool   $allowed
@@ -52,8 +52,8 @@ defined( 'ABSPATH' ) || exit;
             foreach ( $rows as $variant ) :
                 ?>
                 <?php
-                // Beide Betraege mitgeben, damit ein Wechsel der Einheit die
-                // Zeile nicht zerschiesst — genau wie beim Preisfeld oben.
+                // Pass along both amounts so switching the unit doesn't break
+                // the row — exactly like the price field above.
                 $row_fiat = ( $variant['price'] ?? null ) !== null ? $variant['price'] : '';
                 $row_sats = ( $variant['sats'] ?? null ) !== null ? $variant['sats'] : '';
                 ?>

@@ -5,20 +5,20 @@ namespace SK\Modules\ShopImport;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * CSV einlesen und Spalten erraten.
+ * Read a CSV file and guess its columns.
  *
- * Bewusst ein eigener Leser statt WC_Product_CSV_Importer: Jener ist auf den
- * Import-Assistenten im WP-Admin zugeschnitten und bringt eine grosse
- * Fehleroberflaeche mit. Hier braucht es Kontrolle darueber, wem die Inserate
- * gehoeren, wie Preise nach Sats kommen und wie viele Bilder geladen werden.
+ * Deliberately a custom reader instead of WC_Product_CSV_Importer: that one
+ * is tailored to the WP-admin import wizard and brings a large error
+ * surface with it. Here we need control over who owns the listings, how
+ * prices get converted to Sats, and how many images get loaded.
  *
- * Die Spaltennamen haengen von der Sprache des exportierenden Shops ab —
- * deshalb wird geraten und die Zuordnung anschliessend angezeigt, statt sich
- * auf feste Namen zu verlassen.
+ * Column names depend on the language of the exporting shop — so they're
+ * guessed and the mapping is then shown, rather than relying on fixed
+ * names.
  */
 final class Csv {
 
-    /** Welche Felder das Ziel kennt. */
+    /** Which fields the target knows. */
     const FIELDS = [
         'sku'         => 'Artikelnummer',
         'name'        => 'Titel',
@@ -30,14 +30,14 @@ final class Csv {
     ];
 
     /**
-     * Spalten, die die Struktur beschreiben statt den Inhalt. Sie werden nicht
-     * zugeordnet, sondern erraten — ohne sie liessen sich Varianten nicht von
-     * eigenstaendigen Produkten unterscheiden.
+     * Columns that describe the structure rather than the content. They
+     * aren't mapped but guessed — without them, variations couldn't be told
+     * apart from standalone products.
      */
     const STRUCTURE = [ 'type', 'parent', 'published', 'id' ];
 
     /**
-     * Uebliche Spaltennamen aus WooCommerce-Exporten, deutsch und englisch.
+     * Common column names from WooCommerce exports, German and English.
      */
     const GUESS = [
         'sku'         => [ 'sku', 'artikelnummer', 'artikel-nr', 'artikelnr' ],
@@ -54,7 +54,7 @@ final class Csv {
     ];
 
     /**
-     * Datei einlesen.
+     * Read the file.
      *
      * @return array{headers:array,rows:array,delimiter:string,count:int}|\WP_Error
      */
@@ -88,7 +88,7 @@ final class Csv {
         $rows  = [];
         $count = 0;
         while ( ( $data = fgetcsv( $handle, 0, $delimiter ) ) !== false ) {
-            // Leere Zeilen am Dateiende ueberspringen.
+            // Skip empty rows at the end of the file.
             if ( count( $data ) === 1 && trim( (string) $data[0] ) === '' ) {
                 continue;
             }
@@ -108,14 +108,14 @@ final class Csv {
     }
 
     /**
-     * Zuordnung raten: Feld => Spaltenindex, -1 wenn nichts passt.
+     * Guess the mapping: field => column index, -1 if nothing matches.
      *
      * @return array<string,int>
      */
     public static function guess_mapping( array $headers ): array {
-        // mb_strtolower, nicht strtolower: Letzteres laesst Umlaute
-        // unveraendert, wodurch "Übergeordnetes Produkt" nie auf die
-        // Kleinschreibung in GUESS traf.
+        // mb_strtolower, not strtolower: the latter leaves umlauts
+        // unchanged, which meant "Übergeordnetes Produkt" would never match
+        // the lowercase entries in GUESS.
         $normalized = array_map(
             static fn( $h ) => mb_strtolower( trim( (string) $h ), 'UTF-8' ),
             $headers
@@ -151,10 +151,10 @@ final class Csv {
     }
 
     /**
-     * BOM entfernen und nach UTF-8 bringen.
+     * Strip the BOM and convert to UTF-8.
      *
-     * Exporte aus aelteren Shops kommen oft als ISO-8859-1; ohne Umwandlung
-     * landen Umlaute als Fragezeichen im Inserat.
+     * Exports from older shops often arrive as ISO-8859-1; without
+     * conversion, umlauts end up as question marks in the listing.
      */
     private static function clean( $value ): string {
         $value = (string) $value;
@@ -165,10 +165,10 @@ final class Csv {
         }
 
         /*
-         * Manche Exporte tragen den Zeilenumbruch als die zwei Zeichen
-         * Backslash und n statt als echten Umbruch — im Beispielexport steht
-         * beides gemischt in derselben Beschreibung. Unbehandelt steht im
-         * Inserat spaeter ein einzelnes "n" in der Zeile.
+         * Some exports carry line breaks as the two characters backslash and
+         * n instead of an actual newline — in the sample export, both forms
+         * appear mixed within the same description. Left unhandled, a
+         * stray "n" would later show up in the listing's text.
          */
         $value = str_replace( [ '\\r\\n', '\\n', '\\r' ], "\n", $value );
 

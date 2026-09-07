@@ -6,13 +6,13 @@ use SK\Core\Dashboard\DashboardModule;
 use SK\Core\Verification\VerifiedLinks;
 
 /**
- * Dashboard: eigene Adressen bestätigen.
+ * Dashboard: verify your own addresses.
  *
- * Bewusst eine eigene Seite für alle Verkäufer und nicht ein Abschnitt im
- * Shop-Import: die Bestätigung ist eine Aussage über das Konto, kein Schritt
- * eines Katalogimports. Wer kein Händler ist, will trotzdem sein Abzeichen —
- * und wer einer werden will, muss die Seite erreichen können, bevor er
- * importieren darf.
+ * Deliberately its own page for all sellers rather than a section in the
+ * shop import: verification is a statement about the account, not a step
+ * of a catalog import. Anyone who isn't a merchant still wants their badge —
+ * and anyone who wants to become one needs to be able to reach this page
+ * before they're allowed to import.
  */
 class VerifiedLinksPage extends DashboardModule {
 
@@ -64,8 +64,8 @@ class VerifiedLinksPage extends DashboardModule {
 			if ( is_wp_error( $ok ) ) {
 				$this->notice( $user_id, $ok->get_error_message() );
 			} else {
-				// Gleich mitprüfen: wer den Schnipsel schon gesetzt hat, ist
-				// mit einem Klick fertig statt mit zweien.
+				// Check right away: anyone who already placed the snippet is
+				// done in one click instead of two.
 				$this->notice( $user_id, $this->message( VerifiedLinks::check( $user_id, $url ) ) );
 			}
 		} elseif ( $action === 'check' && $url !== '' ) {

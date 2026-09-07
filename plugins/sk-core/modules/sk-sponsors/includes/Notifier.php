@@ -5,11 +5,11 @@ namespace SK\Modules\Sponsors;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Erinnerung, wenn das Guthaben zur Neige geht.
+ * Reminder when the balance is running low.
  *
- * Hängt an dem Ereignis, das Billing beim Abbuchen auslöst. Verschickt wird
- * höchstens einmal pro Kalendermonat und Sponsor — eine Mahnkaskade wäre bei
- * Werbepartnern der falsche Ton.
+ * Hooks into the event Billing fires on deduction. Sent at most once per
+ * calendar month and sponsor — a dunning cascade would be the wrong tone
+ * for advertising partners.
  */
 final class Notifier {
 

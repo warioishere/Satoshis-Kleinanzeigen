@@ -268,8 +268,8 @@ do_action( 'sk_dashboard_wrap_before', $post, $post_id );
                                         <div class="sk-form-group sk-clearfix sk-price-container">
 
                                             <?php
-                                            // Ab einem groesseren Paket darf der Preis in Fiat ausgezeichnet
-                                            // werden; dann steht im Feld der Fiatbetrag, nicht der Sats-Preis.
+                                            // From a certain pack size upward the price may be listed in
+                                            // fiat; then the field holds the fiat amount, not the sats price.
                                             $sk_price_unit = class_exists( \SK\Modules\ShopImport\PriceUnit::class )
                                                 && \SK\Modules\ShopImport\PriceUnit::is_allowed();
                                             ?>

@@ -5,15 +5,15 @@ namespace SK\Modules\Sponsors;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Selbstbedienungsseite für Sponsoren unter /sponsor/<token>/.
+ * Self-service page for sponsors at /sponsor/<token>/.
  *
- * Zeigt bewusst nicht nur ein Zahlformular, sondern zuerst den Gegenwert:
- * Klicks der letzten 30 Tage, Stand des Guthabens, verbleibende Monate. Wer
- * verlängern soll, muss sehen, wofür — ein nacktes Betragsfeld beantwortet
- * diese Frage nicht.
+ * Deliberately doesn't show just a payment form, but first the value
+ * received: clicks in the last 30 days, balance status, remaining months.
+ * Someone deciding to renew needs to see what for — a bare amount field
+ * doesn't answer that.
  *
- * Zugang über einen geheimen Token statt über ein Benutzerkonto: Sponsoren
- * sind Firmen, die sich für eine Verlängerung nicht registrieren wollen.
+ * Access via a secret token instead of a user account: sponsors are
+ * companies that don't want to register just to renew.
  */
 class Portal {
 
@@ -79,19 +79,19 @@ class Portal {
             exit;
         }
 
-        // Direkt in die BTCPay-Bezahlseite der Bestellung.
+        // Straight into the order's BTCPay payment page.
         wp_safe_redirect( $order->get_checkout_payment_url() );
         exit;
     }
 
     /**
-     * Statuscode geradeziehen.
+     * Fix up the status code.
      *
-     * Zu dieser Adresse gibt es keinen Beitrag, WordPress hielte sie sonst fuer
-     * eine 404 — das wuerde Suchmaschinen und Caching-Schichten in die Irre
-     * fuehren. Passt der Token zu niemandem, landet der Aufruf auf der
-     * Startseite statt auf einer beliebigen anderen Seite mit Status 200;
-     * dasselbe Verhalten wie bei einem unbekannten /go/-Slug.
+     * There's no post at this address, so WordPress would otherwise treat it
+     * as a 404 — which would mislead search engines and caching layers. If
+     * the token matches nobody, the request lands on the homepage instead of
+     * some arbitrary other page with status 200; the same behavior as an
+     * unknown /go/ slug.
      */
     public function prepare_page(): void {
         $token = (string) get_query_var( self::QUERY_VAR );

@@ -5,12 +5,12 @@ namespace SK\Modules\Sponsors;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Prüft, ob ein Sponsor zurückverlinkt.
+ * Checks whether a sponsor links back.
  *
- * Hintergrund: Eine Messung im August 2026 ergab, dass von 14 geprüften
- * Sponsorenzielen genau eines auf satoshiskleinanzeigen.space verlinkt. Ein
- * Gratisplatz ohne Rücklink ist damit eine reine Einbahnstraße — diese Klasse
- * macht den Zustand sichtbar, statt ihn zu vermuten.
+ * Background: a measurement in August 2026 found that of 14 checked sponsor
+ * targets, exactly one linked back to satoshiskleinanzeigen.space. A free
+ * placement without a backlink is therefore a pure one-way street — this
+ * class makes the state visible instead of assuming it.
  */
 final class Backlink {
 
@@ -18,41 +18,39 @@ final class Backlink {
     const META_CHECKED = '_sk_sponsor_backlink_checked';
 
     /**
-     * Vom Betreiber von Hand bestaetigter Rueckling.
+     * Backlink manually confirmed by the operator.
      *
-     * Noetig, weil nicht jede Seite von diesem Server aus erreichbar ist:
-     * yourdevice.ch etwa liegt im selben Netz, und der Weg auf dessen
-     * oeffentliche IP wird nicht zurueckgeschleift. Auch Cloudflare-Regeln
-     * koennen serverseitige Abrufe blocken. Ein gesetztes Haekchen gewinnt
-     * gegen die automatische Pruefung.
+     * Needed because not every site is reachable from this server:
+     * yourdevice.ch, for instance, is on the same network, and the route to
+     * its public IP doesn't loop back. Cloudflare rules can also block
+     * server-side requests. A checked box wins over the automatic check.
      */
     const META_MANUAL = '_sk_sponsor_backlink_manual';
 
-    /** verlinkt */
+    /** links back */
     const OK          = 1;
-    /** verlinkt nicht */
+    /** does not link back */
     const MISSING     = 0;
-    /** prinzipiell nicht pruefbar (Chat- oder Kurzlink) */
+    /** fundamentally not checkable (chat or short link) */
     const UNCHECKABLE = -1;
-    /** Abruf fehlgeschlagen (Timeout, Fehlerstatus) */
+    /** request failed (timeout, error status) */
     const UNREACHABLE = -2;
 
     /**
-     * Externe Abrufe pro Durchlauf.
+     * External requests per run.
      *
-     * Grosszuegig genug, dass ein Klick den ganzen Bestand erfasst — bei acht
-     * Stueck blieb der Rest kommentarlos auf "ungeprueft" stehen und der Knopf
-     * wirkte kaputt. Ein Abruf dauert rund eine Sekunde, die Obergrenze
-     * schuetzt nur davor, dass eine sehr lange Liste in ein Server-Zeitlimit
-     * laeuft.
+     * Generous enough that one click covers the whole set — with eight, the
+     * rest silently stayed "unchecked" and the button seemed broken. One
+     * request takes about a second; the upper limit only guards against a
+     * very long list running into a server time limit.
      */
     const BATCH = 30;
 
-    /** Sekunden je externem Abruf. */
+    /** Seconds per external request. */
     const TIMEOUT = 4;
 
     /**
-     * Wie viele Sponsoren wurden noch nie geprüft?
+     * How many sponsors have never been checked?
      */
     public static function unchecked_count(): int {
         $sponsors = get_posts(
@@ -75,7 +73,7 @@ final class Backlink {
     }
 
     /**
-     * Prüft die am längsten nicht geprüften Sponsoren.
+     * Checks the sponsors that have gone unchecked the longest.
      *
      * @return array{checked:int,ok:int,open:int}
      */
@@ -88,9 +86,9 @@ final class Backlink {
             ]
         );
 
-        // Nach Prüfdatum in PHP sortieren, nie geprüfte zuerst. Über
-        // meta_key + orderby entstünde ein INNER JOIN, der genau die
-        // ungeprüften Sponsoren ausschliesst — also die, um die es geht.
+        // Sort by check date in PHP, never-checked first. Using
+        // meta_key + orderby would create an INNER JOIN that excludes
+        // exactly the unchecked sponsors — the ones this is about.
         usort(
             $sponsors,
             static function ( $a, $b ) {
@@ -118,10 +116,10 @@ final class Backlink {
     }
 
     /**
-     * Holt die Ziel-URL und sucht darin die eigene Domain.
+     * Fetches the target URL and searches it for our own domain.
      */
     public static function check( int $sponsor_id ): bool {
-        // Ein von Hand bestaetigter Rueckling wird nicht ueberschrieben.
+        // A manually confirmed backlink is never overwritten.
         if ( (int) get_post_meta( $sponsor_id, self::META_MANUAL, true ) === 1 ) {
             return true;
         }
@@ -130,7 +128,7 @@ final class Backlink {
 
         update_post_meta( $sponsor_id, self::META_CHECKED, current_time( 'mysql' ) );
 
-        // Telegram- und andere Chat-Ziele lassen sich nicht sinnvoll prüfen.
+        // Telegram and other chat targets can't be meaningfully checked.
         $host = (string) wp_parse_url( $url, PHP_URL_HOST );
         if ( $url === '' || $host === '' || self::is_unverifiable( $host ) ) {
             update_post_meta( $sponsor_id, self::META_OK, self::UNCHECKABLE );
@@ -146,8 +144,8 @@ final class Backlink {
             ]
         );
 
-        // Getrennt von UNCHECKABLE: Ein Timeout heisst nicht, dass die Seite
-        // nicht verlinkt — er heisst, dass dieser Server sie nicht erreicht.
+        // Separate from UNCHECKABLE: a timeout doesn't mean the site doesn't
+        // link back — it means this server couldn't reach it.
         if ( is_wp_error( $response ) || (int) wp_remote_retrieve_response_code( $response ) >= 400 ) {
             update_post_meta( $sponsor_id, self::META_OK, self::UNREACHABLE );
             return false;
@@ -155,7 +153,7 @@ final class Backlink {
 
         $body = (string) wp_remote_retrieve_body( $response );
         $own  = (string) wp_parse_url( home_url(), PHP_URL_HOST );
-        // Auch die blanke Domain treffen, wenn die Seite unter "new." läuft.
+        // Also match the bare domain when the site runs under "new.".
         $needle = preg_replace( '/^(www|new|staging)\./', '', $own );
 
         $found = $needle !== '' && stripos( $body, $needle ) !== false;
@@ -175,7 +173,7 @@ final class Backlink {
     }
 
     /**
-     * OK / MISSING / UNCHECKABLE / UNREACHABLE, oder null wenn ungeprüft.
+     * OK / MISSING / UNCHECKABLE / UNREACHABLE, or null if unchecked.
      */
     public static function status( int $sponsor_id ): ?int {
         if ( (int) get_post_meta( $sponsor_id, self::META_MANUAL, true ) === 1 ) {
@@ -192,9 +190,9 @@ final class Backlink {
     }
 
     /**
-     * Beschriftung für die Anzeige.
+     * Label for display.
      *
-     * @return array{0:string,1:string} Text und Farbe
+     * @return array{0:string,1:string} text and color
      */
     public static function label( int $sponsor_id ): array {
         if ( self::is_manual( $sponsor_id ) ) {

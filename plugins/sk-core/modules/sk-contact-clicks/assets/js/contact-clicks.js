@@ -1,17 +1,17 @@
 /**
- * Meldet Klicks auf Kontaktangaben eines Inserats.
+ * Reports clicks on a listing's contact details.
  *
- * Die Links selbst bleiben unveraendert — kein preventDefault, keine
- * Weiterleitung. Das ist Absicht: Kontaktziele sind teils tel: und mailto:,
- * die sich nicht sauber umleiten lassen, und eine kaputte Kontaktaufnahme
- * waere schlimmer als eine fehlende Zahl.
+ * The links themselves stay unchanged — no preventDefault, no redirect.
+ * This is intentional: some contact targets are tel: and mailto:, which
+ * can't be redirected cleanly, and a broken contact attempt would be
+ * worse than a missing number.
  */
 (function () {
     'use strict';
 
     if (!window.skContactClicks) return;
 
-    /** Kanal aus der Symbolklasse, sonst aus dem Ziel ableiten. */
+    /** Derive the channel from the icon class, otherwise from the target. */
     function channelOf(link) {
         var m = (link.className || '').match(/dkp-contact-icon--([a-z0-9]+)/);
         if (m) return m[1];
@@ -26,8 +26,8 @@
     }
 
     /**
-     * Produkt-ID aus dem Umfeld. Auf der Einzelseite steht sie in der
-     * body-Klasse, in Listen an der Kachel (WooCommerce vergibt post-<id>).
+     * Product ID from the surrounding context. On the single page it's in
+     * the body class, in listings it's on the tile (WooCommerce assigns post-<id>).
      */
     function productOf(link) {
         var item = link.closest('[class*="post-"]');
@@ -59,9 +59,9 @@
         if (!channel) return;
 
         /*
-         * Der Chat zaehlt nicht hier. Ein Klick auf sein Symbol oeffnet nur
-         * das Fenster — und bei Ausgeloggten den Anmeldehinweis. Gezaehlt
-         * wird serverseitig, wenn eine Unterhaltung wirklich zustande kommt.
+         * Chat isn't counted here. Clicking its icon only opens the
+         * window — or, for logged-out visitors, the login prompt. It's
+         * counted server-side once a conversation actually comes about.
          */
         if (channel === 'chat') return;
 
@@ -72,8 +72,8 @@
         body.append('channel', channel);
         body.append('context', contextOf(link));
 
-        // sendBeacon ueberlebt den Seitenwechsel; wo es fehlt, ein
-        // keepalive-fetch. Fehler werden bewusst verschluckt.
+        // sendBeacon survives the page navigation; where it's unavailable, a
+        // keepalive fetch is used instead. Errors are intentionally swallowed.
         try {
             if (navigator.sendBeacon) {
                 navigator.sendBeacon(window.skContactClicks.ajaxurl, body);
@@ -86,6 +86,6 @@
                     body: body.toString()
                 }).catch(function () {});
             }
-        } catch (err) { /* Messung darf den Klick nie stoeren */ }
+        } catch (err) { /* Tracking must never interfere with the click */ }
     }, true);
 }());

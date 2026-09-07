@@ -1,13 +1,13 @@
 <?php
 /**
- * Erklärt, warum eine Lightning-Adresse nicht angenommen wurde.
+ * Explains why a Lightning address was not accepted.
  *
- * Optik und Verhalten wie das Paket-Infofenster im Shop-Import: dieselben
- * sk-pack-info-Klassen, damit es sich nicht wie ein Fremdkörper anfühlt und
- * kein zweites Modal-Design entsteht.
+ * Look and behavior match the package info modal in shop import: the same
+ * sk-pack-info classes, so it doesn't feel like a foreign element and no
+ * second modal design is created.
  *
- * Geöffnet wird es von sk-payments-lnaddr.js, sobald eine Prüfung oder ein
- * Speicherversuch die Adresse abweist.
+ * Opened by sk-payments-lnaddr.js as soon as a check or a save attempt
+ * rejects the address.
  */
 
 defined( 'ABSPATH' ) || exit;

@@ -1,9 +1,9 @@
 /**
- * Auswahl der zu importierenden Inserate.
+ * Selection of the listings to import.
  *
- * Haelt Zaehler und Knopfbeschriftung an der tatsaechlichen Auswahl — sonst
- * verspricht der Knopf "28 Inserate importieren", obwohl das Paket nur sechs
- * zulaesst und der naechste Schritt eine Absage waere.
+ * Keeps the counter and button label in sync with the actual selection —
+ * otherwise the button would promise "import 28 listings" even though the
+ * package only allows six and the next step would be a rejection.
  */
 (function () {
     'use strict';
@@ -63,9 +63,9 @@
     update();
 
     /*
-     * Waehrend des Imports passiert minutenlang sichtbar nichts: Das Formular
-     * wird abgeschickt, der Server legt Inserate an und laedt Bilder nach.
-     * Ohne Rueckmeldung klickt der Verkaeufer ein zweites Mal.
+     * During the import, nothing visibly happens for minutes: the form is
+     * submitted, and the server creates listings and fetches images. Without
+     * feedback, the seller clicks a second time.
      */
     form.addEventListener('submit', function () {
         var box = document.getElementById('sk-import-progress');
@@ -84,11 +84,11 @@
 }());
 
 /**
- * Modal auf der Abo-Seite: was der Katalogimport kann.
+ * Modal on the subscription page: what the catalog import can do.
  *
- * Eigene Funktion, weil der obige Block auf der Abo-Seite gar nicht erst
- * laeuft — dort gibt es kein Auswahlformular. Klicks laufen ueber document,
- * damit die Reihenfolge von Skript und Markup egal ist.
+ * A separate function because the block above doesn't even run on the
+ * subscription page — there is no selection form there. Clicks are handled
+ * via document so the order of script and markup doesn't matter.
  */
 (function () {
     'use strict';
@@ -136,14 +136,14 @@
 }());
 
 /**
- * Import in Stapeln abarbeiten.
+ * Process the import in batches.
  *
- * Der Auftrag liegt auf dem Server, dieser Block holt nur einen Stapel nach
- * dem anderen ab. Deshalb ueberlebt ein geschlossenes Fenster den Import: die
- * Seite zeigt beim naechsten Aufruf denselben Stand und macht dort weiter.
+ * The job lives on the server, this block just fetches one batch after
+ * another. That's why a closed window survives the import: the page shows
+ * the same state on the next visit and continues from there.
  *
- * Die Stapelgroesse bestimmt der Server anhand der gemessenen Dauer — ein
- * Artikel mit fuenf Bildern braucht ein Vielfaches eines Artikels ohne.
+ * The server determines the batch size based on measured duration — an
+ * item with five images takes a multiple of the time of one without.
  */
 (function () {
     'use strict';
@@ -218,8 +218,8 @@
         if (running) return;
         running = true;
         if (error) error.style.display = 'none';
-        // Waehrend des Laufs weg damit: der Knopf ist nur die Rueckfalltuer,
-        // und ein deaktivierter Knopf faerbt sich im Theme violett.
+        // Hide it while running: the button is only the fallback door, and a
+        // disabled button turns purple in this theme.
         if (button) button.style.display = 'none';
         next();
     }

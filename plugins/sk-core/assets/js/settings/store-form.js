@@ -127,10 +127,10 @@ function skStoreToast(message, type) {
         }
     })();
 
-    /* ── Payment-Entfernen: sofortige UI-Bereinigung vor Form-Submit ── */
-    // Bei Klick auf "Entfernen" den gespeicherten State visuell sofort zurücksetzen,
-    // damit der User nicht weiter "gespeichert — leer lassen um beizubehalten" sieht
-    // während der AJAX-Save im Hintergrund läuft.
+    /* ── Payment removal: immediate UI cleanup before form submit ── */
+    // On clicking "Remove", reset the saved state visually right away so the
+    // user doesn't keep seeing "saved — leave empty to keep it" while the
+    // AJAX save is still running in the background.
     $(document).on('click', '.sk-payment-remove-link', function(e) {
         e.preventDefault();
         var $link  = $(this);
@@ -140,14 +140,14 @@ function skStoreToast(message, type) {
         var inputField       = $link.data('input-field');
         var defaultHolder    = $link.data('default-placeholder') || '';
 
-        // 1. Remove-Flag setzen
+        // 1. Set the remove flag
         $form.find('[name="' + removeField + '"]').val('1');
-        // 2. Input-Feld zurücksetzen (Placeholder + skp-saved Klasse)
+        // 2. Reset the input field (placeholder + skp-saved class)
         var $input = $form.find('[name="' + inputField + '"]');
         $input.val('').attr('placeholder', defaultHolder).removeClass('skp-saved');
-        // 3. Status-Pill(s) + Entfernen-Link im Feld ausblenden
+        // 3. Hide the status pill(s) + remove link in the field
         $field.find('.sk-settings-status').remove();
-        // 4. Form abschicken — AJAX-Save löscht das User-Meta serverseitig.
+        // 4. Submit the form — AJAX save deletes the user meta server-side.
         $form.trigger('submit');
     });
 
@@ -233,14 +233,14 @@ function skStoreToast(message, type) {
     skpTest($('#skp-test-lnaddr'), '#skp-test-lnaddr-result', 'skp_test_lnaddr', function() {
         return { value: $('input[name="lightning_address"]').val() };
     }, function(message) {
-        // Eine abgewiesene Lightning-Adresse braucht mehr als eine rote Zeile:
-        // der Haendler muss wissen, welche Wallet stattdessen geht.
+        // A rejected Lightning address needs more than a red line of text:
+        // the vendor needs to know which wallet works instead.
         skpShowLnaddrModal(message);
     });
 
     /**
-     * Fenster im Muster des Paket-Infofensters — dieselben Klassen, damit
-     * kein zweites Modal-Design entsteht.
+     * Modal styled like the package info modal — reuses the same classes so
+     * we don't end up with a second modal design.
      */
     function skpShowLnaddrModal(message) {
         var el = document.getElementById('skp-lnaddr-reject');
@@ -272,7 +272,7 @@ function skStoreToast(message, type) {
         if (el) el.classList.remove('is-visible');
     });
 
-    // Wurde beim Speichern abgewiesen? Dann gleich beim Laden erklaeren.
+    // Was it rejected on save? Then explain it right away on load.
     if (window.skpLnaddrRejected) {
         skpShowLnaddrModal(window.skpLnaddrRejected);
     }

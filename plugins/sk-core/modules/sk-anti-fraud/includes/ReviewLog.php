@@ -101,7 +101,7 @@ final class ReviewLog {
     }
 
     /**
-     * Ein einzelner Eintrag, fuer Aktionen die von der Liste ausgehen.
+     * A single entry, for actions triggered from the list.
      */
     public static function get( int $id ) {
         global $wpdb;

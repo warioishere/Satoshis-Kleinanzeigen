@@ -9,8 +9,8 @@ defined( 'ABSPATH' ) || exit;
  *
  * NIP-99 spec: https://github.com/nostr-protocol/nips/blob/master/99.md
  *
- * Frueher NIP-15 (Kind 30018). Das ist in der NIP-Liste durchgestrichen und
- * als "unrecommended: too complicated, try 99 instead" gekennzeichnet.
+ * Previously NIP-15 (Kind 30018). That's struck through in the NIP list and
+ * marked "unrecommended: too complicated, try 99 instead".
  */
 class ProductPublisher {
 
@@ -32,16 +32,16 @@ class ProductPublisher {
         $vendor_id = (int) get_post_field( 'post_author', $post_id );
 
         /*
-         * Nur mit dem Schluessel des Anbieters, nie mit dem des Marktplatzes.
+         * Only with the vendor's own key, never with the marketplace's.
          *
-         * Der Marktplatz-Schluessel ist der SK-Account auf Nostr — derselbe,
-         * mit dem der Auto Poster in den SK-Feed schreibt. Inserate darunter
-         * zu veroeffentlichen hiess: sie stehen unter unserem Namen, Kaeufer
-         * antworten an uns statt an den Anbieter, und die Zuordnung muss aus
-         * dem Text geraten werden.
+         * The marketplace key is the SK account on Nostr — the same one the
+         * Auto Poster uses to write to the SK feed. Publishing listings under
+         * it meant: they appeared under our name, buyers replied to us
+         * instead of the vendor, and the routing had to be guessed from the
+         * text.
          *
-         * Wer keinen Schluessel hat, bekommt beim Anhaken der Option die Wahl
-         * angeboten. Bis dahin geht das Inserat nicht raus.
+         * Anyone without a key is offered the choice when checking the
+         * option. Until then, the listing doesn't go out.
          */
         if ( ! class_exists( 'SK\Modules\Auth\NostrIdentity' ) || ! \SK\Modules\Auth\NostrIdentity::has_identity( $vendor_id ) ) {
             return null;
@@ -60,11 +60,11 @@ class ProductPublisher {
     /**
      * Build the event data for a product.
      *
-     * Einzige Stelle, an der ein Ereignis entsteht — publish() und der
-     * selbstsignierende Weg (NIP-07) nutzen beide diese. Vorher gab es zwei
-     * Kopien, die bereits auseinandergelaufen waren: nur eine schrieb die
-     * Bildmasse mit, dasselbe Inserat ergab also je nach Signierer ein
-     * anderes Ereignis.
+     * The single place where an event is built — publish() and the
+     * self-signing path (NIP-07) both use this. There used to be two copies
+     * that had already drifted apart: only one wrote the image dimensions,
+     * so the same listing produced a different event depending on who
+     * signed it.
      *
      * @param int $post_id Product ID.
      * @return array|null  { content: string, tags: array } or null.
@@ -98,7 +98,7 @@ class ProductPublisher {
             $location = $store_info['find_address'];
         }
 
-        // Die Zusammenfassung ist laut NIP-99 eine kurze Zeile, kein Absatz.
+        // Per NIP-99, the summary is a short line, not a paragraph.
         $summary = mb_substr( self::one_line( $product->get_short_description() ?: $description ), 0, 200 );
 
         $content = $description;
@@ -121,11 +121,11 @@ class ProductPublisher {
             $tags[] = [ 'location', $location ];
         }
 
-        // Ohne Bestandsfuehrung meldet WooCommerce null — das ist kein Ausverkauf.
+        // WooCommerce reports null when stock tracking is off — that's not a sellout.
         $stock  = $product->get_stock_quantity();
         $tags[] = [ 'status', ( $stock !== null && $stock <= 0 ) ? 'sold' : 'active' ];
 
-        // Images: featured (with dimensions, wie NIP-99 sie vorsieht) + gallery.
+        // Images: featured (with dimensions, as NIP-99 specifies) + gallery.
         $thumb_id = get_post_thumbnail_id( $post_id );
         if ( $thumb_id ) {
             $url = wp_get_attachment_url( $thumb_id );
@@ -169,16 +169,15 @@ class ProductPublisher {
     }
 
     /**
-     * Text fuers Ereignis aufbereiten.
+     * Prepare text for the event.
      *
-     * wp_strip_all_tags() allein genuegt nicht: es entfernt Markup, laesst
-     * aber HTML-Entitaeten stehen. In den Ereignissen stand deshalb woertlich
-     * "Truck &amp; Logistics", weil eine Notiz reiner Text ist und niemand
-     * das mehr aufloest. Geschuetzte Leerzeichen fallen aus demselben Grund
-     * auf normale zurueck.
+     * wp_strip_all_tags() alone isn't enough: it removes markup but leaves
+     * HTML entities in place. Events therefore literally contained
+     * "Truck &amp; Logistics", because an event is plain text and nobody
+     * resolves that anymore. Non-breaking spaces are collapsed to normal
+     * ones for the same reason.
      *
-     * Absaetze bleiben erhalten; nur Leerzeichen und Tabulatoren werden
-     * zusammengezogen.
+     * Paragraphs are preserved; only spaces and tabs are collapsed.
      */
     private static function clean_text( string $text ): string {
         $text = html_entity_decode( $text, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
@@ -191,7 +190,7 @@ class ProductPublisher {
     }
 
     /**
-     * Dasselbe, aber auf eine Zeile — fuer Titel und Zusammenfassung.
+     * The same, but on one line — for title and summary.
      */
     private static function one_line( string $text ): string {
         $text = self::clean_text( $text );
@@ -201,13 +200,13 @@ class ProductPublisher {
     }
 
     /**
-     * Die Preis-Markierung nach NIP-99: [ 'price', Betrag, Waehrung ].
+     * The price tag per NIP-99: [ 'price', amount, currency ].
      *
-     * Die eingestellte Waehrung aendert nur das Etikett, nicht den Betrag —
-     * wer "BTC" waehlte, bot damit 25000 Sats als 25000 BTC an. Zwischen Sats
-     * und BTC laesst sich ohne Kurs rechnen, deshalb wird hier umgerechnet.
-     * Fuer alles andere gilt die Waehrung des Shops: ein falsches Etikett ist
-     * schlimmer als ein unpassendes.
+     * The configured currency only changes the label, not the amount —
+     * anyone who picked "BTC" would thereby offer 25000 sats as 25000 BTC.
+     * Sats and BTC can be converted without a rate, so it's converted here.
+     * For everything else, the shop's currency applies: a wrong label is
+     * worse than a mismatched one.
      *
      * @param \WC_Product $product
      * @return array
@@ -230,12 +229,12 @@ class ProductPublisher {
             return [ 'price', 'sat' === $shop ? (string) (int) round( $betrag ) : self::btc_string( $betrag ), $gewollt ];
         }
 
-        // Keine Umrechnung moeglich: so auszeichnen, wie der Shop rechnet.
+        // No conversion possible: label it however the shop calculates.
         return [ 'price', (string) $betrag, $shop ];
     }
 
     /**
-     * BTC ohne Exponentialschreibweise und ohne ueberfluessige Nullen.
+     * BTC without exponential notation and without trailing zeros.
      */
     private static function btc_string( float $betrag ): string {
         $s = number_format( $betrag, 8, '.', '' );

@@ -5,20 +5,20 @@ namespace SK\Modules\Sponsors;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Einmaliger Import der Bestandssponsoren.
+ * One-time import of existing sponsors.
  *
- * Bis August 2026 lagen Sponsoren als Blog-Beiträge; die Ziel-URL kam vom
- * Plugin wp-post-image-carousel (_wppic_image_link), die Reihenfolge von
- * wp-post-rank (_post_rank). Der Import übernimmt Titel, Text, Logo, Ziel
- * und Reihenfolge, damit niemand die Einträge abtippen muss.
+ * Until August 2026, sponsors were blog posts; the target URL came from the
+ * wp-post-image-carousel plugin (_wppic_image_link), the order from
+ * wp-post-rank (_post_rank). The import carries over title, text, logo,
+ * target, and order, so nobody has to retype the entries.
  *
- * Ausgewählt wird über die Ziel-URL, nicht über die Kategorie "sponsoren":
- * Die früheren Kadence-Blöcke haben gar nicht nach Kategorie gefiltert,
- * weshalb mindestens ein Sponsor ("Clavastack") unter "Allgemein" liegt und
- * trotzdem auf der Startseite steht. Wer nach Kategorie auswählt, verliert ihn.
+ * Selection happens via the target URL, not via the "sponsoren" category:
+ * the earlier Kadence blocks didn't filter by category at all, which is why
+ * at least one sponsor ("Clavastack") sits under "Allgemein" and still shows
+ * on the homepage. Selecting by category would lose it.
  *
- * Die Quellbeiträge bleiben unangetastet — der Import ist wiederholbar und
- * legt nichts doppelt an (_sk_sponsor_legacy_post_id).
+ * The source posts stay untouched — the import is repeatable and never
+ * creates duplicates (_sk_sponsor_legacy_post_id).
  */
 final class Migration {
 
@@ -26,7 +26,7 @@ final class Migration {
     const LEGACY_URL_META  = '_wppic_image_link';
     const LEGACY_RANK_META = '_post_rank';
 
-    /** Bisher zeigte die Startseite die besten drei als "Top Sponsors". */
+    /** Previously the homepage showed the top three as "Top Sponsors". */
     const TOP_COUNT = 3;
 
     /**
@@ -41,8 +41,8 @@ final class Migration {
             return $result;
         }
 
-        // Reihenfolge einmal vorab bestimmen, damit die Top-Stufe genau die
-        // drei Einträge trifft, die auch bisher oben standen.
+        // Determine the order once upfront, so the top tier picks exactly
+        // the three entries that were previously shown at the top.
         $ranked = [];
         foreach ( $legacy as $post ) {
             $ranked[ $post->ID ] = (int) get_post_meta( $post->ID, self::LEGACY_RANK_META, true );
@@ -58,7 +58,7 @@ final class Migration {
 
             $url = (string) get_post_meta( $post->ID, self::LEGACY_URL_META, true );
             if ( $url === '' ) {
-                // Ohne Ziel gibt es nichts zu verlinken und nichts zu zählen.
+                // Without a target there's nothing to link and nothing to count.
                 $result['missing_url']++;
                 continue;
             }
@@ -79,9 +79,9 @@ final class Migration {
             }
 
             update_post_meta( $new_id, PostType::META_URL, esc_url_raw( $url ) );
-            // Die alte Rangzahl wird zum Tiebreaker, nicht zum Preis: Solange
-            // niemand zahlt, sind alle Monatsraten 0 und die Startseite behaelt
-            // exakt ihre bisherige Reihenfolge.
+            // The old rank number becomes the tiebreaker, not the price: as
+            // long as nobody pays, all monthly rates are 0 and the homepage
+            // keeps exactly its previous order.
             update_post_meta( $new_id, PostType::META_SORT_HINT, (int) $ranked[ $post->ID ] );
             update_post_meta( $new_id, PostType::META_MONTHLY, 0 );
             update_post_meta( $new_id, PostType::META_BALANCE, 0 );
@@ -106,7 +106,7 @@ final class Migration {
     }
 
     /**
-     * Alle Altbeiträge, die als Sponsorenkachel gerendert wurden.
+     * All legacy posts that were rendered as a sponsor tile.
      *
      * @return \WP_Post[]
      */

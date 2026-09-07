@@ -5,11 +5,11 @@ namespace SK\Modules\ShopImport;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Wer darf einen Shop-Katalog hochladen.
+ * Who is allowed to upload a shop catalog.
  *
- * Bewusst eine Freigabe je Verkäufer statt einer offenen Funktion für alle
- * 480 Konten: Ein Katalogimport erzeugt hunderte Inserate, und wer das darf,
- * soll eine bewusste Entscheidung sein.
+ * Deliberately an opt-in per vendor rather than an open feature for all
+ * 480 accounts: a catalog import creates hundreds of listings, and who's
+ * allowed to do that should be a deliberate decision.
  */
 final class Dealer {
 
@@ -17,14 +17,14 @@ final class Dealer {
     const META_LAST_RUN = '_sk_dealer_last_import';
 
     /**
-     * Vom Betreiber geprueft.
+     * Reviewed by the operator.
      *
-     * Bewusst getrennt von der Importfreigabe: "darf einen Katalog hochladen"
-     * und "ist geprueft" sind zwei Aussagen. Die zweite ist die, an der spaeter
-     * der Sofortkauf ueber sk_payments haengen soll — dort zahlt der Kaeufer
-     * direkt in die Wallet des Verkaeufers, ohne Treuhand, weshalb ungepruefte
-     * Verkaeufer dort nichts verloren haben. Ein gemeinsames Flag muesste man
-     * dafuer spaeter wieder auseinandernehmen.
+     * Deliberately kept separate from the import opt-in: "may upload a
+     * catalog" and "is reviewed" are two different statements. The second
+     * one is what instant checkout via sk_payments is meant to hang off
+     * later — there, the buyer pays directly into the vendor's wallet
+     * without escrow, which is why unreviewed vendors have no business
+     * there. A combined flag would have to be split apart again later.
      */
     const META_VERIFIED    = '_sk_vendor_verified';
     const META_VERIFIED_AT = '_sk_vendor_verified_at';
@@ -39,13 +39,14 @@ final class Dealer {
     }
 
     /**
-     * Nach einer bestaetigten Adresse den Importhaken setzen.
+     * Set the import flag after a confirmed URL.
      *
-     * Die Freigabe folgte bisher allein aus may_import(); im Admin stand die
-     * Box dann leer, obwohl der Haendler importieren darf. Der Haken wird
-     * gesetzt, nie automatisch entfernt — eine abgelaufene Bestaetigung soll
-     * keine Freigabe zuruecknehmen, die der Betreiber vielleicht selbst
-     * gegeben hat. Wegnehmen bleibt seine Entscheidung.
+     * Previously, the opt-in followed only from may_import(); the checkbox
+     * in the admin then stayed unchecked even though the dealer was
+     * allowed to import. The flag gets set, but never removed
+     * automatically — an expired confirmation shouldn't revoke an opt-in
+     * the operator may have granted themselves. Taking it away remains
+     * their decision.
      */
     public static function enable_on_verification( int $user_id ): void {
         if ( $user_id > 0 && ! self::is_enabled( $user_id ) ) {
@@ -67,18 +68,18 @@ final class Dealer {
     }
 
     /**
-     * Darf dieser Verkaeufer einen Katalog hochladen?
+     * Is this vendor allowed to upload a catalog?
      *
-     * Zwei Wege dorthin. Der eine geht ohne Zutun des Betreibers: wer eine
-     * Adresse per Ruecklink bestaetigt hat, darf importieren — was er
-     * einstellt, begrenzt ohnehin sein Paket. Der andere bleibt der bisherige
-     * Weg von Hand; er wird gebraucht, weil sich nicht jede Seite von diesem
-     * Server aus abrufen laesst (siehe VerifiedLinks).
+     * Two paths get you there. One works without the operator's
+     * involvement: whoever has confirmed a URL via back-link is allowed to
+     * import — what they list is limited by their pack anyway. The other
+     * remains the previous manual path; it's still needed because not
+     * every site can be fetched from this server (see VerifiedLinks).
      *
-     * Ausdruecklich NICHT dasselbe wie is_verified(): eine bestaetigte Domain
-     * beweist Kontrolle ueber eine Domain, nicht dass jemand ein redlicher
-     * Haendler ist. Am Haekchen "geprueft" haengt spaeter der Sofortkauf, bei
-     * dem Geld ohne Treuhand fliesst — das bleibt eine Entscheidung.
+     * Explicitly NOT the same as is_verified(): a confirmed domain proves
+     * control over a domain, not that someone is a trustworthy dealer. The
+     * "reviewed" checkbox is what instant checkout will hang off later,
+     * where money moves without escrow — that stays a deliberate decision.
      */
     public static function may_import( int $user_id ): bool {
         if ( \SK\Core\Verification\VerifiedLinks::is_verified( $user_id ) ) {
@@ -89,17 +90,17 @@ final class Dealer {
     }
 
     /**
-     * Alle freigeschalteten Händler.
+     * All enabled dealers.
      *
      * @return \WP_User[]
      */
     /**
-     * Alle Händler — freigeschaltete und selbst bestätigte.
+     * All dealers — enabled ones and self-confirmed ones.
      *
-     * Wer seine Domain bestätigt hat, darf importieren, ohne dass der
-     * Betreiber ein Häkchen setzt. Stünde er nicht in dieser Liste, sähe es
-     * im Admin aus, als sei nichts geschehen — und niemand käme darauf, ihn
-     * auch noch zu prüfen.
+     * Anyone who has confirmed their domain may import without the
+     * operator checking a box. If they weren't in this list, the admin
+     * would look as if nothing had happened — and no one would think to
+     * review them either.
      *
      * @return \WP_User[]
      */

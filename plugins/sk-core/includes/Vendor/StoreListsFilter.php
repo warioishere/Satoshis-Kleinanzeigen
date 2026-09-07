@@ -288,13 +288,13 @@ class StoreListsFilter {
         }
 
         /*
-         * Nur Verifizierte zeigen.
+         * Only show verified ones.
          *
-         * Ein INNER JOIN statt LEFT JOIN: der Eintrag ist damit Bedingung,
-         * nicht bloss Sortierhilfe. Verbunden wird ueber das flache
-         * Ablaufdatum, nicht ueber die serialisierte Liste der Adressen — die
-         * laesst sich in SQL nicht auswerten. Der Vergleich mit der aktuellen
-         * Zeit sortiert abgelaufene Bestaetigungen gleich mit aus.
+         * An INNER JOIN instead of a LEFT JOIN: the entry becomes a condition
+         * this way, not just a sorting aid. The join uses the flat expiry
+         * date, not the serialized list of URLs — that can't be evaluated in
+         * SQL. Comparing against the current time filters out expired
+         * confirmations along the way.
          */
         if ( 'verified' === $this->orderby ) {
             $this->query->query_from .= $wpdb->prepare(
@@ -370,7 +370,7 @@ class StoreListsFilter {
             return;
         }
 
-        // Gefiltert wird schon im JOIN; hier bleibt die uebliche Reihenfolge.
+        // Filtering already happens in the JOIN; the usual order stays here.
         if ( 'verified' === $this->orderby ) {
             $this->query->query_orderby = 'ORDER BY ID DESC';
             return;

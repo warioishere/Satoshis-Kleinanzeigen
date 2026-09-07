@@ -16,18 +16,18 @@ use SK\Core\Dashboard\DashboardModule;
  */
 class VendorChat extends DashboardModule {
 
-	/** Zeichen je Nachricht. Ein Inseratstext ist kuerzer. */
+	/** Characters per message. A listing text is shorter. */
 	const MAX_MESSAGE_LENGTH = 5000;
 
-	/** Neue Unterhaltungen je Nutzer und Zeitfenster. */
+	/** New conversations per user and time window. */
 	const RATE_START_MAX    = 5;
 	const RATE_START_WINDOW = 600;
 
-	/** Nachrichten je Nutzer und Minute. */
+	/** Messages per user and minute. */
 	const RATE_SEND_MAX    = 20;
 	const RATE_SEND_WINDOW = 60;
 
-	/** User-Meta: wen dieser Nutzer blockiert hat. */
+	/** User meta: who this user has blocked. */
 	const BLOCKED_META = '_dvc_blocked_users';
 
 	public function config(): ?array {
@@ -294,9 +294,9 @@ class VendorChat extends DashboardModule {
 			'product_title' => get_the_title( $product_id ),
 			'product_url'   => get_permalink( $product_id ),
 			'is_archived'   => in_array( $user_id, (array) $archived_by ),
-			// Wer selbst blockiert hat, kann es zuruecknehmen. Wer blockiert
-			// wurde, sieht nur das geschlossene Eingabefeld — sonst waere die
-			// Sperre eine Mitteilung an den Blockierten.
+			// Whoever did the blocking can undo it. Whoever was blocked only
+			// sees the closed input field — otherwise the block itself
+			// would notify the blocked user.
 			'blocked_by_me' => $other_id && self::has_blocked( (int) $user_id, $other_id ),
 			'is_blocked'    => $other_id && self::is_blocked_between( (int) $user_id, $other_id ),
 			'messages'      => $messages,
@@ -363,12 +363,12 @@ class VendorChat extends DashboardModule {
 	// =========================================================================
 
 	/**
-	 * Skript nur auf den Seiten, auf denen der Chat vorkommt.
+	 * Only load the script on pages where chat actually appears.
 	 *
-	 * Es lag bisher auf jeder Seite des Auftritts, obwohl das Fenster nur auf
-	 * Inserats-, Shop- und Anbieterseiten gerendert wird — und die
-	 * Chatuebersicht im Dashboard braucht es ebenfalls, dort haengen
-	 * Absendeformular und Auffrischung daran.
+	 * It used to load on every page of the site, even though the window
+	 * only renders on listing, shop, and vendor pages — and the chat
+	 * overview in the dashboard needs it too, since the send form and
+	 * refresh logic depend on it.
 	 */
 	private function needs_assets(): bool {
 		if ( function_exists( 'sk_is_seller_dashboard' ) && sk_is_seller_dashboard() ) {
@@ -497,9 +497,9 @@ class VendorChat extends DashboardModule {
 	 * @return array
 	 */
 	public function add_chat_icon( $icons, $vendor_id, $product_id = 0, $context = '' ) {
-		// Systemprodukte ohne Autor (z. B. das Sponsoren-Guthaben) haben
-		// keinen Anbieter — ein Chatknopf dorthin liefe in "Ungueltige
-		// Anfrage", jetzt wo der Chat der Weg zum Anbieter ist.
+		// System products without an author (e.g. the sponsor credit) have
+		// no vendor — a chat button pointing there would run into "Invalid
+		// request" now that chat is the way to reach the vendor.
 		if ( (int) $vendor_id <= 0 || (int) $product_id <= 0 ) {
 			return $icons;
 		}
@@ -554,13 +554,12 @@ class VendorChat extends DashboardModule {
 		}
 
 		/*
-		 * Anbieter und Inserat muessen zusammengehoeren.
+		 * The vendor and the listing must actually belong together.
 		 *
-		 * Ohne diese Pruefung nahm der Endpunkt jede Kombination an: ein Chat
-		 * mit einem beliebigen Nutzer ohne dessen Inserat, mit sich selbst,
-		 * mit einer nicht vergebenen ID — und als "Produkt" jeder Beitrag,
-		 * dessen Titel dann im Chattitel stand, Entwuerfe fremder Anbieter
-		 * eingeschlossen.
+		 * Without this check, the endpoint accepted any combination: a chat
+		 * with an arbitrary user without their listing, with oneself, with
+		 * an unassigned ID — and as "product" any post at all, whose title
+		 * then ended up in the chat title, including other vendors' drafts.
 		 */
 		$product = wc_get_product( $product_id );
 
@@ -596,9 +595,9 @@ class VendorChat extends DashboardModule {
 
 		$existing_chat = $this->get_chat_between_users( $current_user_id, $vendor_id, $product_id );
 
-		// Erst zaehlen, wenn feststeht, dass die Anfrage gueltig ist — sonst
-		// verbraucht eine abgewiesene Anfrage das Kontingent des Absenders.
-		// Eine Antwort in eine laufende Unterhaltung ist keine neue Anfrage.
+		// Only count once the request is confirmed valid — otherwise a
+		// rejected request would eat into the sender's quota. A reply to an
+		// ongoing conversation is not a new request.
 		if ( ! $existing_chat && ! self::rate_allows( 'start', $current_user_id, self::RATE_START_MAX, self::RATE_START_WINDOW ) ) {
 			wp_send_json_error( [ 'message' => __( 'Du hast gerade viele Anbieter angeschrieben. Bitte warte einen Moment.', 'sk-core' ) ] );
 		}
@@ -630,11 +629,11 @@ class VendorChat extends DashboardModule {
 			$this->add_message_to_chat( $chat_id, $current_user_id, $message );
 
 			/*
-			 * Erst hier zaehlt die Kontaktaufnahme, nicht beim Oeffnen des
-			 * Fensters: ein geoeffnetes Modal ist keine Kontaktaufnahme, und
-			 * bei Ausgeloggten war es bisher sogar nur der Anmeldehinweis.
-			 * Nur beim ersten Mal — eine weitere Nachricht in dieselbe
-			 * Unterhaltung ist kein neuer Kontakt.
+			 * The contact only counts here, not when the window is opened:
+			 * an opened modal is not a contact, and for logged-out users it
+			 * used to just be the login prompt anyway. Only the first
+			 * time — another message in the same conversation is not a new
+			 * contact.
 			 */
 			if ( class_exists( '\SK\Modules\ContactClicks\Tracker' ) ) {
 				\SK\Modules\ContactClicks\Tracker::record( $product_id, $vendor_id, 'chat', 'single' );
@@ -828,8 +827,8 @@ class VendorChat extends DashboardModule {
 	/**
 	 * AJAX: block the other participant of a chat.
 	 *
-	 * Ueber die Chat-ID statt ueber eine Nutzer-ID: so kann nur blockiert
-	 * werden, mit wem man tatsaechlich eine Unterhaltung hat.
+	 * Via the chat ID rather than a user ID: this way only someone you
+	 * actually have a conversation with can be blocked.
 	 */
 	public function ajax_block_user() {
 		check_ajax_referer( 'dvc_ajax_nonce', 'nonce' );
@@ -885,11 +884,11 @@ class VendorChat extends DashboardModule {
 	}
 
 	// =========================================================================
-	// Blockieren
+	// Blocking
 	// =========================================================================
 
 	/**
-	 * Wen dieser Nutzer blockiert hat.
+	 * Who this user has blocked.
 	 *
 	 * @return int[]
 	 */
@@ -903,17 +902,17 @@ class VendorChat extends DashboardModule {
 		return array_values( array_unique( array_filter( array_map( 'intval', $blocked ) ) ) );
 	}
 
-	/** Hat $user_id den anderen blockiert? */
+	/** Has $user_id blocked the other one? */
 	public static function has_blocked( int $user_id, int $other_id ): bool {
 		return in_array( $other_id, self::blocked_users( $user_id ), true );
 	}
 
 	/**
-	 * Steht zwischen den beiden eine Blockierung — in welcher Richtung auch immer?
+	 * Is there a block between the two — in either direction?
 	 *
-	 * Beide Richtungen, weil eine einseitige Sperre eine schiefe Lage ergibt:
-	 * wer blockiert, will die Unterhaltung beendet haben, nicht bloss selbst
-	 * das letzte Wort behalten.
+	 * Both directions, because a one-sided block creates a lopsided
+	 * situation: whoever blocks wants the conversation ended, not just to
+	 * keep the last word for themselves.
 	 */
 	public static function is_blocked_between( int $a, int $b ): bool {
 		return self::has_blocked( $a, $b ) || self::has_blocked( $b, $a );
@@ -937,14 +936,14 @@ class VendorChat extends DashboardModule {
 	}
 
 	// =========================================================================
-	// Mengen- und Laengengrenzen
+	// Rate and length limits
 	// =========================================================================
 
 	/**
-	 * Darf dieser Nutzer noch schreiben?
+	 * Is this user still allowed to send messages?
 	 *
-	 * Je Nutzer, nicht je IP: angemeldet ist die Kennung ohnehin bekannt, und
-	 * ein Wechsel der Leitung hilft dann nicht weiter.
+	 * Per user, not per IP: when logged in, the identity is known anyway,
+	 * and switching networks wouldn't help get around it.
 	 */
 	private static function rate_allows( string $what, int $user_id, int $max, int $window ): bool {
 		if ( ! function_exists( 'sk_rate_limit' ) ) {
@@ -960,7 +959,7 @@ class VendorChat extends DashboardModule {
 
 	private static function too_long_notice(): string {
 		return sprintf(
-			/* translators: %s: Hoechstzahl der Zeichen. */
+			/* translators: %s: maximum number of characters. */
 			__( 'Deine Nachricht ist zu lang (höchstens %s Zeichen).', 'sk-core' ),
 			number_format_i18n( self::MAX_MESSAGE_LENGTH )
 		);

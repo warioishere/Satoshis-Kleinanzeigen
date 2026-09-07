@@ -2,10 +2,10 @@
 /**
  * SK Settings Header Template
  *
- * Kopf wie auf den uebrigen Dashboardseiten (Merkliste, Gesuche):
- * sk-review-page-header mit h2 und Symbol. Vorher stand hier ein
- * h1.entry-title in einem sk-dashboard-header, der eine Trennlinie mitbrachte
- * und groesser war als alles Vergleichbare.
+ * Header like on the other dashboard pages (watchlist, requests):
+ * sk-review-page-header with an h2 and icon. This used to be an
+ * h1.entry-title inside an sk-dashboard-header, which brought a divider
+ * along and was bigger than anything comparable.
  */
 ?>
 <div class="sk-review-page-header">

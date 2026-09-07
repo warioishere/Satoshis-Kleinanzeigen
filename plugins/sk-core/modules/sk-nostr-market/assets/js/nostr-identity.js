@@ -1,10 +1,10 @@
 /**
- * SK Nostr Market — Identitaet im Inseratsformular.
+ * SK Nostr Market — identity in the listing form.
  *
- * Blendet die Auswahl ein, sobald jemand ohne eigenen Schluessel die
- * Nostr-Option anhakt, und legt auf Wunsch eine Identitaet an. Der erzeugte
- * Schluessel wird sofort gezeigt: ohne ihn kann der Anbieter seine Identitaet
- * nirgendwo sonst benutzen.
+ * Shows the selection as soon as someone without their own key checks the
+ * Nostr option, and creates an identity on request. The generated key is
+ * shown immediately: without it, the vendor has no other way to use their
+ * identity.
  */
 (function ($) {
     'use strict';
@@ -39,8 +39,8 @@
                 return;
             }
 
-            // Den Schluessel getrennt holen, damit er nicht in der Antwort des
-            // Erstellens haengt und nirgends im Seitenquelltext landet.
+            // Fetch the key separately so it never sits in the create
+            // response and never ends up in the page source.
             $.post(CFG.ajaxurl, {
                 action: 'sk_get_nostr_nsec',
                 nonce: CFG.nonce

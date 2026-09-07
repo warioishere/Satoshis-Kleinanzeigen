@@ -31,7 +31,7 @@ class VendorsPage extends AbstractPage {
 
         $search = isset( $_GET['s'] ) ? sanitize_text_field( $_GET['s'] ) : '';
         if ( ! empty( $search ) ) {
-            // Suche über User-Felder + sk_store_name Meta zusammenführen.
+            // Merge search across user fields + sk_store_name meta.
             $by_user_fields = new \WP_User_Query( [
                 'role'           => 'seller',
                 'search'         => '*' . $search . '*',
@@ -56,7 +56,7 @@ class VendorsPage extends AbstractPage {
                 (array) $by_store_name->get_results()
             ) );
 
-            // `include` leer == alle — daher Placeholder 0 wenn Suche nichts findet.
+            // Empty `include` == all — hence a placeholder 0 when the search finds nothing.
             $args['include'] = empty( $ids ) ? [ 0 ] : $ids;
         }
 

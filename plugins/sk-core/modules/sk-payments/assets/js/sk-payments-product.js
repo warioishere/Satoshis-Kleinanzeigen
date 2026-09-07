@@ -9,7 +9,7 @@
     var SKP = window.skPayments || {};
     var pendingData = null;
 
-    /* ─── Sofortkauf Button ─── */
+    /* ─── Instant buy button ─── */
 
     $(document).on('click', '.skp-buy-btn', function (e) {
         e.preventDefault();
@@ -27,8 +27,8 @@
             has_variants: $btn.data('has-variants') === 1 || $btn.data('has-variants') === '1'
         };
 
-        // Gibt es Ausfuehrungen, wird zuerst gewaehlt — welche es ist,
-        // entscheidet den Preis.
+        // If variants exist, one is chosen first — which one decides the
+        // price.
         if (pendingData.has_variants) {
             $('#skp-variant-modal').css('display', 'flex');
             return;
@@ -37,7 +37,7 @@
         askNote();
     });
 
-    /* ─── Ausfuehrungen ─── */
+    /* ─── Variants ─── */
 
     function proceed() {
         if (!pendingData) return;
@@ -71,7 +71,7 @@
         pendingData = null;
     });
 
-    /* ─── Lieferangabe ─── */
+    /* ─── Delivery note ─── */
 
     function askNote() {
         if (!pendingData) return;
@@ -117,9 +117,9 @@
     /* ─── Lightning Flow ─── */
 
     /*
-     * Die Invoice entsteht sofort in der Wallet des Anbieters, der QR-Code
-     * steht im Modal. Der Chat bekommt dieselbe Karte plus die Lieferangabe,
-     * damit die Zahlung auffindbar bleibt und man sich schreiben kann.
+     * The invoice is created immediately in the vendor's wallet, the QR code
+     * sits in the modal. The chat gets the same card plus the delivery note,
+     * so the payment stays findable and the two can message each other.
      */
     function startLightning() {
         if (!pendingData) return;
@@ -129,7 +129,7 @@
         $.post(SKP.ajaxurl, {
             action: 'skp_create_lightning_payment',
             nonce: SKP.nonce,
-            // Anbieter, Titel und Betrag kommen serverseitig aus dem Inserat.
+            // Vendor, title and price are resolved server-side from the product.
             product_id: pendingData.product_id,
             variant: pendingData.variant,
             note: pendingData.note
@@ -179,7 +179,7 @@
         $('#skp-lightning-content').html(html);
         $('#skp-lightning-modal').css('display', 'flex');
 
-        // Ohne Pruefmoeglichkeit waere jede Abfrage vergeblich.
+        // Without a way to verify, any polling would be pointless.
         if (data.has_verify !== false) {
             startLightningPolling(data.payment_hash);
         }
@@ -285,8 +285,8 @@
         // QR Code — rendered server-side by QrImage, never by a third party.
         if (/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(String(data.qr || ''))) {
             html += '<div style="text-align:center;margin-bottom:12px;">';
-            // display:block + auto margins: das Theme setzt img auf block, damit
-            // laeuft text-align am Elternteil ins Leere und der Code klebt links.
+            // display:block + auto margins: the theme sets img to block, so
+            // text-align on the parent has no effect and the code would stick to the left.
             html += '<img src="' + escAttr(data.qr) + '" alt="QR" style="display:block;margin:0 auto;max-width:180px;width:100%;border-radius:8px;background:#fff;padding:6px;" />';
             html += '</div>';
         }

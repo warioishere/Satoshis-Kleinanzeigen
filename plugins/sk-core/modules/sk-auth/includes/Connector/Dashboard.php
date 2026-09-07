@@ -160,9 +160,9 @@ class SK_Auth_Dashboard extends \SK\Core\Dashboard\DashboardModule {
                                             <div class="uac-status-message" id="uac-nostr-status"></div>
 
                                             <?php
-                                            // Ohne diesen Weg gaebe es im Frontend keinen: der Hinweisbanner
-                                            // auf dem Dashboard war die einzige Stelle, die eine Identitaet
-                                            // anlegen konnte, und er laesst sich dauerhaft wegklicken.
+                                            // Without this path there would be none on the frontend: the
+                                            // notice banner on the dashboard was the only place that could
+                                            // create an identity, and it can be dismissed permanently.
                                             \SK\Core\Dashboard\Modules\UserOnboarding::enqueue_nostr_script();
                                             ?>
                                             <p class="uac-method-description" style="margin-top:16px;">

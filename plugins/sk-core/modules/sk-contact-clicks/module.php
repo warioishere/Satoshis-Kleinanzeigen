@@ -5,17 +5,19 @@ namespace SK\Modules\ContactClicks;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * SK Contact Clicks — misst, ob ein Inserat zu einem Kontakt führt.
+ * SK Contact Clicks — measures whether a listing leads to a contact.
  *
- * Bis August 2026 war bekannt, wie oft ein Inserat aufgerufen wird (im Schnitt
- * 21 mal), aber nicht, ob daraus je eine Kontaktaufnahme wurde. Ohne diese Zahl
- * lässt sich weder ein Boost verkaufen ("kauf Sichtbarkeit" — wie viel?) noch
- * ein Sponsorenpreis begründen, und jede Kommissionsdiskussion steht auf Sand.
+ * Until August 2026 it was known how often a listing gets viewed (21 times
+ * on average), but not whether a contact ever resulted from that. Without
+ * this number, neither a boost can be sold ("buy visibility" — how much?)
+ * nor a sponsor price justified, and every commission discussion rests on
+ * sand.
  *
- * Gemessen wird bewusst im Browser statt über eine Weiterleitung: Die
- * Kontaktziele sind teils tel: und mailto:, die sich nicht sauber umleiten
- * lassen. Die Links bleiben deshalb unverändert; ein Beacon meldet den Klick
- * nebenher. Geht das Melden schief, klickt der Besucher trotzdem normal weiter.
+ * Measurement is deliberately done in the browser instead of via a redirect:
+ * some contact targets are tel: and mailto:, which can't be redirected
+ * cleanly. The links therefore stay unchanged; a beacon reports the click
+ * on the side. If the reporting fails, the visitor still clicks through
+ * normally.
  */
 final class Module {
 

@@ -5,14 +5,14 @@ namespace SK\Modules\ShopImport;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Erzeugt Inserate aus CSV-Zeilen.
+ * Creates listings from CSV rows.
  */
 final class Importer {
 
-    /** Kennzeichnet ein importiertes Inserat. */
+    /** Marks an imported listing. */
     const META_IMPORTED = '_sk_imported';
 
-    /** Schluessel zum Wiederfinden: Verkaeufer plus Artikelnummer. */
+    /** Key for looking items back up: vendor plus SKU. */
     const META_KEY = '_sk_import_key';
 
     const META_SOURCE   = '_sk_import_source';
@@ -20,29 +20,29 @@ final class Importer {
     const META_FIAT     = '_sk_fiat_price';
     const META_CURRENCY = '_sk_fiat_currency';
 
-    /** Kennzeichnet ein Haendlerinserat, zur spaeteren Trennung von Privat. */
+    /** Marks a dealer listing, for later separation from private listings. */
     const META_DEALER = '_sk_dealer_listing';
 
-    /** Ausfuehrungen eines Produkts, nur zur Anzeige. */
+    /** A product's variants, for display only. */
     const META_VARIANTS = '_sk_variants';
 
-    /** Preis ist ein "ab"-Preis, weil er aus Varianten stammt. */
+    /** Price is a "from" price because it's derived from variants. */
     const META_FROM = '_sk_price_from';
 
     /**
-     * Bilder je Produkt. Mehr als eine Handvoll sieht sich ohnehin niemand an,
-     * und jedes Bild ist eine Datei auf der Platte.
+     * Images per product. Nobody looks at more than a handful anyway, and
+     * every image is a file on disk.
      */
     const IMAGES_PER_PRODUCT = 5;
 
     /**
-     * Bilder je Durchlauf. Zweiter Deckel, damit ein Katalog mit 200 Artikeln
-     * nicht tausend Dateien nachlaedt.
+     * Images per run. A second cap, so that a 200-item catalog doesn't
+     * load a thousand files.
      */
     const DEFAULT_IMAGE_CAP = 60;
 
     /**
-     * @param array $items Von Catalog::build() aufbereitete Inserate
+     * @param array $items Listings prepared by Catalog::build()
      * @param array $args  vendor_id, currency, default_cat, category_map, image_cap, status
      *
      * @return array{created:int,updated:int,skipped:int,images:int,errors:array}
@@ -66,16 +66,16 @@ final class Importer {
 
         $geo = self::vendor_location( $vendor_id );
 
-        // Ohne passendes Paket kein Artikel mit Ausfuehrungen — sonst waere
-        // der Import ein Umweg um die Paketgrenze im Editor.
+        // No items with variants without a matching pack — otherwise the
+        // import would be a detour around the editor's pack limit.
         if ( ! Variants::is_allowed( $vendor_id ) ) {
             $before = count( $items );
             $items  = array_values( array_filter( $items, static fn( $item ) => empty( $item['variants'] ) ) );
             $result['skipped'] += $before - count( $items );
         }
 
-        // Auto-Poster pausieren, sonst geht der ganze Katalog als Einzelposts
-        // in Telegram, Nostr und den Community-Feed.
+        // Pause the auto poster, otherwise the whole catalog would go out
+        // as individual posts to Telegram, Nostr, and the community feed.
         Silence::start();
 
         foreach ( $items as $index => $item ) {
@@ -85,30 +85,30 @@ final class Importer {
                 continue;
             }
 
-            // Ohne Artikelnummer waere ein zweiter Import ein Duplikat; der
-            // Titel ist dann der stabilste Ersatz. Catalog vergibt denselben
-            // Schluessel, damit die Auswahl im Formular dazu passt.
+            // Without a SKU, a second import would create a duplicate; the
+            // title is then the most stable fallback. Catalog assigns the
+            // same key so the form's selection matches it.
             $sku = (string) ( $item['sku'] ?? '' );
             $key = $vendor_id . ':' . ( (string) ( $item['key'] ?? '' ) !== '' ? $item['key'] : ( $sku !== '' ? $sku : md5( $name ) ) );
 
             $existing = self::find_by_key( $key );
 
-            // Was im Shop privat steht, wird hier nicht oeffentlich.
+            // Whatever is private in the shop doesn't become public here.
             $row_status = ! empty( $item['draft'] ) ? 'draft' : $status;
 
             /*
-             * Ueber die WooCommerce-API anlegen, nicht per wp_insert_post.
-             * Ein reiner Beitrag vom Typ "product" bekommt weder den
-             * product_type-Term noch eine Zeile in wc_product_meta_lookup —
-             * er existiert dann in der Datenbank, taucht aber in keiner
-             * Produktliste auf.
+             * Create via the WooCommerce API, not via wp_insert_post. A
+             * plain post of type "product" gets neither the product_type
+             * term nor a row in wc_product_meta_lookup — it would then
+             * exist in the database but show up in no product list.
              */
             try {
                 /*
-                 * wp_slash vor dem Setzen: WooCommerce reicht die Werte an
-                 * wp_insert_post weiter, und das entfernt eine Ebene
-                 * Backslashes. Ohne Slash frisst es jeden Backslash im Text —
-                 * aus "\n" wird ein blosses "n" mitten im Absatz.
+                 * wp_slash before setting: WooCommerce passes the values on
+                 * to wp_insert_post, which strips one level of backslashes.
+                 * Without the slash it would eat every backslash in the
+                 * text — "\n" would become a bare "n" in the middle of a
+                 * paragraph.
                  */
                 $product = new \WC_Product_Simple( $existing ?: 0 );
                 $product->set_name( wp_slash( $name ) );
@@ -132,7 +132,7 @@ final class Importer {
                 continue;
             }
 
-            // Den Verkaeufer setzt die Produkt-API nicht.
+            // The product API doesn't set the vendor.
             if ( (int) get_post_field( 'post_author', $post_id ) !== $vendor_id ) {
                 wp_update_post( [ 'ID' => $post_id, 'post_author' => $vendor_id ] );
             }
@@ -170,16 +170,16 @@ final class Importer {
     }
 
     /**
-     * Ausfuehrungen ablegen.
+     * Store variants.
      *
-     * Heute nur Anzeige: Die Variantenauswahl steckt bei WooCommerce im
-     * Warenkorb-Formular, und das ist im Katalogmodus abgeschaltet.
+     * Display-only today: WooCommerce's variant selection lives in the
+     * cart form, and that's disabled in catalog mode.
      *
-     * Der Datensatz ist aber schon so geschnitten, dass sk_payments spaeter
-     * daran andocken kann, ohne dass etwas umgebaut werden muss: Jede
-     * Ausfuehrung traegt einen stabilen Schluessel (fuer die Auswahl beim
-     * Sofortkauf) und ihren eigenen Sats-Betrag (fuer die Rechnung). Ohne
-     * beides muesste man beim Aktivieren des Kaufs von vorn anfangen.
+     * The data is already shaped so that sk_payments can dock onto it
+     * later without needing a rebuild: every variant carries a stable key
+     * (for the selection at instant checkout) and its own Sats amount
+     * (for the invoice). Without both, enabling checkout would mean
+     * starting over.
      */
     private static function apply_variants( int $post_id, array $variants, string $currency, bool $from ): void {
         if ( empty( $variants ) ) {
@@ -206,8 +206,8 @@ final class Importer {
             $sku = trim( (string) ( $variant['sku'] ?? '' ) );
 
             $clean[] = [
-                // Artikelnummer wenn vorhanden, sonst aus dem Namen abgeleitet —
-                // in beiden Faellen ueber Importe hinweg stabil.
+                // SKU when present, otherwise derived from the name —
+                // either way, stable across imports.
                 'key'      => $sku !== '' ? $sku : substr( md5( $label ), 0, 12 ),
                 'name'     => $label,
                 'price'    => $fiat,
@@ -241,11 +241,11 @@ final class Importer {
     }
 
     /**
-     * Preis in Sats umrechnen, den Fiatbetrag aber behalten.
+     * Convert the price to Sats, but keep the fiat amount.
      *
-     * Nur den Sats-Preis zu speichern hiesse, dass er mit jedem Kurssprung
-     * falscher wird; mit dem Ausgangsbetrag laesst er sich jederzeit neu
-     * berechnen.
+     * Storing only the Sats price would mean it gets more wrong with
+     * every rate change; with the original amount it can always be
+     * recomputed.
      */
     private static function apply_price( int $post_id, string $raw, string $currency, array &$result ): void {
         $value = self::parse_price( $raw );
@@ -262,7 +262,7 @@ final class Importer {
             return;
         }
 
-        // Ueber die API, damit wc_product_meta_lookup mitgepflegt wird.
+        // Via the API, so that wc_product_meta_lookup gets updated too.
         $product = wc_get_product( $post_id );
         if ( $product ) {
             $product->set_regular_price( (string) $sats );
@@ -272,7 +272,7 @@ final class Importer {
     }
 
     /**
-     * "1.234,56" und "1,234.56" sollen beide funktionieren.
+     * Both "1.234,56" and "1,234.56" should work.
      */
     public static function parse_price( string $raw ): ?float {
         $raw = trim( preg_replace( '/[^\d.,\-]/', '', $raw ) ?? '' );
@@ -284,7 +284,7 @@ final class Importer {
         $last_dot   = strrpos( $raw, '.' );
 
         if ( $last_comma !== false && ( $last_dot === false || $last_comma > $last_dot ) ) {
-            // Deutsches Format: Punkt ist Tausendertrenner.
+            // German format: the dot is a thousands separator.
             $raw = str_replace( '.', '', $raw );
             $raw = str_replace( ',', '.', $raw );
         } else {
@@ -298,8 +298,8 @@ final class Importer {
         $ids = [];
 
         foreach ( array_filter( array_map( 'trim', explode( ',', $raw ) ) ) as $name ) {
-            // WooCommerce exportiert Unterkategorien als "Eltern > Kind".
-            // array_pop braucht eine Variable, kein Funktionsergebnis.
+            // WooCommerce exports subcategories as "Parent > Child".
+            // array_pop needs a variable, not a function result.
             $parts = explode( '>', $name );
             $leaf  = trim( (string) end( $parts ) );
             $key  = strtolower( $leaf );
@@ -327,7 +327,8 @@ final class Importer {
     }
 
     /**
-     * Bilder laden. Das erste wird Beitragsbild, weitere in die Galerie.
+     * Load images. The first one becomes the featured image, the rest go
+     * into the gallery.
      */
     private static function apply_images( int $post_id, string $raw, int $budget ): int {
         if ( $raw === '' || $budget <= 0 ) {
@@ -371,8 +372,8 @@ final class Importer {
     }
 
     /**
-     * Standort des Verkaeufers auf das Inserat uebernehmen — ohne Koordinaten
-     * taucht es in der Umkreissuche nicht auf.
+     * Copy the vendor's location onto the listing — without coordinates,
+     * it wouldn't show up in radius search.
      */
     private static function vendor_location( int $vendor_id ): array {
         return [

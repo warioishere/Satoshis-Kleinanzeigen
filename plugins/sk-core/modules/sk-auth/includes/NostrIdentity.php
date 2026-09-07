@@ -209,13 +209,13 @@ class NostrIdentity {
     }
 
     /**
-     * Profil veroeffentlichen, nachdem die Antwort beim Browser ist.
+     * Publish the profile after the response has reached the browser.
      *
-     * `register_shutdown_function()` allein genuegt unter PHP-FPM nicht: die
-     * Ausgabe geht erst raus, wenn das Skript samt Shutdown-Handlern fertig
-     * ist. Der Klick auf "Erstellen" haette also weiterhin ~85 s gewartet.
-     * `fastcgi_finish_request()` schliesst die Antwort vorher ab, der Versand
-     * an die Relays laeuft danach im selben Prozess weiter.
+     * `register_shutdown_function()` alone isn't enough under PHP-FPM: output
+     * only goes out once the script, shutdown handlers included, has
+     * finished. Clicking "Create" would still have waited ~85 s.
+     * `fastcgi_finish_request()` closes the response beforehand, and sending
+     * to the relays continues afterwards in the same process.
      */
     public static function publish_profile_deferred( int $user_id ): void {
         if ( function_exists( 'fastcgi_finish_request' ) ) {
