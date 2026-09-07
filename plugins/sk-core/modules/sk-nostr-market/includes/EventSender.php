@@ -179,24 +179,57 @@ class EventSender {
     }
 
     /**
-     * Get the Nostr private key (reuses Auto Poster's key).
+     * Get the Nostr private key (reuses Auto Poster's key), always as hex.
+     *
+     * Der Schluessel darf als nsec hinterlegt sein — auf Live ist er das.
+     * Sign::signEvent() wandelt das selbst um, Key::getPublicKey() nicht: dort
+     * warf ein nsec einen ValueError. Deshalb wird hier einmal zentral
+     * normalisiert, damit jeder Aufrufer Hex bekommt.
      */
     public static function get_privkey(): ?string {
         // Priority: wp-config constant → Auto Poster setting → filter.
-        if ( defined( 'NAP_NOSTR_PRIVKEY' ) && preg_match( '/^[0-9a-fA-F]{64}$/', NAP_NOSTR_PRIVKEY ) ) {
-            return NAP_NOSTR_PRIVKEY;
+        if ( defined( 'NAP_NOSTR_PRIVKEY' ) && NAP_NOSTR_PRIVKEY ) {
+            $key = self::to_hex( (string) NAP_NOSTR_PRIVKEY );
+
+            if ( null !== $key ) {
+                return $key;
+            }
         }
 
         if ( function_exists( 'nap_resolve_private_key' ) ) {
             $key = nap_resolve_private_key();
-            return $key ?: null;
+
+            if ( $key ) {
+                return self::to_hex( (string) $key );
+            }
         }
 
         // Fallback: read from Auto Poster options directly.
         $opts = get_option( 'nap_nostr_options', [] );
-        $key  = $opts['private_key'] ?? '';
+
+        return self::to_hex( (string) ( $opts['private_key'] ?? '' ) );
+    }
+
+    /**
+     * Einen Schluessel auf 64 Hex-Zeichen bringen, oder null.
+     */
+    private static function to_hex( string $key ): ?string {
+        $key = trim( $key );
+
         if ( preg_match( '/^[0-9a-fA-F]{64}$/', $key ) ) {
-            return $key;
+            return strtolower( $key );
+        }
+
+        if ( 0 === strpos( $key, 'nsec' ) && class_exists( '\swentel\nostr\Key\Key' ) ) {
+            try {
+                $hex = ( new \swentel\nostr\Key\Key() )->convertToHex( $key );
+
+                if ( preg_match( '/^[0-9a-fA-F]{64}$/', (string) $hex ) ) {
+                    return strtolower( (string) $hex );
+                }
+            } catch ( \Throwable $e ) {
+                error_log( '[SK Nostr Market] nsec liess sich nicht umwandeln: ' . $e->getMessage() );
+            }
         }
 
         return null;
@@ -211,10 +244,16 @@ class EventSender {
             return null;
         }
 
+        /*
+         * \Throwable, nicht \Exception: die Bibliothek wirft bei einem
+         * unbrauchbaren Schluessel einen ValueError, und der ist ein Error.
+         * Er lief deshalb bis in die Einstellungsseite durch und riss sie mit.
+         */
         try {
             $key = new \swentel\nostr\Key\Key();
             return $key->getPublicKey( $privkey );
-        } catch ( \Exception $e ) {
+        } catch ( \Throwable $e ) {
+            error_log( '[SK Nostr Market] Pubkey liess sich nicht ableiten: ' . $e->getMessage() );
             return null;
         }
     }
