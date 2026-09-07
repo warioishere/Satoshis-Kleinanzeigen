@@ -572,25 +572,177 @@ class ChatBridge {
         }
 
         return [
-            'name' => self::contact_name( $pubkey ),
+            'name' => self::contact_name( $pubkey, $chat_id ),
             'url'  => self::contact_url( $pubkey ),
         ];
     }
 
+    /** Chat meta: resolved name of the Nostr contact, and when it was looked up. */
+    const NAME_META      = '_dvc_nostr_name';
+    const NAME_TIME_META = '_dvc_nostr_name_time';
+
     /**
-     * How a Nostr sender is named in the chat: shortened npub.
+     * How a Nostr sender is named in the chat.
      *
-     * The npub is the only identity we can vouch for; a profile name from
-     * the relays could say anything, including "Satoshiskleinanzeigen".
+     * The resolved name (store name of an SK account, otherwise the profile
+     * name from the relays) followed by the shortened npub. The npub always
+     * stays visible: a profile name is self-declared and proves nothing.
+     *
+     * @param int $chat_id Chat whose stored name is used; 0 for npub only.
      */
-    public static function contact_name( string $pubkey ): string {
+    public static function contact_name( string $pubkey, int $chat_id = 0 ): string {
         $npub = self::npub( $pubkey );
 
         if ( '' === $npub ) {
             return 'Nostr';
         }
 
-        return substr( $npub, 0, 12 ) . '…' . substr( $npub, -4 );
+        $short = substr( $npub, 0, 12 ) . '…' . substr( $npub, -4 );
+        $name  = $chat_id ? (string) get_post_meta( $chat_id, self::NAME_META, true ) : '';
+
+        return '' === $name ? $short : $name . ' · ' . $short;
+    }
+
+    /**
+     * Look the contact's name up and store it on the chat, at most once a
+     * day. Runs when a message arrives, never while rendering: the lookup
+     * may go to the relays.
+     */
+    public static function refresh_contact_name( int $chat_id, string $pubkey ): void {
+        if ( (int) get_post_meta( $chat_id, self::NAME_TIME_META, true ) > time() - DAY_IN_SECONDS ) {
+            return;
+        }
+
+        update_post_meta( $chat_id, self::NAME_META, self::resolve_contact_name( $pubkey ) );
+        update_post_meta( $chat_id, self::NAME_TIME_META, time() );
+    }
+
+    /**
+     * Store name if the pubkey belongs to an SK account, otherwise the name
+     * from the Kind 0 profile on the relays. Empty if neither is known.
+     */
+    private static function resolve_contact_name( string $pubkey ): string {
+        $users = get_users( [
+            'meta_key'    => 'nostr_public_key',
+            'meta_value'  => $pubkey,
+            'number'      => 1,
+            'fields'      => 'ID',
+            'count_total' => false,
+        ] );
+
+        if ( ! empty( $users ) ) {
+            $user_id = (int) $users[0];
+            $store   = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( $user_id ) : [];
+            $name    = is_array( $store ) ? (string) ( $store['store_name'] ?? '' ) : '';
+
+            if ( '' === $name ) {
+                $user = get_userdata( $user_id );
+                $name = $user ? (string) $user->display_name : '';
+            }
+
+            return self::clean_contact_name( $name );
+        }
+
+        return self::clean_contact_name( self::fetch_profile_name( $pubkey ) );
+    }
+
+    /**
+     * One line, capped, and never our own name: a stranger's profile may
+     * call itself whatever it likes, and this label is what the vendor
+     * reads first.
+     */
+    private static function clean_contact_name( string $name ): string {
+        $name = trim( preg_replace( '/\s+/u', ' ', sanitize_text_field( $name ) ) );
+        $name = mb_substr( $name, 0, 40 );
+
+        if ( '' === $name ) {
+            return '';
+        }
+
+        $own = array_filter( [ 'satoshiskleinanzeigen', mb_strtolower( (string) get_bloginfo( 'name' ) ) ] );
+
+        foreach ( $own as $verboten ) {
+            if ( false !== mb_stripos( $name, $verboten ) ) {
+                return '';
+            }
+        }
+
+        return $name;
+    }
+
+    /**
+     * Newest Kind 0 profile of a pubkey from the configured relays.
+     *
+     * Short timeout: this runs while a message is being delivered, and a
+     * relay that stalls must not hold that up.
+     */
+    private static function fetch_profile_name( string $pubkey ): string {
+        if ( ! class_exists( '\WebSocket\Client' ) ) {
+            return '';
+        }
+
+        $best    = null;
+        $best_at = 0;
+
+        foreach ( EventSender::get_relays() as $relay_url ) {
+            try {
+                $client = new \WebSocket\Client( $relay_url );
+                $client->setTimeout( 5 );
+
+                $sub = bin2hex( random_bytes( 8 ) );
+                $client->text( wp_json_encode( [ 'REQ', $sub, [ 'authors' => [ $pubkey ], 'kinds' => [ 0 ], 'limit' => 1 ] ] ) );
+
+                $start = time();
+
+                while ( time() - $start < 5 ) {
+                    $data = json_decode( $client->receive()->getContent(), true );
+
+                    if ( ! is_array( $data ) ) {
+                        continue;
+                    }
+
+                    if ( 'EOSE' === ( $data[0] ?? '' ) ) {
+                        break;
+                    }
+
+                    if ( 'EVENT' === ( $data[0] ?? '' ) && is_array( $data[2] ?? null ) && 0 === (int) ( $data[2]['kind'] ?? -1 ) ) {
+                        $at = (int) ( $data[2]['created_at'] ?? 0 );
+
+                        if ( $at > $best_at && strtolower( (string) ( $data[2]['pubkey'] ?? '' ) ) === $pubkey ) {
+                            $best_at = $at;
+                            $best    = $data[2];
+                        }
+                    }
+                }
+
+                $client->text( wp_json_encode( [ 'CLOSE', $sub ] ) );
+                $client->disconnect();
+            } catch ( \Throwable $e ) {
+                // Next relay.
+            }
+
+            if ( null !== $best ) {
+                break;
+            }
+        }
+
+        if ( null === $best ) {
+            return '';
+        }
+
+        $profile = json_decode( (string) ( $best['content'] ?? '' ), true );
+
+        if ( ! is_array( $profile ) ) {
+            return '';
+        }
+
+        foreach ( [ 'display_name', 'name' ] as $key ) {
+            if ( ! empty( $profile[ $key ] ) && is_string( $profile[ $key ] ) ) {
+                return $profile[ $key ];
+            }
+        }
+
+        return '';
     }
 
     /**

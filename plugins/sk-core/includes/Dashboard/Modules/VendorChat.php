@@ -266,7 +266,7 @@ class VendorChat extends DashboardModule {
 			$messages[] = [
 				'user_id'   => $message['user_id'],
 				'is_own'    => $message['user_id'] == $user_id,
-				'name'      => $this->sender_name( $message ),
+				'name'      => $this->sender_name( $message, $chat_id ),
 				'timestamp' => $message['timestamp'],
 				'text'      => $prepared['text'],
 				'card'      => $prepared['card'],
@@ -312,13 +312,14 @@ class VendorChat extends DashboardModule {
 	 * there would label a stranger's text with our own name.
 	 *
 	 * @param array $message
+	 * @param int   $chat_id
 	 * @return string
 	 */
-	private function sender_name( array $message ): string {
+	private function sender_name( array $message, int $chat_id ): string {
 		$pubkey = (string) ( $message['nostr_pubkey'] ?? '' );
 
 		if ( $pubkey !== '' && class_exists( '\SK\Modules\NostrMarket\Bridge\ChatBridge' ) ) {
-			return \SK\Modules\NostrMarket\Bridge\ChatBridge::contact_name( $pubkey );
+			return \SK\Modules\NostrMarket\Bridge\ChatBridge::contact_name( $pubkey, $chat_id );
 		}
 
 		return $this->display_name_for( (int) ( $message['user_id'] ?? 0 ) );
@@ -731,7 +732,7 @@ class VendorChat extends DashboardModule {
 		// replace payment markers with server-verified card data.
 		$messages = $this->get_messages( $chat_id );
 		foreach ( $messages as &$msg ) {
-			$msg['display_name'] = $this->sender_name( $msg );
+			$msg['display_name'] = $this->sender_name( $msg, (int) $chat_id );
 			$msg['avatar']       = get_avatar_url( $msg['user_id'], [ 'size' => 32 ] );
 
 			$prepared       = self::prepare_message( $msg, $chat_id );

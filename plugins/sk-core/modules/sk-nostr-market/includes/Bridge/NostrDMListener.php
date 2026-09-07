@@ -705,6 +705,7 @@ class NostrDMListener {
         $query = new \WP_Query( $args );
         if ( $query->have_posts() ) {
             $chat_id = $query->posts[0]->ID;
+            ChatBridge::refresh_contact_name( $chat_id, $nostr_pubkey );
             ChatBridge::add_message( $chat_id, $admin_id, $message, $nostr_pubkey );
             return $chat_id;
         }
@@ -740,6 +741,7 @@ class NostrDMListener {
         update_post_meta( $chat_id, '_dvc_nostr_pubkey', $nostr_pubkey );
         update_post_meta( $chat_id, ChatBridge::INBOX_META, strtolower( $inbox ) );
 
+        ChatBridge::refresh_contact_name( $chat_id, $nostr_pubkey );
         ChatBridge::add_message( $chat_id, $admin_id, $message, $nostr_pubkey );
 
         return $chat_id;
