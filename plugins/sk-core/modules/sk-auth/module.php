@@ -238,6 +238,41 @@ final class Module {
         add_rewrite_rule( '^\.well-known/nostr\.json$', 'index.php?sk_nostr_json=1', 'top' );
     }
 
+    /**
+     * The marketplace's own public key, derived from the signing key.
+     *
+     * The key lives in the wp-config constant or the Auto Poster settings;
+     * only the private half is stored anywhere, so the public half is
+     * derived here rather than kept as a second copy that could drift.
+     *
+     * @return string|null Hex pubkey, or null when no key is configured.
+     */
+    private static function marketplace_pubkey(): ?string {
+        $privkey = null;
+
+        if ( defined( 'NAP_NOSTR_PRIVKEY' ) && NAP_NOSTR_PRIVKEY ) {
+            $privkey = (string) NAP_NOSTR_PRIVKEY;
+        } elseif ( function_exists( 'nap_resolve_private_key' ) ) {
+            $privkey = (string) nap_resolve_private_key();
+        }
+
+        if ( empty( $privkey ) || ! class_exists( '\swentel\nostr\Key\Key' ) ) {
+            return null;
+        }
+
+        try {
+            $key = new \swentel\nostr\Key\Key();
+
+            if ( 0 === strpos( $privkey, 'nsec' ) ) {
+                $privkey = $key->convertToHex( $privkey );
+            }
+
+            return $key->getPublicKey( $privkey );
+        } catch ( \Throwable $e ) {
+            return null;
+        }
+    }
+
     public function nip05_handler() {
         if ( ! get_query_var( 'sk_nostr_json' ) ) {
             return;
@@ -248,6 +283,24 @@ final class Module {
             header( 'Content-Type: application/json; charset=utf-8' );
             header( 'Access-Control-Allow-Origin: *' );
             echo wp_json_encode( [ 'names' => (object) [] ] );
+            exit;
+        }
+
+        /*
+         * "_" is the root identifier: clients render it as the bare domain,
+         * so the marketplace key verifies as satoshiskleinanzeigen.space.
+         * That key belongs to no user account, so it has to be answered
+         * before the user lookup — and without it relays that require NIP-05
+         * refuse everything we sign ourselves.
+         */
+        if ( '_' === $name ) {
+            $marketplace = self::marketplace_pubkey();
+
+            header( 'Content-Type: application/json; charset=utf-8' );
+            header( 'Access-Control-Allow-Origin: *' );
+            echo wp_json_encode( $marketplace
+                ? [ 'names' => [ '_' => $marketplace ], 'relays' => [ $marketplace => NostrIdentity::get_relays() ] ]
+                : [ 'names' => (object) [], 'relays' => (object) [] ] );
             exit;
         }
 
