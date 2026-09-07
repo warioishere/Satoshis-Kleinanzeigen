@@ -30,6 +30,7 @@ final class Module {
         // Settings always load (visible in admin even when methods are disabled).
         require_once SK_AUTH_INCLUDES . '/AuthSettings.php';
         require_once SK_AUTH_INCLUDES . '/NostrIdentity.php';
+        require_once SK_AUTH_INCLUDES . '/RelayPublisher.php';
         require_once SK_AUTH_INCLUDES . '/NostrRelaySync.php';
         new AuthSettings();
         NostrIdentity::init_hooks();

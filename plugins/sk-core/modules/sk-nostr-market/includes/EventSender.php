@@ -4,8 +4,6 @@ namespace SK\Modules\NostrMarket;
 
 use swentel\nostr\Event\Event;
 use swentel\nostr\Sign\Sign;
-use swentel\nostr\Relay\Relay;
-use swentel\nostr\Message\EventMessage;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -53,35 +51,28 @@ class EventSender {
             $signer = new Sign();
             $signer->signEvent( $event, $privkey );
 
-            $event_id = $event->getId();
-            $sent_any = false;
+            return self::publish_event( $event, $relays );
 
-            foreach ( $relays as $relay_url ) {
-                try {
-                    $msg   = new EventMessage( $event );
-                    $relay = new Relay( $relay_url );
-                    if ( method_exists( $relay, 'setTimeout' ) ) {
-                        $relay->setTimeout( 3 );
-                    }
-                    $relay->setMessage( $msg );
-                    $result = $relay->send();
-
-                    if ( self::relay_accepted( $result ) ) {
-                        $sent_any = true;
-                    } else {
-                        error_log( "[SK Nostr Market] Relay {$relay_url} lehnte Event {$event_id} ab: " . self::relay_message( $result ) );
-                    }
-                } catch ( \Exception $e ) {
-                    error_log( "[SK Nostr Market] Relay {$relay_url} error: " . $e->getMessage() );
-                }
-            }
-
-            return $sent_any ? $event_id : null;
-
-        } catch ( \Exception $e ) {
+        } catch ( \Throwable $e ) {
             error_log( '[SK Nostr Market] Event error: ' . $e->getMessage() );
             return null;
         }
+    }
+
+    /**
+     * Hand a signed event to the relays; the id if at least one accepted.
+     *
+     * @param string[] $relays
+     */
+    private static function publish_event( Event $event, array $relays ): ?string {
+        if ( ! class_exists( '\SK\Modules\Auth\RelayPublisher' ) ) {
+            error_log( '[SK Nostr Market] RelayPublisher (sk_auth) missing, nothing sent.' );
+            return null;
+        }
+
+        $result = \SK\Modules\Auth\RelayPublisher::publish( $event, $relays );
+
+        return empty( $result['accepted'] ) ? null : $event->getId();
     }
 
     /**
@@ -106,39 +97,14 @@ class EventSender {
             return null;
         }
 
-        $event_id = $event->getId();
-        $relays   = self::get_relays();
+        $relays = self::get_relays();
 
         if ( empty( $relays ) ) {
             error_log( '[SK Nostr Market] Keine Relays konfiguriert.' );
             return null;
         }
 
-        $sent_any = false;
-
-        foreach ( $relays as $relay_url ) {
-            try {
-                $msg   = new EventMessage( $event );
-                $relay = new Relay( $relay_url );
-
-                if ( method_exists( $relay, 'setTimeout' ) ) {
-                    $relay->setTimeout( 3 );
-                }
-
-                $relay->setMessage( $msg );
-                $result = $relay->send();
-
-                if ( self::relay_accepted( $result ) ) {
-                    $sent_any = true;
-                } else {
-                    error_log( "[SK Nostr Market] Relay {$relay_url} lehnte Event {$event_id} ab: " . self::relay_message( $result ) );
-                }
-            } catch ( \Exception $e ) {
-                error_log( "[SK Nostr Market] Relay {$relay_url} error: " . $e->getMessage() );
-            }
-        }
-
-        return $sent_any ? $event_id : null;
+        return self::publish_event( $event, $relays );
     }
 
     /**
@@ -182,40 +148,6 @@ class EventSender {
             error_log( '[SK Nostr Market] Signed event unusable: ' . $e->getMessage() );
             return null;
         }
-    }
-
-    /**
-     * Hat das Relay das Ereignis wirklich angenommen?
-     *
-     * Relay::send() liefert immer ein Objekt, nie false — die alte Pruefung
-     * "!== false" wertete deshalb auch ein ablehnendes Relay als Erfolg, und
-     * das Inserat galt als veroeffentlicht, obwohl es niemand genommen hatte.
-     *
-     * Nur ein ausdrueckliches isSuccess=false zaehlt als Ablehnung; alles
-     * Unerwartete gilt als angenommen, damit nichts doppelt gesendet wird.
-     * Dieselbe Pruefung steht im Auto Poster, wo der Fehler zuerst auffiel.
-     *
-     * @param mixed $response
-     */
-    private static function relay_accepted( $response ): bool {
-        if ( is_object( $response ) && property_exists( $response, 'isSuccess' ) ) {
-            return (bool) $response->isSuccess;
-        }
-
-        return $response !== false;
-    }
-
-    /**
-     * Lesbarer Grund einer Ablehnung, fuers Protokoll.
-     *
-     * @param mixed $response
-     */
-    private static function relay_message( $response ): string {
-        if ( is_object( $response ) && property_exists( $response, 'message' ) && $response->message !== '' ) {
-            return (string) $response->message;
-        }
-
-        return 'kein Grund genannt';
     }
 
     /**

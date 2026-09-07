@@ -452,27 +452,13 @@ class ChatBridge {
             return false;
         }
 
-        $relays = class_exists( 'SK\Modules\Auth\NostrIdentity' )
-            ? \SK\Modules\Auth\NostrIdentity::get_relays()
-            : [ 'wss://relay.nostr.band', 'wss://nos.lol' ];
-
-        $sent = false;
-        foreach ( $relays as $relay_url ) {
-            try {
-                $msg   = new \swentel\nostr\Message\EventMessage( $giftWrap );
-                $relay = new \swentel\nostr\Relay\Relay( $relay_url );
-                if ( method_exists( $relay, 'setTimeout' ) ) {
-                    $relay->setTimeout( 3 );
-                }
-                $relay->setMessage( $msg );
-                $result = $relay->send();
-                if ( false !== $result ) {
-                    $sent = true;
-                }
-            } catch ( \Throwable $e ) {}
+        if ( ! class_exists( 'SK\Modules\Auth\RelayPublisher' ) ) {
+            return false;
         }
 
-        return $sent;
+        $result = \SK\Modules\Auth\RelayPublisher::publish( $giftWrap, \SK\Modules\Auth\NostrIdentity::get_relays() );
+
+        return ! empty( $result['accepted'] );
     }
 
     /**

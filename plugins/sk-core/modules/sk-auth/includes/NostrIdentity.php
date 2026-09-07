@@ -5,8 +5,6 @@ namespace SK\Modules\Auth;
 use swentel\nostr\Event\Event;
 use swentel\nostr\Sign\Sign;
 use swentel\nostr\Key\Key;
-use swentel\nostr\Relay\Relay;
-use swentel\nostr\Message\EventMessage;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -57,12 +55,10 @@ class NostrIdentity {
         // Mark source.
         update_user_meta( $user_id, 'sk_nostr_identity_source', 'generated' );
 
-        // Kind-0-Profil erst nach der Antwort veroeffentlichen. Der Versand an
-        // die Relays dauert gemessene ~85 s: die vendorte Relay-Klasse kennt
-        // kein setTimeout(), der Aufruf weiter unten laeuft deshalb ohne jede
-        // Zeitbegrenzung. Synchron blockierte das den Klick auf "Erstellen"
-        // eineinhalb Minuten lang. Gleiches Vorgehen wie beim Profil-Update
-        // weiter oben in dieser Datei.
+        // Publish the Kind 0 profile only after the response has gone out.
+        // Even with RelayPublisher's 5 s per relay, four relays can hold the
+        // click on "Create" for 20 s. Same approach as the profile update
+        // further up in this file.
         register_shutdown_function( [ __CLASS__, 'publish_profile_deferred' ], $user_id );
 
         return $pubkey;
@@ -179,28 +175,13 @@ class NostrIdentity {
         $signer = new Sign();
         $signer->signEvent( $event, $privkey );
 
-        $relays  = self::get_relays();
-        $sent    = false;
+        // Only a relay's OK for this event id counts. The previous check,
+        // "false !== $result", accepted every response object, including an
+        // explicit rejection, and waited the client's default 60 s for a
+        // silent relay.
+        $result = RelayPublisher::publish( $event, self::get_relays() );
 
-        foreach ( $relays as $relay_url ) {
-            try {
-                $msg   = new EventMessage( $event );
-                $relay = new Relay( $relay_url );
-                if ( method_exists( $relay, 'setTimeout' ) ) {
-                    $relay->setTimeout( 3 );
-                }
-                $relay->setMessage( $msg );
-                $result = $relay->send();
-                if ( false !== $result ) {
-                    $sent = true;
-                }
-            } catch ( \Throwable $e ) {
-                // Log but continue to next relay.
-                error_log( '[NostrIdentity] Relay send failed (' . $relay_url . '): ' . $e->getMessage() );
-            }
-        }
-
-        return $sent ? $event->getId() : null;
+        return empty( $result['accepted'] ) ? null : $event->getId();
     }
 
     /**
