@@ -18,7 +18,7 @@ class MarketplaceSettings {
             'icon_url'             => '',
             'description'          => __( 'NIP-99 Classified Listings', 'sk-core' ),
             'settings_title'       => __( 'Nostr Marketplace', 'sk-core' ),
-            'settings_description' => __( 'Produkte als NIP-99 Classified Listings auf Nostr publishen. Sichtbar auf Amethyst, Shopstr, Coracle, Plebeian Market und jedem NIP-99 Client.', 'sk-core' ),
+            'settings_description' => __( 'Inserate als NIP-99 Classified Listings auf Nostr veröffentlichen. Die Entscheidung je Inserat trifft der Anbieter im Inseratsformular.', 'sk-core' ),
         ];
 
         return $sections;
@@ -33,7 +33,7 @@ class MarketplaceSettings {
                 'label'   => __( 'Nostr Marketplace aktivieren', 'sk-core' ),
                 'type'    => 'switcher',
                 'default' => 'off',
-                'desc'    => __( 'Produkte automatisch als NIP-99 Classified Listings auf Nostr Relays publishen. Sichtbar auf Amethyst, Shopstr, Coracle, Plebeian Market.', 'sk-core' ),
+                'desc'    => __( 'Schaltet die Veröffentlichung auf Nostr frei. Ob ein Inserat tatsächlich dorthin geht, entscheidet der Anbieter am Inserat selbst unter „Weitere Optionen" — Vorgabe ist aus. Angezeigt wird es in Clients, die Kleinanzeigen unterstützen, etwa Amethyst oder Shopstr; Primal kann das derzeit nicht.', 'sk-core' ),
             ],
             'sk_nostr_market_pubkey_info' => [
                 'name'  => 'sk_nostr_market_pubkey_info',

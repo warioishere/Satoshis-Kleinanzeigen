@@ -46,12 +46,77 @@ class NostrDMListener {
     }
 
     /**
-     * Poll relays for new DMs to our pubkey.
+     * Alle Postfaecher, die wir abfragen — Marktplatz und Anbieter.
+     *
+     * Inserate von Anbietern mit eigenem Schluessel erscheinen unter deren
+     * Namen. Wer darauf antwortet, schreibt folglich an deren Postfach, nicht
+     * an unseres. Bisher wurde nur das Marktplatz-Postfach abgefragt: die
+     * Antwort kam bei einem Schluessel an, den niemand las, und war weg.
+     *
+     * Der Empfaenger ist zugleich die Zuordnung. Wer auf das Inserat eines
+     * Anbieters antwortet, landet bei genau diesem Anbieter, ohne dass die
+     * Nachricht sagen muss, um welches Inserat es geht.
+     *
+     * @return array<string, array{privkey: string, vendor_id: int}>
+     */
+    private static function key_ring(): array {
+        static $ring = null;
+
+        if ( null !== $ring ) {
+            return $ring;
+        }
+
+        $ring = [];
+
+        $markt_priv = EventSender::get_privkey();
+        $markt_pub  = EventSender::get_pubkey();
+
+        if ( $markt_priv && $markt_pub ) {
+            $ring[ strtolower( $markt_pub ) ] = [
+                'privkey'   => $markt_priv,
+                'vendor_id' => 0,
+            ];
+        }
+
+        if ( ! class_exists( 'SK\Modules\Auth\NostrIdentity' ) ) {
+            return $ring;
+        }
+
+        global $wpdb;
+
+        $vendor_ids = $wpdb->get_col(
+            "SELECT DISTINCT user_id FROM {$wpdb->usermeta}
+             WHERE meta_key = 'sk_nostr_private_key' AND meta_value <> ''"
+        );
+
+        foreach ( (array) $vendor_ids as $vendor_id ) {
+            $vendor_id = (int) $vendor_id;
+            $pub       = strtolower( (string) get_user_meta( $vendor_id, 'nostr_public_key', true ) );
+
+            if ( ! preg_match( '/^[0-9a-f]{64}$/', $pub ) || isset( $ring[ $pub ] ) ) {
+                continue;
+            }
+
+            $priv = \SK\Modules\Auth\NostrIdentity::get_private_key( $vendor_id );
+
+            if ( $priv ) {
+                $ring[ $pub ] = [
+                    'privkey'   => $priv,
+                    'vendor_id' => $vendor_id,
+                ];
+            }
+        }
+
+        return $ring;
+    }
+
+    /**
+     * Poll relays for new DMs to any of our pubkeys.
      */
     public static function poll(): void {
-        $privkey = EventSender::get_privkey();
-        $pubkey  = EventSender::get_pubkey();
-        if ( ! $privkey || ! $pubkey ) {
+        $ring = self::key_ring();
+
+        if ( empty( $ring ) ) {
             return;
         }
 
@@ -59,6 +124,8 @@ class NostrDMListener {
         if ( empty( $relays ) ) {
             return;
         }
+
+        $pubkeys = array_keys( $ring );
 
         $last_seen = (int) get_option( self::LAST_SEEN_KEY, time() - 300 );
 
@@ -73,10 +140,10 @@ class NostrDMListener {
         $since = max( 0, $last_seen - 2 * DAY_IN_SECONDS );
 
         foreach ( $relays as $relay_url ) {
-            $events = self::fetch_dms( $relay_url, $pubkey, $since );
+            $events = self::fetch_dms( $relay_url, $pubkeys, $since );
 
             foreach ( $events as $event ) {
-                self::process_dm( $event, $privkey, $pubkey );
+                self::process_dm( $event, $ring );
             }
         }
 
@@ -88,7 +155,10 @@ class NostrDMListener {
     /**
      * Fetch Kind 4 (NIP-04) DMs addressed to our pubkey since $since.
      */
-    private static function fetch_dms( string $relay_url, string $pubkey, int $since ): array {
+    /**
+     * @param string[] $pubkeys Alle Postfaecher, die uns gehoeren.
+     */
+    private static function fetch_dms( string $relay_url, array $pubkeys, int $since ): array {
         if ( ! class_exists( '\WebSocket\Client' ) ) {
             return [];
         }
@@ -105,7 +175,7 @@ class NostrDMListener {
                 // Gift Wrap; wer darauf antwortet, tut es ebenfalls, und diese
                 // Antworten waren mit einem Filter auf Kind 4 unsichtbar.
                 'kinds' => [ 4, 1059 ],
-                '#p'    => [ $pubkey ],
+                '#p'    => array_values( $pubkeys ),
                 'since' => $since,
                 'limit' => 100,
             ];
@@ -149,7 +219,36 @@ class NostrDMListener {
     /**
      * Process a single incoming DM.
      */
-    private static function process_dm( array $event, string $privkey, string $our_pubkey ): void {
+    /**
+     * An welches unserer Postfaecher ging das Ereignis?
+     *
+     * @param array<string, array{privkey: string, vendor_id: int}> $ring
+     * @return array{pubkey: string, privkey: string, vendor_id: int}|null
+     */
+    private static function recipient_from_tags( array $event, array $ring ): ?array {
+        foreach ( (array) ( $event['tags'] ?? [] ) as $tag ) {
+            if ( ! is_array( $tag ) || ( $tag[0] ?? '' ) !== 'p' ) {
+                continue;
+            }
+
+            $pub = strtolower( (string) ( $tag[1] ?? '' ) );
+
+            if ( isset( $ring[ $pub ] ) ) {
+                return [
+                    'pubkey'    => $pub,
+                    'privkey'   => $ring[ $pub ]['privkey'],
+                    'vendor_id' => $ring[ $pub ]['vendor_id'],
+                ];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array<string, array{privkey: string, vendor_id: int}> $ring
+     */
+    private static function process_dm( array $event, array $ring ): void {
         $event_id = $event['id'] ?? '';
 
         if ( empty( $event_id ) || ! preg_match( '/^[0-9a-f]{64}$/i', $event_id ) ) {
@@ -169,10 +268,18 @@ class NostrDMListener {
 
         set_transient( $processed_key, 1, 3 * DAY_IN_SECONDS );
 
+        // Das Relay liefert nach unserem Filter nur Eigenes, aber verlassen
+        // wir uns nicht darauf.
+        $empfaenger = self::recipient_from_tags( $event, $ring );
+
+        if ( null === $empfaenger ) {
+            return;
+        }
+
         $kind = (int) ( $event['kind'] ?? 0 );
 
         if ( 1059 === $kind ) {
-            $inner = self::unwrap_gift_wrap( $event, $privkey );
+            $inner = self::unwrap_gift_wrap( $event, $empfaenger['privkey'] );
 
             if ( null === $inner ) {
                 return;
@@ -196,7 +303,7 @@ class NostrDMListener {
             $sender_pubkey = strtolower( $sender_pubkey );
 
             try {
-                $decrypted = \swentel\nostr\Encryption\Nip04::decrypt( $content, $privkey, $sender_pubkey );
+                $decrypted = \swentel\nostr\Encryption\Nip04::decrypt( $content, $empfaenger['privkey'], $sender_pubkey );
             } catch ( \Throwable $e ) {
                 error_log( '[SK Nostr Market Bridge] Decrypt failed: ' . $e->getMessage() );
                 return;
@@ -209,8 +316,8 @@ class NostrDMListener {
 
         $sender_pubkey = strtolower( $sender_pubkey );
 
-        // Skip our own messages.
-        if ( $sender_pubkey === strtolower( $our_pubkey ) ) {
+        // Eigene Nachrichten ueberspringen — auch die eines Anbieters an sich selbst.
+        if ( isset( $ring[ $sender_pubkey ] ) ) {
             return;
         }
 
@@ -218,16 +325,40 @@ class NostrDMListener {
             return;
         }
 
-        // Try to parse as NIP-15 order (JSON with type field).
         $order    = json_decode( $decrypted, true );
         $is_order = is_array( $order ) && isset( $order['type'] ) && (int) $order['type'] === 0;
 
         if ( $is_order ) {
             self::handle_order( $order, $sender_pubkey, $event_id );
-        } else {
-            // Plain text message — try to route to a vendor.
-            self::handle_message( $decrypted, $sender_pubkey, $event_id );
+            return;
         }
+
+        /*
+         * Ging die Nachricht an das Postfach eines Anbieters, ist damit klar,
+         * wer gemeint ist — auch bei der allerersten Nachricht und ohne dass
+         * ein Inserat genannt wird. Genau das ist der Weg, den ein Kaeufer in
+         * seinem Client nimmt: Inserat sehen, auf den Absender antworten.
+         */
+        if ( $empfaenger['vendor_id'] > 0 ) {
+            self::route_to_vendor( $empfaenger['vendor_id'], $sender_pubkey, $decrypted );
+            return;
+        }
+
+        // Plain text message — try to route to a vendor.
+        self::handle_message( $decrypted, $sender_pubkey, $event_id );
+    }
+
+    /**
+     * Eine Nachricht dem Anbieter zustellen, an dessen Postfach sie ging.
+     */
+    private static function route_to_vendor( int $vendor_id, string $sender_pubkey, string $text ): void {
+        $text = self::clean_field( $text, 4000 );
+
+        if ( '' === $text ) {
+            return;
+        }
+
+        self::create_bridge_chat( $vendor_id, $sender_pubkey, 0, '', $text );
     }
 
     /**
@@ -483,11 +614,19 @@ class NostrDMListener {
         }
 
         // Create new bridge chat.
-        $npub = self::pubkey_to_npub( $nostr_pubkey );
+        $npub  = self::pubkey_to_npub( $nostr_pubkey );
+        $titel = 'Nostr: ' . substr( $npub, 0, 16 ) . '...';
+
+        // Eine Anfrage ohne Inseratsbezug ist der Normalfall, wenn jemand im
+        // Client einfach auf den Absender antwortet.
+        if ( '' !== $product_title ) {
+            $titel .= ' → ' . $product_title;
+        }
+
         $chat_id = wp_insert_post( [
             'post_type'   => 'vendor_chat',
             'post_status' => 'publish',
-            'post_title'  => 'Nostr: ' . substr( $npub, 0, 16 ) . '... → ' . $product_title,
+            'post_title'  => $titel,
             'post_author' => $admin_id,
         ] );
 

@@ -200,7 +200,14 @@ class ChatBridge {
         $store_info  = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( $sender_id ) : [];
         $vendor_name = $store_info['store_name'] ?? ( get_userdata( $sender_id )->display_name ?? 'Vendor' );
 
-        self::send_dm( $recipient, "{$vendor_name}: {$text}" );
+        /*
+         * Mit dem Schluessel des Anbieters, wenn er einen hat. Sonst haette
+         * der Kaeufer an den Anbieter geschrieben und die Antwort kaeme vom
+         * Marktplatz — in seinem Client zwei verschiedene Gespraechspartner
+         * fuer dasselbe Gespraech. send_dm() faellt von allein auf den
+         * Marktplatzschluessel zurueck, wenn keiner hinterlegt ist.
+         */
+        self::send_dm( $recipient, "{$vendor_name}: {$text}", $sender_id );
     }
 
     /**
