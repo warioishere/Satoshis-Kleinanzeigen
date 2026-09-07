@@ -376,7 +376,13 @@ class NostrDMListener {
         /*
          * Duplicate check first, and on the outer id. The window reaches two
          * days back, so anything already-known comes by again on every run;
-         * the marker therefore has to last longer than the window.
+         * the marker therefore has to outlast the window.
+         *
+         * Held briefly at this point and only made to last once the event has
+         * actually been dealt with. Marking it here for the full three days
+         * turned every failure into a permanent one: an event that tripped
+         * over a bug on its first pass was never looked at again, so fixing
+         * the bug did not bring the message back.
          */
         $processed_key = 'sk_dm_' . substr( $event_id, 0, 32 );
 
@@ -384,13 +390,15 @@ class NostrDMListener {
             return;
         }
 
-        set_transient( $processed_key, 1, 3 * DAY_IN_SECONDS );
+        set_transient( $processed_key, 1, 5 * MINUTE_IN_SECONDS );
 
         // The relay should only return our own messages per our filter, but
         // we don't rely on that.
         $empfaenger = self::recipient_from_tags( $event, $ring );
 
         if ( null === $empfaenger ) {
+            self::settle( $event_id );
+
             return;
         }
 
@@ -400,6 +408,8 @@ class NostrDMListener {
          */
         if ( empty( $empfaenger['privkey'] ) ) {
             self::queue_for_browser( $empfaenger['vendor_id'], $event );
+            self::settle( $event_id );
+
             return;
         }
 
@@ -445,8 +455,27 @@ class NostrDMListener {
 
         $sender_pubkey = strtolower( $sender_pubkey );
 
-        // Skip our own messages — including a vendor's message to themselves.
-        if ( isset( $ring[ $sender_pubkey ] ) ) {
+        /*
+         * Skip what we sent ourselves. Our own gift wraps are addressed to
+         * one of our mailboxes' correspondents and come back on the next
+         * poll, so they have to be recognised — but only by the key that
+         * could have signed them, which means a key we hold.
+         *
+         * Membership in the ring alone was too much: a vendor who signs in
+         * their own browser is in it too, with a pubkey and no key of ours.
+         * When such a vendor wrote to the marketplace, their message was
+         * dropped as if it were our own echo, and nothing ever arrived.
+         */
+        if ( ! empty( $ring[ $sender_pubkey ]['privkey'] ) ) {
+            self::settle( $event_id );
+
+            return;
+        }
+
+        // A mailbox writing to itself is an echo either way.
+        if ( $sender_pubkey === strtolower( (string) $empfaenger['pubkey'] ) ) {
+            self::settle( $event_id );
+
             return;
         }
 
@@ -462,6 +491,8 @@ class NostrDMListener {
          */
         if ( $empfaenger['vendor_id'] > 0 ) {
             self::route_to_vendor( $empfaenger['vendor_id'], $sender_pubkey, $decrypted, $empfaenger['pubkey'] );
+            self::settle( $event_id );
+
             return;
         }
 
@@ -481,12 +512,25 @@ class NostrDMListener {
 
             if ( $autor ) {
                 self::create_bridge_chat( $autor, $sender_pubkey, $post_id, get_the_title( $post_id ), self::clean_field( $decrypted, 4000 ), $empfaenger['pubkey'] );
+                self::settle( $event_id );
+
                 return;
             }
         }
 
         // Plain text message — try to route to a vendor.
         self::handle_message( $decrypted, $sender_pubkey, $event_id );
+        self::settle( $event_id );
+    }
+
+    /**
+     * Remember an event as dealt with, for longer than the fetch window.
+     *
+     * Only called where the event reached its destination or was rightly
+     * ignored — never after a failure, so a failed event comes round again.
+     */
+    private static function settle( string $event_id ): void {
+        set_transient( 'sk_dm_' . substr( $event_id, 0, 32 ), 1, 3 * DAY_IN_SECONDS );
     }
 
     /**
