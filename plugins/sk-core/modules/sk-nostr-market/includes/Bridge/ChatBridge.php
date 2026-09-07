@@ -661,7 +661,9 @@ class ChatBridge {
                         $event = $data[2];
 
                         if ( strtolower( (string) ( $event['pubkey'] ?? '' ) ) !== strtolower( $pubkey )
-                            || (int) ( $event['created_at'] ?? 0 ) <= $newest ) {
+                            || (int) ( $event['created_at'] ?? 0 ) <= $newest
+                            || 10050 !== (int) ( $event['kind'] ?? 0 )
+                            || ! self::signed_by_author( $event ) ) {
                             continue;
                         }
 
@@ -669,9 +671,18 @@ class ChatBridge {
                         $relays = [];
 
                         foreach ( (array) ( $event['tags'] ?? [] ) as $tag ) {
-                            if ( 'relay' === ( $tag[0] ?? '' ) && ! empty( $tag[1] )
-                                && preg_match( '#^wss?://\S+$#i', (string) $tag[1] ) ) {
-                                $relays[] = untrailingslashit( (string) $tag[1] );
+                            if ( 'relay' !== ( $tag[0] ?? '' ) || empty( $tag[1] ) || ! is_string( $tag[1] ) ) {
+                                continue;
+                            }
+
+                            $url = untrailingslashit( trim( $tag[1] ) );
+
+                            if ( self::usable_foreign_relay( $url ) ) {
+                                $relays[] = $url;
+                            }
+
+                            if ( count( $relays ) >= self::FOREIGN_RELAYS_MAX ) {
+                                break;
                             }
                         }
                     }
@@ -689,6 +700,106 @@ class ChatBridge {
         set_transient( $cache_key, $relays, HOUR_IN_SECONDS );
 
         return $relays;
+    }
+
+    /** How many relays from a recipient's own list a wrap is sent to. */
+    const FOREIGN_RELAYS_MAX = 3;
+
+    /**
+     * Does the event carry a valid signature by its own pubkey?
+     *
+     * A relay list is only as trustworthy as its signature: without this
+     * check any relay could answer the lookup with a list of its own making.
+     */
+    private static function signed_by_author( array $event ): bool {
+        if ( ! class_exists( '\swentel\nostr\Event\Event' ) ) {
+            return false;
+        }
+
+        foreach ( [ 'id', 'pubkey', 'sig', 'content' ] as $field ) {
+            if ( ! isset( $event[ $field ] ) || ! is_string( $event[ $field ] ) ) {
+                return false;
+            }
+        }
+
+        if ( ! isset( $event['created_at'] ) || ! is_int( $event['created_at'] ) ) {
+            return false;
+        }
+
+        $event['kind'] = (int) ( $event['kind'] ?? 0 );
+        $event['tags'] = isset( $event['tags'] ) && is_array( $event['tags'] ) ? $event['tags'] : [];
+
+        try {
+            return (bool) ( new \swentel\nostr\Event\Event() )->verify( (object) $event );
+        } catch ( \Throwable $e ) {
+            return false;
+        }
+    }
+
+    /**
+     * May a relay URL that a stranger published be dialled from here?
+     *
+     * The recipient's relay list decides where a reply is sent, and the
+     * recipient is whoever wrote to us. Taking the list as it is let them
+     * point this server at any host and port they liked: an internal
+     * service, the loopback interface, or a relay known to take the PHP
+     * worker down — and a fresh hostname per message walked around the
+     * per-relay circuit breaker in RelayPublisher.
+     *
+     * Only TLS relays under a public DNS name are used. The name is
+     * resolved here, and every address it yields has to be a public one;
+     * an IP literal, a name that resolves into a private or reserved range,
+     * and anything that does not resolve at all is left out.
+     */
+    private static function usable_foreign_relay( string $url ): bool {
+        $parts = wp_parse_url( $url );
+
+        if ( ! is_array( $parts ) || 'wss' !== strtolower( (string) ( $parts['scheme'] ?? '' ) ) ) {
+            return false;
+        }
+
+        if ( isset( $parts['user'] ) || isset( $parts['pass'] ) || isset( $parts['query'] ) || isset( $parts['fragment'] ) ) {
+            return false;
+        }
+
+        $host = strtolower( (string) ( $parts['host'] ?? '' ) );
+
+        // A DNS name with a public suffix — no IP literals, no single labels.
+        if ( '' === $host
+            || strlen( $host ) > 253
+            || false === strpos( $host, '.' )
+            || filter_var( $host, FILTER_VALIDATE_IP ) !== false
+            || '[' === $host[0]
+            || ! preg_match( '/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/', $host )
+            || preg_match( '/\.(?:localhost|local|internal|intranet|lan|home|corp|arpa|test|example|invalid|onion)$/', $host ) ) {
+            return false;
+        }
+
+        $addresses = [];
+
+        $v4 = gethostbynamel( $host );
+
+        if ( is_array( $v4 ) ) {
+            $addresses = $v4;
+        }
+
+        foreach ( (array) @dns_get_record( $host, DNS_AAAA ) as $record ) {
+            if ( ! empty( $record['ipv6'] ) ) {
+                $addresses[] = $record['ipv6'];
+            }
+        }
+
+        if ( empty( $addresses ) ) {
+            return false;
+        }
+
+        foreach ( $addresses as $ip ) {
+            if ( false === filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
