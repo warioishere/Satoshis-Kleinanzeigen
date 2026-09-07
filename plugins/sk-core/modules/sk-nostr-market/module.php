@@ -125,9 +125,6 @@ final class Module {
     }
 
     private function register_hooks() {
-        // Save vendor Nostr Market preferences.
-        add_action( 'sk_store_profile_saved', [ $this, 'save_vendor_settings' ], 20, 1 );
-
         // AJAX: Vendor signs event with NIP-07 extension.
         add_action( 'wp_ajax_sk_nostr_market_publish_signed', [ $this, 'ajax_publish_signed_event' ] );
 
@@ -144,34 +141,17 @@ final class Module {
         add_action( 'wp_trash_post', [ $this, 'on_product_deleted' ] );
         add_action( 'before_delete_post', [ $this, 'on_product_deleted' ] );
 
+        // Knopf "Erneut posten" auf der Inseratsseite im Adminbereich.
+        add_action( 'add_meta_boxes', [ $this, 'add_repost_box' ] );
+        add_action( 'admin_post_sk_nostr_repost', [ $this, 'handle_repost' ] );
+        add_action( 'admin_notices', [ $this, 'repost_notice' ] );
+
         // Nostr DM Bridge: poll incoming DMs + forward vendor replies.
         Bridge\NostrDMListener::init();
         Bridge\ChatBridge::init();
 
         // Process queue after response is sent.
         register_shutdown_function( [ __CLASS__, 'process_queue' ] );
-    }
-
-    /**
-     * Save vendor Nostr Market preferences from store settings form.
-     */
-    public function save_vendor_settings( int $store_id ): void {
-        $settings = get_user_meta( $store_id, 'sk_profile_settings', true );
-        if ( ! is_array( $settings ) ) {
-            $settings = [];
-        }
-
-        $settings['nostr_market_enabled'] = isset( $_POST['nostr_market_enabled'] ) ? sanitize_text_field( $_POST['nostr_market_enabled'] ) : '0';
-
-        update_user_meta( $store_id, 'sk_profile_settings', $settings );
-    }
-
-    /**
-     * Check if a vendor has Nostr Market posting enabled.
-     */
-    public static function vendor_wants_nostr( int $vendor_id ): bool {
-        $settings = get_user_meta( $vendor_id, 'sk_profile_settings', true );
-        return is_array( $settings ) && ! empty( $settings['nostr_market_enabled'] ) && $settings['nostr_market_enabled'] === '1';
     }
 
     /**
@@ -253,12 +233,17 @@ final class Module {
     }
 
     /**
-     * Check if a product should be posted to Nostr (per-product checkbox).
+     * Soll dieses Inserat auf Nostr?
+     *
+     * Entschieden wird das am Inserat selbst, unter "Weitere Optionen".
+     * Frueher stand darueber noch ein Schalter im Anbieterprofil; wer den
+     * uebersah, verstand nicht, warum das Kaestchen am Inserat nichts tat.
+     *
+     * Vorgabe ist aus: Veroeffentlichen in ein fremdes Netz ist nichts, was
+     * ungefragt passieren sollte.
      */
     public static function product_wants_nostr( int $post_id ): bool {
-        $meta = get_post_meta( $post_id, '_sk_nostr_market_post', true );
-        // Default true if meta not set yet (new product from vendor with Nostr enabled).
-        return $meta === '' || $meta === '1';
+        return get_post_meta( $post_id, '_sk_nostr_market_post', true ) === '1';
     }
 
     public function on_product_published( $post_id ) {
@@ -271,13 +256,6 @@ final class Module {
 
         // Skip if already published.
         if ( ProductPublisher::has_event( $post_id ) ) {
-            return;
-        }
-
-        $vendor_id = (int) $post->post_author;
-
-        // Skip if vendor doesn't want Nostr posting.
-        if ( ! self::vendor_wants_nostr( $vendor_id ) ) {
             return;
         }
 
@@ -295,6 +273,12 @@ final class Module {
         }
 
         if ( $new_status === 'publish' && in_array( $old_status, [ 'draft', 'pending', 'auto-draft' ], true ) ) {
+            // Diese Pruefung fehlte: ein Entwurf, der veroeffentlicht wurde,
+            // ging auf Nostr, auch wenn das Kaestchen am Inserat leer war.
+            if ( ! self::product_wants_nostr( $post->ID ) ) {
+                return;
+            }
+
             if ( ! ProductPublisher::has_event( $post->ID ) ) {
                 self::queue( $post->ID, 'publish' );
             }
@@ -309,9 +293,25 @@ final class Module {
             return;
         }
 
-        // Only update if already published to Nostr.
-        if ( ProductPublisher::has_event( $post_id ) ) {
+        $gewollt   = self::product_wants_nostr( $post_id );
+        $vorhanden = ProductPublisher::has_event( $post_id );
+
+        /*
+         * Das Kaestchen wird auf Prioritaet 5 gespeichert, also vor diesem
+         * Aufruf — der Stand hier ist der neue.
+         *
+         * Doppelte Posts kann es dabei nicht geben: veroeffentlicht wird nur,
+         * wenn noch kein Ereignis vermerkt ist, und beim Abschalten wird das
+         * bestehende geloescht und der Vermerk entfernt. Wer aus- und wieder
+         * einschaltet, bekommt ein neues Ereignis unter derselben Kennung
+         * ('d'), das die Clients ersetzen statt danebenzulegen.
+         */
+        if ( $gewollt && ! $vorhanden ) {
+            self::queue( $post_id, 'publish' );
+        } elseif ( $gewollt ) {
             self::queue( $post_id, 'update' );
+        } elseif ( $vorhanden ) {
+            self::queue( $post_id, 'delete' );
         }
     }
 
@@ -322,6 +322,99 @@ final class Module {
         }
 
         self::queue( $post_id, 'delete' );
+    }
+
+    /**
+     * Kasten auf der Inseratsseite im Adminbereich.
+     *
+     * Gleiche Bedienung wie beim Telegram-Reposter nebenan: ein Knopf, der
+     * sofort sendet, statt auf den naechsten Speichervorgang zu warten.
+     */
+    public function add_repost_box(): void {
+        add_meta_box(
+            'sk_nostr_repost_box',
+            __( 'Nostr', 'sk-core' ),
+            [ $this, 'render_repost_box' ],
+            'product',
+            'side',
+            'default'
+        );
+    }
+
+    /**
+     * @param \WP_Post $post
+     */
+    public function render_repost_box( $post ): void {
+        if ( ! $post instanceof \WP_Post || 'product' !== $post->post_type ) {
+            return;
+        }
+
+        $vorhanden = ProductPublisher::has_event( (int) $post->ID );
+        $gewollt   = self::product_wants_nostr( (int) $post->ID );
+
+        $url = wp_nonce_url(
+            admin_url( 'admin-post.php?action=sk_nostr_repost&post_id=' . (int) $post->ID ),
+            'sk_nostr_repost_' . (int) $post->ID
+        );
+
+        echo '<p><a href="' . esc_url( $url ) . '" class="button button-primary">'
+            . esc_html__( 'Jetzt auf Nostr posten', 'sk-core' ) . '</a></p>';
+
+        if ( $vorhanden ) {
+            echo '<p style="color:#666">' . esc_html__( 'Bereits auf Nostr. Der Knopf ersetzt den bestehenden Beitrag.', 'sk-core' ) . '</p>';
+        } elseif ( ! $gewollt ) {
+            echo '<p style="color:#666">' . esc_html__( 'Am Inserat ist Nostr abgewählt. Der Knopf postet trotzdem, einmalig.', 'sk-core' ) . '</p>';
+        } else {
+            echo '<p style="color:#666">' . esc_html__( 'Noch nicht auf Nostr.', 'sk-core' ) . '</p>';
+        }
+    }
+
+    /**
+     * Sofort posten, ohne auf einen Speichervorgang zu warten.
+     *
+     * Ein bestehender Beitrag wird vorher geloescht. Bei Kind 30402 ersetzt
+     * ihn ein neuer mit derselben Kennung ohnehin; das Loeschen ist fuer
+     * Clients gedacht, die ersetzbare Ereignisse nicht sauber behandeln.
+     */
+    public function handle_repost(): void {
+        $post_id = isset( $_GET['post_id'] ) ? absint( $_GET['post_id'] ) : 0;
+
+        if ( ! $post_id || ! current_user_can( 'edit_post', $post_id ) ) {
+            wp_die( esc_html__( 'Keine Berechtigung.', 'sk-core' ) );
+        }
+
+        if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'sk_nostr_repost_' . $post_id ) ) {
+            wp_die( esc_html__( 'Sicherheitsprüfung fehlgeschlagen.', 'sk-core' ) );
+        }
+
+        if ( ProductPublisher::has_event( $post_id ) ) {
+            ProductDeleter::delete( $post_id );
+        }
+
+        $event_id = ProductPublisher::publish( $post_id );
+
+        wp_safe_redirect( add_query_arg(
+            'sk_nostr_repost',
+            $event_id ? '1' : '0',
+            get_edit_post_link( $post_id, 'url' )
+        ) );
+        exit;
+    }
+
+    public function repost_notice(): void {
+        if ( ! isset( $_GET['sk_nostr_repost'] ) ) {
+            return;
+        }
+
+        $ok = '1' === $_GET['sk_nostr_repost'];
+
+        printf(
+            '<div class="notice %s is-dismissible"><p>%s</p></div>',
+            $ok ? 'notice-success' : 'notice-error',
+            esc_html( $ok
+                ? __( 'Nostr: Inserat gesendet.', 'sk-core' )
+                : __( 'Nostr: Senden fehlgeschlagen. Grund steht im Fehlerprotokoll.', 'sk-core' ) )
+        );
     }
 
     private static function queue( int $post_id, string $action ) {

@@ -74,8 +74,8 @@ class ProductPublisher {
         $store_info = is_array( $store_info ) ? $store_info : [];
         $store_name = $store_info['store_name'] ?? '';
 
-        $title       = $product->get_name();
-        $description = wp_strip_all_tags( $product->get_description() ?: $product->get_short_description() );
+        $title       = self::one_line( $product->get_name() );
+        $description = self::clean_text( $product->get_description() ?: $product->get_short_description() );
         $description = mb_substr( $description, 0, 2000 );
         $permalink   = get_permalink( $post_id );
 
@@ -87,7 +87,8 @@ class ProductPublisher {
             $location = $store_info['find_address'];
         }
 
-        $summary = mb_substr( wp_strip_all_tags( $product->get_short_description() ?: $description ), 0, 200 );
+        // Die Zusammenfassung ist laut NIP-99 eine kurze Zeile, kein Absatz.
+        $summary = mb_substr( self::one_line( $product->get_short_description() ?: $description ), 0, 200 );
 
         $content = $description;
         if ( $store_name ) {
@@ -154,6 +155,38 @@ class ProductPublisher {
             'content' => $content,
             'tags'    => $tags,
         ];
+    }
+
+    /**
+     * Text fuers Ereignis aufbereiten.
+     *
+     * wp_strip_all_tags() allein genuegt nicht: es entfernt Markup, laesst
+     * aber HTML-Entitaeten stehen. In den Ereignissen stand deshalb woertlich
+     * "Truck &amp; Logistics", weil eine Notiz reiner Text ist und niemand
+     * das mehr aufloest. Geschuetzte Leerzeichen fallen aus demselben Grund
+     * auf normale zurueck.
+     *
+     * Absaetze bleiben erhalten; nur Leerzeichen und Tabulatoren werden
+     * zusammengezogen.
+     */
+    private static function clean_text( string $text ): string {
+        $text = html_entity_decode( $text, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+        $text = str_replace( "\xC2\xA0", ' ', $text );
+        $text = wp_strip_all_tags( $text );
+        $text = preg_replace( '/[ \t]+/u', ' ', $text );
+        $text = preg_replace( "/\r\n?/", "\n", $text );
+
+        return trim( (string) $text );
+    }
+
+    /**
+     * Dasselbe, aber auf eine Zeile — fuer Titel und Zusammenfassung.
+     */
+    private static function one_line( string $text ): string {
+        $text = self::clean_text( $text );
+        $text = preg_replace( '/\s*\n+\s*/u', ' ', $text );
+
+        return trim( (string) $text );
     }
 
     /**

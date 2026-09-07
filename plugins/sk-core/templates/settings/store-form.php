@@ -482,7 +482,6 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
     <?php if ( sk_module_active( 'sk_nostr_market' ) && sk_get_option( 'sk_nostr_market_enabled', 'sk_nostr_market', 'off' ) === 'on' ) :
         $nm_nostr_pubkey = get_user_meta( $current_user, 'nostr_public_key', true );
         $nm_has_pubkey   = ! empty( $nm_nostr_pubkey );
-        $nm_post_enabled = $profile_info['nostr_market_enabled'] ?? ( $nm_has_pubkey ? '1' : '0' );
         $nm_self_sign    = $profile_info['nostr_market_self_sign'] ?? '0';
 
         // Convert pubkey to npub for display.
@@ -497,20 +496,6 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
     <div class="sk-settings-section">
         <div class="sk-settings-section-title">
             <i class="sk-nostr-icon sk-nostr-icon--inline"></i> Nostr Marketplace
-        </div>
-
-        <div class="sk-settings-field">
-            <label class="sk-settings-label">Inserate auf Nostr posten</label>
-            <div class="sk-settings-input">
-                <label>
-                    <input type="hidden" name="nostr_market_enabled" value="0" />
-                    <input type="checkbox" name="nostr_market_enabled" value="1" <?php checked( $nm_post_enabled, '1' ); ?>>
-                    Deine Produkte werden als Inserate auf dem Nostr Netzwerk veröffentlicht
-                </label>
-                <p class="description">
-                    Sichtbar auf Amethyst, Shopstr, Coracle und anderen Nostr Clients.
-                </p>
-            </div>
         </div>
 
         <?php if ( $nm_has_pubkey ) : ?>

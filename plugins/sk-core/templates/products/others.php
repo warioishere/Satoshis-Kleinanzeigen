@@ -52,23 +52,26 @@ $post_statuses = sk_get_available_post_status( $post->ID );
             ?>
         </div>
 
-        <?php if ( sk_module_active( 'sk_nostr_market' ) && sk_get_option( 'sk_nostr_market_enabled', 'sk_nostr_market', 'off' ) === 'on' ) :
-            $vendor_id = get_current_user_id();
-            $vendor_settings = get_user_meta( $vendor_id, 'sk_profile_settings', true );
-            $vendor_nostr_enabled = is_array( $vendor_settings ) && ! empty( $vendor_settings['nostr_market_enabled'] ) && $vendor_settings['nostr_market_enabled'] === '1';
-
-            if ( $vendor_nostr_enabled ) :
-                $nostr_post = get_post_meta( $post_id, '_sk_nostr_market_post', true );
-                $nostr_checked = ( $nostr_post === '' ) ? true : ( $nostr_post === '1' ); // Default: on wenn Vendor es aktiviert hat.
+        <?php
+        /*
+         * Nostr: entschieden wird es hier am Inserat, nicht mehr zusaetzlich
+         * im Anbieterprofil. Vorgabe ist aus — in ein fremdes Netz zu
+         * veroeffentlichen sollte nicht ungefragt geschehen.
+         */
+        if ( sk_module_active( 'sk_nostr_market' ) && sk_get_option( 'sk_nostr_market_enabled', 'sk_nostr_market', 'off' ) === 'on' ) :
+            $nostr_checked = get_post_meta( $post_id, '_sk_nostr_market_post', true ) === '1';
         ?>
         <div class="sk-form-group">
             <label>
                 <input type="hidden" name="_sk_nostr_market_post" value="0" />
                 <input type="checkbox" name="_sk_nostr_market_post" value="1" <?php checked( $nostr_checked ); ?>>
-                <?php esc_html_e( 'Auf Nostr Marketplace posten', 'sk-core' ); ?>
+                <?php esc_html_e( 'Auf Nostr veröffentlichen', 'sk-core' ); ?>
             </label>
+            <p class="sk-settings-hint">
+                <?php esc_html_e( 'Dein Inserat erscheint zusätzlich im Nostr-Netzwerk, sichtbar in Clients wie Amethyst oder Coracle. Du kannst es jederzeit wieder abwählen, dann wird es dort entfernt.', 'sk-core' ); ?>
+            </p>
         </div>
-        <?php endif; endif; ?>
+        <?php endif; ?>
 
     </div>
 </div><!-- .sk-other-options -->
