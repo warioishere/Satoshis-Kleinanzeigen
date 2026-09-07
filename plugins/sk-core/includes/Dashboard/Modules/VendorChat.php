@@ -604,6 +604,7 @@ class VendorChat extends DashboardModule {
 
 		if ( $existing_chat ) {
 			$this->add_message_to_chat( $existing_chat->ID, $current_user_id, $message );
+			$this->mirror_message_to_nostr( (int) $vendor_id, $current_user_id, $message );
 			wp_send_json_success( [
 				'message' => __( 'Nachricht gesendet!', 'sk-core' ),
 				'chat_id' => $existing_chat->ID,
@@ -627,6 +628,7 @@ class VendorChat extends DashboardModule {
 			update_post_meta( $chat_id, '_dvc_archived_by',   [] );
 
 			$this->add_message_to_chat( $chat_id, $current_user_id, $message );
+			$this->mirror_message_to_nostr( (int) $vendor_id, $current_user_id, $message );
 
 			/*
 			 * The contact only counts here, not when the window is opened:
@@ -687,27 +689,7 @@ class VendorChat extends DashboardModule {
 
 		$this->add_message_to_chat( $chat_id, $current_user_id, $message );
 
-		if ( $other_user_id ) {
-
-			// Mirror to Nostr when the recipient can be reached there and the
-			// message can be signed in the sender's name.
-			if ( class_exists( 'SK\Modules\Auth\NostrIdentity' )
-				&& class_exists( 'SK\Modules\NostrMarket\Bridge\ChatBridge' )
-				&& \SK\Modules\NostrMarket\Bridge\ChatBridge::is_enabled() ) {
-				$recipient_pubkey = \SK\Modules\Auth\NostrIdentity::get_public_key( $other_user_id );
-
-				// The platform account has no key of its own; it writes under
-				// the marketplace key, which is the marketplace's identity.
-				$sender_can_sign = \SK\Modules\Auth\NostrIdentity::has_identity( $current_user_id )
-					|| \SK\Modules\NostrMarket\Bridge\ChatBridge::is_platform_account( $current_user_id );
-
-				if ( $recipient_pubkey && $sender_can_sign ) {
-					register_shutdown_function( function () use ( $recipient_pubkey, $message, $current_user_id ) {
-						\SK\Modules\NostrMarket\Bridge\ChatBridge::send_dm( $recipient_pubkey, $message, $current_user_id );
-					} );
-				}
-			}
-		}
+		$this->mirror_message_to_nostr( (int) $other_user_id, $current_user_id, $message );
 
 		wp_send_json_success( [ 'message' => __( 'Nachricht gesendet!', 'sk-core' ) ] );
 	}
@@ -1095,6 +1077,45 @@ class VendorChat extends DashboardModule {
 		$message = self::sanitize_user_message( $message );
 
 		ChatMessages::append( (int) $chat_id, (int) $user_id, $message );
+	}
+
+	/**
+	 * Mirror an outgoing message to the recipient's Nostr key.
+	 *
+	 * Every path that writes a message calls this. The mirror used to sit in
+	 * the send handler alone, so anything written through the contact form on
+	 * a product page — which opens or continues the chat itself — was stored
+	 * and never left the platform.
+	 *
+	 * Sent after the response, because a relay round trip is slower than the
+	 * reply the sender is waiting for.
+	 *
+	 * @param int    $recipient_id Who the message is for.
+	 * @param int    $sender_id    Who wrote it.
+	 * @param string $message      The text as stored.
+	 */
+	private function mirror_message_to_nostr( int $recipient_id, int $sender_id, string $message ): void {
+		if ( ! $recipient_id
+			|| ! class_exists( 'SK\Modules\Auth\NostrIdentity' )
+			|| ! class_exists( 'SK\Modules\NostrMarket\Bridge\ChatBridge' )
+			|| ! \SK\Modules\NostrMarket\Bridge\ChatBridge::is_enabled() ) {
+			return;
+		}
+
+		$recipient_pubkey = \SK\Modules\Auth\NostrIdentity::get_public_key( $recipient_id );
+
+		// The platform account has no key of its own; it writes under the
+		// marketplace key, which is the marketplace's identity on Nostr.
+		$sender_can_sign = \SK\Modules\Auth\NostrIdentity::has_identity( $sender_id )
+			|| \SK\Modules\NostrMarket\Bridge\ChatBridge::is_platform_account( $sender_id );
+
+		if ( ! $recipient_pubkey || ! $sender_can_sign ) {
+			return;
+		}
+
+		register_shutdown_function( function () use ( $recipient_pubkey, $message, $sender_id ) {
+			\SK\Modules\NostrMarket\Bridge\ChatBridge::send_dm( $recipient_pubkey, $message, $sender_id );
+		} );
 	}
 
 	/**
