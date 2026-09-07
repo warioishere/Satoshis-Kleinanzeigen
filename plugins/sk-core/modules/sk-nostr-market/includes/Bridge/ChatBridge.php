@@ -597,10 +597,13 @@ class ChatBridge {
      *
      * Without this our own messages came back, were handed to the member's
      * browser and reappeared as a conversation with a stranger who was us.
+     *
+     * Kept in the database, not the object cache: a flushed cache forgot
+     * every one of these at once.
      */
     private static function remember_sent( string $event_id ): void {
         if ( preg_match( '/^[0-9a-f]{64}$/i', $event_id ) ) {
-            set_transient( 'sk_nostr_sent_' . substr( strtolower( $event_id ), 0, 32 ), 1, 3 * DAY_IN_SECONDS );
+            SeenEvents::remember_sent( strtolower( $event_id ) );
         }
     }
 
@@ -608,7 +611,7 @@ class ChatBridge {
      * Did this event leave here?
      */
     public static function was_sent_by_us( string $event_id ): bool {
-        return (bool) get_transient( 'sk_nostr_sent_' . substr( strtolower( $event_id ), 0, 32 ) );
+        return preg_match( '/^[0-9a-f]{64}$/i', $event_id ) && SeenEvents::was_sent_by_us( strtolower( $event_id ) );
     }
 
     /**

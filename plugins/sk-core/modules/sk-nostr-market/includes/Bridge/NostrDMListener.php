@@ -146,6 +146,39 @@ class NostrDMListener {
      * Poll relays for new DMs to any of our pubkeys.
      */
     public static function poll(): void {
+        /*
+         * One poll at a time. The system cron, the WP cron and the inbox
+         * view can all start one within the same minute, and two running
+         * side by side found no chat for a new sender and each created one.
+         * The lock lives in the database server and goes with the
+         * connection, so a poll that dies leaves nothing behind.
+         */
+        if ( ! self::acquire_lock() ) {
+            return;
+        }
+
+        try {
+            self::poll_locked();
+        } finally {
+            self::release_lock();
+        }
+    }
+
+    const LOCK_NAME = 'sk_nostr_market_poll';
+
+    private static function acquire_lock(): bool {
+        global $wpdb;
+
+        return '1' === (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK( %s, 0 )', self::LOCK_NAME ) );
+    }
+
+    private static function release_lock(): void {
+        global $wpdb;
+
+        $wpdb->query( $wpdb->prepare( 'SELECT RELEASE_LOCK( %s )', self::LOCK_NAME ) );
+    }
+
+    private static function poll_locked(): void {
         $ring = self::key_ring();
 
         if ( empty( $ring ) ) {
@@ -188,6 +221,8 @@ class NostrDMListener {
         // Progress is tied to the clock, not to event timestamps — a gift
         // wrap's timestamp is made up.
         update_option( self::LAST_SEEN_KEY, time() );
+
+        SeenEvents::prune();
     }
 
     /** Seconds per relay: connect, subscribe and read until EOSE. */
@@ -376,21 +411,26 @@ class NostrDMListener {
         /*
          * Duplicate check first, and on the outer id. The window reaches two
          * days back, so anything already-known comes by again on every run;
-         * the marker therefore has to outlast the window.
+         * the record therefore has to outlast the window — and it has to
+         * survive a cache flush, which is why it is a database row and not
+         * a transient: with the markers in Redis, an emptied cache had the
+         * next poll deliver two days of messages a second time.
          *
-         * Held briefly at this point and only made to last once the event has
-         * actually been dealt with. Marking it here for the full three days
-         * turned every failure into a permanent one: an event that tripped
-         * over a bug on its first pass was never looked at again, so fixing
-         * the bug did not bring the message back.
+         * The claim is only made permanent by settle() once the event has
+         * actually been dealt with. Settling it here turned every failure
+         * into a permanent one: an event that tripped over a bug on its
+         * first pass was never looked at again, so fixing the bug did not
+         * bring the message back. An unsettled claim is released after a
+         * few minutes.
+         *
+         * The claim is a single INSERT, so two polls running at the same
+         * moment cannot both take the same event.
          */
-        $processed_key = 'sk_dm_' . substr( $event_id, 0, 32 );
+        $event_id = strtolower( $event_id );
 
-        if ( get_transient( $processed_key ) ) {
+        if ( ! SeenEvents::claim( $event_id, (int) ( $event['created_at'] ?? 0 ) ) ) {
             return;
         }
-
-        set_transient( $processed_key, 1, 5 * MINUTE_IN_SECONDS );
 
         // The relay should only return our own messages per our filter, but
         // we don't rely on that.
@@ -622,7 +662,7 @@ class NostrDMListener {
      * ignored — never after a failure, so a failed event comes round again.
      */
     private static function settle( string $event_id ): void {
-        set_transient( 'sk_dm_' . substr( $event_id, 0, 32 ), 1, 3 * DAY_IN_SECONDS );
+        SeenEvents::settle( strtolower( $event_id ) );
     }
 
     /**

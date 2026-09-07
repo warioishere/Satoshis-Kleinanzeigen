@@ -142,6 +142,7 @@ final class Module {
         require_once SK_NOSTR_MARKET_INCLUDES . '/EventSender.php';
         require_once SK_NOSTR_MARKET_INCLUDES . '/ProductPublisher.php';
         require_once SK_NOSTR_MARKET_INCLUDES . '/ProductDeleter.php';
+        require_once SK_NOSTR_MARKET_INCLUDES . '/Bridge/SeenEvents.php';
         require_once SK_NOSTR_MARKET_INCLUDES . '/Bridge/NostrDMListener.php';
         require_once SK_NOSTR_MARKET_INCLUDES . '/Bridge/ChatBridge.php';
     }
