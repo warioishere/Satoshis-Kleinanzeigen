@@ -245,7 +245,7 @@ class ModuleManager {
                     'sk_nostr_market' => [
                         'id'           => 'sk_nostr_market',
                         'name'         => __( 'SK Nostr Market', 'sk-core' ),
-                        'description'  => __( 'NIP-15 Nostr Marketplace — Produkte auf Nostr Marketplaces publishen.', 'sk-core' ),
+                        'description'  => __( 'Inserate als NIP-99 Classified Listings auf Nostr veröffentlichen. Anbieter entscheiden je Inserat.', 'sk-core' ),
                         'thumbnail'    => $thumbnail_dir . '/follow-store.svg',
                         'module_file'  => SK_CORE_DIR . '/modules' . '/sk-nostr-market/module.php',
                         'module_class' => 'SK\Modules\NostrMarket\Module',
