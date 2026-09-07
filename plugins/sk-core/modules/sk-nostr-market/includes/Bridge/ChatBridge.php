@@ -129,6 +129,12 @@ class ChatBridge {
             wp_send_json_error( [ 'message' => 'Nicht eingeloggt.' ] );
         }
 
+        // The button is not rendered without payments, but the request can
+        // still arrive from a page that was open when the module went off.
+        if ( ! self::payments_available() ) {
+            wp_send_json_error( [ 'message' => 'Zahlungen sind derzeit abgeschaltet.' ] );
+        }
+
         $chat_id     = absint( $_POST['chat_id'] ?? 0 );
         $amount_sats = absint( $_POST['amount_sats'] ?? 0 );
         $vendor_id   = get_current_user_id();
@@ -689,8 +695,20 @@ class ChatBridge {
      * Inject JS for the "Invoice erstellen" button in Nostr bridge chats.
      * Only renders on vendor-chat dashboard page.
      */
+    /**
+     * Is there anything behind an invoice button?
+     *
+     * The invoice itself comes from sk_payments. With that module off there
+     * is nothing to create, and offering it anyway ended in "no payment
+     * method configured" — which blames the vendor's own settings for a
+     * switch that is off for the whole site.
+     */
+    private static function payments_available(): bool {
+        return class_exists( 'SK\Modules\Payments\StoreSettings' );
+    }
+
     public static function render_bridge_invoice_js(): void {
-        if ( ! is_user_logged_in() ) {
+        if ( ! is_user_logged_in() || ! self::payments_available() ) {
             return;
         }
 
