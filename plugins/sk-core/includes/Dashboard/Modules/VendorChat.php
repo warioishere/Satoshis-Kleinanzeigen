@@ -1237,13 +1237,7 @@ class VendorChat extends DashboardModule {
 	 * @return int
 	 */
 	public function get_unread_count( $user_id ) {
-		$chat_ids = ChatMessages::chat_ids_for_participant( (int) $user_id );
-
-		if ( empty( $chat_ids ) ) {
-			return 0;
-		}
-
-		return (int) array_sum( ChatMessages::unread_counts( $chat_ids, (int) $user_id ) );
+		return ChatMessages::unread_total( (int) $user_id );
 	}
 
 	/**

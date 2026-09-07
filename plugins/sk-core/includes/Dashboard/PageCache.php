@@ -162,6 +162,24 @@ final class PageCache {
     }
 
     /**
+     * Discard this visitor's cached dashboard pages.
+     *
+     * Only works while the visitor is the one making the request: the key is
+     * built from their login cookie, and nobody else can reach it. That is the
+     * case whenever they change something themselves — saving settings, or
+     * reading a chat.
+     */
+    public static function bump_visitor(): void {
+        $user_hash = self::user_hash();
+
+        if ( '' === $user_hash ) {
+            return;
+        }
+
+        wp_cache_set( 'sk_dcv_' . $user_hash, time(), self::GROUP, HOUR_IN_SECONDS );
+    }
+
+    /**
      * Build the cache key.
      *
      * Two version counters are folded in: one per visitor, bumped when that

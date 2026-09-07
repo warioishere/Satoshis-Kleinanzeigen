@@ -224,6 +224,23 @@ class ChatMessages {
 	/**
 	 * Mark everything currently in the chat as read for this user.
 	 */
+	/**
+	 * Ungelesene Nachrichten eines Nutzers ueber alle Chats hinweg.
+	 *
+	 * Eine Stelle fuer beide Anzeigen — das Abzeichen im Dashboardmenue und
+	 * das Postfach im Seitenkopf. Zwei getrennte Zaehlungen waeren frueher oder
+	 * spaeter uneinig darueber, ob da nun etwas liegt oder nicht.
+	 */
+	public static function unread_total( int $user_id ): int {
+		$chat_ids = self::chat_ids_for_participant( $user_id );
+
+		if ( empty( $chat_ids ) ) {
+			return 0;
+		}
+
+		return (int) array_sum( self::unread_counts( $chat_ids, $user_id ) );
+	}
+
 	public static function mark_read( int $chat_id, int $user_id ): void {
 		if ( ! $chat_id || ! $user_id ) {
 			return;
@@ -247,6 +264,18 @@ class ChatMessages {
 		$markers[ $chat_id ] = $latest;
 
 		update_user_meta( $user_id, self::READ_META, $markers );
+
+		/*
+		 * Das Abzeichen im Seitenkopf steht auf jeder Dashboardseite, und die
+		 * liegen bis zu fuenf Minuten im Seitencache. Ohne diesen Anstoss
+		 * zeigte es dort weiter eine Zahl, die es gerade nicht mehr gibt.
+		 *
+		 * Die Pruefung ist keine Zierde: diese Klasse laeuft in den Tests
+		 * allein, ohne den Rest des Dashboards.
+		 */
+		if ( class_exists( PageCache::class ) ) {
+			PageCache::bump_visitor();
+		}
 	}
 
 	/**
