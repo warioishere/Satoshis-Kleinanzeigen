@@ -84,6 +84,7 @@ final class Module {
             if ( $event_data ) {
                 $pending_data[] = [
                     'post_id' => (int) $post_id,
+                    'title'   => get_the_title( (int) $post_id ),
                     'content' => $event_data['content'],
                     'tags'    => $event_data['tags'],
                 ];
@@ -93,6 +94,13 @@ final class Module {
         if ( empty( $pending_data ) ) {
             return;
         }
+
+        wp_enqueue_style(
+            'sk-nostr-sign',
+            plugins_url( 'assets/css/nostr-sign.css', SK_NOSTR_MARKET_PATH . '/module.php' ),
+            [],
+            SK_NOSTR_MARKET_VERSION
+        );
 
         wp_enqueue_script(
             'sk-nostr-sign',
@@ -144,6 +152,8 @@ final class Module {
         // Signieren im Browser, fuer Anbieter mit eigener Nostr-Erweiterung.
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_signing_js' ] );
         add_action( 'wp_ajax_sk_nostr_market_fallback_sign', [ $this, 'ajax_fallback_sign' ] );
+        add_action( 'wp_ajax_sk_nostr_market_cancel_sign', [ $this, 'ajax_cancel_sign' ] );
+        add_action( 'wp_footer', [ $this, 'render_sign_modal' ] );
 
         // Knopf "Erneut posten" auf der Inseratsseite im Adminbereich.
         add_action( 'add_meta_boxes', [ $this, 'add_repost_box' ] );
@@ -183,6 +193,57 @@ final class Module {
         }
 
         return ! \SK\Modules\Auth\NostrIdentity::has_identity( $vendor_id );
+    }
+
+    /**
+     * Das Wartefenster fuer die Unterschrift.
+     *
+     * Steht nur im Dokument, wenn wirklich etwas wartet — das JavaScript wird
+     * unter derselben Bedingung geladen. Sichtbar wird es erst durch das
+     * Skript, damit es ohne JavaScript nicht als toter Kasten stehenbleibt.
+     */
+    public function render_sign_modal(): void {
+        if ( ! wp_script_is( 'sk-nostr-sign', 'enqueued' ) ) {
+            return;
+        }
+        ?>
+        <div id="sk-nostr-sign-modal" class="sk-nostr-sign-modal" data-state="waiting" style="display:none;">
+            <div class="sk-nostr-sign-backdrop"></div>
+            <div class="sk-nostr-sign-box">
+                <div class="sk-nostr-sign-icon"><i class="fas fa-circle-notch"></i></div>
+                <h3 class="sk-nostr-sign-heading"><?php esc_html_e( 'Warten auf deine Signatur', 'sk-core' ); ?></h3>
+                <p>
+                    <span class="sk-nostr-sign-title"></span>
+                    <span class="sk-nostr-sign-text"><?php esc_html_e( 'Deine Nostr-Erweiterung fragt gleich nach deiner Unterschrift. Danach geht dein Inserat unter deinem eigenen Schlüssel ins Nostr-Netz.', 'sk-core' ); ?></span>
+                </p>
+                <div class="sk-nostr-sign-actions">
+                    <button type="button" class="sk-nostr-sign-retry" style="display:none;"><?php esc_html_e( 'Erneut versuchen', 'sk-core' ); ?></button>
+                    <button type="button" class="sk-nostr-sign-cancel"><?php esc_html_e( 'Abbrechen', 'sk-core' ); ?></button>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * AJAX: der Anbieter bricht ab.
+     *
+     * Die Wartemarke faellt, sonst wuerde bei jedem Seitenaufruf erneut
+     * gefragt. Das Inserat bleibt auf der Plattform, nur auf Nostr geht es
+     * nicht — beim naechsten Speichern wird wieder gefragt.
+     */
+    public function ajax_cancel_sign(): void {
+        check_ajax_referer( 'sk_nostr_market_sign', 'nonce' );
+
+        $post_id = absint( $_POST['post_id'] ?? 0 );
+
+        if ( ! $post_id || ! current_user_can( 'edit_post', $post_id ) ) {
+            wp_send_json_error( [ 'message' => 'Keine Berechtigung für dieses Inserat.' ] );
+        }
+
+        delete_post_meta( $post_id, '_sk_nostr_market_pending_sign' );
+
+        wp_send_json_success();
     }
 
     /**

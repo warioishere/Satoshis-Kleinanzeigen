@@ -1,0 +1,104 @@
+/*
+ * Warten auf die Unterschrift der Nostr-Erweiterung.
+ *
+ * Optik bewusst wie das Abmelden-Modal im Dashboard: gleiche Flaeche, gleiche
+ * Farben, gleiche Knopfformen. Ein zweites Modal-Design fuer denselben Zweck
+ * waere nur Ballast.
+ */
+.sk-nostr-sign-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.sk-nostr-sign-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+}
+.sk-nostr-sign-box {
+    position: relative;
+    background: #181e27;
+    border-radius: 12px;
+    padding: 40px;
+    max-width: 420px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: skNostrSignSlideUp 0.3s ease;
+}
+@keyframes skNostrSignSlideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+.sk-nostr-sign-icon {
+    font-size: 48px;
+    color: #f7931a;
+    margin-bottom: 16px;
+}
+/* Dreht sich nur, solange gewartet wird. */
+.sk-nostr-sign-modal[data-state="waiting"] .sk-nostr-sign-icon i {
+    animation: skNostrSignSpin 1.2s linear infinite;
+    display: inline-block;
+}
+@keyframes skNostrSignSpin {
+    to { transform: rotate(360deg); }
+}
+.sk-nostr-sign-box h3 {
+    color: #fff;
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+}
+.sk-nostr-sign-box p {
+    color: #9aa4b2;
+    font-size: 15px;
+    margin: 0 0 28px 0;
+    line-height: 1.5;
+}
+.sk-nostr-sign-title {
+    display: block;
+    color: #cfd6df;
+    font-weight: 600;
+    margin-bottom: 4px;
+    word-break: break-word;
+}
+.sk-nostr-sign-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.sk-nostr-sign-cancel {
+    background: #2b3240;
+    border: 2px solid #2b3240;
+    color: #fff;
+    font-weight: 600;
+    padding: 10px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+.sk-nostr-sign-cancel:hover {
+    background: #343d4d;
+    border-color: #343d4d;
+}
+.sk-nostr-sign-retry {
+    background: #f7931a;
+    border: 2px solid #f7931a;
+    color: #181e27;
+    font-weight: 700;
+    padding: 10px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+.sk-nostr-sign-retry:hover {
+    background: #ff9d2e;
+    border-color: #ff9d2e;
+}
