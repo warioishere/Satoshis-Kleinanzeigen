@@ -48,7 +48,12 @@ wp_enqueue_script( 'sk-php-dashboard-settings' );
 
                     if ( $type === 'sub_section' ) : ?>
                         <tr>
-                            <td colspan="2"><h3><?php echo esc_html( $label ); ?></h3></td>
+                            <td colspan="2">
+                                <h3><?php echo esc_html( $label ); ?></h3>
+                                <?php if ( $desc ) : ?>
+                                    <p class="description"><?php echo wp_kses( $desc, [ 'br' => [], 'code' => [], 'strong' => [], 'em' => [], 'a' => [ 'href' => [], 'target' => [] ] ] ); ?></p>
+                                <?php endif; ?>
+                            </td>
                         </tr>
                     <?php continue;
                     endif;
@@ -74,6 +79,16 @@ wp_enqueue_script( 'sk-php-dashboard-settings' );
                                            value="<?php echo esc_attr( $value ); ?>"
                                            class="regular-text"
                                            <?php if ( ! empty( $field['placeholder'] ) ) : ?>placeholder="<?php echo esc_attr( $field['placeholder'] ); ?>"<?php endif; ?>>
+                                    <?php
+                                    break;
+
+                                case 'textarea':
+                                    ?>
+                                    <textarea id="<?php echo esc_attr( $current_section . '_' . $name ); ?>"
+                                              name="<?php echo esc_attr( $current_section . '[' . $name . ']' ); ?>"
+                                              rows="<?php echo esc_attr( (int) ( $field['rows'] ?? 5 ) ); ?>"
+                                              class="large-text code"
+                                              <?php if ( ! empty( $field['placeholder'] ) ) : ?>placeholder="<?php echo esc_attr( $field['placeholder'] ); ?>"<?php endif; ?>><?php echo esc_textarea( (string) $value ); ?></textarea>
                                     <?php
                                     break;
 

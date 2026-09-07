@@ -77,6 +77,9 @@ class SettingsPage extends AbstractPage {
                 $new_values[ $name ] = isset( $_POST[ $section ][ $name ] ) && $_POST[ $section ][ $name ] === 'on' ? 'on' : 'off';
             } elseif ( $field['type'] === 'number' ) {
                 $new_values[ $name ] = isset( $_POST[ $section ][ $name ] ) ? sanitize_text_field( $_POST[ $section ][ $name ] ) : '';
+            } elseif ( $field['type'] === 'textarea' ) {
+                // Line breaks are data here (one relay per line); sanitize_text_field() would fold them.
+                $new_values[ $name ] = isset( $_POST[ $section ][ $name ] ) ? sanitize_textarea_field( wp_unslash( $_POST[ $section ][ $name ] ) ) : '';
             } elseif ( $field['type'] === 'charges' ) {
                 $new_values[ $name ] = isset( $_POST[ $section ][ $name ] ) ? array_map( function( $method_charges ) {
                     return array_map( 'sanitize_text_field', (array) $method_charges );
