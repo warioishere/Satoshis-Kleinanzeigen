@@ -376,7 +376,7 @@ class NostrDMListener {
          * seinem Client nimmt: Inserat sehen, auf den Absender antworten.
          */
         if ( $empfaenger['vendor_id'] > 0 ) {
-            self::route_to_vendor( $empfaenger['vendor_id'], $sender_pubkey, $decrypted );
+            self::route_to_vendor( $empfaenger['vendor_id'], $sender_pubkey, $decrypted, $empfaenger['pubkey'] );
             return;
         }
 
@@ -395,7 +395,7 @@ class NostrDMListener {
             $autor = (int) get_post_field( 'post_author', $post_id );
 
             if ( $autor ) {
-                self::create_bridge_chat( $autor, $sender_pubkey, $post_id, get_the_title( $post_id ), self::clean_field( $decrypted, 4000 ) );
+                self::create_bridge_chat( $autor, $sender_pubkey, $post_id, get_the_title( $post_id ), self::clean_field( $decrypted, 4000 ), $empfaenger['pubkey'] );
                 return;
             }
         }
@@ -407,14 +407,14 @@ class NostrDMListener {
     /**
      * Eine Nachricht dem Anbieter zustellen, an dessen Postfach sie ging.
      */
-    private static function route_to_vendor( int $vendor_id, string $sender_pubkey, string $text ): void {
+    private static function route_to_vendor( int $vendor_id, string $sender_pubkey, string $text, string $inbox ): void {
         $text = self::clean_field( $text, 4000 );
 
         if ( '' === $text ) {
             return;
         }
 
-        self::create_bridge_chat( $vendor_id, $sender_pubkey, 0, '', $text );
+        self::create_bridge_chat( $vendor_id, $sender_pubkey, 0, '', $text, $inbox );
     }
 
     /** Nutzermeta mit den vorgemerkten, noch verschluesselten Nachrichten. */
@@ -489,14 +489,24 @@ class NostrDMListener {
     }
 
     /**
-     * Eine im Browser entschluesselte Nachricht zustellen.
+     * Deliver a message that was decrypted in the browser.
      *
-     * Der Klartext kommt vom Anbieter selbst, wir koennen ihn nicht pruefen —
-     * das ist der Preis dafuer, dass wir seinen Schluessel nicht haben. Was
-     * wir pruefen: dass die Kennung wirklich in seiner Warteschlange stand.
-     * Sonst koennte jemand beliebige Gespraeche in sein Postfach schreiben.
+     * The plaintext comes from the vendor and cannot be checked here; that
+     * is the price of not holding the key.
+     *
+     * The sender can be checked, though: the browser sends the seal (kind
+     * 13) along, exactly as it sat inside the wrap. The seal is signed by
+     * the real sender and the server verifies that signature. A claimed
+     * pubkey alone was not enough: it allowed creating a conversation with
+     * any Nostr user, and every reply in it went out as a DM to that user.
+     *
+     * The event id also has to be in the vendor's queue.
+     *
+     * @param array $seal The seal as the browser took it out of the wrap:
+     *                    id, pubkey, sig, kind, created_at, tags, content
+     *                    (still encrypted).
      */
-    public static function deliver_decrypted( int $vendor_id, string $event_id, string $sender_pubkey, string $text ): bool {
+    public static function deliver_decrypted( int $vendor_id, string $event_id, array $seal, string $text ): bool {
         $bekannt = false;
 
         foreach ( self::pending_for( $vendor_id ) as $e ) {
@@ -512,9 +522,10 @@ class NostrDMListener {
 
         self::forget_pending( $vendor_id, $event_id );
 
-        $sender_pubkey = strtolower( $sender_pubkey );
+        $sender_pubkey = self::verified_seal_sender( $seal );
 
-        if ( ! preg_match( '/^[0-9a-f]{64}$/', $sender_pubkey ) ) {
+        if ( null === $sender_pubkey ) {
+            error_log( '[SK Nostr Market Bridge] Seal for ' . substr( $event_id, 0, 12 ) . ' failed signature verification.' );
             return false;
         }
 
@@ -524,9 +535,49 @@ class NostrDMListener {
             return false;
         }
 
-        self::create_bridge_chat( $vendor_id, $sender_pubkey, 0, '', $text );
+        $inbox = strtolower( (string) get_user_meta( $vendor_id, 'nostr_public_key', true ) );
+
+        self::create_bridge_chat( $vendor_id, $sender_pubkey, 0, '', $text, $inbox );
 
         return true;
+    }
+
+    /**
+     * The sender of a seal (kind 13), accepted only with a valid signature.
+     *
+     * @return string|null Lowercase hex pubkey, or null.
+     */
+    public static function verified_seal_sender( array $seal ): ?string {
+        if ( 13 !== (int) ( $seal['kind'] ?? 0 ) ) {
+            return null;
+        }
+
+        foreach ( [ 'id', 'pubkey', 'sig', 'content' ] as $feld ) {
+            if ( ! isset( $seal[ $feld ] ) || ! is_string( $seal[ $feld ] ) ) {
+                return null;
+            }
+        }
+
+        if ( ! isset( $seal['created_at'] ) || ! is_int( $seal['created_at'] ) ) {
+            return null;
+        }
+
+        $seal['kind'] = 13;
+        $seal['tags'] = isset( $seal['tags'] ) && is_array( $seal['tags'] ) ? $seal['tags'] : [];
+
+        if ( ! class_exists( '\swentel\nostr\Event\Event' ) ) {
+            return null;
+        }
+
+        try {
+            if ( ! ( new \swentel\nostr\Event\Event() )->verify( (object) $seal ) ) {
+                return null;
+            }
+        } catch ( \Throwable $e ) {
+            return null;
+        }
+
+        return strtolower( $seal['pubkey'] );
     }
 
     /**
@@ -625,8 +676,12 @@ class NostrDMListener {
 
     /**
      * Create a VendorChat bridged to a Nostr user.
+     *
+     * @param string $inbox Which of our mailboxes the message went to. Decides
+     *                      later which key the reply goes out with:
+     *                      marketplace or vendor.
      */
-    private static function create_bridge_chat( int $vendor_id, string $nostr_pubkey, int $product_id, string $product_title, string $message ): int {
+    private static function create_bridge_chat( int $vendor_id, string $nostr_pubkey, int $product_id, string $product_title, string $message, string $inbox = '' ): int {
         $admin_id = self::get_admin_user_id();
 
         // Check for existing bridge chat with this pubkey + vendor.
@@ -678,6 +733,7 @@ class NostrDMListener {
         // Bridge metadata.
         update_post_meta( $chat_id, '_dvc_nostr_bridge', '1' );
         update_post_meta( $chat_id, '_dvc_nostr_pubkey', $nostr_pubkey );
+        update_post_meta( $chat_id, ChatBridge::INBOX_META, strtolower( $inbox ) );
 
         ChatBridge::add_message( $chat_id, $admin_id, $message, $nostr_pubkey );
 

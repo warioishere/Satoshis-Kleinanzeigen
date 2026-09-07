@@ -92,9 +92,9 @@ class EventSender {
      * Verteilt wird es ueber dieselbe Schleife und dieselbe Erfolgspruefung
      * wie alles andere.
      *
-     * Kennung und Signatur werden hier geprueft, nicht erst vom Relay. Was
-     * hier ankommt, hat ein Browser geschickt; ohne Pruefung liesse sich
-     * eine beliebige Kennung ins Inserat schreiben.
+     * Id and signature are verified here, not left to the relay. The input
+     * comes from a browser; without the check an arbitrary id could be
+     * written into the product meta.
      *
      * @param array $signed_event
      * @return string|null Ereigniskennung, wenn ein Relay es angenommen hat.
@@ -142,11 +142,11 @@ class EventSender {
     }
 
     /**
-     * Ein Ereignis aus Rohdaten bauen, wie sie ein Browser schickt.
+     * Build an Event from raw data as a browser sends it.
      *
-     * Vorher: Kennung muss zum Inhalt passen, Signatur zum Schluessel. Beides
-     * prueft die Bibliothek; die Kennung ist der SHA-256 ueber die
-     * kanonische Form, die Signatur Schnorr ueber die Kennung.
+     * The id has to match the content and the signature has to match the
+     * pubkey. The library checks both: the id is the SHA-256 of the
+     * canonical form, the signature is Schnorr over the id.
      *
      * @param array $raw
      */
@@ -171,7 +171,7 @@ class EventSender {
             $event = new Event();
 
             if ( ! $event->verify( (object) $raw ) ) {
-                error_log( '[SK Nostr Market] Signiertes Ereignis ' . $raw['id'] . ' besteht die Pruefung nicht.' );
+                error_log( '[SK Nostr Market] Signed event ' . $raw['id'] . ' failed verification.' );
                 return null;
             }
 
@@ -179,7 +179,7 @@ class EventSender {
 
             return $event;
         } catch ( \Throwable $e ) {
-            error_log( '[SK Nostr Market] Signiertes Ereignis unbrauchbar: ' . $e->getMessage() );
+            error_log( '[SK Nostr Market] Signed event unusable: ' . $e->getMessage() );
             return null;
         }
     }

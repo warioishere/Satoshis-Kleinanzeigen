@@ -160,6 +160,9 @@ final class Module {
         add_action( 'wp_ajax_sk_nostr_pending_wraps', [ $this, 'ajax_pending_wraps' ] );
         add_action( 'wp_ajax_sk_nostr_deliver_decrypted', [ $this, 'ajax_deliver_decrypted' ] );
         add_action( 'wp_ajax_sk_nostr_drop_wrap', [ $this, 'ajax_drop_wrap' ] );
+        add_action( 'wp_ajax_sk_nostr_pending_replies', [ $this, 'ajax_pending_replies' ] );
+        add_action( 'wp_ajax_sk_nostr_deliver_sealed', [ $this, 'ajax_deliver_sealed' ] );
+        add_action( 'wp_ajax_sk_nostr_drop_reply', [ $this, 'ajax_drop_reply' ] );
         add_action( 'wp_ajax_sk_nostr_market_fallback_sign', [ $this, 'ajax_fallback_sign' ] );
         add_action( 'wp_ajax_sk_nostr_market_cancel_sign', [ $this, 'ajax_cancel_sign' ] );
         add_action( 'wp_footer', [ $this, 'render_sign_modal' ] );
@@ -245,10 +248,11 @@ final class Module {
     }
 
     /**
-     * Das Skript, das vorgemerkte Nachrichten im Browser oeffnet.
+     * The script that opens queued messages in the browser and seals queued
+     * replies there.
      *
-     * Nur fuer Anbieter, deren Schluessel wir nicht haben und fuer die etwas
-     * wartet. Alle anderen bekommen es nicht zu Gesicht.
+     * Only for vendors whose key we do not hold and who have something
+     * waiting. Nobody else gets to see it.
      */
     public function enqueue_inbox_js(): void {
         if ( ! is_user_logged_in() ) {
@@ -257,7 +261,7 @@ final class Module {
 
         $user_id = get_current_user_id();
 
-        if ( empty( Bridge\NostrDMListener::pending_for( $user_id ) ) ) {
+        if ( empty( Bridge\NostrDMListener::pending_for( $user_id ) ) && empty( Bridge\ChatBridge::pending_replies_for( $user_id ) ) ) {
             return;
         }
 
@@ -304,14 +308,69 @@ final class Module {
         }
 
         $event_id = sanitize_text_field( (string) wp_unslash( $_POST['event_id'] ?? '' ) );
-        $sender   = sanitize_text_field( (string) wp_unslash( $_POST['sender'] ?? '' ) );
+        $seal     = json_decode( (string) wp_unslash( $_POST['seal'] ?? '' ), true );
         $text     = (string) wp_unslash( $_POST['text'] ?? '' );
 
-        $ok = Bridge\NostrDMListener::deliver_decrypted( get_current_user_id(), $event_id, $sender, $text );
+        $ok = is_array( $seal ) && Bridge\NostrDMListener::deliver_decrypted( get_current_user_id(), $event_id, $seal, $text );
 
         if ( ! $ok ) {
             wp_send_json_error( [ 'message' => 'Nachricht nicht zustellbar.' ] );
         }
+
+        wp_send_json_success();
+    }
+
+    /**
+     * AJAX: replies the vendor has to seal in the browser.
+     */
+    public function ajax_pending_replies(): void {
+        check_ajax_referer( 'sk_nostr_inbox', 'nonce' );
+
+        if ( ! is_user_logged_in() ) {
+            wp_send_json_error( [ 'message' => 'Nicht angemeldet.' ] );
+        }
+
+        wp_send_json_success( [
+            'replies' => Bridge\ChatBridge::pending_replies_for( get_current_user_id() ),
+        ] );
+    }
+
+    /**
+     * AJAX: accept a seal signed in the browser, wrap it and send it.
+     */
+    public function ajax_deliver_sealed(): void {
+        check_ajax_referer( 'sk_nostr_inbox', 'nonce' );
+
+        if ( ! is_user_logged_in() ) {
+            wp_send_json_error( [ 'message' => 'Nicht angemeldet.' ] );
+        }
+
+        $reply_id = sanitize_text_field( (string) wp_unslash( $_POST['reply_id'] ?? '' ) );
+        $seal     = json_decode( (string) wp_unslash( $_POST['seal'] ?? '' ), true );
+
+        $ok = is_array( $seal ) && Bridge\ChatBridge::deliver_sealed( get_current_user_id(), $reply_id, $seal );
+
+        if ( ! $ok ) {
+            wp_send_json_error( [ 'message' => 'Antwort nicht gesendet.' ] );
+        }
+
+        wp_send_json_success();
+    }
+
+    /**
+     * AJAX: discard a queued reply that could not be sealed.
+     */
+    public function ajax_drop_reply(): void {
+        check_ajax_referer( 'sk_nostr_inbox', 'nonce' );
+
+        if ( ! is_user_logged_in() ) {
+            wp_send_json_error( [ 'message' => 'Nicht angemeldet.' ] );
+        }
+
+        Bridge\ChatBridge::forget_reply(
+            get_current_user_id(),
+            sanitize_text_field( (string) wp_unslash( $_POST['reply_id'] ?? '' ) )
+        );
 
         wp_send_json_success();
     }
@@ -416,9 +475,9 @@ final class Module {
             wp_send_json_error( [ 'message' => 'Pubkey stimmt nicht überein.' ] );
         }
 
-        // Nur das Inserat selbst, unter seiner eigenen Kennung. Die
-        // Ereigniskennung wird gleich am Inserat vermerkt und spaeter fuer
-        // das Zurueckziehen benutzt; sie muss zu diesem Inserat gehoeren.
+        // Only the listing itself, under its own d tag. The event id is stored
+        // on the product and used later for the deletion event, so it has to
+        // belong to this product.
         if ( 30402 !== ( $signed_event['kind'] ?? 0 ) || ! self::has_d_tag( $signed_event, 'sk-' . $post_id ) ) {
             wp_send_json_error( [ 'message' => 'Das Ereignis gehört nicht zu diesem Inserat.' ] );
         }
@@ -437,7 +496,7 @@ final class Module {
     }
 
     /**
-     * Traegt das Ereignis die Kennung ('d') genau dieses Inserats?
+     * Does the event carry the 'd' tag of exactly this product?
      */
     private static function has_d_tag( array $event, string $d ): bool {
         foreach ( (array) ( $event['tags'] ?? [] ) as $tag ) {

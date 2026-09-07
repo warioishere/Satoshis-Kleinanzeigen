@@ -14,6 +14,15 @@ defined( 'ABSPATH' ) || exit;
  */
 class ChatBridge {
 
+    /** Chat meta: which of our mailboxes the first message went to. */
+    const INBOX_META = '_dvc_nostr_inbox';
+
+    /** User meta: replies the vendor still has to seal in the browser. */
+    const REPLIES_META = '_sk_nostr_pending_replies';
+
+    /** Cap for the reply queue. */
+    const REPLIES_MAX = 30;
+
     public static function init(): void {
         if ( sk_get_option( 'sk_nostr_market_bridge_enabled', 'sk_nostr_market', 'off' ) !== 'on' ) {
             return;
@@ -197,17 +206,147 @@ class ChatBridge {
             return;
         }
 
+        /*
+         * Which key does the reply go out with?
+         *
+         * The buyer wrote to a specific mailbox and expects the reply from
+         * there. If the message went to the vendor, the vendor replies: with
+         * the key we hold, or by sealing the reply in the browser. Only a
+         * buyer who wrote to the marketplace mailbox gets the reply from the
+         * marketplace.
+         *
+         * Every reply without a vendor key used to fall back to the
+         * marketplace key. That made the SK account speak for everyone, and
+         * whoever obtained a chat with an arbitrary pubkey could message
+         * that pubkey under our name.
+         */
+        if ( class_exists( 'SK\Modules\Auth\NostrIdentity' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $sender_id ) ) {
+            self::send_dm( $recipient, $text, $sender_id );
+            return;
+        }
+
+        $inbox      = strtolower( (string) get_post_meta( $chat_id, self::INBOX_META, true ) );
+        $markt      = strtolower( (string) EventSender::get_pubkey() );
+        $vendor_pub = strtolower( (string) get_user_meta( $sender_id, 'nostr_public_key', true ) );
+
+        if ( '' !== $vendor_pub && $inbox !== $markt ) {
+            self::queue_reply( $sender_id, $chat_id, $recipient, $text );
+            return;
+        }
+
         $store_info  = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( $sender_id ) : [];
         $vendor_name = $store_info['store_name'] ?? ( get_userdata( $sender_id )->display_name ?? 'Vendor' );
 
-        /*
-         * Mit dem Schluessel des Anbieters, wenn er einen hat. Sonst haette
-         * der Kaeufer an den Anbieter geschrieben und die Antwort kaeme vom
-         * Marktplatz — in seinem Client zwei verschiedene Gespraechspartner
-         * fuer dasselbe Gespraech. send_dm() faellt von allein auf den
-         * Marktplatzschluessel zurueck, wenn keiner hinterlegt ist.
-         */
-        self::send_dm( $recipient, "{$vendor_name}: {$text}", $sender_id );
+        self::send_dm( $recipient, "{$vendor_name}: {$text}" );
+    }
+
+    /**
+     * Queue a reply only the vendor can seal.
+     *
+     * The key lives in the vendor's extension. On the next visit the browser
+     * encrypts the reply for the recipient and signs the seal; the server
+     * then adds the wrap with a throwaway key, which needs no vendor key.
+     */
+    private static function queue_reply( int $vendor_id, int $chat_id, string $recipient, string $text ): void {
+        $offen = self::pending_replies_for( $vendor_id );
+
+        $offen[] = [
+            'id'      => bin2hex( random_bytes( 16 ) ),
+            'chat_id' => $chat_id,
+            'to'      => strtolower( $recipient ),
+            'text'    => $text,
+            'time'    => time(),
+        ];
+
+        if ( count( $offen ) > self::REPLIES_MAX ) {
+            error_log( '[SK Nostr Bridge] Vendor ' . $vendor_id . ': more than ' . self::REPLIES_MAX . ' unsealed replies, oldest dropped.' );
+            $offen = array_slice( $offen, -self::REPLIES_MAX );
+        }
+
+        update_user_meta( $vendor_id, self::REPLIES_META, $offen );
+    }
+
+    /**
+     * The queued replies of a vendor.
+     */
+    public static function pending_replies_for( int $vendor_id ): array {
+        $offen = get_user_meta( $vendor_id, self::REPLIES_META, true );
+
+        return is_array( $offen ) ? array_values( $offen ) : [];
+    }
+
+    /**
+     * Remove a reply from the queue.
+     */
+    public static function forget_reply( int $vendor_id, string $reply_id ): void {
+        $rest = array_values( array_filter( self::pending_replies_for( $vendor_id ), static function ( $e ) use ( $reply_id ) {
+            return ( $e['id'] ?? '' ) !== $reply_id;
+        } ) );
+
+        if ( empty( $rest ) ) {
+            delete_user_meta( $vendor_id, self::REPLIES_META );
+        } else {
+            update_user_meta( $vendor_id, self::REPLIES_META, $rest );
+        }
+    }
+
+    /**
+     * Wrap a seal (kind 13) signed in the browser and send it.
+     *
+     * The browser encrypted the reply for the recipient and signed the seal
+     * with the vendor's key. Here the seal is checked to really come from
+     * the vendor, then the wrap (kind 1059) with a throwaway key goes around
+     * it and out to the relays.
+     *
+     * The recipient comes from the queue entry, not from the browser.
+     *
+     * @return bool True if a relay accepted the wrap.
+     */
+    public static function deliver_sealed( int $vendor_id, string $reply_id, array $seal ): bool {
+        $eintrag = null;
+
+        foreach ( self::pending_replies_for( $vendor_id ) as $e ) {
+            if ( ( $e['id'] ?? '' ) === $reply_id ) {
+                $eintrag = $e;
+                break;
+            }
+        }
+
+        if ( null === $eintrag || ! preg_match( '/^[0-9a-f]{64}$/', (string) ( $eintrag['to'] ?? '' ) ) ) {
+            return false;
+        }
+
+        $absender   = NostrDMListener::verified_seal_sender( $seal );
+        $vendor_pub = strtolower( (string) get_user_meta( $vendor_id, 'nostr_public_key', true ) );
+
+        if ( null === $absender || '' === $vendor_pub || $absender !== $vendor_pub ) {
+            error_log( '[SK Nostr Bridge] Seal for reply ' . $reply_id . ' is not from vendor ' . $vendor_id . '.' );
+            self::forget_reply( $vendor_id, $reply_id );
+            return false;
+        }
+
+        if ( ! class_exists( '\swentel\nostr\Nip59\GiftWrapService' ) ) {
+            return false;
+        }
+
+        try {
+            $seal['kind'] = 13;
+            $seal['tags'] = isset( $seal['tags'] ) && is_array( $seal['tags'] ) ? $seal['tags'] : [];
+
+            $seal_event = ( new \swentel\nostr\Event\Event() )->populate( (object) $seal );
+            $svc        = new \swentel\nostr\Nip59\GiftWrapService( new \swentel\nostr\Key\Key(), new \swentel\nostr\Sign\Sign() );
+            $wrap       = $svc->createGiftWrap( $seal_event, $eintrag['to'] );
+            $sent       = self::send_wrap( $wrap );
+        } catch ( \Throwable $e ) {
+            error_log( '[SK Nostr Bridge] Wrapping reply ' . $reply_id . ' failed: ' . $e->getMessage() );
+            return false;
+        }
+
+        if ( $sent ) {
+            self::forget_reply( $vendor_id, $reply_id );
+        }
+
+        return $sent;
     }
 
     /**
@@ -216,17 +355,19 @@ class ChatBridge {
      *
      * @param string $recipient_pubkey Recipient's hex pubkey.
      * @param string $text             Plaintext message.
-     * @param int    $sender_user_id   Optional: SK user ID of sender (uses their Nostr key).
+     * @param int    $sender_user_id   SK user whose key signs the DM; 0 means
+     *                                 the marketplace key. A user without a
+     *                                 key held here gets false, never the
+     *                                 marketplace as a silent stand-in.
      */
     public static function send_dm( string $recipient_pubkey, string $text, int $sender_user_id = 0 ): bool {
-        // Determine sender's private key.
-        $sender_privkey = null;
+        if ( $sender_user_id ) {
+            if ( ! class_exists( 'SK\Modules\Auth\NostrIdentity' ) ) {
+                return false;
+            }
 
-        if ( $sender_user_id && class_exists( 'SK\Modules\Auth\NostrIdentity' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $sender_user_id ) ) {
             $sender_privkey = \SK\Modules\Auth\NostrIdentity::get_private_key( $sender_user_id );
-        }
-
-        if ( ! $sender_privkey ) {
+        } else {
             $sender_privkey = EventSender::get_privkey();
         }
 
@@ -280,7 +421,15 @@ class ChatBridge {
         // Create gift wrap (Kind 1059) — encrypted with random one-time key.
         $giftWrap = $giftWrapSvc->createGiftWrap( $seal, $recipient_pubkey );
 
-        // Send to relays.
+        return self::send_wrap( $giftWrap );
+    }
+
+    /**
+     * Send a finished wrap (kind 1059) to the relays.
+     *
+     * @param \swentel\nostr\EventInterface $giftWrap
+     */
+    private static function send_wrap( $giftWrap ): bool {
         $relays = class_exists( 'SK\Modules\Auth\NostrIdentity' )
             ? \SK\Modules\Auth\NostrIdentity::get_relays()
             : [ 'wss://relay.nostr.band', 'wss://nos.lol' ];
