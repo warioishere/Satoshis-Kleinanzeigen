@@ -319,6 +319,12 @@ class NostrDMListener {
         $bytes  = 0;
         $client = null;
 
+        // NIP-42 state for this connection (see the receive loop).
+        $markt_priv = EventSender::get_privkey();
+        $auth_id    = null;
+        $authed     = false;
+        $reopen     = false;
+
         try {
             $client = new \WebSocket\Client( $relay_url );
             $client->setTimeout( self::RELAY_TIMEOUT );
@@ -347,11 +353,13 @@ class NostrDMListener {
                 }
 
                 $sub_id = bin2hex( random_bytes( 8 ) );
-                $client->text( wp_json_encode( array_merge( [ 'REQ', $sub_id ], $filters ) ) );
+                $req    = wp_json_encode( array_merge( [ 'REQ', $sub_id ], $filters ) );
+                $client->text( $req );
 
                 $count  = array_fill_keys( $batch, 0 );
                 $oldest = array_fill_keys( $batch, PHP_INT_MAX );
                 $eose   = false;
+                $resent = false;
 
                 while ( microtime( true ) < $deadline ) {
                     $data = json_decode( $client->receive()->getContent(), true );
@@ -360,8 +368,43 @@ class NostrDMListener {
                         continue;
                     }
 
+                    /*
+                     * NIP-42. A relay guarding its inbox challenges us and
+                     * closes the subscription with "auth-required" until the
+                     * challenge is answered; the answer is signed with the
+                     * marketplace key, the one mailbox key held here that
+                     * every poll has. The subscription is then opened again.
+                     */
+                    if ( 'AUTH' === $data[0] ) {
+                        if ( null === $auth_id && $breaker && $markt_priv && is_string( $data[1] ?? null ) && '' !== $data[1] ) {
+                            $auth_id = \SK\Modules\Auth\RelayPublisher::answer_challenge( $client, $relay_url, $data[1], $markt_priv );
+                        }
+                        continue;
+                    }
+
+                    if ( 'OK' === $data[0] && null !== $auth_id && ( $data[1] ?? '' ) === $auth_id ) {
+                        $authed = ! empty( $data[2] );
+
+                        if ( $authed && $reopen && ! $resent ) {
+                            $client->text( $req );
+                            $resent = true;
+                        }
+                        continue;
+                    }
+
                     // Answers to an earlier, already closed subscription.
                     if ( in_array( $data[0], [ 'EVENT', 'EOSE', 'CLOSED' ], true ) && ( $data[1] ?? '' ) !== $sub_id ) {
+                        continue;
+                    }
+
+                    if ( 'CLOSED' === $data[0] && null !== $auth_id && ! $resent
+                        && \SK\Modules\Auth\RelayPublisher::wants_auth( (string) ( $data[2] ?? '' ) ) ) {
+                        $reopen = true;
+
+                        if ( $authed ) {
+                            $client->text( $req );
+                            $resent = true;
+                        }
                         continue;
                     }
 

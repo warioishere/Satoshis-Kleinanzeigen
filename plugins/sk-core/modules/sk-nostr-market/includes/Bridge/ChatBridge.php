@@ -80,7 +80,7 @@ class ChatBridge {
                 }
 
                 ( new \swentel\nostr\Sign\Sign() )->signEvent( $event, $privkey );
-                \SK\Modules\Auth\RelayPublisher::publish( $event, $relays );
+                \SK\Modules\Auth\RelayPublisher::publish( $event, $relays, $privkey );
             } catch ( \Throwable $e ) {
                 error_log( '[SK Nostr Bridge] Announcing the DM relays failed: ' . $e->getMessage() );
             }
@@ -590,7 +590,7 @@ class ChatBridge {
         $event->setCreatedAt( time() );
         ( new \swentel\nostr\Sign\Sign() )->signEvent( $event, $sender_privkey );
 
-        $result = \SK\Modules\Auth\RelayPublisher::publish( $event, \SK\Modules\Auth\NostrIdentity::get_relays() );
+        $result = \SK\Modules\Auth\RelayPublisher::publish( $event, \SK\Modules\Auth\NostrIdentity::get_relays(), $sender_privkey );
 
         return ! empty( $result['accepted'] );
     }
