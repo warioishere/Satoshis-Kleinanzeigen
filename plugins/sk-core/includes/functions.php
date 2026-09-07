@@ -2329,6 +2329,13 @@ function sk_admin_settings_rearrange_map( $option, $section ) {
             'store_map_sk_general'                  => [ 'store_map', 'sk_appearance' ],
             'contact_seller_sk_general'             => [ 'contact_seller', 'sk_appearance' ],
             'enable_theme_store_sidebar_sk_general' => [ 'enable_theme_store_sidebar', 'sk_appearance' ],
+            // Everything Nostr is configured in one section (sk_nostr, see
+            // sk-auth NostrSettings). Modules keep reading their old keys;
+            // the map is in core so it holds whatever order modules load in.
+            'sk_notif_nostr_enabled_sk_notifications'       => [ 'sk_notif_nostr_enabled', 'sk_nostr' ],
+            'sk_nostr_market_enabled_sk_nostr_market'        => [ 'sk_nostr_market_enabled', 'sk_nostr' ],
+            'sk_nostr_market_bridge_enabled_sk_nostr_market' => [ 'sk_nostr_market_bridge_enabled', 'sk_nostr' ],
+            'sk_nostr_market_currency_sk_nostr_market'       => [ 'sk_nostr_market_currency', 'sk_nostr' ],
         ]
     );
 

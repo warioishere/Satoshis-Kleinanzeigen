@@ -10,14 +10,12 @@
 
 if (!defined('ABSPATH')) exit;
 
-if (!defined('NAP_OPTION_GROUP')) define('NAP_OPTION_GROUP', 'nap_nostr_settings');
 if (!defined('NAP_OPTION_NAME'))  define('NAP_OPTION_NAME',  'nap_nostr_options');
 if (!defined('NAP_META_EVENT_ID')) define('NAP_META_EVENT_ID','_nap_nostr_event_id');
 
 use swentel\nostr\Event\Event;
 use swentel\nostr\Sign\Sign;
-use swentel\nostr\Relay\Relay;
-use swentel\nostr\Message\EventMessage;
+use SK\Modules\Auth\RelayPublisher;
 
 /**
  * Logging (nur wenn WP_DEBUG true ist)
@@ -29,40 +27,38 @@ function nap_log(string $msg): void {
 }
 
 /**
- * Did the relay actually accept the event?
+ * Send a signed event to the relays and log per relay.
  *
- * Relay::send() always returns an object, so a plain "!== false" check treated
- * a rejection as a success. Only an explicit isSuccess=false counts as refused;
- * anything unexpected is treated as accepted so we never post twice.
+ * @return bool True if at least one relay accepted it.
  */
-function nap_relay_accepted($response): bool {
-    if (is_object($response) && property_exists($response, 'isSuccess')) {
-        return (bool) $response->isSuccess;
+function nap_publish(Event $note, array $relays, string $prefix = ''): bool {
+    if (!class_exists(RelayPublisher::class)) {
+        nap_log($prefix . 'RelayPublisher (sk_auth) nicht geladen.');
+        return false;
     }
-    return $response !== false;
+
+    $result = RelayPublisher::publish($note, $relays);
+
+    foreach ($result['accepted'] as $url) {
+        nap_log(sprintf('%sEvent %s an Relay %s gesendet.', $prefix, $note->getId(), $url));
+    }
+    foreach ($result['rejected'] as $url => $reason) {
+        nap_log(sprintf('%sRelay %s nahm Event %s nicht an: %s', $prefix, $url, $note->getId(), $reason));
+    }
+
+    return !empty($result['accepted']);
 }
 
 /**
- * Readable reason from a relay response, for the log.
- */
-function nap_relay_message($response): string {
-    if (is_object($response) && property_exists($response, 'message') && $response->message !== '') {
-        return (string) $response->message;
-    }
-    return 'keine Begruendung';
-}
-
-/**
- * Optionen lesen (mit Defaults)
+ * Optionen lesen (mit Defaults). Only the private key is still read from
+ * here; relays and the switch live in the Nostr section of the SK settings.
  */
 function nap_get_options(): array {
     $defaults = [
         'private_key' => '',
-        'relays'      => "wss://relay.nostr.band\nwss://nos.lol",
-        'timeout'     => 3, // Sekunden pro Relay (bewusst kurz)
     ];
     $opts = get_option(NAP_OPTION_NAME, []);
-    return wp_parse_args($opts, $defaults);
+    return wp_parse_args(is_array($opts) ? $opts : [], $defaults);
 }
 
 /**
@@ -83,20 +79,15 @@ function nap_resolve_private_key() {
 }
 
 /**
- * Relays parsen & validieren
+ * Relays: the one list from the Nostr section of the SK settings.
  */
 function nap_get_relays(): array {
-    $opts   = nap_get_options();
-    $lines  = preg_split('/\r\n|\r|\n/', (string)$opts['relays']);
-    $relays = array_values(array_filter(array_map(function($r) {
-        $r = trim($r);
-        if ($r === '') return null;
-        if (!preg_match('#^wss?://#i', $r)) return null;
-        return $r;
-    }, $lines)));
+    $relays = class_exists('SK\Modules\Auth\NostrIdentity')
+        ? \SK\Modules\Auth\NostrIdentity::get_relays()
+        : [];
 
     $relays = apply_filters('nap_nostr_relays', $relays);
-    return array_unique($relays);
+    return array_values(array_unique($relays));
 }
 
 /**
@@ -164,110 +155,11 @@ function nap_build_caption(int $product_id): string {
     return apply_filters('nap_nostr_caption', $caption, $product_id);
 }
 
-/**
- * SETTINGS-SEITE
+/*
+ * Settings live in the Nostr section of the SK settings (sk-auth,
+ * NostrSettings): relays, the private key when it is not in wp-config.php,
+ * and the on/off switch.
  */
-add_action('admin_menu', function() {
-    add_options_page(
-        'Nostr Auto Poster',
-        'Nostr Auto Poster',
-        'manage_options',
-        'nap-nostr-settings',
-        'nap_render_settings_page'
-    );
-});
-
-add_action('admin_init', function() {
-    register_setting(NAP_OPTION_GROUP, NAP_OPTION_NAME, [
-        'type'              => 'array',
-        'sanitize_callback' => 'nap_sanitize_options',
-    ]);
-
-    add_settings_section(
-        'nap_main',
-        'Allgemeine Einstellungen',
-        function() {
-            echo '<p>Privkey, Relay-Liste und Timeout. Tipp: Privkey besser in <code>wp-config.php</code> via <code>define(\'NAP_NOSTR_PRIVKEY\', \'…\');</code>.</p>';
-        },
-        'nap-nostr-settings'
-    );
-
-    add_settings_field('private_key','Privater Schlüssel (Hex)','nap_field_private_key','nap-nostr-settings','nap_main');
-    add_settings_field('relays','Relays (eine URL pro Zeile)','nap_field_relays','nap-nostr-settings','nap_main');
-    add_settings_field('timeout','Timeout pro Relay (Sek.)','nap_field_timeout','nap-nostr-settings','nap_main');
-});
-
-function nap_sanitize_options($input) {
-    $out = nap_get_options();
-
-    if (isset($input['private_key'])) {
-        $key = trim((string)$input['private_key']);
-        if ($key === '' || preg_match('/^[0-9a-fA-F]{64}$/', $key)) {
-            $out['private_key'] = $key;
-        }
-    }
-    if (isset($input['relays'])) {
-        $out['relays'] = str_replace("\r\n", "\n", (string)$input['relays']);
-    }
-    if (isset($input['timeout'])) {
-        $t = (int)$input['timeout'];
-        if ($t < 1)  $t = 1;
-        if ($t > 10) $t = 10; // obere Kappe, damit Requests nicht ewig hängen
-        $out['timeout'] = $t;
-    }
-    return $out;
-}
-
-function nap_field_private_key() {
-    $opts = nap_get_options();
-    $in_cfg = defined('NAP_NOSTR_PRIVKEY') && NAP_NOSTR_PRIVKEY;
-    ?>
-    <input type="password" name="<?php echo esc_attr(NAP_OPTION_NAME); ?>[private_key]"
-           value="<?php echo esc_attr($in_cfg ? '********' : ($opts['private_key'] ?? '')); ?>"
-           class="regular-text" placeholder="64-stelliger Hex-Schlüssel" <?php disabled($in_cfg, true); ?> />
-    <?php if ($in_cfg): ?>
-        <p class="description">Privkey ist per <code>NAP_NOSTR_PRIVKEY</code> in <code>wp-config.php</code> gesetzt.</p>
-    <?php else: ?>
-        <p class="description">Hinweis: In der DB gespeichert. In <code>wp-config.php</code> ist sicherer.</p>
-    <?php endif;
-}
-
-function nap_field_relays() {
-    $opts   = nap_get_options();
-    $relays = (string)$opts['relays'];
-    ?>
-    <textarea name="<?php echo esc_attr(NAP_OPTION_NAME); ?>[relays]" rows="6" cols="60" class="large-text code"
-              placeholder="wss://relay.nostr.band&#10;wss://nos.lol"><?php
-        echo esc_textarea($relays);
-    ?></textarea>
-    <p class="description">Eine URL pro Zeile. Nur <code>wss://</code> oder <code>ws://</code>.</p>
-    <?php
-}
-
-function nap_field_timeout() {
-    $opts = nap_get_options();
-    ?>
-    <input type="number" min="1" max="10" name="<?php echo esc_attr(NAP_OPTION_NAME); ?>[timeout]"
-           value="<?php echo esc_attr((int)$opts['timeout']); ?>" />
-    <p class="description">Sekunden pro Relay (1–10). Standard 3.</p>
-    <?php
-}
-
-function nap_render_settings_page() {
-    if (!current_user_can('manage_options')) return;
-    ?>
-    <div class="wrap">
-        <h1>Nostr Auto Poster – Einstellungen</h1>
-        <form method="post" action="options.php">
-            <?php
-                settings_fields(NAP_OPTION_GROUP);
-                do_settings_sections('nap-nostr-settings');
-                submit_button();
-            ?>
-        </form>
-    </div>
-    <?php
-}
 
 /**
  * HAUPT-HOOK: auf sk_new_product_added
@@ -370,37 +262,8 @@ register_shutdown_function(function() {
             continue;
         }
 
-        // Senden (reduced timeout: 1s per relay as safety net)
-        $opts     = nap_get_options();
-        $timeout  = min((int)($opts['timeout'] ?? 1), 3);
-        if ($timeout < 1) $timeout = 1;
-
         $eventId  = $note->getId();
-        $sent_any = false;
-
-        foreach ($relays as $relayUrl) {
-            try {
-                $eventMessage = new EventMessage($note);
-                $relay        = new Relay($relayUrl);
-                if (method_exists($relay, 'setTimeout')) {
-                    $relay->setTimeout($timeout);
-                }
-                $relay->setMessage($eventMessage);
-                $response = $relay->send();
-
-                // send() always returns an object, so the old "!== false" check
-                // counted a rejecting relay as a success. Trust an explicit
-                // isSuccess=false, treat anything else as accepted.
-                if (nap_relay_accepted($response)) {
-                    $sent_any = true;
-                    nap_log(sprintf('Event %s an Relay %s gesendet.', $eventId, $relayUrl));
-                } else {
-                    nap_log(sprintf('Relay %s lehnte Event %s ab: %s', $relayUrl, $eventId, nap_relay_message($response)));
-                }
-            } catch (\Throwable $e) {
-                nap_log(sprintf('Fehler beim Senden an %s: %s', $relayUrl, $e->getMessage()));
-            }
-        }
+        $sent_any = nap_publish($note, $relays);
 
         if ($sent_any) {
             update_post_meta($post_id, NAP_META_EVENT_ID, $eventId);
@@ -449,33 +312,8 @@ function nap_force_send_product( int $post_id ): bool {
         return false;
     }
 
-    $opts    = nap_get_options();
-    $timeout = min((int)($opts['timeout'] ?? 1), 3);
-    if ($timeout < 1) $timeout = 1;
-
     $eventId  = $note->getId();
-    $sent_any = false;
-
-    foreach ($relays as $relayUrl) {
-        try {
-            $eventMessage = new EventMessage($note);
-            $relay        = new Relay($relayUrl);
-            if (method_exists($relay, 'setTimeout')) {
-                $relay->setTimeout($timeout);
-            }
-            $relay->setMessage($eventMessage);
-            $response = $relay->send();
-
-            if (nap_relay_accepted($response)) {
-                $sent_any = true;
-                nap_log(sprintf('Force send: Event %s an Relay %s gesendet.', $eventId, $relayUrl));
-            } else {
-                nap_log(sprintf('Force send: Relay %s lehnte Event %s ab: %s', $relayUrl, $eventId, nap_relay_message($response)));
-            }
-        } catch (\Throwable $e) {
-            nap_log(sprintf('Force send: Fehler an %s: %s', $relayUrl, $e->getMessage()));
-        }
-    }
+    $sent_any = nap_publish($note, $relays, 'Force send: ');
 
     if ($sent_any) {
         update_post_meta($post_id, NAP_META_EVENT_ID, $eventId);

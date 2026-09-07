@@ -239,35 +239,13 @@ class EventSender {
     }
 
     /**
-     * Get relay URLs.
-     * Uses own config if set, falls back to Auto Poster relays.
+     * Relay URLs: the one list from the Nostr settings.
      */
     public static function get_relays(): array {
-        // Own relays from settings.
-        $own = sk_get_option( 'sk_nostr_market_relays', 'sk_nostr_market', '' );
-        if ( ! empty( trim( $own ) ) ) {
-            return self::parse_relays( $own );
+        if ( class_exists( 'SK\Modules\Auth\NostrIdentity' ) ) {
+            return \SK\Modules\Auth\NostrIdentity::get_relays();
         }
 
-        // Fallback to Auto Poster relays.
-        if ( function_exists( 'nap_get_relays' ) ) {
-            return nap_get_relays();
-        }
-
-        $opts   = get_option( 'nap_nostr_options', [] );
-        $relays = $opts['relays'] ?? "wss://relay.nostr.band\nwss://nos.lol";
-        return self::parse_relays( $relays );
-    }
-
-    private static function parse_relays( string $raw ): array {
-        $lines  = preg_split( '/[\n,\s]+/', $raw );
-        $relays = [];
-        foreach ( $lines as $line ) {
-            $line = trim( $line );
-            if ( preg_match( '#^wss?://#i', $line ) ) {
-                $relays[] = $line;
-            }
-        }
-        return $relays;
+        return [];
     }
 }

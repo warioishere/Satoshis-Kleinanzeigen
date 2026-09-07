@@ -90,14 +90,6 @@ class AuthSettings {
                 'type'  => 'sub_section',
                 'desc'  => __( 'Login via Nostr Browser Extension (NIP-07). Original: Yeghro.', 'sk-core' ),
             ],
-            'sk_auth_nostr_relays' => [
-                'name'    => 'sk_auth_nostr_relays',
-                'label'   => __( 'Nostr Relays', 'sk-core' ),
-                'type'    => 'textarea',
-                'default' => get_option( 'nostr_login_relays', "wss://purplepag.es\nwss://relay.nostr.band\nwss://relay.primal.net\nwss://relay.damus.io" ),
-                'desc'    => __( 'Relay URLs, eine pro Zeile.', 'sk-core' ),
-                'rows'    => 5,
-            ],
             'sk_auth_nostr_redirect' => [
                 'name'    => 'sk_auth_nostr_redirect',
                 'label'   => __( 'Redirect nach Login', 'sk-core' ),
@@ -195,10 +187,7 @@ class AuthSettings {
             update_option( 'lnurl-auth-usercreation', $new_values['sk_auth_lnurl_usercreation'] === 'on' ? 'on' : 'off' );
         }
 
-        // Nostr Login legacy options.
-        if ( isset( $new_values['sk_auth_nostr_relays'] ) ) {
-            update_option( 'nostr_login_relays', $new_values['sk_auth_nostr_relays'] );
-        }
+        // Nostr Login legacy options. Relays live in the Nostr section.
         if ( isset( $new_values['sk_auth_nostr_redirect'] ) ) {
             update_option( 'nostr_login_redirect', $new_values['sk_auth_nostr_redirect'] );
         }

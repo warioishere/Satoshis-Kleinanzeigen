@@ -31,8 +31,10 @@ final class Module {
         require_once SK_AUTH_INCLUDES . '/AuthSettings.php';
         require_once SK_AUTH_INCLUDES . '/NostrIdentity.php';
         require_once SK_AUTH_INCLUDES . '/RelayPublisher.php';
+        require_once SK_AUTH_INCLUDES . '/NostrSettings.php';
         require_once SK_AUTH_INCLUDES . '/NostrRelaySync.php';
         new AuthSettings();
+        new NostrSettings();
         NostrIdentity::init_hooks();
         NostrRelaySync::init();
 

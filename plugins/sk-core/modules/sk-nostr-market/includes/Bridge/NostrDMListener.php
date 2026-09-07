@@ -153,15 +153,7 @@ class NostrDMListener {
             return;
         }
 
-        // Every relay we publish to is a relay replies can arrive on: listings
-        // and DMs go out over the login relays, the marketplace over its own.
         $relays = EventSender::get_relays();
-
-        if ( class_exists( 'SK\Modules\Auth\NostrIdentity' ) ) {
-            $relays = array_merge( $relays, \SK\Modules\Auth\NostrIdentity::get_relays() );
-        }
-
-        $relays = array_values( array_unique( array_map( 'strtolower', array_map( 'trim', $relays ) ) ) );
 
         if ( empty( $relays ) ) {
             return;

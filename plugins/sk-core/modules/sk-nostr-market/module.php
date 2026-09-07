@@ -32,9 +32,6 @@ final class Module {
         $this->define_constants();
         $this->includes();
 
-        // Settings always load.
-        new MarketplaceSettings();
-
         // Bridge chats that already exist keep rendering correctly while the
         // module is switched off; this only affects how they are displayed.
         add_filter( 'pre_get_avatar_data', [ Bridge\ChatBridge::class, 'avatar_data' ], 10, 2 );
@@ -145,7 +142,6 @@ final class Module {
         require_once SK_NOSTR_MARKET_INCLUDES . '/EventSender.php';
         require_once SK_NOSTR_MARKET_INCLUDES . '/ProductPublisher.php';
         require_once SK_NOSTR_MARKET_INCLUDES . '/ProductDeleter.php';
-        require_once SK_NOSTR_MARKET_INCLUDES . '/MarketplaceSettings.php';
         require_once SK_NOSTR_MARKET_INCLUDES . '/Bridge/NostrDMListener.php';
         require_once SK_NOSTR_MARKET_INCLUDES . '/Bridge/ChatBridge.php';
     }
