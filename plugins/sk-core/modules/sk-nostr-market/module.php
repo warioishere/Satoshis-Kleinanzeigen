@@ -141,6 +141,10 @@ final class Module {
         add_action( 'wp_trash_post', [ $this, 'on_product_deleted' ] );
         add_action( 'before_delete_post', [ $this, 'on_product_deleted' ] );
 
+        // Signieren im Browser, fuer Anbieter mit eigener Nostr-Erweiterung.
+        add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_signing_js' ] );
+        add_action( 'wp_ajax_sk_nostr_market_fallback_sign', [ $this, 'ajax_fallback_sign' ] );
+
         // Knopf "Erneut posten" auf der Inseratsseite im Adminbereich.
         add_action( 'add_meta_boxes', [ $this, 'add_repost_box' ] );
         add_action( 'admin_post_sk_nostr_repost', [ $this, 'handle_repost' ] );
@@ -155,72 +159,109 @@ final class Module {
     }
 
     /**
-     * Check if a vendor wants to self-sign with their Nostr key.
+     * Muss dieser Anbieter sein Inserat selbst signieren?
+     *
+     * Genau dann, wenn er einen eigenen Nostr-Schluessel mitbringt, wir ihn
+     * aber nicht haben — also bei Anmeldung ueber eine Nostr-Erweiterung. Sein
+     * privater Schluessel verlaesst dabei nie seinen Browser, also koennen wir
+     * in seinem Namen nichts signieren und muessen ihn fragen.
+     *
+     * Wer sich seine Identitaet beim Onboarding erzeugen liess, faellt nicht
+     * darunter: dessen Schluessel liegt verschluesselt bei uns, da signiert der
+     * Server ohne Rueckfrage.
+     *
+     * Frueher hing das an einer Einstellung, die nirgends geschrieben wurde —
+     * die Pruefung war damit immer falsch und der ganze Weg tot.
      */
     public static function vendor_wants_self_sign( int $vendor_id ): bool {
-        $settings = get_user_meta( $vendor_id, 'sk_profile_settings', true );
-        if ( ! is_array( $settings ) || empty( $settings['nostr_market_self_sign'] ) || $settings['nostr_market_self_sign'] !== '1' ) {
+        if ( empty( get_user_meta( $vendor_id, 'nostr_public_key', true ) ) ) {
             return false;
         }
-        // Must also have a Nostr pubkey.
-        return ! empty( get_user_meta( $vendor_id, 'nostr_public_key', true ) );
+
+        if ( ! class_exists( 'SK\Modules\Auth\NostrIdentity' ) ) {
+            return false;
+        }
+
+        return ! \SK\Modules\Auth\NostrIdentity::has_identity( $vendor_id );
     }
 
     /**
-     * AJAX: Receive a vendor-signed NIP-99 event and publish it to relays.
-     * The event was signed client-side via window.nostr.signEvent() (NIP-07).
+     * AJAX: ein vom Anbieter signiertes Ereignis entgegennehmen und verteilen.
+     *
+     * Signiert wurde es im Browser ueber window.nostr.signEvent() (NIP-07).
      */
     public function ajax_publish_signed_event(): void {
         check_ajax_referer( 'sk_nostr_market_sign', 'nonce' );
 
-        if ( ! is_user_logged_in() ) {
-            wp_send_json_error( [ 'message' => 'Nicht eingeloggt.' ] );
-        }
-
-        $signed_event = json_decode( wp_unslash( $_POST['signed_event'] ?? '' ), true );
         $post_id      = absint( $_POST['post_id'] ?? 0 );
+        $signed_event = json_decode( (string) wp_unslash( $_POST['signed_event'] ?? '' ), true );
 
-        if ( empty( $signed_event ) || ! $post_id ) {
+        if ( ! $post_id || empty( $signed_event ) || ! is_array( $signed_event ) ) {
             wp_send_json_error( [ 'message' => 'Fehlende Parameter.' ] );
         }
 
-        // Verify the event pubkey matches the vendor's stored pubkey.
+        /*
+         * Ohne diese Pruefung konnte ein angemeldeter Nutzer eine fremde
+         * Inseratsnummer schicken und dort die Ereigniskennung ueberschreiben.
+         * Der Abgleich des Schluessels allein genuegt nicht — er sagt nur, wer
+         * signiert hat, nicht wem das Inserat gehoert.
+         */
+        if ( ! current_user_can( 'edit_post', $post_id ) ) {
+            wp_send_json_error( [ 'message' => 'Keine Berechtigung für dieses Inserat.' ] );
+        }
+
         $vendor_pubkey = get_user_meta( get_current_user_id(), 'nostr_public_key', true );
+
         if ( empty( $vendor_pubkey ) || ( $signed_event['pubkey'] ?? '' ) !== $vendor_pubkey ) {
             wp_send_json_error( [ 'message' => 'Pubkey stimmt nicht überein.' ] );
         }
 
-        // Publish the pre-signed event to relays.
-        $relays = EventSender::get_relays();
-        $sent   = false;
+        $event_id = EventSender::send_signed( $signed_event );
 
-        foreach ( $relays as $relay_url ) {
-            try {
-                $msg   = new \swentel\nostr\Message\EventMessage( (object) $signed_event );
-                $relay = new \swentel\nostr\Relay\Relay( $relay_url );
-                if ( method_exists( $relay, 'setTimeout' ) ) {
-                    $relay->setTimeout( 3 );
-                }
-                $relay->setMessage( $msg );
-                $result = $relay->send();
-                if ( $result !== false ) {
-                    $sent = true;
-                }
-            } catch ( \Exception $e ) {
-                error_log( "[SK Nostr Market] Relay error: " . $e->getMessage() );
-            }
-        }
-
-        if ( $sent ) {
-            $event_id = $signed_event['id'] ?? '';
-            if ( $event_id ) {
-                update_post_meta( $post_id, ProductPublisher::META_KEY, $event_id );
-                update_post_meta( $post_id, '_sk_nostr_market_self_signed', '1' );
-            }
-            wp_send_json_success( [ 'event_id' => $event_id ] );
-        } else {
+        if ( ! $event_id ) {
             wp_send_json_error( [ 'message' => 'Kein Relay hat das Event akzeptiert.' ] );
         }
+
+        update_post_meta( $post_id, ProductPublisher::META_KEY, $event_id );
+        update_post_meta( $post_id, '_sk_nostr_market_self_signed', '1' );
+        delete_post_meta( $post_id, '_sk_nostr_market_pending_sign' );
+
+        wp_send_json_success( [ 'event_id' => $event_id ] );
+    }
+
+    /**
+     * AJAX: keine Erweiterung da oder Signatur abgelehnt.
+     *
+     * Dann geht das Inserat unter dem Schluessel des Marktplatzes raus, so wie
+     * bei allen anderen Anbietern auch. Die Wartemarke faellt in jedem Fall,
+     * sonst wuerde bei jedem Seitenaufruf erneut gefragt.
+     */
+    public function ajax_fallback_sign(): void {
+        check_ajax_referer( 'sk_nostr_market_sign', 'nonce' );
+
+        $post_id = absint( $_POST['post_id'] ?? 0 );
+
+        if ( ! $post_id || ! current_user_can( 'edit_post', $post_id ) ) {
+            wp_send_json_error( [ 'message' => 'Keine Berechtigung für dieses Inserat.' ] );
+        }
+
+        delete_post_meta( $post_id, '_sk_nostr_market_pending_sign' );
+
+        $data = ProductPublisher::build_event_data( $post_id );
+
+        if ( null === $data ) {
+            wp_send_json_error( [ 'message' => 'Inserat nicht veröffentlichbar.' ] );
+        }
+
+        $event_id = EventSender::send( 30402, $data['content'], $data['tags'] );
+
+        if ( ! $event_id ) {
+            wp_send_json_error( [ 'message' => 'Kein Relay hat das Event akzeptiert.' ] );
+        }
+
+        update_post_meta( $post_id, ProductPublisher::META_KEY, $event_id );
+
+        wp_send_json_success( [ 'event_id' => $event_id ] );
     }
 
     /**
@@ -448,6 +489,20 @@ final class Module {
             switch ( $item['action'] ) {
                 case 'publish':
                 case 'update':
+                    /*
+                     * Bringt der Anbieter seinen Schluessel selbst mit, koennen
+                     * wir hier nicht signieren — er liegt in seinem Browser.
+                     * Statt unter unserem Namen zu veroeffentlichen, wird das
+                     * Inserat vorgemerkt; beim naechsten Seitenaufruf fragt die
+                     * Erweiterung nach seiner Unterschrift.
+                     */
+                    $autor = (int) get_post_field( 'post_author', $item['post_id'] );
+
+                    if ( self::vendor_wants_self_sign( $autor ) ) {
+                        update_post_meta( $item['post_id'], '_sk_nostr_market_pending_sign', '1' );
+                        break;
+                    }
+
                     // For updates, delete old event first (replaceable events handle this,
                     // but explicit delete is cleaner for clients that don't support replaceable).
                     if ( $item['action'] === 'update' ) {

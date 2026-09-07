@@ -85,6 +85,58 @@ class EventSender {
     }
 
     /**
+     * Ein bereits signiertes Ereignis an die Relays geben.
+     *
+     * Fuer Inserate, die der Anbieter selbst im Browser signiert hat: den
+     * Schluessel bekommen wir dabei nie zu sehen, nur das fertige Ereignis.
+     * Verteilt wird es ueber dieselbe Schleife und dieselbe Erfolgspruefung
+     * wie alles andere.
+     *
+     * @param array $signed_event
+     * @return string|null Ereigniskennung, wenn ein Relay es angenommen hat.
+     */
+    public static function send_signed( array $signed_event ): ?string {
+        $event_id = (string) ( $signed_event['id'] ?? '' );
+
+        if ( '' === $event_id ) {
+            return null;
+        }
+
+        $relays = self::get_relays();
+
+        if ( empty( $relays ) ) {
+            error_log( '[SK Nostr Market] Keine Relays konfiguriert.' );
+            return null;
+        }
+
+        $sent_any = false;
+
+        foreach ( $relays as $relay_url ) {
+            try {
+                $msg   = new \swentel\nostr\Message\EventMessage( (object) $signed_event );
+                $relay = new Relay( $relay_url );
+
+                if ( method_exists( $relay, 'setTimeout' ) ) {
+                    $relay->setTimeout( 3 );
+                }
+
+                $relay->setMessage( $msg );
+                $result = $relay->send();
+
+                if ( self::relay_accepted( $result ) ) {
+                    $sent_any = true;
+                } else {
+                    error_log( "[SK Nostr Market] Relay {$relay_url} lehnte Event {$event_id} ab: " . self::relay_message( $result ) );
+                }
+            } catch ( \Exception $e ) {
+                error_log( "[SK Nostr Market] Relay {$relay_url} error: " . $e->getMessage() );
+            }
+        }
+
+        return $sent_any ? $event_id : null;
+    }
+
+    /**
      * Hat das Relay das Ereignis wirklich angenommen?
      *
      * Relay::send() liefert immer ein Objekt, nie false — die alte Pruefung
