@@ -22,13 +22,19 @@ class NostrDMListener {
             return;
         }
 
+        /*
+         * Der Filter MUSS vor dem Einplanen stehen. Sonst kennt WordPress das
+         * Intervall in dem Moment noch nicht, wp_schedule_event() liefert
+         * false, und weil init() bei jedem Aufruf dieselbe Reihenfolge
+         * durchlaeuft, wurde die Abfrage nie eingeplant — die Bruecke lief nie.
+         */
+        add_filter( 'cron_schedules', [ __CLASS__, 'add_cron_interval' ] );
+
         add_action( self::CRON_HOOK, [ __CLASS__, 'poll' ] );
 
         if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
             wp_schedule_event( time(), 'two_minutes', self::CRON_HOOK );
         }
-
-        add_filter( 'cron_schedules', [ __CLASS__, 'add_cron_interval' ] );
     }
 
     public static function add_cron_interval( $schedules ) {
@@ -56,27 +62,27 @@ class NostrDMListener {
 
         $last_seen = (int) get_option( self::LAST_SEEN_KEY, time() - 300 );
 
+        /*
+         * Zwei Tage zurueckschauen statt ab dem letzten Stand.
+         *
+         * Ein Gift Wrap traegt nach NIP-59 absichtlich einen verwuerfelten
+         * Zeitstempel, bis zu zwei Tage in der Vergangenheit. Ein Fenster ab
+         * dem letzten Stand haette solche Nachrichten dauerhaft uebersehen.
+         * Dass dabei Bekanntes erneut kommt, faengt die Dublettenpruefung ab.
+         */
+        $since = max( 0, $last_seen - 2 * DAY_IN_SECONDS );
+
         foreach ( $relays as $relay_url ) {
-            $events = self::fetch_dms( $relay_url, $pubkey, $last_seen );
-            if ( empty( $events ) ) {
-                continue;
-            }
+            $events = self::fetch_dms( $relay_url, $pubkey, $since );
 
             foreach ( $events as $event ) {
                 self::process_dm( $event, $privkey, $pubkey );
-
-                // Track latest timestamp.
-                $ts = (int) ( $event['created_at'] ?? 0 );
-                if ( $ts > $last_seen ) {
-                    $last_seen = $ts;
-                }
             }
-
-            // One relay is enough — break after first successful poll.
-            break;
         }
 
-        update_option( self::LAST_SEEN_KEY, $last_seen );
+        // Der Fortschritt haengt an der Uhr, nicht an den Zeitstempeln der
+        // Ereignisse — die eines Gift Wraps sind erfunden.
+        update_option( self::LAST_SEEN_KEY, time() );
     }
 
     /**
@@ -95,10 +101,13 @@ class NostrDMListener {
 
             $sub_id = bin2hex( random_bytes( 8 ) );
             $filter = [
-                'kinds' => [ 4 ],
+                // 4 = NIP-04, 1059 = NIP-17 Gift Wrap. Wir senden selbst als
+                // Gift Wrap; wer darauf antwortet, tut es ebenfalls, und diese
+                // Antworten waren mit einem Filter auf Kind 4 unsichtbar.
+                'kinds' => [ 4, 1059 ],
                 '#p'    => [ $pubkey ],
-                'since' => $since + 1,
-                'limit' => 50,
+                'since' => $since,
+                'limit' => 100,
             ];
 
             $client->text( wp_json_encode( [ 'REQ', $sub_id, $filter ] ) );
@@ -141,53 +150,154 @@ class NostrDMListener {
      * Process a single incoming DM.
      */
     private static function process_dm( array $event, string $privkey, string $our_pubkey ): void {
-        $sender_pubkey = $event['pubkey'] ?? '';
-        $content       = $event['content'] ?? '';
-        $event_id      = $event['id'] ?? '';
+        $event_id = $event['id'] ?? '';
 
-        if ( empty( $content ) || empty( $event_id ) ) {
+        if ( empty( $event_id ) || ! preg_match( '/^[0-9a-f]{64}$/i', $event_id ) ) {
             return;
         }
 
-        // Pubkeys are used in meta queries and displayed to vendors.
-        if ( ! preg_match( '/^[0-9a-f]{64}$/i', $sender_pubkey ) ) {
-            return;
-        }
-        $sender_pubkey = strtolower( $sender_pubkey );
-
-        // Skip our own messages.
-        if ( $sender_pubkey === $our_pubkey ) {
-            return;
-        }
-
-        // Deduplicate: check if we already processed this event.
+        /*
+         * Dublettenpruefung zuerst, und auf die aeussere Kennung. Das Fenster
+         * reicht zwei Tage zurueck, also kommt Bekanntes bei jedem Lauf erneut
+         * vorbei; die Marke muss deshalb laenger halten als das Fenster.
+         */
         $processed_key = 'sk_dm_' . substr( $event_id, 0, 32 );
+
         if ( get_transient( $processed_key ) ) {
             return;
         }
-        set_transient( $processed_key, 1, DAY_IN_SECONDS );
 
-        // Decrypt NIP-04 content.
-        try {
-            $decrypted = \swentel\nostr\Encryption\Nip04::decrypt( $content, $privkey, $sender_pubkey );
-        } catch ( \Exception $e ) {
-            error_log( '[SK Nostr Market Bridge] Decrypt failed: ' . $e->getMessage() );
+        set_transient( $processed_key, 1, 3 * DAY_IN_SECONDS );
+
+        $kind = (int) ( $event['kind'] ?? 0 );
+
+        if ( 1059 === $kind ) {
+            $inner = self::unwrap_gift_wrap( $event, $privkey );
+
+            if ( null === $inner ) {
+                return;
+            }
+
+            $sender_pubkey = $inner['pubkey'];
+            $decrypted     = $inner['content'];
+        } else {
+            $sender_pubkey = $event['pubkey'] ?? '';
+            $content       = $event['content'] ?? '';
+
+            if ( '' === $content ) {
+                return;
+            }
+
+            // Pubkeys are used in meta queries and displayed to vendors.
+            if ( ! preg_match( '/^[0-9a-f]{64}$/i', $sender_pubkey ) ) {
+                return;
+            }
+
+            $sender_pubkey = strtolower( $sender_pubkey );
+
+            try {
+                $decrypted = \swentel\nostr\Encryption\Nip04::decrypt( $content, $privkey, $sender_pubkey );
+            } catch ( \Throwable $e ) {
+                error_log( '[SK Nostr Market Bridge] Decrypt failed: ' . $e->getMessage() );
+                return;
+            }
+        }
+
+        if ( ! preg_match( '/^[0-9a-f]{64}$/i', $sender_pubkey ) ) {
             return;
         }
 
-        if ( empty( $decrypted ) ) {
+        $sender_pubkey = strtolower( $sender_pubkey );
+
+        // Skip our own messages.
+        if ( $sender_pubkey === strtolower( $our_pubkey ) ) {
+            return;
+        }
+
+        if ( ! is_string( $decrypted ) || '' === $decrypted ) {
             return;
         }
 
         // Try to parse as NIP-15 order (JSON with type field).
-        $order = json_decode( $decrypted, true );
-        $is_order = is_array( $order ) && isset( $order['type'] ) && $order['type'] === 0;
+        $order    = json_decode( $decrypted, true );
+        $is_order = is_array( $order ) && isset( $order['type'] ) && (int) $order['type'] === 0;
 
         if ( $is_order ) {
             self::handle_order( $order, $sender_pubkey, $event_id );
         } else {
             // Plain text message — try to route to a vendor.
             self::handle_message( $decrypted, $sender_pubkey, $event_id );
+        }
+    }
+
+    /**
+     * Ein Gift Wrap (NIP-59) auspacken.
+     *
+     * Drei Schichten: aussen das Kind 1059 mit einem Wegwerfschluessel als
+     * Absender, darin versiegelt (Kind 13) der echte Absender, und darin die
+     * eigentliche Nachricht (Kind 14). Beide Schichten sind mit NIP-44
+     * verschluesselt, jede gegen einen anderen Gegenschluessel.
+     *
+     * Der Absender darf nur aus der innersten Schicht kommen: der aeussere
+     * Schluessel ist Einwegware und sagt nichts darueber, wer geschrieben hat.
+     *
+     * Die Bibliothek kann Gift Wraps nur bauen, nicht oeffnen — deshalb hier
+     * von Hand.
+     *
+     * @return array{pubkey: string, content: string}|null
+     */
+    private static function unwrap_gift_wrap( array $event, string $privkey ): ?array {
+        $aeusserer = $event['pubkey'] ?? '';
+        $inhalt    = $event['content'] ?? '';
+
+        if ( '' === $inhalt || ! preg_match( '/^[0-9a-f]{64}$/i', $aeusserer ) ) {
+            return null;
+        }
+
+        if ( ! class_exists( '\swentel\nostr\Encryption\Nip44' ) ) {
+            return null;
+        }
+
+        try {
+            // Schicht 1: gegen den Wegwerfschluessel des Umschlags.
+            $schluessel = \swentel\nostr\Encryption\Nip44::getConversationKey( $privkey, strtolower( $aeusserer ) );
+            $siegel     = json_decode( \swentel\nostr\Encryption\Nip44::decrypt( $inhalt, $schluessel ), true );
+
+            if ( ! is_array( $siegel ) || 13 !== (int) ( $siegel['kind'] ?? 0 ) ) {
+                return null;
+            }
+
+            $absender = $siegel['pubkey'] ?? '';
+
+            if ( ! preg_match( '/^[0-9a-f]{64}$/i', $absender ) ) {
+                return null;
+            }
+
+            // Schicht 2: gegen den echten Absender.
+            $schluessel2 = \swentel\nostr\Encryption\Nip44::getConversationKey( $privkey, strtolower( $absender ) );
+            $nachricht   = json_decode( \swentel\nostr\Encryption\Nip44::decrypt( (string) ( $siegel['content'] ?? '' ), $schluessel2 ), true );
+
+            if ( ! is_array( $nachricht ) ) {
+                return null;
+            }
+
+            /*
+             * Das Siegel beweist den Absender, die innerste Schicht ist nicht
+             * signiert. Weichen die beiden ab, hat jemand eine fremde Nachricht
+             * untergeschoben.
+             */
+            if ( isset( $nachricht['pubkey'] ) && strtolower( (string) $nachricht['pubkey'] ) !== strtolower( $absender ) ) {
+                error_log( '[SK Nostr Market Bridge] Gift Wrap: Absender im Siegel und in der Nachricht weichen ab.' );
+                return null;
+            }
+
+            return [
+                'pubkey'  => strtolower( $absender ),
+                'content' => (string) ( $nachricht['content'] ?? '' ),
+            ];
+        } catch ( \Throwable $e ) {
+            error_log( '[SK Nostr Market Bridge] Gift Wrap liess sich nicht oeffnen: ' . $e->getMessage() );
+            return null;
         }
     }
 
@@ -204,11 +314,7 @@ class NostrDMListener {
         $first_item  = $items[0];
         $product_ref = $first_item['product_id'] ?? '';
 
-        // product_ref format: "product-{post_id}"
-        $post_id = 0;
-        if ( strpos( $product_ref, 'product-' ) === 0 ) {
-            $post_id = (int) substr( $product_ref, 8 );
-        }
+        $post_id = self::product_ref_to_id( (string) $product_ref );
 
         if ( ! $post_id ) {
             return;
@@ -446,6 +552,26 @@ class NostrDMListener {
         }
 
         return trim( $text );
+    }
+
+    /**
+     * Die Produktkennung einer Bestellung in eine Inseratsnummer uebersetzen.
+     *
+     * Unsere Inserate tragen "sk-<ID>" in der d-Markierung. Erwartet wurde hier
+     * "product-<ID>", ein Rest aus der NIP-15-Zeit — jede Bestellung auf ein
+     * SK-Inserat fiel damit durch. Beide Formen werden jetzt akzeptiert, dazu
+     * eine blanke Zahl.
+     */
+    private static function product_ref_to_id( string $ref ): int {
+        $ref = trim( $ref );
+
+        foreach ( [ 'sk-', 'product-' ] as $praefix ) {
+            if ( 0 === strpos( $ref, $praefix ) ) {
+                return (int) substr( $ref, strlen( $praefix ) );
+            }
+        }
+
+        return ctype_digit( $ref ) ? (int) $ref : 0;
     }
 
     private static function pubkey_to_npub( string $hex_pubkey ): string {
