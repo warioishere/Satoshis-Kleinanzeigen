@@ -284,9 +284,15 @@ class InboxHeaderItem {
 	/**
 	 * Den Abstand ins Stylesheet nachreichen, je Ansicht eine Regel.
 	 *
-	 * Reihenfolge und Umbruchpunkte wie im Theme: der Desktopwert steht ohne
-	 * Bedingung, danach Tablet, danach Handy. Beide Bedingungen greifen auf
-	 * einem Telefon, die spaetere gewinnt. Die Umbruchpunkte kommen ueber
+	 * Jede Ansicht bekommt eine eigene Bedingung, auch der Desktop. Das ist
+	 * der Unterschied zum Theme, das den Desktopwert unbedingt ausgibt und die
+	 * anderen daraufsetzt: dort erbt das Handy den Desktopwert, solange nichts
+	 * eingetragen ist. Hier soll jede Ansicht fuer sich stehen — ein am
+	 * Desktop gesetzter Abstand hat das Handy sonst mitgezogen, obwohl dort
+	 * nichts eingetragen war.
+	 *
+	 * Die Bereiche ueberschneiden sich nur bei Tablet und Handy; deshalb steht
+	 * das Handy hinten und gewinnt dort. Die Umbruchpunkte kommen ueber
 	 * dieselben Filter wie bei Kadence, damit eine verschobene Grenze auch
 	 * hier gilt.
 	 */
@@ -298,7 +304,7 @@ class InboxHeaderItem {
 		$auswahl = '.sk-header-inbox .sk-inbox-link';
 
 		$ansichten = [
-			'desktop' => '',
+			'desktop' => apply_filters( 'kadence_desktop_media_query', '(min-width: 1025px)' ),
 			'tablet'  => apply_filters( 'kadence_tablet_media_query', '(max-width: 1024px)' ),
 			'mobile'  => apply_filters( 'kadence_mobile_media_query', '(max-width: 767px)' ),
 		];
@@ -312,8 +318,7 @@ class InboxHeaderItem {
 				continue;
 			}
 
-			$regel = $auswahl . '{margin:' . $margin . ';}';
-			$css  .= '' === $bedingung ? $regel : '@media ' . $bedingung . '{' . $regel . '}';
+			$css .= '@media ' . $bedingung . '{' . $auswahl . '{margin:' . $margin . ';}}';
 		}
 
 		if ( '' !== $css ) {
