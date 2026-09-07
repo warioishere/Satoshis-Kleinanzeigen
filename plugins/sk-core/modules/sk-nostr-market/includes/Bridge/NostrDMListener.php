@@ -287,6 +287,7 @@ class NostrDMListener {
 
             $sender_pubkey = $inner['pubkey'];
             $decrypted     = $inner['content'];
+            $inner_tags    = $inner['tags'];
         } else {
             $sender_pubkey = $event['pubkey'] ?? '';
             $content       = $event['content'] ?? '';
@@ -301,6 +302,7 @@ class NostrDMListener {
             }
 
             $sender_pubkey = strtolower( $sender_pubkey );
+            $inner_tags    = is_array( $event['tags'] ?? null ) ? $event['tags'] : [];
 
             try {
                 $decrypted = \swentel\nostr\Encryption\Nip04::decrypt( $content, $empfaenger['privkey'], $sender_pubkey );
@@ -325,14 +327,6 @@ class NostrDMListener {
             return;
         }
 
-        $order    = json_decode( $decrypted, true );
-        $is_order = is_array( $order ) && isset( $order['type'] ) && (int) $order['type'] === 0;
-
-        if ( $is_order ) {
-            self::handle_order( $order, $sender_pubkey, $event_id );
-            return;
-        }
-
         /*
          * Ging die Nachricht an das Postfach eines Anbieters, ist damit klar,
          * wer gemeint ist — auch bei der allerersten Nachricht und ohne dass
@@ -342,6 +336,26 @@ class NostrDMListener {
         if ( $empfaenger['vendor_id'] > 0 ) {
             self::route_to_vendor( $empfaenger['vendor_id'], $sender_pubkey, $decrypted );
             return;
+        }
+
+        /*
+         * Ans Marktplatz-Postfach geschrieben. Dort steht kein Anbieter im
+         * Empfaenger, also muss die Nachricht selbst sagen, worum es geht:
+         * ueber eine Verweis-Markierung auf das Inserat, sonst ueber dessen
+         * Adresse oder Kennung im Text.
+         *
+         * Das betrifft die grosse Mehrheit — nur wer einen eigenen Schluessel
+         * hat, bekommt ein eigenes Postfach.
+         */
+        $post_id = self::listing_from_message( $inner_tags, $decrypted );
+
+        if ( $post_id ) {
+            $autor = (int) get_post_field( 'post_author', $post_id );
+
+            if ( $autor ) {
+                self::create_bridge_chat( $autor, $sender_pubkey, $post_id, get_the_title( $post_id ), self::clean_field( $decrypted, 4000 ) );
+                return;
+            }
         }
 
         // Plain text message — try to route to a vendor.
@@ -375,7 +389,7 @@ class NostrDMListener {
      * Die Bibliothek kann Gift Wraps nur bauen, nicht oeffnen — deshalb hier
      * von Hand.
      *
-     * @return array{pubkey: string, content: string}|null
+     * @return array{pubkey: string, content: string, tags: array}|null
      */
     private static function unwrap_gift_wrap( array $event, string $privkey ): ?array {
         $aeusserer = $event['pubkey'] ?? '';
@@ -425,144 +439,12 @@ class NostrDMListener {
             return [
                 'pubkey'  => strtolower( $absender ),
                 'content' => (string) ( $nachricht['content'] ?? '' ),
+                'tags'    => is_array( $nachricht['tags'] ?? null ) ? $nachricht['tags'] : [],
             ];
         } catch ( \Throwable $e ) {
             error_log( '[SK Nostr Market Bridge] Gift Wrap liess sich nicht oeffnen: ' . $e->getMessage() );
             return null;
         }
-    }
-
-    /**
-     * Handle a NIP-15 order (type 0).
-     */
-    private static function handle_order( array $order, string $sender_pubkey, string $event_id ): void {
-        $items = $order['items'] ?? [];
-        if ( empty( $items ) ) {
-            return;
-        }
-
-        // Find the product and vendor.
-        $first_item  = $items[0];
-        $product_ref = $first_item['product_id'] ?? '';
-
-        $post_id = self::product_ref_to_id( (string) $product_ref );
-
-        if ( ! $post_id ) {
-            return;
-        }
-
-        $post = get_post( $post_id );
-        if ( ! $post || $post->post_type !== 'product' ) {
-            return;
-        }
-
-        $vendor_id = (int) $post->post_author;
-
-        // Build order message for VendorChat.
-        $product_title = $post->post_title;
-        // Everything below comes from an unauthenticated Nostr DM.
-        $quantity      = max( 1, (int) ( $first_item['quantity'] ?? 1 ) );
-        $name          = self::clean_field( $order['name'] ?? '', 120 );
-        $address       = self::clean_field( $order['address'] ?? '', 400 );
-        $note          = self::clean_field( $order['message'] ?? '', 2000 );
-        $npub          = self::pubkey_to_npub( $sender_pubkey );
-
-        $message = "[nostr_order]\n";
-        $message .= "Nostr-Bestellung von {$npub}\n";
-        $message .= "Produkt: {$product_title} x{$quantity}\n";
-        if ( $name ) {
-            $message .= "Name: {$name}\n";
-        }
-        if ( $address ) {
-            $message .= "Adresse: {$address}\n";
-        }
-        if ( $note ) {
-            $message .= "Nachricht: {$note}\n";
-        }
-        $message .= "[/nostr_order]";
-
-        self::create_bridge_chat( $vendor_id, $sender_pubkey, $post_id, $product_title, $message );
-
-        // Auto-create invoice and send NIP-15 Payment Request (Type 1) back.
-        self::send_payment_request( $sender_pubkey, $post_id, $vendor_id, $order );
-    }
-
-    /**
-     * Create an invoice via sk-payments and send NIP-15 Payment Request (Type 1).
-     */
-    private static function send_payment_request( string $buyer_pubkey, int $post_id, int $vendor_id, array $order ): void {
-        $product = function_exists( 'wc_get_product' ) ? wc_get_product( $post_id ) : null;
-        if ( ! $product ) {
-            return;
-        }
-
-        $quantity    = (int) ( $order['items'][0]['quantity'] ?? 1 );
-        $price_sats  = (int) $product->get_price() * $quantity;
-        $order_id    = $order['id'] ?? 'nostr-' . substr( bin2hex( random_bytes( 8 ) ), 0, 16 );
-
-        // Build payment options.
-        $payment_options = [];
-
-        // Try Lightning invoice via sk-payments (NWC/LNDHub/LNURL).
-        if ( class_exists( 'SK\Modules\Payments\StoreSettings' ) ) {
-            $has_ln = \SK\Modules\Payments\StoreSettings::has_lightning( $vendor_id );
-
-            if ( $has_ln ) {
-                // Create invoice via REST controller internally.
-                $request = new \WP_REST_Request( 'POST', '/sk/v1/lightning/invoice' );
-                $request->set_param( 'vendor_id', $vendor_id );
-                $request->set_param( 'amount_sats', $price_sats );
-                $request->set_param( 'product_id', $post_id );
-                $request->set_param( 'buyer_id', 0 ); // Nostr user has no WP account.
-
-                if ( class_exists( 'SK\Modules\Payments\REST\LightningController' ) ) {
-                    $controller = new \SK\Modules\Payments\REST\LightningController();
-                    $response = $controller->create_invoice( $request );
-
-                    if ( ! is_wp_error( $response ) ) {
-                        $data = $response->get_data();
-                        if ( ! empty( $data['payment_request'] ) ) {
-                            $payment_options[] = [
-                                'type' => 'ln',
-                                'link' => $data['payment_request'],
-                            ];
-                        }
-                    }
-                }
-            }
-
-            // Onchain address.
-            $has_onchain = \SK\Modules\Payments\StoreSettings::has_onchain( $vendor_id );
-            if ( $has_onchain ) {
-                $btc_address = \SK\Modules\Payments\StoreSettings::get_next_onchain_address( $vendor_id );
-                if ( $btc_address ) {
-                    $btc_amount = number_format( $price_sats / 100000000, 8, '.', '' );
-                    $payment_options[] = [
-                        'type' => 'btc',
-                        'link' => $btc_address,
-                    ];
-                }
-            }
-        }
-
-        if ( empty( $payment_options ) ) {
-            // No payment method — send URL fallback to product page.
-            $payment_options[] = [
-                'type' => 'url',
-                'link' => get_permalink( $post_id ),
-            ];
-        }
-
-        // Build NIP-15 Payment Request (Type 1).
-        $payment_request = wp_json_encode( [
-            'id'              => $order_id,
-            'type'            => 1,
-            'message'         => 'Zahlung für: ' . $product->get_name(),
-            'payment_options' => $payment_options,
-        ] );
-
-        // Send as NIP-04 encrypted DM back to the buyer.
-        ChatBridge::send_dm( $buyer_pubkey, $payment_request );
     }
 
     /**
@@ -694,12 +576,66 @@ class NostrDMListener {
     }
 
     /**
-     * Die Produktkennung einer Bestellung in eine Inseratsnummer uebersetzen.
+     * Aus einer Nachricht ans Marktplatz-Postfach das gemeinte Inserat lesen.
      *
-     * Unsere Inserate tragen "sk-<ID>" in der d-Markierung. Erwartet wurde hier
-     * "product-<ID>", ein Rest aus der NIP-15-Zeit — jede Bestellung auf ein
-     * SK-Inserat fiel damit durch. Beide Formen werden jetzt akzeptiert, dazu
-     * eine blanke Zahl.
+     * Drei Wege, in dieser Reihenfolge:
+     *
+     * 1. Eine "a"-Markierung, wie sie ein Client setzt, der sich auf ein
+     *    Inserat bezieht: "30402:<pubkey>:<kennung>".
+     * 2. Die Adresse des Inserats im Text — sie steht in jedem unserer
+     *    Inserate unter "Inserat:", wird also oft mitzitiert.
+     * 3. Die blosse Kennung "sk-<nummer>" irgendwo im Text.
+     *
+     * Ohne Treffer bleibt die Nachricht unzustellbar; wir raten nicht.
+     *
+     * @param array  $tags Markierungen der Nachricht.
+     * @param string $text Klartext der Nachricht.
+     */
+    private static function listing_from_message( array $tags, string $text ): int {
+        foreach ( $tags as $tag ) {
+            if ( ! is_array( $tag ) || ( $tag[0] ?? '' ) !== 'a' ) {
+                continue;
+            }
+
+            $teile = explode( ':', (string) ( $tag[1] ?? '' ) );
+
+            if ( count( $teile ) >= 3 && '30402' === $teile[0] ) {
+                $id = self::product_ref_to_id( $teile[2] );
+
+                if ( $id && 'product' === get_post_type( $id ) ) {
+                    return $id;
+                }
+            }
+        }
+
+        // Adresse des Inserats, wie sie in unserem Inseratstext steht.
+        if ( preg_match_all( '#https?://[^\s<>"\']+#i', $text, $treffer ) ) {
+            foreach ( $treffer[0] as $url ) {
+                $id = url_to_postid( $url );
+
+                if ( $id && 'product' === get_post_type( $id ) ) {
+                    return (int) $id;
+                }
+            }
+        }
+
+        if ( preg_match( '/\bsk-(\d+)\b/i', $text, $m ) ) {
+            $id = (int) $m[1];
+
+            if ( $id && 'product' === get_post_type( $id ) ) {
+                return $id;
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * Eine Inseratskennung in eine Nummer uebersetzen.
+     *
+     * Unsere Inserate tragen "sk-<ID>" in der d-Markierung. "product-<ID>"
+     * stammt aus der NIP-15-Zeit und wird der Vollstaendigkeit halber noch
+     * akzeptiert.
      */
     private static function product_ref_to_id( string $ref ): int {
         $ref = trim( $ref );
