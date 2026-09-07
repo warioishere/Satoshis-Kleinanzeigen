@@ -10,11 +10,16 @@
  * inside it the seal with the real sender, inside that the message. Both
  * layers are decrypted separately. The seal goes to the server, which
  * verifies its signature, so the server knows who wrote without trusting
- * the browser.
+ * the browser. A kind 4 (NIP-04) is one layer; the server verifies the
+ * event it stored itself.
  *
  * Outbound: the vendor's chat replies are encrypted here for the recipient
  * and signed as a seal. The server adds the wrap with a throwaway key, which
  * needs no vendor key.
+ *
+ * Nothing is attempted while the extension is logged into a key other than
+ * the one this account is linked to: opening would fail, and a seal signed
+ * with the wrong key is refused by the server anyway.
  */
 (function ($) {
     'use strict';
@@ -51,17 +56,53 @@
         }, Promise.resolve());
     }
 
-    // ── Inbound ────────────────────────────────────────────────────────────
+    /** A one-line notice at the top of the page, shown once. */
+    var noticeShown = false;
 
-    post({ action: 'sk_nostr_pending_wraps' })
-        .done(function (res) {
-            if (!res || !res.success || !res.data || !res.data.wraps) {
+    function notice(text) {
+        if (noticeShown || !text) {
+            return;
+        }
+
+        noticeShown = true;
+
+        var el = document.createElement('div');
+        el.className = 'sk-nostr-inbox-notice';
+        el.setAttribute('role', 'status');
+        el.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:99999;padding:10px 16px;background:#7c2d12;color:#fff;font:14px/1.4 system-ui,sans-serif;text-align:center;';
+        el.textContent = text;
+        document.body.appendChild(el);
+    }
+
+    // ── Which key is the extension using? ──────────────────────────────────
+
+    window.nostr.getPublicKey()
+        .then(function (pubkey) {
+            if (CFG.pubkey && pubkey && String(pubkey).toLowerCase() !== CFG.pubkey) {
+                notice(CFG.i18nWrongKey);
                 return;
             }
 
-            sequence(res.data.wraps.slice(0, MAX_PER_VISIT), open).then(sealReplies);
+            return openInbox().then(function () { return sealReplies(pubkey); });
         })
-        .fail(sealReplies);
+        .catch(function (err) {
+            console.warn('[SK Nostr] Extension gave no key:', err && err.message);
+        });
+
+    // ── Inbound ────────────────────────────────────────────────────────────
+
+    function openInbox() {
+        return post({ action: 'sk_nostr_pending_wraps' })
+            .then(function (res) {
+                if (!res || !res.success || !res.data || !res.data.wraps) {
+                    return;
+                }
+
+                return sequence(res.data.wraps.slice(0, MAX_PER_VISIT), open);
+            }, function () {
+                // The list could not be fetched; nothing to open.
+            });
+    }
 
     function parse(raw, what) {
         try {
@@ -71,8 +112,48 @@
         }
     }
 
+    /**
+     * Hand the plaintext to the server. It answers with a code when it
+     * refuses: "invalid" means the message is not what it claims to be and
+     * is dropped; anything else keeps it queued for another try.
+     */
+    function deliver(id, seal, text, tags) {
+        return post({
+            action: 'sk_nostr_deliver_decrypted',
+            event_id: id,
+            seal: JSON.stringify(seal),
+            text: text || '',
+            // A reply names the message it answers; the server routes it
+            // into that chat.
+            tags: JSON.stringify(Array.isArray(tags) ? tags : [])
+        }).then(function (res) {
+            if (res && !res.success && res.data && res.data.code === 'invalid') {
+                return drop(id);
+            }
+        });
+    }
+
     function open(wrap) {
-        if (Number(wrap.kind) !== 1059) {
+        var kind = Number(wrap.kind);
+
+        if (kind === 4) {
+            // NIP-04: one layer, encrypted between sender and us. The server
+            // verifies the event it stored; only the plaintext goes back.
+            if (!window.nostr.nip04) {
+                // This extension cannot open it, and no visit here ever will.
+                return drop(wrap.id);
+            }
+
+            return window.nostr.nip04.decrypt(wrap.pubkey, wrap.content)
+                .then(function (text) {
+                    return deliver(wrap.id, {}, text, []);
+                })
+                .catch(function (err) {
+                    console.warn('[SK Nostr] Could not open message:', err && err.message);
+                });
+        }
+
+        if (kind !== 1059) {
             return drop(wrap.id);
         }
 
@@ -104,15 +185,7 @@
                             throw broken('Sender in seal and message differ.');
                         }
 
-                        return post({
-                            action: 'sk_nostr_deliver_decrypted',
-                            event_id: wrap.id,
-                            seal: JSON.stringify(seal),
-                            text: message.content || '',
-                            // A reply names the message it answers; the
-                            // server routes it into that chat.
-                            tags: JSON.stringify(Array.isArray(message.tags) ? message.tags : [])
-                        });
+                        return deliver(wrap.id, seal, message.content, message.tags);
                     });
             })
             .catch(function (err) {
@@ -137,16 +210,27 @@
 
     // ── Outbound ───────────────────────────────────────────────────────────
 
-    function sealReplies() {
+    function sealReplies(pubkey) {
         return post({ action: 'sk_nostr_pending_replies' })
             .then(function (res) {
                 if (!res || !res.success || !res.data || !res.data.replies || !res.data.replies.length) {
                     return;
                 }
 
-                return window.nostr.getPublicKey().then(function (pubkey) {
-                    return sequence(res.data.replies, function (reply) {
-                        return seal(reply, pubkey);
+                var stop = false;
+
+                return sequence(res.data.replies, function (reply) {
+                    if (stop) {
+                        return;
+                    }
+
+                    return seal(reply, pubkey).then(function (outcome) {
+                        // The server refused the key: every further seal
+                        // would be refused the same way. Stop prompting.
+                        if (outcome === 'wrong_key') {
+                            stop = true;
+                            notice(CFG.i18nWrongKey);
+                        }
                     });
                 });
             });
@@ -195,10 +279,14 @@
                     rumor_id: rumor.id
                 });
             })
+            .then(function (res) {
+                return res && !res.success && res.data ? res.data.code : '';
+            })
             .catch(function (err) {
                 // Stays queued and is retried on the next visit. The reply is
                 // in the chat anyway; only Nostr is still missing it.
                 console.warn('[SK Nostr] Could not seal reply:', err && err.message);
+                return '';
             });
     }
 

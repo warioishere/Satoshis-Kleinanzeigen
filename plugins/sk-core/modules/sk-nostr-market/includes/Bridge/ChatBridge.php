@@ -89,6 +89,76 @@ class ChatBridge {
         register_shutdown_function( $announce );
     }
 
+    /** User meta: hash of the relay list a vendor's kind 10050 last carried. */
+    const RELAYS_ANNOUNCED_META = '_sk_nostr_dm_relays_announced';
+
+    /** User meta: when an announcement was last attempted. */
+    const RELAYS_ANNOUNCE_TRY_META = '_sk_nostr_dm_relays_announce_try';
+
+    /** Vendor announcements per poll, at most; each one is a relay round trip. */
+    const VENDOR_ANNOUNCEMENTS_PER_RUN = 2;
+
+    /**
+     * Tell the network where vendors with a key we hold read their DMs.
+     *
+     * The marketplace announces its relays (above); the vendor keys never
+     * did. A client answering a vendor's listing looked for the vendor's
+     * kind 10050, found none, and left the reply on relays this server
+     * does not read — the same gap the marketplace announcement closed,
+     * one level down. Done from the poll, a couple of vendors per run,
+     * again whenever the relay list changes.
+     *
+     * @param array<string, array{privkey: ?string, vendor_id: int}> $ring
+     */
+    public static function announce_vendor_dm_relays( array $ring ): void {
+        if ( ! self::is_enabled() || ! class_exists( 'SK\Modules\Auth\NostrIdentity' ) ) {
+            return;
+        }
+
+        $relays = EventSender::get_relays();
+
+        if ( empty( $relays ) ) {
+            return;
+        }
+
+        $stamp = md5( implode( "\n", $relays ) );
+        $tags  = [];
+
+        foreach ( $relays as $relay ) {
+            $tags[] = [ 'relay', $relay ];
+        }
+
+        $done = 0;
+
+        foreach ( $ring as $entry ) {
+            if ( $done >= self::VENDOR_ANNOUNCEMENTS_PER_RUN ) {
+                break;
+            }
+
+            $vendor_id = (int) ( $entry['vendor_id'] ?? 0 );
+
+            if ( $vendor_id <= 0 || empty( $entry['privkey'] ) ) {
+                continue;
+            }
+
+            if ( get_user_meta( $vendor_id, self::RELAYS_ANNOUNCED_META, true ) === $stamp ) {
+                continue;
+            }
+
+            // A relay set that takes nothing is not asked every minute.
+            if ( (int) get_user_meta( $vendor_id, self::RELAYS_ANNOUNCE_TRY_META, true ) > time() - HOUR_IN_SECONDS ) {
+                continue;
+            }
+
+            update_user_meta( $vendor_id, self::RELAYS_ANNOUNCE_TRY_META, time() );
+            $done++;
+
+            if ( \SK\Modules\Auth\NostrIdentity::publish( $vendor_id, 10050, '', $tags ) ) {
+                update_user_meta( $vendor_id, self::RELAYS_ANNOUNCED_META, $stamp );
+            }
+        }
+    }
+
     /**
      * Does this user write on behalf of the marketplace?
      *
@@ -287,27 +357,33 @@ class ChatBridge {
          * Which key does the reply go out with?
          *
          * The buyer wrote to a specific mailbox and expects the reply from
-         * there. If the message went to the vendor, the vendor replies: with
-         * the key we hold, or by sealing the reply in the browser. Only a
-         * buyer who wrote to the marketplace mailbox gets the reply from the
-         * marketplace.
+         * there. Whoever wrote to the vendor's own key gets the vendor's
+         * reply: signed with the key we hold, or sealed in their browser.
+         * Whoever wrote to the marketplace gets the marketplace, naming the
+         * vendor — a reply from the vendor's own key used to reach them as
+         * a stranger opening a new conversation, not as the answer to
+         * theirs. Chats from before the inbox was recorded all came in
+         * through the marketplace, the only mailbox there was.
          *
-         * Every reply without a vendor key used to fall back to the
-         * marketplace key. That made the SK account speak for everyone, and
-         * whoever obtained a chat with an arbitrary pubkey could message
-         * that pubkey under our name.
+         * A vendor mailbox whose key is gone has nobody to answer for it.
+         * The marketplace never stands in: that put our name on messages
+         * to anyone who managed to get a chat under their pubkey.
          */
-        if ( class_exists( 'SK\Modules\Auth\NostrIdentity' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $sender_id ) ) {
-            self::send_dm( $recipient, $text, $sender_id, $chat_id );
-            return;
-        }
+        $inbox = strtolower( (string) get_post_meta( $chat_id, self::INBOX_META, true ) );
+        $markt = strtolower( (string) EventSender::get_pubkey() );
 
-        $inbox      = strtolower( (string) get_post_meta( $chat_id, self::INBOX_META, true ) );
-        $markt      = strtolower( (string) EventSender::get_pubkey() );
-        $vendor_pub = strtolower( (string) get_user_meta( $sender_id, 'nostr_public_key', true ) );
+        if ( '' !== $inbox && $inbox !== $markt ) {
+            if ( class_exists( 'SK\Modules\Auth\NostrIdentity' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $sender_id ) ) {
+                self::send_dm( $recipient, $text, $sender_id, $chat_id );
+                return;
+            }
 
-        if ( '' !== $vendor_pub && $inbox !== $markt ) {
-            self::queue_reply( $sender_id, $chat_id, $recipient, $text );
+            if ( '' !== (string) get_user_meta( $sender_id, 'nostr_public_key', true ) ) {
+                self::queue_reply( $sender_id, $chat_id, $recipient, $text );
+                return;
+            }
+
+            error_log( '[SK Nostr Bridge] Chat ' . $chat_id . ': the mailbox it came through has no key left to answer with.' );
             return;
         }
 
@@ -379,7 +455,7 @@ class ChatBridge {
      *
      * @return bool True if a relay accepted the wrap.
      */
-    public static function deliver_sealed( int $vendor_id, string $reply_id, array $seal, string $rumor_id = '' ): bool {
+    public static function deliver_sealed( int $vendor_id, string $reply_id, array $seal, string $rumor_id = '', string &$reason = '' ): bool {
         $eintrag = null;
 
         foreach ( self::pending_replies_for( $vendor_id ) as $e ) {
@@ -390,15 +466,27 @@ class ChatBridge {
         }
 
         if ( null === $eintrag || ! preg_match( '/^[0-9a-f]{64}$/', (string) ( $eintrag['to'] ?? '' ) ) ) {
+            $reason = 'unknown';
             return false;
         }
 
         $absender   = NostrDMListener::verified_seal_sender( $seal );
         $vendor_pub = strtolower( (string) get_user_meta( $vendor_id, 'nostr_public_key', true ) );
 
-        if ( null === $absender || '' === $vendor_pub || $absender !== $vendor_pub ) {
-            error_log( '[SK Nostr Bridge] Seal for reply ' . $reply_id . ' is not from vendor ' . $vendor_id . '.' );
-            self::forget_reply( $vendor_id, $reply_id );
+        if ( null === $absender ) {
+            $reason = 'invalid';
+            return false;
+        }
+
+        /*
+         * Signed with a key that is not the vendor's: the extension is
+         * logged into another account. The reply stays queued for a visit
+         * with the right one — dropping it here lost the reply for Nostr
+         * without anyone noticing.
+         */
+        if ( '' === $vendor_pub || $absender !== $vendor_pub ) {
+            error_log( '[SK Nostr Bridge] Seal for reply ' . $reply_id . ' is not from vendor ' . $vendor_id . '; kept in the queue.' );
+            $reason = 'wrong_key';
             return false;
         }
 

@@ -225,6 +225,9 @@ class NostrDMListener {
         update_option( self::LAST_SEEN_KEY, time() );
 
         SeenEvents::prune();
+
+        // Vendors whose key we hold tell the network where they read DMs.
+        ChatBridge::announce_vendor_dm_relays( $ring );
     }
 
     /** Seconds per relay: connect, subscribe and read until EOSE. */
@@ -470,6 +473,13 @@ class NostrDMListener {
             }
         }
 
+        // The signature is kept for events that are verified later, once a
+        // browser has opened them: a kind 4 has no seal, the event itself
+        // is what proves the sender.
+        $sig = isset( $raw['sig'] ) && is_string( $raw['sig'] ) && preg_match( '/^[0-9a-f]{128}$/i', $raw['sig'] )
+            ? strtolower( $raw['sig'] )
+            : '';
+
         return [
             'id'         => strtolower( $raw['id'] ),
             'pubkey'     => strtolower( $raw['pubkey'] ),
@@ -477,6 +487,7 @@ class NostrDMListener {
             'created_at' => (int) ( $raw['created_at'] ?? 0 ),
             'content'    => $content,
             'tags'       => $tags,
+            'sig'        => $sig,
         ];
     }
 
@@ -931,11 +942,16 @@ class NostrDMListener {
             return false;
         }
 
+        // Everything the signature covers is kept: a kind 4 is verified
+        // from this copy when the browser hands back its plaintext.
         $offen[] = [
-            'id'      => $id,
-            'kind'    => (int) ( $event['kind'] ?? 0 ),
-            'pubkey'  => strtolower( (string) ( $event['pubkey'] ?? '' ) ),
-            'content' => (string) ( $event['content'] ?? '' ),
+            'id'         => $id,
+            'kind'       => (int) ( $event['kind'] ?? 0 ),
+            'pubkey'     => strtolower( (string) ( $event['pubkey'] ?? '' ) ),
+            'created_at' => (int) ( $event['created_at'] ?? 0 ),
+            'tags'       => is_array( $event['tags'] ?? null ) ? $event['tags'] : [],
+            'content'    => (string) ( $event['content'] ?? '' ),
+            'sig'        => (string) ( $event['sig'] ?? '' ),
         ];
 
         update_user_meta( $vendor_id, self::PENDING_META, $offen );
@@ -989,28 +1005,38 @@ class NostrDMListener {
      * @param array $tags Tags of the innermost message, as the browser read
      *                    them; a reply names what it answers.
      */
-    public static function deliver_decrypted( int $vendor_id, string $event_id, array $seal, string $text, array $tags = [] ): bool {
-        $bekannt = false;
+    public static function deliver_decrypted( int $vendor_id, string $event_id, array $seal, string $text, array $tags = [], string &$reason = '' ): bool {
+        $eintrag = null;
 
         foreach ( self::pending_for( $vendor_id ) as $e ) {
             if ( ( $e['id'] ?? '' ) === $event_id ) {
-                $bekannt = true;
+                $eintrag = $e;
                 break;
             }
         }
 
-        if ( ! $bekannt ) {
+        if ( null === $eintrag ) {
+            $reason = 'unknown';
+            return false;
+        }
+
+        /*
+         * Verified before anything leaves the queue. A kind 4 carries no
+         * seal; the event itself is signed by the sender, and the copy
+         * checked is the one taken from the relay, not what the browser
+         * sends back.
+         */
+        $sender_pubkey = 4 === (int) ( $eintrag['kind'] ?? 0 )
+            ? self::verified_kind4_sender( $eintrag )
+            : self::verified_seal_sender( $seal );
+
+        if ( null === $sender_pubkey ) {
+            error_log( '[SK Nostr Market Bridge] Event ' . substr( $event_id, 0, 12 ) . ' failed signature verification.' );
+            $reason = 'invalid';
             return false;
         }
 
         self::forget_pending( $vendor_id, $event_id );
-
-        $sender_pubkey = self::verified_seal_sender( $seal );
-
-        if ( null === $sender_pubkey ) {
-            error_log( '[SK Nostr Market Bridge] Seal for ' . substr( $event_id, 0, 12 ) . ' failed signature verification.' );
-            return false;
-        }
 
         /*
          * A message the browser opened for us that turns out to be ours.
@@ -1043,6 +1069,44 @@ class NostrDMListener {
         self::create_bridge_chat( $vendor_id, $sender_pubkey, 0, '', $text, $inbox );
 
         return true;
+    }
+
+    /**
+     * The sender of a queued kind 4, accepted only with a valid signature.
+     *
+     * @param array $event The queue entry, as stored from the relay.
+     * @return string|null Lowercase hex pubkey, or null.
+     */
+    private static function verified_kind4_sender( array $event ): ?string {
+        if ( 4 !== (int) ( $event['kind'] ?? 0 ) || ! class_exists( '\swentel\nostr\Event\Event' ) ) {
+            return null;
+        }
+
+        foreach ( [ 'id', 'pubkey', 'sig', 'content' ] as $field ) {
+            if ( ! isset( $event[ $field ] ) || ! is_string( $event[ $field ] ) || '' === $event[ $field ] ) {
+                return null;
+            }
+        }
+
+        $raw = [
+            'id'         => $event['id'],
+            'pubkey'     => $event['pubkey'],
+            'sig'        => $event['sig'],
+            'kind'       => 4,
+            'created_at' => (int) ( $event['created_at'] ?? 0 ),
+            'tags'       => is_array( $event['tags'] ?? null ) ? $event['tags'] : [],
+            'content'    => $event['content'],
+        ];
+
+        try {
+            if ( ! ( new \swentel\nostr\Event\Event() )->verify( (object) $raw ) ) {
+                return null;
+            }
+        } catch ( \Throwable $e ) {
+            return null;
+        }
+
+        return strtolower( $event['pubkey'] );
     }
 
     /**

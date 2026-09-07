@@ -297,8 +297,13 @@ final class Module {
         );
 
         wp_localize_script( 'sk-nostr-inbox', 'skNostrInbox', [
-            'ajaxurl' => admin_url( 'admin-ajax.php' ),
-            'nonce'   => wp_create_nonce( 'sk_nostr_inbox' ),
+            'ajaxurl'      => admin_url( 'admin-ajax.php' ),
+            'nonce'        => wp_create_nonce( 'sk_nostr_inbox' ),
+            // The key this account is linked to. The extension may be
+            // logged into another one; then nothing here can be opened or
+            // signed, and the visitor should be told rather than prompted.
+            'pubkey'       => strtolower( (string) get_user_meta( $user_id, 'nostr_public_key', true ) ),
+            'i18nWrongKey' => __( 'Deine Nostr-Erweiterung ist mit einem anderen Schlüssel angemeldet als dein Konto hier. Nachrichten und Antworten warten, bis du in der Erweiterung das passende Konto wählst.', 'sk-core' ),
         ] );
     }
 
@@ -335,10 +340,13 @@ final class Module {
         $text     = (string) wp_unslash( $_POST['text'] ?? '' );
         $tags     = json_decode( (string) wp_unslash( $_POST['tags'] ?? '' ), true );
 
-        $ok = is_array( $seal ) && Bridge\NostrDMListener::deliver_decrypted( get_current_user_id(), $event_id, $seal, $text, is_array( $tags ) ? $tags : [] );
+        $reason = '';
+        $ok     = is_array( $seal ) && Bridge\NostrDMListener::deliver_decrypted( get_current_user_id(), $event_id, $seal, $text, is_array( $tags ) ? $tags : [], $reason );
 
         if ( ! $ok ) {
-            wp_send_json_error( [ 'message' => 'Nachricht nicht zustellbar.' ] );
+            // The code tells the browser whether to drop the message
+            // (invalid: it is not what it claims) or to keep it.
+            wp_send_json_error( [ 'message' => 'Nachricht nicht zustellbar.', 'code' => $reason ] );
         }
 
         wp_send_json_success();
@@ -373,10 +381,11 @@ final class Module {
         $seal     = json_decode( (string) wp_unslash( $_POST['seal'] ?? '' ), true );
         $rumor_id = sanitize_text_field( (string) wp_unslash( $_POST['rumor_id'] ?? '' ) );
 
-        $ok = is_array( $seal ) && Bridge\ChatBridge::deliver_sealed( get_current_user_id(), $reply_id, $seal, $rumor_id );
+        $reason = '';
+        $ok     = is_array( $seal ) && Bridge\ChatBridge::deliver_sealed( get_current_user_id(), $reply_id, $seal, $rumor_id, $reason );
 
         if ( ! $ok ) {
-            wp_send_json_error( [ 'message' => 'Antwort nicht gesendet.' ] );
+            wp_send_json_error( [ 'message' => 'Antwort nicht gesendet.', 'code' => $reason ] );
         }
 
         wp_send_json_success();
