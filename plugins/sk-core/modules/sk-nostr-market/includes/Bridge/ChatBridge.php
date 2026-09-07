@@ -41,6 +41,55 @@ class ChatBridge {
     }
 
     /**
+     * Tell the network which relays we read private messages on (kind 10050).
+     *
+     * NIP-17 clients deliver a gift wrap to the recipient's mailbox list, not
+     * to wherever they happen to be connected. Without this list Amethyst and
+     * friends had nowhere to put a reply to us, and the answers ended up on
+     * relays this server cannot even reach — the mirror image of the bug that
+     * kept our own messages from arriving.
+     *
+     * The announcement names exactly the relays the poll reads, so we never
+     * advertise a mailbox nobody empties.
+     */
+    public static function announce_dm_relays(): void {
+        if ( ! self::is_enabled() ) {
+            return;
+        }
+
+        $privkey = EventSender::get_privkey();
+        $relays  = EventSender::get_relays();
+
+        if ( ! $privkey || empty( $relays ) || ! class_exists( 'SK\Modules\Auth\RelayPublisher' ) ) {
+            return;
+        }
+
+        $announce = function () use ( $privkey, $relays ) {
+            if ( function_exists( 'fastcgi_finish_request' ) ) {
+                fastcgi_finish_request();
+            }
+
+            try {
+                $event = new \swentel\nostr\Event\Event();
+                $event->setKind( 10050 );
+                $event->setContent( '' );
+                $event->setCreatedAt( time() );
+
+                foreach ( $relays as $relay ) {
+                    $event->addTag( [ 'relay', $relay ] );
+                }
+
+                ( new \swentel\nostr\Sign\Sign() )->signEvent( $event, $privkey );
+                \SK\Modules\Auth\RelayPublisher::publish( $event, $relays );
+            } catch ( \Throwable $e ) {
+                error_log( '[SK Nostr Bridge] Announcing the DM relays failed: ' . $e->getMessage() );
+            }
+        };
+
+        register_shutdown_function( $announce );
+    }
+
+    /**
      * Does this user write on behalf of the marketplace?
      *
      * The marketplace key is our identity on Nostr, so a DM from it arrives

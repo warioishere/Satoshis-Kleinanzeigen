@@ -147,6 +147,12 @@ final class Module {
     }
 
     private function register_hooks() {
+        // The relay list is what we tell others about our mailboxes; when it
+        // changes, the announcement has to follow or senders keep writing to
+        // relays we no longer read.
+        add_action( 'update_option_nostr_login_relays', [ Bridge\ChatBridge::class, 'announce_dm_relays' ] );
+        add_action( 'update_option_sk_nostr', [ Bridge\ChatBridge::class, 'announce_dm_relays' ] );
+
         // AJAX: Vendor signs event with NIP-07 extension.
         add_action( 'wp_ajax_sk_nostr_market_publish_signed', [ $this, 'ajax_publish_signed_event' ] );
 
