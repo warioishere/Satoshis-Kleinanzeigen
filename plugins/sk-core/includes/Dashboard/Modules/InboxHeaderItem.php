@@ -163,10 +163,16 @@ class InboxHeaderItem {
 				'control_type' => 'kadence_measure_control',
 				'section'      => self::SECTION_KEY,
 				'priority'     => 10,
+				/*
+				 * Geraeteabhaengig, deshalb je Wert ein Fach pro Ansicht.
+				 * Ohne diese Form nimmt der Regler die Umschaltung unten zwar
+				 * an, schreibt aber immer in dasselbe Fach — die Einstellung
+				 * wirkte dann auf allen Ansichten gleich.
+				 */
 				'default'      => [
-					'size'   => [ '', '', '', '' ],
-					'unit'   => 'px',
-					'locked' => false,
+					'size'   => [ 'desktop' => [ '', '', '', '' ] ],
+					'unit'   => [ 'desktop' => 'px' ],
+					'locked' => [ 'desktop' => false ],
 				],
 				'label'        => __( 'Aussenabstand', 'sk-core' ),
 				'context'      => [
@@ -185,7 +191,11 @@ class InboxHeaderItem {
 					],
 				],
 				'input_attrs'  => [
-					'responsive' => false,
+					'min'        => [ 'px' => 0, 'em' => 0, 'rem' => 0 ],
+					'max'        => [ 'px' => 100, 'em' => 6, 'rem' => 6 ],
+					'step'       => [ 'px' => 1, 'em' => 0.01, 'rem' => 0.01 ],
+					'units'      => [ 'px', 'em', 'rem' ],
+					'responsive' => true,
 				],
 			],
 		] );
@@ -203,21 +213,32 @@ class InboxHeaderItem {
 	}
 
 	/**
-	 * Den eingestellten Aussenabstand als CSS-Wert.
+	 * Der eingestellte Aussenabstand einer Ansicht als CSS-Wert.
 	 *
-	 * Bewusst selbst gerechnet statt ueber render_measure() des Themes: das
-	 * ist eine Innerei der Stil-Komponente, und diese Klasse soll ein
-	 * Theme-Update ueberstehen. Leere Seiten werden zu 0, sonst waere der
-	 * ganze Wert ungueltig.
+	 * Bewusst selbst gerechnet statt ueber render_responsive_measure() des
+	 * Themes: das ist eine Innerei der Stil-Komponente, und diese Klasse soll
+	 * ein Theme-Update ueberstehen.
+	 *
+	 * Die Einheit hat ein eigenes Fach je Ansicht, wird aber oft nur fuer den
+	 * Desktop gefuellt — wer am Handy nur die Zahl aendert, faellt deshalb auf
+	 * die Desktop-Einheit zurueck statt stillschweigend auf Pixel.
+	 *
+	 * @param string $ansicht desktop | tablet | mobile
 	 */
-	private function margin_css(): string {
+	private function margin_css( string $ansicht ): string {
 		$mass = $this->setting( self::OPTION_MARGIN, [] );
 
 		if ( ! is_array( $mass ) || empty( $mass['size'] ) || ! is_array( $mass['size'] ) ) {
 			return '';
 		}
 
-		$seiten = array_slice( array_pad( $mass['size'], 4, '' ), 0, 4 );
+		$groessen = $mass['size'][ $ansicht ] ?? null;
+
+		if ( ! is_array( $groessen ) ) {
+			return '';
+		}
+
+		$seiten = array_slice( array_pad( $groessen, 4, '' ), 0, 4 );
 
 		// Nichts eingetragen: dann auch keine Regel ausgeben.
 		$gesetzt = array_filter( $seiten, static function ( $wert ) {
@@ -228,6 +249,9 @@ class InboxHeaderItem {
 			return '';
 		}
 
+		$einheiten = isset( $mass['unit'] ) && is_array( $mass['unit'] ) ? $mass['unit'] : [];
+		$einheit   = $einheiten[ $ansicht ] ?? ( $einheiten['desktop'] ?? 'px' );
+
 		/*
 		 * Nur echte Einheiten durchlassen. Zeichen bloss herauszufiltern
 		 * genuegte nicht: aus einem verunglueckten Wert wurde dann zwar nichts
@@ -235,7 +259,7 @@ class InboxHeaderItem {
 		 * Browser stillschweigend verwirft.
 		 */
 		$erlaubt = [ 'px', 'em', 'rem', '%', 'vh', 'vw' ];
-		$einheit = isset( $mass['unit'] ) ? strtolower( trim( (string) $mass['unit'] ) ) : 'px';
+		$einheit = strtolower( trim( (string) $einheit ) );
 		$einheit = in_array( $einheit, $erlaubt, true ) ? $einheit : 'px';
 
 		$teile = [];
@@ -248,16 +272,43 @@ class InboxHeaderItem {
 	}
 
 	/**
-	 * Den Abstand ins Stylesheet nachreichen.
+	 * Den Abstand ins Stylesheet nachreichen, je Ansicht eine Regel.
+	 *
+	 * Reihenfolge und Umbruchpunkte wie im Theme: der Desktopwert steht ohne
+	 * Bedingung, danach Tablet, danach Handy. Beide Bedingungen greifen auf
+	 * einem Telefon, die spaetere gewinnt. Die Umbruchpunkte kommen ueber
+	 * dieselben Filter wie bei Kadence, damit eine verschobene Grenze auch
+	 * hier gilt.
 	 */
 	public function inline_styles(): void {
-		$margin = $this->margin_css();
-
-		if ( '' === $margin || ! wp_style_is( 'sk-theme', 'enqueued' ) ) {
+		if ( ! wp_style_is( 'sk-theme', 'enqueued' ) ) {
 			return;
 		}
 
-		wp_add_inline_style( 'sk-theme', '.sk-header-inbox .sk-inbox-link{margin:' . $margin . ';}' );
+		$auswahl = '.sk-header-inbox .sk-inbox-link';
+
+		$ansichten = [
+			'desktop' => '',
+			'tablet'  => apply_filters( 'kadence_tablet_media_query', '(max-width: 1024px)' ),
+			'mobile'  => apply_filters( 'kadence_mobile_media_query', '(max-width: 767px)' ),
+		];
+
+		$css = '';
+
+		foreach ( $ansichten as $ansicht => $bedingung ) {
+			$margin = $this->margin_css( $ansicht );
+
+			if ( '' === $margin ) {
+				continue;
+			}
+
+			$regel = $auswahl . '{margin:' . $margin . ';}';
+			$css  .= '' === $bedingung ? $regel : '@media ' . $bedingung . '{' . $regel . '}';
+		}
+
+		if ( '' !== $css ) {
+			wp_add_inline_style( 'sk-theme', $css );
+		}
 	}
 
 	/**
