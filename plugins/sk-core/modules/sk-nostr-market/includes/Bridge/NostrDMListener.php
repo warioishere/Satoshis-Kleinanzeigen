@@ -57,7 +57,10 @@ class NostrDMListener {
      * Anbieters antwortet, landet bei genau diesem Anbieter, ohne dass die
      * Nachricht sagen muss, um welches Inserat es geht.
      *
-     * @return array<string, array{privkey: string, vendor_id: int}>
+     * Ein Eintrag ohne privkey heisst: wir kennen das Postfach, koennen es
+     * aber nicht oeffnen — das muss der Anbieter selbst tun.
+     *
+     * @return array<string, array{privkey: ?string, vendor_id: int}>
      */
     private static function key_ring(): array {
         static $ring = null;
@@ -105,6 +108,36 @@ class NostrDMListener {
                     'vendor_id' => $vendor_id,
                 ];
             }
+        }
+
+        /*
+         * Anbieter, die sich ueber eine Erweiterung anmelden: wir haben nur
+         * ihren oeffentlichen Schluessel. Ihr Postfach koennen wir abfragen —
+         * die Nachrichten liegen offen auf den Relays —, aber nicht oeffnen.
+         * Sie werden vorgemerkt und spaeter im Browser des Anbieters
+         * entschluesselt.
+         */
+        $nur_pubkey = $wpdb->get_col(
+            "SELECT DISTINCT user_id FROM {$wpdb->usermeta}
+             WHERE meta_key = 'nostr_public_key' AND meta_value <> ''
+               AND user_id NOT IN (
+                   SELECT user_id FROM {$wpdb->usermeta}
+                   WHERE meta_key = 'sk_nostr_private_key' AND meta_value <> ''
+               )"
+        );
+
+        foreach ( (array) $nur_pubkey as $vendor_id ) {
+            $vendor_id = (int) $vendor_id;
+            $pub       = strtolower( (string) get_user_meta( $vendor_id, 'nostr_public_key', true ) );
+
+            if ( ! preg_match( '/^[0-9a-f]{64}$/', $pub ) || isset( $ring[ $pub ] ) ) {
+                continue;
+            }
+
+            $ring[ $pub ] = [
+                'privkey'   => null,
+                'vendor_id' => $vendor_id,
+            ];
         }
 
         return $ring;
@@ -276,6 +309,15 @@ class NostrDMListener {
             return;
         }
 
+        /*
+         * Kein Schluessel bei uns: nur der Anbieter selbst kann diese
+         * Nachricht oeffnen. Roh vormerken, den Rest erledigt sein Browser.
+         */
+        if ( empty( $empfaenger['privkey'] ) ) {
+            self::queue_for_browser( $empfaenger['vendor_id'], $event );
+            return;
+        }
+
         $kind = (int) ( $event['kind'] ?? 0 );
 
         if ( 1059 === $kind ) {
@@ -373,6 +415,118 @@ class NostrDMListener {
         }
 
         self::create_bridge_chat( $vendor_id, $sender_pubkey, 0, '', $text );
+    }
+
+    /** Nutzermeta mit den vorgemerkten, noch verschluesselten Nachrichten. */
+    const PENDING_META = '_sk_nostr_pending_wraps';
+
+    /** Mehr als das hebt niemand auf. */
+    const PENDING_MAX = 30;
+
+    /**
+     * Eine Nachricht vormerken, die nur ihr Empfaenger oeffnen kann.
+     *
+     * Gespeichert wird das rohe Ereignis, so wie es vom Relay kam. Es ist
+     * ohnehin oeffentlich; entschluesseln kann es nur, wer den privaten
+     * Schluessel hat, und der liegt im Browser des Anbieters.
+     */
+    private static function queue_for_browser( int $vendor_id, array $event ): void {
+        if ( $vendor_id <= 0 ) {
+            return;
+        }
+
+        $offen = get_user_meta( $vendor_id, self::PENDING_META, true );
+        $offen = is_array( $offen ) ? $offen : [];
+
+        $id = (string) ( $event['id'] ?? '' );
+
+        foreach ( $offen as $vorhanden ) {
+            if ( ( $vorhanden['id'] ?? '' ) === $id ) {
+                return;
+            }
+        }
+
+        $offen[] = [
+            'id'      => $id,
+            'kind'    => (int) ( $event['kind'] ?? 0 ),
+            'pubkey'  => strtolower( (string) ( $event['pubkey'] ?? '' ) ),
+            'content' => (string) ( $event['content'] ?? '' ),
+        ];
+
+        // Aeltestes zuerst weg, sonst waechst das Meta unbegrenzt, wenn der
+        // Anbieter nie vorbeischaut.
+        if ( count( $offen ) > self::PENDING_MAX ) {
+            $offen = array_slice( $offen, -self::PENDING_MAX );
+        }
+
+        update_user_meta( $vendor_id, self::PENDING_META, $offen );
+    }
+
+    /**
+     * Die vorgemerkten Nachrichten eines Anbieters.
+     */
+    public static function pending_for( int $vendor_id ): array {
+        $offen = get_user_meta( $vendor_id, self::PENDING_META, true );
+
+        return is_array( $offen ) ? $offen : [];
+    }
+
+    /**
+     * Eine vorgemerkte Nachricht abhaken.
+     */
+    public static function forget_pending( int $vendor_id, string $event_id ): void {
+        $offen = self::pending_for( $vendor_id );
+
+        $rest = array_values( array_filter( $offen, static function ( $e ) use ( $event_id ) {
+            return ( $e['id'] ?? '' ) !== $event_id;
+        } ) );
+
+        if ( empty( $rest ) ) {
+            delete_user_meta( $vendor_id, self::PENDING_META );
+        } else {
+            update_user_meta( $vendor_id, self::PENDING_META, $rest );
+        }
+    }
+
+    /**
+     * Eine im Browser entschluesselte Nachricht zustellen.
+     *
+     * Der Klartext kommt vom Anbieter selbst, wir koennen ihn nicht pruefen —
+     * das ist der Preis dafuer, dass wir seinen Schluessel nicht haben. Was
+     * wir pruefen: dass die Kennung wirklich in seiner Warteschlange stand.
+     * Sonst koennte jemand beliebige Gespraeche in sein Postfach schreiben.
+     */
+    public static function deliver_decrypted( int $vendor_id, string $event_id, string $sender_pubkey, string $text ): bool {
+        $bekannt = false;
+
+        foreach ( self::pending_for( $vendor_id ) as $e ) {
+            if ( ( $e['id'] ?? '' ) === $event_id ) {
+                $bekannt = true;
+                break;
+            }
+        }
+
+        if ( ! $bekannt ) {
+            return false;
+        }
+
+        self::forget_pending( $vendor_id, $event_id );
+
+        $sender_pubkey = strtolower( $sender_pubkey );
+
+        if ( ! preg_match( '/^[0-9a-f]{64}$/', $sender_pubkey ) ) {
+            return false;
+        }
+
+        $text = self::clean_field( $text, 4000 );
+
+        if ( '' === $text ) {
+            return false;
+        }
+
+        self::create_bridge_chat( $vendor_id, $sender_pubkey, 0, '', $text );
+
+        return true;
     }
 
     /**

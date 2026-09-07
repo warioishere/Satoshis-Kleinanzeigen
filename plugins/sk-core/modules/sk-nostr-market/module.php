@@ -154,6 +154,12 @@ final class Module {
 
         // Auswahl der Identitaet im Inseratsformular.
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_identity_js' ] );
+
+        // Nachrichten, die nur der Anbieter selbst oeffnen kann.
+        add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_inbox_js' ] );
+        add_action( 'wp_ajax_sk_nostr_pending_wraps', [ $this, 'ajax_pending_wraps' ] );
+        add_action( 'wp_ajax_sk_nostr_deliver_decrypted', [ $this, 'ajax_deliver_decrypted' ] );
+        add_action( 'wp_ajax_sk_nostr_drop_wrap', [ $this, 'ajax_drop_wrap' ] );
         add_action( 'wp_ajax_sk_nostr_market_fallback_sign', [ $this, 'ajax_fallback_sign' ] );
         add_action( 'wp_ajax_sk_nostr_market_cancel_sign', [ $this, 'ajax_cancel_sign' ] );
         add_action( 'wp_footer', [ $this, 'render_sign_modal' ] );
@@ -236,6 +242,96 @@ final class Module {
             'i18nCopy'    => __( 'Kopieren', 'sk-core' ),
             'i18nCopied'  => __( 'Kopiert', 'sk-core' ),
         ] );
+    }
+
+    /**
+     * Das Skript, das vorgemerkte Nachrichten im Browser oeffnet.
+     *
+     * Nur fuer Anbieter, deren Schluessel wir nicht haben und fuer die etwas
+     * wartet. Alle anderen bekommen es nicht zu Gesicht.
+     */
+    public function enqueue_inbox_js(): void {
+        if ( ! is_user_logged_in() ) {
+            return;
+        }
+
+        $user_id = get_current_user_id();
+
+        if ( empty( Bridge\NostrDMListener::pending_for( $user_id ) ) ) {
+            return;
+        }
+
+        wp_enqueue_script(
+            'sk-nostr-inbox',
+            plugins_url( 'assets/js/nostr-inbox.js', SK_NOSTR_MARKET_PATH . '/module.php' ),
+            [ 'jquery' ],
+            SK_NOSTR_MARKET_VERSION,
+            true
+        );
+
+        wp_localize_script( 'sk-nostr-inbox', 'skNostrInbox', [
+            'ajaxurl' => admin_url( 'admin-ajax.php' ),
+            'nonce'   => wp_create_nonce( 'sk_nostr_inbox' ),
+        ] );
+    }
+
+    /**
+     * AJAX: was fuer den angemeldeten Anbieter zu oeffnen ist.
+     *
+     * Die Ereignisse sind verschluesselt und lagen ohnehin offen auf den
+     * Relays — hier wird nichts preisgegeben, was nicht schon oeffentlich war.
+     */
+    public function ajax_pending_wraps(): void {
+        check_ajax_referer( 'sk_nostr_inbox', 'nonce' );
+
+        if ( ! is_user_logged_in() ) {
+            wp_send_json_error( [ 'message' => 'Nicht angemeldet.' ] );
+        }
+
+        wp_send_json_success( [
+            'wraps' => array_values( Bridge\NostrDMListener::pending_for( get_current_user_id() ) ),
+        ] );
+    }
+
+    /**
+     * AJAX: eine im Browser geoeffnete Nachricht entgegennehmen.
+     */
+    public function ajax_deliver_decrypted(): void {
+        check_ajax_referer( 'sk_nostr_inbox', 'nonce' );
+
+        if ( ! is_user_logged_in() ) {
+            wp_send_json_error( [ 'message' => 'Nicht angemeldet.' ] );
+        }
+
+        $event_id = sanitize_text_field( (string) wp_unslash( $_POST['event_id'] ?? '' ) );
+        $sender   = sanitize_text_field( (string) wp_unslash( $_POST['sender'] ?? '' ) );
+        $text     = (string) wp_unslash( $_POST['text'] ?? '' );
+
+        $ok = Bridge\NostrDMListener::deliver_decrypted( get_current_user_id(), $event_id, $sender, $text );
+
+        if ( ! $ok ) {
+            wp_send_json_error( [ 'message' => 'Nachricht nicht zustellbar.' ] );
+        }
+
+        wp_send_json_success();
+    }
+
+    /**
+     * AJAX: eine vorgemerkte Nachricht verwerfen, die sich nicht oeffnen liess.
+     */
+    public function ajax_drop_wrap(): void {
+        check_ajax_referer( 'sk_nostr_inbox', 'nonce' );
+
+        if ( ! is_user_logged_in() ) {
+            wp_send_json_error( [ 'message' => 'Nicht angemeldet.' ] );
+        }
+
+        Bridge\NostrDMListener::forget_pending(
+            get_current_user_id(),
+            sanitize_text_field( (string) wp_unslash( $_POST['event_id'] ?? '' ) )
+        );
+
+        wp_send_json_success();
     }
 
     /**
