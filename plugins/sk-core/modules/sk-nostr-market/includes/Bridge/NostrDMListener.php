@@ -176,7 +176,12 @@ class NostrDMListener {
             $events = self::fetch_dms( $relay_url, $pubkeys, $since );
 
             foreach ( $events as $event ) {
-                self::process_dm( $event, $ring );
+                // One bad event must not end the run for every relay after it.
+                try {
+                    self::process_dm( $event, $ring );
+                } catch ( \Throwable $e ) {
+                    error_log( '[SK Nostr Market Bridge] Event ' . substr( (string) ( $event['id'] ?? '' ), 0, 12 ) . ' from ' . $relay_url . ' failed: ' . $e->getMessage() );
+                }
             }
         }
 
@@ -185,68 +190,148 @@ class NostrDMListener {
         update_option( self::LAST_SEEN_KEY, time() );
     }
 
+    /** Seconds per relay: connect, subscribe and read until EOSE. */
+    const RELAY_TIMEOUT = 10;
+
+    /** Events accepted per relay and poll; the relay is asked for the same limit. */
+    const MAX_EVENTS = 200;
+
     /**
-     * Fetch Kind 4 (NIP-04) DMs addressed to our pubkey since $since.
+     * Largest event content taken from a relay. A NIP-44 payload is at most
+     * 65535 bytes of plaintext, about 88 KB as base64; anything bigger is
+     * not a message anyone could decrypt.
      */
+    const MAX_CONTENT = 100000;
+
     /**
-     * @param string[] $pubkeys Alle Postfaecher, die uns gehoeren.
+     * Fetch kind 4 (NIP-04) and kind 1059 (NIP-17 gift wrap) events addressed
+     * to our pubkeys since $since.
+     *
+     * We send as gift wraps ourselves; replies come back the same way, and a
+     * filter on kind 4 alone never saw them.
+     *
+     * Whatever was collected is returned, also when the relay stalls or
+     * fails halfway: a relay that never sends EOSE used to cost the client's
+     * default 60 s and then lose every event it had already delivered. The
+     * timeout is set on the client itself; the options array the constructor
+     * used to get is ignored by this websocket library. TLS verification is
+     * PHP's default and stays on.
+     *
+     * @param string[] $pubkeys All mailboxes that belong to us.
      */
     private static function fetch_dms( string $relay_url, array $pubkeys, int $since ): array {
         if ( ! class_exists( '\WebSocket\Client' ) ) {
             return [];
         }
 
-        try {
-            // Relay TLS must be verified — otherwise a MITM can inject events
-            // that end up as chat messages.
-            $ctx = stream_context_create( [ 'ssl' => [ 'verify_peer' => true, 'verify_peer_name' => true ] ] );
-            $client = new \WebSocket\Client( $relay_url, [ 'context' => $ctx, 'timeout' => 10 ] );
+        $events = [];
+        $client = null;
+        $sub_id = bin2hex( random_bytes( 8 ) );
 
-            $sub_id = bin2hex( random_bytes( 8 ) );
-            $filter = [
-                // 4 = NIP-04, 1059 = NIP-17 Gift Wrap. Wir senden selbst als
-                // Gift Wrap; wer darauf antwortet, tut es ebenfalls, und diese
-                // Antworten waren mit einem Filter auf Kind 4 unsichtbar.
+        try {
+            $client = new \WebSocket\Client( $relay_url );
+            $client->setTimeout( self::RELAY_TIMEOUT );
+
+            $client->text( wp_json_encode( [ 'REQ', $sub_id, [
                 'kinds' => [ 4, 1059 ],
                 '#p'    => array_values( $pubkeys ),
                 'since' => $since,
-                'limit' => 100,
-            ];
+                'limit' => self::MAX_EVENTS,
+            ] ] ) );
 
-            $client->text( wp_json_encode( [ 'REQ', $sub_id, $filter ] ) );
+            $deadline = microtime( true ) + self::RELAY_TIMEOUT;
 
-            $events = [];
-            $start  = time();
+            while ( microtime( true ) < $deadline ) {
+                $data = json_decode( $client->receive()->getContent(), true );
 
-            while ( time() - $start < 8 ) {
-                $msg = $client->receive();
-                if ( $msg === null ) {
-                    break;
-                }
-
-                $data = json_decode( $msg->getContent(), true );
-                if ( ! is_array( $data ) ) {
+                if ( ! is_array( $data ) || ! isset( $data[0] ) ) {
                     continue;
                 }
 
-                if ( $data[0] === 'EVENT' && isset( $data[2] ) ) {
-                    $events[] = $data[2];
+                if ( 'EOSE' === $data[0] || 'CLOSED' === $data[0] ) {
+                    break;
                 }
 
-                if ( $data[0] === 'EOSE' ) {
+                if ( 'EVENT' !== $data[0] ) {
+                    continue;
+                }
+
+                $event = self::valid_event( $data[2] ?? null );
+
+                if ( null === $event ) {
+                    continue;
+                }
+
+                $events[] = $event;
+
+                // The relay was asked for this limit; not every relay honours it.
+                if ( count( $events ) >= self::MAX_EVENTS ) {
                     break;
                 }
             }
 
             $client->text( wp_json_encode( [ 'CLOSE', $sub_id ] ) );
             $client->disconnect();
+        } catch ( \Throwable $e ) {
+            error_log( '[SK Nostr Market Bridge] Relay ' . $relay_url . ': ' . $e->getMessage() . ' (' . count( $events ) . ' events kept)' );
 
-            return $events;
-
-        } catch ( \Exception $e ) {
-            error_log( '[SK Nostr Market Bridge] Relay poll error: ' . $e->getMessage() );
-            return [];
+            if ( $client ) {
+                try {
+                    $client->disconnect();
+                } catch ( \Throwable $ignored ) {
+                    // Already gone.
+                }
+            }
         }
+
+        return $events;
+    }
+
+    /**
+     * Only the fields we use, each in the shape we expect, or null.
+     *
+     * A relay is not trusted to send well-formed events: an EVENT whose
+     * payload was a string used to reach process_dm() and end the whole
+     * poll with a TypeError.
+     *
+     * @param mixed $raw
+     */
+    private static function valid_event( $raw ): ?array {
+        if ( ! is_array( $raw ) ) {
+            return null;
+        }
+
+        $hex64 = '/^[0-9a-f]{64}$/i';
+
+        if ( ! isset( $raw['id'], $raw['pubkey'], $raw['kind'] )
+            || ! is_string( $raw['id'] ) || ! preg_match( $hex64, $raw['id'] )
+            || ! is_string( $raw['pubkey'] ) || ! preg_match( $hex64, $raw['pubkey'] )
+            || ! is_int( $raw['kind'] ) || ! in_array( $raw['kind'], [ 4, 1059 ], true ) ) {
+            return null;
+        }
+
+        $content = $raw['content'] ?? '';
+
+        if ( ! is_string( $content ) || strlen( $content ) > self::MAX_CONTENT ) {
+            return null;
+        }
+
+        $tags = [];
+
+        foreach ( (array) ( $raw['tags'] ?? [] ) as $tag ) {
+            if ( is_array( $tag ) ) {
+                $tags[] = array_values( array_filter( $tag, 'is_string' ) );
+            }
+        }
+
+        return [
+            'id'         => strtolower( $raw['id'] ),
+            'pubkey'     => strtolower( $raw['pubkey'] ),
+            'kind'       => $raw['kind'],
+            'created_at' => (int) ( $raw['created_at'] ?? 0 ),
+            'content'    => $content,
+            'tags'       => $tags,
+        ];
     }
 
     /**
