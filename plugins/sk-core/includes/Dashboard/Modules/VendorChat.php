@@ -689,12 +689,19 @@ class VendorChat extends DashboardModule {
 
 		if ( $other_user_id ) {
 
-			// Mirror to Nostr DM if both users have Nostr identities.
+			// Mirror to Nostr when the recipient can be reached there and the
+			// message can be signed in the sender's name.
 			if ( class_exists( 'SK\Modules\Auth\NostrIdentity' )
 				&& class_exists( 'SK\Modules\NostrMarket\Bridge\ChatBridge' )
 				&& \SK\Modules\NostrMarket\Bridge\ChatBridge::is_enabled() ) {
 				$recipient_pubkey = \SK\Modules\Auth\NostrIdentity::get_public_key( $other_user_id );
-				if ( $recipient_pubkey && \SK\Modules\Auth\NostrIdentity::has_identity( $current_user_id ) ) {
+
+				// The platform account has no key of its own; it writes under
+				// the marketplace key, which is the marketplace's identity.
+				$sender_can_sign = \SK\Modules\Auth\NostrIdentity::has_identity( $current_user_id )
+					|| \SK\Modules\NostrMarket\Bridge\ChatBridge::is_platform_account( $current_user_id );
+
+				if ( $recipient_pubkey && $sender_can_sign ) {
 					register_shutdown_function( function () use ( $recipient_pubkey, $message, $current_user_id ) {
 						\SK\Modules\NostrMarket\Bridge\ChatBridge::send_dm( $recipient_pubkey, $message, $current_user_id );
 					} );

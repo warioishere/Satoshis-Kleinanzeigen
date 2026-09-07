@@ -482,7 +482,15 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
     <?php if ( sk_module_active( 'sk_nostr_market' ) && sk_get_option( 'sk_nostr_market_enabled', 'sk_nostr_market', 'off' ) === 'on' ) :
         $nm_nostr_pubkey = get_user_meta( $current_user, 'nostr_public_key', true );
         $nm_has_pubkey   = ! empty( $nm_nostr_pubkey );
-        $nm_self_sign    = $profile_info['nostr_market_self_sign'] ?? '0';
+
+        /*
+         * Who signs is decided by the publish path, so ask it rather than
+         * guessing from the pubkey: a key we hold is signed on the server,
+         * a key that stays in the browser extension has to be confirmed by
+         * the vendor for every listing.
+         */
+        $nm_self_sign = class_exists( '\SK\Modules\NostrMarket\Module' )
+            && \SK\Modules\NostrMarket\Module::vendor_wants_self_sign( (int) $current_user );
 
         // Convert pubkey to npub for display.
         $nm_npub = '';
@@ -502,9 +510,18 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
         <div class="sk-settings-field">
             <label class="sk-settings-label">Nostr Key</label>
             <div class="sk-settings-input">
+                <?php if ( $nm_self_sign ) : ?>
+                <p class="sk-settings-status sk-settings-status--ok">
+                    <i class="fas fa-check-circle"></i> Deine Inserate signierst du selbst in deiner Nostr-Erweiterung.
+                </p>
+                <p class="description">
+                    Dein privater Schlüssel bleibt in deinem Browser, wir können damit nichts signieren. Nach dem Speichern eines Inserats fragt deine Erweiterung nach der Signatur — erst danach geht es an die Relays.
+                </p>
+                <?php else : ?>
                 <p class="sk-settings-status sk-settings-status--ok">
                     <i class="fas fa-check-circle"></i> Deine Inserate werden automatisch mit deinem Nostr Key signiert.
                 </p>
+                <?php endif; ?>
                 <?php if ( $nm_npub ) : ?>
                 <p class="sk-settings-npub-line">
                     <code class="sk-settings-npub"><?php echo esc_html( substr( $nm_npub, 0, 20 ) . '...' ); ?></code>

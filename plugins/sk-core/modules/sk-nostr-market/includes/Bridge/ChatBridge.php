@@ -14,6 +14,9 @@ defined( 'ABSPATH' ) || exit;
  */
 class ChatBridge {
 
+    /** The account the marketplace itself writes from. */
+    const PLATFORM_USER_ID = 1;
+
     /** Chat meta: which of our mailboxes the first message went to. */
     const INBOX_META = '_dvc_nostr_inbox';
 
@@ -35,6 +38,23 @@ class ChatBridge {
     public static function is_enabled(): bool {
         return sk_get_option( 'sk_nostr_market_enabled', 'sk_nostr_market', 'off' ) === 'on'
             && sk_get_option( 'sk_nostr_market_bridge_enabled', 'sk_nostr_market', 'off' ) === 'on';
+    }
+
+    /**
+     * Does this user write on behalf of the marketplace?
+     *
+     * The marketplace key is our identity on Nostr, so a DM from it arrives
+     * as Satoshiskleinanzeigen — which is exactly who wrote it. This account
+     * has no key of its own, and without this exception its messages were
+     * dropped silently: the mirror only ran for senders whose key we hold.
+     *
+     * It stays a single named account on purpose. Letting every admin send
+     * under the marketplace key would put our name on personal messages, and
+     * for vendors it is plainly wrong — that mistake is why replies used to
+     * come back to us instead of to them.
+     */
+    public static function is_platform_account( int $user_id ): bool {
+        return self::PLATFORM_USER_ID === $user_id;
     }
 
     public static function init(): void {
@@ -367,7 +387,7 @@ class ChatBridge {
             return false;
         }
 
-        if ( $sender_user_id ) {
+        if ( $sender_user_id && ! self::is_platform_account( $sender_user_id ) ) {
             if ( ! class_exists( 'SK\Modules\Auth\NostrIdentity' ) ) {
                 return false;
             }
