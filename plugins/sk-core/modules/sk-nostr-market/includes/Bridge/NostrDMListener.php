@@ -228,8 +228,30 @@ class NostrDMListener {
     /** Seconds per relay: connect, subscribe and read until EOSE. */
     const RELAY_TIMEOUT = 10;
 
-    /** Events accepted per relay and poll; the relay is asked for the same limit. */
-    const MAX_EVENTS = 200;
+    /**
+     * Events asked for per mailbox and page. Each mailbox gets its own
+     * filter with its own limit: with one filter and one limit for all of
+     * them, whoever filled one mailbox with more than that many events
+     * pushed every other mailbox's messages out of the relay's answer.
+     */
+    const PER_MAILBOX_LIMIT = 200;
+
+    /**
+     * Pages read per mailbox and poll. A relay answers with the newest
+     * events up to the limit; a mailbox that filled a whole page is asked
+     * again for what lies before it, so older messages behind a flood are
+     * still reached — up to this many pages.
+     */
+    const PAGES_MAX = 3;
+
+    /** Mailboxes per subscription; relays cap the filters they take per REQ. */
+    const FILTERS_PER_REQ = 10;
+
+    /** Hard ceiling on events taken from one relay in one poll. */
+    const MAX_EVENTS = 1000;
+
+    /** Hard ceiling on event content taken from one relay in one poll. */
+    const MAX_BYTES = 8 * 1024 * 1024;
 
     /**
      * Largest event content taken from a relay. A NIP-44 payload is at most
@@ -252,6 +274,12 @@ class NostrDMListener {
      * used to get is ignored by this websocket library. TLS verification is
      * PHP's default and stays on.
      *
+     * Each mailbox is its own filter with its own limit, and a mailbox whose
+     * page came back full is asked again for what lies before its oldest
+     * event. The mailboxes are taken in random order, so whenever the
+     * ceiling cuts the run short it is not always the same ones that miss
+     * out.
+     *
      * @param string[] $pubkeys All mailboxes that belong to us.
      */
     private static function fetch_dms( string $relay_url, array $pubkeys, int $since ): array {
@@ -259,53 +287,134 @@ class NostrDMListener {
             return [];
         }
 
+        $pubkeys = array_values( array_unique( array_map( 'strtolower', $pubkeys ) ) );
+        shuffle( $pubkeys );
+
+        // Per mailbox: where the next page ends, and how many were read.
+        $work = [];
+
+        foreach ( $pubkeys as $pubkey ) {
+            $work[ $pubkey ] = [ 'until' => null, 'pages' => 0 ];
+        }
+
         $events = [];
+        $ids    = [];
+        $bytes  = 0;
         $client = null;
-        $sub_id = bin2hex( random_bytes( 8 ) );
 
         try {
             $client = new \WebSocket\Client( $relay_url );
             $client->setTimeout( self::RELAY_TIMEOUT );
 
-            $client->text( wp_json_encode( [ 'REQ', $sub_id, [
-                'kinds' => [ 4, 1059 ],
-                '#p'    => array_values( $pubkeys ),
-                'since' => $since,
-                'limit' => self::MAX_EVENTS,
-            ] ] ) );
-
             $deadline = microtime( true ) + self::RELAY_TIMEOUT;
 
-            while ( microtime( true ) < $deadline ) {
-                $data = json_decode( $client->receive()->getContent(), true );
+            while ( ! empty( $work ) && microtime( true ) < $deadline
+                && count( $events ) < self::MAX_EVENTS && $bytes < self::MAX_BYTES ) {
 
-                if ( ! is_array( $data ) || ! isset( $data[0] ) ) {
-                    continue;
+                $batch   = array_slice( array_keys( $work ), 0, self::FILTERS_PER_REQ );
+                $filters = [];
+
+                foreach ( $batch as $pubkey ) {
+                    $filter = [
+                        'kinds' => [ 4, 1059 ],
+                        '#p'    => [ $pubkey ],
+                        'since' => $since,
+                        'limit' => self::PER_MAILBOX_LIMIT,
+                    ];
+
+                    if ( null !== $work[ $pubkey ]['until'] ) {
+                        $filter['until'] = $work[ $pubkey ]['until'];
+                    }
+
+                    $filters[] = $filter;
                 }
 
-                if ( 'EOSE' === $data[0] || 'CLOSED' === $data[0] ) {
+                $sub_id = bin2hex( random_bytes( 8 ) );
+                $client->text( wp_json_encode( array_merge( [ 'REQ', $sub_id ], $filters ) ) );
+
+                $count  = array_fill_keys( $batch, 0 );
+                $oldest = array_fill_keys( $batch, PHP_INT_MAX );
+                $eose   = false;
+
+                while ( microtime( true ) < $deadline ) {
+                    $data = json_decode( $client->receive()->getContent(), true );
+
+                    if ( ! is_array( $data ) || ! isset( $data[0] ) ) {
+                        continue;
+                    }
+
+                    // Answers to an earlier, already closed subscription.
+                    if ( in_array( $data[0], [ 'EVENT', 'EOSE', 'CLOSED' ], true ) && ( $data[1] ?? '' ) !== $sub_id ) {
+                        continue;
+                    }
+
+                    if ( 'EOSE' === $data[0] || 'CLOSED' === $data[0] ) {
+                        $eose = true;
+                        break;
+                    }
+
+                    if ( 'EVENT' !== $data[0] ) {
+                        continue;
+                    }
+
+                    $event = self::valid_event( $data[2] ?? null );
+
+                    if ( null === $event ) {
+                        continue;
+                    }
+
+                    // Counted before the duplicate check: the overlap at the
+                    // page boundary is a known event, and it still says
+                    // whether the page was full.
+                    foreach ( $event['tags'] as $tag ) {
+                        $to = ( $tag[0] ?? '' ) === 'p' ? strtolower( (string) ( $tag[1] ?? '' ) ) : '';
+
+                        if ( isset( $count[ $to ] ) ) {
+                            $count[ $to ]++;
+                            $oldest[ $to ] = min( $oldest[ $to ], $event['created_at'] );
+                        }
+                    }
+
+                    if ( isset( $ids[ $event['id'] ] ) ) {
+                        continue;
+                    }
+
+                    $ids[ $event['id'] ] = true;
+                    $events[]            = $event;
+                    $bytes              += strlen( $event['content'] );
+
+                    // The relay was asked for a limit; not every relay honours it.
+                    if ( count( $events ) >= self::MAX_EVENTS || $bytes >= self::MAX_BYTES ) {
+                        break;
+                    }
+                }
+
+                $client->text( wp_json_encode( [ 'CLOSE', $sub_id ] ) );
+
+                if ( ! $eose ) {
+                    // Stalled or cut short: what came in is kept, nothing more is asked.
                     break;
                 }
 
-                if ( 'EVENT' !== $data[0] ) {
-                    continue;
-                }
+                /*
+                 * A full page means there may be more behind it. The next
+                 * page ends at the oldest event seen, inclusive: events that
+                 * share that second would otherwise slip through, and the
+                 * repeat is caught by id.
+                 */
+                foreach ( $batch as $pubkey ) {
+                    $work[ $pubkey ]['pages']++;
 
-                $event = self::valid_event( $data[2] ?? null );
-
-                if ( null === $event ) {
-                    continue;
-                }
-
-                $events[] = $event;
-
-                // The relay was asked for this limit; not every relay honours it.
-                if ( count( $events ) >= self::MAX_EVENTS ) {
-                    break;
+                    if ( $count[ $pubkey ] >= self::PER_MAILBOX_LIMIT
+                        && $work[ $pubkey ]['pages'] < self::PAGES_MAX
+                        && $oldest[ $pubkey ] > $since ) {
+                        $work[ $pubkey ]['until'] = $oldest[ $pubkey ];
+                    } else {
+                        unset( $work[ $pubkey ] );
+                    }
                 }
             }
 
-            $client->text( wp_json_encode( [ 'CLOSE', $sub_id ] ) );
             $client->disconnect();
         } catch ( \Throwable $e ) {
             error_log( '[SK Nostr Market Bridge] Relay ' . $relay_url . ': ' . $e->getMessage() . ' (' . count( $events ) . ' events kept)' );
