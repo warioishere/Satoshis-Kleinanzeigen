@@ -309,22 +309,40 @@ class VendorChat extends DashboardModule {
 	 * Who sent a message: the Nostr contact for messages that came over the
 	 * bridge, the SK user otherwise.
 	 *
-	 * A bridged message is written as the bridge user and carries the
-	 * sender's pubkey in its own column. Showing the bridge user's name
-	 * there would label a stranger's text with our own name.
+	 * A message from a stranger is written as the bridge user and carries the
+	 * sender's pubkey in its own column. Showing the bridge user's name there
+	 * would label a stranger's text with our own name.
+	 *
+	 * A member who answers over Nostr is a different case: the message is
+	 * written as themselves and only happens to have travelled that way. It
+	 * carries a pubkey too, and going by the pubkey alone showed their npub
+	 * where their shop name belongs.
 	 *
 	 * @param array $message
 	 * @param int   $chat_id
 	 * @return string
 	 */
 	private function sender_name( array $message, int $chat_id ): string {
-		$pubkey = (string) ( $message['nostr_pubkey'] ?? '' );
+		$user_id = (int) ( $message['user_id'] ?? 0 );
+		$pubkey  = (string) ( $message['nostr_pubkey'] ?? '' );
+
+		$written_as_member = $user_id > 0
+			&& ! ( class_exists( '\SK\Modules\NostrMarket\Bridge\ChatBridge' )
+				&& \SK\Modules\NostrMarket\Bridge\ChatBridge::is_bridge_user( $user_id ) );
+
+		if ( $written_as_member ) {
+			$name = $this->display_name_for( $user_id );
+
+			if ( '' !== $name ) {
+				return $name;
+			}
+		}
 
 		if ( $pubkey !== '' && class_exists( '\SK\Modules\NostrMarket\Bridge\ChatBridge' ) ) {
 			return \SK\Modules\NostrMarket\Bridge\ChatBridge::contact_name( $pubkey, $chat_id );
 		}
 
-		return $this->display_name_for( (int) ( $message['user_id'] ?? 0 ) );
+		return $this->display_name_for( $user_id );
 	}
 
 	/**
