@@ -79,7 +79,7 @@ $post_statuses = sk_get_available_post_status( $post->ID );
             <label>
                 <input type="hidden" name="_sk_nostr_market_post" value="0" />
                 <input type="checkbox" name="_sk_nostr_market_post" value="1" <?php checked( $nostr_checked ); ?>>
-                <?php esc_html_e( 'Auf Nostr veröffentlichen', 'sk-core' ); ?>
+                <?php esc_html_e( 'Auf Nostr Markt veröffentlichen', 'sk-core' ); ?>
             </label>
             <p class="sk-settings-hint">
                 <?php esc_html_e( 'Dein Inserat erscheint zusätzlich im Nostr-Netzwerk unter deinem eigenen Schlüssel, sichtbar in Clients wie Amethyst. Du kannst es jederzeit wieder abwählen, dann wird es dort entfernt.', 'sk-core' ); ?>

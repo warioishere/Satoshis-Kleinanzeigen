@@ -498,7 +498,12 @@ final class Module {
             wp_send_json_error( [ 'message' => 'Das Ereignis gehört nicht zu diesem Inserat.' ] );
         }
 
-        $event_id = EventSender::send_signed( $signed_event );
+        $report   = null;
+        $event_id = EventSender::send_signed( $signed_event, $report );
+
+        // Recorded before the verdict: a listing no relay took is exactly the
+        // case where the reasons are worth having.
+        ProductPublisher::store_relay_report( $post_id, $report );
 
         if ( ! $event_id ) {
             wp_send_json_error( [ 'message' => 'Kein Relay hat das Event akzeptiert.' ] );
@@ -759,6 +764,56 @@ final class Module {
         } else {
             echo '<p style="color:#666">' . esc_html__( 'Noch nicht auf Nostr.', 'sk-core' ) . '</p>';
         }
+
+        self::render_relay_report( (int) $post->ID );
+    }
+
+    /**
+     * Which relays hold the listing — and which refused it.
+     *
+     * A listing sitting on one of five relays is invisible to a client that
+     * reads the other four, and until now nothing here said so.
+     */
+    private static function render_relay_report( int $post_id ): void {
+        $report = ProductPublisher::relay_report( $post_id );
+
+        if ( null === $report ) {
+            return;
+        }
+
+        $accepted = (array) ( $report['accepted'] ?? [] );
+        $rejected = (array) ( $report['rejected'] ?? [] );
+
+        echo '<p style="margin-bottom:4px"><strong>' . esc_html__( 'Relays', 'sk-core' ) . '</strong>';
+
+        if ( ! empty( $report['time'] ) ) {
+            echo ' <span style="color:#666;font-weight:normal">'
+                . esc_html( wp_date( 'd.m.Y H:i', (int) $report['time'] ) ) . '</span>';
+        }
+
+        echo '</p><ul style="margin:0 0 8px">';
+
+        foreach ( $accepted as $url ) {
+            echo '<li style="color:#1a7f37">✓ ' . esc_html( self::relay_label( (string) $url ) ) . '</li>';
+        }
+
+        foreach ( $rejected as $url => $reason ) {
+            echo '<li style="color:#b32d2e">✕ ' . esc_html( self::relay_label( (string) $url ) )
+                . ' <span style="color:#666">— ' . esc_html( (string) $reason ) . '</span></li>';
+        }
+
+        if ( empty( $accepted ) ) {
+            echo '<li style="color:#b32d2e">' . esc_html__( 'Kein Relay hat das Inserat angenommen.', 'sk-core' ) . '</li>';
+        }
+
+        echo '</ul>';
+    }
+
+    /**
+     * Relay URL without the scheme — the box is narrow.
+     */
+    private static function relay_label( string $url ): string {
+        return (string) preg_replace( '#^wss?://#', '', untrailingslashit( $url ) );
     }
 
     /**

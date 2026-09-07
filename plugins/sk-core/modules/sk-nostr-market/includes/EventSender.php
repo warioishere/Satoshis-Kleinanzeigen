@@ -62,15 +62,19 @@ class EventSender {
     /**
      * Hand a signed event to the relays; the id if at least one accepted.
      *
-     * @param string[] $relays
+     * @param string[]   $relays
+     * @param array|null $report Filled with the per-relay verdicts.
      */
-    private static function publish_event( Event $event, array $relays ): ?string {
+    private static function publish_event( Event $event, array $relays, ?array &$report = null ): ?string {
         if ( ! class_exists( '\SK\Modules\Auth\RelayPublisher' ) ) {
             error_log( '[SK Nostr Market] RelayPublisher (sk_auth) missing, nothing sent.' );
+            $report = [ 'accepted' => [], 'rejected' => array_fill_keys( $relays, 'RelayPublisher missing' ) ];
+
             return null;
         }
 
         $result = \SK\Modules\Auth\RelayPublisher::publish( $event, $relays );
+        $report = $result;
 
         return empty( $result['accepted'] ) ? null : $event->getId();
     }
@@ -86,13 +90,16 @@ class EventSender {
      * comes from a browser; without the check an arbitrary id could be
      * written into the product meta.
      *
-     * @param array $signed_event
+     * @param array      $signed_event
+     * @param array|null $report Filled with the per-relay verdicts.
      * @return string|null Event id, if a relay accepted it.
      */
-    public static function send_signed( array $signed_event ): ?string {
+    public static function send_signed( array $signed_event, ?array &$report = null ): ?string {
         $event = self::event_from_array( $signed_event );
 
         if ( null === $event ) {
+            $report = [ 'accepted' => [], 'rejected' => [] ];
+
             return null;
         }
 
@@ -100,10 +107,12 @@ class EventSender {
 
         if ( empty( $relays ) ) {
             error_log( '[SK Nostr Market] No relays configured.' );
+            $report = [ 'accepted' => [], 'rejected' => [] ];
+
             return null;
         }
 
-        return self::publish_event( $event, $relays );
+        return self::publish_event( $event, $relays, $report );
     }
 
     /**

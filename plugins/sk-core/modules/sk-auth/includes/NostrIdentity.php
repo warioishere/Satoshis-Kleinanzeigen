@@ -157,9 +157,13 @@ class NostrIdentity {
     /**
      * Build, sign and publish an event to relays with the user's key.
      *
+     * @param array|null $report Filled with the per-relay verdicts, so a
+     *                           caller can record where the event actually
+     *                           landed instead of only whether one relay
+     *                           took it.
      * @return string|null Event ID if successful.
      */
-    public static function publish( int $user_id, int $kind, string $content, array $tags = [] ): ?string {
+    public static function publish( int $user_id, int $kind, string $content, array $tags = [], ?array &$report = null ): ?string {
         $privkey = self::get_private_key( $user_id );
         if ( ! $privkey ) {
             return null;
@@ -180,6 +184,7 @@ class NostrIdentity {
         // explicit rejection, and waited the client's default 60 s for a
         // silent relay.
         $result = RelayPublisher::publish( $event, self::get_relays() );
+        $report = $result;
 
         return empty( $result['accepted'] ) ? null : $event->getId();
     }
