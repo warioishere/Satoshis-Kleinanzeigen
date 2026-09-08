@@ -27,6 +27,7 @@ final class Module {
 
     private function includes() {
         require_once SK_REPUTATION_INCLUDES . '/Settings.php';
+        require_once SK_REPUTATION_INCLUDES . '/SocialGraph.php';
         require_once SK_REPUTATION_INCLUDES . '/Calculator.php';
         require_once SK_REPUTATION_INCLUDES . '/Cron.php';
         require_once SK_REPUTATION_INCLUDES . '/ProofPage.php';
@@ -51,6 +52,10 @@ final class Module {
         if ( ! self::is_enabled() ) {
             return;
         }
+
+        // "You follow" / "N of your contacts follow", computed in the
+        // viewer's browser from their own Nostr graph.
+        new SocialGraph();
 
         // The payment-based signals (credited transactions, proof page)
         // exist only where SK Payments writes the payment table. Without

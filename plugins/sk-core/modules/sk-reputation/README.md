@@ -80,17 +80,44 @@ Beim Speichern der Events `wp_slash()` verwenden: die Meta-API entfernt
 Backslashes und macht aus `ü` ein `u00fc`, womit die Event-ID nicht
 mehr stimmt.
 
+## Graph-Signal `SocialGraph` + `assets/js/sk-social-graph.js`
+
+„Du folgst diesem Anbieter" und „X deiner Kontakte folgen". Der Server
+rendert nur einen leeren, versteckten Chip mit dem gebundenen Schlüssel des
+Anbieters (`.sk-trust-graph[data-pubkey]`), in allen drei Kontexten. Alles
+Weitere passiert im Browser des Betrachters:
+
+1. Schlüssel des Betrachters: bei eingeloggten Nutzern der gebundene
+   Schlüssel aus `skTrustGraph.viewer` (keine Erweiterung nötig), sonst
+   `window.nostr.getPublicKey()`. Abgelehnt → einen Tag nicht mehr gefragt.
+2. Eigene Kontaktliste (Kind 3) von **allen** Relays parallel, neueste
+   gewinnt. Kein Relay hat alles; die Liste des Marktplatz-Schlüssels lag
+   z. B. nur auf nos.lol.
+3. Grad 2 billig: eine REQ mit `kinds:[3]`, `authors` = eigene Kontakte
+   (200 je Filter, 10 Filter je REQ), `#p` = Anbieter-Schlüssel der Seite.
+   Zurück kommen nur die Kontaktlisten, die einen Anbieter enthalten;
+   neueste je Autor, dann zählen. Zwei Relays parallel.
+4. Namen der Folgenden (Kind 0, bis 8 je Anbieter) für das „Warum": Klick
+   auf den Chip öffnet die Liste mit Links nach njump.
+
+Alles einen Tag in `localStorage` (`skTrust:v1:*`). Kein Schlüssel, keine
+Kontakte, keine Treffer, Anbieter = Betrachter: der Chip bleibt versteckt.
+Feed-Karten, die per AJAX nachkommen, findet ein MutationObserver.
+
+Gemessen (Plattformkonto als Betrachter, 75 Kontakte): 2,9 s bis der Chip
+steht, „Du folgst · 7 deiner Kontakte folgen".
+
 ## Signalquellen
 
 | Signal | Rechnet | Sichtbar wenn |
 |---|---|---|
-| Erhaltene Zaps | Server (sk-zaps, `ZapStats`) | Anbieter hat Zaps erhalten |
+| Du folgst / X Kontakte folgen | Browser des Betrachters | Betrachter hat Schlüssel und Treffer |
+| Erhaltene Zaps | Server (sk-zaps, `ZapStats`) | Anbieter hat Zaps erhalten (nicht im Feed) |
 | Verifizierter Link | Server (`sk_verified_badge`) | Link bestätigt |
 | Lightning-Proofs | Server, nur mit SK Payments | Payments aktiv und Zahlungen verifiziert |
 
-Geplant, in dieser Reihenfolge: Graph-Signal im Browser („Du folgst" /
-„X deiner Kontakte folgen"), Vertrauensseite statt Proof-Seite, NIP-05 pro
-Shop als Angebot, Kind-1984-Meldungen aus dem Graphen des Betrachters.
+Geplant, in dieser Reihenfolge: Vertrauensseite statt Proof-Seite, NIP-05
+pro Shop als Angebot, Kind-1984-Meldungen aus dem Graphen des Betrachters.
 
 ## Payments-Signal (nur mit SK Payments)
 

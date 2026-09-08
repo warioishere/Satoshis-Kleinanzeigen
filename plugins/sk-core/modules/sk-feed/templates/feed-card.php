@@ -43,6 +43,11 @@ if ( ! $is_announce ) {
 		</a>
 		<div class="sk-feed-card-meta">
 			<a href="<?php echo esc_url( $store_url ); ?>" class="sk-feed-card-name"><?php echo esc_html( $store_name ); ?></a>
+			<?php
+			// Trust strip next to the name (social graph line; the zap
+			// total stays with the post's own zap button).
+			\SK\Core\Trust\TrustSignals::render( $vendor_id, \SK\Core\Trust\TrustSignals::CONTEXT_FEED );
+			?>
 			<span class="sk-feed-card-time">
 				<?php if ( 'product_announce' === $feed_type ) : ?>
 					<span class="sk-feed-type-badge"><i class="fas fa-tag"></i> <?php esc_html_e( 'Inserat', 'sk-core' ); ?></span> ·

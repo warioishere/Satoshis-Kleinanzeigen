@@ -228,6 +228,11 @@ class ZapStats {
      * Nothing at all while the vendor has received no zaps.
      */
     public static function chip( int $vendor_id, string $context ): string {
+        // The feed card has the post's own zap button with its total.
+        if ( \SK\Core\Trust\TrustSignals::CONTEXT_FEED === $context ) {
+            return '';
+        }
+
         $sats = ZapButton::is_enabled() ? self::received_sats( $vendor_id ) : 0;
 
         if ( $sats <= 0 ) {
