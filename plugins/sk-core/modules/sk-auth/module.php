@@ -278,6 +278,12 @@ final class Module {
             return;
         }
 
+        // WordPress has already decided this request is a 404 (no post
+        // matches the query). Clients accept a NIP-05 answer only with a
+        // 2xx, so the status is set here before anything is sent.
+        status_header( 200 );
+        nocache_headers();
+
         $name = sanitize_text_field( $_GET['name'] ?? '' );
         if ( empty( $name ) ) {
             header( 'Content-Type: application/json; charset=utf-8' );
