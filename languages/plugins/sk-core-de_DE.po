@@ -12703,3 +12703,376 @@ msgstr "Übergeordnete Bestellung"
 msgctxt "vendor subscription admin related order list"
 msgid "Renewal Order"
 msgstr "Bestellung erneuern"
+
+#: plugins/sk-core/includes/Trust/VendorKey.php
+msgid "Kein vollständiges Event."
+msgstr ""
+
+#: plugins/sk-core/includes/Trust/VendorKey.php
+msgid "Falscher Event-Typ."
+msgstr ""
+
+#: plugins/sk-core/includes/Trust/VendorKey.php
+msgid "Zeitstempel außerhalb des Fensters."
+msgstr ""
+
+#: plugins/sk-core/includes/Trust/VendorKey.php
+msgid "Das Event ist größer als die Vorlage."
+msgstr ""
+
+#: plugins/sk-core/includes/Trust/VendorKey.php
+msgid "Das Event enthält Tags, die nicht zur Vorlage gehören."
+msgstr ""
+
+#: plugins/sk-core/includes/Trust/VendorKey.php
+msgid "Das Event gilt nicht für diese Seite."
+msgstr ""
+
+#: plugins/sk-core/includes/Trust/VendorKey.php
+msgid "Das Event nennt einen anderen Shop."
+msgstr ""
+
+#: plugins/sk-core/includes/Trust/VendorKey.php
+msgid "Der Schlüssel der Erweiterung ist nicht der Schlüssel des Shops."
+msgstr ""
+
+#: plugins/sk-core/includes/Trust/VendorKey.php
+msgid "Signaturprüfung nicht verfügbar."
+msgstr ""
+
+#: plugins/sk-core/includes/Trust/VendorKey.php
+#: plugins/sk-core/modules/sk-zaps/includes/ZapStats.php
+msgid "Signatur ungültig."
+msgstr ""
+
+#: plugins/sk-core/includes/Trust/VendorKey.php
+msgid "Dieser Schlüssel ist bereits an ein anderes Konto gebunden."
+msgstr ""
+
+#: plugins/sk-core/includes/Trust/VendorKey.php
+msgid "Nicht angemeldet."
+msgstr ""
+
+#: plugins/sk-core/includes/Trust/VendorKey.php
+msgid "Kein Event."
+msgstr ""
+
+#: plugins/sk-core/includes/Trust/VendorKey.php
+msgid "Kein Schlüssel hinterlegt."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-auth/includes/NostrLogin.php
+msgid "Bitte zuerst per Nostr anmelden, um den Schlüssel zu verknüpfen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-auth/includes/NostrLogin.php
+msgid "Der Schlüssel der Erweiterung ist nicht der verknüpfte Schlüssel."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/includes/Reports.php
+msgid "SK Reputation"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/includes/Reports.php
+msgid "Anbieter #%1$d %2$s (%3$s)"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/includes/Reports.php
+msgid ""
+"%1$s (#%2$d): %3$s von %4$s am %5$s\n"
+"%6$s"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/includes/Reports.php
+msgid "[SK Reputation] %d neue Nostr-Meldungen"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/includes/SocialGraph.php
+msgid "Du folgst diesem Anbieter"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/includes/SocialGraph.php
+msgid "%d deiner Kontakte folgt"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/includes/SocialGraph.php
+msgid "%d deiner Kontakte folgen"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/includes/SocialGraph.php
+msgid "Du folgst"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/includes/SocialGraph.php
+msgid "%d Kontakt folgt"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/includes/SocialGraph.php
+msgid "%d Kontakte folgen"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/includes/SocialGraph.php
+msgid "Aus deiner eigenen Kontaktliste auf Nostr berechnet, nur in deinem Browser."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/includes/SocialGraph.php
+msgid "und %d weitere"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/includes/SocialGraph.php
+msgid "%d deiner Kontakte hat diesen Anbieter gemeldet"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/includes/SocialGraph.php
+msgid "%d deiner Kontakte haben diesen Anbieter gemeldet"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/includes/SocialGraph.php
+msgid "%d Kontakt meldet"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/includes/SocialGraph.php
+msgid "%d Kontakte melden"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/includes/SocialGraph.php
+msgid "Meldungen aus deiner eigenen Kontaktliste. Was gemeldet wurde, entscheidet der Melder, nicht der Marktplatz."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/includes/SocialGraph.php
+#: plugins/sk-core/modules/sk-reputation/templates/admin-reports.php
+msgid "Identitätsmissbrauch"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/includes/SocialGraph.php
+#: plugins/sk-core/modules/sk-reputation/templates/admin-reports.php
+msgid "Illegal"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/includes/SocialGraph.php
+#: plugins/sk-core/modules/sk-reputation/templates/admin-reports.php
+msgid "Schadsoftware"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/includes/TrustPage.php
+msgid "Vertrauen"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/admin-reports.php
+msgid "SK Reputation – Nostr-Meldungen"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/admin-reports.php
+msgid "Meldungen wurden abgerufen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/admin-reports.php
+msgid "Kind-1984-Meldungen gegen die nachgewiesenen Schlüssel der Anbieter, einmal täglich von den Relays gelesen. Gezählt wird, was aus dem Web of Trust kommt (Schlüssel, denen der Marktplatz folgt, und deren Kontakte) sowie Meldungen registrierter Anbieter mit nachgewiesenem Schlüssel; letztere sind als „Anbieter #ID\" gekennzeichnet, denn ein Anbieter, der einen Mitbewerber meldet, ist nicht die Community. Käufer sehen hiervon nichts; sie sehen nur Meldungen aus ihren eigenen Kontakten."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/admin-reports.php
+msgid "Letzter Lauf: %1$s – %2$d Anbieter-Schlüssel, %3$d Meldungen gelesen, %4$d behalten, Web of Trust %5$d Schlüssel, %6$s s."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/admin-reports.php
+msgid "Noch kein Lauf."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/admin-reports.php
+msgid "Jetzt abrufen"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/admin-reports.php
+msgid "Liest alle Relays; dauert einige Sekunden."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/admin-reports.php
+msgid "Keine Meldungen von bekannten Meldern."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/admin-reports.php
+msgid "%d Meldung"
+msgid_plural "%d Meldungen"
+msgstr[0] ""
+msgstr[1] ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/admin-reports.php
+msgid "Melder"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/admin-reports.php
+msgid "Inhalt"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/admin-reports.php
+msgid "Event"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/admin-reports.php
+msgid "Anbieter #%d"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust-lightning.php
+msgid "Belegte Zahlungen"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust-lightning.php
+msgid "verifizierte Zahlungen"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust-lightning.php
+msgid "Sats Volumen"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust-lightning.php
+msgid "Prüfen: Jede Zahlung enthält die originale bolt11-Invoice oder die Transaktion. Dekodiere die Invoice auf lightningdecoder.com; dort stehen Betrag, Ziel und Payment-Hash. Maschinenlesbar:"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust-lightning.php
+msgid "%s verifizierte Transaktion"
+msgid_plural "%s verifizierte Transaktionen"
+msgstr[0] ""
+msgstr[1] ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust-lightning.php
+msgid "Produkt:"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust-lightning.php
+msgid "Adresse:"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust-lightning.php
+msgid "Payment-Hash:"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust-lightning.php
+msgid "Klicken zum Kopieren"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust-lightning.php
+msgid "Kopieren"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust-lightning.php
+msgid "Klicken zum Aufklappen"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust-lightning.php
+msgid "Dekodieren"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust.php
+msgid "Der Anbieter hat sich mit diesem Schlüssel hier angemeldet; die Anmeldung ist eine signierte Anfrage an diese Seite."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust.php
+msgid "Der Schlüssel wurde von dieser Seite für den Anbieter erzeugt und wird hier verwahrt."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust.php
+msgid "Der Anbieter hat mit seiner Nostr-Erweiterung ein Event signiert, das diesen Shop nennt."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust.php
+msgid "Der Schlüssel ist als Anmeldeschlüssel dieses Kontos hinterlegt."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust.php
+msgid "Vertrauen, das du selbst prüfen kannst"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust.php
+msgid "Diese Seite behauptet nicht, dass der Anbieter vertrauenswürdig ist. Sie zeigt Fakten, die jeder nachrechnen kann: welcher Nostr-Schlüssel nachweislich zu diesem Shop gehört, wer aus deinem eigenen Netzwerk ihm folgt, was er an Zaps erhalten hat und welche Zahlungen belegt sind. Was fehlt, fehlt einfach; es gibt hier keine Abwertung."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust.php
+msgid "Dein Netzwerk"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust.php
+msgid "Mit einer Nostr-Erweiterung im Browser oder nach einem Nostr-Login siehst du hier, ob du diesem Anbieter folgst und wie viele deiner Kontakte es tun. Das rechnet allein dein Browser aus deiner eigenen Kontaktliste aus."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust.php
+msgid "Aus deiner Kontaktliste folgt diesem Anbieter niemand. Das sagt nichts über den Anbieter, nur über die Überschneidung mit deinem Netzwerk."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust.php
+msgid "Prüfen: Deine Kontaktliste ist dein Kind-3-Event auf den Relays. Die Kontaktlisten deiner Kontakte, die diesen Schlüssel enthalten, sind die Treffer. Der Marktplatz ist an dieser Rechnung nicht beteiligt."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust.php
+msgid "Nostr-Schlüssel"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust.php
+msgid "Prüfen: Das Bindungs-Event (Kind 30078) ist mit diesem Schlüssel signiert und nennt diese Seite und diesen Shop."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust.php
+msgid "Es liegt auf %s."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust.php
+msgid "Prüfen: Das Anmelde-Event (Kind 27235, NIP-98) ist mit diesem Schlüssel signiert und an diese Seite adressiert."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust.php
+msgid "Signiertes Event anzeigen"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust.php
+msgid "NIP-05-Adresse dieses Shops:"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust.php
+msgid "Prüfen: Diese Seite beantwortet die Adresse mit genau diesem Schlüssel. Steht sie im Nostr-Profil des Anbieters, zeigt jeder Nostr-Client das Häkchen dieser Seite."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust.php
+msgid "Du kannst sie in deinem Nostr-Profil als NIP-05 eintragen; einrichten musst du hier nichts."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust.php
+msgid "Bestätigte Links"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust.php
+msgid "Prüfen: Die Seite verlinkt zurück auf diesen Shop. Öffne sie und such den Link."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust.php
+#: plugins/sk-core/modules/sk-zaps/includes/ZapStats.php
+msgid "Erhaltene Zaps"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust.php
+msgid "%1$s Zap, Stand %2$s."
+msgid_plural "%1$s Zaps, Stand %2$s."
+msgstr[0] ""
+msgstr[1] ""
+
+#: plugins/sk-core/modules/sk-reputation/templates/store-trust.php
+msgid "Prüfen: Zaps sind Kind-9735-Quittungen auf den Relays, adressiert an den Schlüssel des Anbieters. Jeder Nostr-Client zeigt sie am Profil."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-zaps/includes/ZapButton.php
+msgid "Du kannst dich nicht selbst zappen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-zaps/includes/ZapStats.php
+msgid "Keine Zap-Quittung."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-zaps/includes/ZapStats.php
+msgid "Quittung gehört nicht zu diesem Anbieter."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-zaps/includes/ZapStats.php
+msgid "Quittung stammt nicht vom Zahlungsdienst des Anbieters."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-zaps/includes/ZapStats.php
+msgid "Betrag unlesbar."
+msgstr ""
