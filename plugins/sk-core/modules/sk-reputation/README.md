@@ -163,9 +163,13 @@ aus den eigenen Kontakten; der Marktplatz filtert nichts.
 **Für den Betreiber (`Reports`, Cron `sk_reputation_fetch_reports`,
 täglich):** liest Meldungen gegen alle nachgewiesenen Anbieter-Schlüssel
 (und den Marktplatz-Schlüssel) von den Relays, prüft Signaturen, behält
-nur Melder aus dem Web of Trust: Follows des Marktplatz-Schlüssels, deren
-Follows (Transient `sk_reputation_wot`, Präfixe von 16 Hex, 1 Tag) und die
-nachgewiesenen Schlüssel registrierter Anbieter. Ergebnis je Anbieter in
+Melder aus dem Web of Trust: Follows des Marktplatz-Schlüssels und deren
+Follows (Transient `sk_reputation_wot_v2`, Präfixe von 16 Hex, 1 Tag).
+Registrierte Anbieter mit nachgewiesenem Schlüssel sind **nicht** Teil des
+Web of Trust, sonst könnte jeder mit Nostr-Login einen Mitbewerber melden
+und es sähe nach Community aus; ihre Meldungen werden trotzdem behalten und
+in Admin-Ansicht und Mail als „Anbieter #ID" gekennzeichnet
+(`source` = `vendor`, `reporter_user`). Ergebnis je Anbieter in
 `sk_nostr_reports`, Übersicht unter „SK Reputation" im Admin-Menü mit
 „Jetzt abrufen", eine Mail pro Tag bei neuen Meldungen. Gelesen wird
 inkrementell (seit dem letzten Lauf minus zwei Tage, einmal pro Woche das

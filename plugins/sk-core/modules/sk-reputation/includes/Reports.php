@@ -13,8 +13,10 @@ defined( 'ABSPATH' ) || exit;
  * sk-social-graph.js). This class serves moderation: once a day it reads
  * the reports against every proven vendor key from the site's relays and
  * keeps those whose reporter sits in the marketplace's web of trust — the
- * keys the marketplace key follows, the keys those follow, and the
- * proven keys of registered vendors. Anything else is noise: the reports
+ * keys the marketplace key follows and the keys those follow — plus those
+ * from registered vendors with a proven key, marked as such (a vendor
+ * reporting a competitor is not the community speaking). Anything else
+ * is noise: the reports
  * found in the wild were an automated NSFW bot, an empty profanity report
  * and a "wrong click", none of them from anyone known.
  *
@@ -25,7 +27,7 @@ class Reports {
     const CRON_HOOK   = 'sk_reputation_fetch_reports';
     const REPORTS_META = 'sk_nostr_reports';
     const TIME_META   = 'sk_nostr_reports_time';
-    const WOT_KEY     = 'sk_reputation_wot';
+    const WOT_KEY     = 'sk_reputation_wot_v2';
     const RUN_OPTION  = 'sk_reputation_reports_run';
     const MAIL_THROTTLE = 'sk_reputation_reports_mail';
 
@@ -336,7 +338,20 @@ class Reports {
 
         $reporter = strtolower( $event['pubkey'] );
 
-        if ( ! isset( $wot[ substr( $reporter, 0, self::WOT_PREFIX ) ] ) ) {
+        // Two kinds of reporter count: someone in the marketplace's web of
+        // trust, or a registered vendor with a proven key. A vendor is not
+        // part of the web of trust — anyone with a Nostr login could report
+        // a competitor and look like the community doing it — but their
+        // report is kept and shown as what it is: from vendor #ID.
+        $source        = '';
+        $reporter_user = 0;
+
+        if ( isset( $wot[ substr( $reporter, 0, self::WOT_PREFIX ) ] ) ) {
+            $source = 'wot';
+        } elseif ( isset( $targets[ $reporter ] ) ) {
+            $source        = 'vendor';
+            $reporter_user = (int) $targets[ $reporter ];
+        } else {
             return null;
         }
 
@@ -387,12 +402,14 @@ class Reports {
         }
 
         return [
-            'vendor_id'  => $targets[ $target ],
-            'id'         => strtolower( $event['id'] ),
-            'reporter'   => $reporter,
-            'type'       => $type,
-            'created_at' => (int) $event['created_at'],
-            'content'    => mb_substr( wp_strip_all_tags( $content ), 0, 300 ),
+            'vendor_id'     => $targets[ $target ],
+            'id'            => strtolower( $event['id'] ),
+            'reporter'      => $reporter,
+            'source'        => $source,
+            'reporter_user' => $reporter_user,
+            'type'          => $type,
+            'created_at'    => (int) $event['created_at'],
+            'content'       => mb_substr( wp_strip_all_tags( $content ), 0, 300 ),
         ];
     }
 
@@ -426,8 +443,9 @@ class Reports {
     }
 
     /**
-     * The web of trust as key prefixes: the marketplace's follows, their
-     * follows, and every proven vendor key. Rebuilt once a day.
+     * The web of trust as key prefixes: the marketplace's follows and
+     * their follows. Rebuilt once a day. Vendors' own keys are not in it
+     * (see accept()).
      *
      * @return array<string, int>
      */
@@ -439,10 +457,6 @@ class Reports {
         }
 
         $wot = [];
-
-        foreach ( array_keys( self::vendor_keys() ) as $key ) {
-            $wot[ substr( $key, 0, self::WOT_PREFIX ) ] = 1;
-        }
 
         $marketplace = self::marketplace_pubkey();
 
@@ -516,13 +530,20 @@ class Reports {
         $lines = [];
 
         foreach ( array_slice( $new, 0, 20 ) as $r ) {
-            $vendor  = get_userdata( (int) $r['vendor_id'] );
+            $vendor   = get_userdata( (int) $r['vendor_id'] );
+            $reporter = substr( $r['reporter'], 0, 12 ) . '…';
+
+            if ( ! empty( $r['reporter_user'] ) ) {
+                $by       = get_userdata( (int) $r['reporter_user'] );
+                $reporter = sprintf( 'Anbieter #%d %s (%s)', (int) $r['reporter_user'], $by ? $by->display_name : '?', $reporter );
+            }
+
             $lines[] = sprintf(
-                "%s (#%d): %s von %s… am %s\n%s",
+                "%s (#%d): %s von %s am %s\n%s",
                 $vendor ? $vendor->display_name : '?',
                 $r['vendor_id'],
                 $r['type'],
-                substr( $r['reporter'], 0, 12 ),
+                $reporter,
                 wp_date( 'd.m.Y', $r['created_at'] ),
                 $r['content'] !== '' ? '  „' . $r['content'] . '“' : ''
             );
@@ -530,7 +551,7 @@ class Reports {
 
         wp_mail(
             get_option( 'admin_email' ),
-            sprintf( '[SK Reputation] %d neue Nostr-Meldungen aus dem Web of Trust', count( $new ) ),
+            sprintf( '[SK Reputation] %d neue Nostr-Meldungen', count( $new ) ),
             implode( "\n\n", $lines ) . "\n\n" . admin_url( 'admin.php?page=sk-reputation' )
         );
     }

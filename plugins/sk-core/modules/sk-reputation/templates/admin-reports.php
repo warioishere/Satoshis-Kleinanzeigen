@@ -1,6 +1,7 @@
 <?php
 /**
- * Admin: Nostr reports against vendors, filtered by the marketplace's web of trust.
+ * Admin: Nostr reports against vendors — from the marketplace's web of trust, or from
+ * registered vendors (shown as such).
  *
  * Expects $vendors (see Reports::vendors_with_reports) and $last_run.
  */
@@ -22,7 +23,7 @@ $type_labels = [
     <?php endif; ?>
 
     <p>
-        <?php esc_html_e( 'Kind-1984-Meldungen gegen die nachgewiesenen Schlüssel der Anbieter, einmal täglich von den Relays gelesen. Gezählt wird nur, was aus dem Web of Trust kommt: Schlüssel, denen der Marktplatz folgt, deren Kontakte, und die nachgewiesenen Schlüssel registrierter Anbieter. Käufer sehen hiervon nichts; sie sehen nur Meldungen aus ihren eigenen Kontakten.', 'sk-core' ); ?>
+        <?php esc_html_e( 'Kind-1984-Meldungen gegen die nachgewiesenen Schlüssel der Anbieter, einmal täglich von den Relays gelesen. Gezählt wird, was aus dem Web of Trust kommt (Schlüssel, denen der Marktplatz folgt, und deren Kontakte) sowie Meldungen registrierter Anbieter mit nachgewiesenem Schlüssel; letztere sind als „Anbieter #ID" gekennzeichnet, denn ein Anbieter, der einen Mitbewerber meldet, ist nicht die Community. Käufer sehen hiervon nichts; sie sehen nur Meldungen aus ihren eigenen Kontakten.', 'sk-core' ); ?>
     </p>
 
     <p>
@@ -52,7 +53,7 @@ $type_labels = [
     </form>
 
     <?php if ( empty( $vendors ) ) : ?>
-        <p><strong><?php esc_html_e( 'Keine Meldungen aus dem Web of Trust.', 'sk-core' ); ?></strong></p>
+        <p><strong><?php esc_html_e( 'Keine Meldungen von bekannten Meldern.', 'sk-core' ); ?></strong></p>
     <?php else : ?>
         <?php foreach ( $vendors as $vendor_id => $row ) : ?>
             <h2 style="margin-top:24px;">
@@ -74,7 +75,14 @@ $type_labels = [
                         <tr>
                             <td><?php echo esc_html( wp_date( 'd.m.Y', (int) $r['created_at'] ) ); ?></td>
                             <td><?php echo esc_html( $type_labels[ $r['type'] ] ?? $r['type'] ); ?></td>
-                            <td><a href="<?php echo esc_url( 'https://njump.me/' . $r['reporter'] ); ?>" target="_blank" rel="noopener"><code><?php echo esc_html( substr( $r['reporter'], 0, 12 ) . '…' ); ?></code></a></td>
+                            <td>
+                                <?php if ( ! empty( $r['reporter_user'] ) ) : ?>
+                                    <?php $by = get_userdata( (int) $r['reporter_user'] ); ?>
+                                    <strong><a href="<?php echo esc_url( sk_get_store_url( (int) $r['reporter_user'] ) ); ?>" target="_blank"><?php echo esc_html( sprintf( __( 'Anbieter #%d', 'sk-core' ), (int) $r['reporter_user'] ) ); ?></a></strong>
+                                    <?php echo $by ? esc_html( $by->display_name ) : ''; ?><br>
+                                <?php endif; ?>
+                                <a href="<?php echo esc_url( 'https://njump.me/' . $r['reporter'] ); ?>" target="_blank" rel="noopener"><code><?php echo esc_html( substr( $r['reporter'], 0, 12 ) . '…' ); ?></code></a>
+                            </td>
                             <td><?php echo esc_html( $r['content'] !== '' ? $r['content'] : '–' ); ?></td>
                             <td><a href="<?php echo esc_url( 'https://njump.me/' . $r['id'] ); ?>" target="_blank" rel="noopener">njump</a></td>
                         </tr>
