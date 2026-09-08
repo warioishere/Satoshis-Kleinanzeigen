@@ -33,23 +33,10 @@ class FollowMirror {
     const RETRY_DELAY  = HOUR_IN_SECONDS;
 
     public function __construct() {
+        // The daily sync is scheduled by the module on activation (Module::cron_jobs).
         add_action( 'sk_follow_store_toggle_status', [ __CLASS__, 'on_toggle' ], 10, 3 );
         add_action( self::CRON_HOOK, [ __CLASS__, 'mirror' ], 10, 4 );
         add_action( self::SYNC_HOOK, [ __CLASS__, 'sync_all' ] );
-
-        if ( ! wp_next_scheduled( self::SYNC_HOOK ) ) {
-            self::schedule();
-        }
-    }
-
-    public static function schedule(): void {
-        if ( ! wp_next_scheduled( self::SYNC_HOOK ) ) {
-            wp_schedule_event( time() + 2 * HOUR_IN_SECONDS, 'daily', self::SYNC_HOOK );
-        }
-    }
-
-    public static function unschedule(): void {
-        wp_clear_scheduled_hook( self::SYNC_HOOK );
     }
 
     /** Whether this site keeps the user's contact list. */
@@ -171,7 +158,7 @@ class FollowMirror {
         }
 
         $answered = 0;
-        $current  = RelayReader::latest( 3, [ $pubkey ], $answered )[ $pubkey ] ?? null;
+        $current  = \SK\Core\Nostr\Relays::latest( 3, [ $pubkey ], $answered )[ $pubkey ] ?? null;
 
         if ( null === $current && 0 === $answered ) {
             error_log( '[SK Reputation] contact list for user ' . $user_id . ': no relay answered, nothing published.' );

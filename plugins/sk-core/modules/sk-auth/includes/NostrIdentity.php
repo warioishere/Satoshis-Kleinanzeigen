@@ -180,7 +180,7 @@ class NostrIdentity {
         // "false !== $result", accepted every response object, including an
         // explicit rejection, and waited the client's default 60 s for a
         // silent relay.
-        $result = RelayPublisher::publish( $event, self::get_relays(), $privkey );
+        $result = \SK\Core\Nostr\Relays::publish( $event, self::get_relays(), $privkey );
         $report = $result;
 
         return empty( $result['accepted'] ) ? null : (string) $event['id'];

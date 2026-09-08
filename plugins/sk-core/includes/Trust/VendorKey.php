@@ -455,18 +455,12 @@ class VendorKey {
 
     /** Cron: send one signed event, as scheduled by on_identity_deleted(). */
     public static function publish_event( $event ): void {
-        if ( ! is_array( $event )
-            || ! sk_module_active( 'sk_auth' )
-            || ! class_exists( 'SK\Modules\Auth\RelayPublisher' )
-            || ! class_exists( 'SK\Modules\Auth\NostrIdentity' ) ) {
+        if ( ! is_array( $event ) || ! sk_module_active( 'sk_auth' ) ) {
             return;
         }
 
         try {
-            $result = \SK\Modules\Auth\RelayPublisher::publish(
-                $event,
-                \SK\Modules\Auth\NostrIdentity::get_relays()
-            );
+            $result = \SK\Core\Nostr\Relays::publish( $event );
 
             if ( empty( $result['accepted'] ) ) {
                 error_log( '[SK Trust] revocation ' . substr( (string) ( $event['id'] ?? '' ), 0, 12 ) . ' accepted by no relay: ' . wp_json_encode( $result['rejected'] ?? [] ) );
@@ -508,10 +502,7 @@ class VendorKey {
         $vendor_id = (int) $vendor_id;
         $binding   = self::binding( $vendor_id );
 
-        if ( ! $binding
-            || ! sk_module_active( 'sk_auth' )
-            || ! class_exists( 'SK\Modules\Auth\RelayPublisher' )
-            || ! class_exists( 'SK\Modules\Auth\NostrIdentity' ) ) {
+        if ( ! $binding || ! sk_module_active( 'sk_auth' ) ) {
             return;
         }
 
@@ -519,11 +510,7 @@ class VendorKey {
         update_user_meta( $vendor_id, self::ATTEMPTS_META, $attempts );
 
         try {
-            $result = \SK\Modules\Auth\RelayPublisher::publish(
-                $binding,
-                \SK\Modules\Auth\NostrIdentity::get_relays(),
-                self::held_private_key( $vendor_id )
-            );
+            $result = \SK\Core\Nostr\Relays::publish( $binding, null, self::held_private_key( $vendor_id ) );
         } catch ( \Throwable $e ) {
             error_log( '[SK Trust] publishing binding for user ' . $vendor_id . ' failed: ' . $e->getMessage() );
             $result = [ 'accepted' => [] ];

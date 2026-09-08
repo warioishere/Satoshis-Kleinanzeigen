@@ -14,7 +14,6 @@ if (!defined('NAP_OPTION_NAME'))  define('NAP_OPTION_NAME',  'nap_nostr_options'
 if (!defined('NAP_META_EVENT_ID')) define('NAP_META_EVENT_ID','_nap_nostr_event_id');
 
 use swentel\nostr\Event\Event;
-use SK\Modules\Auth\RelayPublisher;
 
 /**
  * Logging (only when WP_DEBUG is true)
@@ -42,12 +41,7 @@ function nap_sign_note(string $caption, array $relays, string $privkey): Event {
 }
 
 function nap_publish(Event $note, array $relays, string $prefix = ''): bool {
-    if (!class_exists(RelayPublisher::class)) {
-        nap_log($prefix . 'RelayPublisher (sk_auth) not loaded.');
-        return false;
-    }
-
-    $result = RelayPublisher::publish($note, $relays);
+    $result = \SK\Core\Nostr\Relays::publish($note, $relays);
 
     foreach ($result['accepted'] as $url) {
         nap_log(sprintf('%sEvent %s sent to relay %s.', $prefix, $note->getId(), $url));

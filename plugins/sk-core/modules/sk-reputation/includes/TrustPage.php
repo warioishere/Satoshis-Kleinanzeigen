@@ -20,11 +20,19 @@ class TrustPage {
     const SLUG      = 'vertrauen';
     const QUERY_VAR = 'sk_trust';
 
+    /** The address the payment proofs used to have; it now redirects here. */
+    const LEGACY_SLUG      = 'lightning-proof';
+    const LEGACY_QUERY_VAR = 'lightning_proof';
+
+    /** Upper bound for the public proof list. */
+    const PROOF_LIMIT = 200;
+
     public function __construct() {
         add_filter( 'sk_store_tabs', [ $this, 'add_store_tab' ], 10, 2 );
         add_action( 'sk_rewrite_rules_loaded', [ $this, 'add_rewrite_rule' ] );
         add_filter( 'query_vars', [ $this, 'add_query_var' ] );
         add_filter( 'template_include', [ $this, 'load_template' ], 100 );
+        add_action( 'template_redirect', [ $this, 'redirect_legacy' ] );
     }
 
     public function add_store_tab( array $tabs, int $store_id ): array {
@@ -46,11 +54,62 @@ class TrustPage {
             'index.php?' . $store_base . '=$matches[1]&' . self::QUERY_VAR . '=true',
             'top'
         );
+
+        // The old proof page: still routed, so it can redirect.
+        add_rewrite_rule(
+            $store_base . '/([^/]+)/' . self::LEGACY_SLUG . '/?$',
+            'index.php?' . $store_base . '=$matches[1]&' . self::LEGACY_QUERY_VAR . '=true',
+            'top'
+        );
     }
 
     public function add_query_var( array $vars ): array {
         $vars[] = self::QUERY_VAR;
+        $vars[] = self::LEGACY_QUERY_VAR;
         return $vars;
+    }
+
+    /**
+     * /store/{slug}/lightning-proof/ → /store/{slug}/vertrauen/, permanently.
+     * Links out there keep working; the trust page is the one address.
+     */
+    public function redirect_legacy(): void {
+        if ( ! get_query_var( self::LEGACY_QUERY_VAR ) ) {
+            return;
+        }
+
+        $store_name = get_query_var( sk_get_option( 'custom_store_url', 'sk_general', 'store' ) );
+        $store_user = $store_name ? get_user_by( 'slug', $store_name ) : false;
+
+        if ( $store_user ) {
+            wp_safe_redirect( sk_get_store_url( (int) $store_user->ID, self::SLUG ), 301 );
+            exit;
+        }
+    }
+
+    /**
+     * The verified payments behind "Belegte Zahlungen", newest first.
+     *
+     * @return object[]
+     */
+    public static function get_proofs( int $vendor_id ): array {
+        global $wpdb;
+        $table = $wpdb->prefix . 'sk_lightning_payments';
+
+        if ( ! $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) ) {
+            return [];
+        }
+
+        return $wpdb->get_results( $wpdb->prepare(
+            "SELECT payment_hash, amount_sats, payment_request,
+                    created_at, confirmed_at, product_id, context
+             FROM {$table}
+             WHERE vendor_id = %d AND reputation_valid = 1
+             ORDER BY confirmed_at DESC
+             LIMIT %d",
+            $vendor_id,
+            self::PROOF_LIMIT
+        ) );
     }
 
     public function load_template( $template ) {
@@ -65,8 +124,7 @@ class TrustPage {
      * The trust template when the URL names an existing store that has at
      * least one signal; otherwise a 404. A vendor without signals gets no
      * tab and no page either — a page with nothing on it would be the
-     * negative display the rules forbid. Shared with the old
-     * /lightning-proof/ URL.
+     * negative display the rules forbid.
      */
     public static function template_for_current_store( $template ) {
         $custom_store_url = sk_get_option( 'custom_store_url', 'sk_general', 'store' );
@@ -169,24 +227,12 @@ class TrustPage {
      * @return array{sats: int, count: int, time: int, source: string}
      */
     public static function zaps( int $vendor_id ): array {
-        $none = [ 'sats' => 0, 'count' => 0, 'time' => 0, 'source' => '' ];
-
-        if ( ! sk_module_active( 'sk_zaps' ) || ! class_exists( 'SK\Modules\Zaps\ZapButton' ) || ! \SK\Modules\Zaps\ZapButton::is_enabled() ) {
-            return $none;
+        if ( ! sk_module_active( 'sk_zaps' ) || ! class_exists( 'SK\Modules\Zaps\ZapStats' ) ) {
+            return [ 'sats' => 0, 'count' => 0, 'time' => 0, 'source' => '' ];
         }
 
-        $count = (int) get_user_meta( $vendor_id, 'sk_zap_received_count', true );
-
-        if ( $count <= 0 ) {
-            return $none;
-        }
-
-        return [
-            'sats'   => (int) get_user_meta( $vendor_id, 'sk_zap_received_sats', true ),
-            'count'  => $count,
-            'time'   => (int) get_user_meta( $vendor_id, 'sk_zap_received_time', true ),
-            'source' => (string) get_user_meta( $vendor_id, 'sk_zap_received_source', true ),
-        ];
+        // The zaps module owns its numbers; the page only shows them.
+        return \SK\Modules\Zaps\ZapStats::summary( $vendor_id );
     }
 
     /**
@@ -207,7 +253,7 @@ class TrustPage {
 
         return [
             'rep'    => $rep,
-            'proofs' => ProofPage::get_proofs( $vendor_id ),
+            'proofs' => self::get_proofs( $vendor_id ),
         ];
     }
 }

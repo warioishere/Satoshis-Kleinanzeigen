@@ -288,22 +288,6 @@ class NostrDMListener {
      * @param string[] $pubkeys All mailboxes that belong to us.
      */
     private static function fetch_dms( string $relay_url, array $pubkeys, int $since ): array {
-        if ( ! class_exists( '\WebSocket\Client' ) ) {
-            return [];
-        }
-
-        // A relay that took a process down is left alone for a while, on
-        // the read side as much as when publishing.
-        $breaker = class_exists( 'SK\Modules\Auth\RelayPublisher' );
-
-        if ( $breaker && \SK\Modules\Auth\RelayPublisher::stalled( $relay_url ) ) {
-            return [];
-        }
-
-        if ( $breaker ) {
-            \SK\Modules\Auth\RelayPublisher::mark_attempt( $relay_url );
-        }
-
         $pubkeys = array_values( array_unique( array_map( 'strtolower', $pubkeys ) ) );
         shuffle( $pubkeys );
 
@@ -317,180 +301,109 @@ class NostrDMListener {
         $events = [];
         $ids    = [];
         $bytes  = 0;
-        $client = null;
 
-        // NIP-42 state for this connection (see the receive loop).
-        $markt_priv = EventSender::get_privkey();
-        $auth_id    = null;
-        $authed     = false;
-        $reopen     = false;
+        /*
+         * One connection for every page of every mailbox (Relays::session):
+         * the circuit breaker is set while it is open, a NIP-42 challenge is
+         * answered with the marketplace key — the one mailbox key held here
+         * that every poll has. Signatures are not checked at this point: a
+         * kind 4 is verified once a browser opens it, and a gift wrap is
+         * signed by a throwaway key by design; valid_event() shapes what
+         * comes in.
+         */
+        $session = \SK\Core\Nostr\Relays::session( $relay_url, [
+            'timeout'      => self::RELAY_TIMEOUT,
+            'verify'       => false,
+            'auth_privkey' => (string) EventSender::get_privkey(),
+        ] );
 
-        try {
-            $client = new \WebSocket\Client( $relay_url );
-            $client->setTimeout( self::RELAY_TIMEOUT );
+        if ( ! $session->open() ) {
+            return [];
+        }
 
-            $deadline = microtime( true ) + self::RELAY_TIMEOUT;
+        while ( ! empty( $work ) && $session->is_open() && $session->remaining() > 0
+            && count( $events ) < self::MAX_EVENTS && $bytes < self::MAX_BYTES ) {
 
-            while ( ! empty( $work ) && microtime( true ) < $deadline
-                && count( $events ) < self::MAX_EVENTS && $bytes < self::MAX_BYTES ) {
+            $batch   = array_slice( array_keys( $work ), 0, self::FILTERS_PER_REQ );
+            $filters = [];
 
-                $batch   = array_slice( array_keys( $work ), 0, self::FILTERS_PER_REQ );
-                $filters = [];
+            foreach ( $batch as $pubkey ) {
+                $filter = [
+                    'kinds' => [ 4, 1059 ],
+                    '#p'    => [ $pubkey ],
+                    'since' => $since,
+                    'limit' => self::PER_MAILBOX_LIMIT,
+                ];
 
-                foreach ( $batch as $pubkey ) {
-                    $filter = [
-                        'kinds' => [ 4, 1059 ],
-                        '#p'    => [ $pubkey ],
-                        'since' => $since,
-                        'limit' => self::PER_MAILBOX_LIMIT,
-                    ];
-
-                    if ( null !== $work[ $pubkey ]['until'] ) {
-                        $filter['until'] = $work[ $pubkey ]['until'];
-                    }
-
-                    $filters[] = $filter;
+                if ( null !== $work[ $pubkey ]['until'] ) {
+                    $filter['until'] = $work[ $pubkey ]['until'];
                 }
 
-                $sub_id = bin2hex( random_bytes( 8 ) );
-                $req    = wp_json_encode( array_merge( [ 'REQ', $sub_id ], $filters ) );
-                $client->text( $req );
-
-                $count  = array_fill_keys( $batch, 0 );
-                $oldest = array_fill_keys( $batch, PHP_INT_MAX );
-                $eose   = false;
-                $resent = false;
-
-                while ( microtime( true ) < $deadline ) {
-                    $data = json_decode( $client->receive()->getContent(), true );
-
-                    if ( ! is_array( $data ) || ! isset( $data[0] ) ) {
-                        continue;
-                    }
-
-                    /*
-                     * NIP-42. A relay guarding its inbox challenges us and
-                     * closes the subscription with "auth-required" until the
-                     * challenge is answered; the answer is signed with the
-                     * marketplace key, the one mailbox key held here that
-                     * every poll has. The subscription is then opened again.
-                     */
-                    if ( 'AUTH' === $data[0] ) {
-                        if ( null === $auth_id && $breaker && $markt_priv && is_string( $data[1] ?? null ) && '' !== $data[1] ) {
-                            $auth_id = \SK\Modules\Auth\RelayPublisher::answer_challenge( $client, $relay_url, $data[1], $markt_priv );
-                        }
-                        continue;
-                    }
-
-                    if ( 'OK' === $data[0] && null !== $auth_id && ( $data[1] ?? '' ) === $auth_id ) {
-                        $authed = ! empty( $data[2] );
-
-                        if ( $authed && $reopen && ! $resent ) {
-                            $client->text( $req );
-                            $resent = true;
-                        }
-                        continue;
-                    }
-
-                    // Answers to an earlier, already closed subscription.
-                    if ( in_array( $data[0], [ 'EVENT', 'EOSE', 'CLOSED' ], true ) && ( $data[1] ?? '' ) !== $sub_id ) {
-                        continue;
-                    }
-
-                    if ( 'CLOSED' === $data[0] && null !== $auth_id && ! $resent
-                        && \SK\Modules\Auth\RelayPublisher::wants_auth( (string) ( $data[2] ?? '' ) ) ) {
-                        $reopen = true;
-
-                        if ( $authed ) {
-                            $client->text( $req );
-                            $resent = true;
-                        }
-                        continue;
-                    }
-
-                    if ( 'EOSE' === $data[0] || 'CLOSED' === $data[0] ) {
-                        $eose = true;
-                        break;
-                    }
-
-                    if ( 'EVENT' !== $data[0] ) {
-                        continue;
-                    }
-
-                    $event = self::valid_event( $data[2] ?? null );
-
-                    if ( null === $event ) {
-                        continue;
-                    }
-
-                    // Counted before the duplicate check: the overlap at the
-                    // page boundary is a known event, and it still says
-                    // whether the page was full.
-                    foreach ( $event['tags'] as $tag ) {
-                        $to = ( $tag[0] ?? '' ) === 'p' ? strtolower( (string) ( $tag[1] ?? '' ) ) : '';
-
-                        if ( isset( $count[ $to ] ) ) {
-                            $count[ $to ]++;
-                            $oldest[ $to ] = min( $oldest[ $to ], $event['created_at'] );
-                        }
-                    }
-
-                    if ( isset( $ids[ $event['id'] ] ) ) {
-                        continue;
-                    }
-
-                    $ids[ $event['id'] ] = true;
-                    $events[]            = $event;
-                    $bytes              += strlen( $event['content'] );
-
-                    // The relay was asked for a limit; not every relay honours it.
-                    if ( count( $events ) >= self::MAX_EVENTS || $bytes >= self::MAX_BYTES ) {
-                        break;
-                    }
-                }
-
-                $client->text( wp_json_encode( [ 'CLOSE', $sub_id ] ) );
-
-                if ( ! $eose ) {
-                    // Stalled or cut short: what came in is kept, nothing more is asked.
-                    break;
-                }
-
-                /*
-                 * A full page means there may be more behind it. The next
-                 * page ends at the oldest event seen, inclusive: events that
-                 * share that second would otherwise slip through, and the
-                 * repeat is caught by id.
-                 */
-                foreach ( $batch as $pubkey ) {
-                    $work[ $pubkey ]['pages']++;
-
-                    if ( $count[ $pubkey ] >= self::PER_MAILBOX_LIMIT
-                        && $work[ $pubkey ]['pages'] < self::PAGES_MAX
-                        && $oldest[ $pubkey ] > $since ) {
-                        $work[ $pubkey ]['until'] = $oldest[ $pubkey ];
-                    } else {
-                        unset( $work[ $pubkey ] );
-                    }
-                }
+                $filters[] = $filter;
             }
 
-            $client->disconnect();
-        } catch ( \Throwable $e ) {
-            error_log( '[SK Nostr Market Bridge] Relay ' . $relay_url . ': ' . $e->getMessage() . ' (' . count( $events ) . ' events kept)' );
+            $count  = array_fill_keys( $batch, 0 );
+            $oldest = array_fill_keys( $batch, PHP_INT_MAX );
 
-            if ( $client ) {
-                try {
-                    $client->disconnect();
-                } catch ( \Throwable $ignored ) {
-                    // Already gone.
+            $result = $session->request( $filters, function ( array $raw ) use ( &$count, &$oldest, &$ids, &$events, &$bytes ) {
+                $event = self::valid_event( $raw );
+
+                if ( null === $event ) {
+                    return true;
+                }
+
+                // Counted before the duplicate check: the overlap at the
+                // page boundary is a known event, and it still says
+                // whether the page was full.
+                foreach ( $event['tags'] as $tag ) {
+                    $to = ( $tag[0] ?? '' ) === 'p' ? strtolower( (string) ( $tag[1] ?? '' ) ) : '';
+
+                    if ( isset( $count[ $to ] ) ) {
+                        $count[ $to ]++;
+                        $oldest[ $to ] = min( $oldest[ $to ], $event['created_at'] );
+                    }
+                }
+
+                if ( isset( $ids[ $event['id'] ] ) ) {
+                    return true;
+                }
+
+                $ids[ $event['id'] ] = true;
+                $events[]            = $event;
+                $bytes              += strlen( $event['content'] );
+
+                // The relay was asked for a limit; not every relay honours it.
+                return count( $events ) < self::MAX_EVENTS && $bytes < self::MAX_BYTES;
+            } );
+
+            if ( ! $result['eose'] ) {
+                // Stalled, cut short or the ceiling hit: what came in is kept, nothing more is asked.
+                if ( ! $result['stopped'] && ! $session->is_open() ) {
+                    error_log( '[SK Nostr Market Bridge] Relay ' . $relay_url . ': connection ended (' . count( $events ) . ' events kept)' );
+                }
+                break;
+            }
+
+            /*
+             * A full page means there may be more behind it. The next
+             * page ends at the oldest event seen, inclusive: events that
+             * share that second would otherwise slip through, and the
+             * repeat is caught by id.
+             */
+            foreach ( $batch as $pubkey ) {
+                $work[ $pubkey ]['pages']++;
+
+                if ( $count[ $pubkey ] >= self::PER_MAILBOX_LIMIT
+                    && $work[ $pubkey ]['pages'] < self::PAGES_MAX
+                    && $oldest[ $pubkey ] > $since ) {
+                    $work[ $pubkey ]['until'] = $oldest[ $pubkey ];
+                } else {
+                    unset( $work[ $pubkey ] );
                 }
             }
         }
 
-        if ( $breaker ) {
-            \SK\Modules\Auth\RelayPublisher::clear_attempt( $relay_url );
-        }
+        $session->close();
 
         return $events;
     }

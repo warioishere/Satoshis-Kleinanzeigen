@@ -255,6 +255,15 @@ final class Relays {
         return $latest;
     }
 
+    /**
+     * A connection for several requests to one relay (see RelaySession):
+     * for pollers that page through many filters and must not reconnect
+     * for each. Options as for fetch(); `timeout` covers the whole session.
+     */
+    public static function session( string $relay, array $opts = [] ): RelaySession {
+        return new RelaySession( $relay, $opts );
+    }
+
     // ── Publishing ───────────────────────────────────────────────────────
 
     /**

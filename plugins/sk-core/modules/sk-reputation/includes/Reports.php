@@ -68,23 +68,10 @@ class Reports {
     const WOT_PREFIX = 16;
 
     public function __construct() {
+        // The daily run is scheduled by the module on activation (Module::cron_jobs).
         add_action( self::CRON_HOOK, [ __CLASS__, 'fetch' ] );
         add_action( 'admin_menu', [ $this, 'add_menu' ], 25 );
         add_action( 'admin_post_sk_reputation_fetch_reports', [ $this, 'handle_fetch_now' ] );
-
-        if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
-            self::schedule();
-        }
-    }
-
-    public static function schedule(): void {
-        if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
-            wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', self::CRON_HOOK );
-        }
-    }
-
-    public static function unschedule(): void {
-        wp_clear_scheduled_hook( self::CRON_HOOK );
     }
 
     // ── Admin ────────────────────────────────────────────────────────────
@@ -486,7 +473,7 @@ class Reports {
             return [];
         }
 
-        $latest  = RelayReader::latest( 3, $authors );
+        $latest  = \SK\Core\Nostr\Relays::latest( 3, $authors );
         $follows = [];
 
         foreach ( $latest as $event ) {
@@ -503,9 +490,9 @@ class Reports {
         return sk_module_active( 'sk_nostr_market' ) ? Keys::marketplace_pubkey() : '';
     }
 
-    /** @return string[] */
+    /** @return string[] The site's relays, none while sk_auth is off. */
     private static function relays(): array {
-        return RelayReader::relays();
+        return sk_module_active( 'sk_auth' ) ? \SK\Core\Nostr\Relays::list() : [];
     }
 
     /**

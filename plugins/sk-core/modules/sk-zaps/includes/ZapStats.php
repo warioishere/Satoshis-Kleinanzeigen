@@ -219,6 +219,33 @@ class ZapStats {
     }
 
     /**
+     * Everything the trust page shows about received zaps, from the cache.
+     * All zeros while nothing was received; nothing is queued here.
+     *
+     * @return array{sats: int, count: int, time: int, source: string}
+     */
+    public static function summary( int $vendor_id ): array {
+        $none = [ 'sats' => 0, 'count' => 0, 'time' => 0, 'source' => '' ];
+
+        if ( $vendor_id <= 0 || ! ZapButton::is_enabled() ) {
+            return $none;
+        }
+
+        $count = (int) get_user_meta( $vendor_id, self::COUNT_META, true );
+
+        if ( $count <= 0 ) {
+            return $none;
+        }
+
+        return [
+            'sats'   => (int) get_user_meta( $vendor_id, self::SATS_META, true ),
+            'count'  => $count,
+            'time'   => (int) get_user_meta( $vendor_id, self::TIME_META, true ),
+            'source' => (string) get_user_meta( $vendor_id, self::SOURCE_META, true ),
+        ];
+    }
+
+    /**
      * The trust-strip chip: a list item under the rating in the store
      * banner, an inline badge in the vendor box on the product page.
      * Nothing at all while the vendor has received no zaps.

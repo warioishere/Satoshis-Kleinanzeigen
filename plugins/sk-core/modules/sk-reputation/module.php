@@ -29,12 +29,54 @@ final class Module {
         require_once SK_REPUTATION_INCLUDES . '/Settings.php';
         require_once SK_REPUTATION_INCLUDES . '/SocialGraph.php';
         require_once SK_REPUTATION_INCLUDES . '/TrustPage.php';
-        require_once SK_REPUTATION_INCLUDES . '/RelayReader.php';
         require_once SK_REPUTATION_INCLUDES . '/Reports.php';
         require_once SK_REPUTATION_INCLUDES . '/FollowMirror.php';
         require_once SK_REPUTATION_INCLUDES . '/Calculator.php';
         require_once SK_REPUTATION_INCLUDES . '/Cron.php';
-        require_once SK_REPUTATION_INCLUDES . '/ProofPage.php';
+    }
+
+    /**
+     * Every recurring job of the module in one place: scheduled on
+     * activation, cleared on deactivation. Nothing schedules itself from a
+     * constructor on every request any more.
+     *
+     * @return array<string, string> hook => recurrence
+     */
+    public static function cron_jobs(): array {
+        $jobs = [
+            Reports::CRON_HOOK      => 'daily',
+            FollowMirror::SYNC_HOOK => 'daily',
+        ];
+
+        if ( self::payments_available() ) {
+            $jobs[ Cron::HOOK ] = Cron::INTERVAL;
+        }
+
+        return $jobs;
+    }
+
+    public static function schedule_cron(): void {
+        // The six-hour interval is the module's own; make sure WordPress
+        // knows it even when Cron was not built in this request.
+        add_filter( 'cron_schedules', [ Cron::class, 'add_cron_interval' ] );
+
+        $offset = HOUR_IN_SECONDS;
+
+        foreach ( self::cron_jobs() as $hook => $recurrence ) {
+            if ( ! wp_next_scheduled( $hook ) ) {
+                wp_schedule_event( time() + $offset, $recurrence, $hook );
+            }
+
+            $offset += HOUR_IN_SECONDS;
+        }
+    }
+
+    public static function unschedule_cron(): void {
+        foreach ( array_keys( self::cron_jobs() ) as $hook ) {
+            wp_clear_scheduled_hook( $hook );
+        }
+
+        wp_clear_scheduled_hook( Cron::HOOK );
     }
 
     public function load_hooks() {
@@ -61,7 +103,8 @@ final class Module {
         // viewer's browser from their own Nostr graph.
         new SocialGraph();
 
-        // /store/{slug}/vertrauen/: every signal with source and proof.
+        // /store/{slug}/vertrauen/: every signal with source and proof; the
+        // old /lightning-proof/ address redirects there.
         new TrustPage();
 
         // Nostr reports from the web of trust, for the operator only.
@@ -72,12 +115,11 @@ final class Module {
             new FollowMirror();
         }
 
-        // The payment-based signals (credited transactions, proof page)
+        // The payment-based signals (credited transactions, proof list)
         // exist only where SK Payments writes the payment table. Without
         // that module the cron would query a table that is not there.
         if ( self::payments_available() ) {
             new Cron();
-            new ProofPage();
         }
     }
 
@@ -100,16 +142,12 @@ final class Module {
     }
 
     public function activate() {
-        Cron::schedule();
-        Reports::schedule();
-        FollowMirror::schedule();
+        self::schedule_cron();
         flush_rewrite_rules( true );
     }
 
     public function deactivate() {
-        wp_clear_scheduled_hook( 'sk_recalculate_reputation_scores' );
-        Reports::unschedule();
-        FollowMirror::unschedule();
+        self::unschedule_cron();
         flush_rewrite_rules( true );
     }
 }

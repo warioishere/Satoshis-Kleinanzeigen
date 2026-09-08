@@ -88,11 +88,10 @@ sk_check_eq( ReportTypes::is_counted( 'nudity' ), false, 'is_counted() nudity no
 sk_check_eq( array_keys( ReportTypes::labels() ), ReportTypes::COUNTED, 'labels() cover exactly the counted types' );
 sk_check_eq( ReportTypes::label( 'constructor' ), 'constructor', 'label() unknown -> itself' );
 
-// ── RelayPublisher accepts arrays: an event that reaches no relay is reported, not thrown ──
-$GLOBALS['sk_test_relay'] = 'ws://127.0.0.1:1';
-$r = \SK\Modules\Auth\RelayPublisher::publish( $ev, [ 'ws://127.0.0.1:1' ] );
-sk_check_eq( [ $r['accepted'], array_keys( $r['rejected'] ) ], [ [], [ 'ws://127.0.0.1:1' ] ], 'RelayPublisher::publish(array) runs and reports the dead relay' );
-$r = \SK\Modules\Auth\RelayPublisher::publish( 'nonsense', [ 'ws://127.0.0.1:1' ] );
-sk_check_eq( $r['rejected']['ws://127.0.0.1:1'] ?? '', 'not an event', 'RelayPublisher::publish(garbage) rejects without dialling' );
+// ── Relays::publish accepts arrays: an event that reaches no relay is reported, not thrown ──
+$r = \SK\Core\Nostr\Relays::publish( $ev, [ 'ws://127.0.0.1:1' ] );
+sk_check_eq( [ $r['accepted'], array_keys( $r['rejected'] ) ], [ [], [ 'ws://127.0.0.1:1' ] ], 'Relays::publish(array) runs and reports the dead relay' );
+$r = \SK\Core\Nostr\Relays::publish( 'nonsense', [ 'ws://127.0.0.1:1' ] );
+sk_check_eq( $r['rejected']['ws://127.0.0.1:1'] ?? '', 'not an event', 'Relays::publish(garbage) rejects without dialling' );
 
 sk_test_done();

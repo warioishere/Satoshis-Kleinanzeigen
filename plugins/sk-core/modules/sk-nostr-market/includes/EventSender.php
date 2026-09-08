@@ -58,14 +58,7 @@ class EventSender {
      * @param array|null $report Filled with the per-relay verdicts.
      */
     private static function publish_event( Event $event, array $relays, ?array &$report = null, ?string $auth_privkey = null ): ?string {
-        if ( ! class_exists( '\SK\Modules\Auth\RelayPublisher' ) ) {
-            error_log( '[SK Nostr Market] RelayPublisher (sk_auth) missing, nothing sent.' );
-            $report = [ 'accepted' => [], 'rejected' => array_fill_keys( $relays, 'RelayPublisher missing' ) ];
-
-            return null;
-        }
-
-        $result = \SK\Modules\Auth\RelayPublisher::publish( $event, $relays, $auth_privkey );
+        $result = \SK\Core\Nostr\Relays::publish( $event, $relays, $auth_privkey );
         $report = $result;
 
         return empty( $result['accepted'] ) ? null : $event->getId();

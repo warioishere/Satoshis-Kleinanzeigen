@@ -60,7 +60,7 @@ class ChatBridge {
         $privkey = EventSender::get_privkey();
         $relays  = EventSender::get_relays();
 
-        if ( ! $privkey || empty( $relays ) || ! class_exists( 'SK\Modules\Auth\RelayPublisher' ) ) {
+        if ( ! $privkey || empty( $relays ) ) {
             return;
         }
 
@@ -73,7 +73,7 @@ class ChatBridge {
                 $tags = array_map( static fn( $relay ) => [ 'relay', $relay ], array_values( $relays ) );
                 $event = \SK\Core\Nostr\Events::sign( 10050, '', $tags, $privkey );
 
-                \SK\Modules\Auth\RelayPublisher::publish( $event, $relays, $privkey );
+                \SK\Core\Nostr\Relays::publish( $event, $relays, $privkey );
             } catch ( \Throwable $e ) {
                 error_log( '[SK Nostr Bridge] Announcing the DM relays failed: ' . $e->getMessage() );
             }
@@ -590,7 +590,7 @@ class ChatBridge {
      * Send a NIP-04 DM (kind 4), encrypted and signed with the same key.
      */
     private static function send_nip04_dm( string $sender_privkey, string $recipient_pubkey, string $text ): bool {
-        if ( ! class_exists( '\swentel\nostr\Encryption\Nip04' ) || ! class_exists( 'SK\Modules\Auth\RelayPublisher' ) ) {
+        if ( ! class_exists( '\swentel\nostr\Encryption\Nip04' ) ) {
             return false;
         }
 
@@ -601,7 +601,7 @@ class ChatBridge {
             $sender_privkey
         );
 
-        $result = \SK\Modules\Auth\RelayPublisher::publish( $event, \SK\Modules\Auth\NostrIdentity::get_relays(), $sender_privkey );
+        $result = \SK\Core\Nostr\Relays::publish( $event, null, $sender_privkey );
 
         return ! empty( $result['accepted'] );
     }
@@ -673,10 +673,6 @@ class ChatBridge {
             return false;
         }
 
-        if ( ! class_exists( 'SK\Modules\Auth\RelayPublisher' ) ) {
-            return false;
-        }
-
         /*
          * A private message has to go where the recipient reads them, and
          * that is the list they published, not ours. Sending only to our own
@@ -692,13 +688,13 @@ class ChatBridge {
          * somewhere before that can happen, instead of nowhere.
          */
         $relays = array_values( array_unique( array_merge(
-            \SK\Modules\Auth\NostrIdentity::get_relays(),
+            \SK\Core\Nostr\Relays::list(),
             $recipient_pubkey ? self::dm_relays_for( $recipient_pubkey ) : []
         ) ) );
 
         self::remember_sent( (string) $giftWrap->getId() );
 
-        $result = \SK\Modules\Auth\RelayPublisher::publish( $giftWrap, $relays );
+        $result = \SK\Core\Nostr\Relays::publish( $giftWrap, $relays );
 
         return ! empty( $result['accepted'] );
     }

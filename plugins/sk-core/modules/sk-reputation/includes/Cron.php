@@ -6,16 +6,14 @@ defined( 'ABSPATH' ) || exit;
 
 class Cron {
 
-    public function __construct() {
-        add_action( 'sk_recalculate_reputation_scores', [ $this, 'process' ] );
-        add_action( 'sk_recalculate_reputation_scores', [ $this, 'expire_old_invoices' ] );
-        add_filter( 'cron_schedules', [ __CLASS__, 'add_cron_interval' ] );
-    }
+    const HOOK     = 'sk_recalculate_reputation_scores';
+    const INTERVAL = 'six_hours';
 
-    public static function schedule() {
-        if ( ! wp_next_scheduled( 'sk_recalculate_reputation_scores' ) ) {
-            wp_schedule_event( time(), 'six_hours', 'sk_recalculate_reputation_scores' );
-        }
+    public function __construct() {
+        // Scheduled by the module on activation (Module::cron_jobs).
+        add_action( self::HOOK, [ $this, 'process' ] );
+        add_action( self::HOOK, [ $this, 'expire_old_invoices' ] );
+        add_filter( 'cron_schedules', [ __CLASS__, 'add_cron_interval' ] );
     }
 
     public static function add_cron_interval( $schedules ) {

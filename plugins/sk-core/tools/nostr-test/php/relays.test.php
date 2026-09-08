@@ -68,7 +68,20 @@ $log = array_map( fn( $l ) => json_decode( $l, true ), file( getenv( 'MOCK_LOG' 
 $sent = array_values( array_filter( $log, fn( $m ) => 'EVENT' === ( $m['in'] ?? '' ) && ( $m['payload'][0]['id'] ?? '' ) === $ev['id'] ) );
 sk_check_eq( count( $sent ), 1, 'publish(): exactly one EVENT frame reached the mock' );
 sk_check_eq( Relays::publish( 'garbage', [ $mock ] )['rejected'][ $mock ] ?? '', 'not an event', 'publish(): garbage rejected without dialling' );
-sk_check_eq( \SK\Modules\Auth\RelayPublisher::publish( $ev, [ $mock ] )['accepted'], [ $mock ], 'RelayPublisher facade still publishes' );
+// ── session(): several requests on one connection ─────────────────────────
+$s = Relays::session( $mock, [ 'timeout' => 5 ] );
+sk_check_eq( $s->open(), true, 'session(): opens' );
+sk_check_eq( Relays::stalled( $mock ), true, 'session(): breaker marked while open' );
+$got = [];
+$r1  = $s->request( [ [ 'kinds' => [ 3 ], 'authors' => [ $kp['pub'] ] ] ], function ( $e ) use ( &$got ) { $got[] = $e['created_at']; } );
+sk_check_eq( [ $r1['eose'], $r1['count'], $r1['stopped'] ], [ true, 2, false ], 'session request 1: both signed lists, EOSE' );
+$r2 = $s->request( [ [ 'kinds' => [ 3 ], 'authors' => [ $other['pub'] ] ] ], function ( $e ) { return false; } );
+sk_check_eq( [ $r2['eose'], $r2['count'], $r2['stopped'] ], [ false, 1, true ], 'session request 2: callback stopped after the first event' );
+$s->close();
+sk_check_eq( Relays::stalled( $mock ), false, 'session(): breaker cleared on close' );
+$dead_s = Relays::session( $dead, [ 'timeout' => 2 ] );
+sk_check_eq( $dead_s->open(), false, 'session(): dead relay does not open' );
+sk_check_eq( $dead_s->request( [ [ 'kinds' => [ 1 ] ] ], function () {} )['eose'], false, 'session(): request on a closed session is a no-op' );
 
 // ── is_public_url() ───────────────────────────────────────────────────────
 foreach ( [
