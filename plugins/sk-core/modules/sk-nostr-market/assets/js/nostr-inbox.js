@@ -32,8 +32,6 @@
         return;
     }
 
-    var TWO_DAYS = 2 * 24 * 60 * 60;
-
     /** Wraps opened per page load; each one prompts the extension twice. */
     var MAX_PER_VISIT = 10;
 
@@ -274,14 +272,23 @@
             });
     }
 
-    /** Encrypt the message for one key and have the extension sign the seal (kind 13). */
+    /**
+     * Encrypt the message for one key and have the extension sign the seal
+     * (kind 13).
+     *
+     * The seal carries the real time. NIP-59 suggests backdating it, but the
+     * seal is only ever seen by whoever can open the wrap, and they learn
+     * the time from the message anyway; the relays see the wrap alone. A
+     * backdated event, on the other hand, is exactly what a signer refuses
+     * to approve without asking — Alby prompted for every seal despite a
+     * standing "always allow".
+     */
     function sealFor(recipient, rumorJson, now) {
         return window.nostr.nip44.encrypt(recipient, rumorJson)
             .then(function (encrypted) {
                 return window.nostr.signEvent({
                     kind: 13,
-                    // Randomised timestamp, as NIP-59 asks for.
-                    created_at: now - Math.floor(Math.random() * TWO_DAYS),
+                    created_at: now,
                     tags: [],
                     content: encrypted
                 });
