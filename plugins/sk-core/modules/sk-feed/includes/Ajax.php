@@ -781,6 +781,11 @@ class Ajax {
 		$total = (int) get_post_meta( $post_id, '_sk_zap_total_sats', true ) + $amount;
 		update_post_meta( $post_id, '_sk_zap_total_sats', $total );
 
+		// The vendor's own total moves with it, counted once per hash.
+		if ( class_exists( 'SK\Modules\Zaps\ZapStats' ) ) {
+			\SK\Modules\Zaps\ZapStats::add_received( (int) $post->post_author, $payment_hash, $amount );
+		}
+
 		wp_send_json_success( [ 'total' => $total ] );
 	}
 

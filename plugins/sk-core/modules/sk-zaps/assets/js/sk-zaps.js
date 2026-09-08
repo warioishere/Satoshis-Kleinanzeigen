@@ -38,6 +38,57 @@
     setTimeout(revealButtons, 1500);
     $(document).ajaxComplete(revealButtons);
 
+    function ajaxUrl() {
+        return defaults.ajaxurl || (window.skFeed && skFeed.ajaxurl) || '/wp-admin/admin-ajax.php';
+    }
+
+    function formatSats(n) {
+        return String(parseInt(n, 10) || 0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+
+    /**
+     * The zap is paid. Every counter on the page moves right now — the
+     * vendor's total in the store banner or the product box, and the post's
+     * own count — and the server is told, so the numbers hold on reload.
+     *
+     * @param paymentHash Our own invoice: the server checks the wallet.
+     * @param receipt     Outside address: the receipt seen on the relays.
+     */
+    function zapConfirmed(data, amountSats, paymentHash, receipt) {
+        bumpTotals(data, amountSats);
+
+        if (paymentHash) {
+            // Counts the payment once on the vendor, whichever path found it.
+            $.post(ajaxUrl(), { action: 'sk_zap_check_payment', vendor_id: data.vendorId, payment_hash: paymentHash });
+            trackZap(data, amountSats, paymentHash);
+        } else if (receipt) {
+            $.post(ajaxUrl(), {
+                action: 'sk_zap_receipt',
+                vendor_id: data.vendorId,
+                post_id: data.postId || 0,
+                receipt: JSON.stringify(receipt)
+            }, function (res) {
+                if (res && res.success && res.data && res.data.post_total !== null && data.$btn) {
+                    data.$btn.find('.sk-zap-total').text(formatSats(res.data.post_total));
+                }
+            });
+        }
+    }
+
+    function bumpTotals(data, amountSats) {
+        $('.sk-store-zaps, .sk-vendor-zaps').each(function () {
+            var $el = $(this);
+            var current = parseInt(($el.text().match(/[\d.]+/) || ['0'])[0].replace(/\./g, ''), 10) || 0;
+            $el.html('<i class="fas fa-bolt"></i> ' + formatSats(current + amountSats) + ' Sats');
+        });
+
+        if (data.$btn && data.$btn.hasClass('sk-zap-btn--feed')) {
+            var $span = data.$btn.find('.sk-zap-total');
+            var now = parseInt(($span.text() || '0').replace(/\./g, ''), 10) || 0;
+            $span.text(formatSats(now + amountSats));
+        }
+    }
+
     // Zap button click.
     $(document).on('click', '.sk-zap-btn', function (e) {
         e.preventDefault();
@@ -238,7 +289,7 @@
                     await window.webln.enable();
                     await window.webln.sendPayment(invoice);
                     setStatus('<i class="fas fa-bolt"></i> Zap gesendet!', true);
-                    trackZap(data, amountSats, invoiceResp && invoiceResp.payment_hash);
+                    zapConfirmed(data, amountSats, invoiceResp && invoiceResp.payment_hash, null);
                     setTimeout(function () { $('#sk-zap-modal').remove(); }, 2000);
                     return;
                 } catch (weblnErr) {
@@ -439,7 +490,7 @@
             }
             attempts++;
 
-            $.post(skFeed.ajaxurl || defaults.ajaxurl, {
+            $.post(ajaxUrl(), {
                 action: 'sk_zap_check_payment',
                 vendor_id: data.vendorId,
                 payment_hash: paymentHash
@@ -447,7 +498,7 @@
                 if (res.success && res.data && res.data.settled) {
                     confirmed = true;
                     clearInterval(interval);
-                    trackZap(data, amountSats, paymentHash);
+                    zapConfirmed(data, amountSats, paymentHash, null);
                     setStatus('<i class="fas fa-bolt"></i> Zap bestätigt! ' + amountSats + ' Sats', true);
                     setTimeout(function () { $('#sk-zap-modal').remove(); }, 2500);
                 }
@@ -486,8 +537,9 @@
                 }
             } catch (e) {}
 
-            // No payment hash on this path (external LN address), so the zap is
-            // shown to the sender but not added to the public counter.
+            // No payment hash on this path (external LN address): the receipt
+            // itself is the proof, and the server checks it before counting.
+            zapConfirmed(data, amountFromReceipt, null, receiptEvent);
 
             // Update UI
             setStatus('<i class="fas fa-bolt"></i> Zap bestätigt! ' + amountFromReceipt + ' Sats', true);

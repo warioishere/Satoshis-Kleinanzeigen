@@ -33,6 +33,171 @@ class ZapStats {
 
         // Store banner: below the rating, through the slot the header already offers.
         add_action( 'sk_store_header_info_fields', [ __CLASS__, 'render_store_line' ], 20, 1 );
+
+        // A zap paid to an outside Lightning address: the browser hands in
+        // the receipt it saw on the relays. Zappers need no account.
+        add_action( 'wp_ajax_sk_zap_receipt', [ __CLASS__, 'ajax_receipt' ] );
+        add_action( 'wp_ajax_nopriv_sk_zap_receipt', [ __CLASS__, 'ajax_receipt' ] );
+    }
+
+    /**
+     * Count a zap the moment it is known to be paid — once per payment hash
+     * or receipt id, whichever proves it.
+     *
+     * The total shown must move with the zap, not with the next background
+     * fetch hours later. The cached number is bumped and its timestamp set
+     * to now; the next fetch, when it is due, replaces it with the
+     * network's count, which by then includes this zap.
+     *
+     * @param string $key Payment hash or receipt id, 64 hex.
+     * @return bool True when counted now, false when already counted or unusable.
+     */
+    public static function add_received( int $vendor_id, string $key, int $sats ): bool {
+        $key = strtolower( $key );
+
+        if ( $vendor_id <= 0 || $sats <= 0 || ! preg_match( '/^[0-9a-f]{64}$/', $key ) ) {
+            return false;
+        }
+
+        // Unique meta as the lock: a second call for the same key adds nothing.
+        if ( ! add_user_meta( $vendor_id, '_sk_zap_seen_' . $key, $sats, true ) ) {
+            return false;
+        }
+
+        update_user_meta( $vendor_id, self::SATS_META, (int) get_user_meta( $vendor_id, self::SATS_META, true ) + $sats );
+        update_user_meta( $vendor_id, self::COUNT_META, (int) get_user_meta( $vendor_id, self::COUNT_META, true ) + 1 );
+        update_user_meta( $vendor_id, self::TIME_META, time() );
+
+        return true;
+    }
+
+    /**
+     * AJAX: a zap receipt (kind 9735) the browser saw arrive for a vendor
+     * with an outside Lightning address.
+     *
+     * Nothing in the receipt is taken on trust: the signature must be valid,
+     * the signer must be the zapper key the vendor's Lightning address
+     * publishes, the receipt must name the vendor, and each receipt counts
+     * once. What survives that is a paid zap.
+     */
+    public static function ajax_receipt(): void {
+        $vendor_id = absint( $_POST['vendor_id'] ?? 0 );
+        $post_id   = absint( $_POST['post_id'] ?? 0 );
+        $receipt   = json_decode( (string) wp_unslash( $_POST['receipt'] ?? '' ), true );
+
+        $ip = function_exists( 'sk_get_client_ip' ) ? sk_get_client_ip() : '';
+
+        if ( function_exists( 'sk_rate_limit' ) && ! sk_rate_limit( 'zap-receipt:' . md5( $ip ?: 'unknown' ), 20 ) ) {
+            wp_send_json_error( [ 'message' => 'Zu viele Anfragen.' ] );
+        }
+
+        if ( ! $vendor_id || ! is_array( $receipt ) || 9735 !== (int) ( $receipt['kind'] ?? 0 ) ) {
+            wp_send_json_error( [ 'message' => 'Keine Zap-Quittung.' ] );
+        }
+
+        foreach ( [ 'id', 'pubkey', 'sig', 'content' ] as $field ) {
+            if ( ! isset( $receipt[ $field ] ) || ! is_string( $receipt[ $field ] ) ) {
+                wp_send_json_error( [ 'message' => 'Keine Zap-Quittung.' ] );
+            }
+        }
+
+        if ( ! isset( $receipt['created_at'] ) || ! is_int( $receipt['created_at'] ) || ! class_exists( '\swentel\nostr\Event\Event' ) ) {
+            wp_send_json_error( [ 'message' => 'Keine Zap-Quittung.' ] );
+        }
+
+        $receipt['kind'] = 9735;
+        $receipt['tags'] = isset( $receipt['tags'] ) && is_array( $receipt['tags'] ) ? $receipt['tags'] : [];
+
+        try {
+            $valid = ( new \swentel\nostr\Event\Event() )->verify( (object) $receipt );
+        } catch ( \Throwable $e ) {
+            $valid = false;
+        }
+
+        if ( ! $valid ) {
+            wp_send_json_error( [ 'message' => 'Signatur ungültig.' ] );
+        }
+
+        $vendor_pub = strtolower( (string) get_user_meta( $vendor_id, 'nostr_public_key', true ) );
+        $named      = false;
+
+        foreach ( $receipt['tags'] as $tag ) {
+            if ( is_array( $tag ) && 'p' === ( $tag[0] ?? '' ) && strtolower( (string) ( $tag[1] ?? '' ) ) === $vendor_pub ) {
+                $named = true;
+            }
+        }
+
+        if ( '' === $vendor_pub || ! $named ) {
+            wp_send_json_error( [ 'message' => 'Quittung gehört nicht zu diesem Anbieter.' ] );
+        }
+
+        $zapper = self::zapper_pubkey_for( $vendor_id );
+
+        if ( '' === $zapper || strtolower( $receipt['pubkey'] ) !== $zapper ) {
+            wp_send_json_error( [ 'message' => 'Quittung stammt nicht vom Zahlungsdienst des Anbieters.' ] );
+        }
+
+        $sats = (int) floor( self::receipt_msats( $receipt ) / 1000 );
+
+        if ( $sats <= 0 ) {
+            wp_send_json_error( [ 'message' => 'Betrag unlesbar.' ] );
+        }
+
+        $counted = self::add_received( $vendor_id, $receipt['id'], $sats );
+
+        // The post it was zapped on, when the vendor wrote it.
+        $post_total = null;
+
+        if ( $post_id && class_exists( 'SK\Modules\Feed\PostType' ) ) {
+            $post = get_post( $post_id );
+
+            if ( $post && \SK\Modules\Feed\PostType::POST_TYPE === $post->post_type && (int) $post->post_author === $vendor_id ) {
+                if ( $counted && add_post_meta( $post_id, '_sk_zap_hash_' . strtolower( $receipt['id'] ), $sats, true ) ) {
+                    update_post_meta( $post_id, '_sk_zap_total_sats', (int) get_post_meta( $post_id, '_sk_zap_total_sats', true ) + $sats );
+                }
+
+                $post_total = (int) get_post_meta( $post_id, '_sk_zap_total_sats', true );
+            }
+        }
+
+        wp_send_json_success( [
+            'counted'      => $counted,
+            'vendor_total' => (int) get_user_meta( $vendor_id, self::SATS_META, true ),
+            'post_total'   => $post_total,
+        ] );
+    }
+
+    /**
+     * The key that signs zap receipts for the vendor's Lightning address
+     * (the "nostrPubkey" of its LNURL-pay metadata), cached for a day.
+     */
+    private static function zapper_pubkey_for( int $vendor_id ): string {
+        $cache_key = 'sk_zap_zapper_' . $vendor_id;
+        $cached    = get_transient( $cache_key );
+
+        if ( is_string( $cached ) ) {
+            return $cached;
+        }
+
+        $zapper = '';
+        $data   = ZapButton::get_vendor_zap_data( $vendor_id );
+        $addr   = (string) ( $data['lightning_address'] ?? '' );
+
+        if ( preg_match( '/^([^@\s]+)@([^@\s]+)$/', $addr, $m ) ) {
+            $response = wp_remote_get( 'https://' . $m[2] . '/.well-known/lnurlp/' . rawurlencode( $m[1] ), [ 'timeout' => 5 ] );
+
+            if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
+                $meta = json_decode( wp_remote_retrieve_body( $response ), true );
+
+                if ( is_array( $meta ) && ! empty( $meta['allowsNostr'] ) && preg_match( '/^[0-9a-f]{64}$/i', (string) ( $meta['nostrPubkey'] ?? '' ) ) ) {
+                    $zapper = strtolower( $meta['nostrPubkey'] );
+                }
+            }
+        }
+
+        set_transient( $cache_key, $zapper, DAY_IN_SECONDS );
+
+        return $zapper;
     }
 
     /**

@@ -181,6 +181,11 @@ class ZapButton {
                 set_transient( $receipt_key, 1, DAY_IN_SECONDS );
                 self::publish_zap_receipt( $vendor_id, $payment_hash, $result );
             }
+
+            // The vendor's total moves with the payment, once per hash.
+            if ( class_exists( 'SK\Modules\Zaps\ZapStats' ) ) {
+                ZapStats::add_received( $vendor_id, $payment_hash, max( 0, (int) ( $result['amount_sats'] ?? 0 ) ) );
+            }
         }
 
         wp_send_json_success( [ 'settled' => $settled ] );
@@ -421,6 +426,7 @@ class ZapButton {
         $relays        = array_filter( array_map( 'trim', explode( "\n", $relays_option ) ) );
 
         wp_localize_script( 'sk-zaps', 'skZaps', [
+            'ajaxurl'       => admin_url( 'admin-ajax.php' ),
             'defaultAmount' => (int) sk_get_option( 'sk_zaps_default_amount', 'sk_zaps', '21' ),
             'relays'        => array_values( $relays ),
             // QR codes are rendered on our own server, never by a third party.
