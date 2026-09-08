@@ -14,7 +14,6 @@ if (!defined('NAP_OPTION_NAME'))  define('NAP_OPTION_NAME',  'nap_nostr_options'
 if (!defined('NAP_META_EVENT_ID')) define('NAP_META_EVENT_ID','_nap_nostr_event_id');
 
 use swentel\nostr\Event\Event;
-use swentel\nostr\Sign\Sign;
 use SK\Modules\Auth\RelayPublisher;
 
 /**
@@ -31,6 +30,17 @@ function nap_log(string $msg): void {
  *
  * @return bool True if at least one relay accepted it.
  */
+/**
+ * A kind 1 note with one r tag per relay, signed with the marketplace key.
+ *
+ * @throws \RuntimeException When the key is unusable.
+ */
+function nap_sign_note(string $caption, array $relays, string $privkey): Event {
+    $tags = array_map(static fn($r) => ['r', $r], array_values($relays));
+
+    return \SK\Core\Nostr\Events::to_object(\SK\Core\Nostr\Events::sign(1, $caption, $tags, $privkey));
+}
+
 function nap_publish(Event $note, array $relays, string $prefix = ''): bool {
     if (!class_exists(RelayPublisher::class)) {
         nap_log($prefix . 'RelayPublisher (sk_auth) not loaded.');
@@ -249,14 +259,7 @@ register_shutdown_function(function() {
         }
 
         try {
-            $note = new Event();
-            $note->setKind(1);
-            $note->setContent(nap_build_caption($post_id));
-            foreach ($relays as $r) {
-                $note->addTag(['r', $r]);
-            }
-            $signer = new Sign();
-            $signer->signEvent($note, $privkey);
+            $note = nap_sign_note(nap_build_caption($post_id), $relays, $privkey);
         } catch (\Throwable $e) {
             nap_log('Error creating/signing the event: ' . $e->getMessage());
             continue;
@@ -299,14 +302,7 @@ function nap_force_send_product( int $post_id ): bool {
     }
 
     try {
-        $note = new Event();
-        $note->setKind(1);
-        $note->setContent(nap_build_caption($post_id));
-        foreach ($relays as $r) {
-            $note->addTag(['r', $r]);
-        }
-        $signer = new Sign();
-        $signer->signEvent($note, $privkey);
+        $note = nap_sign_note(nap_build_caption($post_id), $relays, $privkey);
     } catch (\Throwable $e) {
         nap_log('Force send: error creating/signing: ' . $e->getMessage());
         return false;

@@ -110,43 +110,7 @@ class RelayReader {
      * @param string[]|null $authors Lowercase hex keys the event must come from.
      */
     public static function verified( $event, ?int $kind = null, ?array $authors = null ): bool {
-        if ( ! is_array( $event ) ) {
-            return false;
-        }
-
-        foreach ( [ 'id', 'pubkey', 'sig', 'content' ] as $field ) {
-            if ( ! is_string( $event[ $field ] ?? null ) ) {
-                return false;
-            }
-        }
-
-        if ( ! is_int( $event['created_at'] ?? null ) || ! is_int( $event['kind'] ?? null ) || ! is_array( $event['tags'] ?? null ) ) {
-            return false;
-        }
-
-        if ( null !== $kind && $kind !== $event['kind'] ) {
-            return false;
-        }
-
-        $pubkey = strtolower( $event['pubkey'] );
-
-        if ( ! preg_match( '/^[0-9a-f]{64}$/', $pubkey ) ) {
-            return false;
-        }
-
-        if ( null !== $authors && ! in_array( $pubkey, $authors, true ) ) {
-            return false;
-        }
-
-        if ( ! class_exists( '\swentel\nostr\Event\Event' ) ) {
-            return false;
-        }
-
-        try {
-            return (bool) ( new \swentel\nostr\Event\Event() )->verify( (object) $event );
-        } catch ( \Throwable $e ) {
-            return false;
-        }
+        return \SK\Core\Nostr\Events::verify( $event, $kind, $authors );
     }
 
     /**

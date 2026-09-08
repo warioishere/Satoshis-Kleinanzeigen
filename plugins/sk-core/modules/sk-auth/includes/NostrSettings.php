@@ -208,23 +208,18 @@ class NostrSettings {
             return;
         }
 
-        if ( 0 === strpos( $key, 'nsec' ) && class_exists( '\swentel\nostr\Key\Key' ) ) {
-            try {
-                $key = (string) ( new \swentel\nostr\Key\Key() )->convertToHex( $key );
-            } catch ( \Throwable $e ) {
-                return;
-            }
-        }
+        $key = \SK\Core\Nostr\Keys::nsec_to_hex( $key );
 
-        if ( ! preg_match( '/^[0-9a-fA-F]{64}$/', $key ) ) {
+        if ( '' === $key ) {
             return;
         }
 
         $opts                = get_option( 'nap_nostr_options', [] );
         $opts                = is_array( $opts ) ? $opts : [];
-        $opts['private_key'] = strtolower( $key );
+        $opts['private_key'] = $key;
 
         update_option( 'nap_nostr_options', $opts );
+        \SK\Core\Nostr\Keys::forget_marketplace();
     }
 
     public static function key_in_config(): bool {
@@ -238,15 +233,7 @@ class NostrSettings {
             return __( 'Kein Schlüssel hinterlegt. Der Marktplatz kann weder posten noch Nachrichten empfangen.', 'sk-core' );
         }
 
-        $npub = '';
-
-        if ( class_exists( '\swentel\nostr\Key\Key' ) ) {
-            try {
-                $npub = (string) ( new \swentel\nostr\Key\Key() )->convertPublicKeyToBech32( $pubkey );
-            } catch ( \Throwable $e ) {
-                $npub = '';
-            }
-        }
+        $npub = \SK\Core\Nostr\Keys::to_npub( $pubkey );
 
         $where = self::key_in_config()
             ? __( 'Der private Schlüssel steht als NAP_NOSTR_PRIVKEY in der wp-config.php.', 'sk-core' )
@@ -259,31 +246,6 @@ class NostrSettings {
      * Public key of the marketplace identity, derived from the private key.
      */
     public static function marketplace_pubkey(): string {
-        $key = '';
-
-        if ( self::key_in_config() ) {
-            $key = (string) NAP_NOSTR_PRIVKEY;
-        } else {
-            $opts = get_option( 'nap_nostr_options', [] );
-            $key  = is_array( $opts ) ? (string) ( $opts['private_key'] ?? '' ) : '';
-        }
-
-        $key = trim( $key );
-
-        if ( '' === $key || ! class_exists( '\swentel\nostr\Key\Key' ) ) {
-            return '';
-        }
-
-        try {
-            $k = new \swentel\nostr\Key\Key();
-
-            if ( 0 === strpos( $key, 'nsec' ) ) {
-                $key = (string) $k->convertToHex( $key );
-            }
-
-            return preg_match( '/^[0-9a-fA-F]{64}$/', $key ) ? (string) $k->getPublicKey( strtolower( $key ) ) : '';
-        } catch ( \Throwable $e ) {
-            return '';
-        }
+        return \SK\Core\Nostr\Keys::marketplace_pubkey();
     }
 }

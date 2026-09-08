@@ -2,8 +2,6 @@
 
 namespace SK\Modules\Payments\NWC;
 
-use swentel\nostr\Event\Event;
-use swentel\nostr\Sign\Sign;
 use swentel\nostr\Relay\Relay;
 use swentel\nostr\Message\EventMessage;
 use swentel\nostr\Encryption\Nip04;
@@ -147,13 +145,9 @@ class Client {
 
             $encrypted = Nip04::encrypt( $payload, $this->secret, $this->wallet_pubkey );
 
-            $event = new Event();
-            $event->setKind( 23194 );
-            $event->setContent( $encrypted );
-            $event->addTag( [ 'p', $this->wallet_pubkey ] );
-
-            $signer = new Sign();
-            $signer->signEvent( $event, $this->secret );
+            $event = \SK\Core\Nostr\Events::to_object(
+                \SK\Core\Nostr\Events::sign( 23194, $encrypted, [ [ 'p', $this->wallet_pubkey ] ], $this->secret )
+            );
 
             $relay = new Relay( $this->relay_url );
             $relay->setTimeout( 10 );

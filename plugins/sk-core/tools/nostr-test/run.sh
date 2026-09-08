@@ -37,7 +37,7 @@ stop_relay() {
 if [ "$WHAT" = all ] || [ "$WHAT" = php ]; then
   start_relay
   trap stop_relay EXIT
-  for t in php/followmirror.test.php php/reports.test.php; do
+  for t in php/events.test.php php/followmirror.test.php php/reports.test.php; do
     echo "== $t"
     php "$t" > "$HERE/last.out" 2>&1
     RC=$?

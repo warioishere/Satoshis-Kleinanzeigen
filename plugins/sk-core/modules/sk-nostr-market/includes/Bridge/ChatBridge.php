@@ -70,16 +70,9 @@ class ChatBridge {
             }
 
             try {
-                $event = new \swentel\nostr\Event\Event();
-                $event->setKind( 10050 );
-                $event->setContent( '' );
-                $event->setCreatedAt( time() );
+                $tags = array_map( static fn( $relay ) => [ 'relay', $relay ], array_values( $relays ) );
+                $event = \SK\Core\Nostr\Events::sign( 10050, '', $tags, $privkey );
 
-                foreach ( $relays as $relay ) {
-                    $event->addTag( [ 'relay', $relay ] );
-                }
-
-                ( new \swentel\nostr\Sign\Sign() )->signEvent( $event, $privkey );
                 \SK\Modules\Auth\RelayPublisher::publish( $event, $relays, $privkey );
             } catch ( \Throwable $e ) {
                 error_log( '[SK Nostr Bridge] Announcing the DM relays failed: ' . $e->getMessage() );
@@ -601,12 +594,12 @@ class ChatBridge {
             return false;
         }
 
-        $event = new \swentel\nostr\Event\Event();
-        $event->setKind( 4 );
-        $event->setContent( \swentel\nostr\Encryption\Nip04::encrypt( $text, $sender_privkey, $recipient_pubkey ) );
-        $event->addTag( [ 'p', $recipient_pubkey ] );
-        $event->setCreatedAt( time() );
-        ( new \swentel\nostr\Sign\Sign() )->signEvent( $event, $sender_privkey );
+        $event = \SK\Core\Nostr\Events::sign(
+            4,
+            \swentel\nostr\Encryption\Nip04::encrypt( $text, $sender_privkey, $recipient_pubkey ),
+            [ [ 'p', $recipient_pubkey ] ],
+            $sender_privkey
+        );
 
         $result = \SK\Modules\Auth\RelayPublisher::publish( $event, \SK\Modules\Auth\NostrIdentity::get_relays(), $sender_privkey );
 
@@ -644,10 +637,7 @@ class ChatBridge {
             'content'    => $text,
         ];
 
-        $rumor['id'] = hash( 'sha256', (string) wp_json_encode(
-            [ 0, $rumor['pubkey'], $rumor['created_at'], $rumor['kind'], $rumor['tags'], $rumor['content'] ],
-            JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
-        ) );
+        $rumor['id'] = \SK\Core\Nostr\Events::id( $rumor );
 
         // A reply that names this message finds its way back to the chat.
         if ( $chat_id > 0 ) {
@@ -656,14 +646,16 @@ class ChatBridge {
 
         // Seal (kind 13): the rumor encrypted to the recipient, signed by
         // the sender, so the recipient learns who wrote it.
-        $seal = new \swentel\nostr\Event\Event();
-        $seal->setKind( 13 );
-        $seal->setCreatedAt( $created_at );
-        $seal->setContent( \swentel\nostr\Encryption\Nip44::encrypt(
-            (string) wp_json_encode( $rumor, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ),
-            \swentel\nostr\Encryption\Nip44::getConversationKey( $sender_privkey, $recipient_pubkey )
+        $seal = \SK\Core\Nostr\Events::to_object( \SK\Core\Nostr\Events::sign(
+            13,
+            \swentel\nostr\Encryption\Nip44::encrypt(
+                (string) wp_json_encode( $rumor, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ),
+                \swentel\nostr\Encryption\Nip44::getConversationKey( $sender_privkey, $recipient_pubkey )
+            ),
+            [],
+            $sender_privkey,
+            $created_at
         ) );
-        $signService->signEvent( $seal, $sender_privkey );
 
         // Gift wrap (kind 1059) — the seal under a one-time key.
         $giftWrap = $giftWrapSvc->createGiftWrap( $seal, $recipient_pubkey );
@@ -848,28 +840,10 @@ class ChatBridge {
      * check any relay could answer the lookup with a list of its own making.
      */
     private static function signed_by_author( array $event ): bool {
-        if ( ! class_exists( '\swentel\nostr\Event\Event' ) ) {
-            return false;
-        }
-
-        foreach ( [ 'id', 'pubkey', 'sig', 'content' ] as $field ) {
-            if ( ! isset( $event[ $field ] ) || ! is_string( $event[ $field ] ) ) {
-                return false;
-            }
-        }
-
-        if ( ! isset( $event['created_at'] ) || ! is_int( $event['created_at'] ) ) {
-            return false;
-        }
-
         $event['kind'] = (int) ( $event['kind'] ?? 0 );
         $event['tags'] = isset( $event['tags'] ) && is_array( $event['tags'] ) ? $event['tags'] : [];
 
-        try {
-            return (bool) ( new \swentel\nostr\Event\Event() )->verify( (object) $event );
-        } catch ( \Throwable $e ) {
-            return false;
-        }
+        return \SK\Core\Nostr\Events::verify( $event );
     }
 
     /**

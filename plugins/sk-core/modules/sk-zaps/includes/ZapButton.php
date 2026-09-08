@@ -260,27 +260,14 @@ class ZapButton {
         }
 
         // Use marketplace key to sign (LNURL provider role per NIP-57).
-        $privkey = null;
-        if ( defined( 'NAP_NOSTR_PRIVKEY' ) ) {
-            $privkey = NAP_NOSTR_PRIVKEY;
-        } elseif ( function_exists( 'nap_resolve_private_key' ) ) {
-            $privkey = nap_resolve_private_key();
-        }
+        $privkey = \SK\Core\Nostr\Keys::marketplace_privkey();
 
-        if ( ! $privkey ) {
+        if ( '' === $privkey ) {
             return;
         }
 
         try {
-            $event = new \swentel\nostr\Event\Event();
-            $event->setKind( 9735 );
-            $event->setContent( '' );
-            foreach ( $tags as $tag ) {
-                $event->addTag( $tag );
-            }
-
-            $signer = new \swentel\nostr\Sign\Sign();
-            $signer->signEvent( $event, $privkey );
+            $event = \SK\Core\Nostr\Events::to_object( \SK\Core\Nostr\Events::sign( 9735, '', $tags, $privkey ) );
 
             $relays = \SK\Modules\Auth\NostrIdentity::get_relays();
             foreach ( $relays as $relay_url ) {

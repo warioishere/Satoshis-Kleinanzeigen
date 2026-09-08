@@ -134,16 +134,7 @@ class TrustPage {
             return null;
         }
 
-        $npub = '';
-
-        if ( class_exists( '\swentel\nostr\Key\Key' ) ) {
-            try {
-                $npub = (string) ( new \swentel\nostr\Key\Key() )->convertPublicKeyToBech32( $proof['pubkey'] );
-            } catch ( \Throwable $e ) {
-                $npub = '';
-            }
-        }
-
+        $npub  = \SK\Core\Nostr\Keys::to_npub( $proof['pubkey'] );
         $event = $proof['event'];
 
         return [

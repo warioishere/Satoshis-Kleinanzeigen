@@ -2,9 +2,10 @@
 
 namespace SK\Modules\Auth;
 
+use SK\Core\Nostr\Events;
+use SK\Core\Nostr\Keys;
 use swentel\nostr\Event\Event;
 use swentel\nostr\Sign\Sign;
-use swentel\nostr\Key\Key;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -44,9 +45,9 @@ class NostrIdentity {
      * @return string Public key (hex).
      */
     public static function create_for_user( int $user_id ): string {
-        $key     = new Key();
-        $privkey = $key->generatePrivateKey();
-        $pubkey  = $key->getPublicKey( $privkey );
+        $pair    = Keys::generate();
+        $privkey = $pair['priv'];
+        $pubkey  = $pair['pub'];
 
         // Store encrypted private key.
         update_user_meta( $user_id, 'sk_nostr_private_key', self::encrypt( $privkey ) );
@@ -134,24 +135,14 @@ class NostrIdentity {
      * Get user's npub (bech32 public key).
      */
     public static function get_npub( int $user_id ): string {
-        $pubkey = self::get_public_key( $user_id );
-        if ( empty( $pubkey ) ) {
-            return '';
-        }
-        $key = new Key();
-        return $key->convertPublicKeyToBech32( $pubkey );
+        return Keys::to_npub( self::get_public_key( $user_id ) );
     }
 
     /**
      * Get user's nsec (bech32 private key). Only for generated identities.
      */
     public static function get_nsec( int $user_id ): string {
-        $privkey = self::get_private_key( $user_id );
-        if ( empty( $privkey ) ) {
-            return '';
-        }
-        $key = new Key();
-        return $key->convertPrivateKeyToBech32( $privkey );
+        return Keys::to_nsec( (string) self::get_private_key( $user_id ) );
     }
 
     /**
@@ -183,15 +174,7 @@ class NostrIdentity {
             return null;
         }
 
-        $event = new Event();
-        $event->setKind( $kind );
-        $event->setContent( $content );
-        foreach ( $tags as $tag ) {
-            $event->addTag( $tag );
-        }
-
-        $signer = new Sign();
-        $signer->signEvent( $event, $privkey );
+        $event = Events::sign( $kind, $content, $tags, $privkey );
 
         // Only a relay's OK for this event id counts. The previous check,
         // "false !== $result", accepted every response object, including an
@@ -200,7 +183,7 @@ class NostrIdentity {
         $result = RelayPublisher::publish( $event, self::get_relays(), $privkey );
         $report = $result;
 
-        return empty( $result['accepted'] ) ? null : $event->getId();
+        return empty( $result['accepted'] ) ? null : (string) $event['id'];
     }
 
     /**

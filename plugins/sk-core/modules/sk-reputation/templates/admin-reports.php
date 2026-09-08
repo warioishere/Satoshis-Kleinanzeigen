@@ -8,12 +8,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$type_labels = [
-    'spam'          => __( 'Spam', 'sk-core' ),
-    'impersonation' => __( 'Identitätsmissbrauch', 'sk-core' ),
-    'illegal'       => __( 'Illegal', 'sk-core' ),
-    'malware'       => __( 'Schadsoftware', 'sk-core' ),
-];
+$type_labels = \SK\Core\Nostr\ReportTypes::labels();
 ?>
 <div class="wrap">
     <h1><?php esc_html_e( 'SK Reputation – Nostr-Meldungen', 'sk-core' ); ?></h1>

@@ -2,11 +2,8 @@
 
 namespace SK\Modules\Auth;
 
-use swentel\nostr\Event\Event;
 use swentel\nostr\EventInterface;
-use swentel\nostr\Key\Key;
 use swentel\nostr\Message\EventMessage;
-use swentel\nostr\Sign\Sign;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -29,7 +26,9 @@ class RelayPublisher {
     const STALL_SKIP = 6 * HOUR_IN_SECONDS;
 
     /**
-     * @param EventInterface $event        Signed event.
+     * @param EventInterface|array $event  Signed event, as the library's
+     *                                     object or as the plain array the
+     *                                     rest of the plugin works with.
      * @param string[]       $relays       Relay URLs.
      * @param string|null    $auth_privkey Key to answer a NIP-42 challenge
      *                                     with — normally the key that
@@ -41,9 +40,21 @@ class RelayPublisher {
      * @return array{accepted: string[], rejected: array<string, string>}
      *               URLs that accepted, and URL => reason for the rest.
      */
-    public static function publish( EventInterface $event, array $relays, ?string $auth_privkey = null ): array {
+    public static function publish( $event, array $relays, ?string $auth_privkey = null ): array {
         $accepted = [];
         $rejected = [];
+
+        if ( is_array( $event ) ) {
+            $event = \SK\Core\Nostr\Events::to_object( $event );
+        }
+
+        if ( ! $event instanceof EventInterface ) {
+            foreach ( $relays as $url ) {
+                $rejected[ $url ] = 'not an event';
+            }
+
+            return compact( 'accepted', 'rejected' );
+        }
 
         if ( ! class_exists( '\WebSocket\Client' ) ) {
             foreach ( $relays as $url ) {
@@ -127,24 +138,18 @@ class RelayPublisher {
      * @return string The id of the auth event, so its OK can be told apart.
      */
     public static function answer_challenge( \WebSocket\Client $client, string $relay_url, string $challenge, string $privkey ): string {
-        $auth = new Event();
-        $auth->setKind( 22242 );
-        $auth->setContent( '' );
-        $auth->setCreatedAt( time() );
-        $auth->addTag( [ 'relay', $relay_url ] );
-        $auth->addTag( [ 'challenge', $challenge ] );
-        ( new Sign() )->signEvent( $auth, $privkey );
+        $auth = \SK\Core\Nostr\Events::sign( 22242, '', [ [ 'relay', $relay_url ], [ 'challenge', $challenge ] ], $privkey );
 
-        $client->text( '["AUTH",' . $auth->toJson() . ']' );
+        $client->text( '["AUTH",' . wp_json_encode( $auth, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . ']' );
 
-        return (string) $auth->getId();
+        return (string) $auth['id'];
     }
 
     /**
      * A key for challenges when the caller has none to offer.
      */
     public static function throwaway_key(): string {
-        return ( new Key() )->generatePrivateKey();
+        return \SK\Core\Nostr\Keys::generate()['priv'];
     }
 
     /**

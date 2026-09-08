@@ -105,20 +105,14 @@ class ZapStats {
             }
         }
 
-        if ( ! isset( $receipt['created_at'] ) || ! is_int( $receipt['created_at'] ) || ! class_exists( '\swentel\nostr\Event\Event' ) ) {
+        if ( ! isset( $receipt['created_at'] ) || ! is_int( $receipt['created_at'] ) ) {
             wp_send_json_error( [ 'message' => $not_a_receipt ] );
         }
 
         $receipt['kind'] = 9735;
         $receipt['tags'] = isset( $receipt['tags'] ) && is_array( $receipt['tags'] ) ? $receipt['tags'] : [];
 
-        try {
-            $valid = ( new \swentel\nostr\Event\Event() )->verify( (object) $receipt );
-        } catch ( \Throwable $e ) {
-            $valid = false;
-        }
-
-        if ( ! $valid ) {
+        if ( ! \SK\Core\Nostr\Events::verify( $receipt, 9735 ) ) {
             wp_send_json_error( [ 'message' => __( 'Signatur ungültig.', 'sk-core' ) ] );
         }
 

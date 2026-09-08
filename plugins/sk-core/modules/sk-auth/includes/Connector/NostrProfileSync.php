@@ -260,19 +260,14 @@ class UAC_Nostr_Profile_Sync {
      * @return string|false npub string on success, false on failure
      */
     private function hex_to_npub($hex_pubkey) {
-        if (!preg_match('/^[a-f0-9]{64}$/i', $hex_pubkey)) {
+        if (!preg_match('/^[a-f0-9]{64}$/i', (string) $hex_pubkey)) {
             return false;
         }
 
-        // Use centralized nostr-php library (loaded via sk-core/lib/autoload.php).
-        if (class_exists('\swentel\nostr\Key\Key')) {
-            try {
-                $key = new \swentel\nostr\Key\Key();
-                $npub = $key->convertPublicKeyToBech32($hex_pubkey);
-                return $npub ?: false;
-            } catch (\Throwable $e) {
-                return false;
-            }
+        $npub = \SK\Core\Nostr\Keys::to_npub((string) $hex_pubkey);
+
+        if ('' !== $npub) {
+            return $npub;
         }
 
         // Fallback: manual bech32 encoding.

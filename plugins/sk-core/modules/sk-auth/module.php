@@ -248,29 +248,9 @@ final class Module {
      * @return string|null Hex pubkey, or null when no key is configured.
      */
     private static function marketplace_pubkey(): ?string {
-        $privkey = null;
+        $key = \SK\Core\Nostr\Keys::marketplace_pubkey();
 
-        if ( defined( 'NAP_NOSTR_PRIVKEY' ) && NAP_NOSTR_PRIVKEY ) {
-            $privkey = (string) NAP_NOSTR_PRIVKEY;
-        } elseif ( function_exists( 'nap_resolve_private_key' ) ) {
-            $privkey = (string) nap_resolve_private_key();
-        }
-
-        if ( empty( $privkey ) || ! class_exists( '\swentel\nostr\Key\Key' ) ) {
-            return null;
-        }
-
-        try {
-            $key = new \swentel\nostr\Key\Key();
-
-            if ( 0 === strpos( $privkey, 'nsec' ) ) {
-                $privkey = $key->convertToHex( $privkey );
-            }
-
-            return $key->getPublicKey( $privkey );
-        } catch ( \Throwable $e ) {
-            return null;
-        }
+        return '' === $key ? null : $key;
     }
 
     public function nip05_handler() {

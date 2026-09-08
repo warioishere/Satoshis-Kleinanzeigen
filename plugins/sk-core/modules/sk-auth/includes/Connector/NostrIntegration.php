@@ -154,13 +154,8 @@ class UAC_Nostr_Login_Integration {
             return new WP_Error('invalid_authtoken', 'Fehler beim Dekodieren des Authentifizierungstokens.');
         }
 
-        // Verify using Nostr Event class
-        if (!class_exists('swentel\nostr\Event\Event')) {
-            return new WP_Error('nostr_plugin_missing', 'Nostr-Login-Plugin ist nicht aktiv.');
-        }
-
-        $event = new \swentel\nostr\Event\Event();
-        if (!$event->verify($authtoken_decoded)) {
+        // Id and signature, checked the same way everywhere (SK\Core\Nostr\Events).
+        if (!\SK\Core\Nostr\Events::verify($authtoken_decoded)) {
             return new WP_Error('invalid_signature', 'Ungültige Nostr-Event-Signatur.');
         }
 

@@ -2,6 +2,9 @@
 
 namespace SK\Core\Trust;
 
+use SK\Core\Nostr\Events;
+use SK\Core\Nostr\Keys;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -82,21 +85,8 @@ class VendorKey {
         }
 
         $settings = get_user_meta( $vendor_id, 'sk_profile_settings', true );
-        $npub     = is_array( $settings ) ? trim( preg_replace( '/^nostr:/i', '', (string) ( $settings['nostr'] ?? '' ) ) ) : '';
 
-        if ( 0 === strpos( $npub, 'npub1' ) && class_exists( '\swentel\nostr\Key\Key' ) ) {
-            try {
-                $hex = strtolower( (string) ( new \swentel\nostr\Key\Key() )->convertToHex( $npub ) );
-
-                if ( self::is_hex_key( $hex ) ) {
-                    return $hex;
-                }
-            } catch ( \Throwable $e ) {
-                // Not a usable npub.
-            }
-        }
-
-        return '';
+        return is_array( $settings ) ? Keys::npub_to_hex( (string) ( $settings['nostr'] ?? '' ) ) : '';
     }
 
     /**
@@ -226,15 +216,9 @@ class VendorKey {
 
     /** The stored binding event as an array, if it is one for this site. */
     public static function binding( int $vendor_id ): ?array {
-        $raw = get_user_meta( $vendor_id, self::BINDING_META, true );
+        $event = Events::decode( get_user_meta( $vendor_id, self::BINDING_META, true ) );
 
-        if ( ! is_string( $raw ) || '' === $raw ) {
-            return null;
-        }
-
-        $event = json_decode( $raw, true );
-
-        if ( ! is_array( $event ) || self::BINDING_KIND !== (int) ( $event['kind'] ?? 0 ) ) {
+        if ( ! $event || self::BINDING_KIND !== (int) ( $event['kind'] ?? 0 ) ) {
             return null;
         }
 
@@ -249,15 +233,9 @@ class VendorKey {
 
     /** The stored login event as an array. */
     public static function login_proof( int $vendor_id ): ?array {
-        $raw = get_user_meta( $vendor_id, self::LOGIN_PROOF_META, true );
+        $event = Events::decode( get_user_meta( $vendor_id, self::LOGIN_PROOF_META, true ) );
 
-        if ( ! is_string( $raw ) || '' === $raw ) {
-            return null;
-        }
-
-        $event = json_decode( $raw, true );
-
-        if ( ! is_array( $event ) || 27235 !== (int) ( $event['kind'] ?? 0 ) ) {
+        if ( ! $event || 27235 !== (int) ( $event['kind'] ?? 0 ) ) {
             return null;
         }
 
@@ -364,17 +342,7 @@ class VendorKey {
             return __( 'Der Schlüssel der Erweiterung ist nicht der Schlüssel des Shops.', 'sk-core' );
         }
 
-        if ( ! class_exists( '\swentel\nostr\Event\Event' ) ) {
-            return __( 'Signaturprüfung nicht verfügbar.', 'sk-core' );
-        }
-
-        try {
-            $valid = ( new \swentel\nostr\Event\Event() )->verify( (object) $event );
-        } catch ( \Throwable $e ) {
-            $valid = false;
-        }
-
-        if ( ! $valid ) {
+        if ( ! Events::verify( $event, self::BINDING_KIND, [ $expected_pubkey ] ) ) {
             return __( 'Signatur ungültig.', 'sk-core' );
         }
 
@@ -391,7 +359,7 @@ class VendorKey {
     public static function store( int $vendor_id, array $event ): void {
         $event['pubkey'] = strtolower( $event['pubkey'] );
 
-        update_user_meta( $vendor_id, self::BINDING_META, self::encode( $event ) );
+        update_user_meta( $vendor_id, self::BINDING_META, Events::encode_for_meta( $event ) );
         update_user_meta( $vendor_id, self::BOUND_META, $event['pubkey'] );
         delete_user_meta( $vendor_id, self::RELAYS_META );
         delete_user_meta( $vendor_id, self::ATTEMPTS_META );
@@ -446,22 +414,10 @@ class VendorKey {
             return;
         }
 
-        if ( ! class_exists( '\swentel\nostr\Sign\Sign' ) ) {
-            return;
-        }
-
         try {
             $template = self::template( $vendor_id, $pubkey );
 
-            $event = new \swentel\nostr\Event\Event();
-            $event->setKind( $template['kind'] );
-            $event->setCreatedAt( $template['created_at'] );
-            $event->setContent( $template['content'] );
-            $event->setTags( $template['tags'] );
-
-            ( new \swentel\nostr\Sign\Sign() )->signEvent( $event, $privkey );
-
-            self::store( $vendor_id, $event->toArray() );
+            self::store( $vendor_id, Events::sign( $template['kind'], $template['content'], $template['tags'], $privkey, $template['created_at'] ) );
         } catch ( \Throwable $e ) {
             error_log( '[SK Trust] self-binding for user ' . $vendor_id . ' failed: ' . $e->getMessage() );
         }
@@ -478,17 +434,11 @@ class VendorKey {
     public static function on_identity_deleted( int $user_id, string $privkey ): void {
         $pubkey = self::pubkey_of( strtolower( $privkey ) );
 
-        if ( '' !== $pubkey && class_exists( '\swentel\nostr\Sign\Sign' ) ) {
+        if ( '' !== $pubkey ) {
             try {
-                $event = new \swentel\nostr\Event\Event();
-                $event->setKind( self::BINDING_KIND );
-                $event->setCreatedAt( time() );
-                $event->setContent( '' );
-                $event->setTags( [ [ 'd', self::site() ] ] );
+                $revocation = Events::sign( self::BINDING_KIND, '', [ [ 'd', self::site() ] ], $privkey );
 
-                ( new \swentel\nostr\Sign\Sign() )->signEvent( $event, strtolower( $privkey ) );
-
-                wp_schedule_single_event( time() + 10, self::PUBLISH_EVENT_HOOK, [ $event->toArray() ] );
+                wp_schedule_single_event( time() + 10, self::PUBLISH_EVENT_HOOK, [ $revocation ] );
             } catch ( \Throwable $e ) {
                 error_log( '[SK Trust] revoking binding for user ' . $user_id . ' failed: ' . $e->getMessage() );
             }
@@ -514,7 +464,7 @@ class VendorKey {
 
         try {
             $result = \SK\Modules\Auth\RelayPublisher::publish(
-                ( new \swentel\nostr\Event\Event() )->populate( (object) $event ),
+                $event,
                 \SK\Modules\Auth\NostrIdentity::get_relays()
             );
 
@@ -534,25 +484,15 @@ class VendorKey {
      * @param string $event_json The verified NIP-98 event, as received.
      */
     public static function record_login_proof( int $user_id, string $event_json ): void {
-        $event = json_decode( $event_json, true );
+        $event = Events::decode( $event_json );
 
-        if ( ! is_array( $event ) || 27235 !== (int) ( $event['kind'] ?? 0 ) || ! self::is_hex_key( strtolower( (string) ( $event['pubkey'] ?? '' ) ) ) ) {
+        if ( ! $event || 27235 !== (int) ( $event['kind'] ?? 0 ) || ! self::is_hex_key( strtolower( (string) ( $event['pubkey'] ?? '' ) ) ) ) {
             return;
         }
 
-        update_user_meta( $user_id, self::LOGIN_PROOF_META, self::encode( $event ) );
+        update_user_meta( $user_id, self::LOGIN_PROOF_META, Events::encode_for_meta( $event ) );
 
         unset( self::$bound_cache[ $user_id ] );
-    }
-
-    /**
-     * An event as it is stored on the user. The meta API strips slashes
-     * from what it is given, which turns a "ü" in the JSON into
-     * "u00fc" and breaks the event's id; hence unescaped output, slashed
-     * once for the API.
-     */
-    private static function encode( array $event ): string {
-        return wp_slash( wp_json_encode( $event, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) );
     }
 
     // ── Publishing ───────────────────────────────────────────────────────
@@ -579,10 +519,8 @@ class VendorKey {
         update_user_meta( $vendor_id, self::ATTEMPTS_META, $attempts );
 
         try {
-            $event = ( new \swentel\nostr\Event\Event() )->populate( (object) $binding );
-
             $result = \SK\Modules\Auth\RelayPublisher::publish(
-                $event,
+                $binding,
                 \SK\Modules\Auth\NostrIdentity::get_relays(),
                 self::held_private_key( $vendor_id )
             );
@@ -705,27 +643,15 @@ class VendorKey {
     }
 
     private static function pubkey_of( string $privkey ): string {
-        if ( ! class_exists( '\swentel\nostr\Key\Key' ) ) {
-            return '';
-        }
-
-        try {
-            $pub = strtolower( (string) ( new \swentel\nostr\Key\Key() )->getPublicKey( $privkey ) );
-        } catch ( \Throwable $e ) {
-            return '';
-        }
-
-        return self::is_hex_key( $pub ) ? $pub : '';
+        return Keys::pubkey_of( $privkey );
     }
 
+    /**
+     * The marketplace key names itself in bindings only while the Nostr
+     * market module, whose key it is, runs.
+     */
     private static function marketplace_pubkey(): string {
-        if ( sk_module_active( 'sk_nostr_market' ) && class_exists( 'SK\Modules\NostrMarket\EventSender' ) ) {
-            $pub = strtolower( (string) \SK\Modules\NostrMarket\EventSender::get_pubkey() );
-
-            return self::is_hex_key( $pub ) ? $pub : '';
-        }
-
-        return '';
+        return sk_module_active( 'sk_nostr_market' ) ? Keys::marketplace_pubkey() : '';
     }
 
     private static function store_url( int $vendor_id ): string {
@@ -737,16 +663,10 @@ class VendorKey {
     }
 
     private static function tag( array $event, string $name ): string {
-        foreach ( (array) ( $event['tags'] ?? [] ) as $tag ) {
-            if ( is_array( $tag ) && $name === ( $tag[0] ?? '' ) ) {
-                return (string) ( $tag[1] ?? '' );
-            }
-        }
-
-        return '';
+        return Events::tag( $event, $name );
     }
 
     private static function is_hex_key( string $value ): bool {
-        return (bool) preg_match( '/^[0-9a-f]{64}$/', $value );
+        return Keys::is_hex( $value );
     }
 }

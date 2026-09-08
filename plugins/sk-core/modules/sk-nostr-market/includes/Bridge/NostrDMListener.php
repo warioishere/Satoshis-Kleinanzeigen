@@ -1140,35 +1140,21 @@ class NostrDMListener {
      * @return string|null Lowercase hex pubkey, or null.
      */
     private static function verified_kind4_sender( array $event ): ?string {
-        if ( 4 !== (int) ( $event['kind'] ?? 0 ) || ! class_exists( '\swentel\nostr\Event\Event' ) ) {
+        if ( 4 !== (int) ( $event['kind'] ?? 0 ) || '' === ( $event['content'] ?? '' ) ) {
             return null;
-        }
-
-        foreach ( [ 'id', 'pubkey', 'sig', 'content' ] as $field ) {
-            if ( ! isset( $event[ $field ] ) || ! is_string( $event[ $field ] ) || '' === $event[ $field ] ) {
-                return null;
-            }
         }
 
         $raw = [
-            'id'         => $event['id'],
-            'pubkey'     => $event['pubkey'],
-            'sig'        => $event['sig'],
+            'id'         => $event['id'] ?? null,
+            'pubkey'     => $event['pubkey'] ?? null,
+            'sig'        => $event['sig'] ?? null,
             'kind'       => 4,
             'created_at' => (int) ( $event['created_at'] ?? 0 ),
             'tags'       => is_array( $event['tags'] ?? null ) ? $event['tags'] : [],
-            'content'    => $event['content'],
+            'content'    => $event['content'] ?? null,
         ];
 
-        try {
-            if ( ! ( new \swentel\nostr\Event\Event() )->verify( (object) $raw ) ) {
-                return null;
-            }
-        } catch ( \Throwable $e ) {
-            return null;
-        }
-
-        return strtolower( $event['pubkey'] );
+        return \SK\Core\Nostr\Events::verify( $raw, 4 ) ? strtolower( $event['pubkey'] ) : null;
     }
 
     /**
@@ -1181,32 +1167,10 @@ class NostrDMListener {
             return null;
         }
 
-        foreach ( [ 'id', 'pubkey', 'sig', 'content' ] as $feld ) {
-            if ( ! isset( $seal[ $feld ] ) || ! is_string( $seal[ $feld ] ) ) {
-                return null;
-            }
-        }
-
-        if ( ! isset( $seal['created_at'] ) || ! is_int( $seal['created_at'] ) ) {
-            return null;
-        }
-
         $seal['kind'] = 13;
         $seal['tags'] = isset( $seal['tags'] ) && is_array( $seal['tags'] ) ? $seal['tags'] : [];
 
-        if ( ! class_exists( '\swentel\nostr\Event\Event' ) ) {
-            return null;
-        }
-
-        try {
-            if ( ! ( new \swentel\nostr\Event\Event() )->verify( (object) $seal ) ) {
-                return null;
-            }
-        } catch ( \Throwable $e ) {
-            return null;
-        }
-
-        return strtolower( $seal['pubkey'] );
+        return \SK\Core\Nostr\Events::verify( $seal, 13 ) ? strtolower( $seal['pubkey'] ) : null;
     }
 
     /**
@@ -1518,11 +1482,6 @@ class NostrDMListener {
     }
 
     private static function pubkey_to_npub( string $hex_pubkey ): string {
-        try {
-            $key = new \swentel\nostr\Key\Key();
-            return $key->convertPublicKeyToBech32( $hex_pubkey );
-        } catch ( \Exception $e ) {
-            return 'npub...' . substr( $hex_pubkey, 0, 8 );
-        }
+        return \SK\Core\Nostr\Keys::to_npub( $hex_pubkey ) ?: 'npub...' . substr( $hex_pubkey, 0, 8 );
     }
 }

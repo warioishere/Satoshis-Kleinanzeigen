@@ -36,19 +36,9 @@ class NostrLoginBox {
             return;
         }
 
-        // Libs loaded via sk-core/lib/autoload.php.
-        if ( ! class_exists( '\swentel\nostr\Key\Key' ) ) {
-            return;
-        }
+        $npub = \SK\Core\Nostr\Keys::to_npub( (string) $hex_pubkey );
 
-        try {
-            $key  = new \swentel\nostr\Key\Key();
-            $npub = $key->convertPublicKeyToBech32( $hex_pubkey );
-        } catch ( \Throwable $e ) {
-            return;
-        }
-
-        if ( empty( $npub ) || strpos( $npub, 'npub' ) !== 0 ) {
+        if ( '' === $npub ) {
             return;
         }
 

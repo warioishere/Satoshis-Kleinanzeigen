@@ -101,7 +101,7 @@ class FollowMirror {
         $vendor_key = strtolower( (string) $vendor_key );
         $attempt    = max( 1, (int) $attempt );
 
-        if ( ! self::mirrors( $user_id ) || ! preg_match( '/^[0-9a-f]{64}$/', $vendor_key ) ) {
+        if ( ! self::mirrors( $user_id ) || ! \SK\Core\Nostr\Keys::is_hex( $vendor_key ) ) {
             return;
         }
 
@@ -166,7 +166,7 @@ class FollowMirror {
     private static function apply( int $user_id, array $add, array $remove ): string {
         $pubkey = strtolower( (string) \SK\Modules\Auth\NostrIdentity::get_public_key( $user_id ) );
 
-        if ( ! preg_match( '/^[0-9a-f]{64}$/', $pubkey ) ) {
+        if ( ! \SK\Core\Nostr\Keys::is_hex( $pubkey ) ) {
             return 'failed';
         }
 

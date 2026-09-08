@@ -139,14 +139,9 @@ class Cron {
 
         // NIP-32 Label Event (Kind 1985).
         // Labels the vendor's pubkey with a reputation tier.
-        $marketplace_privkey = null;
-        if ( defined( 'NAP_NOSTR_PRIVKEY' ) ) {
-            $marketplace_privkey = NAP_NOSTR_PRIVKEY;
-        } elseif ( function_exists( 'nap_resolve_private_key' ) ) {
-            $marketplace_privkey = nap_resolve_private_key();
-        }
+        $marketplace_privkey = \SK\Core\Nostr\Keys::marketplace_privkey();
 
-        if ( ! $marketplace_privkey ) {
+        if ( '' === $marketplace_privkey ) {
             return;
         }
 
@@ -157,15 +152,9 @@ class Cron {
         ];
 
         try {
-            $event = new \swentel\nostr\Event\Event();
-            $event->setKind( 1985 );
-            $event->setContent( $tier . ' (' . $valid_tx . ' verified transactions)' );
-            foreach ( $tags as $tag ) {
-                $event->addTag( $tag );
-            }
-
-            $signer = new \swentel\nostr\Sign\Sign();
-            $signer->signEvent( $event, $marketplace_privkey );
+            $event = \SK\Core\Nostr\Events::to_object(
+                \SK\Core\Nostr\Events::sign( 1985, $tier . ' (' . $valid_tx . ' verified transactions)', $tags, $marketplace_privkey )
+            );
 
             $relays = \SK\Modules\Auth\NostrIdentity::get_relays();
             foreach ( $relays as $relay_url ) {

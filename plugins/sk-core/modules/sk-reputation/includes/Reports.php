@@ -2,6 +2,9 @@
 
 namespace SK\Modules\Reputation;
 
+use SK\Core\Nostr\Events;
+use SK\Core\Nostr\Keys;
+use SK\Core\Nostr\ReportTypes;
 use SK\Core\Trust\VendorKey;
 
 defined( 'ABSPATH' ) || exit;
@@ -34,8 +37,8 @@ class Reports {
     /** Formerly the ids of every kept report; the stored reports carry them now. */
     const LEGACY_SEEN_OPTION = 'sk_reputation_report_ids';
 
-    /** Report types that matter on a classifieds site. */
-    const TYPES = [ 'spam', 'impersonation', 'illegal', 'malware' ];
+    /** Report types that matter on a classifieds site (see ReportTypes). */
+    const TYPES = ReportTypes::COUNTED;
 
     /** Reports older than this are ignored, and stored ones expire. */
     const MAX_AGE = 365 * DAY_IN_SECONDS;
@@ -389,18 +392,10 @@ class Reports {
             return null;
         }
 
-        if ( ! class_exists( '\swentel\nostr\Event\Event' ) ) {
-            return null;
-        }
+        $event['tags']    = (array) ( $event['tags'] ?? [] );
+        $event['content'] = $content;
 
-        try {
-            $event['tags']    = (array) ( $event['tags'] ?? [] );
-            $event['content'] = $content;
-
-            if ( ! ( new \swentel\nostr\Event\Event() )->verify( (object) $event ) ) {
-                return null;
-            }
-        } catch ( \Throwable $e ) {
+        if ( ! Events::verify( $event, 1984 ) ) {
             return null;
         }
 
@@ -495,22 +490,17 @@ class Reports {
         $follows = [];
 
         foreach ( $latest as $event ) {
-            foreach ( (array) ( $event['tags'] ?? [] ) as $tag ) {
-                if ( is_array( $tag ) && 'p' === ( $tag[0] ?? '' ) && preg_match( '/^[0-9a-fA-F]{64}$/', (string) ( $tag[1] ?? '' ) ) ) {
-                    $follows[ strtolower( $tag[1] ) ] = 1;
-                }
+            foreach ( Events::tag_values( $event, 'p', true ) as $key ) {
+                $follows[ $key ] = 1;
             }
         }
 
         return array_keys( $follows );
     }
 
+    /** The marketplace key roots the web of trust only while its module runs. */
     private static function marketplace_pubkey(): string {
-        if ( sk_module_active( 'sk_nostr_market' ) && class_exists( 'SK\Modules\NostrMarket\EventSender' ) ) {
-            return strtolower( (string) \SK\Modules\NostrMarket\EventSender::get_pubkey() );
-        }
-
-        return '';
+        return sk_module_active( 'sk_nostr_market' ) ? Keys::marketplace_pubkey() : '';
     }
 
     /** @return string[] */

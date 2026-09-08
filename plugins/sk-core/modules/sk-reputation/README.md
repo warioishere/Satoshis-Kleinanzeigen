@@ -19,6 +19,9 @@ Signale stehen nebeneinander und werden nie zu einer Zahl verrechnet.
 ## Aufbau
 
 ```
+includes/Nostr/Keys.php           # Core: Schlüssel (hex/npub/nsec, Marktplatz-Schlüssel), wirft nie
+includes/Nostr/Events.php         # Core: Events als Arrays verifizieren, signieren, Tags lesen, speichern
+includes/Nostr/ReportTypes.php    # Core: NIP-56-Typen, die hier zählen, mit Labels
 includes/Trust/TrustSignals.php   # Core: zentrale Registry der Chips (unabhängig vom Modul)
 modules/sk-reputation/
 ├── module.php                    # Schalter, bootet die Signalquellen ab init

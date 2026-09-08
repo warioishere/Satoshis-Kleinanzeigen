@@ -2,8 +2,9 @@
 
 namespace SK\Modules\NostrMarket;
 
+use SK\Core\Nostr\Events;
+use SK\Core\Nostr\Keys;
 use swentel\nostr\Event\Event;
-use swentel\nostr\Sign\Sign;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -40,16 +41,7 @@ class EventSender {
         }
 
         try {
-            $event = new Event();
-            $event->setKind( $kind );
-            $event->setContent( $content );
-
-            foreach ( $tags as $tag ) {
-                $event->addTag( $tag );
-            }
-
-            $signer = new Sign();
-            $signer->signEvent( $event, $privkey );
+            $event = Events::to_object( Events::sign( $kind, $content, $tags, $privkey ) );
 
             return self::publish_event( $event, $relays, $report, $privkey );
 
@@ -125,33 +117,16 @@ class EventSender {
      * @param array $raw
      */
     private static function event_from_array( array $raw ): ?Event {
-        $hex64 = '/^[0-9a-f]{64}$/';
-
-        if ( ! isset( $raw['id'], $raw['pubkey'], $raw['sig'], $raw['kind'], $raw['created_at'] ) ) {
-            return null;
-        }
-
-        if ( ! is_string( $raw['id'] ) || ! preg_match( $hex64, $raw['id'] )
-            || ! is_string( $raw['pubkey'] ) || ! preg_match( $hex64, $raw['pubkey'] )
-            || ! is_string( $raw['sig'] ) || ! preg_match( '/^[0-9a-f]{128}$/', $raw['sig'] )
-            || ! is_int( $raw['kind'] ) || ! is_int( $raw['created_at'] ) ) {
-            return null;
-        }
-
         $raw['content'] = isset( $raw['content'] ) && is_string( $raw['content'] ) ? $raw['content'] : '';
         $raw['tags']    = isset( $raw['tags'] ) && is_array( $raw['tags'] ) ? $raw['tags'] : [];
 
+        if ( ! Events::verify( $raw ) ) {
+            error_log( '[SK Nostr Market] Signed event ' . ( is_string( $raw['id'] ?? null ) ? $raw['id'] : '?' ) . ' failed verification.' );
+            return null;
+        }
+
         try {
-            $event = new Event();
-
-            if ( ! $event->verify( (object) $raw ) ) {
-                error_log( '[SK Nostr Market] Signed event ' . $raw['id'] . ' failed verification.' );
-                return null;
-            }
-
-            $event->populate( (object) $raw );
-
-            return $event;
+            return Events::to_object( $raw );
         } catch ( \Throwable $e ) {
             error_log( '[SK Nostr Market] Signed event unusable: ' . $e->getMessage() );
             return null;
@@ -175,75 +150,18 @@ class EventSender {
      * caller gets hex.
      */
     public static function get_privkey(): ?string {
-        // Priority: wp-config constant → Auto Poster setting → filter.
-        if ( defined( 'NAP_NOSTR_PRIVKEY' ) && NAP_NOSTR_PRIVKEY ) {
-            $key = self::to_hex( (string) NAP_NOSTR_PRIVKEY );
+        $key = Keys::marketplace_privkey();
 
-            if ( null !== $key ) {
-                return $key;
-            }
-        }
-
-        if ( function_exists( 'nap_resolve_private_key' ) ) {
-            $key = nap_resolve_private_key();
-
-            if ( $key ) {
-                return self::to_hex( (string) $key );
-            }
-        }
-
-        // Fallback: read from Auto Poster options directly.
-        $opts = get_option( 'nap_nostr_options', [] );
-
-        return self::to_hex( (string) ( $opts['private_key'] ?? '' ) );
-    }
-
-    /**
-     * Bring a key to 64 hex characters, or null.
-     */
-    private static function to_hex( string $key ): ?string {
-        $key = trim( $key );
-
-        if ( preg_match( '/^[0-9a-fA-F]{64}$/', $key ) ) {
-            return strtolower( $key );
-        }
-
-        if ( 0 === strpos( $key, 'nsec' ) && class_exists( '\swentel\nostr\Key\Key' ) ) {
-            try {
-                $hex = ( new \swentel\nostr\Key\Key() )->convertToHex( $key );
-
-                if ( preg_match( '/^[0-9a-fA-F]{64}$/', (string) $hex ) ) {
-                    return strtolower( (string) $hex );
-                }
-            } catch ( \Throwable $e ) {
-                error_log( '[SK Nostr Market] nsec could not be converted: ' . $e->getMessage() );
-            }
-        }
-
-        return null;
+        return '' === $key ? null : $key;
     }
 
     /**
      * Get the Nostr public key derived from the private key.
      */
     public static function get_pubkey(): ?string {
-        $privkey = self::get_privkey();
-        if ( ! $privkey ) {
-            return null;
-        }
+        $key = Keys::marketplace_pubkey();
 
-        /*
-         * \Throwable, not \Exception: the library throws a ValueError on an
-         * unusable key, and that's an Error. It used to propagate all the way
-         * up into the settings page and take it down with it.
-         */
-        try {
-            $key = new \swentel\nostr\Key\Key();
-            return $key->getPublicKey( $privkey );
-        } catch ( \Throwable $e ) {
-            error_log( '[SK Nostr Market] Pubkey could not be derived: ' . $e->getMessage() );
-            return null;
-        }
+        return '' === $key ? null : $key;
     }
 
     /**

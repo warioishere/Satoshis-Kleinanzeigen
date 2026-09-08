@@ -6,7 +6,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-use swentel\nostr\Event\Event;
 
 /**
  * Nostr Login Handler — NIP-07/NIP-98 authentication.
@@ -141,8 +140,7 @@ class Nostr_Login_Handler {
         $authtoken = base64_decode( $authtoken );
 
         // Verify authtoken event signature and format
-        $event = new Event();
-        if ( ! $event->verify( $authtoken ) ) {
+        if ( ! \SK\Core\Nostr\Events::verify( $authtoken, 27235 ) ) {
             wp_send_json_error( [ 'message' => __( 'Ungültige Signatur.', 'sk-core' ) ] );
         }
 

@@ -106,12 +106,7 @@ class SocialGraph {
                 'report1S'  => __( '%d Kontakt meldet', 'sk-core' ),
                 'reportNS'  => __( '%d Kontakte melden', 'sk-core' ),
                 'reportWhy' => __( 'Meldungen aus deiner eigenen Kontaktliste. Was gemeldet wurde, entscheidet der Melder, nicht der Marktplatz.', 'sk-core' ),
-                'types'     => [
-                    'spam'          => __( 'Spam', 'sk-core' ),
-                    'impersonation' => __( 'Identitätsmissbrauch', 'sk-core' ),
-                    'illegal'       => __( 'Illegal', 'sk-core' ),
-                    'malware'       => __( 'Schadsoftware', 'sk-core' ),
-                ],
+                'types'     => \SK\Core\Nostr\ReportTypes::labels(),
             ],
         ] );
     }
