@@ -26,20 +26,38 @@ class Reports {
     const REPORTS_META = 'sk_nostr_reports';
     const TIME_META   = 'sk_nostr_reports_time';
     const WOT_KEY     = 'sk_reputation_wot';
-    const SEEN_OPTION = 'sk_reputation_report_ids';
     const RUN_OPTION  = 'sk_reputation_reports_run';
     const MAIL_THROTTLE = 'sk_reputation_reports_mail';
+
+    /** Formerly the ids of every kept report; the stored reports carry them now. */
+    const LEGACY_SEEN_OPTION = 'sk_reputation_report_ids';
 
     /** Report types that matter on a classifieds site. */
     const TYPES = [ 'spam', 'impersonation', 'illegal', 'malware' ];
 
-    /** Reports older than this are ignored. */
+    /** Reports older than this are ignored, and stored ones expire. */
     const MAX_AGE = 365 * DAY_IN_SECONDS;
 
+    /**
+     * A run normally reads only what arrived since the last one, with this
+     * much overlap for late deliveries and skewed clocks; every so often a
+     * run covers the whole MAX_AGE window again.
+     */
+    const SINCE_MARGIN  = 2 * DAY_IN_SECONDS;
+    const FULL_INTERVAL = WEEK_IN_SECONDS;
+
     const RELAY_TIMEOUT   = 10;
-    const FILTERS_PER_REQ = 10;
     const KEYS_PER_FILTER = 50;
-    const MAX_EVENTS      = 2000;
+
+    /**
+     * One filter per REQ, paged with `until` while a page comes back full,
+     * so a flood against one key cannot push the reports against another
+     * key in the same chunk out of a shared limit. Pages and total are
+     * capped: a flood costs time, not correctness, and never skips a relay.
+     */
+    const PAGE_LIMIT  = 500;
+    const MAX_PAGES   = 4;
+    const MAX_EVENTS  = 10000;
 
     /** Web of trust keys are kept as this many leading hex characters. */
     const WOT_PREFIX = 16;
@@ -139,50 +157,54 @@ class Reports {
 
     /**
      * Cron: read the reports against every proven vendor key, keep the
-     * ones from the web of trust, store them per vendor, mail the new ones.
+     * ones from the web of trust, merge them into what is stored per
+     * vendor, mail the new ones.
+     *
+     * Merge, never replace: what a run does not see again — because a
+     * relay was down, or because a flood of junk filled the page — stays.
+     * A stored report leaves only by age (MAX_AGE).
      */
     public static function fetch(): void {
-        $started = microtime( true );
+        $started  = microtime( true );
+        $now      = time();
+        $last_run = (array) get_option( self::RUN_OPTION, [] );
+        $targets  = self::vendor_keys();
 
-        $targets = self::vendor_keys();
+        delete_option( self::LEGACY_SEEN_OPTION );
 
         if ( empty( $targets ) ) {
-            update_option( self::RUN_OPTION, [ 'time' => time(), 'targets' => 0, 'events' => 0, 'kept' => 0, 'wot' => 0 ], false );
+            update_option( self::RUN_OPTION, [ 'time' => $now, 'targets' => 0, 'events' => 0, 'kept' => 0, 'wot' => 0 ] + $last_run, false );
 
             return;
         }
 
         $wot = self::wot();
 
-        $filters = [];
-
-        foreach ( array_chunk( array_keys( $targets ), self::KEYS_PER_FILTER ) as $chunk ) {
-            $filters[] = [
-                'kinds' => [ 1984 ],
-                '#p'    => $chunk,
-                'since' => time() - self::MAX_AGE,
-                'limit' => 500,
-            ];
-        }
+        // Incremental since the last run, a full pass once a week.
+        $full  = empty( $last_run['time'] ) || empty( $last_run['full_time'] ) || $now - (int) $last_run['full_time'] > self::FULL_INTERVAL;
+        $since = $full ? $now - self::MAX_AGE : max( $now - self::MAX_AGE, (int) $last_run['time'] - self::SINCE_MARGIN );
 
         $events = [];
+        $pages  = 0;
 
         foreach ( self::relays() as $relay ) {
-            foreach ( array_chunk( $filters, self::FILTERS_PER_REQ ) as $batch ) {
-                foreach ( self::req( $relay, $batch ) as $event ) {
-                    $events[ $event['id'] ] = $event;
-                }
+            foreach ( array_chunk( array_keys( $targets ), self::KEYS_PER_FILTER ) as $chunk ) {
+                $pages += self::read_pages( $relay, $chunk, $since, $events );
+            }
+        }
 
-                if ( count( $events ) >= self::MAX_EVENTS ) {
-                    break 2;
+        // What each vendor already has, by report id.
+        $stored = [];
+
+        foreach ( array_unique( $targets ) as $vendor_id ) {
+            foreach ( self::for_vendor( $vendor_id ) as $report ) {
+                if ( is_array( $report ) && is_string( $report['id'] ?? null ) ) {
+                    $stored[ $vendor_id ][ $report['id'] ] = $report;
                 }
             }
         }
 
-        $kept       = [];
-        $seen       = (array) get_option( self::SEEN_OPTION, [] );
-        $new        = [];
-        $by_vendor  = [];
+        $new = [];
 
         foreach ( $events as $event ) {
             $report = self::accept( $event, $targets, $wot );
@@ -194,41 +216,105 @@ class Reports {
             $vendor_id = $report['vendor_id'];
             unset( $report['vendor_id'] );
 
-            $by_vendor[ $vendor_id ][] = $report;
-            $kept[ $report['id'] ]     = 1;
-
-            if ( ! isset( $seen[ $report['id'] ] ) ) {
+            if ( ! isset( $stored[ $vendor_id ][ $report['id'] ] ) ) {
                 $new[] = [ 'vendor_id' => $vendor_id ] + $report;
             }
+
+            $stored[ $vendor_id ][ $report['id'] ] = $report;
         }
 
-        // Replace, never merge: a report withdrawn from the relays disappears here too.
-        foreach ( array_keys( $targets ) as $pubkey ) {
-            $vendor_id = $targets[ $pubkey ];
+        $cutoff = $now - self::MAX_AGE;
+        $kept   = 0;
 
-            if ( isset( $by_vendor[ $vendor_id ] ) ) {
-                usort( $by_vendor[ $vendor_id ], static fn( $a, $b ) => $b['created_at'] <=> $a['created_at'] );
-                update_user_meta( $vendor_id, self::REPORTS_META, $by_vendor[ $vendor_id ] );
-                update_user_meta( $vendor_id, self::TIME_META, time() );
+        foreach ( array_unique( $targets ) as $vendor_id ) {
+            $list = array_values( array_filter( $stored[ $vendor_id ] ?? [], static function ( $report ) use ( $cutoff ) {
+                return (int) ( $report['created_at'] ?? 0 ) >= $cutoff;
+            } ) );
+
+            if ( ! empty( $list ) ) {
+                usort( $list, static fn( $a, $b ) => $b['created_at'] <=> $a['created_at'] );
+                update_user_meta( $vendor_id, self::REPORTS_META, $list );
+                update_user_meta( $vendor_id, self::TIME_META, $now );
+                $kept += count( $list );
             } else {
                 delete_user_meta( $vendor_id, self::REPORTS_META );
                 delete_user_meta( $vendor_id, self::TIME_META );
             }
         }
 
-        update_option( self::SEEN_OPTION, $kept, false );
         update_option( self::RUN_OPTION, [
-            'time'    => time(),
-            'targets' => count( $targets ),
-            'events'  => count( $events ),
-            'kept'    => count( $kept ),
-            'wot'     => count( $wot ),
-            'seconds' => round( microtime( true ) - $started, 1 ),
+            'time'      => $now,
+            'full_time' => $full ? $now : (int) ( $last_run['full_time'] ?? 0 ),
+            'since'     => $since,
+            'targets'   => count( $targets ),
+            'events'    => count( $events ),
+            'pages'     => $pages,
+            'new'       => count( $new ),
+            'kept'      => $kept,
+            'wot'       => count( $wot ),
+            'seconds'   => round( microtime( true ) - $started, 1 ),
         ], false );
 
         if ( ! empty( $new ) ) {
             self::notify_admin( $new );
         }
+    }
+
+    /**
+     * The reports against one chunk of keys from one relay, newest first,
+     * page by page while a page comes back full. Events land in $events by
+     * id. Returns the number of pages read.
+     *
+     * @param string[]            $chunk
+     * @param array<string,array> $events
+     */
+    private static function read_pages( string $relay, array $chunk, int $since, array &$events ): int {
+        $until = null;
+        $pages = 0;
+
+        while ( $pages < self::MAX_PAGES ) {
+            $filter = [
+                'kinds' => [ 1984 ],
+                '#p'    => $chunk,
+                'since' => $since,
+                'limit' => self::PAGE_LIMIT,
+            ];
+
+            if ( null !== $until ) {
+                $filter['until'] = $until;
+            }
+
+            $batch = self::req( $relay, [ $filter ] );
+            $pages++;
+
+            $oldest = null;
+            $added  = 0;
+
+            foreach ( $batch as $event ) {
+                if ( ! is_string( $event['id'] ?? null ) || ! is_int( $event['created_at'] ?? null ) ) {
+                    continue;
+                }
+
+                if ( ! isset( $events[ $event['id'] ] ) ) {
+                    $events[ $event['id'] ] = $event;
+                    $added++;
+                }
+
+                $oldest = null === $oldest ? $event['created_at'] : min( $oldest, $event['created_at'] );
+            }
+
+            // A short page is the last one; a page that brought nothing new
+            // (all events share the boundary timestamp) ends it too, as
+            // does the overall cap — the first page is always read.
+            if ( count( $batch ) < self::PAGE_LIMIT || 0 === $added || null === $oldest || $oldest <= $since || count( $events ) >= self::MAX_EVENTS ) {
+                break;
+            }
+
+            // Inclusive boundary: events sharing that second are deduplicated by id.
+            $until = $oldest;
+        }
+
+        return $pages;
     }
 
     /**
@@ -417,7 +503,7 @@ class Reports {
 
     /** @return array<int, array> */
     private static function req( string $relay, array $filters ): array {
-        return RelayReader::req( $relay, $filters, self::RELAY_TIMEOUT, self::MAX_EVENTS );
+        return RelayReader::req( $relay, $filters, self::RELAY_TIMEOUT, self::PAGE_LIMIT );
     }
 
     private static function notify_admin( array $new ): void {

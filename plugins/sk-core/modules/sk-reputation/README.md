@@ -166,8 +166,15 @@ täglich):** liest Meldungen gegen alle nachgewiesenen Anbieter-Schlüssel
 nur Melder aus dem Web of Trust: Follows des Marktplatz-Schlüssels, deren
 Follows (Transient `sk_reputation_wot`, Präfixe von 16 Hex, 1 Tag) und die
 nachgewiesenen Schlüssel registrierter Anbieter. Ergebnis je Anbieter in
-`sk_nostr_reports` (ersetzt, nie gemischt), Übersicht unter „SK Reputation"
-im Admin-Menü mit „Jetzt abrufen", eine Mail pro Tag bei neuen Meldungen.
+`sk_nostr_reports`, Übersicht unter „SK Reputation" im Admin-Menü mit
+„Jetzt abrufen", eine Mail pro Tag bei neuen Meldungen. Gelesen wird
+inkrementell (seit dem letzten Lauf minus zwei Tage, einmal pro Woche das
+ganze Jahr), je Relay und 50er-Chunk ein eigener Filter, der bei voller
+Seite (500) mit `until` bis zu viermal weiterblättert. Neue Meldungen werden
+mit den gespeicherten **gemischt, nie ersetzt**: eine Flut von Junk-Meldungen
+kostet Zeit, verdrängt aber keine echte Meldung mehr, und ein ausgefallenes
+Relay löscht nichts. Eine gespeicherte Meldung verschwindet nur durch Alter
+(ein Jahr).
 Käufer sehen davon nichts.
 
 ## Interne Follows im Nostr-Graphen (`FollowMirror`)
