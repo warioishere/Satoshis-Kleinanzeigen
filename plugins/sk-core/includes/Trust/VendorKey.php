@@ -567,7 +567,7 @@ class VendorKey {
         wp_enqueue_script(
             'sk-key-binding',
             plugins_url( 'assets/js/sk-key-binding.js', SK_CORE_FILE ),
-            [],
+            [ \SK\Core\Nostr\Assets::HANDLE ],
             (string) ( file_exists( $file ) ? filemtime( $file ) : '1' ),
             true
         );

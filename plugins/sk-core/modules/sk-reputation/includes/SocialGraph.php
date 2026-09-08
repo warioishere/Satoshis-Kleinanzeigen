@@ -66,30 +66,22 @@ class SocialGraph {
 
         // The script is enqueued from the first chip: it goes into the
         // footer anyway, so a late enqueue costs nothing. The stylesheet is
-        // handled in enqueue_style().
+        // handled in enqueue_style(). Relays, verifier and the shared
+        // helpers come with the `sk-nostr` dependency (SK\Core\Nostr\Assets).
         wp_enqueue_script(
             'sk-social-graph',
             SK_REPUTATION_URL . '/assets/js/sk-social-graph.js',
-            [],
+            [ \SK\Core\Nostr\Assets::HANDLE ],
             SK_REPUTATION_VERSION,
             true
         );
-
-        $relays = sk_module_active( 'sk_auth' ) && class_exists( 'SK\Modules\Auth\NostrIdentity' )
-            ? \SK\Modules\Auth\NostrIdentity::get_relays()
-            : [ 'wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net' ];
 
         // A logged-in viewer with a proven key needs no extension at all:
         // the contact list is public, only the key has to be known.
         $viewer = is_user_logged_in() ? VendorKey::bound( get_current_user_id() ) : '';
 
         wp_localize_script( 'sk-social-graph', 'skTrustGraph', [
-            'relays' => array_values( $relays ),
             'viewer' => $viewer,
-            // Schnorr verifier (BIP-340, NIP-01 id), loaded by the script
-            // only once a viewer key is known: what a relay sends counts
-            // only with a valid signature.
-            'verify' => add_query_arg( 'ver', SK_REPUTATION_VERSION, SK_REPUTATION_URL . '/assets/js/sk-nostr-verify.js' ),
             'i18n'   => [
                 'follow'    => __( 'Du folgst diesem Anbieter', 'sk-core' ),
                 'contact1'  => __( '%d deiner Kontakte folgt', 'sk-core' ),

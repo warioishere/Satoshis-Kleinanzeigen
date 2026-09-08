@@ -471,13 +471,13 @@ class ZapButton {
         wp_enqueue_script(
             'sk-zaps',
             SK_ZAPS_URL . '/assets/js/sk-zaps.js',
-            [ 'jquery' ],
+            [ 'jquery', \SK\Core\Nostr\Assets::HANDLE ],
             SK_ZAPS_VERSION,
             true
         );
 
-        $relays_option = get_option( 'nostr_login_relays', "wss://purplepag.es\nwss://relay.nostr.band" );
-        $relays        = array_filter( array_map( 'trim', explode( "\n", $relays_option ) ) );
+        // The one relay list, parsed the one way (see SK\Core\Nostr\Relays).
+        $relays = \SK\Core\Nostr\Relays::list();
 
         wp_localize_script( 'sk-zaps', 'skZaps', [
             'ajaxurl'       => admin_url( 'admin-ajax.php' ),

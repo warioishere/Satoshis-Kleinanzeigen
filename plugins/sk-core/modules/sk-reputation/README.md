@@ -23,6 +23,9 @@ includes/Nostr/Keys.php           # Core: Schlüssel (hex/npub/nsec, Marktplatz-
 includes/Nostr/Events.php         # Core: Events als Arrays verifizieren, signieren, Tags lesen, speichern
 includes/Nostr/ReportTypes.php    # Core: NIP-56-Typen, die hier zählen, mit Labels
 includes/Nostr/Relays.php         # Core: Relay-Liste, Schutzschalter, fetch/query/latest (verifiziert), publish, is_public_url
+includes/Nostr/Assets.php         # Core: registriert `sk-nostr` (Browser-Helfer) und liefert Relays + Verifier-URL
+assets/js/sk-nostr.js             # Core: window.skNostr – hex/dict/esc, waitForNostr, query/subscribe mit Signaturprüfung
+assets/js/sk-nostr-verify.js      # Core: Schnorr-Verifier (Build in tools/nostr-verify/)
 includes/Trust/TrustSignals.php   # Core: zentrale Registry der Chips (unabhängig vom Modul)
 modules/sk-reputation/
 ├── module.php                    # Schalter, bootet die Signalquellen ab init
@@ -114,10 +117,13 @@ Weitere passiert im Browser des Betrachters:
 4. Namen der Folgenden (Kind 0, bis 8 je Anbieter) für das „Warum": Klick
    auf den Chip öffnet die Liste mit Links nach njump.
 
-**Kein Event zählt ohne gültige Signatur.** Alles, was ein Relay liefert,
-geht durch `assets/js/sk-nostr-verify.js` (BIP-340-Schnorr und NIP-01-ID,
-gebaut aus `@noble/curves`, Quelle und Build in `tools/nostr-verify/`),
-das erst nachgeladen wird, wenn ein Betrachterschlüssel bekannt ist
+**Kein Event zählt ohne gültige Signatur.** Relay-Zugriff, Verifikation und
+die Helfer für unsicheren Input kommen aus dem Core-Skript
+`assets/js/sk-nostr.js` (`window.skNostr`, Abhängigkeit `sk-nostr`, siehe
+`SK\Core\Nostr\Assets`); dasselbe nutzen Zaps und Schlüsselbindung. Alles,
+was ein Relay liefert, geht durch den Verifier `assets/js/sk-nostr-verify.js`
+(BIP-340-Schnorr und NIP-01-ID, gebaut aus `@noble/curves`, Quelle und Build
+in `tools/nostr-verify/`), der erst nachgeladen wird, wenn er gebraucht wird
 (27 KB, 11 KB gzip, rund 1,5 ms je Event). Schlüssel und Event-IDs werden
 nur als 64 Hex-Zeichen angenommen, alle Maps sind prototypfrei, Attribute
 werden escaped. Ein Relay kann Events also weglassen, nicht erfinden; ohne

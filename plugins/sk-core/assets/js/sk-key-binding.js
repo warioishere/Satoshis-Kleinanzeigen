@@ -6,12 +6,15 @@
  * signature over the binding event and hands it to the server. Nothing is
  * typed, nothing is shown. A different key, no extension, or a declined
  * prompt leaves everything as it is.
+ *
+ * Depends on sk-nostr.js (window.skNostr).
  */
 (function () {
     'use strict';
 
     var cfg = window.skTrustBind;
-    if (!cfg || !cfg.candidate || !cfg.template) {
+    var nostr = window.skNostr;
+    if (!cfg || !cfg.candidate || !cfg.template || !nostr) {
         return;
     }
 
@@ -39,16 +42,16 @@
         try { localStorage.setItem(MISMATCH, JSON.stringify({ c: cfg.candidate, ts: Date.now() })); } catch (e) { /* ignore */ }
     }
 
-    async function bind() {
+    async function bind(ext) {
         var pubkey;
         try {
-            pubkey = await window.nostr.getPublicKey();
+            pubkey = nostr.hexKey(await ext.getPublicKey());
         } catch (e) {
             declined();
             return;
         }
 
-        if (!pubkey || String(pubkey).toLowerCase() !== cfg.candidate) {
+        if (!pubkey || pubkey !== cfg.candidate) {
             mismatch();
             return;
         }
@@ -63,7 +66,7 @@
 
         var signed;
         try {
-            signed = await window.nostr.signEvent(unsigned);
+            signed = await ext.signEvent(unsigned);
         } catch (e) {
             declined();
             return;
@@ -84,15 +87,8 @@
         } catch (e) { /* next visit tries again */ }
     }
 
-    // The extension may inject window.nostr after the page has loaded.
-    var tries = 0;
-    var timer = setInterval(function () {
-        tries++;
-        if (window.nostr) {
-            clearInterval(timer);
-            bind();
-        } else if (tries >= 20) {
-            clearInterval(timer);
-        }
-    }, 500);
+    // The extension may inject window.nostr well after the page has loaded.
+    nostr.waitForNostr(10000).then(function (ext) {
+        if (ext) { bind(ext); }
+    });
 })();

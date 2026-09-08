@@ -12,15 +12,21 @@
  * the extension. No key, no contacts, or nothing found: the chips stay
  * hidden. Results are cached in localStorage for a day.
  *
- * Nothing a relay sends is taken at its word: every event is checked for
- * a valid NIP-01 id and BIP-340 signature (sk-nostr-verify.js, loaded on
- * demand) before it counts. A relay can withhold events, not invent them.
+ * Relay access, verification and the untrusted-input helpers come from
+ * sk-nostr.js (window.skNostr): nothing a relay sends counts without a
+ * valid signature, keys and ids are 64 hex or nothing.
  */
 (function () {
     'use strict';
 
     var cfg = window.skTrustGraph;
-    if (!cfg || !cfg.relays || !cfg.relays.length) {
+    var nostr = window.skNostr;
+    if (!cfg || !nostr) {
+        return;
+    }
+
+    var relays = (cfg.relays && cfg.relays.length) ? cfg.relays : (nostr.config.relays || []);
+    if (!relays.length) {
         return;
     }
 
@@ -30,34 +36,12 @@
     var FILTERS_PER_REQ = 10;
     var MAX_CONTACTS = 4000;
     var NAMES_PER_VENDOR = 8;
-    var REQ_TIMEOUT = 7000;
 
-    // ── Untrusted input ──────────────────────────────────────────────────
-    //
-    // Everything a relay sends is data from a third party. Keys and event
-    // ids are accepted only as 64 lowercase hex characters, and every map
-    // keyed by them has no prototype, so "constructor" or "__proto__" as a
-    // key hits nothing.
-
-    var HEX64 = /^[0-9a-f]{64}$/;
-
-    function isHex64(value) {
-        return typeof value === 'string' && HEX64.test(value);
-    }
-
-    /** Lowercase hex key, or '' when the value is not one. */
-    function hexKey(value) {
-        var s = String(value || '').toLowerCase();
-        return HEX64.test(s) ? s : '';
-    }
-
-    function dict() {
-        return Object.create(null);
-    }
-
-    function own(obj, key) {
-        return Object.prototype.hasOwnProperty.call(obj, key);
-    }
+    var isHex64 = nostr.isHex64;
+    var hexKey = nostr.hexKey;
+    var dict = nostr.dict;
+    var own = nostr.own;
+    var esc = nostr.esc;
 
     // ── Storage ──────────────────────────────────────────────────────────
 
@@ -92,155 +76,29 @@
         try { localStorage.setItem(PREFIX + key, JSON.stringify({ ts: Date.now(), v: value })); } catch (e) { /* full or blocked */ }
     }
 
-    // ── Signatures ───────────────────────────────────────────────────────
-
-    var verifierPromise = null;
-
-    /**
-     * The Schnorr verifier, fetched once and only when needed. Resolves
-     * with the function, or with null when it cannot be had — in which
-     * case no event is trusted at all.
-     */
-    function loadVerifier() {
-        if (typeof window.skNostrVerify === 'function') { return Promise.resolve(window.skNostrVerify); }
-        if (!cfg.verify) { return Promise.resolve(null); }
-        if (!verifierPromise) {
-            verifierPromise = new Promise(function (resolve) {
-                var s = document.createElement('script');
-                s.src = cfg.verify;
-                s.async = true;
-                s.onload = function () { resolve(typeof window.skNostrVerify === 'function' ? window.skNostrVerify : null); };
-                s.onerror = function () { resolve(null); };
-                document.head.appendChild(s);
-            });
-        }
-        return verifierPromise;
-    }
-
-    /**
-     * Only the events whose id and signature hold. About a millisecond
-     * each; the loop yields now and then so a long list does not freeze
-     * the page.
-     */
-    async function verifiedOnly(events) {
-        var verify = await loadVerifier();
-        if (!verify) { return []; }
-        var out = [];
-        for (var i = 0; i < events.length; i++) {
-            if (verify(events[i])) { out.push(events[i]); }
-            if (i % 50 === 49) { await new Promise(function (r) { setTimeout(r, 0); }); }
-        }
-        return out;
-    }
-
     // ── Relays ───────────────────────────────────────────────────────────
 
-    /**
-     * One REQ against one relay. Resolves with the events seen until EOSE;
-     * rejects only when the relay could not be reached at all.
-     */
-    function queryRelay(url, filters) {
-        return new Promise(function (resolve, reject) {
-            var events = [];
-            var done = false;
-            var ws;
-            var timer = setTimeout(function () { finish(events.length ? null : 'timeout'); }, REQ_TIMEOUT);
-
-            function finish(err) {
-                if (done) { return; }
-                done = true;
-                clearTimeout(timer);
-                try { ws.close(); } catch (e) { /* ignore */ }
-                if (err && !events.length) { reject(err); } else { resolve(events); }
-            }
-
-            try {
-                ws = new WebSocket(url);
-            } catch (e) {
-                clearTimeout(timer);
-                reject(e);
-                return;
-            }
-
-            var sub = 'skt' + Math.random().toString(36).slice(2, 10);
-            ws.onopen = function () { ws.send(JSON.stringify(['REQ', sub].concat(filters))); };
-            ws.onmessage = function (msg) {
-                var data;
-                try { data = JSON.parse(msg.data); } catch (e) { return; }
-                if (data[0] === 'EVENT' && data[1] === sub && data[2]) { events.push(data[2]); }
-                else if ((data[0] === 'EOSE' || data[0] === 'CLOSED') && data[1] === sub) { finish(null); }
-            };
-            ws.onerror = function () { finish('error'); };
-            ws.onclose = function () { finish(null); };
-        });
-    }
-
-    /**
-     * The same REQ against the first `count` relays in parallel, merged,
-     * deduplicated and signature-checked. No single relay has everything:
-     * a contact list missing on one is often on the next.
-     */
+    /** Verified events from the first `count` relays, merged. */
     async function query(filters, count) {
-        var relays = cfg.relays.slice(0, count || cfg.relays.length);
-        var results = await Promise.all(relays.map(function (url) {
-            return queryRelay(url, filters).catch(function () { return []; });
-        }));
-        var seen = dict();
-        var merged = [];
-        results.forEach(function (list) {
-            list.forEach(function (e) {
-                if (!e || typeof e !== 'object') { return; }
-                var id = hexKey(e.id);
-                if (!id || seen[id] || !hexKey(e.pubkey) || typeof e.created_at !== 'number') { return; }
-                seen[id] = 1;
-                merged.push(e);
-            });
-        });
-        return verifiedOnly(merged);
-    }
-
-    /** The hex keys in the event's tags of one name; anything else is dropped. */
-    function tagValues(event, name) {
-        var out = [];
-        var tags = Array.isArray(event.tags) ? event.tags : [];
-        tags.forEach(function (t) {
-            if (!Array.isArray(t) || t[0] !== name) { return; }
-            var v = hexKey(t[1]);
-            if (v) { out.push(v); }
-        });
-        return out;
-    }
-
-    /** Latest event per author. */
-    function latestPerAuthor(events) {
-        var by = dict();
-        events.forEach(function (e) {
-            var a = hexKey(e.pubkey);
-            if (!a) { return; }
-            if (!by[a] || by[a].created_at < e.created_at) { by[a] = e; }
-        });
-        return by;
+        return (await nostr.query(filters, { relays: relays, count: count })).events;
     }
 
     // ── The viewer ───────────────────────────────────────────────────────
 
     async function viewerPubkey() {
-        if (cfg.viewer && /^[0-9a-f]{64}$/.test(cfg.viewer)) { return cfg.viewer; }
+        if (isHex64(cfg.viewer)) { return cfg.viewer; }
 
         // A declined prompt is remembered for a day; the key itself only per tab.
         if (load('viewer') === 'none') { return ''; }
         var cached = loadSession('viewer');
         if (isHex64(cached)) { return cached; }
 
-        // The extension may inject window.nostr after load.
-        for (var i = 0; i < 6 && !window.nostr; i++) {
-            await new Promise(function (r) { setTimeout(r, 500); });
-        }
-        if (!window.nostr) { return ''; }
+        var ext = await nostr.waitForNostr(3000);
+        if (!ext) { return ''; }
 
         try {
-            var pk = String(await window.nostr.getPublicKey()).toLowerCase();
-            if (/^[0-9a-f]{64}$/.test(pk)) { saveSession('viewer', pk); return pk; }
+            var pk = hexKey(await ext.getPublicKey());
+            if (pk) { saveSession('viewer', pk); return pk; }
         } catch (e) {
             // Declined: not asked again today.
             save('viewer', 'none');
@@ -253,9 +111,9 @@
         if (Array.isArray(cached)) { return cached.filter(isHex64); }
 
         // Every relay: the viewer's list lives wherever their client wrote it.
-        var events = await query([{ kinds: [3], authors: [viewer], limit: 1 }], cfg.relays.length);
-        var latest = latestPerAuthor(events)[viewer];
-        var contacts = latest ? tagValues(latest, 'p') : [];
+        var events = await query([{ kinds: [3], authors: [viewer], limit: 1 }], relays.length);
+        var latest = nostr.latestPerAuthor(events)[viewer];
+        var contacts = latest ? nostr.tagValues(latest, 'p') : [];
 
         // Unique, and never the viewer themself.
         var seen = dict();
@@ -267,15 +125,6 @@
 
     // ── Degree two ───────────────────────────────────────────────────────
 
-    /**
-     * For each vendor, which of the viewer's contacts follow them.
-     * Returns { vendor: [contact, ...] }.
-     */
-    /**
-     * For each vendor: which of the viewer's contacts follow them (f), and
-     * which have reported them (r, kind 1984 with a type that matters here).
-     * One round of REQs covers both; returns { vendor: { f: [...], r: [...] } }.
-     */
     /** A cached per-vendor result, with anything that is not a key thrown out. */
     function cleanGraphEntry(entry) {
         if (!entry || typeof entry !== 'object') { return null; }
@@ -288,6 +137,11 @@
         return { f: f, r: r };
     }
 
+    /**
+     * For each vendor: which of the viewer's contacts follow them (f), and
+     * which have reported them (r, kind 1984 with a type that matters here).
+     * One round of REQs covers both; returns { vendor: { f: [...], r: [...] } }.
+     */
     async function graphOf(viewer, contacts, vendors) {
         var result = dict();
         var pending = [];
@@ -315,10 +169,10 @@
         var contactSet = dict();
         authors.forEach(function (c) { contactSet[c] = 1; });
 
-        var latest = latestPerAuthor(events.filter(function (e) { return e.kind === 3; }));
+        var latest = nostr.latestPerAuthor(events.filter(function (e) { return e.kind === 3; }));
         Object.keys(latest).forEach(function (author) {
             if (!contactSet[author]) { return; }
-            var follows = tagValues(latest[author], 'p');
+            var follows = nostr.tagValues(latest[author], 'p');
             pending.forEach(function (v) {
                 // A vendor listing themself is not one of the viewer's contacts following them.
                 if (author !== v && follows.indexOf(v) !== -1) { result[v].f.push(author); }
@@ -331,8 +185,7 @@
             if (!reporter || !id || !contactSet[reporter]) { return; }
             // Automated classifiers report by score, not by judgement.
             if (/^\s*automated/i.test(String(e.content || ''))) { return; }
-            var tags = Array.isArray(e.tags) ? e.tags : [];
-            tags.forEach(function (t) {
+            e.tags.forEach(function (t) {
                 if (!Array.isArray(t) || t[0] !== 'p') { return; }
                 var target = hexKey(t[1]);
                 var type = String(t[2] || '').toLowerCase();
@@ -357,8 +210,7 @@
         });
 
         if (missing.length) {
-            var events = await query([{ kinds: [0], authors: missing }], 2);
-            var latest = latestPerAuthor(events);
+            var latest = nostr.latestPerAuthor(await query([{ kinds: [0], authors: missing }], 2));
             missing.forEach(function (p) {
                 var name = '';
                 try {
@@ -376,12 +228,6 @@
     function shortKey(p) { return p.slice(0, 8) + '…' + p.slice(-4); }
 
     // ── Rendering ────────────────────────────────────────────────────────
-
-    function esc(s) {
-        return String(s).replace(/[&<>"']/g, function (c) {
-            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-        });
-    }
 
     function fill(el, text, icon, why) {
         el.innerHTML = '<i class="fas ' + icon + '" aria-hidden="true"></i> <span class="sk-trust-graph-text">' + esc(text) + '</span>';
@@ -486,7 +332,7 @@
             if (!viewer) { hint('nokey'); return; }
 
             // Fetch the verifier while the relays are being asked.
-            loadVerifier();
+            nostr.loadVerifier();
 
             contactsPromise = contactsPromise || contactsOf(viewer);
             var contacts = await contactsPromise;
@@ -522,15 +368,15 @@
                 // Only the store banner and the trust page have room for the full sentence.
                 var short = !c.classList.contains('sk-trust-graph--store') && !c.classList.contains('sk-trust-graph--page');
                 var follow = short ? cfg.i18n.followS : cfg.i18n.follow;
-                var contacts = list.length === 1
+                var contactsText = list.length === 1
                     ? (short ? cfg.i18n.contact1S : cfg.i18n.contact1)
                     : (short ? cfg.i18n.contactNS : cfg.i18n.contactN);
-                contacts = contacts.replace('%d', list.length);
+                contactsText = contactsText.replace('%d', list.length);
 
                 if (contactSet[v]) {
-                    fill(c, follow + (list.length ? ' · ' + contacts : ''), 'fa-user-check', list.length ? whyList(list, names) : '');
+                    fill(c, follow + (list.length ? ' · ' + contactsText : ''), 'fa-user-check', list.length ? whyList(list, names) : '');
                 } else if (list.length) {
-                    fill(c, contacts, 'fa-users', whyList(list, names));
+                    fill(c, contactsText, 'fa-users', whyList(list, names));
                 } else if (c.classList.contains('sk-trust-graph--page')) {
                     hint('nomatch');
                 }

@@ -37,8 +37,11 @@ const EVENTS = [
 (async () => {
   const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox', '--disable-dev-shm-usage', '--ignore-certificate-errors'], protocolTimeout: 120000 });
   const page = await browser.newPage();
-  let verifierStatus = 0;
-  page.on('response', r => { if (r.url().includes('sk-nostr-verify')) verifierStatus = r.status(); });
+  let verifierStatus = 0, coreStatus = 0;
+  const pageErrors = [];
+  page.on('response', r => { if (r.url().includes('sk-nostr-verify')) verifierStatus = r.status(); else if (r.url().includes('/sk-nostr.js')) coreStatus = r.status(); });
+  page.on('pageerror', e => pageErrors.push(String(e.message || e)));
+  page.on('console', m => { if (m.type() === 'error' && /sk-nostr|sk-social-graph|sk-zaps|sk-key-binding/.test(m.text())) pageErrors.push(m.text()); });
 
   await page.evaluateOnNewDocument((VIEWER, EVENTS) => {
     window.nostr = { getPublicKey: async () => VIEWER, signEvent: async (e) => e };
@@ -72,10 +75,15 @@ const EVENTS = [
     injected: document.querySelectorAll('.sk-trust-pop [onmouseover]').length,
     badHref: [...document.querySelectorAll('.sk-trust-pop a')].filter(a => !/^https:\/\/njump\.me\/[0-9a-f]{64}$/.test(a.getAttribute('href'))).length,
     verifier: typeof window.skNostrVerify,
+    core: typeof window.skNostr,
+    zapsLoaded: !!document.querySelector('script[src*="sk-zaps.js"]'),
     localViewer: Object.keys(localStorage).some(k => k.endsWith(':viewer')),
   }));
   await browser.close();
 
+  check.eq(coreStatus, 200, 'sk-nostr.js loaded');
+  check.eq(r.core, 'object', 'window.skNostr present');
+  check.eq(pageErrors, [], 'no script errors on the page');
   check.eq(verifierStatus, 200, 'verifier bundle loaded');
   check.eq(r.verifier, 'function', 'window.skNostrVerify present');
   check.ok(r.chipTexts.length >= 1, 'graph chip visible');

@@ -48,6 +48,8 @@ if [ "$WHAT" = all ] || [ "$WHAT" = php ]; then
 fi
 
 if [ "$WHAT" = all ] || [ "$WHAT" = graph ]; then
+  echo "== nostr-js.test.mjs"
+  node nostr-js.test.mjs || STATUS=1
   echo "== graph.test.mjs"
   node graph.test.mjs || STATUS=1
 fi

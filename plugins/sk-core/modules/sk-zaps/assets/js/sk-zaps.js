@@ -26,6 +26,8 @@
      * after every AJAX round, for extensions that inject late and for feed
      * cards that arrive later.
      */
+    var nostr = window.skNostr;
+
     function revealButtons() {
         if (!window.nostr) {
             return;
@@ -33,10 +35,21 @@
         $('.sk-zap-btn[hidden]').prop('hidden', false);
     }
 
-    revealButtons();
+    // Wait for a late-injecting extension once; afterwards every AJAX round
+    // (feed cards arriving later) reveals whatever buttons came with it.
+    if (nostr) {
+        nostr.waitForNostr(3000).then(revealButtons);
+    } else {
+        revealButtons();
+        setTimeout(revealButtons, 1500);
+    }
     $(window).on('load', revealButtons);
-    setTimeout(revealButtons, 1500);
     $(document).ajaxComplete(revealButtons);
+
+    function relayList() {
+        var fromServer = (window.skZaps && skZaps.relays) || (nostr && nostr.config.relays) || [];
+        return fromServer.length ? fromServer : ['wss://relay.damus.io', 'wss://nos.lol'];
+    }
 
     function ajaxUrl() {
         return defaults.ajaxurl || (window.skFeed && skFeed.ajaxurl) || '/wp-admin/admin-ajax.php';
@@ -244,7 +257,7 @@
                         tags: [
                             ['p', data.nostrPubkey],
                             ['amount', String(amountMsats)],
-                            ['relays', 'wss://relay.nostr.band', 'wss://nos.lol', 'wss://relay.damus.io'],
+                            ['relays'].concat(relayList()),
                             ['lnurl', data.lnAddress]
                         ]
                     };
@@ -345,40 +358,20 @@
      * Fetch lud16 (Lightning Address) from a Nostr profile via relay.
      */
     async function fetchLud16FromNostr(pubkeyHex) {
-        var relays = (window.skZaps && skZaps.relays) || ['wss://purplepag.es', 'wss://relay.nostr.band'];
+        var pubkey = nostr ? nostr.hexKey(pubkeyHex) : '';
+        if (!pubkey) { return ''; }
 
-        for (var i = 0; i < relays.length; i++) {
-            try {
-                var lud16 = await new Promise(function (resolve, reject) {
-                    var ws = new WebSocket(relays[i]);
-                    var timeout = setTimeout(function () { ws.close(); reject('timeout'); }, 5000);
-
-                    ws.onopen = function () {
-                        ws.send(JSON.stringify(['REQ', 'lud16', { kinds: [0], authors: [pubkeyHex], limit: 1 }]));
-                    };
-                    ws.onmessage = function (msg) {
-                        try {
-                            var data = JSON.parse(msg.data);
-                            if (data[0] === 'EVENT' && data[2] && data[2].content) {
-                                var profile = JSON.parse(data[2].content);
-                                clearTimeout(timeout);
-                                ws.close();
-                                resolve(profile.lud16 || '');
-                            } else if (data[0] === 'EOSE') {
-                                clearTimeout(timeout);
-                                ws.close();
-                                resolve('');
-                            }
-                        } catch (e) { /* ignore parse errors */ }
-                    };
-                    ws.onerror = function () { clearTimeout(timeout); reject('ws error'); };
-                });
-
-                if (lud16) return lud16;
-            } catch (e) { /* try next relay */ }
+        // The newest signed profile of the vendor from the site's relays: a
+        // forged kind 0 must not redirect the payment to someone else's address.
+        try {
+            var result = await nostr.query([{ kinds: [0], authors: [pubkey], limit: 1 }], { relays: relayList(), timeout: 5000 });
+            var latest = nostr.latestPerAuthor(result.events)[pubkey];
+            if (!latest) { return ''; }
+            var profile = JSON.parse(latest.content);
+            return typeof profile.lud16 === 'string' ? profile.lud16 : '';
+        } catch (e) {
+            return '';
         }
-
-        return '';
     }
 
     async function resolveLnAddress(address) {
@@ -532,20 +525,23 @@
      * Watch Nostr relays for a Kind 9735 Zap Receipt confirming payment.
      */
     function watchForZapReceipt(data, amountSats) {
-        var relays = (window.skZaps && skZaps.relays) || ['wss://purplepag.es', 'wss://relay.nostr.band'];
+        if (!nostr) { return; }
+
+        var vendor = nostr.hexKey(data.nostrPubkey);
+        if (!vendor) { return; }
+
         var since = Math.floor(Date.now() / 1000) - 5; // small buffer
         var confirmed = false;
-        var sockets = [];
-        var timeout;
+        var subscription = null;
 
         function cleanup() {
-            clearTimeout(timeout);
-            sockets.forEach(function (ws) { try { ws.close(); } catch (e) {} });
-            sockets = [];
+            if (subscription) { subscription.close(); subscription = null; }
         }
 
         function onReceipt(receiptEvent) {
             if (confirmed) return;
+            // Only a receipt that names this vendor; the signature was checked by sk-nostr.
+            if (receiptEvent.kind !== 9735 || nostr.tagValues(receiptEvent, 'p').indexOf(vendor) === -1) return;
             confirmed = true;
 
             // Extract amount from bolt11 in zap receipt description tag
@@ -570,40 +566,13 @@
             cleanup();
         }
 
-        // Subscribe to each relay
-        relays.forEach(function (relayUrl) {
-            try {
-                var ws = new WebSocket(relayUrl);
-                sockets.push(ws);
-
-                ws.onopen = function () {
-                    // Subscribe for Kind 9735 (Zap Receipt) tagging vendor pubkey
-                    ws.send(JSON.stringify([
-                        'REQ', 'zap-receipt',
-                        { kinds: [9735], '#p': [data.nostrPubkey], since: since, limit: 5 }
-                    ]));
-                };
-
-                ws.onmessage = function (msg) {
-                    try {
-                        var ev = JSON.parse(msg.data);
-                        if (ev[0] === 'EVENT' && ev[2] && ev[2].kind === 9735) {
-                            onReceipt(ev[2]);
-                        }
-                    } catch (e) {}
-                };
-
-                ws.onerror = function () { /* ignore, other relays may work */ };
-            } catch (e) {}
-        });
-
-        // Give up after 90 seconds
-        timeout = setTimeout(function () {
-            if (!confirmed) {
-                console.log('[SK Zaps] No zap receipt received within 90s');
-            }
-            cleanup();
-        }, 90000);
+        // Kind 9735 receipts naming the vendor, live from every relay, verified;
+        // the subscription closes itself after 90 seconds.
+        subscription = nostr.subscribe(
+            [{ kinds: [9735], '#p': [vendor], since: since, limit: 5 }],
+            onReceipt,
+            { relays: relayList(), timeout: 90000 }
+        );
     }
 
     // Only zaps we can prove server-side are counted. Without a payment hash
