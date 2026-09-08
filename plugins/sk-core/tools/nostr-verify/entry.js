@@ -8,7 +8,7 @@
  *
  * Built from @noble/curves and @noble/hashes (MIT, Paul Miller) with
  * esbuild: `npm install && npm run build` in tools/nostr-verify writes
- * modules/sk-reputation/assets/js/sk-nostr-verify.js.
+ * assets/js/sk-nostr-verify.js, which sk-nostr.js fetches on demand.
  */
 import { schnorr } from '@noble/curves/secp256k1.js';
 import { sha256 } from '@noble/hashes/sha2.js';

@@ -1,9 +1,9 @@
 {
   "name": "sk-nostr-verify-build",
   "private": true,
-  "description": "Builds modules/sk-reputation/assets/js/sk-nostr-verify.js from entry.js. Run: npm install && npm run build",
+  "description": "Builds assets/js/sk-nostr-verify.js from entry.js. Run: npm install && npm run build",
   "scripts": {
-    "build": "esbuild entry.js --bundle --minify --format=iife --target=es2017 --legal-comments=inline --outfile=../../modules/sk-reputation/assets/js/sk-nostr-verify.js"
+    "build": "esbuild entry.js --bundle --minify --format=iife --target=es2017 --legal-comments=inline --outfile=../../assets/js/sk-nostr-verify.js"
   },
   "devDependencies": {
     "@noble/curves": "2.0.1",

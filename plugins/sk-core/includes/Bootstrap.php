@@ -69,6 +69,7 @@ class Bootstrap {
     public function init_classes() {
         new Blocks\ExtendedManager();
         new SettingsApi\Manager();
+        Nostr\Assets::init();
         Trust\VendorKey::init();
 
         if ( is_admin() ) {
