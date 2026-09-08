@@ -15,9 +15,10 @@ defined( 'ABSPATH' ) || exit;
  */
 class ZapStats {
 
-    const SATS_META  = 'sk_zap_received_sats';
-    const COUNT_META = 'sk_zap_received_count';
-    const TIME_META  = 'sk_zap_received_time';
+    const SATS_META   = 'sk_zap_received_sats';
+    const COUNT_META  = 'sk_zap_received_count';
+    const TIME_META   = 'sk_zap_received_time';
+    const SOURCE_META = 'sk_zap_received_source';
 
     /** How long a fetched total is trusted before it is refreshed. */
     const MAX_AGE = 6 * HOUR_IN_SECONDS;
@@ -295,10 +296,12 @@ class ZapStats {
             return;
         }
 
-        $stats = self::from_primal( $pubkey );
+        $stats  = self::from_primal( $pubkey );
+        $source = 'primal';
 
         if ( null === $stats ) {
-            $stats = self::from_relays( $pubkey );
+            $stats  = self::from_relays( $pubkey );
+            $source = 'relays';
         }
 
         // A failed fetch keeps the old number and is tried again next hour.
@@ -306,26 +309,61 @@ class ZapStats {
             return;
         }
 
+        /*
+         * Our relays see a part of what Primal sees, never more. A relay
+         * count must not replace a Primal count, and it is trusted for an
+         * hour only, so the next try at Primal comes soon.
+         */
+        if ( 'relays' === $source ) {
+            if ( 'primal' === get_user_meta( $vendor_id, self::SOURCE_META, true )
+                && (int) get_user_meta( $vendor_id, self::SATS_META, true ) >= (int) $stats['sats'] ) {
+                update_user_meta( $vendor_id, self::TIME_META, time() - self::MAX_AGE + HOUR_IN_SECONDS );
+
+                return;
+            }
+
+            update_user_meta( $vendor_id, self::TIME_META, time() - self::MAX_AGE + HOUR_IN_SECONDS );
+        } else {
+            update_user_meta( $vendor_id, self::TIME_META, time() );
+        }
+
         update_user_meta( $vendor_id, self::SATS_META, (int) $stats['sats'] );
         update_user_meta( $vendor_id, self::COUNT_META, (int) $stats['count'] );
-        update_user_meta( $vendor_id, self::TIME_META, time() );
+        update_user_meta( $vendor_id, self::SOURCE_META, $source );
     }
+
+    /**
+     * Primal's cache answers with a 502 more often than not on a bad
+     * minute (measured: four of six in a row). Asked up to this many
+     * times, a second apart, before the relays stand in.
+     */
+    const PRIMAL_ATTEMPTS = 5;
 
     /**
      * @return array{sats: int, count: int}|null
      */
     private static function from_primal( string $pubkey ): ?array {
-        $response = wp_remote_post( 'https://cache.primal.net/api', [
-            'timeout' => 8,
-            'body'    => wp_json_encode( [ 'user_profile', [ 'pubkey' => $pubkey ] ] ),
-            'headers' => [ 'Content-Type' => 'application/json' ],
-        ] );
+        $events = null;
 
-        if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
-            return null;
+        for ( $attempt = 1; $attempt <= self::PRIMAL_ATTEMPTS; $attempt++ ) {
+            $response = wp_remote_post( 'https://cache.primal.net/api', [
+                'timeout' => 8,
+                'body'    => wp_json_encode( [ 'user_profile', [ 'pubkey' => $pubkey ] ] ),
+                'headers' => [ 'Content-Type' => 'application/json' ],
+            ] );
+
+            if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
+                $events = json_decode( wp_remote_retrieve_body( $response ), true );
+
+                if ( is_array( $events ) ) {
+                    break;
+                }
+            }
+
+            if ( $attempt < self::PRIMAL_ATTEMPTS ) {
+                sleep( 1 );
+            }
         }
-
-        $events = json_decode( wp_remote_retrieve_body( $response ), true );
 
         if ( ! is_array( $events ) ) {
             return null;
