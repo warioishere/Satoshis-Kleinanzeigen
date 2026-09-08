@@ -26,6 +26,9 @@ class ZapButton {
 
         add_action( 'wp_ajax_sk_zap_check_payment', [ __CLASS__, 'ajax_check_payment' ] );
         add_action( 'wp_ajax_nopriv_sk_zap_check_payment', [ __CLASS__, 'ajax_check_payment' ] );
+
+        // The QR for the invoice, rendered here so it works without sk_payments.
+        add_action( 'rest_api_init', [ __CLASS__, 'register_qr_route' ] );
         add_action( 'sk_zaps_fetch_lud16', [ __CLASS__, 'fetch_lud16' ], 10, 2 );
     }
 
@@ -388,6 +391,62 @@ class ZapButton {
     }
 
     /**
+     * GET /sk/v1/zaps/qr?data=<bolt11>
+     *
+     * The zap flow without WebLN shows the invoice as a QR code. That image
+     * used to come from the payments module's endpoint, and where that
+     * module is off the QR never appeared — the payer sat in front of
+     * "QR wird erzeugt…" for good. The renderer itself only needs the QR
+     * library, so it is used from here directly.
+     */
+    public static function register_qr_route(): void {
+        register_rest_route( 'sk/v1', '/zaps/qr', [
+            [
+                'methods'             => \WP_REST_Server::READABLE,
+                'callback'            => [ __CLASS__, 'rest_qr' ],
+                'permission_callback' => '__return_true',
+                'args'                => [
+                    'data' => [ 'required' => true, 'type' => 'string' ],
+                ],
+            ],
+        ] );
+    }
+
+    public static function rest_qr( \WP_REST_Request $request ) {
+        $ip = function_exists( 'sk_get_client_ip' ) ? sk_get_client_ip() : '';
+
+        if ( function_exists( 'sk_rate_limit' ) && ! sk_rate_limit( 'zap-qr:' . md5( $ip ?: 'unknown' ), 30 ) ) {
+            return new \WP_Error( 'qr_rate', 'Zu viele Anfragen.', [ 'status' => 429 ] );
+        }
+
+        $data = trim( (string) $request->get_param( 'data' ) );
+
+        if ( strlen( $data ) > 1000 || ! preg_match( '/^ln[a-z0-9]{20,}$/i', $data ) ) {
+            return new \WP_Error( 'qr_invalid', 'Nur bolt11-Invoices werden gerendert.', [ 'status' => 400 ] );
+        }
+
+        if ( ! class_exists( 'SK\Modules\Payments\QrImage' ) ) {
+            $file = dirname( SK_ZAPS_PATH ) . '/sk-payments/includes/QrImage.php';
+
+            if ( file_exists( $file ) ) {
+                require_once $file;
+            }
+        }
+
+        if ( ! class_exists( 'SK\Modules\Payments\QrImage' ) ) {
+            return new \WP_Error( 'qr_failed', 'QR-Code konnte nicht erzeugt werden.', [ 'status' => 500 ] );
+        }
+
+        $uri = \SK\Modules\Payments\QrImage::bolt11( $data );
+
+        if ( '' === $uri ) {
+            return new \WP_Error( 'qr_failed', 'QR-Code konnte nicht erzeugt werden.', [ 'status' => 500 ] );
+        }
+
+        return new \WP_REST_Response( [ 'qr' => $uri ], 200 );
+    }
+
+    /**
      * Are zaps switched on?
      *
      * Two switches used to be read in two places: the templates looked at
@@ -483,7 +542,7 @@ class ZapButton {
             'i18nSelfZap'   => __( 'Du kannst dich nicht selbst zappen.', 'sk-core' ),
             'relays'        => array_values( $relays ),
             // QR codes are rendered on our own server, never by a third party.
-            'qrUrl'         => rest_url( 'sk/v1/lightning/qr' ),
+            'qrUrl'         => rest_url( 'sk/v1/zaps/qr' ),
         ] );
     }
 }
