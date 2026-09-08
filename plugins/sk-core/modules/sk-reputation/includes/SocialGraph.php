@@ -76,6 +76,10 @@ class SocialGraph {
         wp_localize_script( 'sk-social-graph', 'skTrustGraph', [
             'relays' => array_values( $relays ),
             'viewer' => $viewer,
+            // Schnorr verifier (BIP-340, NIP-01 id), loaded by the script
+            // only once a viewer key is known: what a relay sends counts
+            // only with a valid signature.
+            'verify' => add_query_arg( 'ver', SK_REPUTATION_VERSION, SK_REPUTATION_URL . '/assets/js/sk-nostr-verify.js' ),
             'i18n'   => [
                 'follow'    => __( 'Du folgst diesem Anbieter', 'sk-core' ),
                 'contact1'  => __( '%d deiner Kontakte folgt', 'sk-core' ),

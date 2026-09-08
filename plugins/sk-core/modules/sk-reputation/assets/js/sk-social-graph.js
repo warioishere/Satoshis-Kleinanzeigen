@@ -11,6 +11,10 @@
  * The viewer's key comes from the site (a logged-in, proven key) or from
  * the extension. No key, no contacts, or nothing found: the chips stay
  * hidden. Results are cached in localStorage for a day.
+ *
+ * Nothing a relay sends is taken at its word: every event is checked for
+ * a valid NIP-01 id and BIP-340 signature (sk-nostr-verify.js, loaded on
+ * demand) before it counts. A relay can withhold events, not invent them.
  */
 (function () {
     'use strict';
@@ -21,7 +25,7 @@
     }
 
     var TTL = 24 * 60 * 60 * 1000;
-    var PREFIX = 'skTrust:v2:';
+    var PREFIX = 'skTrust:v3:';
     var AUTHORS_PER_FILTER = 200;
     var FILTERS_PER_REQ = 10;
     var MAX_CONTACTS = 4000;
@@ -71,6 +75,47 @@
         try { localStorage.setItem(PREFIX + key, JSON.stringify({ ts: Date.now(), v: value })); } catch (e) { /* full or blocked */ }
     }
 
+    // ── Signatures ───────────────────────────────────────────────────────
+
+    var verifierPromise = null;
+
+    /**
+     * The Schnorr verifier, fetched once and only when needed. Resolves
+     * with the function, or with null when it cannot be had — in which
+     * case no event is trusted at all.
+     */
+    function loadVerifier() {
+        if (typeof window.skNostrVerify === 'function') { return Promise.resolve(window.skNostrVerify); }
+        if (!cfg.verify) { return Promise.resolve(null); }
+        if (!verifierPromise) {
+            verifierPromise = new Promise(function (resolve) {
+                var s = document.createElement('script');
+                s.src = cfg.verify;
+                s.async = true;
+                s.onload = function () { resolve(typeof window.skNostrVerify === 'function' ? window.skNostrVerify : null); };
+                s.onerror = function () { resolve(null); };
+                document.head.appendChild(s);
+            });
+        }
+        return verifierPromise;
+    }
+
+    /**
+     * Only the events whose id and signature hold. About a millisecond
+     * each; the loop yields now and then so a long list does not freeze
+     * the page.
+     */
+    async function verifiedOnly(events) {
+        var verify = await loadVerifier();
+        if (!verify) { return []; }
+        var out = [];
+        for (var i = 0; i < events.length; i++) {
+            if (verify(events[i])) { out.push(events[i]); }
+            if (i % 50 === 49) { await new Promise(function (r) { setTimeout(r, 0); }); }
+        }
+        return out;
+    }
+
     // ── Relays ───────────────────────────────────────────────────────────
 
     /**
@@ -114,9 +159,9 @@
     }
 
     /**
-     * The same REQ against the first `count` relays in parallel, merged
-     * and deduplicated. No single relay has everything: a contact list
-     * missing on one is often on the next.
+     * The same REQ against the first `count` relays in parallel, merged,
+     * deduplicated and signature-checked. No single relay has everything:
+     * a contact list missing on one is often on the next.
      */
     async function query(filters, count) {
         var relays = cfg.relays.slice(0, count || cfg.relays.length);
@@ -134,7 +179,7 @@
                 merged.push(e);
             });
         });
-        return merged;
+        return verifiedOnly(merged);
     }
 
     /** The hex keys in the event's tags of one name; anything else is dropped. */
@@ -421,6 +466,9 @@
             viewerPromise = viewerPromise || viewerPubkey();
             var viewer = await viewerPromise;
             if (!viewer) { hint('nokey'); return; }
+
+            // Fetch the verifier while the relays are being asked.
+            loadVerifier();
 
             contactsPromise = contactsPromise || contactsOf(viewer);
             var contacts = await contactsPromise;

@@ -100,7 +100,21 @@ Weitere passiert im Browser des Betrachters:
 4. Namen der Folgenden (Kind 0, bis 8 je Anbieter) für das „Warum": Klick
    auf den Chip öffnet die Liste mit Links nach njump.
 
-Alles einen Tag in `localStorage` (`skTrust:v1:*`). Kein Schlüssel, keine
+**Kein Event zählt ohne gültige Signatur.** Alles, was ein Relay liefert,
+geht durch `assets/js/sk-nostr-verify.js` (BIP-340-Schnorr und NIP-01-ID,
+gebaut aus `@noble/curves`, Quelle und Build in `tools/nostr-verify/`),
+das erst nachgeladen wird, wenn ein Betrachterschlüssel bekannt ist
+(27 KB, 11 KB gzip, rund 1,5 ms je Event). Schlüssel und Event-IDs werden
+nur als 64 Hex-Zeichen angenommen, alle Maps sind prototypfrei, Attribute
+werden escaped. Ein Relay kann Events also weglassen, nicht erfinden; ohne
+Verifier wird gar nichts gezählt. Ein Anbieter, der sich selbst in seiner
+Kind 3 führt, zählt nicht als Kontakt. Was der Server weiterhin vorgibt:
+die Relay-Liste (`nostr_login_relays`) und bei eingeloggten Nutzern den
+Betrachterschlüssel; für SK-erzeugte Identitäten schreibt SK zudem die
+Kind 3 selbst (`FollowMirror`), deren Follows fließen damit in fremde
+„X deiner Kontakte"-Zahlen ein.
+
+Alles einen Tag in `localStorage` (`skTrust:v3:*`). Kein Schlüssel, keine
 Kontakte, keine Treffer, Anbieter = Betrachter: der Chip bleibt versteckt.
 Feed-Karten, die per AJAX nachkommen, findet ein MutationObserver.
 
