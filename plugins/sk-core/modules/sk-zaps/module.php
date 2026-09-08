@@ -32,6 +32,8 @@ final class Module {
         }
 
         require_once SK_ZAPS_PATH . '/includes/ZapButton.php';
+        require_once SK_ZAPS_PATH . '/includes/ZapStats.php';
         new ZapButton();
+        ZapStats::init();
     }
 }

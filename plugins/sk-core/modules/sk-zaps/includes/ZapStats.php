@@ -1,0 +1,298 @@
+<?php
+
+namespace SK\Modules\Zaps;
+
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * How many sats a vendor has received in zaps — on this site and on Nostr
+ * at large, since both end up as zap receipts (kind 9735) under the
+ * vendor's key.
+ *
+ * The number is fetched in the background and cached on the user; a page
+ * render only reads the cache and, when it has gone stale, asks for a
+ * refresh. Nothing here talks to the network while a page is being built.
+ */
+class ZapStats {
+
+    const SATS_META  = 'sk_zap_received_sats';
+    const COUNT_META = 'sk_zap_received_count';
+    const TIME_META  = 'sk_zap_received_time';
+
+    /** How long a fetched total is trusted before it is refreshed. */
+    const MAX_AGE = 6 * HOUR_IN_SECONDS;
+
+    /** Cron hook that does the fetching. */
+    const CRON_HOOK = 'sk_zaps_refresh_received';
+
+    /** Receipts read per relay when Primal has nothing. */
+    const RECEIPTS_LIMIT = 1000;
+
+    public static function init(): void {
+        add_action( self::CRON_HOOK, [ __CLASS__, 'refresh' ], 10, 2 );
+
+        // Store banner: below the rating, through the slot the header already offers.
+        add_action( 'sk_store_header_info_fields', [ __CLASS__, 'render_store_line' ], 20, 1 );
+    }
+
+    /**
+     * Sats received so far, from the cache; 0 until the first fetch is in.
+     * A stale or missing value queues a refresh.
+     */
+    public static function received_sats( int $vendor_id ): int {
+        if ( $vendor_id <= 0 ) {
+            return 0;
+        }
+
+        $fetched = (int) get_user_meta( $vendor_id, self::TIME_META, true );
+
+        if ( $fetched < time() - self::MAX_AGE ) {
+            self::queue_refresh( $vendor_id );
+        }
+
+        return (int) get_user_meta( $vendor_id, self::COUNT_META, true ) > 0
+            ? (int) get_user_meta( $vendor_id, self::SATS_META, true )
+            : 0;
+    }
+
+    /**
+     * The line for the store banner, under the rating.
+     */
+    public static function render_store_line( $vendor_id ): void {
+        $sats = ZapButton::is_enabled() ? self::received_sats( (int) $vendor_id ) : 0;
+
+        if ( $sats <= 0 ) {
+            return;
+        }
+
+        ZapButton::ensure_assets();
+        ?>
+        <li class="sk-store-zaps" title="<?php esc_attr_e( 'Erhaltene Zaps', 'sk-core' ); ?>">
+            <i class="fas fa-bolt"></i>
+            <?php echo esc_html( self::format_sats( $sats ) ); ?>
+        </li>
+        <?php
+    }
+
+    /**
+     * The inline badge next to the vendor name on a product page.
+     */
+    public static function render_inline( int $vendor_id ): void {
+        $sats = ZapButton::is_enabled() ? self::received_sats( $vendor_id ) : 0;
+
+        if ( $sats <= 0 ) {
+            return;
+        }
+
+        ZapButton::ensure_assets();
+        ?>
+        <span class="sk-vendor-zaps" title="<?php esc_attr_e( 'Erhaltene Zaps', 'sk-core' ); ?>"><i class="fas fa-bolt"></i> <?php echo esc_html( self::format_sats( $sats ) ); ?></span>
+        <?php
+    }
+
+    public static function format_sats( int $sats ): string {
+        return number_format( $sats, 0, '', '.' ) . ' Sats';
+    }
+
+    /**
+     * Ask for a refresh, at most once an hour per vendor, off the page.
+     */
+    private static function queue_refresh( int $vendor_id ): void {
+        $pubkey = strtolower( (string) get_user_meta( $vendor_id, 'nostr_public_key', true ) );
+
+        if ( ! preg_match( '/^[0-9a-f]{64}$/', $pubkey ) ) {
+            return;
+        }
+
+        $marker = 'sk_zap_stats_asked_' . $vendor_id;
+
+        if ( false !== get_transient( $marker ) ) {
+            return;
+        }
+
+        set_transient( $marker, 1, HOUR_IN_SECONDS );
+
+        wp_schedule_single_event( time() + 30, self::CRON_HOOK, [ $vendor_id, $pubkey ] );
+    }
+
+    /**
+     * Fetch the total and store it. Runs on cron, never during a render.
+     *
+     * Primal's cache answers with the account's zap statistics across the
+     * relays it indexes — that covers zaps the vendor got anywhere on Nostr.
+     * When it has nothing, the receipts on our own relays are summed.
+     */
+    public static function refresh( $vendor_id, $pubkey ): void {
+        $vendor_id = (int) $vendor_id;
+        $pubkey    = strtolower( (string) $pubkey );
+
+        if ( $vendor_id <= 0 || ! preg_match( '/^[0-9a-f]{64}$/', $pubkey ) ) {
+            return;
+        }
+
+        $stats = self::from_primal( $pubkey );
+
+        if ( null === $stats ) {
+            $stats = self::from_relays( $pubkey );
+        }
+
+        // A failed fetch keeps the old number and is tried again next hour.
+        if ( null === $stats ) {
+            return;
+        }
+
+        update_user_meta( $vendor_id, self::SATS_META, (int) $stats['sats'] );
+        update_user_meta( $vendor_id, self::COUNT_META, (int) $stats['count'] );
+        update_user_meta( $vendor_id, self::TIME_META, time() );
+    }
+
+    /**
+     * @return array{sats: int, count: int}|null
+     */
+    private static function from_primal( string $pubkey ): ?array {
+        $response = wp_remote_post( 'https://cache.primal.net/api', [
+            'timeout' => 8,
+            'body'    => wp_json_encode( [ 'user_profile', [ 'pubkey' => $pubkey ] ] ),
+            'headers' => [ 'Content-Type' => 'application/json' ],
+        ] );
+
+        if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+            return null;
+        }
+
+        $events = json_decode( wp_remote_retrieve_body( $response ), true );
+
+        if ( ! is_array( $events ) ) {
+            return null;
+        }
+
+        // Kind 10000105: Primal's user statistics, content is JSON.
+        foreach ( $events as $event ) {
+            if ( 10000105 !== (int) ( $event['kind'] ?? 0 ) ) {
+                continue;
+            }
+
+            $stats = json_decode( (string) ( $event['content'] ?? '' ), true );
+
+            if ( ! is_array( $stats ) || ! isset( $stats['total_satszapped'] ) ) {
+                continue;
+            }
+
+            return [
+                'sats'  => max( 0, (int) $stats['total_satszapped'] ),
+                'count' => max( 0, (int) ( $stats['total_zap_count'] ?? 0 ) ),
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * Sum of the zap receipts on our own relays.
+     *
+     * The amount comes from the zap request inside the receipt (msats);
+     * where that is missing, from the invoice's amount.
+     *
+     * @return array{sats: int, count: int}|null
+     */
+    private static function from_relays( string $pubkey ): ?array {
+        if ( ! class_exists( '\WebSocket\Client' ) || ! class_exists( 'SK\Modules\Auth\NostrIdentity' ) ) {
+            return null;
+        }
+
+        $seen  = [];
+        $msats = 0;
+        $any   = false;
+
+        foreach ( \SK\Modules\Auth\NostrIdentity::get_relays() as $relay_url ) {
+            if ( \SK\Modules\Auth\RelayPublisher::stalled( $relay_url ) ) {
+                continue;
+            }
+
+            \SK\Modules\Auth\RelayPublisher::mark_attempt( $relay_url );
+
+            try {
+                $client = new \WebSocket\Client( $relay_url );
+                $client->setTimeout( 5 );
+
+                $sub = bin2hex( random_bytes( 8 ) );
+                $client->text( wp_json_encode( [ 'REQ', $sub, [ 'kinds' => [ 9735 ], '#p' => [ $pubkey ], 'limit' => self::RECEIPTS_LIMIT ] ] ) );
+
+                $deadline = microtime( true ) + 8;
+
+                while ( microtime( true ) < $deadline ) {
+                    $data = json_decode( $client->receive()->getContent(), true );
+
+                    if ( ! is_array( $data ) || ( $data[1] ?? '' ) !== $sub ) {
+                        continue;
+                    }
+
+                    if ( 'EOSE' === $data[0] || 'CLOSED' === $data[0] ) {
+                        $any = true;
+                        break;
+                    }
+
+                    if ( 'EVENT' !== $data[0] || ! is_array( $data[2] ?? null ) ) {
+                        continue;
+                    }
+
+                    $event = $data[2];
+                    $id    = strtolower( (string) ( $event['id'] ?? '' ) );
+
+                    if ( ! preg_match( '/^[0-9a-f]{64}$/', $id ) || isset( $seen[ $id ] ) ) {
+                        continue;
+                    }
+
+                    $seen[ $id ] = true;
+                    $msats      += self::receipt_msats( $event );
+                }
+
+                $client->text( wp_json_encode( [ 'CLOSE', $sub ] ) );
+                $client->disconnect();
+            } catch ( \Throwable $e ) {
+                // Next relay.
+            }
+
+            \SK\Modules\Auth\RelayPublisher::clear_attempt( $relay_url );
+        }
+
+        if ( ! $any ) {
+            return null;
+        }
+
+        return [ 'sats' => (int) floor( $msats / 1000 ), 'count' => count( $seen ) ];
+    }
+
+    /**
+     * Amount of one receipt in msats, 0 when it cannot be read.
+     */
+    private static function receipt_msats( array $event ): int {
+        $tags = [];
+
+        foreach ( (array) ( $event['tags'] ?? [] ) as $tag ) {
+            if ( is_array( $tag ) && isset( $tag[0], $tag[1] ) && is_string( $tag[1] ) ) {
+                $tags[ $tag[0] ] = $tag[1];
+            }
+        }
+
+        // The zap request the receipt answers, with its amount in msats.
+        if ( ! empty( $tags['description'] ) ) {
+            $request = json_decode( $tags['description'], true );
+
+            foreach ( (array) ( $request['tags'] ?? [] ) as $tag ) {
+                if ( is_array( $tag ) && 'amount' === ( $tag[0] ?? '' ) && ctype_digit( (string) ( $tag[1] ?? '' ) ) ) {
+                    return (int) $tag[1];
+                }
+            }
+        }
+
+        // Otherwise the invoice: lnbc<amount><unit>1...
+        if ( ! empty( $tags['bolt11'] ) && preg_match( '/^ln(?:bc|tb|bcrt)(\d+)([munp]?)1/i', $tags['bolt11'], $m ) ) {
+            $factor = [ '' => 100000000000, 'm' => 100000000, 'u' => 100000, 'n' => 100, 'p' => 0.1 ];
+
+            return (int) floor( (int) $m[1] * $factor[ strtolower( $m[2] ) ] );
+        }
+
+        return 0;
+    }
+}

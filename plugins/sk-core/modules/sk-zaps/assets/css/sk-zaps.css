@@ -40,6 +40,19 @@
 }
 .sk-zap-btn--feed .sk-zap-total:empty { display: none; }
 
+/* Sats received: store banner line under the rating, and inline on the product page. */
+.sk-store-zaps { color: #fff; }
+.sk-store-zaps i { color: #f7931a; margin-right: 4px; }
+/* Product page: at the right end of the vendor box, left of the badge. */
+.sk-vendor-info-wrap .sk-vendor-zaps {
+    display: inline-flex; align-items: center; gap: 4px; align-self: center;
+    margin-left: auto; font-size: 13px; white-space: nowrap;
+}
+.sk-vendor-info-wrap .sk-vendor-zaps i { color: #f7931a; }
+/* The badge normally pushes itself right with margin-left:auto; with the
+   sats line ahead of it, that line takes the push and the badge follows. */
+.sk-vendor-info-wrap .sk-vendor-zaps + .sk-verify-badge { margin-left: 10px; }
+
 /* Modal */
 .sk-zap-modal {
     position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7);
