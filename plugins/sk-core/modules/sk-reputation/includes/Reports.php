@@ -195,10 +195,13 @@ class Reports {
             }
         }
 
-        // What each vendor already has, by report id.
+        // What each vendor already has, by report id. The same daily pass
+        // keeps every vendor's key binding in order (see VendorKey).
         $stored = [];
 
         foreach ( array_unique( $targets ) as $vendor_id ) {
+            VendorKey::maintain( $vendor_id );
+
             foreach ( self::for_vendor( $vendor_id ) as $report ) {
                 if ( is_array( $report ) && is_string( $report['id'] ?? null ) ) {
                     $stored[ $vendor_id ][ $report['id'] ] = $report;

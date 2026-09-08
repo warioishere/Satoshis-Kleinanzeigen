@@ -55,6 +55,12 @@ class NostrIdentity {
         // Mark source.
         update_user_meta( $user_id, 'sk_nostr_identity_source', 'generated' );
 
+        // Bind the new key to this site right away: a signature only, the
+        // relay work runs in cron (see VendorKey).
+        if ( class_exists( 'SK\Core\Trust\VendorKey' ) ) {
+            \SK\Core\Trust\VendorKey::maintain( $user_id );
+        }
+
         // Publish the Kind 0 profile only after the response has gone out.
         // Even with RelayPublisher's 5 s per relay, four relays can hold the
         // click on "Create" for 20 s. Same approach as the profile update

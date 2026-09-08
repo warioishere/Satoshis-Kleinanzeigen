@@ -145,14 +145,15 @@ class VendorKey {
     }
 
     private static function resolve( int $vendor_id ): string {
+        // Reading only: the binding event for a held key is written by
+        // maintain(), from identity creation and the daily cron, never
+        // while a page renders.
         $held = self::held_private_key( $vendor_id );
 
         if ( null !== $held ) {
             $pub = self::pubkey_of( $held );
 
             if ( '' !== $pub ) {
-                self::ensure_self_binding( $vendor_id, $held, $pub );
-
                 return $pub;
             }
         }
@@ -398,6 +399,40 @@ class VendorKey {
         unset( self::$bound_cache[ $vendor_id ] );
 
         self::queue_publish( $vendor_id, 10 );
+    }
+
+    /**
+     * The write side of a vendor's key, run off the request path: when an
+     * identity is created and once a day for every vendor with a key.
+     * Signs the binding for a key this site holds if it is missing, and
+     * gives a binding that never reached a relay a fresh set of attempts.
+     */
+    public static function maintain( int $vendor_id ): void {
+        if ( $vendor_id <= 0 ) {
+            return;
+        }
+
+        $held = self::held_private_key( $vendor_id );
+
+        if ( null !== $held ) {
+            $pub = self::pubkey_of( $held );
+
+            if ( '' !== $pub ) {
+                self::ensure_self_binding( $vendor_id, $held, $pub );
+            }
+        }
+
+        unset( self::$bound_cache[ $vendor_id ] );
+
+        $binding = self::binding( $vendor_id );
+
+        if ( $binding
+            && $binding['pubkey'] === self::bound( $vendor_id )
+            && empty( get_user_meta( $vendor_id, self::RELAYS_META, true ) )
+            && (int) get_user_meta( $vendor_id, self::ATTEMPTS_META, true ) >= self::MAX_PUBLISH_ATTEMPTS ) {
+            delete_user_meta( $vendor_id, self::ATTEMPTS_META );
+            self::queue_publish( $vendor_id, 10 );
+        }
     }
 
     /**

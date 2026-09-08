@@ -65,7 +65,7 @@ eintragen; der Nachweis entsteht aus dem, was ohnehin passiert:
 | Herkunft des Schlüssels | Nachweis |
 |---|---|
 | Nostr-Login | Das signierte NIP-98-Event des Logins setzt den Schlüssel auf den Nutzer; `NostrLogin` schreibt ihn sonst nie ohne Signatur (der Profil-Sync darf den Schlüssel nicht mehr setzen oder ändern). Das Login-Event wird als `sk_nostr_login_proof` aufbewahrt. |
-| Von SK erzeugte Identität, Plattformkonto | SK hält den Schlüssel und signiert die Bindung selbst. |
+| Von SK erzeugte Identität, Plattformkonto | SK hält den Schlüssel und signiert die Bindung selbst (`VendorKey::maintain`, beim Erzeugen der Identität und einmal täglich aus dem Reports-Cron; `bound()` selbst schreibt nichts). Derselbe Lauf gibt einer Bindung, die nach drei Versuchen kein Relay angenommen hat, neue Versuche. |
 | Getippter npub | Beim nächsten Dashboard-Besuch mit Erweiterung fragt `assets/js/sk-key-binding.js` still nach dem Schlüssel; ist es derselbe, signiert die Erweiterung einmal das Bindungs-Event. Ein anderer Schlüssel oder ein abgelehntes Popup ändert nichts. |
 
 Das Bindungs-Event ist Kind 30078 (NIP-78), `d` = Host der Seite, `r` =
