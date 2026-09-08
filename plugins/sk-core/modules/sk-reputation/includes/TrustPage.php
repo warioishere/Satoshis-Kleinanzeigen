@@ -97,6 +97,12 @@ class TrustPage {
     // ── What the page shows ─────────────────────────────────────────────
 
     public static function has_signals( int $vendor_id ): bool {
+        // Trust pages are for stores; a customer account with a Nostr key is
+        // not one.
+        if ( $vendor_id <= 0 || ! function_exists( 'sk_is_user_seller' ) || ! sk_is_user_seller( $vendor_id ) ) {
+            return false;
+        }
+
         if ( '' !== VendorKey::bound( $vendor_id ) ) {
             return true;
         }
@@ -109,7 +115,11 @@ class TrustPage {
             return true;
         }
 
-        return null !== self::lightning( $vendor_id );
+        // Only whether a reputation row exists; the proof list itself is
+        // loaded by the page, not for the tab.
+        return Module::payments_available()
+            && class_exists( 'SK\Modules\Payments\StoreSettings' )
+            && (bool) \SK\Modules\Payments\StoreSettings::get_reputation( $vendor_id );
     }
 
     /**
