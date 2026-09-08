@@ -59,6 +59,7 @@
 .sk-trust-big { font-size: 26px; font-weight: 700; color: #f7931a; margin: 0 0 4px; }
 .sk-trust-key { font-family: monospace; font-size: 13px; word-break: break-all; }
 .sk-trust-list { margin: 0 0 8px; padding-left: 18px; }
+.sk-trust-nip05 code { background: #0f1923; padding: 2px 8px; border-radius: 4px; color: #e8ecf0; font-size: 13px; }
 .sk-trust-badge { padding: 3px 10px; background: rgba(247, 147, 26, 0.13); border-radius: 5px; font-size: 13px; color: #f7931a; }
 .sk-trust-figures { display: flex; gap: 32px; flex-wrap: wrap; margin-bottom: 12px; }
 .sk-trust-figures .sk-trust-big { color: #e8ecf0; }

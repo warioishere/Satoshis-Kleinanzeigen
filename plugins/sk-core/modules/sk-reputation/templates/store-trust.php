@@ -108,6 +108,23 @@ get_header( 'shop' );
                             <pre><?php echo esc_html( $nostr['event_json'] ); ?></pre>
                         </details>
                     <?php endif; ?>
+
+                    <?php
+                    // NIP-05 for the shop: answered by this site for every proven
+                    // key. Nothing to set up; a vendor may put it into their Nostr
+                    // profile, then every client shows the site's check mark.
+                    $nip05 = $store_user->user_nicename . '@' . \SK\Core\Trust\VendorKey::site();
+                    ?>
+                    <p class="sk-trust-nip05">
+                        <span class="sk-trust-note"><?php esc_html_e( 'NIP-05-Adresse dieses Shops:', 'sk-core' ); ?></span>
+                        <code><?php echo esc_html( $nip05 ); ?></code>
+                    </p>
+                    <p class="sk-trust-note">
+                        <?php esc_html_e( 'Prüfen: Diese Seite beantwortet die Adresse mit genau diesem Schlüssel. Steht sie im Nostr-Profil des Anbieters, zeigt jeder Nostr-Client das Häkchen dieser Seite.', 'sk-core' ); ?>
+                        <?php if ( get_current_user_id() === $vendor_id ) : ?>
+                            <?php esc_html_e( 'Du kannst sie in deinem Nostr-Profil als NIP-05 eintragen; einrichten musst du hier nichts.', 'sk-core' ); ?>
+                        <?php endif; ?>
+                    </p>
                 </div>
                 <?php endif; ?>
 

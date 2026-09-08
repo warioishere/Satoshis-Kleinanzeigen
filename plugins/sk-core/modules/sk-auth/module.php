@@ -324,7 +324,12 @@ final class Module {
         $relays = [];
 
         if ( $user ) {
-            $pubkey = get_user_meta( $user->ID, 'nostr_public_key', true );
+            // Only a key whose holder has proven it (see VendorKey) — the
+            // address vouches for the key, so it must not repeat a claim.
+            $pubkey = class_exists( 'SK\Core\Trust\VendorKey' )
+                ? \SK\Core\Trust\VendorKey::bound( (int) $user->ID )
+                : (string) get_user_meta( $user->ID, 'nostr_public_key', true );
+
             if ( $pubkey ) {
                 $names[ strtolower( $name ) ] = $pubkey;
                 $relays[ $pubkey ]            = NostrIdentity::get_relays();
