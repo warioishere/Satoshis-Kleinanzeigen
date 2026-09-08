@@ -508,9 +508,18 @@ class Reports {
         return RelayReader::relays();
     }
 
-    /** @return array<int, array> */
+    /**
+     * Raw events: the page size must be judged on what the relay sent, not
+     * on what survives verification — accept() verifies each report itself.
+     *
+     * @return array<int, array>
+     */
     private static function req( string $relay, array $filters ): array {
-        return RelayReader::req( $relay, $filters, self::RELAY_TIMEOUT, self::PAGE_LIMIT );
+        return \SK\Core\Nostr\Relays::fetch( $relay, $filters, [
+            'timeout' => self::RELAY_TIMEOUT,
+            'max'     => self::PAGE_LIMIT,
+            'verify'  => false,
+        ] )['events'];
     }
 
     private static function notify_admin( array $new ): void {

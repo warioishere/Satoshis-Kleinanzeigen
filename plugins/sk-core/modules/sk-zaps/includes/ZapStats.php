@@ -390,71 +390,26 @@ class ZapStats {
      * @return array{sats: int, count: int}|null
      */
     private static function from_relays( string $pubkey ): ?array {
-        if ( ! class_exists( '\WebSocket\Client' ) || ! class_exists( 'SK\Modules\Auth\NostrIdentity' ) ) {
+        // Every relay, merged by id; only receipts with a valid signature.
+        $result = \SK\Core\Nostr\Relays::query(
+            [ [ 'kinds' => [ 9735 ], '#p' => [ $pubkey ], 'limit' => self::RECEIPTS_LIMIT ] ],
+            null,
+            [ 'timeout' => 8, 'max' => self::RECEIPTS_LIMIT ]
+        );
+
+        if ( 0 === $result['answered'] ) {
             return null;
         }
 
-        $seen  = [];
         $msats = 0;
-        $any   = false;
 
-        foreach ( \SK\Modules\Auth\NostrIdentity::get_relays() as $relay_url ) {
-            if ( \SK\Modules\Auth\RelayPublisher::stalled( $relay_url ) ) {
-                continue;
+        foreach ( $result['events'] as $event ) {
+            if ( 9735 === (int) ( $event['kind'] ?? 0 ) ) {
+                $msats += self::receipt_msats( $event );
             }
-
-            \SK\Modules\Auth\RelayPublisher::mark_attempt( $relay_url );
-
-            try {
-                $client = new \WebSocket\Client( $relay_url );
-                $client->setTimeout( 5 );
-
-                $sub = bin2hex( random_bytes( 8 ) );
-                $client->text( wp_json_encode( [ 'REQ', $sub, [ 'kinds' => [ 9735 ], '#p' => [ $pubkey ], 'limit' => self::RECEIPTS_LIMIT ] ] ) );
-
-                $deadline = microtime( true ) + 8;
-
-                while ( microtime( true ) < $deadline ) {
-                    $data = json_decode( $client->receive()->getContent(), true );
-
-                    if ( ! is_array( $data ) || ( $data[1] ?? '' ) !== $sub ) {
-                        continue;
-                    }
-
-                    if ( 'EOSE' === $data[0] || 'CLOSED' === $data[0] ) {
-                        $any = true;
-                        break;
-                    }
-
-                    if ( 'EVENT' !== $data[0] || ! is_array( $data[2] ?? null ) ) {
-                        continue;
-                    }
-
-                    $event = $data[2];
-                    $id    = strtolower( (string) ( $event['id'] ?? '' ) );
-
-                    if ( ! preg_match( '/^[0-9a-f]{64}$/', $id ) || isset( $seen[ $id ] ) ) {
-                        continue;
-                    }
-
-                    $seen[ $id ] = true;
-                    $msats      += self::receipt_msats( $event );
-                }
-
-                $client->text( wp_json_encode( [ 'CLOSE', $sub ] ) );
-                $client->disconnect();
-            } catch ( \Throwable $e ) {
-                // Next relay.
-            }
-
-            \SK\Modules\Auth\RelayPublisher::clear_attempt( $relay_url );
         }
 
-        if ( ! $any ) {
-            return null;
-        }
-
-        return [ 'sats' => (int) floor( $msats / 1000 ), 'count' => count( $seen ) ];
+        return [ 'sats' => (int) floor( $msats / 1000 ), 'count' => count( $result['events'] ) ];
     }
 
     /**

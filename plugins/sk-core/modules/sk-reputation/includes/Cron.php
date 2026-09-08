@@ -152,22 +152,11 @@ class Cron {
         ];
 
         try {
-            $event = \SK\Core\Nostr\Events::to_object(
-                \SK\Core\Nostr\Events::sign( 1985, $tier . ' (' . $valid_tx . ' verified transactions)', $tags, $marketplace_privkey )
+            \SK\Core\Nostr\Relays::publish(
+                \SK\Core\Nostr\Events::sign( 1985, $tier . ' (' . $valid_tx . ' verified transactions)', $tags, $marketplace_privkey ),
+                null,
+                $marketplace_privkey
             );
-
-            $relays = \SK\Modules\Auth\NostrIdentity::get_relays();
-            foreach ( $relays as $relay_url ) {
-                try {
-                    $msg   = new \swentel\nostr\Message\EventMessage( $event );
-                    $relay = new \swentel\nostr\Relay\Relay( $relay_url );
-                    if ( method_exists( $relay, 'setTimeout' ) ) {
-                        $relay->setTimeout( 3 );
-                    }
-                    $relay->setMessage( $msg );
-                    $relay->send();
-                } catch ( \Throwable $e ) {}
-            }
 
             update_user_meta( $vendor_id, 'sk_nostr_reputation_tier', $tier );
         } catch ( \Throwable $e ) {

@@ -111,79 +111,31 @@ class NostrRelaySync {
      * updates and zap receipts, no timeline content.
      */
     private static function fetch_events( string $relay_url, array $pubkeys, int $since ): array {
-        $context = stream_context_create( [
-            'ssl' => [ 'verify_peer' => true, 'verify_peer_name' => true ],
-        ] );
+        // One REQ with both filters; every event verified (a profile update
+        // rewrites display names and avatars, so a forged one must not count).
+        $result = \SK\Core\Nostr\Relays::fetch(
+            $relay_url,
+            [
+                [ 'authors' => $pubkeys, 'kinds' => [ 0 ], 'since' => $since ],
+                [ 'kinds' => [ 9735 ], '#p' => $pubkeys, 'since' => $since ],
+            ],
+            [ 'timeout' => self::RELAY_TIMEOUT_SEC ]
+        );
 
-        $client = new \WebSocket\Client( $relay_url, [ 'context' => $context, 'timeout' => self::RELAY_TIMEOUT_SEC ] );
-        $sub_id = bin2hex( random_bytes( 8 ) );
+        if ( ! $result['eose'] ) {
+            // The caller marks a relay that never finished as failing for a while.
+            throw new \RuntimeException( 'no EOSE within ' . self::RELAY_TIMEOUT_SEC . 's' );
+        }
 
         $events = [];
 
-        try {
-            $client->text( json_encode( [
-                'REQ',
-                $sub_id,
-                [
-                    'authors' => $pubkeys,
-                    'kinds'   => [ 0 ],
-                    'since'   => $since,
-                ],
-            ] ) );
+        foreach ( $result['events'] as $event ) {
+            $dedup_key = 'sk_nsync_' . substr( (string) ( $event['id'] ?? '' ), 0, 16 );
 
-            // Also subscribe for zap receipts targeting our users.
-            $sub_id2 = bin2hex( random_bytes( 8 ) );
-            $client->text( json_encode( [
-                'REQ',
-                $sub_id2,
-                [
-                    'kinds' => [ 9735 ],
-                    '#p'    => $pubkeys,
-                    'since' => $since,
-                ],
-            ] ) );
-
-            $start = time();
-            $eose_count = 0;
-
-            while ( time() - $start < self::RELAY_TIMEOUT_SEC ) {
-                $msg = $client->receive();
-                if ( ! $msg ) {
-                    break;
-                }
-
-                $content = $msg->getContent();
-                $data    = json_decode( $content, true );
-                if ( ! is_array( $data ) ) {
-                    continue;
-                }
-
-                if ( 'EVENT' === ( $data[0] ?? '' ) && isset( $data[2] ) ) {
-                    $event = $data[2];
-                    $eid   = $event['id'] ?? '';
-                    // Dedup.
-                    $dedup_key = 'sk_nsync_' . substr( $eid, 0, 16 );
-                    if ( ! get_transient( $dedup_key ) ) {
-                        set_transient( $dedup_key, 1, DAY_IN_SECONDS );
-                        $events[] = $event;
-                    }
-                }
-
-                if ( 'EOSE' === ( $data[0] ?? '' ) ) {
-                    $eose_count++;
-                    if ( $eose_count >= 2 ) {
-                        break; // Both subscriptions done.
-                    }
-                }
+            if ( ! get_transient( $dedup_key ) ) {
+                set_transient( $dedup_key, 1, DAY_IN_SECONDS );
+                $events[] = $event;
             }
-
-            // Clean up subscriptions.
-            $client->text( json_encode( [ 'CLOSE', $sub_id ] ) );
-            $client->text( json_encode( [ 'CLOSE', $sub_id2 ] ) );
-            $client->disconnect();
-        } catch ( \Throwable $e ) {
-            try { $client->disconnect(); } catch ( \Throwable $_ ) {}
-            throw $e;
         }
 
         return $events;

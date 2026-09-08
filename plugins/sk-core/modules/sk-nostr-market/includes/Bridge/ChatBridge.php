@@ -749,77 +749,22 @@ class ChatBridge {
         }
 
         $relays = [];
+        $pubkey = strtolower( $pubkey );
 
-        if ( class_exists( '\WebSocket\Client' ) ) {
-            $newest = 0;
+        // The newest kind 10050 the recipient signed, from the site's relays.
+        $list = \SK\Core\Nostr\Relays::latest( 10050, [ $pubkey ] )[ $pubkey ] ?? null;
 
-            foreach ( \SK\Modules\Auth\NostrIdentity::get_relays() as $relay_url ) {
-                if ( \SK\Modules\Auth\RelayPublisher::stalled( $relay_url ) ) {
-                    continue;
+        if ( $list ) {
+            foreach ( \SK\Core\Nostr\Events::tag_values( $list, 'relay' ) as $value ) {
+                $url = untrailingslashit( trim( $value ) );
+
+                if ( '' !== $url && self::usable_foreign_relay( $url ) ) {
+                    $relays[] = $url;
                 }
 
-                \SK\Modules\Auth\RelayPublisher::mark_attempt( $relay_url );
-
-                try {
-                    $client = new \WebSocket\Client( $relay_url );
-                    $client->setTimeout( 5 );
-
-                    $sub = bin2hex( random_bytes( 8 ) );
-                    $client->text( wp_json_encode( [ 'REQ', $sub, [ 'authors' => [ $pubkey ], 'kinds' => [ 10050 ], 'limit' => 1 ] ] ) );
-
-                    $start = time();
-
-                    while ( time() - $start < 5 ) {
-                        $data = json_decode( $client->receive()->getContent(), true );
-
-                        if ( ! is_array( $data ) ) {
-                            continue;
-                        }
-
-                        if ( 'EOSE' === ( $data[0] ?? '' ) ) {
-                            break;
-                        }
-
-                        if ( 'EVENT' !== ( $data[0] ?? '' ) || ! is_array( $data[2] ?? null ) ) {
-                            continue;
-                        }
-
-                        $event = $data[2];
-
-                        if ( strtolower( (string) ( $event['pubkey'] ?? '' ) ) !== strtolower( $pubkey )
-                            || (int) ( $event['created_at'] ?? 0 ) <= $newest
-                            || 10050 !== (int) ( $event['kind'] ?? 0 )
-                            || ! self::signed_by_author( $event ) ) {
-                            continue;
-                        }
-
-                        $newest = (int) $event['created_at'];
-                        $relays = [];
-
-                        foreach ( (array) ( $event['tags'] ?? [] ) as $tag ) {
-                            if ( 'relay' !== ( $tag[0] ?? '' ) || empty( $tag[1] ) || ! is_string( $tag[1] ) ) {
-                                continue;
-                            }
-
-                            $url = untrailingslashit( trim( $tag[1] ) );
-
-                            if ( self::usable_foreign_relay( $url ) ) {
-                                $relays[] = $url;
-                            }
-
-                            if ( count( $relays ) >= self::FOREIGN_RELAYS_MAX ) {
-                                break;
-                            }
-                        }
-                    }
-
-                    $client->text( wp_json_encode( [ 'CLOSE', $sub ] ) );
-                    $client->disconnect();
-                } catch ( \Throwable $e ) {
-                    // Next relay.
+                if ( count( $relays ) >= self::FOREIGN_RELAYS_MAX ) {
+                    break;
                 }
-
-                \SK\Modules\Auth\RelayPublisher::clear_attempt( $relay_url );
             }
         }
 
@@ -862,54 +807,7 @@ class ChatBridge {
      * and anything that does not resolve at all is left out.
      */
     private static function usable_foreign_relay( string $url ): bool {
-        $parts = wp_parse_url( $url );
-
-        if ( ! is_array( $parts ) || 'wss' !== strtolower( (string) ( $parts['scheme'] ?? '' ) ) ) {
-            return false;
-        }
-
-        if ( isset( $parts['user'] ) || isset( $parts['pass'] ) || isset( $parts['query'] ) || isset( $parts['fragment'] ) ) {
-            return false;
-        }
-
-        $host = strtolower( (string) ( $parts['host'] ?? '' ) );
-
-        // A DNS name with a public suffix — no IP literals, no single labels.
-        if ( '' === $host
-            || strlen( $host ) > 253
-            || false === strpos( $host, '.' )
-            || filter_var( $host, FILTER_VALIDATE_IP ) !== false
-            || '[' === $host[0]
-            || ! preg_match( '/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/', $host )
-            || preg_match( '/\.(?:localhost|local|internal|intranet|lan|home|corp|arpa|test|example|invalid|onion)$/', $host ) ) {
-            return false;
-        }
-
-        $addresses = [];
-
-        $v4 = gethostbynamel( $host );
-
-        if ( is_array( $v4 ) ) {
-            $addresses = $v4;
-        }
-
-        foreach ( (array) @dns_get_record( $host, DNS_AAAA ) as $record ) {
-            if ( ! empty( $record['ipv6'] ) ) {
-                $addresses[] = $record['ipv6'];
-            }
-        }
-
-        if ( empty( $addresses ) ) {
-            return false;
-        }
-
-        foreach ( $addresses as $ip ) {
-            if ( false === filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
-                return false;
-            }
-        }
-
-        return true;
+        return \SK\Core\Nostr\Relays::is_public_url( $url );
     }
 
     /**
@@ -1177,65 +1075,17 @@ class ChatBridge {
      * relay that stalls must not hold that up.
      */
     private static function fetch_profile_name( string $pubkey ): string {
-        if ( ! class_exists( '\WebSocket\Client' ) ) {
-            return '';
-        }
+        $pubkey = strtolower( $pubkey );
 
-        $best    = null;
-        $best_at = 0;
-
-        $breaker = class_exists( 'SK\Modules\Auth\RelayPublisher' );
+        // The first relay that has a signed profile is enough; short timeout,
+        // this runs while a message is being delivered.
+        $best = null;
 
         foreach ( EventSender::get_relays() as $relay_url ) {
-            if ( $breaker && \SK\Modules\Auth\RelayPublisher::stalled( $relay_url ) ) {
-                continue;
-            }
+            $found = \SK\Core\Nostr\Relays::latest( 0, [ $pubkey ], $answered, [ $relay_url ] )[ $pubkey ] ?? null;
 
-            if ( $breaker ) {
-                \SK\Modules\Auth\RelayPublisher::mark_attempt( $relay_url );
-            }
-
-            try {
-                $client = new \WebSocket\Client( $relay_url );
-                $client->setTimeout( 5 );
-
-                $sub = bin2hex( random_bytes( 8 ) );
-                $client->text( wp_json_encode( [ 'REQ', $sub, [ 'authors' => [ $pubkey ], 'kinds' => [ 0 ], 'limit' => 1 ] ] ) );
-
-                $start = time();
-
-                while ( time() - $start < 5 ) {
-                    $data = json_decode( $client->receive()->getContent(), true );
-
-                    if ( ! is_array( $data ) ) {
-                        continue;
-                    }
-
-                    if ( 'EOSE' === ( $data[0] ?? '' ) ) {
-                        break;
-                    }
-
-                    if ( 'EVENT' === ( $data[0] ?? '' ) && is_array( $data[2] ?? null ) && 0 === (int) ( $data[2]['kind'] ?? -1 ) ) {
-                        $at = (int) ( $data[2]['created_at'] ?? 0 );
-
-                        if ( $at > $best_at && strtolower( (string) ( $data[2]['pubkey'] ?? '' ) ) === $pubkey ) {
-                            $best_at = $at;
-                            $best    = $data[2];
-                        }
-                    }
-                }
-
-                $client->text( wp_json_encode( [ 'CLOSE', $sub ] ) );
-                $client->disconnect();
-            } catch ( \Throwable $e ) {
-                // Next relay.
-            }
-
-            if ( $breaker ) {
-                \SK\Modules\Auth\RelayPublisher::clear_attempt( $relay_url );
-            }
-
-            if ( null !== $best ) {
+            if ( $found ) {
+                $best = $found;
                 break;
             }
         }

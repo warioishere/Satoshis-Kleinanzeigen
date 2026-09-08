@@ -231,15 +231,7 @@ class NostrIdentity {
      * Get configured relays.
      */
     public static function get_relays(): array {
-        $option = get_option( 'nostr_login_relays', "wss://relay.damus.io\nwss://nos.lol\nwss://relay.primal.net\nwss://relay.snort.social" );
-
-        // Newline, comma or space separated; only websocket URLs, each once.
-        $relays = preg_split( '/[\s,]+/', (string) $option );
-        $relays = array_filter( array_map( 'trim', (array) $relays ), static function ( $r ) {
-            return (bool) preg_match( '#^wss?://\S+$#i', $r );
-        } );
-
-        return array_values( array_unique( $relays ) );
+        return \SK\Core\Nostr\Relays::list();
     }
 
     // ── Encryption ──

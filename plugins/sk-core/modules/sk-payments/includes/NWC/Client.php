@@ -2,8 +2,6 @@
 
 namespace SK\Modules\Payments\NWC;
 
-use swentel\nostr\Relay\Relay;
-use swentel\nostr\Message\EventMessage;
 use swentel\nostr\Encryption\Nip04;
 
 defined( 'ABSPATH' ) || exit;
@@ -145,16 +143,17 @@ class Client {
 
             $encrypted = Nip04::encrypt( $payload, $this->secret, $this->wallet_pubkey );
 
-            $event = \SK\Core\Nostr\Events::to_object(
-                \SK\Core\Nostr\Events::sign( 23194, $encrypted, [ [ 'p', $this->wallet_pubkey ] ], $this->secret )
-            );
+            $event = \SK\Core\Nostr\Events::sign( 23194, $encrypted, [ [ 'p', $this->wallet_pubkey ] ], $this->secret );
 
-            $relay = new Relay( $this->relay_url );
-            $relay->setTimeout( 10 );
-            $relay->setMessage( new EventMessage( $event ) );
-            $relay->send();
+            // The wallet's relay, through the shared breaker. A refusal is
+            // logged; the answer (or its absence) decides below.
+            $sent = \SK\Core\Nostr\Relays::publish( $event, [ $this->relay_url ], $this->secret );
 
-            $response = $this->wait_for_response( $event->getId() );
+            if ( empty( $sent['accepted'] ) ) {
+                error_log( '[SK NWC] request not accepted by ' . $this->relay_url . ': ' . wp_json_encode( $sent['rejected'] ) );
+            }
+
+            $response = $this->wait_for_response( (string) $event['id'] );
 
             return $response;
         } catch ( \Exception $e ) {
@@ -163,55 +162,32 @@ class Client {
     }
 
     private function wait_for_response( string $request_event_id ) {
-        try {
-            $client = new \WebSocket\Client( $this->relay_url );
+        $filter = [
+            'kinds'   => [ 23195 ],
+            '#e'      => [ $request_event_id ],
+            'authors' => [ $this->wallet_pubkey ],
+            'limit'   => 1,
+        ];
 
-            $sub_id = bin2hex( random_bytes( 8 ) );
-            $filter = [
-                'kinds'   => [ 23195 ],
-                '#e'      => [ $request_event_id ],
-                'authors' => [ $this->wallet_pubkey ],
-                'limit'   => 1,
-            ];
+        // The wallet's relay, through the shared breaker; the answer must be
+        // signed by the wallet itself.
+        $result = \SK\Core\Nostr\Relays::fetch( $this->relay_url, [ $filter ], [ 'timeout' => 10, 'max' => 1 ] );
 
-            $client->text( wp_json_encode( [ 'REQ', $sub_id, $filter ] ) );
-
-            $start   = time();
-            $timeout = 10;
-
-            while ( time() - $start < $timeout ) {
-                $msg = $client->receive();
-                if ( $msg === null ) {
-                    continue;
-                }
-
-                $data = json_decode( $msg->getContent(), true );
-                if ( ! is_array( $data ) || $data[0] !== 'EVENT' ) {
-                    continue;
-                }
-
-                $response_event = $data[2] ?? null;
-                if ( ! $response_event || empty( $response_event['content'] ) ) {
-                    continue;
-                }
-
-                $decrypted = Nip04::decrypt(
-                    $response_event['content'],
-                    $this->secret,
-                    $this->wallet_pubkey
-                );
-
-                $client->text( wp_json_encode( [ 'CLOSE', $sub_id ] ) );
-                $client->disconnect();
-
-                return json_decode( $decrypted, true );
+        foreach ( $result['events'] as $response_event ) {
+            if ( empty( $response_event['content'] ) || strtolower( (string) ( $response_event['pubkey'] ?? '' ) ) !== strtolower( $this->wallet_pubkey ) ) {
+                continue;
             }
 
-            $client->disconnect();
-            return new \WP_Error( 'nwc_timeout', 'Keine Antwort vom Wallet-Service (Timeout).' );
-        } catch ( \Exception $e ) {
-            return new \WP_Error( 'nwc_ws_error', 'WebSocket-Fehler: ' . $e->getMessage() );
+            try {
+                $decrypted = Nip04::decrypt( $response_event['content'], $this->secret, $this->wallet_pubkey );
+
+                return json_decode( $decrypted, true );
+            } catch ( \Exception $e ) {
+                return new \WP_Error( 'nwc_ws_error', 'WebSocket-Fehler: ' . $e->getMessage() );
+            }
         }
+
+        return new \WP_Error( 'nwc_timeout', 'Keine Antwort vom Wallet-Service (Timeout).' );
     }
 
     /**
