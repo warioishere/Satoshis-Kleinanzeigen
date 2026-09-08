@@ -71,41 +71,13 @@ class ZapButton {
     /**
      * The Nostr key a vendor is zapped under, as lowercase hex.
      *
-     * Usually the key of their login or generated identity. Otherwise the
-     * npub they typed into their store settings — and for the platform
-     * account, whose key lives in the configuration and not on the user,
-     * the marketplace key. Without this the admin's own store had a
-     * key in its settings and no zap button.
+     * Only a key whose holder has proven control of it towards this site
+     * (see VendorKey): the login key, a generated identity, the marketplace
+     * key for the platform account, or a typed npub once the extension has
+     * signed the binding. A merely typed npub gets no zap button.
      */
     public static function vendor_pubkey( int $vendor_id ): string {
-        $hex = strtolower( (string) get_user_meta( $vendor_id, 'nostr_public_key', true ) );
-
-        if ( preg_match( '/^[0-9a-f]{64}$/', $hex ) ) {
-            return $hex;
-        }
-
-        $settings = get_user_meta( $vendor_id, 'sk_profile_settings', true );
-        $npub     = is_array( $settings ) ? trim( preg_replace( '/^nostr:/i', '', (string) ( $settings['nostr'] ?? '' ) ) ) : '';
-
-        if ( 0 === strpos( $npub, 'npub1' ) && class_exists( '\swentel\nostr\Key\Key' ) ) {
-            try {
-                $hex = strtolower( (string) ( new \swentel\nostr\Key\Key() )->convertToHex( $npub ) );
-
-                if ( preg_match( '/^[0-9a-f]{64}$/', $hex ) ) {
-                    return $hex;
-                }
-            } catch ( \Throwable $e ) {
-                // Not a usable npub; fall through.
-            }
-        }
-
-        if ( class_exists( 'SK\Modules\NostrMarket\Bridge\ChatBridge' )
-            && \SK\Modules\NostrMarket\Bridge\ChatBridge::is_platform_account( $vendor_id )
-            && class_exists( 'SK\Modules\NostrMarket\EventSender' ) ) {
-            return strtolower( (string) \SK\Modules\NostrMarket\EventSender::get_pubkey() );
-        }
-
-        return '';
+        return \SK\Core\Trust\VendorKey::bound( $vendor_id );
     }
 
     public static function get_vendor_zap_data( int $vendor_id ): ?array {

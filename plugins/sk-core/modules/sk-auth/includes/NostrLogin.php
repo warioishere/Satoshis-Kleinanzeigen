@@ -260,6 +260,12 @@ class Nostr_Login_Handler {
         }
 
         if ( $user ) {
+            // The signed request proves control of the key towards this
+            // site; keep it so the key counts as bound (see VendorKey).
+            if ( class_exists( 'SK\Core\Trust\VendorKey' ) ) {
+                \SK\Core\Trust\VendorKey::record_login_proof( (int) $user->ID, $authtoken );
+            }
+
             wp_set_current_user( $user->ID );
             wp_set_auth_cookie( $user->ID );
             nostr_login_debug_log( 'User logged in successfully: ' . $user->ID );
@@ -449,14 +455,19 @@ class Nostr_Login_Handler {
                 throw new Exception(__('Invalid public key.', 'sk-core'));
             }
 
-            // Check for existing public key
-            $existing_user = $this->get_user_by_public_key($metadata['public_key']);
-            if ($existing_user && $existing_user->ID !== $user_id) {
-                throw new Exception(__('This Nostr account is already linked to another user.', 'sk-core'));
+            // The key on the user is only ever set by a signed login or a
+            // generated identity. This request carries no signature, so it
+            // may refresh the profile of the key already linked, not link
+            // one: otherwise anyone with the nonce could claim any key.
+            $linked = strtolower( (string) get_user_meta( $user_id, 'nostr_public_key', true ) );
+
+            if ( '' === $linked ) {
+                throw new Exception( __( 'Bitte zuerst per Nostr anmelden, um den Schlüssel zu verknüpfen.', 'sk-core' ) );
             }
 
-            // Update Nostr-specific data
-            update_user_meta($user_id, 'nostr_public_key', sanitize_text_field($metadata['public_key']));
+            if ( strtolower( $metadata['public_key'] ) !== $linked ) {
+                throw new Exception( __( 'Der Schlüssel der Erweiterung ist nicht der verknüpfte Schlüssel.', 'sk-core' ) );
+            }
 
             if (!empty($metadata['nip05'])) {
                 update_user_meta($user_id, 'nip05', sanitize_text_field($metadata['nip05']));

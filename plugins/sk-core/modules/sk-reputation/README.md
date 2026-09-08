@@ -54,6 +54,32 @@ Eigene Sektion „SK Reputation" in den Admin-Einstellungen
 (`sk_reputation_enabled`, Option `sk_reputation`). Der Schalter hing früher in
 der SK-Payments-Sektion; das Modul ist jetzt unabhängig von Payments.
 
+## Schlüsselbindung `SK\Core\Trust\VendorKey`
+
+Welcher Nostr-Schlüssel für einen Anbieter zählt. `VendorKey::bound( $id )`
+liefert nur einen Schlüssel, dessen Inhaber die Kontrolle gegenüber dieser
+Seite bewiesen hat, sonst `''`. Ein bloß in die Store-Einstellungen
+getippter npub ist eine Behauptung und zählt nicht. Niemand muss dafür etwas
+eintragen; der Nachweis entsteht aus dem, was ohnehin passiert:
+
+| Herkunft des Schlüssels | Nachweis |
+|---|---|
+| Nostr-Login | Das signierte NIP-98-Event des Logins setzt den Schlüssel auf den Nutzer; `NostrLogin` schreibt ihn sonst nie ohne Signatur (der Profil-Sync darf den Schlüssel nicht mehr setzen oder ändern). Das Login-Event wird als `sk_nostr_login_proof` aufbewahrt. |
+| Von SK erzeugte Identität, Plattformkonto | SK hält den Schlüssel und signiert die Bindung selbst. |
+| Getippter npub | Beim nächsten Dashboard-Besuch mit Erweiterung fragt `assets/js/sk-key-binding.js` still nach dem Schlüssel; ist es derselbe, signiert die Erweiterung einmal das Bindungs-Event. Ein anderer Schlüssel oder ein abgelehntes Popup ändert nichts. |
+
+Das Bindungs-Event ist Kind 30078 (NIP-78), `d` = Host der Seite, `r` =
+Store-URL, `p` = Marktplatz-Schlüssel. Es liegt als `sk_nostr_binding` auf
+dem Nutzer (dazu `sk_nostr_bound_pubkey` für die Eindeutigkeitsprüfung) und
+wird per Cron `sk_trust_publish_binding` auf die Relays veröffentlicht
+(`sk_nostr_binding_relays` merkt, wer es angenommen hat). Ein Schlüssel kann
+nur an ein Konto gebunden sein. Wird der getippte npub geändert, gilt die
+alte Bindung nicht mehr.
+
+Beim Speichern der Events `wp_slash()` verwenden: die Meta-API entfernt
+Backslashes und macht aus `ü` ein `u00fc`, womit die Event-ID nicht
+mehr stimmt.
+
 ## Signalquellen
 
 | Signal | Rechnet | Sichtbar wenn |
@@ -62,10 +88,9 @@ der SK-Payments-Sektion; das Modul ist jetzt unabhängig von Payments.
 | Verifizierter Link | Server (`sk_verified_badge`) | Link bestätigt |
 | Lightning-Proofs | Server, nur mit SK Payments | Payments aktiv und Zahlungen verifiziert |
 
-Geplant, in dieser Reihenfolge: Nostr-Schlüsselbindung (nur signierte
-Schlüssel zählen), Graph-Signal im Browser („Du folgst" / „X deiner Kontakte
-folgen"), Vertrauensseite statt Proof-Seite, NIP-05 pro Shop als Angebot,
-Kind-1984-Meldungen aus dem Graphen des Betrachters.
+Geplant, in dieser Reihenfolge: Graph-Signal im Browser („Du folgst" /
+„X deiner Kontakte folgen"), Vertrauensseite statt Proof-Seite, NIP-05 pro
+Shop als Angebot, Kind-1984-Meldungen aus dem Graphen des Betrachters.
 
 ## Payments-Signal (nur mit SK Payments)
 
