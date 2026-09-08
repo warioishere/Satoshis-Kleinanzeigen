@@ -178,9 +178,14 @@ die Kontaktliste (Kind 3): Folgen-Knopf gedrückt → der nachgewiesene
 Schlüssel des Anbieters kommt in ihre Liste, Entfolgen → er geht raus.
 Hook `sk_follow_store_toggle_status`, Relay-Arbeit per Einzel-Cron
 `sk_reputation_mirror_follow` fünf Sekunden später: neueste Liste von allen
-Relays holen (`RelayReader::latest`), Tag hinzufügen/entfernen, alle anderen
-Tags und den Inhalt behalten, mit `NostrIdentity::publish` signieren und
-senden. Täglich `sk_reputation_mirror_sync` ergänzt Schlüssel von
+Relays holen (`RelayReader::latest`, nimmt nur Events mit gültiger Signatur
+des Nutzers selbst), Tag hinzufügen/entfernen, alle anderen Tags und den
+Inhalt behalten, mit `NostrIdentity::publish` signieren und senden. Hat
+**kein Relay geantwortet** (kein EOSE), wird nichts veröffentlicht, denn ein
+unerreichbares Relay ist kein leeres, und eine aus dem Nichts gebaute Liste
+würde die echte überall ersetzen; der Auftrag wird bis zu dreimal im
+Stundenabstand wiederholt. Eine neue Liste entsteht nur, wenn ein Relay
+geantwortet hat und keines eine kennt. Täglich `sk_reputation_mirror_sync` ergänzt Schlüssel von
 Anbietern, die erst später gebunden wurden; entfernt wird nur auf
 ausdrückliches Entfolgen. Nutzer mit eigenem Schlüssel werden nicht
 angefasst. Damit zählen interne Follows im selben Graph-Signal wie alle

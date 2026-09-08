@@ -30,14 +30,31 @@ class RelayReader {
      * @return array<int, array> Raw events, unverified.
      */
     public static function req( string $relay, array $filters, int $timeout = self::TIMEOUT, int $max = self::MAX_EVENTS ): array {
+        return self::fetch( $relay, $filters, $timeout, $max )['events'];
+    }
+
+    /**
+     * One REQ, and whether the relay actually finished answering it.
+     *
+     * An empty result means two different things: the relay has nothing,
+     * or the relay never answered (unreachable, stalled, timed out). A
+     * caller about to publish a replacement for something it did not find
+     * must tell them apart — hence `eose`, true only when the relay closed
+     * the subscription itself with EOSE (or CLOSED).
+     *
+     * @return array{events: array<int, array>, eose: bool} Raw events, unverified.
+     */
+    public static function fetch( string $relay, array $filters, int $timeout = self::TIMEOUT, int $max = self::MAX_EVENTS ): array {
+        $none = [ 'events' => [], 'eose' => false ];
+
         if ( ! class_exists( '\WebSocket\Client' ) ) {
-            return [];
+            return $none;
         }
 
         $breaker = class_exists( 'SK\Modules\Auth\RelayPublisher' );
 
         if ( $breaker && \SK\Modules\Auth\RelayPublisher::stalled( $relay ) ) {
-            return [];
+            return $none;
         }
 
         if ( $breaker ) {
@@ -45,6 +62,7 @@ class RelayReader {
         }
 
         $events = [];
+        $eose   = false;
         $sub    = bin2hex( random_bytes( 8 ) );
 
         try {
@@ -62,6 +80,7 @@ class RelayReader {
                 }
 
                 if ( 'EOSE' === $data[0] || 'CLOSED' === $data[0] ) {
+                    $eose = true;
                     break;
                 }
 
@@ -79,22 +98,86 @@ class RelayReader {
             \SK\Modules\Auth\RelayPublisher::clear_attempt( $relay );
         }
 
-        return $events;
+        return [ 'events' => $events, 'eose' => $eose ];
     }
 
     /**
-     * The newest replaceable event per author across all relays.
+     * Whether an event is what it claims: well-formed, id recomputed,
+     * signature valid, and — when given — of the expected kind and from
+     * one of the expected authors. Relays check signatures on the way in,
+     * but nothing here relies on a relay being honest.
+     *
+     * @param string[]|null $authors Lowercase hex keys the event must come from.
+     */
+    public static function verified( $event, ?int $kind = null, ?array $authors = null ): bool {
+        if ( ! is_array( $event ) ) {
+            return false;
+        }
+
+        foreach ( [ 'id', 'pubkey', 'sig', 'content' ] as $field ) {
+            if ( ! is_string( $event[ $field ] ?? null ) ) {
+                return false;
+            }
+        }
+
+        if ( ! is_int( $event['created_at'] ?? null ) || ! is_int( $event['kind'] ?? null ) || ! is_array( $event['tags'] ?? null ) ) {
+            return false;
+        }
+
+        if ( null !== $kind && $kind !== $event['kind'] ) {
+            return false;
+        }
+
+        $pubkey = strtolower( $event['pubkey'] );
+
+        if ( ! preg_match( '/^[0-9a-f]{64}$/', $pubkey ) ) {
+            return false;
+        }
+
+        if ( null !== $authors && ! in_array( $pubkey, $authors, true ) ) {
+            return false;
+        }
+
+        if ( ! class_exists( '\swentel\nostr\Event\Event' ) ) {
+            return false;
+        }
+
+        try {
+            return (bool) ( new \swentel\nostr\Event\Event() )->verify( (object) $event );
+        } catch ( \Throwable $e ) {
+            return false;
+        }
+    }
+
+    /**
+     * The newest replaceable event per author across all relays, each
+     * verified against its signature and the author it was asked for.
      *
      * @param string[] $authors
+     * @param int|null $answered Set to the number of relay requests that
+     *                           reached EOSE. Zero means nobody answered,
+     *                           which is not the same as nobody having it.
      * @return array<string, array> author => event
      */
-    public static function latest( int $kind, array $authors ): array {
-        $latest = [];
+    public static function latest( int $kind, array $authors, ?int &$answered = null ): array {
+        $latest   = [];
+        $answered = 0;
+        $authors  = array_values( array_unique( array_map( 'strtolower', array_map( 'strval', $authors ) ) ) );
 
-        foreach ( array_chunk( array_values( $authors ), 100 ) as $chunk ) {
+        foreach ( array_chunk( $authors, 100 ) as $chunk ) {
             foreach ( self::relays() as $relay ) {
-                foreach ( self::req( $relay, [ [ 'kinds' => [ $kind ], 'authors' => $chunk ] ] ) as $event ) {
-                    $author = strtolower( (string) ( $event['pubkey'] ?? '' ) );
+                $result = self::fetch( $relay, [ [ 'kinds' => [ $kind ], 'authors' => $chunk ] ] );
+
+                if ( $result['eose'] ) {
+                    $answered++;
+                }
+
+                foreach ( $result['events'] as $event ) {
+                    if ( ! self::verified( $event, $kind, $chunk ) ) {
+                        continue;
+                    }
+
+                    $author = strtolower( $event['pubkey'] );
 
                     if ( ! isset( $latest[ $author ] ) || $latest[ $author ]['created_at'] < $event['created_at'] ) {
                         $latest[ $author ] = $event;

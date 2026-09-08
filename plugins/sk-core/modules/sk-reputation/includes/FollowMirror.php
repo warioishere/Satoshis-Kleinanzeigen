@@ -28,9 +28,13 @@ class FollowMirror {
     const CRON_HOOK = 'sk_reputation_mirror_follow';
     const SYNC_HOOK = 'sk_reputation_mirror_sync';
 
+    /** How often a single mirror is retried when no relay answered. */
+    const MAX_ATTEMPTS = 3;
+    const RETRY_DELAY  = HOUR_IN_SECONDS;
+
     public function __construct() {
         add_action( 'sk_follow_store_toggle_status', [ __CLASS__, 'on_toggle' ], 10, 3 );
-        add_action( self::CRON_HOOK, [ __CLASS__, 'mirror' ], 10, 3 );
+        add_action( self::CRON_HOOK, [ __CLASS__, 'mirror' ], 10, 4 );
         add_action( self::SYNC_HOOK, [ __CLASS__, 'sync_all' ] );
 
         if ( ! wp_next_scheduled( self::SYNC_HOOK ) ) {
@@ -79,7 +83,7 @@ class FollowMirror {
         }
 
         $op   = 'following' === $status ? 'add' : 'remove';
-        $args = [ $follower_id, $vendor_key, $op ];
+        $args = [ $follower_id, $vendor_key, $op, 1 ];
 
         if ( ! wp_next_scheduled( self::CRON_HOOK, $args ) ) {
             wp_schedule_single_event( time() + 5, self::CRON_HOOK, $args );
@@ -88,16 +92,28 @@ class FollowMirror {
 
     /**
      * Cron: add or remove one key in the user's contact list and publish.
+     * When no relay answered at all, the same job is tried again later;
+     * the list must not be rebuilt from nothing just because the relays
+     * were down.
      */
-    public static function mirror( $user_id, $vendor_key, $op ): void {
+    public static function mirror( $user_id, $vendor_key, $op, $attempt = 1 ): void {
         $user_id    = (int) $user_id;
         $vendor_key = strtolower( (string) $vendor_key );
+        $attempt    = max( 1, (int) $attempt );
 
         if ( ! self::mirrors( $user_id ) || ! preg_match( '/^[0-9a-f]{64}$/', $vendor_key ) ) {
             return;
         }
 
-        self::apply( $user_id, 'add' === $op ? [ $vendor_key ] : [], 'remove' === $op ? [ $vendor_key ] : [] );
+        $outcome = self::apply( $user_id, 'add' === $op ? [ $vendor_key ] : [], 'remove' === $op ? [ $vendor_key ] : [] );
+
+        if ( 'no-answer' === $outcome && $attempt < self::MAX_ATTEMPTS ) {
+            $args = [ $user_id, $vendor_key, $op, $attempt + 1 ];
+
+            if ( ! wp_next_scheduled( self::CRON_HOOK, $args ) ) {
+                wp_schedule_single_event( time() + self::RETRY_DELAY, self::CRON_HOOK, $args );
+            }
+        }
     }
 
     /**
@@ -136,17 +152,33 @@ class FollowMirror {
      * Every tag the list already has is kept, including petnames and
      * relay hints on p tags; the content (legacy relay list) too.
      *
+     * The list that is changed is the newest one the relays hold, and only
+     * one that carries the user's own valid signature (RelayReader::latest
+     * verifies it): a relay cannot slip in a list of its own making for
+     * this site to re-sign. When no relay answers, nothing is published —
+     * an unreachable relay is not an empty one, and a list rebuilt from
+     * nothing would replace the real one everywhere.
+     *
      * @param string[] $add
      * @param string[] $remove
+     * @return string 'published', 'unchanged', 'no-answer' or 'failed'.
      */
-    private static function apply( int $user_id, array $add, array $remove ): void {
+    private static function apply( int $user_id, array $add, array $remove ): string {
         $pubkey = strtolower( (string) \SK\Modules\Auth\NostrIdentity::get_public_key( $user_id ) );
 
         if ( ! preg_match( '/^[0-9a-f]{64}$/', $pubkey ) ) {
-            return;
+            return 'failed';
         }
 
-        $current = RelayReader::latest( 3, [ $pubkey ] )[ $pubkey ] ?? null;
+        $answered = 0;
+        $current  = RelayReader::latest( 3, [ $pubkey ], $answered )[ $pubkey ] ?? null;
+
+        if ( null === $current && 0 === $answered ) {
+            error_log( '[SK Reputation] contact list for user ' . $user_id . ': no relay answered, nothing published.' );
+
+            return 'no-answer';
+        }
+
         $tags    = is_array( $current['tags'] ?? null ) ? $current['tags'] : [];
         $content = is_string( $current['content'] ?? null ) ? $current['content'] : '';
 
@@ -177,13 +209,13 @@ class FollowMirror {
         }
 
         if ( ! $changed ) {
-            return;
+            return 'unchanged';
         }
 
-        // A list that does not exist on the relays yet may only be created
-        // for an addition; removing from nothing publishes nothing.
+        // A list that no relay knows may only be created for an addition;
+        // removing from nothing publishes nothing.
         if ( null === $current && empty( $add ) ) {
-            return;
+            return 'unchanged';
         }
 
         $report = null;
@@ -191,6 +223,10 @@ class FollowMirror {
 
         if ( null === $id ) {
             error_log( '[SK Reputation] contact list for user ' . $user_id . ' not accepted: ' . wp_json_encode( $report['rejected'] ?? [] ) );
+
+            return 'failed';
         }
+
+        return 'published';
     }
 }
