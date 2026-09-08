@@ -65,6 +65,46 @@ class ZapButton {
      * Get zap data for a vendor (Lightning Address + Nostr pubkey).
      * Returns null if vendor can't receive zaps.
      */
+    /**
+     * The Nostr key a vendor is zapped under, as lowercase hex.
+     *
+     * Usually the key of their login or generated identity. Otherwise the
+     * npub they typed into their store settings — and for the platform
+     * account, whose key lives in the configuration and not on the user,
+     * the marketplace key. Without this the admin's own store had a
+     * key in its settings and no zap button.
+     */
+    public static function vendor_pubkey( int $vendor_id ): string {
+        $hex = strtolower( (string) get_user_meta( $vendor_id, 'nostr_public_key', true ) );
+
+        if ( preg_match( '/^[0-9a-f]{64}$/', $hex ) ) {
+            return $hex;
+        }
+
+        $settings = get_user_meta( $vendor_id, 'sk_profile_settings', true );
+        $npub     = is_array( $settings ) ? trim( preg_replace( '/^nostr:/i', '', (string) ( $settings['nostr'] ?? '' ) ) ) : '';
+
+        if ( 0 === strpos( $npub, 'npub1' ) && class_exists( '\swentel\nostr\Key\Key' ) ) {
+            try {
+                $hex = strtolower( (string) ( new \swentel\nostr\Key\Key() )->convertToHex( $npub ) );
+
+                if ( preg_match( '/^[0-9a-f]{64}$/', $hex ) ) {
+                    return $hex;
+                }
+            } catch ( \Throwable $e ) {
+                // Not a usable npub; fall through.
+            }
+        }
+
+        if ( class_exists( 'SK\Modules\NostrMarket\Bridge\ChatBridge' )
+            && \SK\Modules\NostrMarket\Bridge\ChatBridge::is_platform_account( $vendor_id )
+            && class_exists( 'SK\Modules\NostrMarket\EventSender' ) ) {
+            return strtolower( (string) \SK\Modules\NostrMarket\EventSender::get_pubkey() );
+        }
+
+        return '';
+    }
+
     public static function get_vendor_zap_data( int $vendor_id ): ?array {
         $settings = get_user_meta( $vendor_id, 'sk_profile_settings', true );
         if ( ! is_array( $settings ) ) {
@@ -72,7 +112,7 @@ class ZapButton {
         }
 
         $lightning_address = $settings['lightning_address'] ?? '';
-        $nostr_pubkey     = get_user_meta( $vendor_id, 'nostr_public_key', true );
+        $nostr_pubkey      = self::vendor_pubkey( $vendor_id );
 
         // Fallback: our own LNURL-Pay endpoint, for vendors who connected a
         // wallet but never typed a Lightning Address. The local part is the
@@ -428,6 +468,10 @@ class ZapButton {
         wp_localize_script( 'sk-zaps', 'skZaps', [
             'ajaxurl'       => admin_url( 'admin-ajax.php' ),
             'defaultAmount' => (int) sk_get_option( 'sk_zaps_default_amount', 'sk_zaps', '21' ),
+            // Who is looking: their own buttons get a hint instead of a modal.
+            'currentUserId' => get_current_user_id(),
+            'currentPubkey' => is_user_logged_in() ? strtolower( (string) get_user_meta( get_current_user_id(), 'nostr_public_key', true ) ) : '',
+            'i18nSelfZap'   => __( 'Du kannst dich nicht selbst zappen.', 'sk-core' ),
             'relays'        => array_values( $relays ),
             // QR codes are rendered on our own server, never by a third party.
             'qrUrl'         => rest_url( 'sk/v1/lightning/qr' ),

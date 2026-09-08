@@ -89,6 +89,23 @@
         }
     }
 
+    /** Same toast as the rest of the site (.dm-toast lives in the theme stylesheet). */
+    function toast(message, type) {
+        var $t = $('<div class="dm-toast ' + (type || 'error') + '"><i class="fas ' + (type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle') + '"></i><span></span></div>');
+        $t.find('span').text(message);
+        $('body').append($t);
+        setTimeout(function () { $t.fadeOut(300, function () { $t.remove(); }); }, 3000);
+    }
+
+    /** The viewer's own button: same account, or same key in the extension's profile. */
+    function isSelf(data) {
+        var me = parseInt(defaults.currentUserId, 10) || 0;
+        if (me && me === (parseInt(data.vendorId, 10) || 0)) {
+            return true;
+        }
+        return !!defaults.currentPubkey && !!data.nostrPubkey && String(data.nostrPubkey).toLowerCase() === defaults.currentPubkey;
+    }
+
     // Zap button click.
     $(document).on('click', '.sk-zap-btn', function (e) {
         e.preventDefault();
@@ -103,6 +120,11 @@
             postId: $btn.data('post-id') || 0,
             $btn: $btn
         };
+
+        if (isSelf(data)) {
+            toast(defaults.i18nSelfZap || 'Du kannst dich nicht selbst zappen.');
+            return;
+        }
 
         showZapModal(data);
     });

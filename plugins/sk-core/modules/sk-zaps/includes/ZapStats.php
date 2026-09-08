@@ -119,7 +119,7 @@ class ZapStats {
             wp_send_json_error( [ 'message' => 'Signatur ungültig.' ] );
         }
 
-        $vendor_pub = strtolower( (string) get_user_meta( $vendor_id, 'nostr_public_key', true ) );
+        $vendor_pub = ZapButton::vendor_pubkey( $vendor_id );
         $named      = false;
 
         foreach ( $receipt['tags'] as $tag ) {
@@ -264,7 +264,7 @@ class ZapStats {
      * Ask for a refresh, at most once an hour per vendor, off the page.
      */
     private static function queue_refresh( int $vendor_id ): void {
-        $pubkey = strtolower( (string) get_user_meta( $vendor_id, 'nostr_public_key', true ) );
+        $pubkey = ZapButton::vendor_pubkey( $vendor_id );
 
         if ( ! preg_match( '/^[0-9a-f]{64}$/', $pubkey ) ) {
             return;
