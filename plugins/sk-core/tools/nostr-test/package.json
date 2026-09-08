@@ -1,0 +1,16 @@
+{
+  "name": "sk-nostr-test",
+  "private": true,
+  "type": "module",
+  "description": "Test tooling for the Nostr trust signals: mock relay, signed test events, browser test with a fake relay. See run.sh.",
+  "scripts": {
+    "test": "./run.sh",
+    "test:php": "./run.sh php",
+    "test:graph": "./run.sh graph"
+  },
+  "devDependencies": {
+    "@noble/curves": "2.0.1",
+    "@noble/hashes": "2.0.1"
+  },
+  "comment": "Puppeteer is not installed here (it brings its own Chromium): graph.test.mjs uses SK_PUPPETEER or the css-audit install on the server."
+}
