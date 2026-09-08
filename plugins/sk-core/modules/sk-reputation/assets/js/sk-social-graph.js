@@ -21,7 +21,7 @@
     }
 
     var TTL = 24 * 60 * 60 * 1000;
-    var PREFIX = 'skTrust:v1:';
+    var PREFIX = 'skTrust:v2:';
     var AUTHORS_PER_FILTER = 200;
     var FILTERS_PER_REQ = 10;
     var MAX_CONTACTS = 4000;
@@ -170,13 +170,18 @@
      * For each vendor, which of the viewer's contacts follow them.
      * Returns { vendor: [contact, ...] }.
      */
-    async function followersAmongContacts(viewer, contacts, vendors) {
+    /**
+     * For each vendor: which of the viewer's contacts follow them (f), and
+     * which have reported them (r, kind 1984 with a type that matters here).
+     * One round of REQs covers both; returns { vendor: { f: [...], r: [...] } }.
+     */
+    async function graphOf(viewer, contacts, vendors) {
         var result = {};
         var pending = [];
 
         vendors.forEach(function (v) {
-            var cached = load(viewer + ':f:' + v);
-            if (cached) { result[v] = cached; } else { pending.push(v); result[v] = []; }
+            var cached = load(viewer + ':g:' + v);
+            if (cached) { result[v] = cached; } else { pending.push(v); result[v] = { f: [], r: [] }; }
         });
 
         if (!pending.length || !contacts.length) { return result; }
@@ -184,7 +189,9 @@
         var authors = contacts.slice(0, MAX_CONTACTS);
         var filters = [];
         for (var i = 0; i < authors.length; i += AUTHORS_PER_FILTER) {
-            filters.push({ kinds: [3], authors: authors.slice(i, i + AUTHORS_PER_FILTER), '#p': pending });
+            var chunk = authors.slice(i, i + AUTHORS_PER_FILTER);
+            filters.push({ kinds: [3], authors: chunk, '#p': pending });
+            filters.push({ kinds: [1984], authors: chunk, '#p': pending });
         }
 
         var events = [];
@@ -192,19 +199,33 @@
             events = events.concat(await query(filters.slice(j, j + FILTERS_PER_REQ), 2));
         }
 
-        var latest = latestPerAuthor(events);
         var contactSet = {};
         authors.forEach(function (c) { contactSet[c] = 1; });
 
+        var latest = latestPerAuthor(events.filter(function (e) { return e.kind === 3; }));
         Object.keys(latest).forEach(function (author) {
             if (!contactSet[author]) { return; }
             var follows = tagValues(latest[author], 'p');
             pending.forEach(function (v) {
-                if (follows.indexOf(v) !== -1) { result[v].push(author); }
+                if (follows.indexOf(v) !== -1) { result[v].f.push(author); }
             });
         });
 
-        pending.forEach(function (v) { save(viewer + ':f:' + v, result[v]); });
+        events.filter(function (e) { return e.kind === 1984; }).forEach(function (e) {
+            var reporter = String(e.pubkey || '').toLowerCase();
+            if (!contactSet[reporter]) { return; }
+            // Automated classifiers report by score, not by judgement.
+            if (/^\s*automated/i.test(String(e.content || ''))) { return; }
+            (e.tags || []).forEach(function (t) {
+                if (t[0] !== 'p' || !t[1]) { return; }
+                var target = String(t[1]).toLowerCase();
+                var type = String(t[2] || '').toLowerCase();
+                if (!result[target] || pending.indexOf(target) === -1 || !cfg.i18n.types[type]) { return; }
+                result[target].r.push({ id: e.id, reporter: reporter, type: type, created_at: e.created_at });
+            });
+        });
+
+        pending.forEach(function (v) { save(viewer + ':g:' + v, result[v]); });
         return result;
     }
 
@@ -275,6 +296,44 @@
         if (el) { el.hidden = false; }
     }
 
+    /**
+     * Reports by the viewer's own contacts, as a chip of its own next to
+     * the graph chip. Absent when there are none.
+     */
+    function renderReports(chip, reports, names) {
+        if (!reports || !reports.length || chip.nextElementSibling && chip.nextElementSibling.classList.contains('sk-trust-report')) { return; }
+
+        var byReporter = {};
+        reports.forEach(function (r) { if (!byReporter[r.reporter] || byReporter[r.reporter].created_at < r.created_at) { byReporter[r.reporter] = r; } });
+        var distinct = Object.keys(byReporter);
+        if (!distinct.length) { return; }
+
+        var short = !chip.classList.contains('sk-trust-graph--store') && !chip.classList.contains('sk-trust-graph--page');
+        var text = (distinct.length === 1
+            ? (short ? cfg.i18n.report1S : cfg.i18n.report1)
+            : (short ? cfg.i18n.reportNS : cfg.i18n.reportN)).replace('%d', distinct.length);
+
+        var ctx = (chip.className.match(/sk-trust-graph--(\w+)/) || [])[1] || '';
+        var el = document.createElement(chip.tagName);
+        el.className = 'sk-trust-report sk-trust-report--' + ctx;
+        el.title = cfg.i18n.reportWhy;
+        el.innerHTML = '<i class="fas fa-triangle-exclamation" aria-hidden="true"></i> <span class="sk-trust-report-text">' + esc(text) + '</span>';
+
+        var html = '<div class="sk-trust-pop-note">' + esc(cfg.i18n.reportWhy) + '</div><ul>';
+        distinct.slice(0, NAMES_PER_VENDOR).forEach(function (p) {
+            var r = byReporter[p];
+            html += '<li><a href="https://njump.me/' + r.id + '" target="_blank" rel="noopener">' + esc(names[p] || shortKey(p)) + '</a><span class="sk-trust-pop-type">' + esc(cfg.i18n.types[r.type] || r.type) + '</span></li>';
+        });
+        html += '</ul>';
+        var pop = document.createElement('div');
+        pop.className = 'sk-trust-pop';
+        pop.innerHTML = html;
+        el.appendChild(pop);
+        el.addEventListener('click', function (ev) { ev.stopPropagation(); pop.classList.toggle('is-open'); });
+
+        chip.parentNode.insertBefore(el, chip.nextSibling);
+    }
+
     function whyList(followers, names) {
         var shown = followers.slice(0, NAMES_PER_VENDOR);
         var html = '<div class="sk-trust-pop-note">' + esc(cfg.i18n.why) + '</div><ul>';
@@ -322,17 +381,22 @@
             });
             if (!vendors.length) { return; }
 
-            var followers = await followersAmongContacts(viewer, contacts, vendors);
+            var graph = await graphOf(viewer, contacts, vendors);
 
             var namePubkeys = [];
             vendors.forEach(function (v) {
-                (followers[v] || []).slice(0, NAMES_PER_VENDOR).forEach(function (p) { if (namePubkeys.indexOf(p) === -1) { namePubkeys.push(p); } });
+                var g = graph[v] || { f: [], r: [] };
+                g.f.slice(0, NAMES_PER_VENDOR).concat(g.r.map(function (r) { return r.reporter; })).forEach(function (p) {
+                    if (namePubkeys.indexOf(p) === -1) { namePubkeys.push(p); }
+                });
             });
             var names = namePubkeys.length ? await namesOf(namePubkeys) : {};
 
             chips.forEach(function (c) {
                 var v = c.getAttribute('data-pubkey').toLowerCase();
-                var list = followers[v] || [];
+                var g = graph[v] || { f: [], r: [] };
+                var list = g.f;
+                renderReports(c, g.r, names);
                 // Only the store banner and the trust page have room for the full sentence.
                 var short = !c.classList.contains('sk-trust-graph--store') && !c.classList.contains('sk-trust-graph--page');
                 var follow = short ? cfg.i18n.followS : cfg.i18n.follow;

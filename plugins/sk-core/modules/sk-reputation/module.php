@@ -29,6 +29,7 @@ final class Module {
         require_once SK_REPUTATION_INCLUDES . '/Settings.php';
         require_once SK_REPUTATION_INCLUDES . '/SocialGraph.php';
         require_once SK_REPUTATION_INCLUDES . '/TrustPage.php';
+        require_once SK_REPUTATION_INCLUDES . '/Reports.php';
         require_once SK_REPUTATION_INCLUDES . '/Calculator.php';
         require_once SK_REPUTATION_INCLUDES . '/Cron.php';
         require_once SK_REPUTATION_INCLUDES . '/ProofPage.php';
@@ -61,6 +62,9 @@ final class Module {
         // /store/{slug}/vertrauen/: every signal with source and proof.
         new TrustPage();
 
+        // Nostr reports from the web of trust, for the operator only.
+        new Reports();
+
         // The payment-based signals (credited transactions, proof page)
         // exist only where SK Payments writes the payment table. Without
         // that module the cron would query a table that is not there.
@@ -90,11 +94,13 @@ final class Module {
 
     public function activate() {
         Cron::schedule();
+        Reports::schedule();
         flush_rewrite_rules( true );
     }
 
     public function deactivate() {
         wp_clear_scheduled_hook( 'sk_recalculate_reputation_scores' );
+        Reports::unschedule();
         flush_rewrite_rules( true );
     }
 }

@@ -90,3 +90,12 @@
 .sk-trust-proof-line code.skl-bolt11-proof { display: block; margin-top: 4px; max-height: 40px; overflow: hidden; font-size: 10px; }
 .sk-trust-proof-actions { margin-top: 4px; display: flex; gap: 12px; }
 .sk-trust-proof-actions button, .skl-copy-btn { background: none; border: none; color: #6b7a8c; cursor: pointer; font-size: 11px; padding: 0; }
+
+/* Reports by the viewer's own contacts: amber, never louder than that. */
+.sk-trust-report { display: inline-flex; align-items: center; gap: 4px; position: relative; color: #f59e0b; cursor: pointer; }
+.sk-trust-report i { color: #f59e0b; }
+.sk-store-info .sk-trust-report { color: #fbbf24; }
+.sk-vendor-info-wrap .sk-trust-report { align-self: center; font-size: 13px; margin-left: 10px; }
+.sk-feed-card-meta .sk-trust-report { font-size: 12px; margin-left: 8px; }
+.sk-trust-report--page { font-size: 15px; margin-top: 6px; display: flex; }
+.sk-trust-pop-type { color: #6b7280; font-size: 12px; margin-left: 4px; }

@@ -128,8 +128,37 @@ die frühere Proof-Liste). Der Tab erscheint nur, wenn der Server mindestens
 ein Signal kennt (`TrustPage::has_signals`). Die alte Adresse
 `/lightning-proof/` zeigt dieselbe Seite.
 
-Geplant, in dieser Reihenfolge: NIP-05 pro Shop als Angebot,
-Kind-1984-Meldungen aus dem Graphen des Betrachters.
+## NIP-05 pro Shop
+
+`/.well-known/nostr.json?name={slug}` (sk-auth) antwortet für jeden
+Anbieter mit nachgewiesenem Schlüssel, nie mit einem behaupteten
+(`VendorKey::bound`). Die Vertrauensseite nennt die Adresse; wer sie in
+sein Nostr-Profil einträgt, bekommt in jedem Client das Häkchen der Seite.
+Einrichten muss niemand etwas.
+
+## Meldungen (Kind 1984, NIP-56)
+
+**Für Käufer, relativ zum Betrachter:** dieselbe REQ wie für Grad 2 fragt
+zusätzlich `kinds:[1984]` mit `authors` = eigene Kontakte und `#p` =
+Anbieter. Treffer mit Typ `spam`, `impersonation`, `illegal` oder
+`malware` (nicht `nudity`/`profanity`, nicht „Automated …") ergeben einen
+eigenen bernsteinfarbenen Chip neben dem Graph-Chip: „2 deiner Kontakte
+haben diesen Anbieter gemeldet", mit Melder, Typ und Link zum Event. Nur
+aus den eigenen Kontakten; der Marktplatz filtert nichts.
+
+**Für den Betreiber (`Reports`, Cron `sk_reputation_fetch_reports`,
+täglich):** liest Meldungen gegen alle nachgewiesenen Anbieter-Schlüssel
+(und den Marktplatz-Schlüssel) von den Relays, prüft Signaturen, behält
+nur Melder aus dem Web of Trust: Follows des Marktplatz-Schlüssels, deren
+Follows (Transient `sk_reputation_wot`, Präfixe von 16 Hex, 1 Tag) und die
+nachgewiesenen Schlüssel registrierter Anbieter. Ergebnis je Anbieter in
+`sk_nostr_reports` (ersetzt, nie gemischt), Übersicht unter „SK Reputation"
+im Admin-Menü mit „Jetzt abrufen", eine Mail pro Tag bei neuen Meldungen.
+Käufer sehen davon nichts.
+
+Befund beim Bau (2026-09-08): sechs Meldungen gegen 59 Anbieter-Schlüssel,
+davon vier von einem NSFW-Bot, eine leer, eine „wrong click"; keine aus
+dem Web of Trust. Ohne Filter wäre das Signal reines Rauschen.
 
 ## Payments-Signal (nur mit SK Payments)
 

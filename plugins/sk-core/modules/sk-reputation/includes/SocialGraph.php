@@ -86,6 +86,18 @@ class SocialGraph {
                 'contactNS' => __( '%d Kontakte folgen', 'sk-core' ),
                 'why'       => __( 'Aus deiner eigenen Kontaktliste auf Nostr berechnet, nur in deinem Browser.', 'sk-core' ),
                 'more'      => __( 'und %d weitere', 'sk-core' ),
+                // Reports (kind 1984) by the viewer's own contacts.
+                'report1'   => __( '%d deiner Kontakte hat diesen Anbieter gemeldet', 'sk-core' ),
+                'reportN'   => __( '%d deiner Kontakte haben diesen Anbieter gemeldet', 'sk-core' ),
+                'report1S'  => __( '%d Kontakt meldet', 'sk-core' ),
+                'reportNS'  => __( '%d Kontakte melden', 'sk-core' ),
+                'reportWhy' => __( 'Meldungen aus deiner eigenen Kontaktliste. Was gemeldet wurde, entscheidet der Melder, nicht der Marktplatz.', 'sk-core' ),
+                'types'     => [
+                    'spam'          => __( 'Spam', 'sk-core' ),
+                    'impersonation' => __( 'Identitätsmissbrauch', 'sk-core' ),
+                    'illegal'       => __( 'Illegal', 'sk-core' ),
+                    'malware'       => __( 'Schadsoftware', 'sk-core' ),
+                ],
             ],
         ] );
     }
