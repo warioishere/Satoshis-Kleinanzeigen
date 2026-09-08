@@ -97,7 +97,13 @@ if ( 'layout3' === $profile_layout ) {
                                 <?php echo wp_kses_post( sk_get_readable_seller_rating( $store_user->get_id() ) ); ?>
                             </li>
 
-                            <?php do_action( 'sk_store_header_info_fields', $store_user->get_id() ); ?>
+                            <?php
+                            // Trust strip: one <li> per signal the vendor
+                            // has (zaps received, later the social graph
+                            // line and Lightning proofs). Nothing for a
+                            // vendor without signals.
+                            \SK\Core\Trust\TrustSignals::render( (int) $store_user->get_id(), \SK\Core\Trust\TrustSignals::CONTEXT_STORE );
+                            ?>
                         </ul>
 
                         <?php if ( $social_fields ) { ?>

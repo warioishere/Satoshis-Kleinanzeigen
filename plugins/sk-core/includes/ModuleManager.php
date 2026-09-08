@@ -226,8 +226,8 @@ class ModuleManager {
                     ],
                     'sk_reputation' => [
                         'id'           => 'sk_reputation',
-                        'name'         => __( 'Lightning Reputation', 'sk-core' ),
-                        'description'  => __( 'Sybil-resistentes Reputationssystem basierend auf Lightning-Zahlungen.', 'sk-core' ),
+                        'name'         => __( 'SK Reputation', 'sk-core' ),
+                        'description'  => __( 'Nachprüfbare Vertrauenssignale an Anbietern: Nostr-Schlüsselbindung, Kontakte des Betrachters, verifizierte Lightning-Zahlungen.', 'sk-core' ),
                         'thumbnail'    => $thumbnail_dir . '/follow-store.svg',
                         'module_file'  => SK_CORE_DIR . '/modules' . '/sk-reputation/module.php',
                         'module_class' => 'SK\Modules\Reputation\Module',

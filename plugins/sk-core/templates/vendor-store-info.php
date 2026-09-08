@@ -31,11 +31,9 @@
         <?php endif; ?>
     </div>
     <?php
-    // Sats the vendor has received in zaps, left of the verification badge
-    // at the right end of the box.
-    if ( class_exists( 'SK\Modules\Zaps\ZapStats' ) && class_exists( 'SK\Modules\Zaps\ZapButton' ) && \SK\Modules\Zaps\ZapButton::is_enabled() ) {
-        \SK\Modules\Zaps\ZapStats::render_inline( (int) $vendor->get_id() );
-    }
+    // Trust strip (zaps received, later the social graph line and Lightning
+    // proofs), left of the verification badge at the right end of the box.
+    \SK\Core\Trust\TrustSignals::render( (int) $vendor->get_id(), \SK\Core\Trust\TrustSignals::CONTEXT_PRODUCT );
 
     // Rechts am Ende der Box, mittig zur Hoehe — die Ausrichtung macht das
     // margin-left:auto in .sk-vendor-info-wrap .sk-verify-badge.

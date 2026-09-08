@@ -42,13 +42,6 @@ class AdminSettings {
                 'default' => 'on',
                 'desc'    => __( 'Ermöglicht Vendors, Lightning-Zahlungen zu empfangen (NWC, LNDHub, Lightning-Adresse).', 'sk-core' ),
             ],
-            'sk_reputation_enabled' => [
-                'name'    => 'sk_reputation_enabled',
-                'label'   => __( 'Reputation-System aktivieren', 'sk-core' ),
-                'type'    => 'switcher',
-                'default' => 'on',
-                'desc'    => __( 'Sybil-resistentes Reputationssystem basierend auf verifizierten Lightning-Zahlungen. Zeigt Badges und Proof-Pages auf Store-Seiten.', 'sk-core' ),
-            ],
             'sk_lightning_chat_integration' => [
                 'name'    => 'sk_lightning_chat_integration',
                 'label'   => __( 'Chat-Integration', 'sk-core' ),

@@ -26,6 +26,7 @@ final class Module {
     }
 
     private function includes() {
+        require_once SK_REPUTATION_INCLUDES . '/Settings.php';
         require_once SK_REPUTATION_INCLUDES . '/Calculator.php';
         require_once SK_REPUTATION_INCLUDES . '/Cron.php';
         require_once SK_REPUTATION_INCLUDES . '/ProofPage.php';
@@ -37,19 +38,45 @@ final class Module {
     }
 
     private function instances() {
+        new Settings();
+
+        // Modules are built before the module manager is in the container,
+        // so whether other modules are active is only known from init on.
+        // Priority 0 is still ahead of the rewrite rules (init, 10) that
+        // the proof page hooks into.
+        add_action( 'init', [ $this, 'boot' ], 0 );
+    }
+
+    public function boot(): void {
         if ( ! self::is_enabled() ) {
             return;
         }
 
-        new Cron();
-        new ProofPage();
+        // The payment-based signals (credited transactions, proof page)
+        // exist only where SK Payments writes the payment table. Without
+        // that module the cron would query a table that is not there.
+        if ( self::payments_available() ) {
+            new Cron();
+            new ProofPage();
+        }
     }
 
     /**
-     * Check if Reputation system is enabled in admin settings.
+     * Module switched on in the module manager and enabled in its own
+     * settings section.
      */
     public static function is_enabled(): bool {
-        return sk_get_option( 'sk_reputation_enabled', 'sk_lightning', 'on' ) === 'on';
+        return sk_module_active( 'sk_reputation' )
+            && sk_get_option( 'sk_reputation_enabled', Settings::SECTION, 'on' ) === 'on';
+    }
+
+    /**
+     * Whether payments are a source of signals on this site.
+     */
+    public static function payments_available(): bool {
+        return sk_module_active( 'sk_payments' )
+            && class_exists( 'SK\Modules\Payments\Module', false )
+            && \SK\Modules\Payments\Module::is_enabled();
     }
 
     public function activate() {

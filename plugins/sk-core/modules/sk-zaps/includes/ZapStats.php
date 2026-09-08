@@ -32,8 +32,9 @@ class ZapStats {
     public static function init(): void {
         add_action( self::CRON_HOOK, [ __CLASS__, 'refresh' ], 10, 2 );
 
-        // Store banner: below the rating, through the slot the header already offers.
-        add_action( 'sk_store_header_info_fields', [ __CLASS__, 'render_store_line' ], 20, 1 );
+        // The sats line is one chip in the vendor's trust strip (store
+        // banner below the rating, vendor box on the product page).
+        \SK\Core\Trust\TrustSignals::register( 'zaps', [ __CLASS__, 'chip' ], 20 );
 
         // A zap paid to an outside Lightning address: the browser hands in
         // the receipt it saw on the relays. Zappers need no account.
@@ -222,38 +223,27 @@ class ZapStats {
     }
 
     /**
-     * The line for the store banner, under the rating.
+     * The trust-strip chip: a list item under the rating in the store
+     * banner, an inline badge in the vendor box on the product page.
+     * Nothing at all while the vendor has received no zaps.
      */
-    public static function render_store_line( $vendor_id ): void {
-        $sats = ZapButton::is_enabled() ? self::received_sats( (int) $vendor_id ) : 0;
-
-        if ( $sats <= 0 ) {
-            return;
-        }
-
-        ZapButton::ensure_assets();
-        ?>
-        <li class="sk-store-zaps" title="<?php esc_attr_e( 'Erhaltene Zaps', 'sk-core' ); ?>">
-            <i class="fas fa-bolt"></i>
-            <?php echo esc_html( self::format_sats( $sats ) ); ?>
-        </li>
-        <?php
-    }
-
-    /**
-     * The inline badge next to the vendor name on a product page.
-     */
-    public static function render_inline( int $vendor_id ): void {
+    public static function chip( int $vendor_id, string $context ): string {
         $sats = ZapButton::is_enabled() ? self::received_sats( $vendor_id ) : 0;
 
         if ( $sats <= 0 ) {
-            return;
+            return '';
         }
 
         ZapButton::ensure_assets();
-        ?>
-        <span class="sk-vendor-zaps" title="<?php esc_attr_e( 'Erhaltene Zaps', 'sk-core' ); ?>"><i class="fas fa-bolt"></i> <?php echo esc_html( self::format_sats( $sats ) ); ?></span>
-        <?php
+
+        $title = esc_attr__( 'Erhaltene Zaps', 'sk-core' );
+        $text  = esc_html( self::format_sats( $sats ) );
+
+        if ( \SK\Core\Trust\TrustSignals::CONTEXT_STORE === $context ) {
+            return '<li class="sk-store-zaps" title="' . $title . '"><i class="fas fa-bolt"></i> ' . $text . '</li>';
+        }
+
+        return '<span class="sk-vendor-zaps" title="' . $title . '"><i class="fas fa-bolt"></i> ' . $text . '</span>';
     }
 
     public static function format_sats( int $sats ): string {
