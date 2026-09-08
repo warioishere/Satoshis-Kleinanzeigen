@@ -62,8 +62,11 @@ class TrustPage {
     }
 
     /**
-     * The trust template when the URL names an existing store, else what
-     * WordPress would have shown. Shared with the old /lightning-proof/ URL.
+     * The trust template when the URL names an existing store that has at
+     * least one signal; otherwise a 404. A vendor without signals gets no
+     * tab and no page either — a page with nothing on it would be the
+     * negative display the rules forbid. Shared with the old
+     * /lightning-proof/ URL.
      */
     public static function template_for_current_store( $template ) {
         $custom_store_url = sk_get_option( 'custom_store_url', 'sk_general', 'store' );
@@ -73,7 +76,18 @@ class TrustPage {
             return $template;
         }
 
-        if ( ! get_user_by( 'slug', $store_name ) ) {
+        $store_user = get_user_by( 'slug', $store_name );
+
+        if ( ! $store_user || ! self::has_signals( (int) $store_user->ID ) ) {
+            global $wp_query;
+
+            if ( $wp_query instanceof \WP_Query ) {
+                $wp_query->set_404();
+            }
+
+            status_header( 404 );
+            nocache_headers();
+
             return get_404_template();
         }
 
