@@ -29,7 +29,9 @@ final class Module {
         require_once SK_REPUTATION_INCLUDES . '/Settings.php';
         require_once SK_REPUTATION_INCLUDES . '/SocialGraph.php';
         require_once SK_REPUTATION_INCLUDES . '/TrustPage.php';
+        require_once SK_REPUTATION_INCLUDES . '/RelayReader.php';
         require_once SK_REPUTATION_INCLUDES . '/Reports.php';
+        require_once SK_REPUTATION_INCLUDES . '/FollowMirror.php';
         require_once SK_REPUTATION_INCLUDES . '/Calculator.php';
         require_once SK_REPUTATION_INCLUDES . '/Cron.php';
         require_once SK_REPUTATION_INCLUDES . '/ProofPage.php';
@@ -65,6 +67,11 @@ final class Module {
         // Nostr reports from the web of trust, for the operator only.
         new Reports();
 
+        // Internal store follows of SK-made identities, kept in their kind 3.
+        if ( sk_module_active( 'follow_store' ) ) {
+            new FollowMirror();
+        }
+
         // The payment-based signals (credited transactions, proof page)
         // exist only where SK Payments writes the payment table. Without
         // that module the cron would query a table that is not there.
@@ -95,12 +102,14 @@ final class Module {
     public function activate() {
         Cron::schedule();
         Reports::schedule();
+        FollowMirror::schedule();
         flush_rewrite_rules( true );
     }
 
     public function deactivate() {
         wp_clear_scheduled_hook( 'sk_recalculate_reputation_scores' );
         Reports::unschedule();
+        FollowMirror::unschedule();
         flush_rewrite_rules( true );
     }
 }

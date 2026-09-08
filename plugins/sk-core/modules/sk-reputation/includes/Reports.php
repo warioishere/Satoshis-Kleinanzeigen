@@ -388,20 +388,7 @@ class Reports {
             return [];
         }
 
-        $latest = [];
-
-        foreach ( array_chunk( $authors, 100 ) as $chunk ) {
-            foreach ( self::relays() as $relay ) {
-                foreach ( self::req( $relay, [ [ 'kinds' => [ 3 ], 'authors' => $chunk ] ] ) as $event ) {
-                    $author = strtolower( (string) ( $event['pubkey'] ?? '' ) );
-
-                    if ( ! isset( $latest[ $author ] ) || $latest[ $author ]['created_at'] < $event['created_at'] ) {
-                        $latest[ $author ] = $event;
-                    }
-                }
-            }
-        }
-
+        $latest  = RelayReader::latest( 3, $authors );
         $follows = [];
 
         foreach ( $latest as $event ) {
@@ -425,70 +412,12 @@ class Reports {
 
     /** @return string[] */
     private static function relays(): array {
-        if ( sk_module_active( 'sk_auth' ) && class_exists( 'SK\Modules\Auth\NostrIdentity' ) ) {
-            return \SK\Modules\Auth\NostrIdentity::get_relays();
-        }
-
-        return [];
+        return RelayReader::relays();
     }
 
-    /**
-     * One REQ against one relay, events until EOSE or the timeout.
-     * Guarded by the same breaker as every other relay call here.
-     *
-     * @return array<int, array>
-     */
+    /** @return array<int, array> */
     private static function req( string $relay, array $filters ): array {
-        if ( ! class_exists( '\WebSocket\Client' ) ) {
-            return [];
-        }
-
-        $breaker = class_exists( 'SK\Modules\Auth\RelayPublisher' );
-
-        if ( $breaker && \SK\Modules\Auth\RelayPublisher::stalled( $relay ) ) {
-            return [];
-        }
-
-        if ( $breaker ) {
-            \SK\Modules\Auth\RelayPublisher::mark_attempt( $relay );
-        }
-
-        $events = [];
-        $sub    = bin2hex( random_bytes( 8 ) );
-
-        try {
-            $client = new \WebSocket\Client( $relay );
-            $client->setTimeout( self::RELAY_TIMEOUT );
-            $client->text( wp_json_encode( array_merge( [ 'REQ', $sub ], $filters ) ) );
-
-            $deadline = microtime( true ) + self::RELAY_TIMEOUT;
-
-            while ( microtime( true ) < $deadline && count( $events ) < self::MAX_EVENTS ) {
-                $data = json_decode( $client->receive()->getContent(), true );
-
-                if ( ! is_array( $data ) || ( $data[1] ?? '' ) !== $sub ) {
-                    continue;
-                }
-
-                if ( 'EOSE' === $data[0] || 'CLOSED' === $data[0] ) {
-                    break;
-                }
-
-                if ( 'EVENT' === $data[0] && is_array( $data[2] ?? null ) && is_string( $data[2]['id'] ?? null ) ) {
-                    $events[] = $data[2];
-                }
-            }
-
-            $client->close();
-        } catch ( \Throwable $e ) {
-            // A silent or unreachable relay contributes nothing.
-        }
-
-        if ( $breaker ) {
-            \SK\Modules\Auth\RelayPublisher::clear_attempt( $relay );
-        }
-
-        return $events;
+        return RelayReader::req( $relay, $filters, self::RELAY_TIMEOUT, self::MAX_EVENTS );
     }
 
     private static function notify_admin( array $new ): void {

@@ -156,6 +156,24 @@ nachgewiesenen Schlüssel registrierter Anbieter. Ergebnis je Anbieter in
 im Admin-Menü mit „Jetzt abrufen", eine Mail pro Tag bei neuen Meldungen.
 Käufer sehen davon nichts.
 
+## Interne Follows im Nostr-Graphen (`FollowMirror`)
+
+Für Nutzer mit **von SK erzeugter Identität** (Meta
+`sk_nostr_identity_source = generated`, Schlüssel liegt bei uns) pflegt SK
+die Kontaktliste (Kind 3): Folgen-Knopf gedrückt → der nachgewiesene
+Schlüssel des Anbieters kommt in ihre Liste, Entfolgen → er geht raus.
+Hook `sk_follow_store_toggle_status`, Relay-Arbeit per Einzel-Cron
+`sk_reputation_mirror_follow` fünf Sekunden später: neueste Liste von allen
+Relays holen (`RelayReader::latest`), Tag hinzufügen/entfernen, alle anderen
+Tags und den Inhalt behalten, mit `NostrIdentity::publish` signieren und
+senden. Täglich `sk_reputation_mirror_sync` ergänzt Schlüssel von
+Anbietern, die erst später gebunden wurden; entfernt wird nur auf
+ausdrückliches Entfolgen. Nutzer mit eigenem Schlüssel werden nicht
+angefasst. Damit zählen interne Follows im selben Graph-Signal wie alle
+anderen; eine globale Followerzahl gibt es bewusst nicht. Aktiv nur, wenn
+das Modul `follow_store` läuft. (Live 2026-09-08: 45 erzeugte Identitäten,
+noch keine mit internem Follow.)
+
 Befund beim Bau (2026-09-08): sechs Meldungen gegen 59 Anbieter-Schlüssel,
 davon vier von einem NSFW-Bot, eine leer, eine „wrong click"; keine aus
 dem Web of Trust. Ohne Filter wäre das Signal reines Rauschen.
