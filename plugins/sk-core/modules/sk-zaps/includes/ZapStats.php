@@ -90,21 +90,23 @@ class ZapStats {
         $ip = function_exists( 'sk_get_client_ip' ) ? sk_get_client_ip() : '';
 
         if ( function_exists( 'sk_rate_limit' ) && ! sk_rate_limit( 'zap-receipt:' . md5( $ip ?: 'unknown' ), 20 ) ) {
-            wp_send_json_error( [ 'message' => 'Zu viele Anfragen.' ] );
+            wp_send_json_error( [ 'message' => __( 'Zu viele Anfragen.', 'sk-core' ) ] );
         }
 
+        $not_a_receipt = __( 'Keine Zap-Quittung.', 'sk-core' );
+
         if ( ! $vendor_id || ! is_array( $receipt ) || 9735 !== (int) ( $receipt['kind'] ?? 0 ) ) {
-            wp_send_json_error( [ 'message' => 'Keine Zap-Quittung.' ] );
+            wp_send_json_error( [ 'message' => $not_a_receipt ] );
         }
 
         foreach ( [ 'id', 'pubkey', 'sig', 'content' ] as $field ) {
             if ( ! isset( $receipt[ $field ] ) || ! is_string( $receipt[ $field ] ) ) {
-                wp_send_json_error( [ 'message' => 'Keine Zap-Quittung.' ] );
+                wp_send_json_error( [ 'message' => $not_a_receipt ] );
             }
         }
 
         if ( ! isset( $receipt['created_at'] ) || ! is_int( $receipt['created_at'] ) || ! class_exists( '\swentel\nostr\Event\Event' ) ) {
-            wp_send_json_error( [ 'message' => 'Keine Zap-Quittung.' ] );
+            wp_send_json_error( [ 'message' => $not_a_receipt ] );
         }
 
         $receipt['kind'] = 9735;
@@ -117,7 +119,7 @@ class ZapStats {
         }
 
         if ( ! $valid ) {
-            wp_send_json_error( [ 'message' => 'Signatur ungültig.' ] );
+            wp_send_json_error( [ 'message' => __( 'Signatur ungültig.', 'sk-core' ) ] );
         }
 
         $vendor_pub = ZapButton::vendor_pubkey( $vendor_id );
@@ -130,19 +132,19 @@ class ZapStats {
         }
 
         if ( '' === $vendor_pub || ! $named ) {
-            wp_send_json_error( [ 'message' => 'Quittung gehört nicht zu diesem Anbieter.' ] );
+            wp_send_json_error( [ 'message' => __( 'Quittung gehört nicht zu diesem Anbieter.', 'sk-core' ) ] );
         }
 
         $zapper = self::zapper_pubkey_for( $vendor_id );
 
         if ( '' === $zapper || strtolower( $receipt['pubkey'] ) !== $zapper ) {
-            wp_send_json_error( [ 'message' => 'Quittung stammt nicht vom Zahlungsdienst des Anbieters.' ] );
+            wp_send_json_error( [ 'message' => __( 'Quittung stammt nicht vom Zahlungsdienst des Anbieters.', 'sk-core' ) ] );
         }
 
         $sats = (int) floor( self::receipt_msats( $receipt ) / 1000 );
 
         if ( $sats <= 0 ) {
-            wp_send_json_error( [ 'message' => 'Betrag unlesbar.' ] );
+            wp_send_json_error( [ 'message' => __( 'Betrag unlesbar.', 'sk-core' ) ] );
         }
 
         $counted = self::add_received( $vendor_id, $receipt['id'], $sats );

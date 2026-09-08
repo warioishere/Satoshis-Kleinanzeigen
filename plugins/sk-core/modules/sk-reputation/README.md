@@ -80,6 +80,16 @@ Beim Speichern der Events `wp_slash()` verwenden: die Meta-API entfernt
 Backslashes und macht aus `ü` ein `u00fc`, womit die Event-ID nicht
 mehr stimmt.
 
+`VendorKey::verify` nimmt nur Events in der Form der Vorlage an: höchstens
+die drei Tags `d`, `r`, `p` (letzteres nur mit dem Marktplatz-Schlüssel),
+Inhalt bis 500 Zeichen, Rohdaten bis 4 KB. Wird eine von SK erzeugte
+Identität gelöscht, signiert `VendorKey::on_identity_deleted` noch mit dem
+Schlüssel ein leeres Kind 30078 mit demselben `d`, das die Bindung auf den
+Relays ersetzt (Cron `sk_trust_publish_event`), und löscht alle
+Bindungs-Metas. Ein Schlüssel auf dem Konto ohne aufbewahrtes Event gilt
+als Nachweistyp `linked` („als Anmeldeschlüssel hinterlegt"), nicht als
+`login`; woher er kam, ist nicht belegt.
+
 ## Graph-Signal `SocialGraph` + `assets/js/sk-social-graph.js`
 
 „Du folgst diesem Anbieter" und „X deiner Kontakte folgen". Der Server

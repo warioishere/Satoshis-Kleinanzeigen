@@ -71,6 +71,23 @@
         } catch (e) { return null; }
     }
 
+    /**
+     * Per-tab storage for the extension's key: a browser shared between
+     * accounts, or an account switched in the extension, must not show
+     * the previous person's graph for a day. getPublicKey() is silent once
+     * a site is approved, so asking again per tab costs nothing visible.
+     */
+    function loadSession(key) {
+        try {
+            var raw = sessionStorage.getItem(PREFIX + key);
+            return raw ? JSON.parse(raw) : null;
+        } catch (e) { return null; }
+    }
+
+    function saveSession(key, value) {
+        try { sessionStorage.setItem(PREFIX + key, JSON.stringify(value)); } catch (e) { /* unavailable */ }
+    }
+
     function save(key, value) {
         try { localStorage.setItem(PREFIX + key, JSON.stringify({ ts: Date.now(), v: value })); } catch (e) { /* full or blocked */ }
     }
@@ -210,8 +227,9 @@
     async function viewerPubkey() {
         if (cfg.viewer && /^[0-9a-f]{64}$/.test(cfg.viewer)) { return cfg.viewer; }
 
-        var cached = load('viewer');
-        if (cached === 'none') { return ''; }
+        // A declined prompt is remembered for a day; the key itself only per tab.
+        if (load('viewer') === 'none') { return ''; }
+        var cached = loadSession('viewer');
         if (isHex64(cached)) { return cached; }
 
         // The extension may inject window.nostr after load.
@@ -222,7 +240,7 @@
 
         try {
             var pk = String(await window.nostr.getPublicKey()).toLowerCase();
-            if (/^[0-9a-f]{64}$/.test(pk)) { save('viewer', pk); return pk; }
+            if (/^[0-9a-f]{64}$/.test(pk)) { saveSession('viewer', pk); return pk; }
         } catch (e) {
             // Declined: not asked again today.
             save('viewer', 'none');

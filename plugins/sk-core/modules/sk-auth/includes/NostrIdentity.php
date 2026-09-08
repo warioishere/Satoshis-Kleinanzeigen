@@ -71,6 +71,14 @@ class NostrIdentity {
      * auth-connector dashboard.
      */
     public static function delete_for_user( int $user_id ): void {
+        // While the key is still here: revoke its binding on the relays and
+        // drop the proofs kept for it (see VendorKey).
+        $privkey = self::get_private_key( $user_id );
+
+        if ( $privkey && class_exists( 'SK\Core\Trust\VendorKey' ) ) {
+            \SK\Core\Trust\VendorKey::on_identity_deleted( $user_id, $privkey );
+        }
+
         delete_user_meta( $user_id, 'sk_nostr_private_key' );
         delete_user_meta( $user_id, 'nostr_public_key' );
         delete_user_meta( $user_id, 'sk_nostr_identity_source' );

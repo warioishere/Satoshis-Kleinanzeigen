@@ -106,7 +106,7 @@ class Reports {
 
     public function handle_fetch_now(): void {
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( 'Keine Berechtigung.' );
+            wp_die( esc_html__( 'Keine Berechtigung.', 'sk-core' ) );
         }
 
         check_admin_referer( 'sk_reputation_fetch_reports' );
@@ -535,11 +535,18 @@ class Reports {
 
             if ( ! empty( $r['reporter_user'] ) ) {
                 $by       = get_userdata( (int) $r['reporter_user'] );
-                $reporter = sprintf( 'Anbieter #%d %s (%s)', (int) $r['reporter_user'], $by ? $by->display_name : '?', $reporter );
+                $reporter = sprintf(
+                    /* translators: 1: vendor user id, 2: vendor display name, 3: shortened Nostr key */
+                    __( 'Anbieter #%1$d %2$s (%3$s)', 'sk-core' ),
+                    (int) $r['reporter_user'],
+                    $by ? $by->display_name : '?',
+                    $reporter
+                );
             }
 
             $lines[] = sprintf(
-                "%s (#%d): %s von %s am %s\n%s",
+                /* translators: 1: reported vendor name, 2: vendor user id, 3: report type, 4: reporter, 5: date, 6: quoted report text or empty */
+                __( "%1\$s (#%2\$d): %3\$s von %4\$s am %5\$s\n%6\$s", 'sk-core' ),
                 $vendor ? $vendor->display_name : '?',
                 $r['vendor_id'],
                 $r['type'],
@@ -551,7 +558,8 @@ class Reports {
 
         wp_mail(
             get_option( 'admin_email' ),
-            sprintf( '[SK Reputation] %d neue Nostr-Meldungen', count( $new ) ),
+            /* translators: %d: number of new reports */
+            sprintf( __( '[SK Reputation] %d neue Nostr-Meldungen', 'sk-core' ), count( $new ) ),
             implode( "\n\n", $lines ) . "\n\n" . admin_url( 'admin.php?page=sk-reputation' )
         );
     }

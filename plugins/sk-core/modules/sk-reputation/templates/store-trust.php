@@ -31,6 +31,8 @@ $proof_types = [
     'login'   => __( 'Der Anbieter hat sich mit diesem Schlüssel hier angemeldet; die Anmeldung ist eine signierte Anfrage an diese Seite.', 'sk-core' ),
     'held'    => __( 'Der Schlüssel wurde von dieser Seite für den Anbieter erzeugt und wird hier verwahrt.', 'sk-core' ),
     'binding' => __( 'Der Anbieter hat mit seiner Nostr-Erweiterung ein Event signiert, das diesen Shop nennt.', 'sk-core' ),
+    // A key on the account without a kept event: linked, but how is not on record.
+    'linked'  => __( 'Der Schlüssel ist als Anmeldeschlüssel dieses Kontos hinterlegt.', 'sk-core' ),
 ];
 
 $graph_chip = ( sk_module_active( 'sk_reputation' ) && class_exists( SocialGraph::class ) )

@@ -46,11 +46,19 @@ class VendorKey {
 
     const MAX_PUBLISH_ATTEMPTS = 3;
 
+    /** A binding is the template plus a signature; anything bigger is not one. */
+    const MAX_EVENT_BYTES     = 4096;
+    const MAX_CONTENT_LENGTH  = 500;
+
+    /** Cron: publish a signed event handed over as its array (the revocation of a binding). */
+    const PUBLISH_EVENT_HOOK = 'sk_trust_publish_event';
+
     /** @var array<int, string> */
     private static array $bound_cache = [];
 
     public static function init(): void {
         add_action( self::PUBLISH_HOOK, [ __CLASS__, 'publish' ] );
+        add_action( self::PUBLISH_EVENT_HOOK, [ __CLASS__, 'publish_event' ] );
         add_action( 'wp_ajax_' . self::AJAX_ACTION, [ __CLASS__, 'ajax_bind' ] );
         add_action( 'wp_enqueue_scripts', [ __CLASS__, 'maybe_enqueue' ], 20 );
     }
@@ -206,8 +214,9 @@ class VendorKey {
 
         // The key on the user without a kept event: it came from a Nostr
         // login before login events were kept, or from an administrator.
+        // Not called a login — nothing here proves which it was.
         return [
-            'type'   => null !== self::held_private_key( $vendor_id ) ? 'held' : 'login',
+            'type'   => null !== self::held_private_key( $vendor_id ) ? 'held' : 'linked',
             'pubkey' => $pub,
             'event'  => null,
             'relays' => [],
@@ -311,34 +320,51 @@ class VendorKey {
     public static function verify( array $event, int $vendor_id, string $expected_pubkey ): string {
         foreach ( [ 'id', 'pubkey', 'sig', 'content' ] as $field ) {
             if ( ! isset( $event[ $field ] ) || ! is_string( $event[ $field ] ) ) {
-                return 'Kein vollständiges Event.';
+                return __( 'Kein vollständiges Event.', 'sk-core' );
             }
         }
 
         if ( self::BINDING_KIND !== (int) ( $event['kind'] ?? 0 ) ) {
-            return 'Falscher Event-Typ.';
+            return __( 'Falscher Event-Typ.', 'sk-core' );
         }
 
         if ( ! isset( $event['created_at'] ) || ! is_int( $event['created_at'] ) || abs( time() - $event['created_at'] ) > self::MAX_SKEW ) {
-            return 'Zeitstempel außerhalb des Fensters.';
+            return __( 'Zeitstempel außerhalb des Fensters.', 'sk-core' );
         }
 
         $event['tags'] = isset( $event['tags'] ) && is_array( $event['tags'] ) ? $event['tags'] : [];
 
+        // The event is stored, published under this site's connection and
+        // shown on the trust page, so it must stay the shape of the
+        // template: the three known tags, nothing else, a short content.
+        if ( count( $event['tags'] ) > 3 || strlen( $event['content'] ) > self::MAX_CONTENT_LENGTH ) {
+            return __( 'Das Event ist größer als die Vorlage.', 'sk-core' );
+        }
+
+        $marketplace = self::marketplace_pubkey();
+
+        foreach ( $event['tags'] as $tag ) {
+            $name = is_array( $tag ) && 2 === count( $tag ) && is_string( $tag[1] ?? null ) ? (string) ( $tag[0] ?? '' ) : '';
+
+            if ( ! in_array( $name, [ 'd', 'r', 'p' ], true ) || ( 'p' === $name && strtolower( $tag[1] ) !== $marketplace ) ) {
+                return __( 'Das Event enthält Tags, die nicht zur Vorlage gehören.', 'sk-core' );
+            }
+        }
+
         if ( self::tag( $event, 'd' ) !== self::site() ) {
-            return 'Das Event gilt nicht für diese Seite.';
+            return __( 'Das Event gilt nicht für diese Seite.', 'sk-core' );
         }
 
         if ( self::normalize_url( self::tag( $event, 'r' ) ) !== self::normalize_url( self::store_url( $vendor_id ) ) ) {
-            return 'Das Event nennt einen anderen Shop.';
+            return __( 'Das Event nennt einen anderen Shop.', 'sk-core' );
         }
 
         if ( strtolower( $event['pubkey'] ) !== strtolower( $expected_pubkey ) ) {
-            return 'Der Schlüssel der Erweiterung ist nicht der Schlüssel des Shops.';
+            return __( 'Der Schlüssel der Erweiterung ist nicht der Schlüssel des Shops.', 'sk-core' );
         }
 
         if ( ! class_exists( '\swentel\nostr\Event\Event' ) ) {
-            return 'Signaturprüfung nicht verfügbar.';
+            return __( 'Signaturprüfung nicht verfügbar.', 'sk-core' );
         }
 
         try {
@@ -348,13 +374,13 @@ class VendorKey {
         }
 
         if ( ! $valid ) {
-            return 'Signatur ungültig.';
+            return __( 'Signatur ungültig.', 'sk-core' );
         }
 
         $holder = self::holder_of( strtolower( $event['pubkey'] ) );
 
         if ( $holder && $holder !== $vendor_id ) {
-            return 'Dieser Schlüssel ist bereits an ein anderes Konto gebunden.';
+            return __( 'Dieser Schlüssel ist bereits an ein anderes Konto gebunden.', 'sk-core' );
         }
 
         return '';
@@ -403,6 +429,65 @@ class VendorKey {
             self::store( $vendor_id, $event->toArray() );
         } catch ( \Throwable $e ) {
             error_log( '[SK Trust] self-binding for user ' . $vendor_id . ' failed: ' . $e->getMessage() );
+        }
+    }
+
+    /**
+     * A generated identity is being deleted: the binding on the relays
+     * would otherwise keep saying the key belongs to this shop, with no
+     * one left able to replace it. So, while the key is still here, sign
+     * an empty event with the same d tag — it replaces the binding on
+     * every relay — and queue it; then forget everything about the key.
+     * The relay work runs in cron, never in the request.
+     */
+    public static function on_identity_deleted( int $user_id, string $privkey ): void {
+        $pubkey = self::pubkey_of( strtolower( $privkey ) );
+
+        if ( '' !== $pubkey && class_exists( '\swentel\nostr\Sign\Sign' ) ) {
+            try {
+                $event = new \swentel\nostr\Event\Event();
+                $event->setKind( self::BINDING_KIND );
+                $event->setCreatedAt( time() );
+                $event->setContent( '' );
+                $event->setTags( [ [ 'd', self::site() ] ] );
+
+                ( new \swentel\nostr\Sign\Sign() )->signEvent( $event, strtolower( $privkey ) );
+
+                wp_schedule_single_event( time() + 10, self::PUBLISH_EVENT_HOOK, [ $event->toArray() ] );
+            } catch ( \Throwable $e ) {
+                error_log( '[SK Trust] revoking binding for user ' . $user_id . ' failed: ' . $e->getMessage() );
+            }
+        }
+
+        foreach ( [ self::BINDING_META, self::BOUND_META, self::RELAYS_META, self::ATTEMPTS_META, self::LOGIN_PROOF_META ] as $meta ) {
+            delete_user_meta( $user_id, $meta );
+        }
+
+        wp_clear_scheduled_hook( self::PUBLISH_HOOK, [ $user_id ] );
+
+        unset( self::$bound_cache[ $user_id ] );
+    }
+
+    /** Cron: send one signed event, as scheduled by on_identity_deleted(). */
+    public static function publish_event( $event ): void {
+        if ( ! is_array( $event )
+            || ! sk_module_active( 'sk_auth' )
+            || ! class_exists( 'SK\Modules\Auth\RelayPublisher' )
+            || ! class_exists( 'SK\Modules\Auth\NostrIdentity' ) ) {
+            return;
+        }
+
+        try {
+            $result = \SK\Modules\Auth\RelayPublisher::publish(
+                ( new \swentel\nostr\Event\Event() )->populate( (object) $event ),
+                \SK\Modules\Auth\NostrIdentity::get_relays()
+            );
+
+            if ( empty( $result['accepted'] ) ) {
+                error_log( '[SK Trust] revocation ' . substr( (string) ( $event['id'] ?? '' ), 0, 12 ) . ' accepted by no relay: ' . wp_json_encode( $result['rejected'] ?? [] ) );
+            }
+        } catch ( \Throwable $e ) {
+            error_log( '[SK Trust] publishing revocation failed: ' . $e->getMessage() );
         }
     }
 
@@ -525,31 +610,37 @@ class VendorKey {
 
     public static function ajax_bind(): void {
         if ( ! is_user_logged_in() ) {
-            wp_send_json_error( [ 'message' => 'Nicht angemeldet.' ] );
+            wp_send_json_error( [ 'message' => __( 'Nicht angemeldet.', 'sk-core' ) ] );
         }
 
         check_ajax_referer( self::NONCE );
 
         if ( function_exists( 'sk_is_same_origin_request' ) && ! sk_is_same_origin_request() ) {
-            wp_send_json_error( [ 'message' => 'Anfrage von fremder Herkunft.' ] );
+            wp_send_json_error( [ 'message' => __( 'Anfrage von fremder Herkunft.', 'sk-core' ) ] );
         }
 
         $user_id = get_current_user_id();
 
         if ( function_exists( 'sk_rate_limit' ) && ! sk_rate_limit( 'trust-bind:' . $user_id, 10 ) ) {
-            wp_send_json_error( [ 'message' => 'Zu viele Anfragen.' ] );
+            wp_send_json_error( [ 'message' => __( 'Zu viele Anfragen.', 'sk-core' ) ] );
         }
 
-        $event = json_decode( (string) wp_unslash( $_POST['event'] ?? '' ), true );
+        $raw = (string) wp_unslash( $_POST['event'] ?? '' );
+
+        if ( strlen( $raw ) > self::MAX_EVENT_BYTES ) {
+            wp_send_json_error( [ 'message' => __( 'Das Event ist größer als die Vorlage.', 'sk-core' ) ] );
+        }
+
+        $event = json_decode( $raw, true );
 
         if ( ! is_array( $event ) ) {
-            wp_send_json_error( [ 'message' => 'Kein Event.' ] );
+            wp_send_json_error( [ 'message' => __( 'Kein Event.', 'sk-core' ) ] );
         }
 
         $candidate = self::candidate( $user_id );
 
         if ( '' === $candidate ) {
-            wp_send_json_error( [ 'message' => 'Kein Schlüssel hinterlegt.' ] );
+            wp_send_json_error( [ 'message' => __( 'Kein Schlüssel hinterlegt.', 'sk-core' ) ] );
         }
 
         $error = self::verify( $event, $user_id, $candidate );
