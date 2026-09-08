@@ -76,18 +76,56 @@
 
     // ── Which key is the extension using? ──────────────────────────────────
 
-    window.nostr.getPublicKey()
-        .then(function (pubkey) {
-            if (CFG.pubkey && pubkey && String(pubkey).toLowerCase() !== CFG.pubkey) {
-                notice(CFG.i18nWrongKey);
-                return;
-            }
+    /** The extension's key, asked for once and kept; null when it is the wrong one. */
+    var identity = null;
 
-            return openInbox().then(function () { return sealReplies(pubkey); });
-        })
-        .catch(function (err) {
+    function withIdentity(fn) {
+        if (!identity) {
+            identity = window.nostr.getPublicKey().then(function (pubkey) {
+                if (CFG.pubkey && pubkey && String(pubkey).toLowerCase() !== CFG.pubkey) {
+                    notice(CFG.i18nWrongKey);
+                    return null;
+                }
+
+                return pubkey;
+            });
+        }
+
+        return identity.then(function (pubkey) {
+            return pubkey ? fn(pubkey) : undefined;
+        }).catch(function (err) {
             console.warn('[SK Nostr] Extension gave no key:', err && err.message);
         });
+    }
+
+    /** One run at a time: every step prompts the extension. */
+    var running = Promise.resolve();
+
+    function run(fn) {
+        running = running.then(function () { return withIdentity(fn); });
+        return running;
+    }
+
+    /** The chat page: the one place where prompting on load is expected. */
+    function onChatPage() {
+        return document.getElementById('dvc-active-list') !== null || /vendor-chat/.test(window.location.pathname);
+    }
+
+    // On load, and only on the chat page: whatever waited from earlier —
+    // messages to open, replies to seal. Elsewhere nothing prompts.
+    if (CFG.hasPending && onChatPage()) {
+        run(function (pubkey) {
+            return openInbox().then(function () { return sealReplies(pubkey); });
+        });
+    }
+
+    // A message just sent in the chat: its mirror is queued by now, seal it
+    // here and now instead of on some later page load.
+    $(document).on('sk:chat-sent', function () {
+        run(function (pubkey) {
+            return sealReplies(pubkey);
+        });
+    });
 
     // ── Inbound ────────────────────────────────────────────────────────────
 
@@ -236,27 +274,9 @@
             });
     }
 
-    /**
-     * NIP-17: the message (kind 14) stays unsigned, only its id is computed.
-     * Encrypted for the recipient it becomes the content of the seal (kind
-     * 13), which the extension signs.
-     */
-    function seal(reply, pubkey) {
-        var now = Math.floor(Date.now() / 1000);
-
-        var rumor = {
-            pubkey: pubkey,
-            created_at: now,
-            kind: 14,
-            tags: [['p', reply.to]],
-            content: reply.text || ''
-        };
-
-        return eventId(rumor)
-            .then(function (id) {
-                rumor.id = id;
-                return window.nostr.nip44.encrypt(reply.to, JSON.stringify(rumor));
-            })
+    /** Encrypt the message for one key and have the extension sign the seal (kind 13). */
+    function sealFor(recipient, rumorJson, now) {
+        return window.nostr.nip44.encrypt(recipient, rumorJson)
             .then(function (encrypted) {
                 return window.nostr.signEvent({
                     kind: 13,
@@ -271,10 +291,55 @@
                     throw new Error('The extension returned nothing.');
                 }
 
+                return signed;
+            });
+    }
+
+    /**
+     * NIP-17: the message (kind 14) stays unsigned, only its id is computed.
+     * Encrypted for the recipient it becomes the content of the seal (kind
+     * 13), which the extension signs.
+     *
+     * A second seal goes to the sender's own key: that copy is what their
+     * own client shows as the sent message — without it the conversation
+     * in Amethyst has the replies and none of the questions.
+     */
+    function seal(reply, pubkey) {
+        var now = Math.floor(Date.now() / 1000);
+
+        var rumor = {
+            pubkey: pubkey,
+            created_at: now,
+            kind: 14,
+            tags: [['p', reply.to]],
+            content: reply.text || ''
+        };
+
+        var rumorJson = '';
+        var forRecipient = null;
+
+        return eventId(rumor)
+            .then(function (id) {
+                rumor.id = id;
+                rumorJson = JSON.stringify(rumor);
+                return sealFor(reply.to, rumorJson, now);
+            })
+            .then(function (signed) {
+                forRecipient = signed;
+
+                // The copy for ourselves; if the extension declines it, the
+                // message still goes to the recipient.
+                return sealFor(pubkey, rumorJson, now).catch(function (err) {
+                    console.warn('[SK Nostr] No copy for own inbox:', err && err.message);
+                    return null;
+                });
+            })
+            .then(function (forSelf) {
                 return post({
                     action: 'sk_nostr_deliver_sealed',
                     reply_id: reply.id,
-                    seal: JSON.stringify(signed),
+                    seal: JSON.stringify(forRecipient),
+                    self_seal: forSelf ? JSON.stringify(forSelf) : '',
                     // So a reply naming this message finds its chat again.
                     rumor_id: rumor.id
                 });

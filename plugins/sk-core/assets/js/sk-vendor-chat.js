@@ -223,6 +223,10 @@
 						// Reload messages
 						DVC.loadMessages(chatId);
 
+						// A member whose Nostr key lives in their extension
+						// seals the mirror of this message right now.
+						$(document).trigger('sk:chat-sent');
+
 						// Re-enable submit button
 						$submitBtn.prop('disabled', false).removeClass('dvc-loading');
 					} else {

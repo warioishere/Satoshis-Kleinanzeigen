@@ -456,7 +456,7 @@ class ChatBridge {
      *
      * @return bool True if a relay accepted the wrap.
      */
-    public static function deliver_sealed( int $vendor_id, string $reply_id, array $seal, string $rumor_id = '', string &$reason = '' ): bool {
+    public static function deliver_sealed( int $vendor_id, string $reply_id, array $seal, string $rumor_id = '', string &$reason = '', array $self_seal = [] ): bool {
         $eintrag = null;
 
         foreach ( self::pending_replies_for( $vendor_id ) as $e ) {
@@ -515,6 +515,23 @@ class ChatBridge {
             // comes from the queue entry, never from the browser.
             if ( preg_match( '/^[0-9a-f]{64}$/i', $rumor_id ) ) {
                 SeenEvents::remember_rumor( strtolower( $rumor_id ), (int) ( $eintrag['chat_id'] ?? 0 ) );
+            }
+
+            /*
+             * The copy for the member's own inbox (NIP-17): sealed for their
+             * own key, so their client shows the message they sent. Goes to
+             * their own DM relays. Best effort — the recipient has theirs.
+             */
+            if ( ! empty( $self_seal ) && NostrDMListener::verified_seal_sender( $self_seal ) === $vendor_pub ) {
+                try {
+                    $self_seal['kind'] = 13;
+                    $self_seal['tags'] = isset( $self_seal['tags'] ) && is_array( $self_seal['tags'] ) ? $self_seal['tags'] : [];
+
+                    $copy = $svc->createGiftWrap( ( new \swentel\nostr\Event\Event() )->populate( (object) $self_seal ), $vendor_pub );
+                    self::send_wrap( $copy, $vendor_pub );
+                } catch ( \Throwable $e ) {
+                    error_log( '[SK Nostr Bridge] Own copy of reply ' . $reply_id . ' not sent: ' . $e->getMessage() );
+                }
             }
         }
 

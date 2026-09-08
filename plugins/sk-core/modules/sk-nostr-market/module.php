@@ -284,7 +284,15 @@ final class Module {
 
         $user_id = get_current_user_id();
 
-        if ( empty( Bridge\NostrDMListener::pending_for( $user_id ) ) && empty( Bridge\ChatBridge::pending_replies_for( $user_id ) ) ) {
+        $pending = ! empty( Bridge\NostrDMListener::pending_for( $user_id ) ) || ! empty( Bridge\ChatBridge::pending_replies_for( $user_id ) );
+
+        /*
+         * Loaded for everyone who signs in their browser, not only when
+         * something is waiting: a message they send in the chat is queued
+         * during that request and has to be sealed right then, from the
+         * page they are on — not after a reload nobody was told about.
+         */
+        if ( ! $pending && ! self::vendor_wants_self_sign( $user_id ) ) {
             return;
         }
 
@@ -303,6 +311,9 @@ final class Module {
             // logged into another one; then nothing here can be opened or
             // signed, and the visitor should be told rather than prompted.
             'pubkey'       => strtolower( (string) get_user_meta( $user_id, 'nostr_public_key', true ) ),
+            // Whether the on-load pass has anything to do; the extension is
+            // not asked for its key on every page for nothing.
+            'hasPending'   => $pending,
             'i18nWrongKey' => __( 'Deine Nostr-Erweiterung ist mit einem anderen Schlüssel angemeldet als dein Konto hier. Nachrichten und Antworten warten, bis du in der Erweiterung das passende Konto wählst.', 'sk-core' ),
         ] );
     }
@@ -377,12 +388,13 @@ final class Module {
             wp_send_json_error( [ 'message' => 'Nicht angemeldet.' ] );
         }
 
-        $reply_id = sanitize_text_field( (string) wp_unslash( $_POST['reply_id'] ?? '' ) );
-        $seal     = json_decode( (string) wp_unslash( $_POST['seal'] ?? '' ), true );
-        $rumor_id = sanitize_text_field( (string) wp_unslash( $_POST['rumor_id'] ?? '' ) );
+        $reply_id  = sanitize_text_field( (string) wp_unslash( $_POST['reply_id'] ?? '' ) );
+        $seal      = json_decode( (string) wp_unslash( $_POST['seal'] ?? '' ), true );
+        $self_seal = json_decode( (string) wp_unslash( $_POST['self_seal'] ?? '' ), true );
+        $rumor_id  = sanitize_text_field( (string) wp_unslash( $_POST['rumor_id'] ?? '' ) );
 
         $reason = '';
-        $ok     = is_array( $seal ) && Bridge\ChatBridge::deliver_sealed( get_current_user_id(), $reply_id, $seal, $rumor_id, $reason );
+        $ok     = is_array( $seal ) && Bridge\ChatBridge::deliver_sealed( get_current_user_id(), $reply_id, $seal, $rumor_id, $reason, is_array( $self_seal ) ? $self_seal : [] );
 
         if ( ! $ok ) {
             wp_send_json_error( [ 'message' => 'Antwort nicht gesendet.', 'code' => $reason ] );
