@@ -204,8 +204,10 @@ class VendorKey {
             ];
         }
 
+        // The key on the user without a kept event: it came from a Nostr
+        // login before login events were kept, or from an administrator.
         return [
-            'type'   => 'held',
+            'type'   => null !== self::held_private_key( $vendor_id ) ? 'held' : 'login',
             'pubkey' => $pub,
             'event'  => null,
             'relays' => [],

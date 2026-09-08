@@ -26,6 +26,8 @@ class TrustSignals {
     const CONTEXT_STORE   = 'store';
     const CONTEXT_PRODUCT = 'product';
     const CONTEXT_FEED    = 'feed';
+    /** The store's trust page, where a signal explains itself. */
+    const CONTEXT_PAGE    = 'page';
 
     /** @var array<string, array{render: callable, priority: int}> */
     private static array $signals = [];

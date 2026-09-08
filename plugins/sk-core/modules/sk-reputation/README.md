@@ -116,8 +116,20 @@ steht, „Du folgst · 7 deiner Kontakte folgen".
 | Verifizierter Link | Server (`sk_verified_badge`) | Link bestätigt |
 | Lightning-Proofs | Server, nur mit SK Payments | Payments aktiv und Zahlungen verifiziert |
 
-Geplant, in dieser Reihenfolge: Vertrauensseite statt Proof-Seite, NIP-05
-pro Shop als Angebot, Kind-1984-Meldungen aus dem Graphen des Betrachters.
+## Vertrauensseite `TrustPage` + `templates/store-trust.php`
+
+`/store/{slug}/vertrauen/`, Store-Tab „Vertrauen". Jedes Signal als Karte
+mit Quelle und Prüfweg: Dein Netzwerk (Graph-Chip in voller Länge, dazu die
+Hinweise „ohne Schlüssel" / „keine Überschneidung", die das JS nur hier
+einblendet), Nostr-Schlüssel (npub mit njump-Link, Art des Nachweises,
+Relays, signiertes Event zum Aufklappen), bestätigte Links, erhaltene Zaps,
+und mit SK Payments die belegten Zahlungen (`store-trust-lightning.php`,
+die frühere Proof-Liste). Der Tab erscheint nur, wenn der Server mindestens
+ein Signal kennt (`TrustPage::has_signals`). Die alte Adresse
+`/lightning-proof/` zeigt dieselbe Seite.
+
+Geplant, in dieser Reihenfolge: NIP-05 pro Shop als Angebot,
+Kind-1984-Meldungen aus dem Graphen des Betrachters.
 
 ## Payments-Signal (nur mit SK Payments)
 

@@ -266,6 +266,15 @@
         document.querySelectorAll('.sk-trust-pop.is-open').forEach(function (p) { p.classList.remove('is-open'); });
     });
 
+    /**
+     * The trust page explains an empty result; everywhere else silence.
+     * 'nokey': no viewer key; 'nomatch': a key, but nothing in common.
+     */
+    function hint(which) {
+        var el = document.querySelector('[data-sk-trust-' + which + ']');
+        if (el) { el.hidden = false; }
+    }
+
     function whyList(followers, names) {
         var shown = followers.slice(0, NAMES_PER_VENDOR);
         var html = '<div class="sk-trust-pop-note">' + esc(cfg.i18n.why) + '</div><ul>';
@@ -297,11 +306,11 @@
 
             viewerPromise = viewerPromise || viewerPubkey();
             var viewer = await viewerPromise;
-            if (!viewer) { return; }
+            if (!viewer) { hint('nokey'); return; }
 
             contactsPromise = contactsPromise || contactsOf(viewer);
             var contacts = await contactsPromise;
-            if (!contacts.length) { return; }
+            if (!contacts.length) { hint('nomatch'); return; }
 
             var contactSet = {};
             contacts.forEach(function (c) { contactSet[c] = 1; });
@@ -324,8 +333,8 @@
             chips.forEach(function (c) {
                 var v = c.getAttribute('data-pubkey').toLowerCase();
                 var list = followers[v] || [];
-                // Only the store banner has room for the full sentence.
-                var short = !c.classList.contains('sk-trust-graph--store');
+                // Only the store banner and the trust page have room for the full sentence.
+                var short = !c.classList.contains('sk-trust-graph--store') && !c.classList.contains('sk-trust-graph--page');
                 var follow = short ? cfg.i18n.followS : cfg.i18n.follow;
                 var contacts = list.length === 1
                     ? (short ? cfg.i18n.contact1S : cfg.i18n.contact1)
@@ -336,6 +345,8 @@
                     fill(c, follow + (list.length ? ' · ' + contacts : ''), 'fa-user-check', list.length ? whyList(list, names) : '');
                 } else if (list.length) {
                     fill(c, contacts, 'fa-users', whyList(list, names));
+                } else if (c.classList.contains('sk-trust-graph--page')) {
+                    hint('nomatch');
                 }
             });
         } catch (e) {

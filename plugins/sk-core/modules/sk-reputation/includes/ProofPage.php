@@ -2,37 +2,19 @@
 
 namespace SK\Modules\Reputation;
 
-use SK\Modules\Payments\StoreSettings;
-
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * The payment proofs: the list behind the trust page's "Belegte Zahlungen"
+ * and the old /store/{slug}/lightning-proof/ address, which now shows the
+ * trust page so links out there keep working.
+ */
 class ProofPage {
 
     public function __construct() {
-        add_filter( 'sk_store_tabs', [ $this, 'add_store_tab' ], 10, 2 );
         add_action( 'sk_rewrite_rules_loaded', [ $this, 'add_rewrite_rule' ] );
         add_filter( 'query_vars', [ $this, 'add_query_var' ] );
         add_filter( 'template_include', [ $this, 'load_template' ], 100 );
-    }
-
-    public function add_store_tab( array $tabs, int $store_id ): array {
-        if ( ! class_exists( StoreSettings::class ) ) {
-            return $tabs;
-        }
-
-        // Show tab if vendor has any payment method configured (LN or Onchain).
-        $has_payments = StoreSettings::has_lightning( $store_id ) || StoreSettings::has_onchain( $store_id );
-
-        if ( ! $has_payments ) {
-            return $tabs;
-        }
-
-        $tabs['lightning_proof'] = [
-            'title' => 'Reputation',
-            'url'   => sk_get_store_url( $store_id, 'lightning-proof' ),
-        ];
-
-        return $tabs;
     }
 
     public function add_rewrite_rule( $store_base ) {
@@ -53,22 +35,10 @@ class ProofPage {
             return $template;
         }
 
-        $custom_store_url = sk_get_option( 'custom_store_url', 'sk_general', 'store' );
-        $store_name       = get_query_var( $custom_store_url );
-
-        if ( empty( $store_name ) ) {
-            return $template;
-        }
-
-        $seller = get_user_by( 'slug', $store_name );
-        if ( ! $seller ) {
-            return get_404_template();
-        }
-
-        return SK_REPUTATION_TEMPLATES . '/store-lightning-proof.php';
+        return TrustPage::template_for_current_store( $template );
     }
 
-    /** Upper bound for the public proof page. */
+    /** Upper bound for the public proof list. */
     const PROOF_LIMIT = 200;
 
     public static function get_proofs( int $vendor_id ): array {

@@ -39,3 +39,53 @@
 .sk-trust-pop a:hover { text-decoration: underline; }
 .sk-trust-pop-note { color: #6b7280; font-size: 12px; }
 .sk-trust-pop-more { color: #6b7280; font-size: 12px; margin-top: 4px; }
+
+/* ── The trust page ─────────────────────────────────────────────────── */
+
+.sk-trust-page { padding: 20px 0; display: grid; gap: 16px; }
+.sk-trust-card {
+    background: #1e2b3c; border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 10px;
+    padding: 20px 24px; color: #c8d0da; font-size: 14px; line-height: 1.6;
+}
+.sk-trust-card h2 { margin: 0 0 10px; font-size: 20px; color: #e8ecf0; }
+.sk-trust-card h3 { margin: 0 0 10px; font-size: 16px; color: #e8ecf0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sk-trust-card h3 i { color: #8b5cf6; }
+.sk-trust-card p { margin: 0 0 8px; }
+.sk-trust-card a { color: #f7931a; text-decoration: none; }
+.sk-trust-card a:hover { text-decoration: underline; }
+.sk-trust-intro p { color: #9ca3af; }
+.sk-trust-note { color: #6b7a8c; font-size: 13px; }
+.sk-trust-hint { color: #9ca3af; font-size: 13px; }
+.sk-trust-big { font-size: 26px; font-weight: 700; color: #f7931a; margin: 0 0 4px; }
+.sk-trust-key { font-family: monospace; font-size: 13px; word-break: break-all; }
+.sk-trust-list { margin: 0 0 8px; padding-left: 18px; }
+.sk-trust-badge { padding: 3px 10px; background: rgba(247, 147, 26, 0.13); border-radius: 5px; font-size: 13px; color: #f7931a; }
+.sk-trust-figures { display: flex; gap: 32px; flex-wrap: wrap; margin-bottom: 12px; }
+.sk-trust-figures .sk-trust-big { color: #e8ecf0; }
+.sk-trust-figures > div:first-child .sk-trust-big { color: #f7931a; }
+.sk-trust-raw summary { cursor: pointer; color: #9ca3af; font-size: 13px; }
+.sk-trust-raw pre {
+    margin: 8px 0 0; padding: 10px 12px; background: #0f1923; border-radius: 6px;
+    color: #8a9bb0; font-size: 11px; line-height: 1.5; overflow-x: auto; white-space: pre-wrap; word-break: break-all;
+}
+
+/* The graph line on the page: same chip, room for the full sentence. */
+.sk-trust-graph-slot { margin-bottom: 8px; }
+.sk-trust-graph--page { display: inline-flex; align-items: center; gap: 6px; position: relative; font-size: 15px; color: #e8ecf0; }
+.sk-trust-graph--page i { color: #8b5cf6; }
+
+/* Payment proofs. */
+.sk-trust-proofs { padding: 0; overflow: hidden; }
+.sk-trust-proofs h3 { padding: 16px 24px; margin: 0; border-bottom: 1px solid rgba(255, 255, 255, 0.07); }
+.sk-trust-proof { padding: 14px 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.04); }
+.sk-trust-proof:nth-child(odd) { background: rgba(255, 255, 255, 0.02); }
+.sk-trust-proof-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
+.sk-trust-proof-type { font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-right: 6px; background: rgba(92, 184, 92, 0.1); color: #5cb85c; }
+.sk-trust-proof-sats { font-weight: 700; color: #f7931a; font-size: 16px; }
+.sk-trust-proof-line { font-size: 12px; margin-top: 6px; }
+.sk-trust-proof-line code {
+    background: #0f1923; padding: 2px 6px; border-radius: 3px; color: #8a9bb0; font-size: 11px; word-break: break-all; cursor: pointer;
+}
+.sk-trust-proof-line code.skl-bolt11-proof { display: block; margin-top: 4px; max-height: 40px; overflow: hidden; font-size: 10px; }
+.sk-trust-proof-actions { margin-top: 4px; display: flex; gap: 12px; }
+.sk-trust-proof-actions button, .skl-copy-btn { background: none; border: none; color: #6b7a8c; cursor: pointer; font-size: 11px; padding: 0; }
