@@ -118,6 +118,18 @@ if ( ! $is_announce ) {
 	<?php endif; ?>
 
 	<div class="sk-feed-card-actions">
+		<?php
+		// Zap button first — only when sk_zaps module is actually active
+		// (class_exists alone lies: the PSR-4 autoloader finds the file
+		// on-disk regardless).
+		if ( sk_ext()->module->is_active( 'sk_zaps' ) && class_exists( 'SK\Modules\Zaps\ZapButton' ) ) {
+			$zap_data = \SK\Modules\Zaps\ZapButton::get_vendor_zap_data( $vendor_id );
+			if ( $zap_data ) {
+				\SK\Modules\Zaps\ZapButton::render_button( $zap_data, $post_id );
+			}
+		}
+		?>
+
 		<button type="button" class="sk-feed-like-btn<?php echo $user_liked ? ' active' : ''; ?>" data-post-id="<?php echo esc_attr( $post_id ); ?>">
 			<i class="<?php echo $user_liked ? 'fas' : 'far'; ?> fa-heart"></i>
 			<span class="sk-feed-like-count"><?php echo $like_count > 0 ? esc_html( $like_count ) : ''; ?></span>
@@ -127,17 +139,6 @@ if ( ! $is_announce ) {
 			<i class="far fa-comment"></i>
 			<span><?php echo $comments > 0 ? esc_html( $comments ) : ''; ?></span>
 		</a>
-
-		<?php
-		// Zap button — only when sk_zaps module is actually active (class_exists
-		// alone lies: the PSR-4 autoloader finds the file on-disk regardless).
-		if ( sk_ext()->module->is_active( 'sk_zaps' ) && class_exists( 'SK\Modules\Zaps\ZapButton' ) ) {
-			$zap_data = \SK\Modules\Zaps\ZapButton::get_vendor_zap_data( $vendor_id );
-			if ( $zap_data ) {
-				\SK\Modules\Zaps\ZapButton::render_button( $zap_data, $post_id );
-			}
-		}
-		?>
 
 		<button type="button" class="sk-feed-share-btn" data-url="<?php echo esc_attr( home_url( '/community/post/' . $post_id . '/' ) ); ?>" title="<?php esc_attr_e( 'Teilen', 'sk-core' ); ?>">
 			<i class="fas fa-share-alt"></i>

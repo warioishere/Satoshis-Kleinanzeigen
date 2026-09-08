@@ -112,6 +112,16 @@ get_header();
 			</div>
 
 			<div class="sk-feed-card-actions">
+				<?php
+				// Zap button first — only when sk_zaps module is active.
+				if ( sk_ext()->module->is_active( 'sk_zaps' ) && class_exists( 'SK\Modules\Zaps\ZapButton' ) ) {
+					$zap_data = \SK\Modules\Zaps\ZapButton::get_vendor_zap_data( $vendor_id );
+					if ( $zap_data ) {
+						\SK\Modules\Zaps\ZapButton::render_button( $zap_data, $post_id );
+					}
+				}
+				?>
+
 				<button type="button" class="sk-feed-like-btn<?php echo $user_liked ? ' active' : ''; ?>" data-post-id="<?php echo esc_attr( $post_id ); ?>">
 					<i class="<?php echo $user_liked ? 'fas' : 'far'; ?> fa-heart"></i>
 					<span><?php esc_html_e( 'Like', 'sk-core' ); ?></span>
@@ -121,16 +131,6 @@ get_header();
 					<i class="far fa-comment"></i>
 					<span><?php esc_html_e( 'Kommentieren', 'sk-core' ); ?></span>
 				</button>
-
-				<?php
-				// Only show Zap button when sk_zaps module is active.
-				if ( sk_ext()->module->is_active( 'sk_zaps' ) && class_exists( 'SK\Modules\Zaps\ZapButton' ) ) {
-					$zap_data = \SK\Modules\Zaps\ZapButton::get_vendor_zap_data( $vendor_id );
-					if ( $zap_data ) {
-						\SK\Modules\Zaps\ZapButton::render_button( $zap_data, $post_id );
-					}
-				}
-				?>
 
 				<button type="button" class="sk-feed-share-btn" data-url="<?php echo esc_attr( home_url( '/community/post/' . $post_id . '/' ) ); ?>" title="<?php esc_attr_e( 'Teilen', 'sk-core' ); ?>">
 						<i class="fas fa-share-alt"></i> <span><?php esc_html_e( 'Teilen', 'sk-core' ); ?></span>
