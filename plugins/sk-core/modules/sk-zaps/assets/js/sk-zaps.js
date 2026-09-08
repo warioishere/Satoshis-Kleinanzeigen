@@ -19,6 +19,25 @@
     var defaults = window.skZaps || {};
     var presetAmounts = [21, 100, 500, 1000, 5000];
 
+    /*
+     * The buttons are rendered hidden: a zap needs an extension on this side
+     * to sign the request, and only the browser can tell whether there is
+     * one. Shown once window.nostr is there — checked again after load and
+     * after every AJAX round, for extensions that inject late and for feed
+     * cards that arrive later.
+     */
+    function revealButtons() {
+        if (!window.nostr) {
+            return;
+        }
+        $('.sk-zap-btn[hidden]').prop('hidden', false);
+    }
+
+    revealButtons();
+    $(window).on('load', revealButtons);
+    setTimeout(revealButtons, 1500);
+    $(document).ajaxComplete(revealButtons);
+
     // Zap button click.
     $(document).on('click', '.sk-zap-btn', function (e) {
         e.preventDefault();
@@ -46,7 +65,7 @@
 
         var html = '<div id="sk-zap-modal" class="sk-zap-modal">';
         html += '<div class="sk-zap-modal-inner">';
-        html += '<h3 style="margin:0 0 4px;color:#e8ecf0;font-size:18px;">&#9889; ' + escHtml(data.storeName) + '</h3>';
+        html += '<h3 style="margin:0 0 4px;color:#e8ecf0;font-size:18px;"><i class="fas fa-bolt" style="color:#f7931a;"></i> ' + escHtml(data.storeName) + '</h3>';
         html += '<p style="margin:0 0 12px;font-size:12px;color:#5a6a7e;">' + subtitle + '</p>';
 
         // Preset amounts.
@@ -66,7 +85,7 @@
         html += '<button type="button" class="sk-zap-send" id="sk-zap-send"';
         html += ' data-ln-address="' + escAttr(data.lnAddress) + '"';
         html += ' data-nostr-pubkey="' + escAttr(data.nostrPubkey) + '">';
-        html += '&#9889; Zap senden</button>';
+        html += '<i class="fas fa-bolt"></i> Zap senden</button>';
 
         // Status.
         html += '<div class="sk-zap-status" id="sk-zap-status"></div>';
@@ -110,7 +129,7 @@
                 data.lnAddress = await fetchLud16FromNostr(data.nostrPubkey);
                 if (!data.lnAddress) {
                     setStatus('Kein Lightning-Zahlungsweg im Nostr-Profil gefunden.', false);
-                    $btn.prop('disabled', false).text('&#9889; Zap senden');
+                    $btn.prop('disabled', false).html('<i class="fas fa-bolt"></i> Zap senden');
                     return;
                 }
             }
@@ -119,7 +138,7 @@
             var lnurlData = await resolveLnAddress(data.lnAddress);
             if (!lnurlData || !lnurlData.callback) {
                 setStatus('Lightning Address konnte nicht aufgelöst werden.', false);
-                $btn.prop('disabled', false).text('&#9889; Zap senden');
+                $btn.prop('disabled', false).html('<i class="fas fa-bolt"></i> Zap senden');
                 return;
             }
 
@@ -132,7 +151,7 @@
                 var minS = Math.ceil(min / 1000);
                 var maxS = Math.floor(max / 1000);
                 setStatus('Betrag muss zwischen ' + minS + ' und ' + maxS + ' Sats liegen.', false);
-                $btn.prop('disabled', false).text('&#9889; Zap senden');
+                $btn.prop('disabled', false).html('<i class="fas fa-bolt"></i> Zap senden');
                 return;
             }
 
@@ -189,7 +208,7 @@
 
             if (!invoice) {
                 setStatus('Keine Invoice erhalten.', false);
-                $btn.prop('disabled', false).text('&#9889; Zap senden');
+                $btn.prop('disabled', false).html('<i class="fas fa-bolt"></i> Zap senden');
                 return;
             }
 
@@ -200,14 +219,14 @@
 
             if (invoiceMsats === null) {
                 setStatus('Invoice-Betrag konnte nicht geprüft werden.', false);
-                $btn.prop('disabled', false).text('&#9889; Zap senden');
+                $btn.prop('disabled', false).html('<i class="fas fa-bolt"></i> Zap senden');
                 return;
             }
 
             if (invoiceMsats !== amountMsats) {
                 setStatus('Invoice lautet über ' + Math.round(invoiceMsats / 1000) +
                           ' Sats statt ' + amountSats + '. Abgebrochen.', false);
-                $btn.prop('disabled', false).text('&#9889; Zap senden');
+                $btn.prop('disabled', false).html('<i class="fas fa-bolt"></i> Zap senden');
                 return;
             }
 
@@ -218,7 +237,7 @@
                     setStatus('<i class="fas fa-spinner fa-spin"></i> Zahlung wird gesendet...', null);
                     await window.webln.enable();
                     await window.webln.sendPayment(invoice);
-                    setStatus('&#9889; Zap gesendet!', true);
+                    setStatus('<i class="fas fa-bolt"></i> Zap gesendet!', true);
                     trackZap(data, amountSats, invoiceResp && invoiceResp.payment_hash);
                     setTimeout(function () { $('#sk-zap-modal').remove(); }, 2000);
                     return;
@@ -242,7 +261,7 @@
         } catch (err) {
             console.error('[SK Zaps] Error:', err);
             setStatus('Fehler: ' + escHtml(err && err.message ? err.message : ''), false);
-            $btn.prop('disabled', false).text('&#9889; Zap senden');
+            $btn.prop('disabled', false).html('<i class="fas fa-bolt"></i> Zap senden');
         }
     }
 
@@ -429,7 +448,7 @@
                     confirmed = true;
                     clearInterval(interval);
                     trackZap(data, amountSats, paymentHash);
-                    setStatus('&#9889; Zap bestätigt! ' + amountSats + ' Sats', true);
+                    setStatus('<i class="fas fa-bolt"></i> Zap bestätigt! ' + amountSats + ' Sats', true);
                     setTimeout(function () { $('#sk-zap-modal').remove(); }, 2500);
                 }
             });
@@ -471,7 +490,7 @@
             // shown to the sender but not added to the public counter.
 
             // Update UI
-            setStatus('&#9889; Zap bestätigt! ' + amountFromReceipt + ' Sats', true);
+            setStatus('<i class="fas fa-bolt"></i> Zap bestätigt! ' + amountFromReceipt + ' Sats', true);
             setTimeout(function () { $('#sk-zap-modal').remove(); }, 2500);
 
             cleanup();
@@ -525,13 +544,13 @@
             payment_hash: paymentHash
         }, function (res) {
             if (res.success && data.$btn) {
-                var total = res.data.total;
-                var formatted = total >= 1000 ? (total / 1000).toFixed(total % 1000 === 0 ? 0 : 1) + 'k' : total;
+                // Same shape as the server renders: sats with a thousands dot.
+                var formatted = String(parseInt(res.data.total, 10) || 0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
                 var $span = data.$btn.find('.sk-zap-total');
                 if ($span.length) {
                     $span.text(formatted);
                 } else {
-                    data.$btn.html('&#9889; <span class="sk-zap-total">' + formatted + '</span>');
+                    data.$btn.html('<i class="fas fa-bolt"></i> <span class="sk-zap-total">' + formatted + '</span>');
                 }
             }
         });

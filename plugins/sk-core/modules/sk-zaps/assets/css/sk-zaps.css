@@ -1,0 +1,78 @@
+/* SK Zaps — button and modal. Loaded wherever a zap button is rendered. */
+
+/* Default button: store tab bar and product page. */
+.sk-zap-btn {
+    background: none;
+    border: 1px solid rgba(247, 147, 26, 0.3);
+    color: #f7931a;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.sk-zap-btn:hover {
+    background: rgba(247, 147, 26, 0.1);
+    border-color: #f7931a;
+}
+/* Rendered hidden until the script finds an extension; the display rule
+   above would otherwise override the browser's own [hidden] styling. */
+.sk-zap-btn[hidden] { display: none; }
+
+/* Feed variant: an icon among the other post actions, no button chrome. */
+.sk-feed-card-actions .sk-zap-btn.sk-zap-btn--feed {
+    background: none;
+    border: none;
+    color: #5a6a7e;
+    font-size: 14px;
+    font-weight: 400;
+    padding: 6px 10px;
+    border-radius: 6px;
+    gap: 5px;
+}
+.sk-feed-card-actions .sk-zap-btn.sk-zap-btn--feed:hover {
+    color: #f7931a;
+    background: rgba(247, 147, 26, 0.08);
+}
+.sk-zap-btn--feed .sk-zap-total:empty { display: none; }
+
+/* Modal */
+.sk-zap-modal {
+    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7);
+    z-index: 99999; display: flex; align-items: center; justify-content: center;
+}
+.sk-zap-modal-inner {
+    background: #1a2332; border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px; padding: 24px; max-width: 360px; width: 90%;
+}
+.sk-zap-amounts { display: flex; gap: 6px; margin: 12px 0; flex-wrap: wrap; }
+.sk-zap-amount-btn {
+    background: rgba(247, 147, 26, 0.1); border: 1px solid rgba(247, 147, 26, 0.3);
+    color: #f7931a; padding: 8px 14px; border-radius: 6px; cursor: pointer;
+    font-size: 14px; font-weight: 600;
+}
+.sk-zap-amount-btn:hover, .sk-zap-amount-btn.active {
+    background: #f7931a; color: #fff;
+}
+.sk-zap-custom { width: 100%; margin: 8px 0; }
+.sk-zap-custom input {
+    width: 100%; background: #0f1923; border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #e8ecf0; padding: 8px 12px; border-radius: 6px; font-size: 14px;
+}
+.sk-zap-send {
+    width: 100%; background: #f7931a; color: #fff; border: none;
+    padding: 10px; border-radius: 6px; font-size: 15px; font-weight: 600;
+    cursor: pointer; margin-top: 8px;
+}
+.sk-zap-send:hover { background: #e8850f; }
+.sk-zap-send:disabled { opacity: 0.7; cursor: wait; }
+.sk-zap-close {
+    width: 100%; background: none; border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #5a6a7e; padding: 8px; border-radius: 6px; cursor: pointer;
+    font-size: 13px; margin-top: 6px;
+}
+.sk-zap-status { text-align: center; padding: 8px; font-size: 13px; color: #5a6a7e; }

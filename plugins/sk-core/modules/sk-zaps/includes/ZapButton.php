@@ -24,7 +24,6 @@ class ZapButton {
             add_action( 'woocommerce_single_product_summary', [ $this, 'render_product_button' ], 35 );
         }
 
-        add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_assets' ] );
         add_action( 'wp_ajax_sk_zap_check_payment', [ __CLASS__, 'ajax_check_payment' ] );
         add_action( 'wp_ajax_nopriv_sk_zap_check_payment', [ __CLASS__, 'ajax_check_payment' ] );
         add_action( 'sk_zaps_fetch_lud16', [ __CLASS__, 'fetch_lud16' ], 10, 2 );
@@ -103,8 +102,10 @@ class ZapButton {
             }
         }
 
-        // No way to receive payment → no zap button.
-        if ( empty( $lightning_address ) ) {
+        // No way to receive payment → no zap button. And no Nostr key → no
+        // zap either: a zap is a Nostr receipt on a payment, and the button
+        // is only for recipients who are on Nostr themselves.
+        if ( empty( $lightning_address ) || empty( $nostr_pubkey ) ) {
             return null;
         }
 
@@ -333,14 +334,44 @@ class ZapButton {
     }
 
     /**
-     * Render the zap button HTML.
+     * Are zaps switched on?
+     *
+     * Two switches used to be read in two places: the templates looked at
+     * whether the module is active, the module itself at its own setting.
+     * With the setting off, the feed still rendered a button (class_exists
+     * finds the file through the autoloader regardless) while the script
+     * behind it was never loaded — a button that did nothing.
      */
-    public static function render_button( array $data, int $post_id = 0 ): void {
+    public static function is_enabled(): bool {
+        return function_exists( 'sk_ext' )
+            && sk_ext()->module->is_active( 'sk_zaps' )
+            && sk_get_option( 'sk_zaps_enabled', 'sk_zaps', 'off' ) === 'on';
+    }
+
+    /**
+     * Render the zap button HTML.
+     *
+     * The button starts hidden: zapping needs an extension on the viewer's
+     * side, and only the browser can tell whether there is one. The script
+     * reveals it when window.nostr exists.
+     *
+     * @param string $variant 'button' for store and product pages, 'feed'
+     *                        for an icon among the post actions.
+     */
+    public static function render_button( array $data, int $post_id = 0, string $variant = 'button' ): void {
+        if ( ! self::is_enabled() ) {
+            return;
+        }
+
+        self::ensure_assets();
+
         $default_amount = (int) sk_get_option( 'sk_zaps_default_amount', 'sk_zaps', '21' );
         $zap_total      = $post_id ? (int) get_post_meta( $post_id, '_sk_zap_total_sats', true ) : 0;
+        $classes        = 'sk-zap-btn' . ( 'feed' === $variant ? ' sk-zap-btn--feed' : '' );
         ?>
         <button type="button"
-                class="sk-zap-btn"
+                class="<?php echo esc_attr( $classes ); ?>"
+                hidden
                 data-vendor-id="<?php echo esc_attr( $data['vendor_id'] ); ?>"
                 data-lightning-address="<?php echo esc_attr( $data['lightning_address'] ); ?>"
                 data-nostr-pubkey="<?php echo esc_attr( $data['nostr_pubkey'] ); ?>"
@@ -348,20 +379,35 @@ class ZapButton {
                 data-default-amount="<?php echo esc_attr( $default_amount ); ?>"
                 <?php if ( $post_id ) : ?>data-post-id="<?php echo esc_attr( $post_id ); ?>"<?php endif; ?>
                 title="Zap <?php echo esc_attr( $data['store_name'] ); ?>">
-            &#9889; <?php if ( $zap_total ) : ?><span class="sk-zap-total"><?php echo esc_html( number_format( $zap_total, 0, '', '.' ) ); ?></span><?php else : ?>Zap<?php endif; ?>
+            <i class="fas fa-bolt"></i>
+            <?php if ( 'feed' === $variant ) : ?>
+                <span class="sk-zap-total"><?php echo $zap_total ? esc_html( number_format( $zap_total, 0, '', '.' ) ) : ''; ?></span>
+            <?php else : ?>
+                <?php if ( $zap_total ) : ?><span class="sk-zap-total"><?php echo esc_html( number_format( $zap_total, 0, '', '.' ) ); ?></span><?php else : ?>Zap<?php endif; ?>
+            <?php endif; ?>
         </button>
         <?php
     }
 
     /**
-     * Enqueue zap JS + CSS on relevant pages.
+     * Script and stylesheet, once, from wherever a button is rendered.
+     *
+     * Registered at render time rather than on a page-type guess: the guess
+     * loaded the assets on every page of one site and on no feed page of the
+     * other. Scripts go to the footer and late styles are printed there too,
+     * so rendering inside the content is early enough.
      */
-    public function enqueue_assets(): void {
-        // Load on product pages, store pages, and feed/community pages.
-        $is_feed = is_singular() && get_post_type() === 'page' && has_shortcode( get_post()->post_content ?? '', 'sk_feed' );
-        if ( ! is_product() && ! function_exists( 'sk_is_store_page' ) && ! $is_feed ) {
+    public static function ensure_assets(): void {
+        if ( wp_script_is( 'sk-zaps', 'enqueued' ) ) {
             return;
         }
+
+        wp_enqueue_style(
+            'sk-zaps',
+            SK_ZAPS_URL . '/assets/css/sk-zaps.css',
+            [],
+            SK_ZAPS_VERSION
+        );
 
         wp_enqueue_script(
             'sk-zaps',
@@ -380,59 +426,5 @@ class ZapButton {
             // QR codes are rendered on our own server, never by a third party.
             'qrUrl'         => rest_url( 'sk/v1/lightning/qr' ),
         ] );
-
-        // Inline CSS.
-        wp_add_inline_style( 'sk-theme', '
-            .sk-zap-btn {
-                background: none;
-                border: 1px solid rgba(247,147,26,0.3);
-                color: #f7931a;
-                padding: 6px 14px;
-                border-radius: 6px;
-                cursor: pointer;
-                font-size: 14px;
-                font-weight: 600;
-                transition: all 0.2s;
-            }
-            .sk-zap-btn:hover {
-                background: rgba(247,147,26,0.1);
-                border-color: #f7931a;
-            }
-            .sk-zap-modal {
-                position: fixed; inset: 0; background: rgba(0,0,0,0.7);
-                z-index: 99999; display: flex; align-items: center; justify-content: center;
-            }
-            .sk-zap-modal-inner {
-                background: #1a2332; border: 1px solid rgba(255,255,255,0.1);
-                border-radius: 12px; padding: 24px; max-width: 360px; width: 90%;
-            }
-            .sk-zap-amounts { display: flex; gap: 6px; margin: 12px 0; flex-wrap: wrap; }
-            .sk-zap-amount-btn {
-                background: rgba(247,147,26,0.1); border: 1px solid rgba(247,147,26,0.3);
-                color: #f7931a; padding: 8px 14px; border-radius: 6px; cursor: pointer;
-                font-size: 14px; font-weight: 600;
-            }
-            .sk-zap-amount-btn:hover, .sk-zap-amount-btn.active {
-                background: #f7931a; color: #fff;
-            }
-            .sk-zap-custom { width: 100%; margin: 8px 0; }
-            .sk-zap-custom input {
-                width: 100%; background: #0f1923; border: 1px solid rgba(255,255,255,0.08);
-                color: #e8ecf0; padding: 8px 12px; border-radius: 6px; font-size: 14px;
-            }
-            .sk-zap-send {
-                width: 100%; background: #f7931a; color: #fff; border: none;
-                padding: 10px; border-radius: 6px; font-size: 15px; font-weight: 600;
-                cursor: pointer; margin-top: 8px;
-            }
-            .sk-zap-send:hover { background: #e8850f; }
-            .sk-zap-send:disabled { opacity: 0.7; cursor: wait; }
-            .sk-zap-close {
-                width: 100%; background: none; border: 1px solid rgba(255,255,255,0.1);
-                color: #5a6a7e; padding: 8px; border-radius: 6px; cursor: pointer;
-                font-size: 13px; margin-top: 6px;
-            }
-            .sk-zap-status { text-align: center; padding: 8px; font-size: 13px; color: #5a6a7e; }
-        ' );
     }
 }

@@ -11400,8 +11400,6 @@ body:has(.dvc-modal) .dkp-contact-icons {
 }
 .sk-feed-report-btn:hover { color: #e06c75; }
 .sk-feed-report-btn.reported { color: #e06c75; cursor: default; }
-.sk-feed-card-actions .sk-zap-btn { font-size: 13px; padding: 4px 10px; }
-
 /* Like count is clickable when > 0 — subtle hover to suggest that. */
 .sk-feed-like-count { cursor: pointer; }
 .sk-feed-like-count:empty { cursor: default; }
