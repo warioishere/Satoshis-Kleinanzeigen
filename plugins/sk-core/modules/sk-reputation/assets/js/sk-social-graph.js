@@ -28,6 +28,33 @@
     var NAMES_PER_VENDOR = 8;
     var REQ_TIMEOUT = 7000;
 
+    // ── Untrusted input ──────────────────────────────────────────────────
+    //
+    // Everything a relay sends is data from a third party. Keys and event
+    // ids are accepted only as 64 lowercase hex characters, and every map
+    // keyed by them has no prototype, so "constructor" or "__proto__" as a
+    // key hits nothing.
+
+    var HEX64 = /^[0-9a-f]{64}$/;
+
+    function isHex64(value) {
+        return typeof value === 'string' && HEX64.test(value);
+    }
+
+    /** Lowercase hex key, or '' when the value is not one. */
+    function hexKey(value) {
+        var s = String(value || '').toLowerCase();
+        return HEX64.test(s) ? s : '';
+    }
+
+    function dict() {
+        return Object.create(null);
+    }
+
+    function own(obj, key) {
+        return Object.prototype.hasOwnProperty.call(obj, key);
+    }
+
     // ── Storage ──────────────────────────────────────────────────────────
 
     function load(key) {
@@ -96,27 +123,38 @@
         var results = await Promise.all(relays.map(function (url) {
             return queryRelay(url, filters).catch(function () { return []; });
         }));
-        var seen = {};
+        var seen = dict();
         var merged = [];
         results.forEach(function (list) {
             list.forEach(function (e) {
-                if (e && e.id && !seen[e.id]) { seen[e.id] = 1; merged.push(e); }
+                if (!e || typeof e !== 'object') { return; }
+                var id = hexKey(e.id);
+                if (!id || seen[id] || !hexKey(e.pubkey) || typeof e.created_at !== 'number') { return; }
+                seen[id] = 1;
+                merged.push(e);
             });
         });
         return merged;
     }
 
+    /** The hex keys in the event's tags of one name; anything else is dropped. */
     function tagValues(event, name) {
         var out = [];
-        (event.tags || []).forEach(function (t) { if (t[0] === name && t[1]) { out.push(String(t[1]).toLowerCase()); } });
+        var tags = Array.isArray(event.tags) ? event.tags : [];
+        tags.forEach(function (t) {
+            if (!Array.isArray(t) || t[0] !== name) { return; }
+            var v = hexKey(t[1]);
+            if (v) { out.push(v); }
+        });
         return out;
     }
 
     /** Latest event per author. */
     function latestPerAuthor(events) {
-        var by = {};
+        var by = dict();
         events.forEach(function (e) {
-            var a = String(e.pubkey || '').toLowerCase();
+            var a = hexKey(e.pubkey);
+            if (!a) { return; }
             if (!by[a] || by[a].created_at < e.created_at) { by[a] = e; }
         });
         return by;
@@ -129,7 +167,7 @@
 
         var cached = load('viewer');
         if (cached === 'none') { return ''; }
-        if (cached) { return cached; }
+        if (isHex64(cached)) { return cached; }
 
         // The extension may inject window.nostr after load.
         for (var i = 0; i < 6 && !window.nostr; i++) {
@@ -149,7 +187,7 @@
 
     async function contactsOf(viewer) {
         var cached = load(viewer + ':contacts');
-        if (cached) { return cached; }
+        if (Array.isArray(cached)) { return cached.filter(isHex64); }
 
         // Every relay: the viewer's list lives wherever their client wrote it.
         var events = await query([{ kinds: [3], authors: [viewer], limit: 1 }], cfg.relays.length);
@@ -157,7 +195,7 @@
         var contacts = latest ? tagValues(latest, 'p') : [];
 
         // Unique, and never the viewer themself.
-        var seen = {};
+        var seen = dict();
         contacts = contacts.filter(function (p) { if (seen[p] || p === viewer) { return false; } seen[p] = 1; return true; });
 
         save(viewer + ':contacts', contacts);
@@ -175,12 +213,24 @@
      * which have reported them (r, kind 1984 with a type that matters here).
      * One round of REQs covers both; returns { vendor: { f: [...], r: [...] } }.
      */
+    /** A cached per-vendor result, with anything that is not a key thrown out. */
+    function cleanGraphEntry(entry) {
+        if (!entry || typeof entry !== 'object') { return null; }
+        var f = Array.isArray(entry.f) ? entry.f.filter(isHex64) : [];
+        var r = Array.isArray(entry.r) ? entry.r.filter(function (x) {
+            return x && isHex64(x.id) && isHex64(x.reporter) && own(cfg.i18n.types, String(x.type)) && typeof x.created_at === 'number';
+        }).map(function (x) {
+            return { id: x.id, reporter: x.reporter, type: String(x.type), created_at: x.created_at };
+        }) : [];
+        return { f: f, r: r };
+    }
+
     async function graphOf(viewer, contacts, vendors) {
-        var result = {};
+        var result = dict();
         var pending = [];
 
         vendors.forEach(function (v) {
-            var cached = load(viewer + ':g:' + v);
+            var cached = cleanGraphEntry(load(viewer + ':g:' + v));
             if (cached) { result[v] = cached; } else { pending.push(v); result[v] = { f: [], r: [] }; }
         });
 
@@ -199,7 +249,7 @@
             events = events.concat(await query(filters.slice(j, j + FILTERS_PER_REQ), 2));
         }
 
-        var contactSet = {};
+        var contactSet = dict();
         authors.forEach(function (c) { contactSet[c] = 1; });
 
         var latest = latestPerAuthor(events.filter(function (e) { return e.kind === 3; }));
@@ -207,21 +257,24 @@
             if (!contactSet[author]) { return; }
             var follows = tagValues(latest[author], 'p');
             pending.forEach(function (v) {
-                if (follows.indexOf(v) !== -1) { result[v].f.push(author); }
+                // A vendor listing themself is not one of the viewer's contacts following them.
+                if (author !== v && follows.indexOf(v) !== -1) { result[v].f.push(author); }
             });
         });
 
         events.filter(function (e) { return e.kind === 1984; }).forEach(function (e) {
-            var reporter = String(e.pubkey || '').toLowerCase();
-            if (!contactSet[reporter]) { return; }
+            var reporter = hexKey(e.pubkey);
+            var id = hexKey(e.id);
+            if (!reporter || !id || !contactSet[reporter]) { return; }
             // Automated classifiers report by score, not by judgement.
             if (/^\s*automated/i.test(String(e.content || ''))) { return; }
-            (e.tags || []).forEach(function (t) {
-                if (t[0] !== 'p' || !t[1]) { return; }
-                var target = String(t[1]).toLowerCase();
+            var tags = Array.isArray(e.tags) ? e.tags : [];
+            tags.forEach(function (t) {
+                if (!Array.isArray(t) || t[0] !== 'p') { return; }
+                var target = hexKey(t[1]);
                 var type = String(t[2] || '').toLowerCase();
-                if (!result[target] || pending.indexOf(target) === -1 || !cfg.i18n.types[type]) { return; }
-                result[target].r.push({ id: e.id, reporter: reporter, type: type, created_at: e.created_at });
+                if (!target || target === reporter || pending.indexOf(target) === -1 || !own(cfg.i18n.types, type)) { return; }
+                result[target].r.push({ id: id, reporter: reporter, type: type, created_at: e.created_at });
             });
         });
 
@@ -232,11 +285,12 @@
     // ── Names, for the "why" ─────────────────────────────────────────────
 
     async function namesOf(pubkeys) {
-        var names = {};
+        var names = dict();
         var missing = [];
         pubkeys.forEach(function (p) {
+            if (!isHex64(p)) { return; }
             var cached = load('name:' + p);
-            if (cached !== null) { names[p] = cached; } else { missing.push(p); }
+            if (typeof cached === 'string') { names[p] = cached; } else { missing.push(p); }
         });
 
         if (missing.length) {
@@ -303,7 +357,7 @@
     function renderReports(chip, reports, names) {
         if (!reports || !reports.length || chip.nextElementSibling && chip.nextElementSibling.classList.contains('sk-trust-report')) { return; }
 
-        var byReporter = {};
+        var byReporter = dict();
         reports.forEach(function (r) { if (!byReporter[r.reporter] || byReporter[r.reporter].created_at < r.created_at) { byReporter[r.reporter] = r; } });
         var distinct = Object.keys(byReporter);
         if (!distinct.length) { return; }
@@ -322,7 +376,8 @@
         var html = '<div class="sk-trust-pop-note">' + esc(cfg.i18n.reportWhy) + '</div><ul>';
         distinct.slice(0, NAMES_PER_VENDOR).forEach(function (p) {
             var r = byReporter[p];
-            html += '<li><a href="https://njump.me/' + r.id + '" target="_blank" rel="noopener">' + esc(names[p] || shortKey(p)) + '</a><span class="sk-trust-pop-type">' + esc(cfg.i18n.types[r.type] || r.type) + '</span></li>';
+            var label = own(cfg.i18n.types, r.type) ? cfg.i18n.types[r.type] : r.type;
+            html += '<li><a href="https://njump.me/' + esc(r.id) + '" target="_blank" rel="noopener">' + esc(names[p] || shortKey(p)) + '</a><span class="sk-trust-pop-type">' + esc(label) + '</span></li>';
         });
         html += '</ul>';
         var pop = document.createElement('div');
@@ -338,7 +393,7 @@
         var shown = followers.slice(0, NAMES_PER_VENDOR);
         var html = '<div class="sk-trust-pop-note">' + esc(cfg.i18n.why) + '</div><ul>';
         shown.forEach(function (p) {
-            html += '<li><a href="https://njump.me/' + p + '" target="_blank" rel="noopener">' + esc(names[p] || shortKey(p)) + '</a></li>';
+            html += '<li><a href="https://njump.me/' + esc(p) + '" target="_blank" rel="noopener">' + esc(names[p] || shortKey(p)) + '</a></li>';
         });
         html += '</ul>';
         if (followers.length > shown.length) {
@@ -371,13 +426,13 @@
             var contacts = await contactsPromise;
             if (!contacts.length) { hint('nomatch'); return; }
 
-            var contactSet = {};
+            var contactSet = dict();
             contacts.forEach(function (c) { contactSet[c] = 1; });
 
             var vendors = [];
             chips.forEach(function (c) {
-                var v = c.getAttribute('data-pubkey').toLowerCase();
-                if (v !== viewer && vendors.indexOf(v) === -1) { vendors.push(v); }
+                var v = hexKey(c.getAttribute('data-pubkey'));
+                if (v && v !== viewer && vendors.indexOf(v) === -1) { vendors.push(v); }
             });
             if (!vendors.length) { return; }
 
@@ -393,7 +448,8 @@
             var names = namePubkeys.length ? await namesOf(namePubkeys) : {};
 
             chips.forEach(function (c) {
-                var v = c.getAttribute('data-pubkey').toLowerCase();
+                var v = hexKey(c.getAttribute('data-pubkey'));
+                if (!v) { return; }
                 var g = graph[v] || { f: [], r: [] };
                 var list = g.f;
                 renderReports(c, g.r, names);
