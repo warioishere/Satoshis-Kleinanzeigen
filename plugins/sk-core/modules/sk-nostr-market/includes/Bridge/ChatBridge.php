@@ -394,13 +394,14 @@ class ChatBridge {
     }
 
     /**
-     * Queue a reply only the vendor can seal.
+     * Queue a message only its author can seal.
      *
-     * The key lives in the vendor's extension. On the next visit the browser
-     * encrypts the reply for the recipient and signs the seal; the server
-     * then adds the wrap with a throwaway key, which needs no vendor key.
+     * The key lives in the member's extension. On the next visit the browser
+     * encrypts the message for the recipient and signs the seal; the server
+     * then adds the wrap with a throwaway key, which needs no member key.
+     * Used for bridge chats here and for ordinary chats by VendorChat.
      */
-    private static function queue_reply( int $vendor_id, int $chat_id, string $recipient, string $text ): void {
+    public static function queue_reply( int $vendor_id, int $chat_id, string $recipient, string $text ): void {
         $offen = self::pending_replies_for( $vendor_id );
 
         $offen[] = [

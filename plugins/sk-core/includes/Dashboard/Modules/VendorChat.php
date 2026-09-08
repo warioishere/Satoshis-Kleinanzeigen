@@ -1174,12 +1174,34 @@ class VendorChat extends DashboardModule {
 
 		$recipient_pubkey = \SK\Modules\Auth\NostrIdentity::get_public_key( $recipient_id );
 
-		// The platform account has no key of its own; it writes under the
-		// marketplace key, which is the marketplace's identity on Nostr.
+		/*
+		 * The platform account has no key of its own; on Nostr it is the
+		 * marketplace key — as the sender of its messages, and as the
+		 * address for messages to it. Without the second half a member
+		 * writing to the marketplace saw their message in the chat here and
+		 * never in their own client.
+		 */
+		if ( '' === $recipient_pubkey
+			&& \SK\Modules\NostrMarket\Bridge\ChatBridge::is_platform_account( $recipient_id )
+			&& class_exists( 'SK\Modules\NostrMarket\EventSender' ) ) {
+			$recipient_pubkey = (string) \SK\Modules\NostrMarket\EventSender::get_pubkey();
+		}
+
+		if ( ! $recipient_pubkey ) {
+			return;
+		}
+
 		$sender_can_sign = \SK\Modules\Auth\NostrIdentity::has_identity( $sender_id )
 			|| \SK\Modules\NostrMarket\Bridge\ChatBridge::is_platform_account( $sender_id );
 
-		if ( ! $recipient_pubkey || ! $sender_can_sign ) {
+		if ( ! $sender_can_sign ) {
+			// A member whose key lives in their extension: the message waits
+			// for their next visit, where the browser seals it. Same path as
+			// a bridge chat, nothing leaves under a stand-in key.
+			if ( \SK\Modules\Auth\NostrIdentity::has_pubkey( $sender_id ) ) {
+				\SK\Modules\NostrMarket\Bridge\ChatBridge::queue_reply( $sender_id, $chat_id, strtolower( $recipient_pubkey ), $message );
+			}
+
 			return;
 		}
 
