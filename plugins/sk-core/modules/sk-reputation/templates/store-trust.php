@@ -39,8 +39,6 @@ $graph_chip = ( sk_module_active( 'sk_reputation' ) && class_exists( SocialGraph
     ? ( new SocialGraph() )->chip( $vendor_id, \SK\Core\Trust\TrustSignals::CONTEXT_PAGE )
     : '';
 
-wp_enqueue_style( 'sk-trust', SK_REPUTATION_URL . '/assets/css/sk-trust.css', [], SK_REPUTATION_VERSION );
-
 get_header( 'shop' );
 ?>
 

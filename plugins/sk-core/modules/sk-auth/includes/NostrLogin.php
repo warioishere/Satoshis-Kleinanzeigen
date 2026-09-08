@@ -98,24 +98,10 @@ class Nostr_Login_Handler {
             return false;
         }
 
-        // Save Nostr public key securely
-        if ( isset( $_POST['nostr_public_key'] ) ) {
-            $nostr_public_key = strtolower( sanitize_text_field( wp_unslash( $_POST['nostr_public_key'] ) ) );
-            if ( $this->is_valid_public_key( $nostr_public_key ) ) {
-                // One key, one account — the same rule the self-service
-                // paths apply. A key that already belongs to someone else
-                // would make that person's messages route to this account.
-                $holder = $this->get_user_by_public_key( $nostr_public_key );
-
-                if ( $holder && (int) $holder->ID !== (int) $user_id ) {
-                    error_log( '[SK Auth / Nostr] Profile save for user ' . $user_id . ': key already linked to user ' . $holder->ID . ', not saved.' );
-                } else {
-                    update_user_meta( $user_id, 'nostr_public_key', $nostr_public_key );
-                }
-            } else {
-                // Handle invalid public key
-            }
-        }
+        // The public key is shown read-only and is not taken from this form:
+        // it is only ever set by a signed Nostr login or a generated identity
+        // (see VendorKey), and a key nobody proved must not become "proven"
+        // by being typed into a profile field.
 
         // Save Nip05 securely
         if ( isset( $_POST['nip05'] ) ) {

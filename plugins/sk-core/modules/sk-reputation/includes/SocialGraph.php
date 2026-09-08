@@ -20,6 +20,20 @@ class SocialGraph {
 
     public function __construct() {
         TrustSignals::register( 'graph', [ $this, 'chip' ], 10 );
+
+        // The stylesheet goes into the head on every front-end page: a chip
+        // can appear anywhere a vendor is named, and a style enqueued while
+        // the page renders would land in the footer and flash.
+        add_action( 'wp_enqueue_scripts', [ __CLASS__, 'enqueue_style' ] );
+    }
+
+    public static function enqueue_style(): void {
+        wp_enqueue_style(
+            'sk-trust',
+            SK_REPUTATION_URL . '/assets/css/sk-trust.css',
+            [],
+            SK_REPUTATION_VERSION
+        );
     }
 
     /**
@@ -50,13 +64,9 @@ class SocialGraph {
             return;
         }
 
-        wp_enqueue_style(
-            'sk-trust',
-            SK_REPUTATION_URL . '/assets/css/sk-trust.css',
-            [],
-            SK_REPUTATION_VERSION
-        );
-
+        // The script is enqueued from the first chip: it goes into the
+        // footer anyway, so a late enqueue costs nothing. The stylesheet is
+        // handled in enqueue_style().
         wp_enqueue_script(
             'sk-social-graph',
             SK_REPUTATION_URL . '/assets/js/sk-social-graph.js',

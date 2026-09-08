@@ -15,16 +15,28 @@
         return;
     }
 
-    // A declined prompt is not asked again in this browser session.
+    // A declined prompt is not asked again in this browser session; an
+    // extension holding a different key than the typed npub is not asked
+    // again for a day — that npub may simply belong to someone else.
     var DECLINED = 'skTrustBindDeclined';
+    var MISMATCH = 'skTrustBindMismatch';
+    var DAY = 24 * 60 * 60 * 1000;
     try {
         if (window.sessionStorage && sessionStorage.getItem(DECLINED) === cfg.candidate) {
+            return;
+        }
+        var m = JSON.parse(localStorage.getItem(MISMATCH) || 'null');
+        if (m && m.c === cfg.candidate && Date.now() - m.ts < DAY) {
             return;
         }
     } catch (e) { /* storage unavailable */ }
 
     function declined() {
         try { sessionStorage.setItem(DECLINED, cfg.candidate); } catch (e) { /* ignore */ }
+    }
+
+    function mismatch() {
+        try { localStorage.setItem(MISMATCH, JSON.stringify({ c: cfg.candidate, ts: Date.now() })); } catch (e) { /* ignore */ }
     }
 
     async function bind() {
@@ -37,6 +49,7 @@
         }
 
         if (!pubkey || String(pubkey).toLowerCase() !== cfg.candidate) {
+            mismatch();
             return;
         }
 
