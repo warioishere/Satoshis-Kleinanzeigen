@@ -29,7 +29,9 @@ final class Module {
         require_once SK_REPUTATION_INCLUDES . '/Settings.php';
         require_once SK_REPUTATION_INCLUDES . '/SocialGraph.php';
         require_once SK_REPUTATION_INCLUDES . '/TrustPage.php';
+        require_once SK_REPUTATION_INCLUDES . '/WebOfTrust.php';
         require_once SK_REPUTATION_INCLUDES . '/Reports.php';
+        require_once SK_REPUTATION_INCLUDES . '/ReportsAdmin.php';
         require_once SK_REPUTATION_INCLUDES . '/FollowMirror.php';
         require_once SK_REPUTATION_INCLUDES . '/Calculator.php';
         require_once SK_REPUTATION_INCLUDES . '/Cron.php';
@@ -107,8 +109,13 @@ final class Module {
         // old /lightning-proof/ address redirects there.
         new TrustPage();
 
-        // Nostr reports from the web of trust, for the operator only.
+        // Nostr reports from the web of trust, for the operator only: the
+        // daily fetch, and in the back end the page and the mail.
         new Reports();
+
+        if ( is_admin() ) {
+            new ReportsAdmin();
+        }
 
         // Internal store follows of SK-made identities, kept in their kind 3.
         if ( sk_module_active( 'follow_store' ) ) {

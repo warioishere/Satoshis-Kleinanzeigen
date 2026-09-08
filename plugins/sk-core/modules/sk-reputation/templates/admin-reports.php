@@ -6,11 +6,14 @@
  * Expects $vendors (see Reports::vendors_with_reports) and $last_run.
  */
 
+use SK\Core\Nostr\ReportTypes;
+use SK\Modules\Reputation\ReportsAdmin;
+
 defined( 'ABSPATH' ) || exit;
 
-$type_labels = \SK\Core\Nostr\ReportTypes::labels();
+$type_labels = ReportTypes::labels();
 ?>
-<div class="wrap">
+<div class="wrap sk-rep">
     <h1><?php esc_html_e( 'SK Reputation – Nostr-Meldungen', 'sk-core' ); ?></h1>
 
     <?php if ( ! empty( $_GET['fetched'] ) ) : ?>
@@ -40,9 +43,9 @@ $type_labels = \SK\Core\Nostr\ReportTypes::labels();
         <?php endif; ?>
     </p>
 
-    <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-bottom:20px;">
-        <input type="hidden" name="action" value="sk_reputation_fetch_reports">
-        <?php wp_nonce_field( 'sk_reputation_fetch_reports' ); ?>
+    <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="sk-rep-fetch">
+        <input type="hidden" name="action" value="<?php echo esc_attr( ReportsAdmin::FETCH_ACTION ); ?>">
+        <?php wp_nonce_field( ReportsAdmin::FETCH_ACTION ); ?>
         <button type="submit" class="button"><?php esc_html_e( 'Jetzt abrufen', 'sk-core' ); ?></button>
         <span class="description"><?php esc_html_e( 'Liest alle Relays; dauert einige Sekunden.', 'sk-core' ); ?></span>
     </form>
@@ -51,18 +54,18 @@ $type_labels = \SK\Core\Nostr\ReportTypes::labels();
         <p><strong><?php esc_html_e( 'Keine Meldungen von bekannten Meldern.', 'sk-core' ); ?></strong></p>
     <?php else : ?>
         <?php foreach ( $vendors as $vendor_id => $row ) : ?>
-            <h2 style="margin-top:24px;">
+            <h2 class="sk-rep-vendor">
                 <a href="<?php echo esc_url( sk_get_store_url( $vendor_id ) ); ?>" target="_blank"><?php echo esc_html( $row['vendor']->display_name ); ?></a>
-                <span style="font-weight:normal;color:#666;">#<?php echo (int) $vendor_id; ?> · <?php echo esc_html( sprintf( _n( '%d Meldung', '%d Meldungen', count( $row['reports'] ), 'sk-core' ), count( $row['reports'] ) ) ); ?></span>
+                <span class="sk-rep-vendor-meta">#<?php echo (int) $vendor_id; ?> · <?php echo esc_html( sprintf( _n( '%d Meldung', '%d Meldungen', count( $row['reports'] ), 'sk-core' ), count( $row['reports'] ) ) ); ?></span>
             </h2>
-            <table class="widefat striped" style="max-width:1100px;">
+            <table class="widefat striped sk-rep-table">
                 <thead>
                     <tr>
-                        <th style="width:110px;"><?php esc_html_e( 'Datum', 'sk-core' ); ?></th>
-                        <th style="width:160px;"><?php esc_html_e( 'Typ', 'sk-core' ); ?></th>
-                        <th style="width:200px;"><?php esc_html_e( 'Melder', 'sk-core' ); ?></th>
+                        <th class="sk-rep-col-date"><?php esc_html_e( 'Datum', 'sk-core' ); ?></th>
+                        <th class="sk-rep-col-type"><?php esc_html_e( 'Typ', 'sk-core' ); ?></th>
+                        <th class="sk-rep-col-reporter"><?php esc_html_e( 'Melder', 'sk-core' ); ?></th>
                         <th><?php esc_html_e( 'Inhalt', 'sk-core' ); ?></th>
-                        <th style="width:90px;"><?php esc_html_e( 'Event', 'sk-core' ); ?></th>
+                        <th class="sk-rep-col-event"><?php esc_html_e( 'Event', 'sk-core' ); ?></th>
                     </tr>
                 </thead>
                 <tbody>

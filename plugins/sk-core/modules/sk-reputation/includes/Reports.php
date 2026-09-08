@@ -3,36 +3,38 @@
 namespace SK\Modules\Reputation;
 
 use SK\Core\Nostr\Events;
-use SK\Core\Nostr\Keys;
+use SK\Core\Nostr\Relays;
 use SK\Core\Nostr\ReportTypes;
+use SK\Core\Trust\KeyBinding;
 use SK\Core\Trust\VendorKey;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Nostr reports (kind 1984, NIP-56) against vendors — the operator's view.
+ * Nostr reports (kind 1984, NIP-56) against vendors — the daily fetch.
  *
  * Buyers see reports only from their own contacts, in their browser (see
  * sk-social-graph.js). This class serves moderation: once a day it reads
  * the reports against every proven vendor key from the site's relays and
- * keeps those whose reporter sits in the marketplace's web of trust — the
- * keys the marketplace key follows and the keys those follow — plus those
- * from registered vendors with a proven key, marked as such (a vendor
- * reporting a competitor is not the community speaking). Anything else
- * is noise: the reports
- * found in the wild were an automated NSFW bot, an empty profanity report
- * and a "wrong click", none of them from anyone known.
+ * keeps those whose reporter sits in the marketplace's web of trust (see
+ * WebOfTrust) plus those from registered vendors with a proven key, marked
+ * as such. Anything else is noise: the reports found in the wild were an
+ * automated NSFW bot, an empty profanity report and a "wrong click", none
+ * of them from anyone known.
  *
  * Nothing here runs while a page renders, and nothing is shown to buyers.
+ * The admin page and the mail are ReportsAdmin's.
  */
 class Reports {
 
-    const CRON_HOOK   = 'sk_reputation_fetch_reports';
+    const CRON_HOOK    = 'sk_reputation_fetch_reports';
     const REPORTS_META = 'sk_nostr_reports';
-    const TIME_META   = 'sk_nostr_reports_time';
-    const WOT_KEY     = 'sk_reputation_wot_v2';
-    const RUN_OPTION  = 'sk_reputation_reports_run';
-    const MAIL_THROTTLE = 'sk_reputation_reports_mail';
+    const TIME_META    = 'sk_nostr_reports_time';
+    const RUN_OPTION   = 'sk_reputation_reports_run';
+
+    /** Kept for callers and tests that knew them here. */
+    const WOT_KEY       = WebOfTrust::TRANSIENT;
+    const MAIL_THROTTLE = ReportsAdmin::MAIL_THROTTLE;
 
     /** Formerly the ids of every kept report; the stored reports carry them now. */
     const LEGACY_SEEN_OPTION = 'sk_reputation_report_ids';
@@ -60,52 +62,16 @@ class Reports {
      * key in the same chunk out of a shared limit. Pages and total are
      * capped: a flood costs time, not correctness, and never skips a relay.
      */
-    const PAGE_LIMIT  = 500;
-    const MAX_PAGES   = 4;
-    const MAX_EVENTS  = 10000;
-
-    /** Web of trust keys are kept as this many leading hex characters. */
-    const WOT_PREFIX = 16;
+    const PAGE_LIMIT = 500;
+    const MAX_PAGES  = 4;
+    const MAX_EVENTS = 10000;
 
     public function __construct() {
         // The daily run is scheduled by the module on activation (Module::cron_jobs).
         add_action( self::CRON_HOOK, [ __CLASS__, 'fetch' ] );
-        add_action( 'admin_menu', [ $this, 'add_menu' ], 25 );
-        add_action( 'admin_post_sk_reputation_fetch_reports', [ $this, 'handle_fetch_now' ] );
     }
 
-    // ── Admin ────────────────────────────────────────────────────────────
-
-    public function add_menu(): void {
-        add_submenu_page(
-            'sk',
-            __( 'SK Reputation', 'sk-core' ),
-            __( 'SK Reputation', 'sk-core' ),
-            'manage_options',
-            'sk-reputation',
-            [ $this, 'render_page' ]
-        );
-    }
-
-    public function render_page(): void {
-        $vendors  = self::vendors_with_reports();
-        $last_run = get_option( self::RUN_OPTION, [] );
-
-        require SK_REPUTATION_TEMPLATES . '/admin-reports.php';
-    }
-
-    public function handle_fetch_now(): void {
-        if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( esc_html__( 'Keine Berechtigung.', 'sk-core' ) );
-        }
-
-        check_admin_referer( 'sk_reputation_fetch_reports' );
-
-        self::fetch();
-
-        wp_safe_redirect( admin_url( 'admin.php?page=sk-reputation&fetched=1' ) );
-        exit;
-    }
+    // ── Stored reports ───────────────────────────────────────────────────
 
     /**
      * @return array<int, array{vendor: \WP_User, reports: array, time: int}>
@@ -138,7 +104,7 @@ class Reports {
         return $out;
     }
 
-    /** @return array<int, array{id: string, reporter: string, type: string, created_at: int, content: string}> */
+    /** @return array<int, array{id: string, reporter: string, source: string, reporter_user: int, type: string, created_at: int, content: string}> */
     public static function for_vendor( int $vendor_id ): array {
         $raw = get_user_meta( $vendor_id, self::REPORTS_META, true );
 
@@ -149,8 +115,8 @@ class Reports {
 
     /**
      * Cron: read the reports against every proven vendor key, keep the
-     * ones from the web of trust, merge them into what is stored per
-     * vendor, mail the new ones.
+     * ones worth keeping, merge them into what is stored per vendor, mail
+     * the new ones.
      *
      * Merge, never replace: what a run does not see again — because a
      * relay was down, or because a flood of junk filled the page — stays.
@@ -170,7 +136,7 @@ class Reports {
             return;
         }
 
-        $wot = self::wot();
+        $wot = WebOfTrust::prefixes();
 
         // Incremental since the last run, a full pass once a week.
         $full  = empty( $last_run['time'] ) || empty( $last_run['full_time'] ) || $now - (int) $last_run['full_time'] > self::FULL_INTERVAL;
@@ -186,11 +152,11 @@ class Reports {
         }
 
         // What each vendor already has, by report id. The same daily pass
-        // keeps every vendor's key binding in order (see VendorKey).
+        // keeps every vendor's key binding in order (see KeyBinding).
         $stored = [];
 
         foreach ( array_unique( $targets ) as $vendor_id ) {
-            VendorKey::maintain( $vendor_id );
+            KeyBinding::maintain( $vendor_id );
 
             foreach ( self::for_vendor( $vendor_id ) as $report ) {
                 if ( is_array( $report ) && is_string( $report['id'] ?? null ) ) {
@@ -250,9 +216,7 @@ class Reports {
             'seconds'   => round( microtime( true ) - $started, 1 ),
         ], false );
 
-        if ( ! empty( $new ) ) {
-            self::notify_admin( $new );
-        }
+        ReportsAdmin::notify( $new );
     }
 
     /**
@@ -315,6 +279,12 @@ class Reports {
     /**
      * One report, if it is worth keeping.
      *
+     * Two kinds of reporter count: someone in the marketplace's web of
+     * trust, or a registered vendor with a proven key. A vendor is not
+     * part of the web of trust — anyone with a Nostr login could report
+     * a competitor and look like the community doing it — but their
+     * report is kept and shown as what it is: from vendor #ID.
+     *
      * @param array<string, int> $targets pubkey => vendor id
      * @param array<string, int> $wot     key prefix => 1
      */
@@ -329,17 +299,11 @@ class Reports {
             return null;
         }
 
-        $reporter = strtolower( $event['pubkey'] );
-
-        // Two kinds of reporter count: someone in the marketplace's web of
-        // trust, or a registered vendor with a proven key. A vendor is not
-        // part of the web of trust — anyone with a Nostr login could report
-        // a competitor and look like the community doing it — but their
-        // report is kept and shown as what it is: from vendor #ID.
+        $reporter      = strtolower( $event['pubkey'] );
         $source        = '';
         $reporter_user = 0;
 
-        if ( isset( $wot[ substr( $reporter, 0, self::WOT_PREFIX ) ] ) ) {
+        if ( WebOfTrust::contains( $reporter, $wot ) ) {
             $source = 'wot';
         } elseif ( isset( $targets[ $reporter ] ) ) {
             $source        = 'vendor';
@@ -370,7 +334,7 @@ class Reports {
             }
         }
 
-        if ( '' === $target || ! in_array( $type, self::TYPES, true ) ) {
+        if ( '' === $target || ! ReportTypes::is_counted( $type ) ) {
             return null;
         }
 
@@ -404,95 +368,12 @@ class Reports {
      * @return array<string, int>
      */
     public static function vendor_keys(): array {
-        global $wpdb;
-
-        $ids = $wpdb->get_col(
-            "SELECT DISTINCT user_id FROM {$wpdb->usermeta}
-             WHERE ( meta_key = 'nostr_public_key' OR meta_key = '" . esc_sql( VendorKey::BOUND_META ) . "' ) AND meta_value <> ''"
-        );
-
-        $platform = class_exists( 'SK\Modules\NostrMarket\Bridge\ChatBridge' ) ? \SK\Modules\NostrMarket\Bridge\ChatBridge::PLATFORM_USER_ID : 1;
-        $ids[]    = $platform;
-
-        $out = [];
-
-        foreach ( array_unique( array_map( 'intval', $ids ) ) as $id ) {
-            $key = VendorKey::bound( $id );
-
-            if ( '' !== $key && ! isset( $out[ $key ] ) ) {
-                $out[ $key ] = $id;
-            }
-        }
-
-        return $out;
-    }
-
-    /**
-     * The web of trust as key prefixes: the marketplace's follows and
-     * their follows. Rebuilt once a day. Vendors' own keys are not in it
-     * (see accept()).
-     *
-     * @return array<string, int>
-     */
-    public static function wot(): array {
-        $cached = get_transient( self::WOT_KEY );
-
-        if ( is_array( $cached ) && ! empty( $cached ) ) {
-            return $cached;
-        }
-
-        $wot = [];
-
-        $marketplace = self::marketplace_pubkey();
-
-        if ( '' !== $marketplace ) {
-            $degree1 = self::follows_of( [ $marketplace ] );
-
-            foreach ( $degree1 as $key ) {
-                $wot[ substr( $key, 0, self::WOT_PREFIX ) ] = 1;
-            }
-
-            foreach ( self::follows_of( $degree1 ) as $key ) {
-                $wot[ substr( $key, 0, self::WOT_PREFIX ) ] = 1;
-            }
-        }
-
-        set_transient( self::WOT_KEY, $wot, DAY_IN_SECONDS );
-
-        return $wot;
-    }
-
-    /**
-     * Union of the p tags of the newest kind 3 of each author, from every relay.
-     *
-     * @param string[] $authors
-     * @return string[]
-     */
-    private static function follows_of( array $authors ): array {
-        if ( empty( $authors ) ) {
-            return [];
-        }
-
-        $latest  = \SK\Core\Nostr\Relays::latest( 3, $authors );
-        $follows = [];
-
-        foreach ( $latest as $event ) {
-            foreach ( Events::tag_values( $event, 'p', true ) as $key ) {
-                $follows[ $key ] = 1;
-            }
-        }
-
-        return array_keys( $follows );
-    }
-
-    /** The marketplace key roots the web of trust only while its module runs. */
-    private static function marketplace_pubkey(): string {
-        return sk_module_active( 'sk_nostr_market' ) ? Keys::marketplace_pubkey() : '';
+        return VendorKey::all_bound();
     }
 
     /** @return string[] The site's relays, none while sk_auth is off. */
     private static function relays(): array {
-        return sk_module_active( 'sk_auth' ) ? \SK\Core\Nostr\Relays::list() : [];
+        return sk_module_active( 'sk_auth' ) ? Relays::list() : [];
     }
 
     /**
@@ -502,54 +383,10 @@ class Reports {
      * @return array<int, array>
      */
     private static function req( string $relay, array $filters ): array {
-        return \SK\Core\Nostr\Relays::fetch( $relay, $filters, [
+        return Relays::fetch( $relay, $filters, [
             'timeout' => self::RELAY_TIMEOUT,
             'max'     => self::PAGE_LIMIT,
             'verify'  => false,
         ] )['events'];
-    }
-
-    private static function notify_admin( array $new ): void {
-        if ( get_transient( self::MAIL_THROTTLE ) ) {
-            return;
-        }
-
-        set_transient( self::MAIL_THROTTLE, 1, DAY_IN_SECONDS );
-
-        $lines = [];
-
-        foreach ( array_slice( $new, 0, 20 ) as $r ) {
-            $vendor   = get_userdata( (int) $r['vendor_id'] );
-            $reporter = substr( $r['reporter'], 0, 12 ) . '…';
-
-            if ( ! empty( $r['reporter_user'] ) ) {
-                $by       = get_userdata( (int) $r['reporter_user'] );
-                $reporter = sprintf(
-                    /* translators: 1: vendor user id, 2: vendor display name, 3: shortened Nostr key */
-                    __( 'Anbieter #%1$d %2$s (%3$s)', 'sk-core' ),
-                    (int) $r['reporter_user'],
-                    $by ? $by->display_name : '?',
-                    $reporter
-                );
-            }
-
-            $lines[] = sprintf(
-                /* translators: 1: reported vendor name, 2: vendor user id, 3: report type, 4: reporter, 5: date, 6: quoted report text or empty */
-                __( "%1\$s (#%2\$d): %3\$s von %4\$s am %5\$s\n%6\$s", 'sk-core' ),
-                $vendor ? $vendor->display_name : '?',
-                $r['vendor_id'],
-                $r['type'],
-                $reporter,
-                wp_date( 'd.m.Y', $r['created_at'] ),
-                $r['content'] !== '' ? '  „' . $r['content'] . '“' : ''
-            );
-        }
-
-        wp_mail(
-            get_option( 'admin_email' ),
-            /* translators: %d: number of new reports */
-            sprintf( __( '[SK Reputation] %d neue Nostr-Meldungen', 'sk-core' ), count( $new ) ),
-            implode( "\n\n", $lines ) . "\n\n" . admin_url( 'admin.php?page=sk-reputation' )
-        );
     }
 }

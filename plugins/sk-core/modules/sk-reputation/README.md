@@ -26,16 +26,30 @@ includes/Nostr/Relays.php         # Core: Relay-Liste, Schutzschalter, fetch/que
 includes/Nostr/Assets.php         # Core: registriert `sk-nostr` (Browser-Helfer) und liefert Relays + Verifier-URL
 assets/js/sk-nostr.js             # Core: window.skNostr – hex/dict/esc, waitForNostr, query/subscribe mit Signaturprüfung
 assets/js/sk-nostr-verify.js      # Core: Schnorr-Verifier (Build in tools/nostr-verify/)
+includes/Nostr/RelaySession.php   # Core: eine Verbindung, mehrere REQs (DM-Poll mit Paging + NIP-42)
 includes/Trust/TrustSignals.php   # Core: zentrale Registry der Chips (unabhängig vom Modul)
+includes/Trust/VendorKey.php      # Core: welcher Schlüssel zählt – nur lesen (bound, proof, all_bound, holder_of)
+includes/Trust/KeyBinding.php     # Core: das Bindungs-Event – Vorlage, verify, store, maintain, publish, Widerruf, Ajax
 modules/sk-reputation/
-├── module.php                    # Schalter, bootet die Signalquellen ab init
+├── module.php                    # Schalter, bootet ab init; cron_jobs()/schedule_cron() bei Aktivierung
 ├── includes/
 │   ├── Settings.php              # eigene Einstellungssektion sk_reputation
+│   ├── SocialGraph.php           # Graph-Chip (leer, Browser füllt)
+│   ├── TrustPage.php             # /vertrauen/ (und 301 von /lightning-proof/), has_signals, get_proofs
+│   ├── Reports.php               # Kind-1984-Meldungen: täglicher Fetch, accept, Speicherung
+│   ├── WebOfTrust.php            # Follows des Marktplatz-Schlüssels + deren Follows, Transient
+│   ├── ReportsAdmin.php          # Admin-Seite, „Jetzt abrufen", Mail
+│   ├── FollowMirror.php          # interne Follows in die Kind 3 SK-erzeugter Identitäten
 │   ├── Calculator.php            # Payments-Signal: Sybil-Checks + Score
-│   ├── Cron.php                  # Payments-Signal: 6h-Cron, NIP-32-Label
-│   └── ProofPage.php             # Payments-Signal: Store-Tab + Proof-Seite
-└── templates/store-lightning-proof.php
+│   └── Cron.php                  # Payments-Signal: 6h-Cron, NIP-32-Label
+└── templates/                    # store-trust.php, store-trust-lightning.php, admin-reports.php
 ```
+
+Alle wiederkehrenden Cron-Jobs des Moduls stehen in `Module::cron_jobs()` und
+werden bei Aktivierung geplant, bei Deaktivierung entfernt; kein Konstruktor
+plant mehr bei jedem Request. Kein Modul spricht die Nostr-Bibliothek oder
+`WebSocket\Client` direkt an, außer für Verschlüsselung (Nip04/Nip44/GiftWrap in
+ChatBridge, DMListener, NWC) und den Objekt-Wrapper `NostrIdentity::sign_event`.
 
 ### Registry `SK\Core\Trust\TrustSignals`
 
@@ -61,9 +75,12 @@ Eigene Sektion „SK Reputation" in den Admin-Einstellungen
 (`sk_reputation_enabled`, Option `sk_reputation`). Der Schalter hing früher in
 der SK-Payments-Sektion; das Modul ist jetzt unabhängig von Payments.
 
-## Schlüsselbindung `SK\Core\Trust\VendorKey`
+## Schlüsselbindung `SK\Core\Trust\VendorKey` + `KeyBinding`
 
-Welcher Nostr-Schlüssel für einen Anbieter zählt. `VendorKey::bound( $id )`
+Welcher Nostr-Schlüssel für einen Anbieter zählt. `VendorKey` liest nur
+(`bound`, `proof`, `candidate`, `all_bound`, `holder_of`); alles, was das
+Bindungs-Event baut, prüft, speichert, veröffentlicht oder widerruft, steht in
+`KeyBinding`. `VendorKey::bound( $id )`
 liefert nur einen Schlüssel, dessen Inhaber die Kontrolle gegenüber dieser
 Seite bewiesen hat, sonst `''`. Ein bloß in die Store-Einstellungen
 getippter npub ist eine Behauptung und zählt nicht. Niemand muss dafür etwas
@@ -270,8 +287,9 @@ Marktplatz-Schlüssel veröffentlicht.
 
 ### Proof Page
 
-`/store/{vendor}/lightning-proof/` zeigt alle verifizierten Transaktionen mit
-Payment-Hash und bolt11 bzw. Adresse und TX-Link; JSON unter
+Die belegten Zahlungen stehen auf der Vertrauensseite
+(`store-trust-lightning.php`, `TrustPage::get_proofs`); die alte Adresse
+`/store/{vendor}/lightning-proof/` leitet per 301 dorthin. JSON unter
 `/wp-json/sk/v1/lightning/proof/{vendor_id}`.
 
 ### Datenbank

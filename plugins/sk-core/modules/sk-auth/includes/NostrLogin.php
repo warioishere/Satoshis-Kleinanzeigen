@@ -246,8 +246,8 @@ class Nostr_Login_Handler {
         if ( $user ) {
             // The signed request proves control of the key towards this
             // site; keep it so the key counts as bound (see VendorKey).
-            if ( class_exists( 'SK\Core\Trust\VendorKey' ) ) {
-                \SK\Core\Trust\VendorKey::record_login_proof( (int) $user->ID, $authtoken );
+            if ( class_exists( 'SK\Core\Trust\KeyBinding' ) ) {
+                \SK\Core\Trust\KeyBinding::record_login_proof( (int) $user->ID, $authtoken );
             }
 
             wp_set_current_user( $user->ID );

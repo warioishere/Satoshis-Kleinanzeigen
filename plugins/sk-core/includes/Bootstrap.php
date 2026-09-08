@@ -70,7 +70,7 @@ class Bootstrap {
         new Blocks\ExtendedManager();
         new SettingsApi\Manager();
         Nostr\Assets::init();
-        Trust\VendorKey::init();
+        Trust\KeyBinding::init();
 
         if ( is_admin() ) {
             new Admin\ExtendedAdmin();

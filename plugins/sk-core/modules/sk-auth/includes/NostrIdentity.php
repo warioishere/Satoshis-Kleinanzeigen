@@ -58,8 +58,8 @@ class NostrIdentity {
 
         // Bind the new key to this site right away: a signature only, the
         // relay work runs in cron (see VendorKey).
-        if ( class_exists( 'SK\Core\Trust\VendorKey' ) ) {
-            \SK\Core\Trust\VendorKey::maintain( $user_id );
+        if ( class_exists( 'SK\Core\Trust\KeyBinding' ) ) {
+            \SK\Core\Trust\KeyBinding::maintain( $user_id );
         }
 
         // Publish the Kind 0 profile only after the response has gone out.
@@ -82,8 +82,8 @@ class NostrIdentity {
         // drop the proofs kept for it (see VendorKey).
         $privkey = self::get_private_key( $user_id );
 
-        if ( $privkey && class_exists( 'SK\Core\Trust\VendorKey' ) ) {
-            \SK\Core\Trust\VendorKey::on_identity_deleted( $user_id, $privkey );
+        if ( $privkey && class_exists( 'SK\Core\Trust\KeyBinding' ) ) {
+            \SK\Core\Trust\KeyBinding::on_identity_deleted( $user_id, $privkey );
         }
 
         delete_user_meta( $user_id, 'sk_nostr_private_key' );
