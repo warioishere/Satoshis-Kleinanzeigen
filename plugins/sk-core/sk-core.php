@@ -69,6 +69,9 @@ add_action( 'init', [ \SK\Core\Antispam::class, 'init' ], 20 );
 // Buy Now — direct BTCPay checkout for subscriptions & boosts.
 \SK\Core\BuyNow::init();
 
+// Product description excerpt on shop/category loops.
+\SK\Core\ProductDescriptionExcerpt::init();
+
 // Vendor avatar + name on product cards.
 \SK\Core\ProductVendorInfo::init();
 

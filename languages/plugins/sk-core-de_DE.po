@@ -13228,3 +13228,11 @@ msgstr ""
 #: includes/BuyNow.php
 msgid "BTCPay-Modal direkt öffnen (Abonnements &amp; Boosts). Wenn deaktiviert, läuft der normale WooCommerce-Checkout-Prozess."
 msgstr ""
+
+#: includes/ProductDescriptionExcerpt.php
+msgid "Wortanzahl für Beschreibungsauszug"
+msgstr ""
+
+#: includes/ProductDescriptionExcerpt.php
+msgid "Wie viele Wörter der Produktbeschreibung auf der Shop- und Kategorieseite angezeigt werden."
+msgstr ""
