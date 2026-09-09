@@ -332,6 +332,15 @@ class ModuleManager {
                         'module_class' => 'SK\Modules\ContactFeewall\Module',
                         'categories'   => [ 'Store Management' ],
                     ],
+                    'sk_post_carousel' => [
+                        'id'           => 'sk_post_carousel',
+                        'name'         => __( 'Post Image Carousel', 'sk-core' ),
+                        'description'  => __( 'Karussell für Beitrags-Bilder über den Shortcode [post_image_carousel].', 'sk-core' ),
+                        'thumbnail'    => $thumbnail_dir . '/follow-store.svg',
+                        'module_file'  => SK_CORE_DIR . '/modules' . '/sk-post-carousel/module.php',
+                        'module_class' => 'SK\Modules\PostCarousel\Module',
+                        'categories'   => [ 'Content' ],
+                    ],
                 ]
             );
         }
