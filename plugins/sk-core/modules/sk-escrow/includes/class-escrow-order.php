@@ -52,6 +52,9 @@ class WEO_Order {
     if (!is_wp_error($res) && !empty($res['escrow_address']) && !empty($res['watch_id'])) {
       $order->update_meta_data('_weo_escrow_addr', $res['escrow_address']);
       $order->update_meta_data('_weo_watch_id',    $res['watch_id']);
+      // The browser recomputes the address from this and refuses to show
+      // a deposit address that the descriptor does not prove.
+      $order->update_meta_data('_weo_descriptor',  (string) ($res['descriptor'] ?? ''));
       $order->save();
     } else {
       $order->add_order_note('Escrow-Service nicht erreichbar – erneuter Versuch in 5 Minuten.');
@@ -75,10 +78,17 @@ class WEO_Order {
     $addr   = $order->get_meta('_weo_escrow_addr');
     $watch  = $order->get_meta('_weo_watch_id');
 
-    echo '<section class="weo-escrow">';
+    $cur = get_current_user_id();
+    $role = '';
+    if ($cur && $cur == $order->get_user_id()) {
+      $role = 'buyer';
+    } elseif ($cur && $cur == (int) $order->get_meta('_weo_vendor_id')) {
+      $role = 'seller';
+    }
+    // Context for sk-escrow-ui.js: descriptor to recompute the address, role to pick the own key.
+    echo '<section class="weo-escrow" data-descriptor="'.esc_attr($order->get_meta('_weo_descriptor')).'" data-address="'.esc_attr($addr).'" data-role="'.esc_attr($role).'">';
     echo '<h2>Escrow</h2>';
 
-    $cur = get_current_user_id();
     if ($cur && !weo_get_payout_address($cur)) {
       echo '<div class="notice weo"><p>'.esc_html__('Bitte hinterlege eine Payout-/Refund-Adresse in deinen Einstellungen.','weo').'</p></div>';
     }
@@ -152,6 +162,10 @@ class WEO_Order {
     $addr_js  = esc_js($addr);
 
     echo '<p><strong>Einzahlungsadresse:</strong> <code id="weo_addr">'.$addr_esc.'</code></p>';
+    echo '<p class="weo-verify" aria-live="polite"></p>';
+    if ($role) {
+      echo weo_keybox_html();
+    }
 
     echo '<div class="weo-qr">';
     echo '  <div id="weo_qr"></div>';
@@ -276,7 +290,7 @@ class WEO_Order {
               $details .= '<p><strong>'.esc_html__('Gebühr','weo').':</strong> '.esc_html(number_format_i18n(intval($dec['fee_sat']))).' sats</p>';
             }
           }
-          echo '<div class="notice weo weo-info"><p><strong>RBF-PSBT (Base64):</strong></p><textarea rows="6" style="width:100%;">'.$psbt_b64.'</textarea>'.$details.'<p>'.esc_html__('Bitte in deiner Wallet laden, signieren und unten wieder hochladen.','weo').'</p></div>';
+          echo '<div class="notice weo weo-info"><p><strong>RBF-PSBT (Base64):</strong></p><textarea class="weo-psbt-source" rows="6" style="width:100%;">'.$psbt_b64.'</textarea>'.$details.'<p>'.esc_html__('Bitte in deiner Wallet laden, signieren und unten wieder hochladen.','weo').'</p></div>';
         }
       } else {
         if ($state !== 'dispute') {
@@ -312,6 +326,7 @@ class WEO_Order {
         echo '<input type="hidden" name="order_id" value="'.intval($order_id).'">';
         echo '<p><label>Signierte PSBT (Base64, Käufer)</label><br/>';
         echo '<textarea name="weo_signed_psbt" class="weo-psbt" rows="6" style="width:100%" placeholder="PSBT…"></textarea></p>';
+        echo weo_sign_panel_html();
         if ($ready_release) {
           echo '<p><label><input type="checkbox" name="weo_release_funds" value="1"> '.esc_html__('Freigabe der Escrow-Mittel bestätigen','weo').'</label></p>';
         } else {
@@ -328,6 +343,7 @@ class WEO_Order {
         echo '<input type="hidden" name="order_id" value="'.intval($order_id).'">';
         echo '<p><label>Signierte PSBT (Base64, Verkäufer)</label><br/>';
         echo '<textarea name="weo_signed_psbt" class="weo-psbt" rows="6" style="width:100%" placeholder="PSBT…"></textarea></p>';
+        echo weo_sign_panel_html();
         if ($ready_release) {
           echo '<p><label><input type="checkbox" name="weo_release_funds" value="1"> '.esc_html__('Freigabe der Escrow-Mittel bestätigen','weo').'</label></p>';
         } else {
@@ -448,7 +464,7 @@ class WEO_Order {
             do_action('weo_rbf_requested', $order_id);
             $order->add_order_note(__('RBF angefordert; Verkäufer benachrichtigt.', 'weo'));
             $psbt_b64 = esc_textarea($resp['psbt']);
-            echo '<div class="notice weo weo-info"><p><strong>RBF-PSBT (Base64):</strong></p><textarea rows="6" style="width:100%;">'.$psbt_b64.'</textarea></div>';
+            echo '<div class="notice weo weo-info"><p><strong>RBF-PSBT (Base64):</strong></p><textarea class="weo-psbt-source" rows="6" style="width:100%;">'.$psbt_b64.'</textarea></div>';
           } else {
             echo '<div class="notice weo weo-error"><p>Fee-Bump fehlgeschlagen.</p></div>';
           }
@@ -468,7 +484,7 @@ class WEO_Order {
           if (is_array($res)) {
             $psbt_b64 = $res['psbt'];
             $details  = $res['details'];
-            echo '<div class="notice weo weo-info"><p><strong>PSBT (Base64):</strong></p><textarea rows="6" style="width:100%;">'.$psbt_b64.'</textarea>'.$details.'<p>Bitte in deiner Wallet laden, signieren und unten wieder hochladen.</p></div>';
+            echo '<div class="notice weo weo-info"><p><strong>PSBT (Base64):</strong></p><textarea class="weo-psbt-source" rows="6" style="width:100%;">'.$psbt_b64.'</textarea>'.$details.'<p>Bitte in deiner Wallet laden, signieren und unten wieder hochladen – oder unten „Im Browser signieren“.</p></div>';
           } elseif ($res) {
             echo '<div class="notice weo weo-error"><p>'.esc_html($res->get_error_message()).'</p></div>';
           }
@@ -480,6 +496,7 @@ class WEO_Order {
   /** Upload signierter PSBT → Merge/Finalize/Broadcast via API */
   public function handle_upload() {
     if (!is_user_logged_in()) wp_die('Nicht erlaubt.');
+    weo_ensure_wc_session();
       $order_id = intval($_POST['order_id'] ?? 0);
       $psbt     = trim(wp_unslash($_POST['weo_signed_psbt'] ?? ''));
       $action   = sanitize_text_field($_POST['action'] ?? '');
@@ -614,6 +631,7 @@ class WEO_Order {
   /** Dispute eröffnen → optional finalize/broadcast mit State 'dispute' */
   public function open_dispute() {
     if (!is_user_logged_in()) wp_die('Nicht erlaubt.');
+    weo_ensure_wc_session();
     $order_id = intval($_POST['order_id'] ?? 0);
     if (!$order_id) wp_die('Fehlende Order-ID.');
     if (!check_admin_referer('weo_open_dispute_'.$order_id)) wp_die('Ungültiger Sicherheits-Token.');

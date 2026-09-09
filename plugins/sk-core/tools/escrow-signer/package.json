@@ -1,0 +1,16 @@
+{
+  "name": "sk-escrow-signer-build",
+  "private": true,
+  "description": "Builds assets/js/sk-escrow-signer.js from entry.js. Run: npm install && npm run build",
+  "scripts": {
+    "build": "esbuild entry.js --bundle --minify --format=iife --target=es2020 --legal-comments=inline --outfile=../../assets/js/sk-escrow-signer.js",
+    "test": "node test.mjs"
+  },
+  "devDependencies": {
+    "@scure/base": "2.0.0",
+    "@scure/bip32": "2.4.0",
+    "@scure/bip39": "2.4.0",
+    "@scure/btc-signer": "2.4.1",
+    "esbuild": "0.25.9"
+  }
+}

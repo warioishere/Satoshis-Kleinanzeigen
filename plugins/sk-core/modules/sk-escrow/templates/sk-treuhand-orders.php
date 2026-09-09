@@ -42,7 +42,7 @@ foreach ($order_panels as $tab_key => $order_role) {
             $rendered_orders = true;
             ?>
             <?php foreach ($orders as $o) : ?>
-            <div class="weo-escrow-order">
+            <div class="weo-escrow-order" data-descriptor="<?php echo esc_attr($o['descriptor'] ?? ''); ?>" data-address="<?php echo esc_attr($o['addr']); ?>" data-role="<?php echo $o['role'] === 'vendor' ? 'seller' : 'buyer'; ?>">
                 <h3><?php echo esc_html(sprintf(__('Bestellung #%s', 'weo'), $o['number'])); ?></h3>
                 <p><?php esc_html_e('Status', 'weo'); ?>: <strong><?php echo esc_html($o['state']); ?></strong></p>
                 <?php if ($o['state'] === 'dispute') : ?>
@@ -64,6 +64,8 @@ foreach ($order_panels as $tab_key => $order_role) {
                 <?php if (!empty($o['addr'])) : ?>
                     <p><strong><?php esc_html_e('Escrow-Adresse', 'weo'); ?>:</strong> <code id="weo_addr_<?php echo intval($o['id']); ?>"><?php echo esc_html($o['addr']); ?></code></p>
                     <div class="weo-qr" id="weo_qr_<?php echo intval($o['id']); ?>" data-addr="<?php echo esc_attr($o['addr']); ?>"></div>
+                    <p class="weo-verify" aria-live="polite"></p>
+                    <?php echo weo_keybox_html(); ?>
                 <?php endif; ?>
 
                 <p><?php esc_html_e('Versand', 'weo'); ?>: <?php echo $o['shipped'] ? esc_html(date_i18n(get_option('date_format'), $o['shipped'])) : esc_html__('noch nicht bestätigt', 'weo'); ?></p>
@@ -122,8 +124,9 @@ foreach ($order_panels as $tab_key => $order_role) {
                     <input type="hidden" name="order_id" value="<?php echo intval($o['id']); ?>">
                     <div class="sk-form-group">
                         <label class="sk-form-label" for="weo_signed_psbt_<?php echo intval($o['id']); ?>"><?php esc_html_e('Signierte PSBT (Base64)', 'weo'); ?></label>
-                        <textarea name="weo_signed_psbt" id="weo_signed_psbt_<?php echo intval($o['id']); ?>" rows="6" style="width:100%" placeholder="PSBT..."></textarea>
+                        <textarea name="weo_signed_psbt" class="weo-psbt" id="weo_signed_psbt_<?php echo intval($o['id']); ?>" rows="6" style="width:100%" placeholder="PSBT..."></textarea>
                     </div>
+                    <div class="sk-form-group"><?php echo weo_sign_panel_html(); ?></div>
                     <div class="sk-form-group">
                         <?php if ($can_release) : ?>
                             <label><input type="checkbox" name="weo_release_funds" value="1"> <?php esc_html_e('Freigabe der Escrow-Mittel bestätigen', 'weo'); ?></label>
@@ -143,8 +146,9 @@ foreach ($order_panels as $tab_key => $order_role) {
                     <input type="hidden" name="order_id" value="<?php echo intval($o['id']); ?>">
                     <div class="sk-form-group">
                         <label class="sk-form-label" for="weo_signed_psbt_<?php echo intval($o['id']); ?>"><?php esc_html_e('Signierte PSBT (Base64)', 'weo'); ?></label>
-                        <textarea name="weo_signed_psbt" id="weo_signed_psbt_<?php echo intval($o['id']); ?>" rows="6" style="width:100%" placeholder="PSBT..."></textarea>
+                        <textarea name="weo_signed_psbt" class="weo-psbt" id="weo_signed_psbt_<?php echo intval($o['id']); ?>" rows="6" style="width:100%" placeholder="PSBT..."></textarea>
                     </div>
+                    <div class="sk-form-group"><?php echo weo_sign_panel_html(); ?></div>
                     <div class="sk-form-group">
                         <?php if ($can_release) : ?>
                             <label><input type="checkbox" name="weo_release_funds" value="1"> <?php esc_html_e('Freigabe der Escrow-Mittel bestätigen', 'weo'); ?></label>

@@ -13487,3 +13487,139 @@ msgstr ""
 #: plugins/sk-core/modules/sk-escrow/includes/class-escrow-settings.php
 msgid "Bitte eine gültige Fallback-Adresse angeben."
 msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Passwort: mindestens 8 Zeichen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Die Passwörter stimmen nicht überein."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Bitte bestätige, dass du die 12 Wörter gesichert hast."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Schlüssel verschlüsselt gespeichert, xpub eingetragen: %s"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Dein Schlüssel für diesen Handel liegt verschlüsselt in diesem Browser."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Kein Schlüssel in diesem Browser: 12 Wörter importieren oder mit der Hardware-Wallet über das PSBT-Feld signieren."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Adresse geprüft: Sie ergibt sich aus dem 2-von-3-Descriptor, und dein Schlüssel ist enthalten."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "WARNUNG: Die angezeigte Adresse passt nicht zum Descriptor oder dein Schlüssel fehlt darin. Nicht einzahlen, Support kontaktieren."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Descriptor konnte nicht geprüft werden: %s"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Bitte zuerst die PSBT erstellen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "PSBT konnte nicht gelesen werden: %s"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Diese Transaktion zahlt an:"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Gebühr: %s sats"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "sats"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Signiert. Jetzt die PSBT hochladen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Falsches Passwort."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Signieren fehlgeschlagen: %s"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Wörter importiert und verschlüsselt gespeichert."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Diese Wörter gehören nicht zu diesem Schlüssel."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Ungültige Wortliste."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Schlüssel im Browser erzeugen"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "oder den xpub deiner Hardware-Wallet oben eintragen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Die 12 Wörter werden nur in diesem Browser gespeichert, verschlüsselt mit deinem Passwort. Schreibe sie jetzt auf: Ohne sie kannst du auf einem anderen Gerät nicht signieren. Verlierst du sie, bleibt die Auszahlung über Marktplatz und Gegenpartei möglich. Dieser Code kommt vom Marktplatz; wer dem Server nicht vertraut, signiert stattdessen mit einer Hardware-Wallet."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Passwort (mindestens 8 Zeichen)"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Passwort wiederholen"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Ich habe die 12 Wörter aufgeschrieben und sicher verwahrt."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Schlüssel verwenden"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Abbrechen"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Im Browser signieren"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Passwort"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Signieren"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "12 Wörter anzeigen"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "12 Wörter importieren"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "12 Wörter, durch Leerzeichen getrennt"
+msgstr ""

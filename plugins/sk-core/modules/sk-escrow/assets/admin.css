@@ -86,3 +86,36 @@
   background: #2196f3;
   color: #fff;
 }
+
+/* Browser signing (sk-escrow-ui.js) */
+.weo-verify--ok {
+  color: #2e7d32;
+}
+.weo-verify--bad {
+  color: #b71c1c;
+  font-weight: bold;
+}
+.weo-status-bad {
+  color: #b71c1c;
+}
+.weo-words {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px 12px;
+  padding-left: 1.5em;
+  font-family: monospace;
+  font-size: 15px;
+}
+.weo-keygen-panel,
+.weo-sign-panel,
+.weo-keybox-panel {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 8px 0;
+  background: #fff;
+}
+.weo-keygen-risk {
+  font-size: 13px;
+  color: #555;
+}

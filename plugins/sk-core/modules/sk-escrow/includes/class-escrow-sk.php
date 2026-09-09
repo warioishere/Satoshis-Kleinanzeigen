@@ -124,6 +124,7 @@ class WEO_SK extends \SK\Core\Dashboard\DashboardModule {
     wp_enqueue_style('weo-sk-treuhand', WEO_URL.'assets/sk-treuhand.css', ['weo-css'], '1.0');
     wp_enqueue_script('weo-qr', WEO_URL.'assets/qr.min.js', [], '1.0', true);
     wp_enqueue_script('weo-sk-treuhand', WEO_URL.'assets/sk-treuhand.js', [], '1.0', true);
+    weo_enqueue_signer();
 
     $active_tab = isset($_GET['weo_tab']) ? sanitize_key(wp_unslash($_GET['weo_tab'])) : 'settings';
     $valid_tabs = ['settings', 'products', 'orders-seller', 'orders-buyer'];
@@ -176,7 +177,7 @@ class WEO_SK extends \SK\Core\Dashboard\DashboardModule {
                 } else {
                   $res = WEO_Psbt::build_refund_psbt($order_id);
                   if (is_array($res)) {
-                    $psbt_notice = '<div class="sk-alert sk-alert-success"><p><strong>'.esc_html__('PSBT (Base64)','weo').':</strong></p><textarea rows="4" style="width:100%;">'.$res['psbt'].'</textarea>'.$res['details'].'</div>';
+                    $psbt_notice = '<div class="sk-alert sk-alert-success"><p><strong>'.esc_html__('PSBT (Base64)','weo').':</strong></p><textarea class="weo-psbt-source" rows="4" style="width:100%;">'.$res['psbt'].'</textarea>'.$res['details'].'</div>';
                   } else {
                     $this->add_notice($res->get_error_message(),'error');
                   }
@@ -188,7 +189,7 @@ class WEO_SK extends \SK\Core\Dashboard\DashboardModule {
                   if ($act === 'build_psbt_payout') {
                     $res = WEO_Psbt::build_payout_psbt($order_id);
                     if (is_array($res)) {
-                      $psbt_notice = '<div class="sk-alert sk-alert-success"><p><strong>'.esc_html__('PSBT (Base64)','weo').':</strong></p><textarea rows="4" style="width:100%;">'.$res['psbt'].'</textarea>'.$res['details'].'</div>';
+                      $psbt_notice = '<div class="sk-alert sk-alert-success"><p><strong>'.esc_html__('PSBT (Base64)','weo').':</strong></p><textarea class="weo-psbt-source" rows="4" style="width:100%;">'.$res['psbt'].'</textarea>'.$res['details'].'</div>';
                     } else {
                       $this->add_notice($res->get_error_message(),'error');
                     }
@@ -311,6 +312,7 @@ class WEO_SK extends \SK\Core\Dashboard\DashboardModule {
       'id'         => $order->get_id(),
       'number'     => $order->get_order_number(),
       'addr'       => $addr,
+      'descriptor' => (string) $order->get_meta('_weo_descriptor'),
       'state'      => $state,
       'funding'    => $funding,
       'shipped'    => intval($order->get_meta('_weo_shipped')),

@@ -60,6 +60,7 @@ class WEO_Gateway extends WC_Payment_Gateway {
       'required'    => $required,
       'placeholder' => 'xpub... / zpub...'
     ], $value);
+    echo weo_keygen_html('_weo_buyer_xpub');
 
     $addr_required = true;
     $addr_value    = '';
@@ -150,6 +151,11 @@ class WEO_Gateway extends WC_Payment_Gateway {
   }
 
   public function enqueue_assets() {
+    if (is_checkout() && !is_order_received_page()) {
+      wp_enqueue_style('weo-css', WEO_URL.'assets/admin.css', [], '1.0');
+      weo_enqueue_signer();
+      return;
+    }
     if (is_order_received_page()) {
       $oid = absint(get_query_var('order-received'));
     } elseif (is_account_page()) {
@@ -162,5 +168,6 @@ class WEO_Gateway extends WC_Payment_Gateway {
     if (!$order || $order->get_payment_method() !== $this->id) return;
     wp_enqueue_style('weo-css', WEO_URL.'assets/admin.css', [], '1.0');
     wp_enqueue_script('weo-qr', WEO_URL.'assets/qr.min.js', [], '1.0', true);
+    weo_enqueue_signer();
   }
 }

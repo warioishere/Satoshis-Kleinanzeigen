@@ -137,6 +137,24 @@ function weo_resolve_vendor_payout_address($order_id) {
 }
 
 /**
+ * Make wc_add_notice() usable on admin-post.php.
+ *
+ * WooCommerce loads its notice functions and starts its session only on
+ * frontend requests. admin-post.php counts as admin, so there wc_add_notice()
+ * is undefined and every PSBT upload or dispute request ended in a fatal
+ * error instead of a redirect with a message.
+ */
+function weo_ensure_wc_session() {
+  if (!function_exists('WC')) return;
+  if (!function_exists('wc_add_notice') && defined('WC_ABSPATH')) {
+    include_once WC_ABSPATH . 'includes/wc-notice-functions.php';
+  }
+  if (null === WC()->session && method_exists(WC(), 'initialize_session')) {
+    WC()->initialize_session();
+  }
+}
+
+/**
  * Claim a POSTed escrow action for the current request.
  *
  * Two handlers accept the same form: WEO_SK runs at init, WEO_Order runs
@@ -257,4 +275,102 @@ function weo_base58check_encode($hex) {
     if ($b === 0) $res = '1'.$res; else break;
   }
   return $res;
+}
+
+// ---- Browser signing ----
+//
+// assets/js/sk-escrow-signer.js (built from tools/escrow-signer) holds the
+// cryptography; modules/sk-escrow/assets/sk-escrow-ui.js wires it to the
+// markup below. None of the password or word inputs carry a name attribute,
+// so no form ever posts them to the server.
+
+function weo_enqueue_signer() {
+  $bundle = SK_CORE_DIR . '/assets/js/sk-escrow-signer.js';
+  wp_enqueue_script('weo-escrow-signer', plugins_url('assets/js/sk-escrow-signer.js', SK_CORE_FILE), [], (string) @filemtime($bundle), true);
+  wp_enqueue_script('weo-escrow-ui', WEO_URL.'assets/sk-escrow-ui.js', ['weo-escrow-signer'], SK_ESCROW_VERSION, true);
+  wp_localize_script('weo-escrow-ui', 'weoSignerL10n', [
+    'pwShort'      => __('Passwort: mindestens 8 Zeichen.', 'sk-core'),
+    'pwMismatch'   => __('Die Passwörter stimmen nicht überein.', 'sk-core'),
+    'ackMissing'   => __('Bitte bestätige, dass du die 12 Wörter gesichert hast.', 'sk-core'),
+    'keySaved'     => __('Schlüssel verschlüsselt gespeichert, xpub eingetragen: %s', 'sk-core'),
+    'keyPresent'   => __('Dein Schlüssel für diesen Handel liegt verschlüsselt in diesem Browser.', 'sk-core'),
+    'keyMissing'   => __('Kein Schlüssel in diesem Browser: 12 Wörter importieren oder mit der Hardware-Wallet über das PSBT-Feld signieren.', 'sk-core'),
+    'verifyOk'     => __('Adresse geprüft: Sie ergibt sich aus dem 2-von-3-Descriptor, und dein Schlüssel ist enthalten.', 'sk-core'),
+    'verifyBad'    => __('WARNUNG: Die angezeigte Adresse passt nicht zum Descriptor oder dein Schlüssel fehlt darin. Nicht einzahlen, Support kontaktieren.', 'sk-core'),
+    'verifyError'  => __('Descriptor konnte nicht geprüft werden: %s', 'sk-core'),
+    'noPsbt'       => __('Bitte zuerst die PSBT erstellen.', 'sk-core'),
+    'psbtBad'      => __('PSBT konnte nicht gelesen werden: %s', 'sk-core'),
+    'summaryTitle' => __('Diese Transaktion zahlt an:', 'sk-core'),
+    'fee'          => __('Gebühr: %s sats', 'sk-core'),
+    'sats'         => __('sats', 'sk-core'),
+    'signed'       => __('Signiert. Jetzt die PSBT hochladen.', 'sk-core'),
+    'wrongPw'      => __('Falsches Passwort.', 'sk-core'),
+    'signError'    => __('Signieren fehlgeschlagen: %s', 'sk-core'),
+    'importOk'     => __('Wörter importiert und verschlüsselt gespeichert.', 'sk-core'),
+    'importBad'    => __('Diese Wörter gehören nicht zu diesem Schlüssel.', 'sk-core'),
+    'invalidWords' => __('Ungültige Wortliste.', 'sk-core'),
+  ]);
+}
+
+/** Generate-12-words panel that fills the xpub input with the given id. */
+function weo_keygen_html($target_id) {
+  ob_start();
+  ?>
+  <div class="weo-keygen" data-target="#<?php echo esc_attr($target_id); ?>" data-network="main">
+    <p>
+      <button type="button" class="button weo-keygen-start"><?php esc_html_e('Schlüssel im Browser erzeugen', 'sk-core'); ?></button>
+      <span class="description"><?php esc_html_e('oder den xpub deiner Hardware-Wallet oben eintragen.', 'sk-core'); ?></span>
+    </p>
+    <div class="weo-keygen-panel" hidden>
+      <p class="weo-keygen-risk"><?php esc_html_e('Die 12 Wörter werden nur in diesem Browser gespeichert, verschlüsselt mit deinem Passwort. Schreibe sie jetzt auf: Ohne sie kannst du auf einem anderen Gerät nicht signieren. Verlierst du sie, bleibt die Auszahlung über Marktplatz und Gegenpartei möglich. Dieser Code kommt vom Marktplatz; wer dem Server nicht vertraut, signiert stattdessen mit einer Hardware-Wallet.', 'sk-core'); ?></p>
+      <ol class="weo-words"></ol>
+      <p><label><?php esc_html_e('Passwort (mindestens 8 Zeichen)', 'sk-core'); ?><br><input type="password" class="weo-keygen-pw" autocomplete="new-password"></label></p>
+      <p><label><?php esc_html_e('Passwort wiederholen', 'sk-core'); ?><br><input type="password" class="weo-keygen-pw2" autocomplete="new-password"></label></p>
+      <p><label><input type="checkbox" class="weo-keygen-ack"> <?php esc_html_e('Ich habe die 12 Wörter aufgeschrieben und sicher verwahrt.', 'sk-core'); ?></label></p>
+      <p>
+        <button type="button" class="button weo-keygen-save"><?php esc_html_e('Schlüssel verwenden', 'sk-core'); ?></button>
+        <button type="button" class="button weo-keygen-cancel"><?php esc_html_e('Abbrechen', 'sk-core'); ?></button>
+      </p>
+      <p class="weo-keygen-status" aria-live="polite"></p>
+    </div>
+  </div>
+  <?php
+  return ob_get_clean();
+}
+
+/** "Sign in browser" controls for inside a PSBT upload form. */
+function weo_sign_panel_html() {
+  ob_start();
+  ?>
+  <p><button type="button" class="button weo-sign-browser"><?php esc_html_e('Im Browser signieren', 'sk-core'); ?></button></p>
+  <div class="weo-sign-panel" hidden>
+    <div class="weo-sign-summary"></div>
+    <p><label><?php esc_html_e('Passwort', 'sk-core'); ?><br><input type="password" class="weo-sign-pw" autocomplete="current-password"></label></p>
+    <p><button type="button" class="button weo-sign-confirm"><?php esc_html_e('Signieren', 'sk-core'); ?></button></p>
+    <p class="weo-sign-status" aria-live="polite"></p>
+  </div>
+  <?php
+  return ob_get_clean();
+}
+
+/** Show or import the 12 words. Without $xpub the key is taken from the surrounding order context. */
+function weo_keybox_html($xpub = '') {
+  ob_start();
+  ?>
+  <div class="weo-keybox"<?php echo $xpub ? ' data-xpub="'.esc_attr($xpub).'" data-network="main"' : ''; ?>>
+    <p class="weo-key-state"></p>
+    <p>
+      <button type="button" class="button weo-words-show"><?php esc_html_e('12 Wörter anzeigen', 'sk-core'); ?></button>
+      <button type="button" class="button weo-words-import"><?php esc_html_e('12 Wörter importieren', 'sk-core'); ?></button>
+    </p>
+    <div class="weo-keybox-panel" hidden>
+      <textarea class="weo-keybox-words" rows="2" hidden placeholder="<?php esc_attr_e('12 Wörter, durch Leerzeichen getrennt', 'sk-core'); ?>"></textarea>
+      <p><label><?php esc_html_e('Passwort', 'sk-core'); ?><br><input type="password" class="weo-keybox-pw" autocomplete="current-password"></label></p>
+      <p><button type="button" class="button weo-keybox-go">OK</button></p>
+      <ol class="weo-keybox-list weo-words"></ol>
+      <p class="weo-keybox-status" aria-live="polite"></p>
+    </div>
+  </div>
+  <?php
+  return ob_get_clean();
 }

@@ -46,6 +46,15 @@ $tab_id   = 'weo-treuhand-tab-settings';
         <div class="sk-form-group">
             <label for="weo_vendor_xpub" class="sk-form-label"><?php esc_html_e('Vendor xpub', 'weo'); ?></label>
             <input type="text" class="sk-form-control" name="weo_vendor_xpub" id="weo_vendor_xpub" value="<?php echo esc_attr($xpub); ?>">
+            <?php
+            // Browser key. One xpub per seller, because the escrow is created
+            // at checkout while the seller is away; a new key can be generated
+            // any time, the old one stays needed for trades already open.
+            echo weo_keygen_html('weo_vendor_xpub');
+            if ($xpub) {
+                echo weo_keybox_html($xpub);
+            }
+            ?>
         </div>
 
         <div class="sk-form-group">
