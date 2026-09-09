@@ -59,8 +59,14 @@ class WEO_Order {
     }
   }
 
-  /** Bestellpanel (Thankyou & "Bestellung ansehen") */
-  public function render_order_panel($order_id) {
+  /**
+   * Bestellpanel (Thankyou & "Bestellung ansehen")
+   *
+   * Static because WEO_Gateway::thankyou_page() calls it as
+   * WEO_Order::render_order_panel(). Instantiating WEO_Order there would
+   * register every hook of the constructor a second time.
+   */
+  public static function render_order_panel($order_id) {
     $order = wc_get_order($order_id); if (!$order) return;
     if ($order->get_payment_method() !== 'weo_gateway') return;
 
@@ -89,14 +95,18 @@ class WEO_Order {
       $funding = null;
       $state = 'unknown';
       $deadline = 0;
+      // $status is a WP_Error here — reading it as an array below would be
+      // fatal, so the amounts fall back to 0 and the deposit box stays hidden.
+      $amount_sat = 0;
+      $fee_est_sat = 0;
     } else {
       $funding = $status['funding'] ?? null;
       $state   = $status['state'] ?? 'unknown';
       $deadline = intval($status['deadline_ts'] ?? 0);
+      $amount_sat = intval($status['amount_sat'] ?? 0);
+      $fee_est_sat = intval($status['fee_est_sat'] ?? 0);
     }
 
-    $amount_sat = intval($status['amount_sat'] ?? 0);
-    $fee_est_sat = intval($status['fee_est_sat'] ?? 0);
     $required = $amount_sat + $fee_est_sat;
     $funded_total = intval($funding['total_sat'] ?? 0);
     if ($required > 0) {
@@ -181,7 +191,17 @@ class WEO_Order {
     $cur      = get_current_user_id();
     $buyer_id  = $order->get_user_id();
     $vendor_id = $order->get_meta('_weo_vendor_id');
-    if (!$vendor_id) { $this->fallback_vendor_payout_address($order_id); $vendor_id = $order->get_meta('_weo_vendor_id'); }
+    if (!$vendor_id) {
+      // Throws when no fallback address is configured. This runs while the
+      // thank-you page renders, so letting it escape would break the page
+      // for the customer over a configuration problem.
+      try {
+        self::fallback_vendor_payout_address($order_id);
+      } catch (Exception $e) {
+        return;
+      }
+      $vendor_id = $order->get_meta('_weo_vendor_id');
+    }
 
     if ($cur && $cur == $vendor_id && !$shipped) {
       $n = wp_create_nonce('weo_ship_'.$order_id);
@@ -280,7 +300,7 @@ class WEO_Order {
       $cur = get_current_user_id();
       $buyer_id  = $order->get_user_id();
       $vendor_id = $order->get_meta('_weo_vendor_id');
-      if (!$vendor_id) { $this->fallback_vendor_payout_address($order_id); $vendor_id = $order->get_meta('_weo_vendor_id'); }
+      if (!$vendor_id) { self::fallback_vendor_payout_address($order_id); $vendor_id = $order->get_meta('_weo_vendor_id'); }
 
         if ($cur && $cur == $buyer_id) {
         echo '<form method="post" action="'.$upload_url.'" style="margin-top:10px;" class="weo-psbt-form">';
@@ -469,14 +489,16 @@ class WEO_Order {
 
     $buyer_id  = $order->get_user_id();
     $vendor_id = $order->get_meta('_weo_vendor_id');
-    if (!$vendor_id) { $this->fallback_vendor_payout_address($order_id); $vendor_id = $order->get_meta('_weo_vendor_id'); }
+    if (!$vendor_id) { self::fallback_vendor_payout_address($order_id); $vendor_id = $order->get_meta('_weo_vendor_id'); }
     $cur = get_current_user_id();
 
+    // Cast: get_current_user_id() returns int, get_meta() a string — a strict
+    // comparison between them is always true and locked the vendor out.
     if ($action === 'weo_upload_psbt_buyer') {
-      if ($cur !== $buyer_id) wp_die('Nicht erlaubt.');
+      if ($cur !== (int) $buyer_id) wp_die('Nicht erlaubt.');
       $meta_key = '_weo_psbt_partials_buyer';
     } else {
-      if ($cur !== $vendor_id) wp_die('Nicht erlaubt.');
+      if ($cur !== (int) $vendor_id) wp_die('Nicht erlaubt.');
       $meta_key = '_weo_psbt_partials_seller';
     }
 
@@ -595,9 +617,9 @@ class WEO_Order {
 
     $buyer_id  = $order->get_user_id();
     $vendor_id = $order->get_meta('_weo_vendor_id');
-    if (!$vendor_id) { $this->fallback_vendor_payout_address($order_id); $vendor_id = $order->get_meta('_weo_vendor_id'); }
+    if (!$vendor_id) { self::fallback_vendor_payout_address($order_id); $vendor_id = $order->get_meta('_weo_vendor_id'); }
     $cur = get_current_user_id();
-    if ($cur !== $buyer_id && $cur !== $vendor_id) wp_die('Nicht erlaubt.');
+    if ($cur !== (int) $buyer_id && $cur !== (int) $vendor_id) wp_die('Nicht erlaubt.');
 
     $signs = intval($order->get_meta('_weo_psbt_sign_count'));
     if ($signs >= 2) {
@@ -650,11 +672,19 @@ class WEO_Order {
 
   /** Admin-Metabox */
   public function metabox() {
-    add_meta_box('weo_meta','Escrow',[$this,'meta_view'],'shop_order','side','high');
+    // With HPOS the order screen is woocommerce_page_wc-orders, not the
+    // shop_order post type — registered on the latter the box never showed.
+    $screen = function_exists('sk_is_hpos_enabled') && sk_is_hpos_enabled() && function_exists('wc_get_page_screen_id')
+      ? wc_get_page_screen_id('shop_order')
+      : 'shop_order';
+
+    add_meta_box('weo_meta','Escrow',[$this,'meta_view'],$screen,'side','high');
   }
 
-  public function meta_view($post) {
-    $order = wc_get_order($post->ID);
+  /** @param WP_Post|WC_Order $post_or_order HPOS hands the callback an order, the post table a post. */
+  public function meta_view($post_or_order) {
+    $order = $post_or_order instanceof WC_Order ? $post_or_order : wc_get_order(is_object($post_or_order) ? $post_or_order->ID : $post_or_order);
+    if (!$order) return;
     echo '<p>Addr: <code>'.esc_html($order->get_meta('_weo_escrow_addr')).'</code></p>';
     echo '<p>Watch: <code>'.esc_html($order->get_meta('_weo_watch_id')).'</code></p>';
     $cnt = intval($order->get_meta('_weo_psbt_sign_count'));
@@ -665,7 +695,7 @@ class WEO_Order {
   }
 
   /** Fallback – trag hier eine Vendor-Payout-Adresse ein, falls nicht separat gepflegt */
-  private function fallback_vendor_payout_address($order_id) {
+  private static function fallback_vendor_payout_address($order_id) {
     $order = wc_get_order($order_id);
     if ($order) {
       $vendor_id = $order->get_meta('_weo_vendor_id');

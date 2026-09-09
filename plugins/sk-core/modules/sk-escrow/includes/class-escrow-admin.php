@@ -110,6 +110,9 @@ class WEO_Admin {
       echo '<form method="post" action="'.$admin_post.'" style="display:inline;margin-right:4px;">';
       echo '<input type="hidden" name="action" value="weo_open_dispute">';
       echo '<input type="hidden" name="order_id" value="'.intval($order->get_id()).'">';
+      // WEO_Order::open_dispute() checks this nonce; without the field the
+      // button always failed the check.
+      echo wp_nonce_field('weo_open_dispute_'.$order->get_id(), '_wpnonce', false, false);
       echo '<button class="button">Dispute</button>';
       echo '</form>';
       echo '</td>';
