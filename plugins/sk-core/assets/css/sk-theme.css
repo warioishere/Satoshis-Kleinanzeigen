@@ -5430,7 +5430,7 @@ div.media-sidebar a.edit-attachment {
   }
 }
 @media (max-width: 480px) {
-  /* !important noetig (margin): schlaegt modules/follow-store. */
+  /* !important noetig (margin): schlaegt modules/sk-follow-store. */
   .sk-single-store .sk-store-tabs ul.sk-modules-button li {
     display: inline-block;
     margin: 0 5px 3px 0 !important;
@@ -5465,7 +5465,7 @@ div.media-sidebar a.edit-attachment {
   .apply-filter {
     margin-top: 20px;
   }
-  /* !important noetig (display): schlaegt modules/geolocation (sk-geolocation-filters.css). */
+  /* !important noetig (display): schlaegt modules/sk-geolocation (sk-geolocation-filters.css). */
   .apply-filter #cancel-filter-btn {
     display: block !important;
   }
@@ -5602,7 +5602,7 @@ div.media-sidebar a.edit-attachment {
  */
 
 /* Global: .sk-btn-theme → bitcoin orange (overrides style.css purple) */
-/* !important noetig (border-color): schlaegt modules/geolocation (sk-geolocation-filters.css). */
+/* !important noetig (border-color): schlaegt modules/sk-geolocation (sk-geolocation-filters.css). */
 input[type='submit'].sk-btn-theme,
 a.sk-btn-theme,
 .sk-btn-theme {
@@ -5924,7 +5924,7 @@ ul.product_list_widget li div[style*="font-size: 0.8em"] {
 }
 
 /* Karten-Basis */
-/* !important noetig (border): schlaegt modules/subscription. */
+/* !important noetig (border): schlaegt modules/sk-subscription. */
 .sk-subscription-content .pack_content_wrapper .product_pack_item {
   width: auto;
   max-width: none;
@@ -6064,7 +6064,7 @@ ul.product_list_widget li div[style*="font-size: 0.8em"] {
   font-size: 16px;
   line-height: 1.7;
 }
-/* !important noetig (color, font-size, margin): schlaegt modules/subscription. */
+/* !important noetig (color, font-size, margin): schlaegt modules/sk-subscription. */
 .sk-subscription-content .pack_content_wrapper .product_pack_item .pack_data_option {
   color: #c4cdd8 !important;
   font-size: 16px !important;
@@ -6078,7 +6078,7 @@ ul.product_list_widget li div[style*="font-size: 0.8em"] {
 /* Merkmale, die nur groessere Pakete haben. Linksbuendig, obwohl die Karte
    sonst zentriert ist: fuenf zentrierte Zeilen wechselnder Laenge flattern.
 
-   Der lange Selektor mit `ul.` ist noetig, weil modules/subscription seine
+   Der lange Selektor mit `ul.` ist noetig, weil modules/sk-subscription seine
    Listen mit `.pack_content ul li` bedient — inklusive weisser Trennlinie
    unter jeder Zeile und zentriertem Text. */
 .sk-subscription-content .pack_content_wrapper .product_pack_item .pack_content ul.pack_features {
@@ -7465,18 +7465,18 @@ ul.sk-store-custom-fields ul {
 .mapboxgl-ctrl-group:not(:empty) {
   background: #fff;
 }
-/* !important noetig (background-color, height, width): schlaegt Mapbox, modules/geolocation (geolocation.css). */
+/* !important noetig (background-color, height, width): schlaegt Mapbox, modules/sk-geolocation (geolocation.css). */
 .mapboxgl-ctrl-group button {
   background-color: transparent !important;
   color: #333;
   width: 29px !important;
   height: 29px !important;
 }
-/* !important noetig (border-top): schlaegt modules/geolocation (sk-geolocation-filters.css). */
+/* !important noetig (border-top): schlaegt modules/sk-geolocation (sk-geolocation-filters.css). */
 .mapboxgl-ctrl-group button + button {
   border-top: 1px solid #ddd !important;
 }
-/* !important noetig (background-position, display, width): schlaegt Mapbox, modules/geolocation (sk-geolocation-filters.css). */
+/* !important noetig (background-position, display, width): schlaegt Mapbox, modules/sk-geolocation (sk-geolocation-filters.css). */
 .mapboxgl-ctrl-group button .mapboxgl-ctrl-icon {
   filter: none;
   background-repeat: no-repeat;

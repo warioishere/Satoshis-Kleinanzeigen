@@ -9,10 +9,10 @@
 	// PSR-4 namespace → directory mappings
 	$map = [
 		'SK\\Core\\'                         => $base . '/includes/',
-		'SK\\Modules\\Geolocation\\'         => $base . '/modules/geolocation/includes/',
-		'SK\\Modules\\StoreReviews\\'        => $base . '/modules/store-reviews/classes/',
-		'SK\\Modules\\ProductAdvertisement\\' => $base . '/modules/product-adv/includes/',
-		'SK\\Modules\\ProductSubscription\\'  => $base . '/modules/subscription/includes/classes/',
+		'SK\\Modules\\Geolocation\\'         => $base . '/modules/sk-geolocation/includes/',
+		'SK\\Modules\\StoreReviews\\'        => $base . '/modules/sk-store-reviews/classes/',
+		'SK\\Modules\\ProductAdvertisement\\' => $base . '/modules/sk-product-adv/includes/',
+		'SK\\Modules\\ProductSubscription\\'  => $base . '/modules/sk-subscription/includes/classes/',
 		'SK\\Modules\\Payments\\'             => $base . '/modules/sk-payments/includes/',
 		'SK\\Modules\\Reputation\\'           => $base . '/modules/sk-reputation/includes/',
 		'SK\\Modules\\Notifications\\'        => $base . '/modules/sk-notifications/includes/',
@@ -22,9 +22,9 @@
 		'SK\\Modules\\Auth\\Lnurl\\'          => $base . '/modules/sk-auth/includes/',
 		'SK\\Modules\\Feed\\'                 => $base . '/modules/sk-feed/includes/',
 		'SK\\Modules\\AntiFraud\\'            => $base . '/modules/sk-anti-fraud/includes/',
-		'SK\\Modules\\FollowStore\\'          => $base . '/modules/follow-store/includes/',
-		'SK\\Modules\\ReportAbuse\\'          => $base . '/modules/report-abuse/includes/',
-		'SK\\Modules\\LiveSearch\\'           => $base . '/modules/live-search/classes/',
+		'SK\\Modules\\FollowStore\\'          => $base . '/modules/sk-follow-store/includes/',
+		'SK\\Modules\\ReportAbuse\\'          => $base . '/modules/sk-report-abuse/includes/',
+		'SK\\Modules\\LiveSearch\\'           => $base . '/modules/sk-live-search/classes/',
 	];
 
 	spl_autoload_register( function ( $class ) use ( $map ) {
