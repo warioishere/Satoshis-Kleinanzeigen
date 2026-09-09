@@ -236,25 +236,42 @@ function telegram_build_caption_and_media($post_id) {
     // End of feewall check
 
     $permalink = get_permalink($post_id);
-    $caption = "🛒 <b>$title</b>\n\n<b>$price_label $price_str</b>$shipping_str\n\n$short_desc";
-    if ( trim( $extra_info ) !== '' ) {
-        $caption .= "\n\n$extra_info";
-    }
-    if ($permalink) {
-        /*
-         * Both paths, not just one. The plain link to the listing is what
-         * most people want — they look first before writing. Below it, a
-         * direct entry into the chat: #chat opens the chat window on the
-         * listing page, as if the visitor had clicked the icon. As a
-         * fragment, not a query parameter, so the page still comes from
-         * cache — the server never sees the #.
-         */
-        $caption .= "\n\n👉 Zum Inserat: " . tn_tg_html_esc($permalink);
-        $caption .= "\n💬 Direkt anschreiben: " . tn_tg_html_esc($permalink . '#chat');
-    }
+
+    $build_caption = function ($desc) use ($title, $price_label, $price_str, $shipping_str, $extra_info, $permalink) {
+        $caption = "🛒 <b>$title</b>\n\n<b>$price_label $price_str</b>$shipping_str\n\n$desc";
+        if ( trim( $extra_info ) !== '' ) {
+            $caption .= "\n\n$extra_info";
+        }
+        if ($permalink) {
+            /*
+             * Both paths, not just one. The plain link to the listing is what
+             * most people want — they look first before writing. Below it, a
+             * direct entry into the chat: #chat opens the chat window on the
+             * listing page, as if the visitor had clicked the icon. As a
+             * fragment, not a query parameter, so the page still comes from
+             * cache — the server never sees the #.
+             */
+            $caption .= "\n\n👉 Zum Inserat: " . tn_tg_html_esc($permalink);
+            $caption .= "\n💬 Direkt anschreiben: " . tn_tg_html_esc($permalink . '#chat');
+        }
+        return $caption;
+    };
+
+    $caption = $build_caption($short_desc);
 
     $image_id  = get_post_thumbnail_id($post_id);
     $image_url = $image_id ? wp_get_attachment_url($image_id) : null;
+
+    /*
+     * sendPhoto caps the caption at 1024 characters (sendMessage at 4096).
+     * Over the limit Telegram answers 400, and the send then runs through
+     * five cron retries that fail exactly the same way. The description is
+     * the elastic part — title, price and both links have to survive, so
+     * only the description gets shortened.
+     */
+    if ($image_url) {
+        $caption = tn_fit_photo_caption($caption, $short_desc, $build_caption);
+    }
 
     error_log('[TG] telegram_build_caption_and_media: final caption_length=' . strlen($caption) . ' image_id=' . ($image_id ?: 'null') . ' image_url=' . ($image_url ?: 'null'));
 
@@ -266,6 +283,61 @@ function telegram_build_caption_and_media($post_id) {
 }
 
 /**
+ * Shorten the description until the whole caption fits Telegram's photo
+ * limit, then rebuild the caption around the shortened text.
+ *
+ * @param string   $caption    The full caption as built.
+ * @param string   $short_desc The description part, the only elastic piece.
+ * @param callable $build      Rebuilds the caption from a description.
+ * @param int      $limit      Telegram's sendPhoto caption limit.
+ */
+function tn_fit_photo_caption($caption, $short_desc, callable $build, $limit = 1024) {
+    if (mb_strlen($caption, 'UTF-8') <= $limit) {
+        return $caption;
+    }
+
+    // Without a description there is nothing left to give: everything that
+    // remains is title, price and the two links. Cut the whole thing rather
+    // than let the API reject it.
+    if ('' === trim((string) $short_desc)) {
+        return tn_hard_trim_caption($caption, $limit);
+    }
+
+    $overflow = mb_strlen($caption, 'UTF-8') - $limit;
+    $keep     = mb_strlen($short_desc, 'UTF-8') - $overflow - 1; // -1 for the ellipsis
+
+    $trimmed = $keep > 0
+        ? rtrim(mb_substr($short_desc, 0, $keep, 'UTF-8')) . '…'
+        : '';
+
+    $caption = $build($trimmed);
+
+    // Even an empty description can leave the caption too long when the title
+    // or the links are extreme.
+    if (mb_strlen($caption, 'UTF-8') > $limit) {
+        $caption = tn_hard_trim_caption($caption, $limit);
+    }
+
+    return $caption;
+}
+
+/**
+ * Last resort when even an empty description does not get the caption under
+ * the limit. Cutting the HTML mid-tag would leave an unclosed <b>, which
+ * Telegram rejects with the same 400 this is meant to avoid — so the
+ * formatting goes and only plain text is cut.
+ */
+function tn_hard_trim_caption($caption, $limit) {
+    $plain = wp_strip_all_tags((string) $caption);
+
+    if (mb_strlen($plain, 'UTF-8') <= $limit) {
+        return $plain;
+    }
+
+    return mb_substr($plain, 0, $limit - 1, 'UTF-8') . '…';
+}
+
+/**
  * Strip the bot token out of an API URL before it goes anywhere near a log.
  * The token is part of the path (…/bot<token>/sendPhoto), so logging the
  * endpoint verbatim put the secret into debug.log on every single call.
@@ -273,6 +345,36 @@ function telegram_build_caption_and_media($post_id) {
 function tn_redact_endpoint($endpoint) {
     return preg_replace('#/bot[^/]+/#', '/bot***/', (string) $endpoint);
 }
+
+/**
+ * Delete the JPGs that the AVIF conversion leaves in uploads/tmp-telegram.
+ *
+ * Telegram fetches those files by URL, so they cannot be removed right after
+ * sending — but nothing ever cleaned them up either, so the directory grew
+ * with every converted image. A day is far more than Telegram needs.
+ */
+function tn_cleanup_tmp_images() {
+    $dir = wp_upload_dir()['basedir'] . '/tmp-telegram';
+
+    if (!is_dir($dir)) {
+        return;
+    }
+
+    $cutoff = time() - DAY_IN_SECONDS;
+
+    foreach ((array) glob($dir . '/*.jpg') as $file) {
+        if (is_file($file) && filemtime($file) < $cutoff) {
+            @unlink($file);
+        }
+    }
+}
+add_action('tn_cleanup_tmp_images', 'tn_cleanup_tmp_images');
+
+add_action('init', function () {
+    if (!wp_next_scheduled('tn_cleanup_tmp_images')) {
+        wp_schedule_event(time() + HOUR_IN_SECONDS, 'daily', 'tn_cleanup_tmp_images');
+    }
+});
 
 /** Telegram API wrapper with gentle retry */
 function telegram_api_post($endpoint, $body) {
