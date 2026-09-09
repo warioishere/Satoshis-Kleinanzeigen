@@ -399,7 +399,9 @@ class WEO_Order {
     </script>";
 
     // Handle Actions direkt nach dem Panel (MVP)
-    if (!empty($_POST['weo_action'])) {
+    // WEO_SK handles the same form at init. Whoever gets there first wins;
+    // without this the action ran twice and every notification went out twice.
+    if (!empty($_POST['weo_action']) && weo_claim_post_action($order_id, sanitize_text_field($_POST['weo_action']))) {
       $act = sanitize_text_field($_POST['weo_action']);
       if ($act === 'mark_shipped') {
         if (wp_verify_nonce($_POST['weo_nonce'] ?? '', 'weo_ship_'.$order_id)) {
@@ -694,28 +696,9 @@ class WEO_Order {
     }
   }
 
-  /** Fallback – trag hier eine Vendor-Payout-Adresse ein, falls nicht separat gepflegt */
+  /** @see weo_resolve_vendor_payout_address() in helpers.php */
   private static function fallback_vendor_payout_address($order_id) {
-    $order = wc_get_order($order_id);
-    if ($order) {
-      $vendor_id = $order->get_meta('_weo_vendor_id');
-      if (!$vendor_id) {
-        foreach ($order->get_items('line_item') as $item) {
-          $pid = $item->get_product_id();
-          $vendor_id = get_post_field('post_author',$pid);
-          if ($vendor_id) break;
-        }
-        if ($vendor_id) { $order->update_meta_data('_weo_vendor_id',$vendor_id); $order->save(); }
-      }
-      if ($vendor_id) {
-        $payout = weo_get_payout_address($vendor_id);
-        if ($payout) return $payout;
-      }
-    }
-    $fallback = get_option('weo_vendor_payout_fallback','');
-    if ($fallback) return $fallback;
-    wc_add_notice(__('Keine Fallback-Payout-Adresse konfiguriert.','weo'),'error');
-    throw new Exception('Fallback vendor payout address missing');
+    return weo_resolve_vendor_payout_address($order_id);
   }
 }
 

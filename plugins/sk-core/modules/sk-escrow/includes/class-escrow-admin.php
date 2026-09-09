@@ -421,26 +421,8 @@ class WEO_Admin {
     }
   }
 
+  /** @see weo_resolve_vendor_payout_address() in helpers.php */
   private function fallback_vendor_payout_address($order_id) {
-    $order = wc_get_order($order_id);
-    if ($order) {
-      $vendor_id = $order->get_meta('_weo_vendor_id');
-      if (!$vendor_id) {
-        foreach ($order->get_items('line_item') as $item) {
-          $pid = $item->get_product_id();
-          $vendor_id = get_post_field('post_author',$pid);
-          if ($vendor_id) break;
-        }
-        if ($vendor_id) { $order->update_meta_data('_weo_vendor_id',$vendor_id); $order->save(); }
-      }
-      if ($vendor_id) {
-        $payout = weo_get_payout_address($vendor_id);
-        if ($payout) return $payout;
-      }
-    }
-    $fallback = get_option('weo_vendor_payout_fallback','');
-    if ($fallback) return $fallback;
-    wc_add_notice(__('Keine Fallback-Payout-Adresse konfiguriert.','weo'),'error');
-    throw new Exception('Fallback vendor payout address missing');
+    return weo_resolve_vendor_payout_address($order_id);
   }
 }

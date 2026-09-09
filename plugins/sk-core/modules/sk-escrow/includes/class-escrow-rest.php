@@ -31,9 +31,17 @@ class WEO_REST {
     $order_id_str = $data['order_id'] ?? '';
     if (!$order_id_str) return new WP_REST_Response(['ok'=>false],400);
 
-    $order_id = wc_get_order_id_by_order_key($order_id_str);
-    $order = $order_id ? wc_get_order($order_id) : wc_get_order($order_id_str);
+    $order = self::locate_order($order_id_str);
     if (!$order) return new WP_REST_Response(['ok'=>false],404);
+
+    /*
+     * Only ever touch escrow orders. The webhook can move an order to
+     * completed or refunded, so a wrong or spoofed identifier must not be
+     * able to reach a regular WooCommerce order.
+     */
+    if ($order->get_payment_method() !== 'weo_gateway') {
+      return new WP_REST_Response(['ok'=>false],404);
+    }
 
     $event = $data['event'] ?? '';
     switch ($event) {
@@ -51,5 +59,41 @@ class WEO_REST {
         break;
     }
     return new WP_REST_Response(['ok'=>true],200);
+  }
+
+  /**
+   * Find the order a webhook refers to.
+   *
+   * The escrow API is handed get_order_number(), which equals the order id
+   * only as long as nothing filters woocommerce_order_number. The previous
+   * lookup passed that string straight to wc_get_order(), so a prefixed or
+   * sequential number would have been cast to an id and could have hit a
+   * different order. A numeric id is therefore only accepted when the order
+   * it returns actually carries that number.
+   *
+   * @return WC_Order|null
+   */
+  private static function locate_order($identifier) {
+    $identifier = trim((string) $identifier);
+
+    if ('' === $identifier) return null;
+
+    // An order key (wc_order_…) is unambiguous.
+    $by_key = wc_get_order_id_by_order_key($identifier);
+    if ($by_key) {
+      $order = wc_get_order($by_key);
+      if ($order) return $order;
+    }
+
+    if (ctype_digit($identifier)) {
+      $order = wc_get_order((int) $identifier);
+      if ($order && (string) $order->get_order_number() === $identifier) {
+        return $order;
+      }
+    }
+
+    // No verified match. Answering 404 is the safe outcome — acting on a
+    // guessed order could complete or refund the wrong one.
+    return null;
   }
 }

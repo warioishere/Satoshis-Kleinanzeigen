@@ -68,6 +68,74 @@ function weo_get_payout_address($user_id) {
   return $addr;
 }
 
+/**
+ * Resolve the payout address for an order's vendor.
+ *
+ * Determines the vendor from the order (falling back to the product author
+ * and caching that on the order), then returns their payout address, or the
+ * globally configured fallback.
+ *
+ * Lived as three byte-identical private copies in WEO_Order, WEO_Admin and
+ * WEO_SK before — the WEO_SK one was never even called.
+ *
+ * @throws Exception When neither a vendor address nor a fallback is set.
+ */
+function weo_resolve_vendor_payout_address($order_id) {
+  $order = wc_get_order($order_id);
+
+  if ($order) {
+    $vendor_id = $order->get_meta('_weo_vendor_id');
+
+    if (!$vendor_id) {
+      foreach ($order->get_items('line_item') as $item) {
+        $pid = $item->get_product_id();
+        $vendor_id = get_post_field('post_author', $pid);
+        if ($vendor_id) break;
+      }
+      if ($vendor_id) {
+        $order->update_meta_data('_weo_vendor_id', $vendor_id);
+        $order->save();
+      }
+    }
+
+    if ($vendor_id) {
+      $payout = weo_get_payout_address($vendor_id);
+      if ($payout) return $payout;
+    }
+  }
+
+  $fallback = get_option('weo_vendor_payout_fallback', '');
+  if ($fallback) return $fallback;
+
+  wc_add_notice(__('Keine Fallback-Payout-Adresse konfiguriert.', 'sk-core'), 'error');
+  throw new Exception('Fallback vendor payout address missing');
+}
+
+/**
+ * Claim a POSTed escrow action for the current request.
+ *
+ * Two handlers accept the same form: WEO_SK runs at init, WEO_Order runs
+ * again while the order panel renders. On a page where both apply the same
+ * POST was processed twice, which fired weo_order_shipped/received twice
+ * and therefore sent every notification twice. The first caller gets the
+ * action, every later one is told it is already taken.
+ *
+ * @return bool True if the caller may process it.
+ */
+function weo_claim_post_action($order_id, $action) {
+  static $claimed = [];
+
+  $key = (int) $order_id . '|' . (string) $action;
+
+  if (isset($claimed[$key])) {
+    return false;
+  }
+
+  $claimed[$key] = true;
+
+  return true;
+}
+
 // ---- Validation helpers ----
 
 function weo_normalize_xpub($xpub, $network = 'main') {
