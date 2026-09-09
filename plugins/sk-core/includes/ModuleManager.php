@@ -341,6 +341,15 @@ class ModuleManager {
                         'module_class' => 'SK\Modules\PostCarousel\Module',
                         'categories'   => [ 'Content' ],
                     ],
+                    'sk_escrow' => [
+                        'id'           => 'sk_escrow',
+                        'name'         => __( 'Treuhand', 'sk-core' ),
+                        'description'  => __( 'On-Chain-Treuhand über 2-von-3-Multisig mit PSBT-Ablauf. Setzt eine erreichbare Escrow-API voraus.', 'sk-core' ),
+                        'thumbnail'    => $thumbnail_dir . '/follow-store.svg',
+                        'module_file'  => SK_CORE_DIR . '/modules' . '/sk-escrow/module.php',
+                        'module_class' => 'SK\Modules\Escrow\Module',
+                        'categories'   => [ 'Store Management' ],
+                    ],
                 ]
             );
         }

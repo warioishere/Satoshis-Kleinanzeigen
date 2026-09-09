@@ -13366,3 +13366,124 @@ msgstr ""
 #: plugins/sk-core/modules/sk-notifications/includes/NotificationSettings.php
 msgid "Konfiguriere automatische Benachrichtigungen an einen Telegram-Kanal, wenn Produkte veröffentlicht werden."
 msgstr ""
+
+#: plugins/sk-core/includes/ModuleManager.php
+#: plugins/sk-core/modules/sk-escrow/includes/class-escrow-settings.php
+msgid "Treuhand"
+msgstr ""
+
+#: plugins/sk-core/includes/ModuleManager.php
+msgid "On-Chain-Treuhand über 2-von-3-Multisig mit PSBT-Ablauf. Setzt eine erreichbare Escrow-API voraus."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
+msgid "On-Chain-Treuhand über 2-von-3-Multisig"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
+msgid "Treuhand (Escrow)"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
+msgid "Nicht-verwahrende Treuhand für Bestellungen: Käufer, Verkäufer und Marktplatz halten je einen Schlüssel, ausgezahlt wird mit zwei von drei Signaturen über einen PSBT-Ablauf. Setzt eine erreichbare Escrow-API voraus."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
+msgid "Escrow-API"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
+msgid "Zugang zum Escrow-Dienst, der die Multisig-Adressen und PSBTs erzeugt."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
+msgid "Escrow-API Base URL"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
+msgid "Beispiel: https://escrow.example.com/api"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
+msgid "API Key"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
+msgid "Webhook HMAC Secret"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
+msgid "Signiert die Rückmeldungen der Escrow-API."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
+msgid "Schlüssel und Auszahlung"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
+msgid "Escrow xpub (eigener Schlüssel)"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
+msgid "Der dritte Schlüssel im 2-von-3-Multisig."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
+msgid "Fallback Vendor-Payout-Adresse"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
+msgid "Adresse für Verkäufer-Auszahlungen, wenn kein eigener Empfang hinterlegt ist. Ohne gültige Adresse werden Auszahlungen abgebrochen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
+msgid "Ablauf"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
+msgid "Min. Bestätigungen"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
+msgid "Signatur-Timeout (Tage)"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
+msgid "Treuhand für Verkäufer aktiv"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
+msgid "Verkäufer dürfen Treuhand nutzen. Aus: Treuhand-Funktionen im Dashboard und auf Produktseiten sind für Verkäufer nicht sichtbar."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
+msgid "Treuhand nur für Administratoren"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
+msgid "Blendet Treuhand-Seite, Einstellungen und Produktaktivierung für Verkäufer aus, während Administratoren sie weiter sehen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
+msgid "Die Fallback-Auszahlungsadresse ist keine gültige Bech32-Adresse (bc1…) und wurde nicht übernommen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/class-escrow-settings.php
+msgid "Nicht-verwahrende On-Chain-Treuhand: Käufer, Verkäufer und Marktplatz halten je einen Schlüssel, ausgezahlt wird mit zwei von drei Signaturen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/class-escrow-settings.php
+msgid "Einstellungen öffnen"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/class-escrow-settings.php
+msgid "Escrows"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/class-escrow-settings.php
+msgid "Disputes"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/class-escrow-settings.php
+msgid "Bitte eine gültige Fallback-Adresse angeben."
+msgstr ""
