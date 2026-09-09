@@ -5,7 +5,8 @@ namespace SK\Core\Dashboard\Modules;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * User Onboarding — welcome modal for first-time users.
+ * User Onboarding — welcome modal for first-time users. Always on —
+ * used to have an on/off switch under Settings → User Onboarding; removed.
  *
  * Ported from plugin: user-onboarding
  */
@@ -20,8 +21,6 @@ class UserOnboarding {
 		add_action( 'wp_ajax_sk_delete_nostr_identity', [ $this, 'ajax_delete_nostr_identity' ] );
 		add_action( 'wp_ajax_sk_get_nostr_nsec', [ $this, 'ajax_get_nostr_nsec' ] );
 		add_action( 'deleted_user', [ $this, 'cleanup' ] );
-		add_action( 'admin_menu', [ $this, 'add_admin_page' ] );
-		add_action( 'admin_init', [ $this, 'register_settings' ] );
 
 		// Dashboard banner for existing users who missed onboarding.
 		// content_before fires INSIDE .sk-dashboard-wrap, right next to the
@@ -34,10 +33,6 @@ class UserOnboarding {
 
 	// ── Helpers ────────────────────────────────────────────────────────────
 
-	private function is_enabled(): bool {
-		return get_option( 'uob_enabled', 'no' ) === 'yes';
-	}
-
 	private function should_show( int $user_id ): bool {
 		return get_user_meta( $user_id, 'uob_show_onboarding', true ) === 'yes';
 	}
@@ -45,15 +40,13 @@ class UserOnboarding {
 	// ── Registration Hook ──────────────────────────────────────────────────
 
 	public function mark_for_onboarding( $user_id ): void {
-		if ( $this->is_enabled() ) {
-			update_user_meta( $user_id, 'uob_show_onboarding', 'yes' );
-		}
+		update_user_meta( $user_id, 'uob_show_onboarding', 'yes' );
 	}
 
 	// ── Assets ─────────────────────────────────────────────────────────────
 
 	public function enqueue_assets(): void {
-		if ( ! $this->is_enabled() || ! is_user_logged_in() ) {
+		if ( ! is_user_logged_in() ) {
 			return;
 		}
 		if ( ! $this->should_show( get_current_user_id() ) ) {
@@ -79,7 +72,7 @@ class UserOnboarding {
 	// ── Modal Output ───────────────────────────────────────────────────────
 
 	public function render_modal(): void {
-		if ( ! $this->is_enabled() || ! is_user_logged_in() ) {
+		if ( ! is_user_logged_in() ) {
 			return;
 		}
 		if ( ! $this->should_show( get_current_user_id() ) ) {
@@ -539,54 +532,5 @@ class UserOnboarding {
 	public function cleanup( $user_id ): void {
 		delete_user_meta( $user_id, 'uob_show_onboarding' );
 		delete_user_meta( $user_id, 'uob_onboarding_completed' );
-	}
-
-	// ── Admin Settings ─────────────────────────────────────────────────────
-
-	public function add_admin_page(): void {
-		add_options_page(
-			__( 'User Onboarding', 'sk-core' ),
-			__( 'User Onboarding', 'sk-core' ),
-			'manage_options',
-			'user-onboarding-settings',
-			[ $this, 'render_settings_page' ]
-		);
-	}
-
-	public function register_settings(): void {
-		register_setting( 'uob_settings', 'uob_enabled' );
-	}
-
-	public function render_settings_page(): void {
-		if ( isset( $_POST['uob_save_settings'] ) && check_admin_referer( 'uob_settings_nonce' ) ) {
-			$enabled = isset( $_POST['uob_enabled'] ) ? 'yes' : 'no';
-			update_option( 'uob_enabled', $enabled );
-			echo '<div class="notice notice-success is-dismissible"><p>' . __( 'Einstellungen gespeichert.', 'sk-core' ) . '</p></div>';
-		}
-
-		$enabled = get_option( 'uob_enabled', 'no' ) === 'yes';
-		?>
-		<div class="wrap">
-			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
-			<form method="post" action="">
-				<?php wp_nonce_field( 'uob_settings_nonce' ); ?>
-				<table class="form-table">
-					<tr>
-						<th scope="row"><label for="uob_enabled"><?php _e( 'Onboarding-System Status', 'sk-core' ); ?></label></th>
-						<td>
-							<label>
-								<input type="checkbox" id="uob_enabled" name="uob_enabled" value="yes" <?php checked( $enabled ); ?>>
-								<?php _e( 'Onboarding-System aktivieren', 'sk-core' ); ?>
-							</label>
-							<p class="description">
-								<?php _e( 'Neue Benutzer sehen nach der Registrierung ein interaktives Onboarding-Modal.', 'sk-core' ); ?>
-							</p>
-						</td>
-					</tr>
-				</table>
-				<?php submit_button( __( 'Einstellungen speichern', 'sk-core' ), 'primary', 'uob_save_settings' ); ?>
-			</form>
-		</div>
-		<?php
 	}
 }
