@@ -9924,6 +9924,7 @@ msgid "Telefon"
 msgstr ""
 
 #: includes/Dashboard/Modules/UserOnboarding.php:179
+#: plugins/sk-core/modules/sk-notifications/includes/NotificationSettings.php
 msgid "Telegram"
 msgstr ""
 
@@ -9932,6 +9933,7 @@ msgid "Telegram aktivieren"
 msgstr ""
 
 #: modules/sk-notifications/includes/NotificationSettings.php:65
+#: plugins/sk-core/modules/sk-notifications/includes/NotificationSettings.php
 msgid "Telegram Benachrichtigungen"
 msgstr ""
 
@@ -13359,4 +13361,8 @@ msgstr ""
 
 #: plugins/sk-core/includes/CategoryFinder.php
 msgid "Kategorie suchen..."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-notifications/includes/NotificationSettings.php
+msgid "Konfiguriere automatische Benachrichtigungen an einen Telegram-Kanal, wenn Produkte veröffentlicht werden."
 msgstr ""

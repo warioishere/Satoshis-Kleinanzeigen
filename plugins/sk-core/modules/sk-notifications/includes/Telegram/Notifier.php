@@ -132,52 +132,13 @@ function tn_ensure_telegram_compatible_image($image_url) {
     return $image_url; // Return original if conversion fails
 }
 
-// =====================
-// == Admin settings
-// =====================
-function telegram_notification_settings_menu() {
-    add_options_page(
-        'Telegram Notification Einstellungen',
-        'Telegram Notification',
-        'manage_options',
-        'telegram-notification',
-        'telegram_notification_settings_page'
-    );
-}
-add_action('admin_menu', 'telegram_notification_settings_menu');
-
-function telegram_notification_settings_page() {
-    ?>
-    <div class="wrap">
-        <h1>Telegram Notification Einstellungen</h1>
-        <form method="post" action="options.php">
-            <?php
-            settings_fields('telegram_notification_settings');
-            do_settings_sections('telegram-notification');
-            submit_button();
-            ?>
-        </form>
-    </div>
-    <?php
-}
-
-function telegram_notification_register_settings() {
-    register_setting('telegram_notification_settings', 'telegram_bot_token');
-    register_setting('telegram_notification_settings', 'telegram_chat_id');
-
-    add_settings_section('telegram_notification_section', 'API-Einstellungen', null, 'telegram-notification');
-
-    add_settings_field('telegram_bot_token', 'Bot Token', function () {
-        $value = esc_attr(get_option('telegram_bot_token'));
-        echo "<input type='text' name='telegram_bot_token' value='$value' class='regular-text' />";
-    }, 'telegram-notification', 'telegram_notification_section');
-
-    add_settings_field('telegram_chat_id', 'Chat ID oder Kanalname (@beispiel)', function () {
-        $value = esc_attr(get_option('telegram_chat_id'));
-        echo "<input type='text' name='telegram_chat_id' value='$value' class='regular-text' />";
-    }, 'telegram-notification', 'telegram_notification_section');
-}
-add_action('admin_init', 'telegram_notification_register_settings');
+/*
+ * Bot token and chat ID are configured in SK Admin → Settings → Telegram
+ * (NotificationSettings, section sk_telegram). That section writes both
+ * values into the telegram_bot_token / telegram_chat_id options this file
+ * reads, so the settings page that used to sit under Settings → Telegram
+ * Notification is gone.
+ */
 
 // =====================
 // == Helper / Builder ==
@@ -304,14 +265,21 @@ function telegram_build_caption_and_media($post_id) {
     );
 }
 
+/**
+ * Strip the bot token out of an API URL before it goes anywhere near a log.
+ * The token is part of the path (…/bot<token>/sendPhoto), so logging the
+ * endpoint verbatim put the secret into debug.log on every single call.
+ */
+function tn_redact_endpoint($endpoint) {
+    return preg_replace('#/bot[^/]+/#', '/bot***/', (string) $endpoint);
+}
+
 /** Telegram API wrapper with gentle retry */
 function telegram_api_post($endpoint, $body) {
     $attempts = 0;
     $delay = 0.5; // seconds
 
-    // Logging: endpoint and body type
-    error_log('[TG] telegram_api_post: endpoint=' . $endpoint);
-    error_log('[TG] telegram_api_post: body type=' . gettype($body) . ' size=' . strlen(json_encode($body)));
+    error_log('[TG] telegram_api_post: endpoint=' . tn_redact_endpoint($endpoint));
 
     do {
         // Log attempt info
@@ -332,11 +300,14 @@ function telegram_api_post($endpoint, $body) {
         } else {
             $code = wp_remote_retrieve_response_code($resp);
             $body_resp = wp_remote_retrieve_body($resp);
-            $headers = wp_remote_retrieve_headers($resp);
 
             error_log('[TG] telegram_api_post: response code=' . $code);
-            error_log('[TG] telegram_api_post: response headers=' . json_encode($headers->getAll()));
-            error_log('[TG] telegram_api_post: response body=' . substr($body_resp, 0, 500));
+
+            // Only the failing response is worth keeping; dumping every
+            // header and body of every successful call just floods the log.
+            if ($code < 200 || $code >= 300) {
+                error_log('[TG] telegram_api_post: response body=' . substr($body_resp, 0, 500));
+            }
 
             if ($code == 429 || ($code >= 500 && $code < 600)) {
                 usleep((int)($delay * 1000000));
@@ -862,36 +833,6 @@ add_action('tn_try_send_telegram_event', function($post_id, $attempt){
     }
 }, 10, 2);
 
-
-// B) Generic save_post (for ALL post types)
-add_action('save_post', function ($post_id, $post, $update) {
-    if (empty($post) || !is_object($post)) return;
-    error_log("[TG] save_post fired type={$post->post_type} update=" . (int)$update . " id={$post_id}");
-}, 10, 3);
-
-// C) Product-specific: save_post_product (exactly our hook)
-add_action('save_post_product', function ($post_id, $post, $update) {
-    error_log("[TG] save_post_product fired update=" . (int)$update . " id={$post_id} status={$post->post_status}");
-}, 9, 3); // before the other blocks, so you're sure to see something
-
-add_action('save_post', function($post_id, $post, $update){
-    if (!is_object($post)) return;
-    if ($post->post_type === 'product') {
-        error_log("[TG] save_post for PRODUCT fired. update=$update status={$post->post_status} #$post_id");
-    }
-}, 10, 3);
-
-add_action('woocommerce_update_product', function($product_id){
-    error_log("[TG] woocommerce_update_product fired for #$product_id");
-}, 10, 1);
-
-add_action('woocommerce_new_product', function($product_id){
-    error_log("[TG] woocommerce_new_product fired for #$product_id");
-}, 10, 1);
-
-add_action('sk_after_save_product', function($product_id){
-    error_log("[TG] sk_after_save_product fired for #$product_id");
-}, 10, 1);
 
 // === Admin meta box: repost to Telegram ===
 // Admin handler: tg_force_resend

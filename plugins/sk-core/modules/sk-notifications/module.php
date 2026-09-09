@@ -42,7 +42,7 @@ final class Module {
     }
 
     private function load_telegram() {
-        if ( sk_get_option( 'sk_notif_telegram_enabled', 'sk_notifications', 'on' ) !== 'on' ) {
+        if ( sk_get_option( 'sk_notif_telegram_enabled', 'sk_telegram', 'on' ) !== 'on' ) {
             return;
         }
         require_once SK_NOTIFICATIONS_INCLUDES . '/Telegram/Notifier.php';

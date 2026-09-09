@@ -6,37 +6,62 @@ defined( 'ABSPATH' ) || exit;
 
 class NotificationSettings {
 
+    const SECTION = 'sk_telegram';
+
+    /** The section this one replaces — used to only hold Telegram fields anyway. */
+    const LEGACY_SECTION = 'sk_notifications';
+
     public function __construct() {
+        $this->migrate_legacy_section();
+
         add_filter( 'sk_settings_sections', [ $this, 'add_section' ] );
         add_filter( 'sk_settings_fields', [ $this, 'add_fields' ] );
         add_action( 'sk_after_saving_settings', [ $this, 'sync_legacy_options' ], 10, 3 );
     }
 
+    /**
+     * The Telegram fields used to live in the generic "SK Notifications"
+     * section, alongside now-orphaned Nostr keys from an earlier layout
+     * (Nostr moved to sk_nostr, see sk-auth NostrSettings). Telegram gets
+     * its own section now; only the Telegram keys are carried over.
+     */
+    private function migrate_legacy_section(): void {
+        $legacy = get_option( self::LEGACY_SECTION, null );
+
+        if ( ! is_array( $legacy ) ) {
+            return;
+        }
+
+        $section = get_option( self::SECTION );
+        $section = is_array( $section ) ? $section : [];
+
+        if ( ! isset( $section['sk_notif_telegram_enabled'] ) ) {
+            foreach ( [ 'sk_notif_telegram_enabled', 'sk_notif_telegram_bot_token', 'sk_notif_telegram_chat_id' ] as $key ) {
+                if ( isset( $legacy[ $key ] ) ) {
+                    $section[ $key ] = $legacy[ $key ];
+                }
+            }
+            update_option( self::SECTION, $section );
+        }
+
+        delete_option( self::LEGACY_SECTION );
+    }
+
     public function add_section( $sections ) {
         $sections[] = [
-            'id'                   => 'sk_notifications',
-            'title'                => __( 'SK Notifications', 'sk-core' ),
+            'id'                   => self::SECTION,
+            'title'                => __( 'Telegram', 'sk-core' ),
             'icon_url'             => '',
             'description'          => __( 'Produkte an Telegram senden', 'sk-core' ),
-            'settings_title'       => __( 'Benachrichtigungen', 'sk-core' ),
-            'settings_description' => __( 'Konfiguriere automatische Benachrichtigungen wenn Produkte veröffentlicht werden.', 'sk-core' ),
+            'settings_title'       => __( 'Telegram Benachrichtigungen', 'sk-core' ),
+            'settings_description' => __( 'Konfiguriere automatische Benachrichtigungen an einen Telegram-Kanal, wenn Produkte veröffentlicht werden.', 'sk-core' ),
         ];
 
         return $sections;
     }
 
     public function add_fields( $settings_fields ) {
-        // The Nostr Auto Poster is configured in the Nostr section (sk-auth,
-        // NostrSettings) together with relays and key.
-        $settings_fields['sk_notifications'] = [
-
-            // ── Telegram ──
-            'sk_notif_telegram_header' => [
-                'name'  => 'sk_notif_telegram_header',
-                'label' => __( 'Telegram Benachrichtigungen', 'sk-core' ),
-                'type'  => 'sub_section',
-                'desc'  => __( 'Sendet neue Produkte an einen Telegram-Kanal.', 'sk-core' ),
-            ],
+        $settings_fields[ self::SECTION ] = [
             'sk_notif_telegram_enabled' => [
                 'name'    => 'sk_notif_telegram_enabled',
                 'label'   => __( 'Telegram aktivieren', 'sk-core' ),
@@ -64,7 +89,7 @@ class NotificationSettings {
     }
 
     public function sync_legacy_options( $section, $new_values, $old_values ) {
-        if ( $section !== 'sk_notifications' ) {
+        if ( $section !== self::SECTION ) {
             return;
         }
 
