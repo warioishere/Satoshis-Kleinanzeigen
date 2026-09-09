@@ -75,6 +75,9 @@ add_action( 'init', [ \SK\Core\Antispam::class, 'init' ], 20 );
 // Product category search box shortcode ([woo_kategorie_finder]).
 \SK\Core\CategoryFinder::init();
 
+// Geo-based fiat price under sats prices (EUR/CHF from browser locale).
+\SK\Core\GeoFiatPrice::init();
+
 // Vendor avatar + name on product cards.
 \SK\Core\ProductVendorInfo::init();
 
