@@ -28,11 +28,13 @@ class WEO_Order {
 
     if (!$buyer_xpub || !$vendor_xpub || !$escrow_xpub) return;
 
-    // Betrag in sats (optional – reine Info für API; echtes UTXO-Tracking macht Core)
-    // Der Shop muss in BTC rechnen – andernfalls hier eine passende Umrechnung ergänzen
-    $total_btc  = floatval($order->get_total());
-    $amount_sat = intval( round( $total_btc * 100000000 ) );
-    if (!weo_validate_amount($amount_sat)) $amount_sat = 0;
+    // The API refuses orders without a positive amount; it decides when the
+    // deposit counts as funded and how much the payout must be.
+    $amount_sat = weo_order_total_sat($order);
+    if ($amount_sat <= 0) {
+      $order->add_order_note('Escrow nicht angelegt: Bestellbetrag kann nicht in Satoshi bestimmt werden.');
+      return;
+    }
 
     $min_conf = intval(weo_get_option('min_conf',2));
 
@@ -158,9 +160,10 @@ class WEO_Order {
 
     // Funding/Status
     if ($funding) {
-      $txid = esc_html($funding['txid'] ?? '');
+      // The API reports the sum over all UTXOs and the lowest confirmation count.
+      $txid = esc_html($funding['utxos'][0]['txid'] ?? '');
       $confs = intval($funding['confirmations'] ?? 0);
-      $val   = isset($funding['value_sat']) ? intval($funding['value_sat']).' sats' : '';
+      $val   = intval($funding['total_sat'] ?? 0).' sats';
       echo "<p>Funding TX: <code>{$txid}</code> • Confs: {$confs} • Betrag: {$val}</p>";
     } else {
       echo '<p>Noch keine Einzahlung erkannt.</p>';

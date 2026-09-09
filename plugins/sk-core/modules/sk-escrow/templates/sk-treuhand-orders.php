@@ -50,9 +50,9 @@ foreach ($order_panels as $tab_key => $order_role) {
                 <?php endif; ?>
                 <?php if (!empty($o['funding'])) :
                     $f = $o['funding'];
-                    $txid = esc_html($f['txid'] ?? '');
+                    $txid = esc_html($f['utxos'][0]['txid'] ?? '');
                     $confs = intval($f['confirmations'] ?? 0);
-                    $val = isset($f['value_sat']) ? intval($f['value_sat']).' sats' : '';
+                    $val = intval($f['total_sat'] ?? 0).' sats';
                     ?>
                     <p><?php esc_html_e('Funding TX', 'weo'); ?>: <code><?php echo $txid; ?></code> • <?php esc_html_e('Confs', 'weo'); ?>: <?php echo $confs; ?> • <?php esc_html_e('Betrag', 'weo'); ?>: <?php echo esc_html($val); ?></p>
                 <?php else : ?>

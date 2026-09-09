@@ -43,19 +43,26 @@ class WEO_REST {
       return new WP_REST_Response(['ok'=>false],404);
     }
 
+    /*
+     * A settled order never moves back. The signature window is five
+     * minutes, so a captured "escrow_funded" could otherwise be replayed
+     * to reopen a completed order.
+     */
+    $settled = $order->has_status(['completed', 'refunded']);
+
     $event = $data['event'] ?? '';
     switch ($event) {
       case 'escrow_funded':
-        $order->update_status('processing','Escrow funded');
+        if (!$settled) $order->update_status('processing','Escrow funded');
         break;
       case 'settled':
-        $order->update_status('completed','Escrow ausgezahlt');
+        if (!$settled) $order->update_status('completed','Escrow ausgezahlt');
         break;
       case 'refunded':
-        $order->update_status('refunded','Escrow refund');
+        if (!$settled) $order->update_status('refunded','Escrow refund');
         break;
       case 'dispute_opened':
-        $order->update_status('on-hold','Dispute geöffnet');
+        if (!$settled) $order->update_status('on-hold','Dispute geöffnet');
         break;
     }
     return new WP_REST_Response(['ok'=>true],200);

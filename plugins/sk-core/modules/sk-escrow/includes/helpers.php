@@ -55,6 +55,31 @@ function weo_sanitize_btc_address($addr) {
   return sanitize_text_field($addr);
 }
 
+/**
+ * Order total in satoshi.
+ *
+ * The shop runs in SAT, so the total already is the sat amount; the old code
+ * multiplied it by 1e8 as if it were BTC and asked the escrow for a deposit
+ * a hundred million times too large. Any other currency is refused: the
+ * escrow must never be created with a guessed amount.
+ *
+ * @return int 0 when the amount cannot be determined.
+ */
+function weo_order_total_sat($order) {
+  $total    = floatval($order->get_total());
+  $currency = strtoupper((string) $order->get_currency());
+
+  if ($currency === 'SAT' || $currency === 'SATS') {
+    $sat = (int) round($total);
+  } elseif ($currency === 'BTC') {
+    $sat = (int) round($total * 100000000);
+  } else {
+    return 0;
+  }
+
+  return weo_validate_amount($sat) ? $sat : 0;
+}
+
 function weo_get_payout_address($user_id) {
   $addr = get_user_meta($user_id, 'weo_payout_address', true);
   if (!$addr) {
