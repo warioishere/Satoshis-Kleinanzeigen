@@ -72,6 +72,9 @@ add_action( 'init', [ \SK\Core\Antispam::class, 'init' ], 20 );
 // Product description excerpt on shop/category loops.
 \SK\Core\ProductDescriptionExcerpt::init();
 
+// Product category search box shortcode ([woo_kategorie_finder]).
+\SK\Core\CategoryFinder::init();
+
 // Vendor avatar + name on product cards.
 \SK\Core\ProductVendorInfo::init();
 

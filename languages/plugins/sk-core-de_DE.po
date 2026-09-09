@@ -13356,3 +13356,7 @@ msgstr ""
 #: plugins/sk-core/modules/sk-post-carousel/includes/Carousel.php
 msgid "Keine Beiträge mit Bild gefunden."
 msgstr ""
+
+#: plugins/sk-core/includes/CategoryFinder.php
+msgid "Kategorie suchen..."
+msgstr ""
