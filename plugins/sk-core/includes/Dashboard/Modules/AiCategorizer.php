@@ -12,156 +12,98 @@ defined( 'ABSPATH' ) || exit;
 class AiCategorizer {
 
 	public function __construct() {
-		add_action( 'admin_menu', [ $this, 'add_menu' ] );
-		add_action( 'admin_init', [ $this, 'register_settings' ] );
+		self::migrate_legacy_options();
+
+		add_filter( 'sk_settings_fields', [ $this, 'add_fields' ], 22 );
 		add_action( 'wp_ajax_skai_suggest', [ $this, 'handle_suggest' ] );
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_assets' ] );
 	}
 
 	// ── Admin Settings ─────────────────────────────────────────────────────────
 
-	public function add_menu(): void {
-		add_options_page(
-			'KI Kategorisierung',
-			'KI Kategorisierung',
-			'manage_options',
-			'sk-ai-categorizer',
-			[ $this, 'render_settings_page' ]
-		);
-	}
+	/**
+	 * The old scalar options (Settings → KI Kategorisierung) migrated into
+	 * the sk_product_advertisement section once, then dropped.
+	 */
+	private static function migrate_legacy_options(): void {
+		$legacy_keys = [ 'skai_enabled', 'skai_api_key', 'skai_model', 'skai_auto_apply' ];
 
-	public function register_settings(): void {
-		register_setting( 'skai_settings', 'skai_enabled', [ 'type' => 'boolean', 'sanitize_callback' => 'absint', 'default' => 0 ] );
-		register_setting( 'skai_settings', 'skai_api_key', [ 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field', 'default' => '' ] );
-		register_setting( 'skai_settings', 'skai_model', [ 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field', 'default' => 'claude-haiku-4-5-20251001' ] );
-		register_setting( 'skai_settings', 'skai_auto_apply', [ 'type' => 'boolean', 'sanitize_callback' => 'absint', 'default' => 0 ] );
-	}
-
-	public function render_settings_page(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( null === get_option( 'skai_enabled', null ) ) {
 			return;
 		}
-		$saved = isset( $_GET['settings-updated'] );
-		?>
-		<div class="wrap">
-			<h1>KI Kategorisierung</h1>
-			<p style="color:#666;max-width:600px">Analysiert Produkttitel und -beschreibung mit Claude AI und schlägt automatisch die passende Kategorie vor.</p>
 
-			<?php if ( $saved ) : ?>
-				<div class="notice notice-success is-dismissible"><p>Einstellungen gespeichert.</p></div>
-			<?php endif; ?>
+		$section = get_option( 'sk_product_advertisement' );
+		$section = is_array( $section ) ? $section : [];
 
-			<form method="post" action="options.php">
-				<?php settings_fields( 'skai_settings' ); ?>
+		if ( ! isset( $section['skai_enabled'] ) ) {
+			$section['skai_enabled']    = get_option( 'skai_enabled', 0 ) ? 'on' : 'off';
+			$section['skai_api_key']    = get_option( 'skai_api_key', '' );
+			$section['skai_model']      = get_option( 'skai_model', 'claude-haiku-4-5-20251001' );
+			$section['skai_auto_apply'] = get_option( 'skai_auto_apply', 0 ) ? 'on' : 'off';
+			update_option( 'sk_product_advertisement', $section );
+		}
 
-				<table class="form-table" role="presentation">
-					<tr>
-						<th scope="row">Plugin aktiv</th>
-						<td>
-							<label>
-								<input type="checkbox" name="skai_enabled" value="1" <?php checked( get_option( 'skai_enabled', 0 ), 1 ); ?>>
-								KI-Kategorisierung aktivieren
-							</label>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="skai_api_key">Claude API Key</label></th>
-						<td>
-							<input type="password" id="skai_api_key" name="skai_api_key"
-								   value="<?php echo esc_attr( get_option( 'skai_api_key', '' ) ); ?>"
-								   class="regular-text" autocomplete="new-password">
-							<p class="description">
-								API Key von <a href="https://console.anthropic.com/" target="_blank" rel="noopener">console.anthropic.com</a>
-							</p>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row"><label for="skai_model">Claude Modell</label></th>
-						<td>
-							<select id="skai_model" name="skai_model">
-								<?php
-								$models = [
-									'claude-haiku-4-5-20251001' => 'Claude Haiku 4.5 (schnell, günstig — empfohlen)',
-									'claude-sonnet-4-6'         => 'Claude Sonnet 4.6 (besser, teurer)',
-									'claude-opus-4-6'           => 'Claude Opus 4.6 (bestes Modell)',
-								];
-								$current = get_option( 'skai_model', 'claude-haiku-4-5-20251001' );
-								foreach ( $models as $value => $label ) {
-									printf(
-										'<option value="%s" %s>%s</option>',
-										esc_attr( $value ),
-										selected( $current, $value, false ),
-										esc_html( $label )
-									);
-								}
-								?>
-							</select>
-						</td>
-					</tr>
-					<tr>
-						<th scope="row">Automatisch anwenden</th>
-						<td>
-							<label>
-								<input type="checkbox" name="skai_auto_apply" value="1" <?php checked( get_option( 'skai_auto_apply', 0 ), 1 ); ?>>
-								Kategorie direkt eintragen (ohne Bestätigung durch Anbieter)
-							</label>
-							<p class="description">Wenn deaktiviert, wird nur ein Vorschlag angezeigt — der Anbieter muss ihn manuell übernehmen.</p>
-						</td>
-					</tr>
-				</table>
-
-				<?php
-				$key   = get_option( 'skai_api_key', '' );
-				$model = get_option( 'skai_model', 'claude-haiku-4-5-20251001' );
-				if ( $key ) :
-					$test_result = $this->test_connection( $key, $model );
-				?>
-				<h2 style="margin-top:30px">Verbindungstest</h2>
-				<?php if ( true === $test_result ) : ?>
-					<div class="notice notice-success inline"><p>Verbindung zu Claude API erfolgreich.</p></div>
-				<?php else : ?>
-					<div class="notice notice-error inline"><p>Fehler: <?php echo esc_html( $test_result ); ?></p></div>
-				<?php endif; ?>
-				<?php endif; ?>
-
-				<?php submit_button( 'Einstellungen speichern' ); ?>
-			</form>
-		</div>
-		<?php
+		foreach ( $legacy_keys as $key ) {
+			delete_option( $key );
+		}
 	}
 
-	private function test_connection( string $api_key, string $model ): bool|string {
-		$response = wp_remote_post( 'https://api.anthropic.com/v1/messages', [
-			'timeout' => 10,
-			'headers' => [
-				'x-api-key'        => $api_key,
-				'anthropic-version' => '2023-06-01',
-				'content-type'     => 'application/json',
+	/**
+	 * Adds the KI Kategorisierung fields into the Product Advertisement
+	 * section, registered by SK\Modules\ProductAdvertisement\Admin\Settings.
+	 */
+	public function add_fields( $fields ) {
+		if ( ! isset( $fields['sk_product_advertisement'] ) || ! is_array( $fields['sk_product_advertisement'] ) ) {
+			$fields['sk_product_advertisement'] = [];
+		}
+
+		$fields['sk_product_advertisement'] = array_merge( $fields['sk_product_advertisement'], [
+			'skai_header' => [
+				'name'  => 'skai_header',
+				'label' => __( 'KI Kategorisierung', 'sk-core' ),
+				'type'  => 'sub_section',
+				'desc'  => __( 'Analysiert Produkttitel und -beschreibung mit Claude AI und schlägt automatisch die passende Kategorie vor.', 'sk-core' ),
 			],
-			'body' => wp_json_encode( [
-				'model'      => $model,
-				'max_tokens' => 5,
-				'messages'   => [ [ 'role' => 'user', 'content' => 'Hi' ] ],
-			] ),
+			'skai_enabled' => [
+				'name'    => 'skai_enabled',
+				'label'   => __( 'KI-Kategorisierung aktivieren', 'sk-core' ),
+				'type'    => 'switcher',
+				'default' => 'off',
+			],
+			'skai_api_key' => [
+				'name'    => 'skai_api_key',
+				'label'   => __( 'Claude API Key', 'sk-core' ),
+				'type'    => 'text',
+				'default' => '',
+				'desc'    => __( 'API Key von console.anthropic.com', 'sk-core' ),
+			],
+			'skai_model' => [
+				'name'    => 'skai_model',
+				'label'   => __( 'Claude Modell', 'sk-core' ),
+				'type'    => 'select',
+				'options' => [
+					'claude-haiku-4-5-20251001' => __( 'Claude Haiku 4.5 (schnell, günstig — empfohlen)', 'sk-core' ),
+					'claude-sonnet-4-6'         => __( 'Claude Sonnet 4.6 (besser, teurer)', 'sk-core' ),
+					'claude-opus-4-6'           => __( 'Claude Opus 4.6 (bestes Modell)', 'sk-core' ),
+				],
+				'default' => 'claude-haiku-4-5-20251001',
+			],
+			'skai_auto_apply' => [
+				'name'    => 'skai_auto_apply',
+				'label'   => __( 'Automatisch anwenden', 'sk-core' ),
+				'type'    => 'switcher',
+				'default' => 'off',
+				'desc'    => __( 'Kategorie direkt eintragen, ohne Bestätigung durch den Anbieter. Wenn deaktiviert, wird nur ein Vorschlag angezeigt.', 'sk-core' ),
+			],
 		] );
 
-		if ( is_wp_error( $response ) ) {
-			return $response->get_error_message();
-		}
-
-		$code = wp_remote_retrieve_response_code( $response );
-		if ( 200 === $code ) {
-			return true;
-		}
-
-		$body = json_decode( wp_remote_retrieve_body( $response ), true );
-		return $body['error']['message'] ?? "HTTP $code";
+		return $fields;
 	}
 
 	// ── Frontend Assets ────────────────────────────────────────────────────────
 
 	public function enqueue_assets(): void {
-		if ( ! get_option( 'skai_enabled', 0 ) ) {
+		if ( sk_get_option( 'skai_enabled', 'sk_product_advertisement', 'off' ) !== 'on' ) {
 			return;
 		}
 		if ( ! function_exists( 'sk_is_seller_dashboard' ) || ! sk_is_seller_dashboard() ) {
@@ -189,7 +131,7 @@ class AiCategorizer {
 		wp_localize_script( 'sk-ai-cat', 'skAiCat', [
 			'ajaxurl'         => admin_url( 'admin-ajax.php' ),
 			'nonce'           => wp_create_nonce( 'skai_suggest' ),
-			'autoApply'       => (bool) get_option( 'skai_auto_apply', 0 ),
+			'autoApply'       => sk_get_option( 'skai_auto_apply', 'sk_product_advertisement', 'off' ) === 'on',
 			'uncategorizedId' => (function () {
 				$t = get_term_by( 'slug', 'unkategorisiert', 'product_cat' );
 				return $t ? (int) $t->term_id : 15;
@@ -224,11 +166,11 @@ class AiCategorizer {
 	public function handle_suggest(): void {
 		check_ajax_referer( 'skai_suggest', 'nonce' );
 
-		if ( ! get_option( 'skai_enabled', 0 ) ) {
+		if ( sk_get_option( 'skai_enabled', 'sk_product_advertisement', 'off' ) !== 'on' ) {
 			wp_send_json_error( [ 'message' => 'disabled' ] );
 		}
 
-		$api_key = get_option( 'skai_api_key', '' );
+		$api_key = sk_get_option( 'skai_api_key', 'sk_product_advertisement', '' );
 		if ( empty( $api_key ) ) {
 			wp_send_json_error( [ 'message' => 'no_api_key' ] );
 		}
@@ -281,7 +223,7 @@ class AiCategorizer {
 	}
 
 	private function call_claude( string $api_key, string $prompt ): array|\WP_Error {
-		$model  = get_option( 'skai_model', 'claude-haiku-4-5-20251001' );
+		$model  = sk_get_option( 'skai_model', 'sk_product_advertisement', 'claude-haiku-4-5-20251001' );
 		$system = 'Du bist ein Kategorisierungs-Assistent für einen Bitcoin-Marktplatz (Kleinanzeigen). '
 			. 'Wähle die am besten passende Kategorie aus der Liste für das gegebene Produkt. '
 			. 'Antworte NUR mit einem JSON-Objekt: {"term_id": <zahl>, "term_name": "<name>", "path": "<Eltern > Kind>"}. '
