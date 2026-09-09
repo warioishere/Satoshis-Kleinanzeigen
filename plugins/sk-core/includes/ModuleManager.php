@@ -323,6 +323,15 @@ class ModuleManager {
                         'module_class' => 'SK\Modules\Sponsors\Module',
                         'categories'   => [ 'Store Management' ],
                     ],
+                    'sk_contact_feewall' => [
+                        'id'           => 'sk_contact_feewall',
+                        'name'         => __( 'Kontakt-Feewall', 'sk-core' ),
+                        'description'  => __( 'Schützt Kontaktdetails von Anbietern mit einer 21-Sats-Paywall über BTCPay.', 'sk-core' ),
+                        'thumbnail'    => $thumbnail_dir . '/follow-store.svg',
+                        'module_file'  => SK_CORE_DIR . '/modules' . '/sk-contact-feewall/module.php',
+                        'module_class' => 'SK\Modules\ContactFeewall\Module',
+                        'categories'   => [ 'Store Management' ],
+                    ],
                 ]
             );
         }

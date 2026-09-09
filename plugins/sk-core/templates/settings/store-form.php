@@ -87,7 +87,7 @@ $cd_phone      = esc_attr( $profile_info['phone_number']  ?? '' );
 $cd_show_phone = ! empty( $profile_info['show_phone_number'] )  ? 'checked' : '';
 $cd_nostr      = esc_attr( $profile_info['nostr']         ?? '' );
 $cd_show_nostr = ! empty( $profile_info['show_nostr'] )         ? 'checked' : '';
-$cd_feewall_available = class_exists( 'Contact_Details_Feewall' ) && get_option( 'cdf_enabled', 'yes' ) === 'yes';
+$cd_feewall_available = sk_module_active( 'sk_contact_feewall' ) && sk_get_option( 'cdf_enabled', 'sk_contact_feewall', 'on' ) === 'on';
 $cd_feewall_enabled   = $cd_feewall_available && isset( $profile_info['cdf_enabled'] ) && $profile_info['cdf_enabled'] === '1';
 
 /* --- Biography --- */
