@@ -23,10 +23,6 @@ class ProductForm {
         add_action( 'sk_process_product_meta', [ $this, 'save_shipping_note' ] );
         add_action( 'woocommerce_single_product_summary', [ $this, 'output_shipping_display' ], 11 );
 
-        // Sats converter
-        add_action( 'admin_menu', [ $this, 'sats_converter_admin_menu' ] );
-        add_action( 'admin_init', [ $this, 'sats_converter_register_settings' ] );
-
         // SEO autofill (Yoast focus keyword)
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_seo_autofill' ] );
         add_action( 'admin_menu', [ $this, 'seo_autofill_admin_menu' ] );
@@ -131,51 +127,13 @@ class ProductForm {
         }
     }
 
-    /* ---- Sats Converter ---- */
-
-    public function sats_converter_admin_menu(): void {
-        add_options_page(
-            'Sats Converter Einstellungen',
-            'Sats Converter',
-            'manage_options',
-            'sats-converter',
-            [ $this, 'sats_converter_admin_page' ]
-        );
-    }
-
-    public function sats_converter_admin_page(): void {
-        ?>
-        <div class="wrap">
-            <h1>Sats Converter Einstellungen</h1>
-            <form method="post" action="options.php">
-                <?php
-                settings_fields( 'sats_converter_settings' );
-                do_settings_sections( 'sats_converter_settings' );
-                ?>
-                <table class="form-table">
-                    <tr>
-                        <th scope="row">Converter anzeigen?</th>
-                        <td>
-                            <label>
-                                <input type="checkbox" name="sats_converter_enabled" value="1"
-                                       <?php checked( get_option( 'sats_converter_enabled' ), 1 ); ?> />
-                                Aktiv
-                            </label>
-                        </td>
-                    </tr>
-                </table>
-                <?php submit_button(); ?>
-            </form>
-        </div>
-        <?php
-    }
-
-    public function sats_converter_register_settings(): void {
-        register_setting( 'sats_converter_settings', 'sats_converter_enabled' );
-    }
+    /* ---- Sats Converter ----
+     * Always on — used to have an on/off switch under Settings → Sats
+     * Converter; removed, the converter now just shows.
+     */
 
     public function output_sats_converter_box(): void {
-        if ( ! is_user_logged_in() || ! get_option( 'sats_converter_enabled' ) ) return;
+        if ( ! is_user_logged_in() ) return;
         ?>
         <div id="sats-converter-box" class="sk-edit-row sk-other-options sk-clearfix">
             <div class="sk-section-heading" data-togglehandler="sats_converter_box">
