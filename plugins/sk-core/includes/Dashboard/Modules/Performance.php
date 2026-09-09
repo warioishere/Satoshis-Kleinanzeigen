@@ -13,12 +13,11 @@ use SK\Core\Dashboard\PageCache;
 class Performance {
 
     public function __construct() {
-        // Initialize defaults
-        add_action( 'init', [ $this, 'init_defaults' ] );
+        self::migrate_legacy_option();
 
-        // Admin settings page
-        add_action( 'admin_init', [ $this, 'register_settings' ] );
-        add_action( 'admin_menu', [ $this, 'add_admin_menu' ] );
+        // SK Admin → Settings → General
+        add_filter( 'sk_settings_general_site_options', [ $this, 'add_field' ], 9 );
+
         add_action( 'admin_post_sk_dashboard_optimizations_save', [ $this, 'handle_frontend_save' ] );
         add_filter( 'the_content', [ $this, 'append_form_to_settings_page' ] );
 
@@ -37,67 +36,40 @@ class Performance {
         return PageCache::is_enabled();
     }
 
-    /* ---- init defaults ---- */
+    /**
+     * The old scalar option (Settings → Dashboard Performance, "1"/"0")
+     * migrated into sk_general once, then dropped.
+     */
+    private static function migrate_legacy_option(): void {
+        $legacy = get_option( 'sk_page_cache_enabled', null );
 
-    public function init_defaults(): void {
-        if ( false === get_option( 'sk_page_cache_enabled', false ) ) {
-            add_option( 'sk_page_cache_enabled', 1 );
+        if ( null === $legacy ) {
+            return;
         }
+
+        $section = get_option( 'sk_general' );
+        $section = is_array( $section ) ? $section : [];
+
+        if ( ! isset( $section['sk_page_cache_enabled'] ) ) {
+            $section['sk_page_cache_enabled'] = $legacy ? 'on' : 'off';
+            update_option( 'sk_general', $section );
+        }
+
+        delete_option( 'sk_page_cache_enabled' );
     }
 
     /* ---- Admin settings ---- */
 
-    public function register_settings(): void {
-        $options = [
-            'sk_page_cache_enabled',
+    public function add_field( $settings_fields ) {
+        $settings_fields['sk_page_cache_enabled'] = [
+            'name'    => 'sk_page_cache_enabled',
+            'label'   => __( 'Dashboard Seiten-Cache', 'sk-core' ),
+            'type'    => 'switcher',
+            'default' => 'on',
+            'desc'    => __( 'Speichert Dashboard-Seiten im Redis-Cache (5 Min. TTL) für sofortiges Laden.', 'sk-core' ),
         ];
 
-        foreach ( $options as $option ) {
-            register_setting( 'sk_dashboard_performance', $option, [
-                'type'              => 'boolean',
-                'sanitize_callback' => static function ( $v ) { return $v ? 1 : 0; },
-                'default'           => 1,
-            ] );
-        }
-
-        add_settings_section( 'sk_dashboard_performance_main', '', '__return_null', 'sk-dashboard-performance' );
-
-        add_settings_field( 'sk_cache_field', esc_html__( 'Seiten-Cache', 'sk-core' ), function () {
-            ?>
-            <label>
-                <input type="checkbox" name="sk_page_cache_enabled" value="1" <?php checked( $this->page_cache_enabled() ); ?>>
-                <?php esc_html_e( 'Speichert Dashboard-Seiten im Redis-Cache (5 Min. TTL) für sofortiges Laden.', 'sk-core' ); ?>
-            </label>
-            <?php
-        }, 'sk-dashboard-performance', 'sk_dashboard_performance_main' );
-    }
-
-    public function add_admin_menu(): void {
-        add_options_page(
-            esc_html__( 'Dashboard Performance', 'sk-core' ),
-            esc_html__( 'Dashboard Performance', 'sk-core' ),
-            'manage_options',
-            'sk-dashboard-performance',
-            [ $this, 'render_admin_page' ]
-        );
-    }
-
-    public function render_admin_page(): void {
-        if ( ! current_user_can( 'manage_options' ) ) {
-            return;
-        }
-        ?>
-        <div class="wrap">
-            <h1><?php esc_html_e( 'Dashboard Performance', 'sk-core' ); ?></h1>
-            <form action="options.php" method="post">
-                <?php
-                settings_fields( 'sk_dashboard_performance' );
-                do_settings_sections( 'sk-dashboard-performance' );
-                submit_button();
-                ?>
-            </form>
-        </div>
-        <?php
+        return $settings_fields;
     }
 
     public function handle_frontend_save(): void {
@@ -105,7 +77,12 @@ class Performance {
             wp_die( esc_html__( 'Insufficient permissions.', 'sk-core' ) );
         }
         check_admin_referer( 'sk_dashboard_optimizations_action' );
-        update_option( 'sk_page_cache_enabled',              isset( $_POST['sk_page_cache_enabled'] ) ? 1 : 0 );
+
+        $section = get_option( 'sk_general' );
+        $section = is_array( $section ) ? $section : [];
+        $section['sk_page_cache_enabled'] = isset( $_POST['sk_page_cache_enabled'] ) ? 'on' : 'off';
+        update_option( 'sk_general', $section );
+
         $redirect = wp_get_referer() ?: home_url( '/' );
         wp_safe_redirect( add_query_arg( 'sk_dash_opt_updated', '1', $redirect ) );
         exit;

@@ -65,9 +65,16 @@ final class PageCache {
 
     /**
      * Is the page cache switched on?
+     *
+     * Read straight from the option, not through sk_get_option(): a mu-plugin
+     * (sk-dashboard-early-cache.php) calls this at muplugins_loaded, before
+     * sk-core (and includes/functions.php, where that helper lives) is even
+     * loaded. get_option() is core WordPress and always available this early.
      */
     public static function is_enabled(): bool {
-        return (bool) get_option( 'sk_page_cache_enabled', 1 );
+        $section = get_option( 'sk_general' );
+
+        return ! is_array( $section ) || ! isset( $section['sk_page_cache_enabled'] ) || 'on' === $section['sk_page_cache_enabled'];
     }
 
     /**
