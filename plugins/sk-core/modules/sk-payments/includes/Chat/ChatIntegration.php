@@ -380,6 +380,9 @@ class ChatIntegration {
             [ '%s' ]
         );
 
+        // The escrow module freezes the multisig at the API on this.
+        do_action( 'sk_payment_disputed', (string) $payment_hash );
+
         wp_send_json_success( [ 'message' => 'Problem wurde gemeldet. Ein Admin wird es prüfen.' ] );
     }
 

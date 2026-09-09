@@ -119,3 +119,49 @@
   font-size: 13px;
   color: #555;
 }
+
+/* Escrow section of a card in Käufe/Verkäufe */
+.weo-escrow-card {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(247, 147, 26, 0.35);
+  border-radius: 8px;
+  font-size: 14px;
+}
+.weo-escrow-card .weo-state {
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+.weo-escrow-card input[type="text"],
+.weo-escrow-card input[type="password"],
+.weo-escrow-card textarea {
+  width: 100%;
+  max-width: 100%;
+  font-family: monospace;
+  font-size: 13px;
+}
+.weo-qr-box {
+  text-align: center;
+  margin: 8px 0;
+}
+.weo-qr-box .weo-qr {
+  display: block;
+  margin: 0 auto 6px;
+  background: #fff;
+  padding: 6px;
+  border-radius: 8px;
+}
+.weo-qr-box .weo-address {
+  display: block;
+  word-break: break-all;
+  margin-bottom: 6px;
+}
+.weo-sign-manual {
+  margin-top: 8px;
+  font-size: 13px;
+}
+.weo-msg:empty,
+.weo-poll:empty,
+.weo-key-state:empty {
+  display: none;
+}

@@ -1,138 +1,63 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-// Avoid redeclaring the admin helper if another copy of the plugin loaded it.
-if (class_exists('WEO_Admin')) {
-  return;
-}
+use SK\Modules\Escrow\Actions;
+use SK\Modules\Escrow\Notify;
+use SK\Modules\Escrow\Rows;
 
+/**
+ * Operator view: every escrow, and the disputes the marketplace has to
+ * resolve. Resolution means building a payout or refund at the API, signing
+ * it with the marketplace key in an external wallet (the site never holds
+ * that key) and merging the signature with the one the favoured party
+ * already gave.
+ */
 class WEO_Admin {
   public function __construct() {
     add_action('admin_menu', [$this, 'menu']);
-    add_action('weo_dispute_opened', [$this, 'notify_dispute']);
-    add_action('admin_notices', [$this, 'maybe_notice']);
   }
 
   public function menu() {
-    add_submenu_page(
-      'weo-treuhand',
-      'Escrows',
-      'Escrows',
-      'manage_woocommerce',
-      'weo-escrows',
-      [$this, 'page']
-    );
+    add_submenu_page('weo-treuhand', 'Escrows', 'Escrows', 'manage_woocommerce', 'weo-escrows', [$this, 'page']);
+    add_submenu_page('weo-treuhand', 'Disputes', 'Disputes', 'manage_woocommerce', 'weo-disputes', [$this, 'disputes_page']);
+  }
 
-    add_submenu_page(
-      'weo-treuhand',
-      'Disputes',
-      'Disputes',
-      'manage_woocommerce',
-      'weo-disputes',
-      [$this, 'disputes_page']
-    );
+  private function user_label($id) {
+    $u = get_userdata((int) $id);
+    return $u ? $u->display_name . ' (#' . (int) $id . ')' : '#' . (int) $id;
   }
 
   public function page() {
     if (!current_user_can('manage_woocommerce')) wp_die('Nicht erlaubt.');
 
-    if (!empty($_POST['weo_action']) && !empty($_POST['order_id'])) {
-      $order_id = intval($_POST['order_id']);
-      if (wp_verify_nonce($_POST['weo_nonce'] ?? '', 'weo_psbt_' . $order_id)) {
-        $order = wc_get_order($order_id);
-        if ($order) {
-          $this->handle_action($order);
-        } else {
-          echo '<div class="notice notice-error"><p>Bestellung nicht gefunden.</p></div>';
-        }
-      } else {
-        echo '<div class="notice notice-error"><p>Ungültiger Sicherheits-Token.</p></div>';
-      }
-    }
+    $rows = Rows::by_status(['requested','pending','confirmed','delivered','disputed','refunded','expired'], 200);
 
-    echo '<div class="wrap"><h1>Offene Escrows</h1>';
-
-    $statuses = array_keys(wc_get_order_statuses());
-    $exclude  = ['wc-completed','wc-refunded','wc-dispute'];
-    $statuses = array_values(array_diff($statuses, $exclude));
-    $statuses = array_map(function($s){ return substr($s,3); }, $statuses);
-
-    $orders = wc_get_orders([
-      'limit' => -1,
-      'status' => $statuses,
-      'meta_key' => '_weo_escrow_addr',
-      'meta_compare' => 'EXISTS'
-    ]);
-
-    echo '<table class="widefat fixed"><thead><tr>';
-    echo '<th>Bestellung</th><th>Adresse</th><th>Funding</th><th>Signaturen</th><th>Aktionen</th>';
-    echo '</tr></thead><tbody>';
-
-    foreach ($orders as $order) {
-      $addr = $order->get_meta('_weo_escrow_addr');
-      if (!$addr) continue;
-      $oid  = weo_sanitize_order_id((string)$order->get_order_number());
-      $status = weo_api_get('/orders/'.rawurlencode($oid).'/status');
-      $fund = is_wp_error($status) ? '-' : intval($status['funding']['total_sat'] ?? 0);
-      $conf = is_wp_error($status) ? 0 : intval($status['funding']['confirmed_sat'] ?? 0);
-      $signs = intval($order->get_meta('_weo_psbt_sign_count'));
-      $nonce = wp_create_nonce('weo_psbt_'.$order->get_id());
-      $admin_post = esc_url(admin_url('admin-post.php'));
-      $in_dispute = (bool) $order->get_meta('_weo_dispute');
-
+    echo '<div class="wrap"><h1>Escrows</h1>';
+    echo '<table class="widefat fixed"><thead><tr><th>ID</th><th>Inserat</th><th>Käufer</th><th>Verkäufer</th><th>Betrag</th><th>Status</th><th>Treuhand</th></tr></thead><tbody>';
+    foreach ($rows as $r) {
+      $meta = Rows::meta($r);
       echo '<tr>';
-      echo '<td><a href="'.esc_url(get_edit_post_link($order->get_id())).'">#'.esc_html($order->get_order_number()).'</a></td>';
-      echo '<td><code>'.esc_html($addr).'</code></td>';
-      echo '<td>'.esc_html($conf.'/'.$fund).'</td>';
-      echo '<td>'.esc_html($signs).'/2</td>';
-      echo '<td>';
-      echo '<form method="post" style="display:inline;margin-right:4px;">';
-      echo '<input type="hidden" name="order_id" value="'.intval($order->get_id()).'">';
-      echo '<input type="hidden" name="weo_nonce" value="'.$nonce.'">';
-      echo '<input type="hidden" name="weo_action" value="build_psbt_payout">';
-      echo '<button class="button">Payout</button>';
-      echo '</form>';
-      echo '<form method="post" style="display:inline;margin-right:4px;">';
-      echo '<input type="hidden" name="order_id" value="'.intval($order->get_id()).'">';
-      echo '<input type="hidden" name="weo_nonce" value="'.$nonce.'">';
-      echo '<input type="hidden" name="weo_action" value="build_psbt_refund">';
-      echo '<button class="button">Refund</button>';
-      echo '</form>';
-      if (!$in_dispute) {
-        echo '<form method="post" style="display:inline;margin-right:4px;">';
-        echo '<input type="hidden" name="order_id" value="'.intval($order->get_id()).'">';
-        echo '<input type="hidden" name="weo_nonce" value="'.$nonce.'">';
-        echo '<input type="hidden" name="weo_action" value="bumpfee">';
-        echo '<input type="number" name="target_conf" value="1" min="1" style="width:60px;" />';
-        echo '<button class="button">RBF</button>';
-        echo '</form>';
-      }
-      echo '<form method="post" action="'.$admin_post.'" style="display:inline;margin-right:4px;">';
-      echo '<input type="hidden" name="action" value="weo_open_dispute">';
-      echo '<input type="hidden" name="order_id" value="'.intval($order->get_id()).'">';
-      // WEO_Order::open_dispute() checks this nonce; without the field the
-      // button always failed the check.
-      echo wp_nonce_field('weo_open_dispute_'.$order->get_id(), '_wpnonce', false, false);
-      echo '<button class="button">Dispute</button>';
-      echo '</form>';
-      echo '</td>';
+      echo '<td>' . (int) $r->id . '</td>';
+      echo '<td>' . esc_html($r->product_id ? get_the_title((int) $r->product_id) : '—') . '</td>';
+      echo '<td>' . esc_html($this->user_label($r->buyer_id)) . '</td>';
+      echo '<td>' . esc_html($this->user_label($r->vendor_id)) . '</td>';
+      echo '<td>' . esc_html(number_format_i18n((int) $r->amount_sats)) . ' sats</td>';
+      echo '<td>' . esc_html($r->status) . '</td>';
+      echo '<td>' . esc_html(($meta['state'] ?? '') . (!empty($meta['address']) ? ' · ' . $meta['address'] : '') . (!empty($meta['settled_txid']) ? ' · tx ' . $meta['settled_txid'] : '')) . '</td>';
       echo '</tr>';
     }
-
     echo '</tbody></table></div>';
   }
 
   public function disputes_page() {
     if (!current_user_can('manage_woocommerce')) wp_die('Nicht erlaubt.');
 
-    if (!empty($_POST['weo_action']) && !empty($_POST['order_id'])) {
-      $order_id = intval($_POST['order_id']);
-      if (wp_verify_nonce($_POST['weo_nonce'] ?? '', 'weo_psbt_' . $order_id)) {
-        $order = wc_get_order($order_id);
-        if ($order) {
-          $this->handle_action($order);
-        } else {
-          echo '<div class="notice notice-error"><p>Bestellung nicht gefunden.</p></div>';
+    if (!empty($_POST['weo_action']) && !empty($_POST['hash'])) {
+      $hash = sanitize_text_field(wp_unslash($_POST['hash']));
+      if (wp_verify_nonce($_POST['weo_nonce'] ?? '', 'weo_admin_' . $hash)) {
+        $row = Rows::get($hash);
+        if ($row) {
+          $this->handle_action($row, sanitize_key(wp_unslash($_POST['weo_action'])));
         }
       } else {
         echo '<div class="notice notice-error"><p>Ungültiger Sicherheits-Token.</p></div>';
@@ -140,289 +65,109 @@ class WEO_Admin {
     }
 
     echo '<div class="wrap"><h1>Disputes</h1>';
+    echo '<p>Aufloesen: Auszahlung oder Erstattung bauen, die PSBT mit dem Marktplatz-Schluessel extern signieren (Sparrow o. ae.), signierte PSBT hier einreichen. Die zweite Signatur liefert die beguenstigte Partei ueber ihr Dashboard, danach wird gesendet.</p>';
 
-    $orders = wc_get_orders([
-      'limit' => -1,
-      'meta_key' => '_weo_escrow_addr',
-      'meta_compare' => 'EXISTS'
-    ]);
-
-    echo '<table class="widefat fixed"><thead><tr>';
-    echo '<th>Bestellung</th><th>Käufer</th><th>Verkäufer</th><th>Funding</th><th>Nachricht</th><th>Aktionen</th>';
-    echo '</tr></thead><tbody>';
-
-    foreach ($orders as $order) {
-      $oid  = weo_sanitize_order_id((string)$order->get_order_number());
-      $meta_dispute = $order->get_meta('_weo_dispute');
-      $status = weo_api_get('/orders/'.rawurlencode($oid).'/status');
-      $state  = is_wp_error($status) ? '' : ($status['state'] ?? '');
-      if (!$meta_dispute && $state !== 'dispute') continue;
-
-      $fund = is_wp_error($status) ? '-' : intval($status['funding']['total_sat'] ?? 0);
-      $conf = is_wp_error($status) ? 0 : intval($status['funding']['confirmed_sat'] ?? 0);
-      $nonce = wp_create_nonce('weo_psbt_'.$order->get_id());
-
-      $buyer_id  = intval($order->get_user_id());
-      $vendor_id = intval($order->get_meta('_weo_vendor_id'));
-
-      echo '<tr>';
-      echo '<td><a href="'.esc_url(get_edit_post_link($order->get_id())).'">#'.esc_html($order->get_order_number()).'</a></td>';
-      echo '<td>'.esc_html($buyer_id).'</td>';
-      echo '<td>'.esc_html($vendor_id).'</td>';
-      $note = trim($order->get_meta('_weo_dispute_note'));
-      echo '<td>'.esc_html($conf.'/'.$fund).'</td>';
-      echo '<td>'.esc_html($note).'</td>';
-      echo '<td>';
-      echo '<form method="post" style="display:inline;margin-right:4px;">';
-      echo '<input type="hidden" name="order_id" value="'.intval($order->get_id()).'">';
-      echo '<input type="hidden" name="weo_nonce" value="'.$nonce.'">';
-      echo '<input type="hidden" name="weo_action" value="build_psbt_payout">';
-      echo '<button class="button">Payout</button>';
-      echo '</form>';
-      echo '<form method="post" style="display:inline;margin-right:4px;">';
-      echo '<input type="hidden" name="order_id" value="'.intval($order->get_id()).'">';
-      echo '<input type="hidden" name="weo_nonce" value="'.$nonce.'">';
-      echo '<input type="hidden" name="weo_action" value="build_psbt_refund">';
-      echo '<button class="button">Refund</button>';
-      echo '</form>';
-      echo '<form method="post" style="display:inline;margin-right:4px;">';
-      echo '<input type="hidden" name="order_id" value="'.intval($order->get_id()).'">';
-      echo '<input type="hidden" name="weo_nonce" value="'.$nonce.'">';
-      echo '<input type="hidden" name="weo_action" value="close_dispute">';
-      echo '<button class="button">Close</button>';
-      echo '</form>';
-      $outcome = $order->get_meta('_weo_dispute_outcome');
-      $need_key = $outcome === 'payout' ? '_weo_psbt_partials_seller' : ($outcome === 'refund' ? '_weo_psbt_partials_buyer' : '');
-      $has_sig = $need_key ? !empty($order->get_meta($need_key)) : false;
-      if ($outcome && $has_sig) {
-        echo '<form method="post" style="display:inline;margin-right:4px;">';
-        echo '<input type="hidden" name="order_id" value="'.intval($order->get_id()).'">';
-        echo '<input type="hidden" name="weo_nonce" value="'.$nonce.'">';
-        echo '<input type="hidden" name="weo_action" value="finalize_dispute">';
-        echo '<input type="text" name="weo_admin_psbt" placeholder="Admin PSBT" style="width:200px;margin-right:4px;">';
-        echo '<button class="button">Broadcast</button>';
-        echo '</form>';
+    foreach (Rows::by_status(['disputed'], 100) as $r) {
+      $meta  = Rows::meta($r);
+      $all   = Rows::all_meta($r);
+      $nonce = wp_create_nonce('weo_admin_' . $r->payment_hash);
+      echo '<div class="card" style="max-width:900px;padding:12px;margin-top:12px;">';
+      echo '<h2>#' . (int) $r->id . ' · ' . esc_html($r->product_id ? get_the_title((int) $r->product_id) : '—') . ' · ' . esc_html(number_format_i18n((int) $r->amount_sats)) . ' sats</h2>';
+      echo '<p>Käufer: ' . esc_html($this->user_label($r->buyer_id)) . ' · Verkäufer: ' . esc_html($this->user_label($r->vendor_id)) . '</p>';
+      echo '<p>Grund: ' . esc_html((string) ($all['dispute_reason'] ?? '')) . ' · gemeldet ' . esc_html((string) ($all['dispute_at'] ?? '')) . '</p>';
+      echo '<p>Treuhand: ' . esc_html((string) ($meta['address'] ?? '')) . ' · API-Status ' . esc_html((string) ($meta['state'] ?? '')) . ' · eingezahlt ' . esc_html(number_format_i18n((int) ($meta['funded_sat'] ?? 0))) . ' sats</p>';
+      echo '<p>Auszahlungsadresse Verkäufer: <code>' . esc_html((string) ($meta['payout_address'] ?? '')) . '</code><br>Erstattungsadresse Käufer: <code>' . esc_html((string) ($meta['refund_address'] ?? '')) . '</code></p>';
+      if (!empty($meta['psbt_type'])) {
+        echo '<p>Offene Transaktion: <strong>' . esc_html($meta['psbt_type']) . '</strong>, signiert von: ' . esc_html(implode(', ', (array) ($meta['signed'] ?? [])) ?: '—') . '</p>';
+        echo '<p><label>PSBT (unsigniert, Base64)</label><br><textarea rows="4" style="width:100%;" readonly>' . esc_textarea((string) $meta['psbt']) . '</textarea></p>';
       }
-      echo '</td>';
-      echo '</tr>';
+
+      foreach (['payout' => 'Auszahlung an Verkäufer bauen', 'refund' => 'Erstattung an Käufer bauen'] as $type => $label) {
+        echo '<form method="post" style="display:inline;margin-right:6px;">';
+        echo '<input type="hidden" name="hash" value="' . esc_attr($r->payment_hash) . '"><input type="hidden" name="weo_nonce" value="' . esc_attr($nonce) . '"><input type="hidden" name="weo_action" value="build_' . $type . '">';
+        echo '<button class="button">' . esc_html($label) . '</button></form>';
+      }
+
+      echo '<form method="post" style="margin-top:8px;">';
+      echo '<input type="hidden" name="hash" value="' . esc_attr($r->payment_hash) . '"><input type="hidden" name="weo_nonce" value="' . esc_attr($nonce) . '"><input type="hidden" name="weo_action" value="partial">';
+      echo '<label>Mit Marktplatz-Schlüssel signierte PSBT (Base64)</label><br><textarea name="psbt" rows="4" style="width:100%;"></textarea><br>';
+      echo '<button class="button button-primary">Signatur einreichen</button></form>';
+
+      echo '<form method="post" style="margin-top:8px;">';
+      echo '<input type="hidden" name="hash" value="' . esc_attr($r->payment_hash) . '"><input type="hidden" name="weo_nonce" value="' . esc_attr($nonce) . '"><input type="hidden" name="weo_action" value="close">';
+      echo '<button class="button">Dispute schliessen (zurück zu „bezahlt“)</button></form>';
+      echo '</div>';
     }
 
-    echo '</tbody></table></div>';
+    echo '</div>';
   }
 
-  private function handle_action($order) {
-    $order_id = $order->get_id();
-    $action = $_POST['weo_action'];
-    if ($action === 'bumpfee') {
-      if ($order->get_meta('_weo_dispute')) {
-        echo '<div class="notice notice-error"><p>Fee-Bump während Dispute nicht möglich.</p></div>';
-        return;
+  private function handle_action(object $row, string $action) {
+    $meta = Rows::meta($row);
+    if (empty($meta['order_id'])) {
+      echo '<div class="notice notice-error"><p>Kein API-Auftrag zu dieser Zeile.</p></div>';
+      return;
+    }
+
+    if ($action === 'close') {
+      if (Rows::set_status($row->payment_hash, 'disputed', 'confirmed')) {
+        Rows::save_meta($row->payment_hash, ['psbt_type' => '', 'psbt' => '', 'signed' => []]);
+        Notify::chat($row, get_current_user_id(), __('Der Marktplatz hat den Dispute geschlossen. Käufer und Verkäufer können den Handel normal abschliessen.', 'sk-core'));
+        echo '<div class="notice notice-success"><p>Dispute geschlossen.</p></div>';
       }
-      $target = intval($_POST['target_conf'] ?? 1);
-      $resp = weo_api_post('/tx/bumpfee', [
-        'order_id'    => (string)$order->get_order_number(),
-        'target_conf' => $target
-      ]);
-      if (!is_wp_error($resp) && !empty($resp['psbt'])) {
-        $order->update_meta_data('_weo_rbf_psbt', $resp['psbt']);
-        $order->delete_meta_data('_weo_psbt_partials_buyer');
-        $order->delete_meta_data('_weo_psbt_partials_seller');
-        $order->update_meta_data('_weo_psbt_sign_count', 0);
-        $order->save();
-        do_action('weo_rbf_requested', $order_id);
-        $order->add_order_note(__('RBF angefordert; Verkäufer benachrichtigt.', 'weo'));
-        $psbt_b64 = esc_textarea($resp['psbt']);
-        echo '<div class="notice notice-success"><p><strong>RBF-PSBT (Base64):</strong></p><textarea rows="6" style="width:100%;">'.$psbt_b64.'</textarea></div>';
+      return;
+    }
+
+    if ($action === 'build_payout' || $action === 'build_refund') {
+      $type = $action === 'build_payout' ? 'payout' : 'refund';
+      if ($type === 'refund') {
+        $res = weo_api_post('/psbt/build_refund', ['order_id' => $meta['order_id'], 'address' => $meta['refund_address'], 'rbf' => true, 'target_conf' => 3]);
       } else {
-        echo '<div class="notice notice-error"><p>Fee-Bump fehlgeschlagen.</p></div>';
+        $res = weo_api_post('/psbt/build', ['order_id' => $meta['order_id'], 'outputs' => [$meta['payout_address'] => (int) $row->amount_sats], 'rbf' => true, 'target_conf' => 3]);
       }
+      if (is_wp_error($res) || empty($res['psbt'])) {
+        echo '<div class="notice notice-error"><p>' . esc_html(is_wp_error($res) ? $res->get_error_message() : 'PSBT konnte nicht erstellt werden.') . '</p></div>';
+        return;
+      }
+      Rows::save_meta($row->payment_hash, ['psbt_type' => $type, 'psbt' => (string) $res['psbt'], 'signed' => []]);
+      Notify::chat($row, get_current_user_id(), $type === 'refund'
+        ? __('Der Marktplatz hat entschieden: Erstattung an den Käufer. Der Käufer signiert unter „Käufe“, der Marktplatz zeichnet gegen.', 'sk-core')
+        : __('Der Marktplatz hat entschieden: Auszahlung an den Verkäufer. Der Verkäufer signiert unter „Verkäufe“, der Marktplatz zeichnet gegen.', 'sk-core'));
+      echo '<div class="notice notice-success"><p>PSBT gebaut. Jetzt extern signieren und unten einreichen; die Gegenpartei signiert im Dashboard.</p></div>';
       return;
     }
 
-    if ($action === 'close_dispute') {
-      $order->delete_meta_data('_weo_dispute');
-      $order->update_status('on-hold', 'Dispute geschlossen');
-      $order->save();
-      echo '<div class="notice notice-success"><p>Dispute geschlossen.</p></div>';
-      return;
-    }
-
-    if ($action === 'finalize_dispute') {
-      $oid = weo_sanitize_order_id((string)$order->get_order_number());
-      $admin_psbt = trim($_POST['weo_admin_psbt'] ?? '');
-      if (!$admin_psbt) {
-        echo '<div class="notice notice-error"><p>Signierte PSBT fehlt.</p></div>';
+    if ($action === 'partial') {
+      $partial = trim((string) wp_unslash($_POST['psbt'] ?? ''));
+      if ($partial === '' || base64_decode($partial, true) === false) {
+        echo '<div class="notice notice-error"><p>Ungültige PSBT.</p></div>';
         return;
       }
-      $outcome = $order->get_meta('_weo_dispute_outcome');
-      $party_key = $outcome === 'payout' ? '_weo_psbt_partials_seller' : ($outcome === 'refund' ? '_weo_psbt_partials_buyer' : '');
-      if (!$party_key) {
-        echo '<div class="notice notice-error"><p>Unbekanntes Dispute-Ergebnis.</p></div>';
+      if (empty($meta['psbt_type'])) {
+        echo '<div class="notice notice-error"><p>Zuerst Auszahlung oder Erstattung bauen.</p></div>';
         return;
       }
-      $party_parts = (array)$order->get_meta($party_key);
-      if (!$party_parts) {
-        echo '<div class="notice notice-error"><p>Signatur der Gegenpartei fehlt.</p></div>';
-        return;
-      }
-      $partials = array_merge($party_parts, [$admin_psbt]);
-      $merge = weo_api_post('/psbt/merge', [
-        'order_id' => $oid,
-        'partials' => $partials
-      ]);
+      $merge = weo_api_post('/psbt/merge', ['order_id' => $meta['order_id'], 'partials' => [$partial]]);
       if (is_wp_error($merge) || empty($merge['psbt'])) {
-        echo '<div class="notice notice-error"><p>PSBT-Zusammenführung fehlgeschlagen.</p></div>';
+        echo '<div class="notice notice-error"><p>' . esc_html(is_wp_error($merge) ? $merge->get_error_message() : 'Zusammenführen fehlgeschlagen.') . '</p></div>';
         return;
       }
-      $final = weo_api_post('/psbt/finalize', [
-        'order_id' => $oid,
-        'psbt'     => $merge['psbt'],
-        'state'    => 'dispute'
-      ]);
-      if (is_wp_error($final) || empty($final['hex'])) {
-        echo '<div class="notice notice-error"><p>Finalisierung fehlgeschlagen.</p></div>';
+      $dec   = weo_api_post('/psbt/decode', ['psbt' => $merge['psbt']]);
+      $count = is_wp_error($dec) ? 0 : (int) ($dec['sign_count'] ?? 0);
+      $signed = array_values(array_unique(array_merge((array) ($meta['signed'] ?? []), ['escrow'])));
+      Rows::save_meta($row->payment_hash, ['signed' => $signed, 'sign_count' => $count]);
+
+      if ($count < 2) {
+        echo '<div class="notice notice-success"><p>Marktplatz-Signatur gespeichert (' . (int) $count . '/2). Die begünstigte Partei muss noch im Dashboard signieren.</p></div>';
         return;
       }
-      $tx = weo_api_post('/tx/broadcast', [
-        'hex'      => $final['hex'],
-        'order_id' => $oid,
-        'state'    => 'dispute'
-      ]);
-      if (!is_wp_error($tx) && !empty($tx['txid'])) {
-        $order->update_meta_data('_weo_payout_txid', $tx['txid']);
-        if ($outcome === 'refund') {
-          $order->update_status('refunded', 'Escrow erstattet. TXID: '.$tx['txid']);
-        } else {
-          $order->update_status('completed', 'Escrow ausgezahlt. TXID: '.$tx['txid']);
-        }
-        $order->delete_meta_data('_weo_dispute');
-        $order->delete_meta_data('_weo_dispute_outcome');
-        $order->save();
-        echo '<div class="notice notice-success"><p>Transaktion gesendet.</p></div>';
-      } else {
-        echo '<div class="notice notice-error"><p>Broadcast fehlgeschlagen.</p></div>';
+
+      $txid = Actions::settle(Rows::get($row->payment_hash), $merge['psbt'], (string) $meta['psbt_type']);
+      if (is_wp_error($txid)) {
+        echo '<div class="notice notice-error"><p>' . esc_html($txid->get_error_message()) . '</p></div>';
+        return;
       }
-      return;
+      echo '<div class="notice notice-success"><p>Transaktion gesendet: ' . esc_html($txid) . '</p></div>';
     }
-
-    $oid = weo_sanitize_order_id((string)$order->get_order_number());
-
-    if (in_array($action, ['build_psbt_payout','build_psbt_refund'], true)) {
-      $state = '';
-      if ($order->get_meta('_weo_dispute')) {
-        $state = 'dispute';
-      } else {
-        $status = weo_api_get('/orders/'.rawurlencode($oid).'/status');
-        $state  = is_wp_error($status) ? '' : ($status['state'] ?? '');
-      }
-      if ($state !== 'dispute') {
-        echo '<div class="notice notice-error"><p>Bestellung nicht im Dispute.</p></div>';
-        return;
-      }
-    }
-
-    if ($action === 'build_psbt_payout') {
-      $payoutAddr = weo_get_payout_address($order->get_meta('_weo_vendor_id'));
-      if (!$payoutAddr) $payoutAddr = $this->fallback_vendor_payout_address($order_id);
-      if (!weo_validate_btc_address($payoutAddr)) {
-        echo '<div class="notice notice-error"><p>Payout-Adresse ungültig.</p></div>';
-        return;
-      }
-      $status = weo_api_get('/orders/'.rawurlencode($oid).'/status');
-      $funded = is_wp_error($status) ? 0 : intval($status['funding']['total_sat'] ?? 0);
-      if ($funded <= 0) {
-        echo '<div class="notice notice-error"><p>Keine Escrow-Einzahlung gefunden.</p></div>';
-        return;
-      }
-      $quote = weo_api_post('/orders/'.rawurlencode($oid).'/payout_quote', [
-        'address'     => $payoutAddr,
-        'target_conf' => 3,
-      ]);
-      if (is_wp_error($quote) || !isset($quote['fee_sat'])) {
-        echo '<div class="notice notice-error"><p>Fee-Kalkulation fehlgeschlagen.</p></div>';
-        return;
-      }
-      $price_sat = weo_order_total_sat($order);
-      $amount_sats = $price_sat + intval($quote['fee_sat']);
-      if ($price_sat <= 0 || !weo_validate_amount($amount_sats)) {
-        echo '<div class="notice notice-error"><p>Betrag ungültig.</p></div>';
-        return;
-      }
-      $resp = weo_api_post('/psbt/build', [
-        'order_id'    => $oid,
-        'outputs'     => [ $payoutAddr => $amount_sats ],
-        'rbf'         => true,
-        'target_conf' => 3,
-      ]);
-    } elseif ($action === 'build_psbt_refund') {
-      $refundAddr = weo_get_payout_address($order->get_user_id());
-      if (!$refundAddr) {
-        echo '<div class="notice notice-error"><p>Keine Käuferadresse hinterlegt.</p></div>';
-        return;
-      }
-      if (!weo_validate_btc_address($refundAddr)) {
-        echo '<div class="notice notice-error"><p>Adresse ungültig.</p></div>';
-        return;
-      }
-      $resp = weo_api_post('/psbt/build_refund', [
-        'order_id'    => $oid,
-        'address'     => $refundAddr,
-        'target_conf' => 3
-      ]);
-    } else {
-      $resp = null;
-    }
-
-    if (!empty($resp) && !is_wp_error($resp) && !empty($resp['psbt'])) {
-      if ($action === 'build_psbt_payout') {
-        $order->update_meta_data('_weo_dispute_outcome', 'payout');
-      } elseif ($action === 'build_psbt_refund') {
-        $order->update_meta_data('_weo_dispute_outcome', 'refund');
-      }
-      $order->save();
-      $psbt_b64 = esc_textarea($resp['psbt']);
-      $details = '';
-      $dec = weo_api_post('/psbt/decode', [ 'psbt' => $resp['psbt'] ]);
-      if (!is_wp_error($dec)) {
-        $outs = $dec['outputs'] ?? [];
-        if ($outs) {
-          $details .= '<p><strong>'.esc_html__('Outputs','weo').':</strong></p><ul>';
-          foreach ($outs as $addr => $sats) {
-            $details .= '<li>'.esc_html($addr).' – '.esc_html(number_format_i18n($sats)).' sats</li>';
-          }
-          $details .= '</ul>';
-        }
-        if (isset($dec['fee_sat'])) {
-          $details .= '<p><strong>'.esc_html__('Gebühr','weo').':</strong> '.esc_html(number_format_i18n(intval($dec['fee_sat']))).' sats</p>';
-        }
-      }
-      echo '<div class="notice notice-info"><p><strong>PSBT (Base64):</strong></p><textarea rows="4" style="width:100%;">'.$psbt_b64.'</textarea>'.$details.'</div>';
-    } elseif ($resp !== null) {
-      echo '<div class="notice notice-error"><p>PSBT konnte nicht erstellt werden.</p></div>';
-    }
-  }
-
-  public function notify_dispute($order) {
-    if (!$order instanceof WC_Order) $order = wc_get_order($order);
-    if (!$order) return;
-    $admin_email = get_option('admin_email');
-    $subject = 'Escrow Dispute für Bestellung #'.$order->get_order_number();
-    $link = admin_url('admin.php?page=weo-disputes');
-    $message = 'Für Bestellung #'.$order->get_order_number().' wurde ein Dispute eröffnet. '.$link;
-    if ($admin_email) wp_mail($admin_email, $subject, $message);
-    set_transient('weo_dispute_notice', $order->get_order_number(), 60);
-  }
-
-  public function maybe_notice() {
-    $ord = get_transient('weo_dispute_notice');
-    if ($ord) {
-      echo '<div class="notice notice-warning"><p>Dispute eröffnet für Bestellung #'.esc_html($ord).'</p></div>';
-      delete_transient('weo_dispute_notice');
-    }
-  }
-
-  /** @see weo_resolve_vendor_payout_address() in helpers.php */
-  private function fallback_vendor_payout_address($order_id) {
-    return weo_resolve_vendor_payout_address($order_id);
   }
 }

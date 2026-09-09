@@ -6,16 +6,15 @@ function weo_get_option($key, $default = '') {
   return isset($opts[$key]) ? $opts[$key] : $default;
 }
 
-function weo_vendor_escrow_allowed() {
-  $enabled = weo_get_option('vendor_escrow_enabled', '1');
-  $allowed = ($enabled === '1');
-  return apply_filters('weo_vendor_escrow_allowed', $allowed);
-}
-
-function weo_admin_treuhand_enabled() {
-  $enabled = weo_get_option('vendor_escrow_admin_only', '');
-  $allowed = ($enabled === '1');
-  return apply_filters('weo_admin_treuhand_enabled', $allowed);
+/**
+ * Is the escrow usable at all: switched on, API reachable by configuration,
+ * marketplace key present.
+ */
+function weo_enabled() {
+  return weo_get_option('vendor_escrow_enabled', '') === '1'
+    && weo_get_option('api_base', '') !== ''
+    && weo_get_option('api_key', '') !== ''
+    && weo_get_option('escrow_xpub', '') !== '';
 }
 
 function weo_api_post($endpoint, $body = []) {
@@ -31,7 +30,7 @@ function weo_api_post($endpoint, $body = []) {
   if (is_wp_error($resp)) return $resp;
   $code = wp_remote_retrieve_response_code($resp);
   $json = json_decode(wp_remote_retrieve_body($resp), true);
-  return ($code >=200 && $code <300) ? $json : new WP_Error('weo_api', 'API error', ['code'=>$code,'body'=>$json]);
+  return ($code >=200 && $code <300) ? $json : new WP_Error('weo_api', weo_api_error_text($json, $code), ['code'=>$code,'body'=>$json]);
 }
 
 function weo_api_get($endpoint) {
@@ -42,145 +41,32 @@ function weo_api_get($endpoint) {
   if (is_wp_error($resp)) return $resp;
   $code = wp_remote_retrieve_response_code($resp);
   $json = json_decode(wp_remote_retrieve_body($resp), true);
-  return ($code >=200 && $code <300) ? $json : new WP_Error('weo_api', 'API error', ['code'=>$code,'body'=>$json]);
+  return ($code >=200 && $code <300) ? $json : new WP_Error('weo_api', weo_api_error_text($json, $code), ['code'=>$code,'body'=>$json]);
+}
+
+/** Short, user-facing text for an API error response. */
+function weo_api_error_text($json, $code) {
+  $detail = is_array($json) ? ($json['detail'] ?? '') : '';
+  if (is_array($detail)) $detail = wp_json_encode($detail);
+  return sprintf('Escrow-API: %s (%d)', $detail !== '' ? $detail : 'Fehler', (int) $code);
 }
 
 function weo_sanitize_xpub($x) {
-  $x = trim($x);
+  $x = trim((string) $x);
   return preg_replace('/[^A-Za-z0-9]/','',$x);
 }
 
 function weo_sanitize_btc_address($addr) {
-  $addr = trim($addr);
+  $addr = trim((string) $addr);
   return sanitize_text_field($addr);
-}
-
-/**
- * Order total in satoshi.
- *
- * The shop runs in SAT, so the total already is the sat amount; the old code
- * multiplied it by 1e8 as if it were BTC and asked the escrow for a deposit
- * a hundred million times too large. Any other currency is refused: the
- * escrow must never be created with a guessed amount.
- *
- * @return int 0 when the amount cannot be determined.
- */
-function weo_order_total_sat($order) {
-  $total    = floatval($order->get_total());
-  $currency = strtoupper((string) $order->get_currency());
-
-  if ($currency === 'SAT' || $currency === 'SATS') {
-    $sat = (int) round($total);
-  } elseif ($currency === 'BTC') {
-    $sat = (int) round($total * 100000000);
-  } else {
-    return 0;
-  }
-
-  return weo_validate_amount($sat) ? $sat : 0;
-}
-
-function weo_get_payout_address($user_id) {
-  $addr = get_user_meta($user_id, 'weo_payout_address', true);
-  if (!$addr) {
-    $old = get_user_meta($user_id, 'weo_vendor_payout_address', true);
-    if (!$old) $old = get_user_meta($user_id, 'weo_buyer_payout_address', true);
-    if ($old) {
-      update_user_meta($user_id, 'weo_payout_address', $old);
-      $addr = $old;
-    }
-  }
-  return $addr;
-}
-
-/**
- * Resolve the payout address for an order's vendor.
- *
- * Determines the vendor from the order (falling back to the product author
- * and caching that on the order), then returns their payout address, or the
- * globally configured fallback.
- *
- * Lived as three byte-identical private copies in WEO_Order, WEO_Admin and
- * WEO_SK before — the WEO_SK one was never even called.
- *
- * @throws Exception When neither a vendor address nor a fallback is set.
- */
-function weo_resolve_vendor_payout_address($order_id) {
-  $order = wc_get_order($order_id);
-
-  if ($order) {
-    $vendor_id = $order->get_meta('_weo_vendor_id');
-
-    if (!$vendor_id) {
-      foreach ($order->get_items('line_item') as $item) {
-        $pid = $item->get_product_id();
-        $vendor_id = get_post_field('post_author', $pid);
-        if ($vendor_id) break;
-      }
-      if ($vendor_id) {
-        $order->update_meta_data('_weo_vendor_id', $vendor_id);
-        $order->save();
-      }
-    }
-
-    if ($vendor_id) {
-      $payout = weo_get_payout_address($vendor_id);
-      if ($payout) return $payout;
-    }
-  }
-
-  $fallback = get_option('weo_vendor_payout_fallback', '');
-  if ($fallback) return $fallback;
-
-  wc_add_notice(__('Keine Fallback-Payout-Adresse konfiguriert.', 'sk-core'), 'error');
-  throw new Exception('Fallback vendor payout address missing');
-}
-
-/**
- * Make wc_add_notice() usable on admin-post.php.
- *
- * WooCommerce loads its notice functions and starts its session only on
- * frontend requests. admin-post.php counts as admin, so there wc_add_notice()
- * is undefined and every PSBT upload or dispute request ended in a fatal
- * error instead of a redirect with a message.
- */
-function weo_ensure_wc_session() {
-  if (!function_exists('WC')) return;
-  if (!function_exists('wc_add_notice') && defined('WC_ABSPATH')) {
-    include_once WC_ABSPATH . 'includes/wc-notice-functions.php';
-  }
-  if (null === WC()->session && method_exists(WC(), 'initialize_session')) {
-    WC()->initialize_session();
-  }
-}
-
-/**
- * Claim a POSTed escrow action for the current request.
- *
- * Two handlers accept the same form: WEO_SK runs at init, WEO_Order runs
- * again while the order panel renders. On a page where both apply the same
- * POST was processed twice, which fired weo_order_shipped/received twice
- * and therefore sent every notification twice. The first caller gets the
- * action, every later one is told it is already taken.
- *
- * @return bool True if the caller may process it.
- */
-function weo_claim_post_action($order_id, $action) {
-  static $claimed = [];
-
-  $key = (int) $order_id . '|' . (string) $action;
-
-  if (isset($claimed[$key])) {
-    return false;
-  }
-
-  $claimed[$key] = true;
-
-  return true;
 }
 
 // ---- Validation helpers ----
 
+/**
+ * Normalize any mainnet account key (xpub, ypub, zpub, Ypub, Zpub) to the
+ * plain xpub serialization the descriptor uses. Testnet keys are refused.
+ */
 function weo_normalize_xpub($xpub, $network = 'main') {
   $xpub = weo_sanitize_xpub($xpub);
   if (!$xpub) return new WP_Error('weo_xpub','xpub missing');
@@ -200,6 +86,7 @@ function weo_normalize_xpub($xpub, $network = 'main') {
 
   $hex = weo_base58check_decode($xpub);
   if ($hex === false) return new WP_Error('weo_xpub','invalid base58');
+  if (strlen($hex) !== 156) return new WP_Error('weo_xpub','invalid length');
   $prefix = substr($hex,0,8);
   $payload = substr($hex,8);
   if (!isset($vers[$prefix])) return new WP_Error('weo_xpub','unknown prefix');
@@ -213,6 +100,8 @@ function weo_validate_btc_address($addr, $network = 'main') {
   $addr = weo_sanitize_btc_address($addr);
   $hrp = $network === 'main' ? 'bc1' : 'tb1';
   if (!preg_match('#^'.preg_quote($hrp,'#').'[0-9ac-hj-np-z]{8,87}$#i', $addr)) return false;
+  // Checksum-verified where the core helper is available.
+  if (class_exists('\SK\Core\BitcoinAddress') && !\SK\Core\BitcoinAddress::is_valid($addr)) return false;
   return true;
 }
 
@@ -248,6 +137,7 @@ function weo_base58check_decode($b58) {
   $pad = 0;
   for ($i=0; $i<strlen($b58) && $b58[$i]=='1'; $i++) $pad++;
   $bin = str_repeat("\x00", $pad) . $bin;
+  if (strlen($bin) < 5) return false;
   $data = substr($bin,0,-4);
   $checksum = substr($bin,-4);
   $hash = substr(hash('sha256', hex2bin(hash('sha256',$data)), true),0,4);
@@ -286,29 +176,42 @@ function weo_base58check_encode($hex) {
 
 function weo_enqueue_signer() {
   $bundle = SK_CORE_DIR . '/assets/js/sk-escrow-signer.js';
+  wp_enqueue_style('weo-css', WEO_URL.'assets/admin.css', [], SK_ESCROW_VERSION);
   wp_enqueue_script('weo-escrow-signer', plugins_url('assets/js/sk-escrow-signer.js', SK_CORE_FILE), [], (string) @filemtime($bundle), true);
-  wp_enqueue_script('weo-escrow-ui', WEO_URL.'assets/sk-escrow-ui.js', ['weo-escrow-signer'], SK_ESCROW_VERSION, true);
-  wp_localize_script('weo-escrow-ui', 'weoSignerL10n', [
-    'pwShort'      => __('Passwort: mindestens 8 Zeichen.', 'sk-core'),
-    'pwMismatch'   => __('Die Passwörter stimmen nicht überein.', 'sk-core'),
-    'ackMissing'   => __('Bitte bestätige, dass du die 12 Wörter gesichert hast.', 'sk-core'),
-    'keySaved'     => __('Schlüssel verschlüsselt gespeichert, xpub eingetragen: %s', 'sk-core'),
-    'keyPresent'   => __('Dein Schlüssel für diesen Handel liegt verschlüsselt in diesem Browser.', 'sk-core'),
-    'keyMissing'   => __('Kein Schlüssel in diesem Browser: 12 Wörter importieren oder mit der Hardware-Wallet über das PSBT-Feld signieren.', 'sk-core'),
-    'verifyOk'     => __('Adresse geprüft: Sie ergibt sich aus dem 2-von-3-Descriptor, und dein Schlüssel ist enthalten.', 'sk-core'),
-    'verifyBad'    => __('WARNUNG: Die angezeigte Adresse passt nicht zum Descriptor oder dein Schlüssel fehlt darin. Nicht einzahlen, Support kontaktieren.', 'sk-core'),
-    'verifyError'  => __('Descriptor konnte nicht geprüft werden: %s', 'sk-core'),
-    'noPsbt'       => __('Bitte zuerst die PSBT erstellen.', 'sk-core'),
-    'psbtBad'      => __('PSBT konnte nicht gelesen werden: %s', 'sk-core'),
-    'summaryTitle' => __('Diese Transaktion zahlt an:', 'sk-core'),
-    'fee'          => __('Gebühr: %s sats', 'sk-core'),
-    'sats'         => __('sats', 'sk-core'),
-    'signed'       => __('Signiert. Jetzt die PSBT hochladen.', 'sk-core'),
-    'wrongPw'      => __('Falsches Passwort.', 'sk-core'),
-    'signError'    => __('Signieren fehlgeschlagen: %s', 'sk-core'),
-    'importOk'     => __('Wörter importiert und verschlüsselt gespeichert.', 'sk-core'),
-    'importBad'    => __('Diese Wörter gehören nicht zu diesem Schlüssel.', 'sk-core'),
-    'invalidWords' => __('Ungültige Wortliste.', 'sk-core'),
+  wp_enqueue_script('weo-escrow-ui', WEO_URL.'assets/sk-escrow-ui.js', ['weo-escrow-signer', 'jquery'], SK_ESCROW_VERSION, true);
+  wp_localize_script('weo-escrow-ui', 'weoSigner', [
+    'ajaxurl' => admin_url('admin-ajax.php'),
+    'nonce'   => wp_create_nonce('weo_escrow'),
+    'l10n'    => [
+      'pwShort'      => __('Passwort: mindestens 8 Zeichen.', 'sk-core'),
+      'pwMismatch'   => __('Die Passwörter stimmen nicht überein.', 'sk-core'),
+      'ackMissing'   => __('Bitte bestätige, dass du die 12 Wörter gesichert hast.', 'sk-core'),
+      'keySaved'     => __('Schlüssel verschlüsselt gespeichert, xpub eingetragen: %s', 'sk-core'),
+      'keyPresent'   => __('Dein Schlüssel für diesen Handel liegt verschlüsselt in diesem Browser.', 'sk-core'),
+      'keyMissing'   => __('Kein Schlüssel in diesem Browser: 12 Wörter importieren oder mit der Hardware-Wallet über das PSBT-Feld signieren.', 'sk-core'),
+      'verifyOk'     => __('Adresse geprüft: Sie ergibt sich aus dem 2-von-3-Descriptor, und dein Schlüssel ist enthalten.', 'sk-core'),
+      'verifyBad'    => __('WARNUNG: Die angezeigte Adresse passt nicht zum Descriptor oder dein Schlüssel fehlt darin. Nicht einzahlen, Support kontaktieren.', 'sk-core'),
+      'verifyError'  => __('Descriptor konnte nicht geprüft werden: %s', 'sk-core'),
+      'psbtBad'      => __('PSBT konnte nicht gelesen werden: %s', 'sk-core'),
+      'summaryTitle' => __('Diese Transaktion zahlt an:', 'sk-core'),
+      'fee'          => __('Gebühr: %s sats', 'sk-core'),
+      'sats'         => __('sats', 'sk-core'),
+      'signed'       => __('Signiert und übermittelt.', 'sk-core'),
+      'wrongPw'      => __('Falsches Passwort.', 'sk-core'),
+      'signError'    => __('Signieren fehlgeschlagen: %s', 'sk-core'),
+      'importOk'     => __('Wörter importiert und verschlüsselt gespeichert.', 'sk-core'),
+      'importBad'    => __('Diese Wörter gehören nicht zu diesem Schlüssel.', 'sk-core'),
+      'invalidWords' => __('Ungültige Wortliste.', 'sk-core'),
+      'addrBad'      => __('Bitte eine gültige Bitcoin-Adresse (bc1…) angeben.', 'sk-core'),
+      'xpubMissing'  => __('Bitte zuerst einen Schlüssel erzeugen oder einen xpub eintragen.', 'sk-core'),
+      'working'      => __('Bitte warten …', 'sk-core'),
+      'netError'     => __('Verbindungsfehler. Bitte erneut versuchen.', 'sk-core'),
+      'confirmRelease' => __('Du bestätigst den Erhalt und gibst die Auszahlung an den Verkäufer frei. Das lässt sich nicht rückgängig machen.', 'sk-core'),
+      'confirmRefund'  => __('Du erstattest den vollen Betrag abzüglich Netzwerkgebühr an den Käufer.', 'sk-core'),
+      'confirmDecline' => __('Anfrage wirklich ablehnen?', 'sk-core'),
+      'confirmCancel'  => __('Anfrage wirklich zurückziehen?', 'sk-core'),
+      'copied'       => __('Kopiert', 'sk-core'),
+    ],
   ]);
 }
 
@@ -338,26 +241,36 @@ function weo_keygen_html($target_id) {
   return ob_get_clean();
 }
 
-/** "Sign in browser" controls for inside a PSBT upload form. */
-function weo_sign_panel_html() {
+/**
+ * Sign controls: browser signing with the stored key, or a PSBT text field
+ * for a hardware wallet. $kind is "payout" or "refund", it only changes the
+ * button label.
+ */
+function weo_sign_panel_html($label) {
   ob_start();
   ?>
-  <p><button type="button" class="button weo-sign-browser"><?php esc_html_e('Im Browser signieren', 'sk-core'); ?></button></p>
   <div class="weo-sign-panel" hidden>
     <div class="weo-sign-summary"></div>
     <p><label><?php esc_html_e('Passwort', 'sk-core'); ?><br><input type="password" class="weo-sign-pw" autocomplete="current-password"></label></p>
-    <p><button type="button" class="button weo-sign-confirm"><?php esc_html_e('Signieren', 'sk-core'); ?></button></p>
+    <p><button type="button" class="button weo-sign-confirm"><?php echo esc_html($label); ?></button></p>
+    <details class="weo-sign-manual">
+      <summary><?php esc_html_e('Stattdessen mit Hardware-Wallet signieren', 'sk-core'); ?></summary>
+      <p><?php esc_html_e('PSBT (Base64) kopieren, in der Wallet signieren und die signierte PSBT hier einfügen.', 'sk-core'); ?></p>
+      <textarea class="weo-psbt-source" rows="3" readonly></textarea>
+      <textarea class="weo-psbt-signed" rows="3" placeholder="PSBT…"></textarea>
+      <p><button type="button" class="button weo-sign-upload"><?php esc_html_e('Signierte PSBT übermitteln', 'sk-core'); ?></button></p>
+    </details>
     <p class="weo-sign-status" aria-live="polite"></p>
   </div>
   <?php
   return ob_get_clean();
 }
 
-/** Show or import the 12 words. Without $xpub the key is taken from the surrounding order context. */
-function weo_keybox_html($xpub = '') {
+/** Show or import the 12 words of the key in the surrounding context. */
+function weo_keybox_html() {
   ob_start();
   ?>
-  <div class="weo-keybox"<?php echo $xpub ? ' data-xpub="'.esc_attr($xpub).'" data-network="main"' : ''; ?>>
+  <div class="weo-keybox">
     <p class="weo-key-state"></p>
     <p>
       <button type="button" class="button weo-words-show"><?php esc_html_e('12 Wörter anzeigen', 'sk-core'); ?></button>

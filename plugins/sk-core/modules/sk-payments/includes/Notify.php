@@ -217,7 +217,7 @@ final class Notify {
             'variante'  => $variant,
             'sats'      => $sats,
             'fiat'      => self::fiat( $sats, $payment->exchange_rate ),
-            'weg'       => $via === 'onchain' ? __( 'Onchain', 'sk-core' ) : __( 'Lightning', 'sk-core' ),
+            'weg'       => $payment->context === 'escrow' ? __( 'Treuhand', 'sk-core' ) : ( $via === 'onchain' ? __( 'Onchain', 'sk-core' ) : __( 'Lightning', 'sk-core' ) ),
             'lieferung' => $shop ? (string) ( $meta['delivery_note'] ?? '' ) : '',
             'shop'      => ! empty( $store['store_name'] ) ? $store['store_name'] : get_the_author_meta( 'display_name', (int) $payment->vendor_id ),
             'kaeufer'   => $buyer ? $buyer->display_name : __( 'Käufer', 'sk-core' ),

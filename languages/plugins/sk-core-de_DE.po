@@ -13623,3 +13623,559 @@ msgstr ""
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "12 Wörter, durch Leerzeichen getrennt"
 msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Nicht eingeloggt."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Zu viele Anfragen, bitte kurz warten."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Treuhand nicht gefunden."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Keine Berechtigung für diesen Handel."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Dieser Schritt ist im aktuellen Zustand nicht möglich."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Keine Berechtigung für diesen Schritt."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Die Treuhand ist derzeit nicht verfügbar."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Ungültiger xpub. Bitte einen Schlüssel erzeugen oder einen Mainnet-xpub eintragen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Bitte eine gültige Auszahlungsadresse (bc1…) angeben."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Der Marktplatz-Schlüssel ist nicht korrekt konfiguriert."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Die drei Schlüssel müssen verschieden sein."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Escrow-API hat keine Adresse geliefert."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Descriptor der Escrow-API passt nicht zu den Schlüsseln."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Anfrage wurde bereits bearbeitet."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Angenommen. Der Käufer wurde über die Einzahlungsadresse informiert."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Vom Verkäufer abgelehnt"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Anfrage abgelehnt."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Vom Käufer zurückgezogen"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Anfrage zurückgezogen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Frist abgelaufen (automatisch)"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Dieser Handel ist bereits abgeschlossen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Du hast bereits signiert. Die Gegenpartei ist dran."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Für diesen Handel läuft bereits eine andere Transaktion."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Im Dispute entscheidet der Marktplatz, welche Transaktion gebaut wird."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "PSBT konnte nicht erstellt werden."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Ungültige PSBT (Base64 erwartet)."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Bitte zuerst die PSBT abrufen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "PSBT konnte nicht zusammengeführt werden."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Signatur gespeichert. Die Gegenpartei muss noch signieren."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Beide Signaturen vorhanden, Transaktion gesendet."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Finalisierung fehlgeschlagen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Actions.php
+msgid "Broadcast fehlgeschlagen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Cron.php
+msgid "Abgelaufen: nicht rechtzeitig angenommen"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Beim Kauf über Treuhand liegt das Geld auf einer 2-von-3-Multisig-Adresse (Käufer, Verkäufer, Marktplatz). Die Schlüssel entstehen pro Handel im Browser; hier legst du nur fest, ob du Treuhand anbietest und wohin Auszahlungen und Erstattungen gehen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Der Marktplatz hat die Treuhand derzeit nicht freigeschaltet. Deine Einstellungen werden gespeichert und gelten, sobald sie aktiv ist."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Treuhand für meine Inserate anbieten"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Käufer sehen dann im Sofortkauf die Zahlart „Treuhand“. Jede Anfrage musst du unter „Verkäufe“ annehmen, dabei entsteht dein Schlüssel für diesen Handel."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Auszahlungsadresse als Verkäufer (bc1…)"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Dorthin geht die Auszahlung, wenn der Käufer den Erhalt bestätigt hat. Beim Annehmen einer Anfrage kannst du sie noch ändern."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Rückerstattungsadresse als Käufer (bc1…)"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Wird bei einer Treuhand-Anfrage vorgeschlagen und kann dort geändert werden."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Ungültiger Sicherheits-Token."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Ungültige Bitcoin-Adresse, nicht übernommen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Ohne gültige Auszahlungsadresse lässt sich die Treuhand nicht anbieten."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Treuhand-Einstellungen gespeichert."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Zum Annehmen erzeugst du einen Schlüssel nur für diesen Handel und bestätigst deine Auszahlungsadresse. Danach erhält der Käufer die Einzahlungsadresse."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Auszahlungsadresse (bc1…)"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Dein Treuhand-Schlüssel (xpub)"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Anfrage annehmen"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Anfrage zurückziehen"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Einzuzahlen: %s sats"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "(Preis %1$s + Reserve für die Netzwerkgebühr %2$s)"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Adresse kopieren"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "In Wallet öffnen"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Der Käufer zahlt jetzt ein. Sobald die Einzahlung bestätigt ist, erscheint das hier und im Chat."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "In der Treuhand: %s sats"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Erhalten – Auszahlung freigeben"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Erstatten"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Erstattung signieren"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Auszahlung signieren"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Deine Signatur liegt vor. Es fehlt noch die des %s."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Käufers"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Verkäufers"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Jetzt signieren"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
+msgid "Transaktion ansehen"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
+msgid "Treuhand freigeschaltet"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
+msgid "Aus: Die Zahlart „Treuhand“ erscheint im Sofortkauf nicht, offene Treuhand-Vorgänge laufen weiter. Setzt API-Zugang und Escrow-xpub voraus."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Notify.php
+msgid "Treuhand-Anfrage: %s"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Notify.php
+msgid "Ein Käufer möchte %1$s über die Treuhand kaufen (%2$s). Bitte nimm die Anfrage unter „Verkäufe“ an oder lehne sie ab. Unbeantwortete Anfragen laufen nach %3$d Tagen ab."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Notify.php
+msgid "Treuhand angenommen: %s"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Notify.php
+msgid "Der Verkäufer hat deine Treuhand-Anfrage für %1$s angenommen. Bitte zahle %2$s unter „Käufe“ ein."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Notify.php
+msgid "Treuhand-Anfrage abgelehnt."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Notify.php
+msgid "Treuhand-Anfrage abgelehnt: %s"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Notify.php
+msgid "Treuhand-Anfrage zurückgezogen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Notify.php
+msgid "Treuhand-Anfrage abgelaufen: Der Verkäufer hat nicht rechtzeitig angenommen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Notify.php
+msgid "Einzahlung in die Treuhand bestätigt (%s). Der Verkäufer kann jetzt liefern."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Notify.php
+msgid "Treuhand eingezahlt: %s"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Notify.php
+msgid "Der Käufer hat den Erhalt bestätigt und die Auszahlung signiert. Bitte unter „Verkäufe“ gegenzeichnen, dann wird ausgezahlt."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Notify.php
+msgid "Auszahlung freigegeben: %s"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Notify.php
+msgid "Der Verkäufer erstattet den Betrag. Bitte unter „Käufe“ gegenzeichnen, dann geht die Erstattung an deine Adresse."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Notify.php
+msgid "Erstattung angeboten: %s"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Notify.php
+msgid "Erstattung gesendet. Transaktion: %s"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Notify.php
+msgid "Auszahlung gesendet. Transaktion: %s"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Notify.php
+msgid "Treuhand abgeschlossen: %s"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Notify.php
+msgid "Problem gemeldet. Die Treuhand ist eingefroren, der Marktplatz prüft und entscheidet über Auszahlung oder Erstattung."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Notify.php
+msgid "Problem gemeldet: %s"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
+msgid "Kauf über Treuhand"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
+msgid "Dein Geld liegt auf einer 2-von-3-Multisig-Adresse, zu der du, der Verkäufer und der Marktplatz je einen Schlüssel halten. Ausgezahlt wird erst, wenn du den Erhalt bestätigst; bei Problemen entscheidet der Marktplatz. Zuerst muss der Verkäufer deine Anfrage annehmen, dann bekommst du die Einzahlungsadresse."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
+msgid "Deine Rückerstattungsadresse (bc1…)"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
+msgid "Treuhand-Anfrage senden"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
+msgid "Dieses Inserat ist nicht kaufbar."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
+msgid "Zu viele Versuche. Bitte kurz warten."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
+msgid "Dieser Anbieter bietet keine Treuhand an."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
+msgid "Bitte eine Ausführung wählen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
+msgid "Inserat hat keinen gültigen Preis."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
+msgid "Bitte Lieferadresse oder Hinweis angeben."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
+msgid "Bitte eine gültige Rückerstattungsadresse (bc1…) angeben."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
+msgid "Deine Anfrage läuft bereits. Der Verkäufer muss sie annehmen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
+msgid "Anfrage konnte nicht gespeichert werden."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
+msgid "Anfrage gesendet. Sobald der Verkäufer annimmt, findest du die Einzahlungsadresse unter „Käufe“ und im Chat."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Rows.php
+msgid "Anfrage offen – der Verkäufer muss annehmen"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Rows.php
+msgid "Angenommen – Einzahlung in die Treuhand offen"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Rows.php
+msgid "Einzahlung bestätigt – Ware kann verschickt werden"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Rows.php
+msgid "Abgeschlossen – Auszahlung gesendet"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Rows.php
+msgid "Erhalt bestätigt – Auszahlung wartet auf die zweite Signatur"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Rows.php
+msgid "Erstattet"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Rows.php
+msgid "Problem gemeldet – der Marktplatz entscheidet"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/Rows.php
+msgid "Anfrage beendet"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/class-escrow-admin.php
+msgid "Der Marktplatz hat den Dispute geschlossen. Käufer und Verkäufer können den Handel normal abschliessen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/class-escrow-admin.php
+msgid "Der Marktplatz hat entschieden: Erstattung an den Käufer. Der Käufer signiert unter „Käufe“, der Marktplatz zeichnet gegen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/class-escrow-admin.php
+msgid "Der Marktplatz hat entschieden: Auszahlung an den Verkäufer. Der Verkäufer signiert unter „Verkäufe“, der Marktplatz zeichnet gegen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Signiert und übermittelt."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Bitte eine gültige Bitcoin-Adresse (bc1…) angeben."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Bitte zuerst einen Schlüssel erzeugen oder einen xpub eintragen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Bitte warten …"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Verbindungsfehler. Bitte erneut versuchen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Du bestätigst den Erhalt und gibst die Auszahlung an den Verkäufer frei. Das lässt sich nicht rückgängig machen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Du erstattest den vollen Betrag abzüglich Netzwerkgebühr an den Käufer."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Anfrage wirklich ablehnen?"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Anfrage wirklich zurückziehen?"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Kopiert"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Stattdessen mit Hardware-Wallet signieren"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "PSBT (Base64) kopieren, in der Wallet signieren und die signierte PSBT hier einfügen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-escrow/includes/helpers.php
+msgid "Signierte PSBT übermitteln"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-payments/includes/ProductPage.php
+msgid "Wohin geht die Bestellung?"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-payments/includes/ProductPage.php
+msgid "Diese Angabe geht in den Chat mit dem Anbieter. Bei digitalen Artikeln reicht ein kurzer Hinweis."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-payments/includes/ProductPage.php
+msgid "Name, Strasse, PLZ und Ort — oder ein Hinweis"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-payments/includes/ProductPage.php
+msgid "Weiter zur Zahlung"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-payments/includes/ProductPage.php
+msgid "Lightning-Zahlung"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-payments/includes/ProductPage.php
+msgid "Schliessen"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-payments/includes/ProductPage.php
+msgid "Welche Ausführung?"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-payments/includes/ProductPage.php
+msgid "Treuhand (2-von-3 Multisig, Freigabe nach Erhalt)"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-payments/includes/Notify.php
+msgid "Neue Bestellung: %1$s"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-payments/includes/Notify.php
+msgid "Unterwegs: %s"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-payments/includes/Notify.php
+msgid "Onchain"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-payments/includes/Notify.php
+msgid "Lightning"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-payments/includes/Notify.php
+msgid "Käufer"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-payments/includes/Notify.php
+msgid "Zahlung eingegangen: %1$s Sats für %2$s"
+msgstr ""
+
+#: plugins/sk-core/modules/sk-payments/includes/Notify.php
+msgid "Deine Bestellung bei %1$s"
+msgstr ""

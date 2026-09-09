@@ -108,12 +108,17 @@ $payments = $wpdb->get_results(
 );
 
 $status_labels = [
+    'requested' => [ '🟠', 'Anfrage offen' ],
     'pending'   => [ '🟡', 'Ausstehend' ],
     'confirmed' => [ '🟢', 'Bezahlt' ],
     'delivered' => [ '⚡', 'Erhalten' ],
+    'refunded'  => [ '↩️', 'Erstattet' ],
     'expired'   => [ '⚪', 'Abgelaufen' ],
     'disputed'  => [ '🔴', 'Problem' ],
 ];
+
+// Escrow rows (sk-escrow module) render their own state and buttons.
+$skp_escrow = class_exists( '\SK\Modules\Escrow\Dashboard' );
 
 do_action( 'sk_dashboard_wrap_start' );
 ?>
@@ -426,7 +431,10 @@ do_action( 'sk_dashboard_wrap_start' );
                             && ! $skp_ship
                             && in_array( $p->status, [ 'confirmed', 'delivered' ], true );
 
-                        $can_confirm_delivery = $tab === 'purchases' && $p->status === 'confirmed';
+                        $is_escrow = $p->context === 'escrow';
+
+                        // Escrow: receipt is confirmed by signing the payout, not by a button here.
+                        $can_confirm_delivery = $tab === 'purchases' && $p->status === 'confirmed' && ! $is_escrow;
                         $can_dispute = $tab === 'purchases' && $p->status === 'confirmed';
                     ?>
                         <li class="sk-review-card">
@@ -455,8 +463,14 @@ do_action( 'sk_dashboard_wrap_start' );
 
                                 <div class="sk-review-card__content">
                                     <?php $is_onchain = $p->context === 'onchain'; ?>
-                                    <span style="font-size:11px;padding:2px 6px;border-radius:3px;margin-right:6px;<?php echo $is_onchain ? 'background:rgba(92,184,92,0.1);color:#5cb85c;' : 'background:rgba(92,184,92,0.1);color:#5cb85c;'; ?>">
-                                        <?php echo $is_onchain ? '<i class="fab fa-bitcoin"></i> Onchain' : '<i class="fas fa-bolt"></i> Lightning'; ?>
+                                    <span style="font-size:11px;padding:2px 6px;border-radius:3px;margin-right:6px;background:rgba(92,184,92,0.1);color:#5cb85c;">
+                                        <?php
+                                        if ( $is_escrow ) {
+                                            echo '<i class="fas fa-handshake"></i> Treuhand';
+                                        } else {
+                                            echo $is_onchain ? '<i class="fab fa-bitcoin"></i> Onchain' : '<i class="fas fa-bolt"></i> Lightning';
+                                        }
+                                        ?>
                                     </span>
                                     <span class="skl-sats-amount" data-sats="<?php echo esc_attr( $p->amount_sats ); ?>" style="font-weight:700;color:#F7931A;font-size:17px;"><?php echo esc_html( $sats ); ?> Sats</span>
                                     <span style="margin-left:10px;"><?php echo $status[0]; ?> <?php echo esc_html( $status[1] ); ?></span>
@@ -521,7 +535,7 @@ do_action( 'sk_dashboard_wrap_start' );
                                     </div>
 
                                     <div class="sk-review-card__actions">
-                                        <?php if ( $tab === 'sales' && $p->status === 'pending' ) : ?>
+                                        <?php if ( $tab === 'sales' && $p->status === 'pending' && ! $is_escrow ) : ?>
                                             <a href="#" class="sk-review-action approve skl-vendor-confirm-dashboard"
                                                data-payment-hash="<?php echo esc_attr( $p->payment_hash ); ?>">
                                                 <i class="fas fa-check"></i> Zahlung bestätigen
@@ -541,6 +555,10 @@ do_action( 'sk_dashboard_wrap_start' );
                                         <?php endif; ?>
                                     </div>
                                 </div>
+
+                                <?php if ( $is_escrow && $skp_escrow ) : ?>
+                                    <?php \SK\Modules\Escrow\Dashboard::render_card( $p, $tab ); ?>
+                                <?php endif; ?>
 
                                 <?php
                                 /*

@@ -8,13 +8,10 @@ defined( 'ABSPATH' ) || exit;
  * The module's settings section, replacing the old Settings page under the
  * "Treuhand" menu (WEO_Settings::render, option group weo_settings).
  *
- * The escrow code itself is left alone: it keeps reading everything through
- * weo_get_option() from the weo_options array and from
- * weo_vendor_payout_fallback. This section only renders those values and
- * writes them back on save, through WEO_Settings' own sanitize callbacks —
- * so the xpub, the payout address and the numeric bounds are validated
- * exactly as before. Deactivating the module therefore changes nothing
- * about the stored configuration.
+ * The escrow code reads everything through weo_get_option() from the
+ * weo_options array. This section only renders those values and writes them
+ * back on save, through WEO_Settings' own sanitize callback. Deactivating
+ * the module changes nothing about the stored configuration.
  */
 class EscrowSettings {
 
@@ -22,9 +19,6 @@ class EscrowSettings {
 
     /** The array option the escrow code reads through weo_get_option(). */
     const LEGACY_OPTION = 'weo_options';
-
-    /** Payout fallback lives in its own option, not in the array above. */
-    const FALLBACK_OPTION = 'weo_vendor_payout_fallback';
 
     public function __construct() {
         add_filter( 'sk_settings_sections', [ $this, 'add_section' ] );
@@ -91,13 +85,6 @@ class EscrowSettings {
                 'default' => $this->legacy( 'escrow_xpub', '' ),
                 'desc'    => __( 'Der dritte Schlüssel im 2-von-3-Multisig.', 'sk-core' ),
             ],
-            'vendor_payout_fallback' => [
-                'name'    => 'vendor_payout_fallback',
-                'label'   => __( 'Fallback Vendor-Payout-Adresse', 'sk-core' ),
-                'type'    => 'text',
-                'default' => (string) get_option( self::FALLBACK_OPTION, '' ),
-                'desc'    => __( 'Adresse für Verkäufer-Auszahlungen, wenn kein eigener Empfang hinterlegt ist. Ohne gültige Adresse werden Auszahlungen abgebrochen.', 'sk-core' ),
-            ],
             'weo_flow_header' => [
                 'name'  => 'weo_flow_header',
                 'label' => __( 'Ablauf', 'sk-core' ),
@@ -120,17 +107,10 @@ class EscrowSettings {
             ],
             'vendor_escrow_enabled' => [
                 'name'    => 'vendor_escrow_enabled',
-                'label'   => __( 'Treuhand für Verkäufer aktiv', 'sk-core' ),
+                'label'   => __( 'Treuhand freigeschaltet', 'sk-core' ),
                 'type'    => 'switcher',
-                'default' => '1' === $this->legacy( 'vendor_escrow_enabled', '1' ) ? 'on' : 'off',
-                'desc'    => __( 'Verkäufer dürfen Treuhand nutzen. Aus: Treuhand-Funktionen im Dashboard und auf Produktseiten sind für Verkäufer nicht sichtbar.', 'sk-core' ),
-            ],
-            'vendor_escrow_admin_only' => [
-                'name'    => 'vendor_escrow_admin_only',
-                'label'   => __( 'Treuhand nur für Administratoren', 'sk-core' ),
-                'type'    => 'switcher',
-                'default' => '1' === $this->legacy( 'vendor_escrow_admin_only', '' ) ? 'on' : 'off',
-                'desc'    => __( 'Blendet Treuhand-Seite, Einstellungen und Produktaktivierung für Verkäufer aus, während Administratoren sie weiter sehen.', 'sk-core' ),
+                'default' => '1' === $this->legacy( 'vendor_escrow_enabled', '' ) ? 'on' : 'off',
+                'desc'    => __( 'Aus: Die Zahlart „Treuhand“ erscheint im Sofortkauf nicht, offene Treuhand-Vorgänge laufen weiter. Setzt API-Zugang und Escrow-xpub voraus.', 'sk-core' ),
             ],
         ];
 
@@ -166,42 +146,12 @@ class EscrowSettings {
             }
         }
 
-        foreach ( [ 'vendor_escrow_enabled', 'vendor_escrow_admin_only' ] as $key ) {
-            if ( isset( $new_values[ $key ] ) ) {
-                $merged[ $key ] = 'on' === $new_values[ $key ] ? '1' : '';
-            }
+        if ( isset( $new_values['vendor_escrow_enabled'] ) ) {
+            $merged['vendor_escrow_enabled'] = 'on' === $new_values['vendor_escrow_enabled'] ? '1' : '';
         }
 
         $weo = new \WEO_Settings();
 
         update_option( self::LEGACY_OPTION, $weo->sanitize( $merged ) );
-
-        if ( ! isset( $new_values['vendor_payout_fallback'] ) ) {
-            return;
-        }
-
-        /*
-         * Payouts go to this address, so it is validated properly rather than
-         * just trimmed: weo_sanitize_btc_address() only runs sanitize_text_field
-         * over the input and would happily store any non-empty string.
-         * Rejecting a bad value keeps the previous working address in place.
-         */
-        $address = weo_sanitize_btc_address( $new_values['vendor_payout_fallback'] );
-
-        if ( '' === $address || ! weo_validate_btc_address( $address ) ) {
-            // add_settings_error() lives in wp-admin/includes and is not loaded
-            // on every path that can save settings.
-            if ( function_exists( 'add_settings_error' ) ) {
-                add_settings_error(
-                    self::FALLBACK_OPTION,
-                    'invalid',
-                    __( 'Die Fallback-Auszahlungsadresse ist keine gültige Bech32-Adresse (bc1…) und wurde nicht übernommen.', 'sk-core' )
-                );
-            }
-
-            return;
-        }
-
-        update_option( self::FALLBACK_OPTION, $address );
     }
 }

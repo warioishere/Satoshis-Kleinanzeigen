@@ -24,6 +24,7 @@
             note: '',
             has_ln: $btn.data('has-ln') === 1 || $btn.data('has-ln') === '1',
             has_onchain: $btn.data('has-onchain') === 1 || $btn.data('has-onchain') === '1',
+            has_escrow: $btn.data('has-escrow') === 1 || $btn.data('has-escrow') === '1',
             has_variants: $btn.data('has-variants') === 1 || $btn.data('has-variants') === '1'
         };
 
@@ -43,17 +44,25 @@
         if (!pendingData) return;
 
         // Only one method available → go directly.
-        if (pendingData.has_ln && !pendingData.has_onchain) {
-            startLightning();
-            return;
-        }
-        if (pendingData.has_onchain && !pendingData.has_ln) {
-            startOnchain();
+        var count = (pendingData.has_ln ? 1 : 0) + (pendingData.has_onchain ? 1 : 0) + (pendingData.has_escrow ? 1 : 0);
+        if (count === 1) {
+            if (pendingData.has_ln) { startLightning(); }
+            else if (pendingData.has_onchain) { startOnchain(); }
+            else { startEscrow(); }
             return;
         }
 
-        // Both available → show modal.
+        // Several available → show modal.
         $('#skp-method-modal').css('display', 'flex');
+    }
+
+    // The escrow module (sk-escrow-buy.js) owns its modal.
+    function startEscrow() {
+        if (window.SKEscrowBuy) {
+            window.SKEscrowBuy.start(pendingData);
+        } else {
+            alert('Treuhand ist gerade nicht verfügbar.');
+        }
     }
 
     $(document).on('click', '#skp-variant-confirm', function () {
@@ -104,6 +113,8 @@
         var method = $(this).data('method');
         if (method === 'lightning') {
             startLightning();
+        } else if (method === 'escrow') {
+            startEscrow();
         } else {
             startOnchain();
         }

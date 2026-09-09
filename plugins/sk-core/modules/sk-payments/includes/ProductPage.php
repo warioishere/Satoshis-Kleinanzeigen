@@ -38,8 +38,12 @@ class ProductPage {
 
         $has_ln     = StoreSettings::has_lightning( $vendor_id );
         $has_onchain = StoreSettings::has_onchain( $vendor_id );
+        // Escrow is the sk-escrow module's method; it hooks in here so the
+        // buyer sees one button with all ways to pay.
+        $has_escrow = class_exists( '\SK\Modules\Escrow\Purchase' ) && \SK\Modules\Escrow\Purchase::available( $vendor_id, $buyer_id );
+        $methods    = (int) $has_ln + (int) $has_onchain + (int) $has_escrow;
 
-        if ( ! $has_ln && ! $has_onchain ) {
+        if ( ! $methods ) {
             return;
         }
 
@@ -58,6 +62,7 @@ class ProductPage {
                     data-price-sats="<?php echo esc_attr( $price_sats ); ?>"
                     data-has-ln="<?php echo $has_ln ? '1' : '0'; ?>"
                     data-has-onchain="<?php echo $has_onchain ? '1' : '0'; ?>"
+                    data-has-escrow="<?php echo $has_escrow ? '1' : '0'; ?>"
                     data-has-variants="<?php echo $variants ? '1' : '0'; ?>"
                     style="background:#f7931a !important;color:#fff !important;border:none !important;padding:10px 24px !important;font-size:16px !important;border-radius:6px !important;cursor:pointer !important;display:inline-flex !important;align-items:center !important;gap:8px !important;">
                 Sofortkauf
@@ -127,24 +132,38 @@ class ProductPage {
         <?php endif; ?>
 
         <!-- Payment Method Modal -->
-        <?php if ( $has_ln && $has_onchain ) : ?>
+        <?php if ( $methods > 1 ) : ?>
         <div id="skp-method-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:99999;align-items:center;justify-content:center;">
             <div style="background:#1a2332;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:24px;max-width:360px;width:90%;">
                 <h3 style="margin:0 0 16px;color:#e8ecf0;font-size:18px;">Wie möchtest du bezahlen?</h3>
+                <?php if ( $has_ln ) : ?>
                 <button type="button" class="skp-method-choice" data-method="lightning"
                         style="display:block;width:100%;padding:14px;margin-bottom:10px;background:rgba(247,147,26,0.1);border:1px solid rgba(247,147,26,0.3);border-radius:8px;color:#f7931a;font-size:15px;font-weight:600;cursor:pointer;text-align:left;">
                     <i class="fas fa-bolt"></i> Lightning (sofort, niedrige Gebühren)
                 </button>
+                <?php endif; ?>
+                <?php if ( $has_onchain ) : ?>
                 <button type="button" class="skp-method-choice" data-method="onchain"
                         style="display:block;width:100%;padding:14px;margin-bottom:10px;background:rgba(247,147,26,0.1);border:1px solid rgba(247,147,26,0.3);border-radius:8px;color:#f7931a;font-size:15px;font-weight:600;cursor:pointer;text-align:left;">
                     <i class="fab fa-bitcoin"></i> Onchain (Bitcoin-Adresse)
                 </button>
+                <?php endif; ?>
+                <?php if ( $has_escrow ) : ?>
+                <button type="button" class="skp-method-choice" data-method="escrow"
+                        style="display:block;width:100%;padding:14px;margin-bottom:10px;background:rgba(247,147,26,0.1);border:1px solid rgba(247,147,26,0.3);border-radius:8px;color:#f7931a;font-size:15px;font-weight:600;cursor:pointer;text-align:left;">
+                    <i class="fas fa-handshake"></i> <?php esc_html_e( 'Treuhand (2-von-3 Multisig, Freigabe nach Erhalt)', 'sk-core' ); ?>
+                </button>
+                <?php endif; ?>
                 <button type="button" id="skp-method-cancel"
                         style="display:block;width:100%;padding:10px;background:none;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#5a6a7e;font-size:14px;cursor:pointer;">
                     Abbrechen
                 </button>
             </div>
         </div>
+        <?php endif; ?>
+
+        <?php if ( $has_escrow ) : ?>
+            <?php \SK\Modules\Escrow\Purchase::render_modal( $product_id ); ?>
         <?php endif; ?>
 
         <!-- Onchain Payment Modal -->

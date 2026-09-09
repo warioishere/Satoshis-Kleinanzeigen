@@ -15,18 +15,11 @@ class WEO_Settings {
     $clean['hmac_secret']= sanitize_text_field($opts['hmac_secret'] ?? '');
     $clean['timeout_days']= max(1, intval($opts['timeout_days'] ?? 7));
     $clean['vendor_escrow_enabled'] = !empty($opts['vendor_escrow_enabled']) ? '1' : '';
-    $clean['vendor_escrow_admin_only'] = !empty($opts['vendor_escrow_admin_only']) ? '1' : '';
     return $clean;
   }
 
   public function menu() {
     add_menu_page('Treuhand', 'Treuhand', 'manage_woocommerce', 'weo-treuhand', [$this,'render'], 'dashicons-lock', 56);
-  }
-
-  public function sanitize_fallback_address($addr) {
-    $addr = weo_sanitize_btc_address($addr);
-    if (!$addr) add_settings_error('weo_vendor_payout_fallback','required',__('Bitte eine gültige Fallback-Adresse angeben.','sk-core'));
-    return $addr;
   }
 
   /**
