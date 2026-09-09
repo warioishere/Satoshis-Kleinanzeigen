@@ -13076,3 +13076,135 @@ msgstr ""
 #: plugins/sk-core/modules/sk-zaps/includes/ZapStats.php
 msgid "Betrag unlesbar."
 msgstr ""
+
+#: Settings.php ModuleManager.php
+msgid "Kontakt-Feewall"
+msgstr ""
+
+#: Settings.php
+msgid "Sats-Paywall auf Kontaktdaten"
+msgstr ""
+
+#: Settings.php
+msgid "Anbieter können ihre Kontaktdaten mit einer 21-Sats-Paywall über BTCPay schützen: Interessenten zahlen einmalig, um Telefon, E-Mail, Telegram, Nostr und Adressen zu sehen. Der Schalter hier steht global über allen Anbieter-Einstellungen — ist er aus, sehen Anbieter die Option in ihren Store-Einstellungen gar nicht erst."
+msgstr ""
+
+#: Settings.php
+msgid "Kontakt-Feewall aktivieren"
+msgstr ""
+
+#: Settings.php
+msgid "Erlaubt Anbietern, ihre Kontaktdaten hinter einer 21-Sats-Zahlung zu verstecken. Setzt einen konfigurierten BTCPay-Server (WooCommerce-Greenfield-Gateway) voraus."
+msgstr ""
+
+#: Feewall.php
+msgid "🔒 Zahle 21 Sats um Kontaktdetails freizuschalten"
+msgstr ""
+
+#: Feewall.php
+msgid "Ungültige Verkäufer-ID"
+msgstr ""
+
+#: Feewall.php
+msgid "Verkäufer nicht gefunden"
+msgstr ""
+
+#: Feewall.php
+msgid "Kontaktdetails"
+msgstr ""
+
+#: Feewall.php
+msgid "Kontaktzugriff:"
+msgstr ""
+
+#: Feewall.php
+msgid "Ungültige Invoice-ID"
+msgstr ""
+
+#: Feewall.php
+msgid "Zahlung erfolgreich! Kontakte werden freigeschaltet..."
+msgstr ""
+
+#: Feewall.php
+msgid "Warte auf Zahlungsbestätigung..."
+msgstr ""
+
+#: Feewall.php
+msgid "BTCPay ist nicht konfiguriert"
+msgstr ""
+
+#: Feewall.php
+msgid "Fehler bei Invoice-Erstellung: %s"
+msgstr ""
+
+#: Feewall.php
+msgid "Unbekannter Fehler"
+msgstr ""
+
+#: Feewall.php
+msgid "Fehler beim Abrufen des Invoice-Status"
+msgstr ""
+
+#: Feewall.php
+msgid "Erstelle Rechnung..."
+msgstr ""
+
+#: Feewall.php
+msgid "Weiterleitung zu BTCPay..."
+msgstr ""
+
+#: Feewall.php
+msgid "Prüfe Zahlung..."
+msgstr ""
+
+#: Feewall.php
+msgid "Zahlung erfolgreich!"
+msgstr ""
+
+#: Feewall.php
+msgid "Fehler beim Erstellen der Rechnung"
+msgstr ""
+
+#: ModuleManager.php
+msgid "Nachprüfbare Vertrauenssignale an Anbietern: Nostr-Schlüsselbindung, Kontakte des Betrachters, verifizierte Lightning-Zahlungen."
+msgstr ""
+
+#: ModuleManager.php
+msgid "Inserate als NIP-99 Classified Listings auf Nostr veröffentlichen. Anbieter entscheiden je Inserat."
+msgstr ""
+
+#: ModuleManager.php
+msgid "Shop-Import"
+msgstr ""
+
+#: ModuleManager.php
+msgid "Haendlerkataloge per CSV als Inserate uebernehmen."
+msgstr ""
+
+#: ModuleManager.php
+msgid "Kontaktklicks"
+msgstr ""
+
+#: ModuleManager.php
+msgid "Misst, ob aus einem Inserat heraus Kontakt aufgenommen wird."
+msgstr ""
+
+#: ModuleManager.php
+msgid "Spenden"
+msgstr ""
+
+#: ModuleManager.php
+msgid "Kostendeckung sichtbar machen und Spenden ueber BTCPay annehmen."
+msgstr ""
+
+#: ModuleManager.php
+msgid "Sponsoren"
+msgstr ""
+
+#: ModuleManager.php
+msgid "Sponsorenplätze der Startseite mit Klickmessung über /go/."
+msgstr ""
+
+#: ModuleManager.php
+msgid "Schützt Kontaktdetails von Anbietern mit einer 21-Sats-Paywall über BTCPay."
+msgstr ""
