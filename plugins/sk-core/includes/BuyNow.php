@@ -12,10 +12,19 @@ defined( 'ABSPATH' ) || exit;
  */
 final class BuyNow {
 
-    public static function init(): void {
-        add_action( 'admin_menu', [ __CLASS__, 'add_settings_page' ] );
+    /** Settings section id, replacing the old Settings → SK Buy Now page. */
+    const SECTION = 'sk_buynow';
 
-        if ( ! (bool) get_option( 'sk_buynow_enabled', 0 ) ) {
+    /** The option this section replaces. */
+    const LEGACY_OPTION = 'sk_buynow_enabled';
+
+    public static function init(): void {
+        self::migrate_legacy_option();
+
+        add_filter( 'sk_settings_sections', [ __CLASS__, 'add_section' ] );
+        add_filter( 'sk_settings_fields', [ __CLASS__, 'add_fields' ] );
+
+        if ( ! self::is_enabled() ) {
             return;
         }
 
@@ -24,47 +33,66 @@ final class BuyNow {
         add_action( 'wp_footer', [ __CLASS__, 'adv_intercept_script' ], 100 );
     }
 
-    public static function add_settings_page(): void {
-        add_options_page(
-            'SK Buy Now',
-            'SK Buy Now',
-            'manage_options',
-            'sk-buynow',
-            [ __CLASS__, 'render_settings' ]
-        );
+    /**
+     * Read the switch straight from the option, not through sk_get_option():
+     * init() runs at plugin-load time in sk-core.php, before includes/functions.php
+     * (where that helper lives) is guaranteed to be loaded. get_option() is core
+     * WordPress and always available this early.
+     */
+    private static function is_enabled(): bool {
+        $section = get_option( self::SECTION );
+
+        return ! is_array( $section ) || ! isset( $section['sk_buynow_enabled'] ) || 'on' === $section['sk_buynow_enabled'];
     }
 
-    public static function render_settings(): void {
-        if ( ! current_user_can( 'manage_options' ) ) {
+    /**
+     * The old scalar option (Settings → SK Buy Now, "1"/"0") migrated into
+     * this section once, then dropped. After that this never runs again —
+     * get_option() on a deleted option returns false immediately.
+     */
+    private static function migrate_legacy_option(): void {
+        $legacy = get_option( self::LEGACY_OPTION, null );
+
+        if ( null === $legacy ) {
             return;
         }
-        if ( isset( $_POST['sk_buynow_save'] ) && check_admin_referer( 'sk_buynow_settings' ) ) {
-            update_option( 'sk_buynow_enabled', isset( $_POST['sk_buynow_enabled'] ) ? 1 : 0 );
-            echo '<div class="notice notice-success is-dismissible"><p>Einstellungen gespeichert.</p></div>';
+
+        $section = get_option( self::SECTION );
+        $section = is_array( $section ) ? $section : [];
+
+        if ( ! isset( $section['sk_buynow_enabled'] ) ) {
+            $section['sk_buynow_enabled'] = (bool) $legacy ? 'on' : 'off';
+            update_option( self::SECTION, $section );
         }
-        $enabled = (bool) get_option( 'sk_buynow_enabled', 1 );
-        ?>
-        <div class="wrap">
-            <h1>SK Buy Now</h1>
-            <p style="color:#666;max-width:580px">Öffnet den BTCPay-Zahlungsdialog direkt beim Klick auf "Jetzt kaufen" — ohne Umweg über den WooCommerce-Checkout.</p>
-            <form method="post">
-                <?php wp_nonce_field( 'sk_buynow_settings' ); ?>
-                <table class="form-table" role="presentation">
-                    <tr>
-                        <th scope="row">Direktzahlung aktiv</th>
-                        <td>
-                            <label>
-                                <input type="checkbox" name="sk_buynow_enabled" value="1" <?php checked( $enabled ); ?>>
-                                BTCPay-Modal direkt öffnen (Abonnements &amp; Boosts)
-                            </label>
-                            <p class="description">Wenn deaktiviert, läuft der normale WooCommerce-Checkout-Prozess.</p>
-                        </td>
-                    </tr>
-                </table>
-                <?php submit_button( 'Einstellungen speichern', 'primary', 'sk_buynow_save' ); ?>
-            </form>
-        </div>
-        <?php
+
+        delete_option( self::LEGACY_OPTION );
+    }
+
+    public static function add_section( $sections ) {
+        $sections[] = [
+            'id'                   => self::SECTION,
+            'title'                => __( 'SK Buy Now', 'sk-core' ),
+            'icon_url'             => '',
+            'description'          => __( 'Direktzahlung ohne WooCommerce-Checkout', 'sk-core' ),
+            'settings_title'       => __( 'SK Buy Now', 'sk-core' ),
+            'settings_description' => __( 'Öffnet den BTCPay-Zahlungsdialog direkt beim Klick auf „Jetzt kaufen" — ohne Umweg über den WooCommerce-Checkout. Betrifft Abonnements und Boosts im Verkäufer-Dashboard.', 'sk-core' ),
+        ];
+
+        return $sections;
+    }
+
+    public static function add_fields( $settings_fields ) {
+        $settings_fields[ self::SECTION ] = [
+            'sk_buynow_enabled' => [
+                'name'    => 'sk_buynow_enabled',
+                'label'   => __( 'Direktzahlung aktiv', 'sk-core' ),
+                'type'    => 'switcher',
+                'default' => 'on',
+                'desc'    => __( 'BTCPay-Modal direkt öffnen (Abonnements &amp; Boosts). Wenn deaktiviert, läuft der normale WooCommerce-Checkout-Prozess.', 'sk-core' ),
+            ],
+        ];
+
+        return $settings_fields;
     }
 
     public static function ajax_handler(): void {
