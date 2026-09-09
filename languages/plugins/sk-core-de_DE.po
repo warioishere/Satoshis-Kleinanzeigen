@@ -13208,3 +13208,23 @@ msgstr ""
 #: ModuleManager.php
 msgid "Schützt Kontaktdetails von Anbietern mit einer 21-Sats-Paywall über BTCPay."
 msgstr ""
+
+#: includes/BuyNow.php
+msgid "SK Buy Now"
+msgstr ""
+
+#: includes/BuyNow.php
+msgid "Direktzahlung ohne WooCommerce-Checkout"
+msgstr ""
+
+#: includes/BuyNow.php
+msgid "Öffnet den BTCPay-Zahlungsdialog direkt beim Klick auf „Jetzt kaufen\" — ohne Umweg über den WooCommerce-Checkout. Betrifft Abonnements und Boosts im Verkäufer-Dashboard."
+msgstr ""
+
+#: includes/BuyNow.php
+msgid "Direktzahlung aktiv"
+msgstr ""
+
+#: includes/BuyNow.php
+msgid "BTCPay-Modal direkt öffnen (Abonnements &amp; Boosts). Wenn deaktiviert, läuft der normale WooCommerce-Checkout-Prozess."
+msgstr ""
