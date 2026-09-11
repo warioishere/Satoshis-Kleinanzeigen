@@ -98,6 +98,21 @@ class NostrRelaySync {
             }
         }
 
+        // NIP-05 verdicts age out after a week and a profile that never
+        // changes never comes through the loop above, so a few due ones are
+        // renewed here each run — each is one request to an outside host.
+        $budget = 10;
+        foreach ( $users as $u ) {
+            if ( $budget <= 0 ) {
+                break;
+            }
+            $uid = (int) $u['user_id'];
+            if ( \SK\Core\Nostr\Nip05::needs_check( $uid ) ) {
+                \SK\Core\Nostr\Nip05::check( $uid );
+                $budget--;
+            }
+        }
+
         update_option( self::LAST_SYNC_KEY, time() );
     }
 
@@ -247,13 +262,18 @@ class NostrRelaySync {
             }
         }
 
-        // Sync NIP-05.
+        // Sync NIP-05, then ask its domain whether the name really maps to
+        // the vendor's key. The verdict is stored; the trust page only reads it.
         if ( ! empty( $profile['nip05'] ) ) {
-            $nip05 = sanitize_text_field( $profile['nip05'] );
-            if ( $nip05 !== get_user_meta( $user_id, 'nip05', true ) ) {
+            $nip05   = sanitize_text_field( $profile['nip05'] );
+            $changed = $nip05 !== get_user_meta( $user_id, 'nip05', true );
+
+            if ( $changed ) {
                 update_user_meta( $user_id, 'nip05', $nip05 );
                 $updated = true;
             }
+
+            \SK\Core\Nostr\Nip05::check( $user_id, $changed );
         }
 
         // Sync website.

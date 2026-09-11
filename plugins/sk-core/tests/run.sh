@@ -46,6 +46,9 @@
 #   test-zap-counting  ZapStats::count_zap. The same receipt seen twice counts
 #                     once, for the vendor and for the post; a foreign post is
 #                     never touched; unusable input changes nothing.
+#   test-nip05        Nip05. An address counts only when its domain answers the
+#                     name with the vendor's key; verdicts are stored, renewed
+#                     after a week, and dropped when the address changes.
 #   test-api-key      AiCategorizer::api_key. The Claude API key is encrypted in
 #                     its own option; a plain-text leftover in the settings
 #                     section is moved on first read; an empty field keeps it.

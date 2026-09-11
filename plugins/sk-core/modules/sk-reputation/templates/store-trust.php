@@ -118,17 +118,32 @@ get_header( 'shop' );
                      * Otherwise visitors see nothing, and the vendor sees the offer.
                      */
                     $nip05    = $store_user->user_nicename . '@' . \SK\Core\Trust\VendorKey::site();
-                    $in_use   = ( class_exists( '\SK\Modules\Auth\NostrIdentity' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $vendor_id ) )
-                        || strcasecmp( (string) get_user_meta( $vendor_id, 'nip05', true ), $nip05 ) === 0;
                     $is_owner = get_current_user_id() === $vendor_id;
+
+                    // The address the vendor's profile carries, once its domain has
+                    // confirmed the key (checked in the relay sync, read here). For an
+                    // identity this site generated that is our own address.
+                    $verified = \SK\Core\Nostr\Nip05::verified( $vendor_id );
+
+                    if ( null === $verified && class_exists( '\SK\Modules\Auth\NostrIdentity' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $vendor_id ) ) {
+                        $verified = $nip05;
+                    }
+
+                    $verified_domain = $verified ? substr( $verified, strrpos( $verified, '@' ) + 1 ) : '';
                     ?>
-                    <?php if ( $in_use ) : ?>
+                    <?php if ( $verified ) : ?>
                         <p class="sk-trust-nip05">
-                            <span class="sk-trust-note"><?php esc_html_e( 'NIP-05-Adresse dieses Shops:', 'sk-core' ); ?></span>
-                            <code><?php echo esc_html( $nip05 ); ?></code>
+                            <span class="sk-trust-note"><?php esc_html_e( 'NIP-05-Adresse:', 'sk-core' ); ?></span>
+                            <code><?php echo esc_html( $verified ); ?></code>
                         </p>
                         <p class="sk-trust-note">
-                            <?php esc_html_e( 'Prüfen: Diese Seite beantwortet die Adresse mit genau diesem Schlüssel, und sie steht im Nostr-Profil des Anbieters. Jeder Nostr-Client zeigt dafür das Häkchen dieser Seite.', 'sk-core' ); ?>
+                            <?php
+                            printf(
+                                /* translators: %s: domain that answered the NIP-05 lookup */
+                                esc_html__( 'Geprüft: %s beantwortet diesen Namen mit genau dem Schlüssel des Anbieters, und die Adresse steht in seinem Nostr-Profil. Jeder Nostr-Client zeigt dafür das Häkchen.', 'sk-core' ),
+                                '<strong>' . esc_html( $verified_domain ) . '</strong>'
+                            );
+                            ?>
                         </p>
                     <?php elseif ( $is_owner ) : ?>
                         <p class="sk-trust-note">
