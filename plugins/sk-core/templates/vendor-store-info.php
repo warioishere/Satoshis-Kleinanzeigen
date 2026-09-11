@@ -38,7 +38,6 @@
     // Rechts am Ende der Box, mittig zur Hoehe — die Ausrichtung macht das
     // margin-left:auto in .sk-vendor-info-wrap .sk-verify-badge.
     if ( function_exists( 'sk_verified_badge' ) ) {
-        echo sk_nip05_badge( $vendor->get_id() ); // phpcs:ignore WordPress.Security.EscapeOutput
         echo sk_verified_badge( $vendor->get_id() ); // phpcs:ignore WordPress.Security.EscapeOutput
     }
     ?>

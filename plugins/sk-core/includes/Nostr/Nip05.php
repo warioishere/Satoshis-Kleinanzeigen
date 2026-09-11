@@ -138,21 +138,4 @@ final class Nip05 {
 
         return strcasecmp( (string) ( $stored['address'] ?? '' ), $address ) === 0 ? $address : null;
     }
-
-    /**
-     * The address shown for the vendor: the verified one from the profile,
-     * or this site's own for an identity the site generated (that profile
-     * carries it, and the site answers for the key). Null when nothing is
-     * worth showing.
-     */
-    public static function shown( int $user_id ): ?string {
-        $verified = self::verified( $user_id );
-
-        if ( null === $verified && class_exists( '\SK\Modules\Auth\NostrIdentity' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $user_id ) ) {
-            $user     = get_userdata( $user_id );
-            $verified = $user ? $user->user_nicename . '@' . \SK\Core\Trust\VendorKey::site() : null;
-        }
-
-        return $verified;
-    }
 }
