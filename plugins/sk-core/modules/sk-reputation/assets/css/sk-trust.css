@@ -17,6 +17,10 @@
 .sk-vendor-info-wrap .sk-trust-graph + .sk-vendor-zaps,
 .sk-vendor-info-wrap .sk-trust-graph + .sk-verify-badge { margin-left: 10px; }
 
+/* Product card: badge only, next to the vendor name. */
+.produkt-vendor-info .sk-trust-graph { display: inline-flex; align-items: center; font-size: 12px; position: relative; }
+.produkt-vendor-info .sk-trust-graph i { color: #8b5cf6; }
+
 /* Feed card: small, next to the name. */
 .sk-feed-card-meta .sk-trust-graph {
     display: inline-flex; align-items: center; gap: 4px;

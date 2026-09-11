@@ -25,6 +25,7 @@ class TrustSignals {
 
     const CONTEXT_STORE   = 'store';
     const CONTEXT_PRODUCT = 'product';
+    const CONTEXT_CARD    = 'card';
     const CONTEXT_FEED    = 'feed';
     /** The store's trust page, where a signal explains itself. */
     const CONTEXT_PAGE    = 'page';

@@ -276,8 +276,9 @@ class ZapStats {
      * Nothing at all while the vendor has received no zaps.
      */
     public static function chip( int $vendor_id, string $context ): string {
-        // The feed card has the post's own zap button with its total.
-        if ( \SK\Core\Trust\TrustSignals::CONTEXT_FEED === $context ) {
+        // The feed card has the post's own zap button with its total; the
+        // product card carries only the graph badge.
+        if ( in_array( $context, [ \SK\Core\Trust\TrustSignals::CONTEXT_FEED, \SK\Core\Trust\TrustSignals::CONTEXT_CARD ], true ) ) {
             return '';
         }
 

@@ -233,9 +233,9 @@
      * What a chip says, per place.
      *
      * The store banner has room for whole sentences, one per line. The
-     * vendor box on a product page has none: there only the badge shows and
-     * the sentence moves into its tooltip. The feed card keeps its short
-     * one-liner.
+     * vendor box on a product page and the product card have none: there
+     * only the badge shows and the sentence moves into its tooltip. The feed
+     * card keeps its short one-liner.
      *
      * @return {{lines: string[], title: string}}
      */
@@ -250,7 +250,7 @@
         if (isContact) { lines.push(follow); }
         if (count) { lines.push(contacts); }
 
-        if (ctx === 'product') {
+        if (ctx === 'product' || ctx === 'card') {
             // Badge only; the full sentence is still there on hover.
             var said = [];
             if (isContact) { said.push(cfg.i18n.follow); }
