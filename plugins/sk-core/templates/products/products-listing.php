@@ -67,9 +67,16 @@
 
                         <div class="sk-product-listing-header sk-product-listing-header--stacked">
                             <?php if ( sk_is_seller_enabled( sk_get_current_user_id() ) && current_user_can( 'sk_add_product' ) ) : ?>
-                                <a href="<?php echo esc_url( $new_product_url ); ?>" class="sk-btn sk-btn-btc <?php echo $disable_product_popup ? '' : 'sk-add-new-product'; ?>">
-                                    + <?php esc_html_e( 'Inserat erstellen', 'sk-core' ); ?>
-                                </a>
+                                <div class="sk-product-listing-actions">
+                                    <a href="<?php echo esc_url( $new_product_url ); ?>" class="sk-btn sk-btn-btc <?php echo $disable_product_popup ? '' : 'sk-add-new-product'; ?>">
+                                        + <?php esc_html_e( 'Inserat erstellen', 'sk-core' ); ?>
+                                    </a>
+                                    <?php if ( sk_module_active( 'sk_shop_import' ) && current_user_can( 'sk_view_overview_menu' ) ) : ?>
+                                        <a href="<?php echo esc_url( sk_get_navigation_url( 'shop-import' ) ); ?>" class="sk-btn sk-btn-btc">
+                                            <i class="fas fa-file-import"></i> <?php esc_html_e( 'Shop-Import', 'sk-core' ); ?>
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
                             <?php endif; ?>
                             <?php sk_product_listing_filter(); ?>
                         </div>
@@ -250,6 +257,12 @@
                                             <i class="fas fa-briefcase">&nbsp;</i>
                                             <?php esc_html_e( 'Add new product', 'sk-core' ); ?>
                                         </a>
+                                        <?php if ( sk_module_active( 'sk_shop_import' ) && current_user_can( 'sk_view_overview_menu' ) ) : ?>
+                                            <a href="<?php echo esc_url( sk_get_navigation_url( 'shop-import' ) ); ?>" class="sk-btn sk-btn-theme">
+                                                <i class="fas fa-file-import">&nbsp;</i>
+                                                <?php esc_html_e( 'Shop-Import', 'sk-core' ); ?>
+                                            </a>
+                                        <?php endif; ?>
                                     <?php endif ?>
 
                                     <?php

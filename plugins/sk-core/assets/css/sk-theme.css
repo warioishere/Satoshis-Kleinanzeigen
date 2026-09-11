@@ -6563,6 +6563,15 @@ ul.sk-store-custom-fields ul {
   margin: 0;
 }
 
+/* Create and import side by side; on a narrow screen the second button
+   wraps onto the next line, left-aligned like the first. */
+.sk-dashboard .sk-product-listing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
 /* Search form inside header */
 .sk-dashboard .sk-product-listing-header--stacked .sk-product-search-form {
   width: 100%;

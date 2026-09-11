@@ -9,8 +9,8 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Vendor dashboard: upload and import a catalog.
  *
- * Only appears for enabled dealers — for the remaining 480 accounts, the
- * menu entry doesn't exist at all.
+ * Reached from the products page, where the import sits as a button next
+ * to "create listing" — it has no entry of its own in the dashboard menu.
  */
 class DashboardPage extends DashboardModule {
 
@@ -38,10 +38,10 @@ class DashboardPage extends DashboardModule {
             'slug'       => 'shop-import',
             'title'      => __( 'Shop-Import', 'sk-core' ),
             'icon'       => '<i class="fas fa-file-import"></i>',
-            // Right after "Products" (pos 30). Decimal positions don't help
-            // here: sk_nav_sort_by_pos computes intval($a-$b), and 30.5
-            // against 31 yields 0, counting as equal.
             'pos'        => 31,
+            // No menu entry: the page belongs to the products list and is
+            // opened from the button next to "create listing" there.
+            'in_menu'    => false,
             // The page is open to every vendor — anyone not yet enabled
             // finds the path to verification here. The import steps inside
             // it check Dealer::may_import().

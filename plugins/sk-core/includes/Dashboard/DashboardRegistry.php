@@ -157,6 +157,13 @@ class DashboardRegistry {
                 continue;
             }
 
+            // A page can live without a menu entry: the URL, the query var
+            // and the template still work, it is just reached from elsewhere
+            // (the shop import sits as a button on the products page).
+            if ( isset( $config['in_menu'] ) && false === $config['in_menu'] ) {
+                continue;
+            }
+
             $url_slug = $config['url_slug'] ?? $slug;
             $url      = $config['url']
                 ?? ( function_exists( 'sk_get_navigation_url' ) ? sk_get_navigation_url( $url_slug ) : home_url( "/sk-dashboard/{$url_slug}/" ) );
