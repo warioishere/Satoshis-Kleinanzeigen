@@ -95,7 +95,12 @@ class Manager {
     }
 
     /**
-     * Hide vendor contact info from API response based on admin settings.
+     * Hide contact details the vendor did not make public.
+     *
+     * Only the vendor's own switches decide this; there is no site-wide
+     * override any more. The phone used to be readable here whenever the
+     * operator had not hidden it globally, which ignored the vendor's own
+     * setting — it is gated the same way as the email now.
      *
      * @param array $data
      *
@@ -108,15 +113,13 @@ class Manager {
             return $data;
         }
 
-        if ( sk_is_vendor_info_hidden( 'address' ) ) {
-            unset( $data['address'] );
-        }
+        $info = $vendor_id && function_exists( 'sk_get_store_info' ) ? (array) sk_get_store_info( $vendor_id ) : [];
 
-        if ( sk_is_vendor_info_hidden( 'phone' ) ) {
+        if ( empty( $info['show_phone_number'] ) ) {
             unset( $data['phone'] );
         }
 
-        if ( sk_is_vendor_info_hidden( 'email' ) || empty( $data['show_email'] ) ) {
+        if ( empty( $data['show_email'] ) ) {
             unset( $data['email'] );
         }
 

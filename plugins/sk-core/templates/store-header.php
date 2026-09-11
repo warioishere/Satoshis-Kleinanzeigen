@@ -5,34 +5,16 @@ $social_info   = $store_user->get_social_profiles();
 $store_tabs    = sk_get_store_tabs( $store_user->get_id() );
 $social_fields = sk_get_social_profile_fields();
 
-$sk_appearance = get_option( 'sk_appearance' );
-$profile_layout   = empty( $sk_appearance['store_header_template'] ) ? 'default' : $sk_appearance['store_header_template'];
 $store_address    = sk_get_seller_short_address( $store_user->get_id(), false );
 
 $general_settings = get_option( 'sk_general', [] );
 $banner_width     = sk_get_vendor_store_banner_width();
 
-if ( ( 'default' === $profile_layout ) || ( 'layout2' === $profile_layout ) ) {
-    $profile_img_class = 'profile-img-circle';
-} else {
-    $profile_img_class = 'profile-img-square';
-}
-
-if ( 'layout3' === $profile_layout ) {
-    unset( $store_info['banner'] );
-
-    $no_banner_class      = ' profile-frame-no-banner';
-    $no_banner_class_tabs = ' sk-store-tabs-no-banner';
-} else {
-    $no_banner_class      = '';
-    $no_banner_class_tabs = '';
-}
-
 ?>
 <div class="sk-profile-frame-wrapper">
-    <div class="profile-frame<?php echo esc_attr( $no_banner_class ); ?>">
+    <div class="profile-frame">
 
-        <div class="profile-info-box profile-layout-<?php echo esc_attr( $profile_layout ); ?>">
+        <div class="profile-info-box profile-layout-default">
             <?php if ( $store_user->get_banner() ) { ?>
                 <img src="<?php echo esc_url( $store_user->get_banner() ); ?>"
                     alt="<?php echo esc_attr( $store_user->get_shop_name() ); ?>"
@@ -45,12 +27,12 @@ if ( 'layout3' === $profile_layout ) {
             <div class="profile-info-summery-wrapper sk-clearfix">
                 <div class="profile-info-summery">
                     <div class="profile-info-head">
-                        <div class="profile-img <?php echo esc_attr( $profile_img_class ); ?>">
+                        <div class="profile-img profile-img-circle">
                             <img src="<?php echo esc_url( $store_user->get_avatar() ); ?>"
                                 alt="<?php echo esc_attr( $store_user->get_shop_name() ); ?>"
                                 size="150">
                         </div>
-                        <?php if ( ! empty( $store_user->get_shop_name() ) && 'default' === $profile_layout ) { ?>
+                        <?php if ( ! empty( $store_user->get_shop_name() ) ) { ?>
                             <h1 class="store-name">
                                 <?php echo esc_html( $store_user->get_shop_name() ); ?>
                                 <?php
@@ -67,15 +49,8 @@ if ( 'layout3' === $profile_layout ) {
                     </div>
 
                     <div class="profile-info">
-                        <?php if ( ! empty( $store_user->get_shop_name() ) && 'default' !== $profile_layout ) { ?>
-                            <h1 class="store-name">
-                                <?php echo esc_html( $store_user->get_shop_name() ); ?>
-                                <?php do_action( 'sk_store_header_after_store_name', $store_user ); ?>
-                            </h1>
-                        <?php } ?>
-
                         <ul class="sk-store-info">
-                            <?php if ( ! sk_is_vendor_info_hidden( 'address' ) && isset( $store_address ) && ! empty( $store_address ) ) { ?>
+                            <?php if ( ! empty( $store_address ) ) { ?>
                                 <li class="sk-store-address"><i class="fas fa-map-marker-alt"></i>
                                     <?php echo wp_kses_post( $store_address ); ?>
                                 </li>
@@ -137,7 +112,7 @@ if ( 'layout3' === $profile_layout ) {
     ?>
 
     <?php if ( $store_tabs ) { ?>
-        <div class="sk-store-tabs<?php echo esc_attr( $no_banner_class_tabs ); ?>">
+        <div class="sk-store-tabs">
             <ul class="sk-modules-button">
                 <?php do_action( 'sk_after_store_tabs', $store_user->get_id() ); ?>
             </ul>

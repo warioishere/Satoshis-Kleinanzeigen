@@ -64,7 +64,7 @@
                                             </div>
                                         <?php endif ?>
 
-                                        <?php if ( ! sk_is_vendor_info_hidden( 'address' ) && $store_address ) : ?>
+                                        <?php if ( $store_address ) : ?>
                                             <?php
                                             $allowed_tags = [
                                                 'span' => [
@@ -76,7 +76,7 @@
                                             <p class="store-address"><?php echo wp_kses( $store_address, $allowed_tags ); ?></p>
                                         <?php endif ?>
 
-                                        <?php if ( ! sk_is_vendor_info_hidden( 'phone' ) && ! empty( $store_phone ) && ! in_array( strtolower( trim( $store_phone ) ), [ 'no', 'nein', 'n/a', '-' ], true ) && preg_match( '/\d/', $store_phone ) ) { ?>
+                                        <?php if ( ! empty( $store_phone ) && ! in_array( strtolower( trim( $store_phone ) ), [ 'no', 'nein', 'n/a', '-' ], true ) && preg_match( '/\d/', $store_phone ) ) { ?>
                                             <p class="store-phone">
                                                 <i class="fas fa-phone-alt" aria-hidden="true"></i> <?php echo esc_html( $store_phone ); ?>
                                             </p>

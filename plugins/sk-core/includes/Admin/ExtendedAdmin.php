@@ -251,10 +251,11 @@ class ExtendedAdmin {
             ],
         );
 
+        // Right before the banner image itself, where the two sizes belong.
         $settings_fields = $sk_settings->add_settings_after(
             $settings_fields,
             'sk_appearance',
-            'store_header_template',
+            'wallet_connections',
             $appearence_settings
         );
 

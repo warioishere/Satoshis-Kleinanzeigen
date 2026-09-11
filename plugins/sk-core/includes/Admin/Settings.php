@@ -531,19 +531,6 @@ class Settings {
                     'type'    => 'switcher',
                     'default' => 'on',
                 ],
-                'store_header_template'      => [
-                    'name'    => 'store_header_template',
-                    'type'    => 'radio_image',
-                    'desc'    => __( 'Select a store header for your store.', 'sk-core' ),
-                    'label'   => __( 'Store Header Template', 'sk-core' ),
-                    'options' => [
-                        'default' => SK_CORE_ASSETS . '/images/store-header-templates/default.png',
-                        'layout1' => SK_CORE_ASSETS . '/images/store-header-templates/layout1.png',
-                        'layout2' => SK_CORE_ASSETS . '/images/store-header-templates/layout2.png',
-                        'layout3' => SK_CORE_ASSETS . '/images/store-header-templates/layout3.png',
-                    ],
-                    'default' => 'default',
-                ],
                 'default_store_banner'       => [
                     'name'            => 'default_store_banner',
                     'label'           => esc_html__( 'Default Store Banner', 'sk-core' ),
@@ -570,22 +557,6 @@ class Settings {
                     'desc'    => __( 'Enable showing store sidebar from your theme.', 'sk-core' ),
                     'type'    => 'switcher',
                     'default' => 'off',
-                ],
-                'hide_vendor_info'           => [
-                    'name'    => 'hide_vendor_info',
-                    'label'   => __( 'Hide Vendor Info', 'sk-core' ),
-                    'desc'    => __( 'Hide vendor contact info from single store page.', 'sk-core' ),
-                    'type'    => 'multicheck',
-                    'default' => [
-                        'email'   => '',
-                        'phone'   => '',
-                        'address' => '',
-                    ],
-                    'options' => [
-                        'email'   => __( 'Email Address', 'sk-core' ),
-                        'phone'   => __( 'Phone Number', 'sk-core' ),
-                        'address' => __( 'Store Address', 'sk-core' ),
-                    ],
                 ],
                 'disable_sk_fontawesome' => [
                     'name'    => 'disable_sk_fontawesome',

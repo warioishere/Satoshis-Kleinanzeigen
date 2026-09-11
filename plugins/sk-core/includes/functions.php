@@ -2513,24 +2513,6 @@ function sk_has_map_api_key() {
 
 
 /**
- * Check which vendor info should be hidden
- *
- *
- * @param string $option
- *
- * @return bool|array if no param is passed
- */
-function sk_is_vendor_info_hidden( $option = null ) {
-    $options = sk_get_option( 'hide_vendor_info', 'sk_appearance' );
-
-    if ( is_null( $option ) ) {
-        return $options;
-    }
-
-    return ! empty( $options[ $option ] );
-}
-
-/**
  * Function current_datetime() compatibility for wp version < 5.3
  *
  *
