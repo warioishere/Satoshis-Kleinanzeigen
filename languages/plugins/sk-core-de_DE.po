@@ -565,7 +565,7 @@ msgstr ""
 #: modules/sk-feed/templates/dashboard-feed.php:112
 #: templates/dashboard/vendor-chat/dashboard-vendor-chat.php:312
 msgid "Abbrechen"
-msgstr ""
+msgstr "Abbrechen"
 
 #: templates/review/listing-table-tr.php:69
 msgid "Ablehnen"
@@ -634,7 +634,7 @@ msgstr "Account Details erfolgreich geändert."
 
 #: templates/settings/store-form.php:596
 msgid "Account endgültig löschen"
-msgstr ""
+msgstr "Account endgültig löschen"
 
 #: modules/sk-auth/includes/AuthSettings.php:153
 msgid "Account Linking erlauben"
@@ -916,7 +916,7 @@ msgstr ""
 
 #: templates/settings/store-form.php:241
 msgid "Aktuelles Passwort"
-msgstr ""
+msgstr "Aktuelles Passwort"
 
 #: modules/live-search/classes/class-sk-live-search.php:77
 msgid "All"
@@ -1136,7 +1136,7 @@ msgstr ""
 
 #: templates/settings/store-form.php:152
 msgid "Anbieter Informationen"
-msgstr ""
+msgstr "Anbieter Informationen"
 
 #: includes/Dashboard/Modules/UserOnboarding.php:123
 msgid "Anbieter kontaktieren"
@@ -1304,7 +1304,7 @@ msgstr ""
 
 #: templates/settings/store-form.php:159
 msgid "Anzeigename"
-msgstr ""
+msgstr "Anzeigename"
 
 #: includes/Admin/Settings.php:278
 msgid "Appearance"
@@ -1490,7 +1490,7 @@ msgstr ""
 
 #: templates/settings/store-form.php:50
 msgid "Auswählen"
-msgstr ""
+msgstr "Auswählen"
 
 #: modules/sk-auth/includes/AuthSettings.php:140
 msgid "Auth Connector"
@@ -1644,11 +1644,11 @@ msgstr "Banner"
 
 #: templates/settings/store-form.php:48
 msgid "Banner auswählen"
-msgstr ""
+msgstr "Banner auswählen"
 
 #: templates/settings/store-form.php:132
 msgid "Banner hochladen"
-msgstr ""
+msgstr "Banner hochladen"
 
 #: includes/REST/StoreController.php:1159
 msgid "Banner ID."
@@ -1833,7 +1833,7 @@ msgstr ""
 
 #: templates/settings/store-form.php:49
 msgid "Bild auswählen"
-msgstr ""
+msgstr "Bild auswählen"
 
 #: modules/sk-feed/templates/dashboard-feed.php:102
 msgid "Bild entfernen"
@@ -1853,7 +1853,7 @@ msgstr "Rechnungsadresse"
 
 #: templates/settings/store-form.php:542
 msgid "Biografie"
-msgstr ""
+msgstr "Biografie"
 
 #: modules/sk-anti-fraud/templates/buyer-warning.php:5
 msgid "Bisher %d bestätigte Transaktionen. Vorsicht bei hochpreisigen Artikeln."
@@ -1865,7 +1865,7 @@ msgstr ""
 
 #: templates/settings/store-form.php:62
 msgid "Bist du sicher? Alle deine Daten, Produkte und dein Shop werden unwiderruflich gelöscht!"
-msgstr ""
+msgstr "Bist du sicher? Alle deine Daten, Produkte und dein Shop werden unwiderruflich gelöscht!"
 
 #: modules/sk-auth/includes/AuthSettings.php:26
 msgid "Bitcoin, Lightning und Nostr Login"
@@ -1897,7 +1897,7 @@ msgstr ""
 
 #: includes/Dashboard/Modules/ContactDetails.php:413
 msgid "Bitte gib eine gültige E-Mail-Adresse ein."
-msgstr ""
+msgstr "Bitte gib eine gültige E-Mail-Adresse ein."
 
 #: includes/Dashboard/Modules/VendorChat.php:381
 msgid "Bitte gib eine Nachricht ein."
@@ -1909,7 +1909,7 @@ msgstr ""
 
 #: includes/Dashboard/Modules/ContactDetails.php:425
 msgid "Bitte gib mindestens eine Kontaktmethode an (Telegram, Twitter/X, Telefonnummer, Nostr oder E-Mail)."
-msgstr ""
+msgstr "Bitte gib mindestens eine Kontaktmethode an (Telegram, Twitter/X, Telefonnummer, Nostr oder E-Mail)."
 
 #: modules/sk-feed/includes/Ajax.php:500
 msgid "Bitte Kommentar eingeben."
@@ -1921,7 +1921,7 @@ msgstr ""
 
 #: includes/Dashboard/Modules/ContactDetails.php:424
 msgid "Bitte lade ein Profilbild hoch, bevor du speicherst."
-msgstr ""
+msgstr "Bitte lade ein Profilbild hoch, bevor du speicherst."
 
 #: modules/sk-feed/includes/Ajax.php:34 modules/sk-feed/includes/Ajax.php:149
 msgid "Bitte Text eingeben."
@@ -2285,10 +2285,6 @@ msgstr "Konfigurieren Sie die Einstellungen für Ihren Anbieter, um seine Produk
 msgid "Configure single product page for vendors."
 msgstr "Konfigurieren Sie eine einzelne Produktseite für Anbieter."
 
-#: includes/Admin/Settings.php:503
-msgid "Configure the appearance and style of the vendor dashboard."
-msgstr ""
-
 #: includes/Vendor/SettingsApi/Settings/Pages/Store.php:277
 msgid "Configure which product sections you want to display in your store page"
 msgstr "Konfigurieren Sie die Produktbereiche, die Sie auf Ihrer Anbieter-Seite anzeigen möchten"
@@ -2549,7 +2545,7 @@ msgstr ""
 
 #: includes/Dashboard/Modules/ContactDetails.php:219
 msgid "Das aktuelle Passwort ist falsch."
-msgstr ""
+msgstr "Das aktuelle Passwort ist falsch."
 
 #: includes/Dashboard/Modules/VendorChat.php:286
 msgid "Das Chat-Icon wird bei allen Produkten angezeigt (für eingeloggte Nutzer)."
@@ -2731,11 +2727,11 @@ msgstr ""
 
 #: templates/settings/store-form.php:593
 msgid "Dein Account, alle Produkte und alle Daten werden unwiderruflich gelöscht. Dieser Vorgang kann nicht rückgängig gemacht werden."
-msgstr ""
+msgstr "Dein Account, alle Produkte und alle Daten werden unwiderruflich gelöscht. Dieser Vorgang kann nicht rückgängig gemacht werden."
 
 #: templates/settings/store-form.php:160
 msgid "Dein Anzeigename"
-msgstr ""
+msgstr "Dein Anzeigename"
 
 #: includes/Dashboard/Modules/Feedback.php:145
 msgid "Dein Feedback..."
@@ -2755,7 +2751,7 @@ msgstr ""
 
 #: templates/settings/store-form.php:562
 msgid "Deine Anbieter-Seite ist erreichbar unter:"
-msgstr ""
+msgstr "Deine Anbieter-Seite ist erreichbar unter:"
 
 #: includes/Dashboard/Modules/UserOnboarding.php:227
 msgid "Deine Inserate sind kryptographisch beweisbar deine"
@@ -2860,7 +2856,7 @@ msgstr ""
 
 #: includes/Dashboard/Modules/ContactDetails.php:230
 msgid "Dieser Store-Link ist bereits vergeben."
-msgstr ""
+msgstr "Dieser Store-Link ist bereits vergeben."
 
 #: templates/products/edit/attributes.php:1
 msgid "Different types of this product (e.g. size, color)"
@@ -3075,7 +3071,7 @@ msgstr ""
 
 #: templates/settings/store-form.php:227
 msgid "E-Mail-Adresse"
-msgstr ""
+msgstr "E-Mail-Adresse"
 
 #: modules/sk-anti-fraud/includes/VendorSummary.php:37
 msgid "E-Mail: %s"
@@ -3175,13 +3171,13 @@ msgstr ""
 #: templates/admin/php-dashboard/feedback.php:26
 #: templates/settings/store-form.php:47
 msgid "Einstellungen gespeichert."
-msgstr ""
+msgstr "Einstellungen gespeichert."
 
 #: includes/Dashboard/Modules/UserOnboarding.php:489
 #: includes/Dashboard/Modules/VendorChat.php:297
 #: templates/settings/store-form.php:581
 msgid "Einstellungen speichern"
-msgstr ""
+msgstr "Einstellungen speichern"
 
 #: templates/admin/php-dashboard/feedback.php:29
 msgid "Eintrag gelöscht."
@@ -3231,7 +3227,7 @@ msgstr "E-Mail Typ"
 
 #: templates/settings/store-form.php:133
 msgid "Empfohlen: %1$s × %2$s Pixel"
-msgstr ""
+msgstr "Empfohlen: %1$s × %2$s Pixel"
 
 #: includes/Admin/Settings.php:356
 msgid "Enable \"More Products\" tab on the single product page."
@@ -4044,7 +4040,7 @@ msgstr "Ankündigung zum erzwungenen Löschen."
 
 #: templates/settings/store-form.php:142
 msgid "Foto hochladen"
-msgstr ""
+msgstr "Foto hochladen"
 
 #: includes/Assets.php:71
 msgid "Fr"
@@ -4095,7 +4091,7 @@ msgstr ""
 
 #: templates/settings/store-form.php:589
 msgid "Gefahrenzone"
-msgstr ""
+msgstr "Gefahrenzone"
 
 #: templates/admin/php-dashboard/antifraud.php:135
 msgid "gelöscht"
@@ -4196,7 +4192,7 @@ msgstr "Anbieter-Element Schema folgen holen."
 
 #: templates/settings/store-form.php:191
 msgid "Gib deinen Standort an, falls du Abholung vor Ort anbietest. Grobe Ortsangaben reichen."
-msgstr ""
+msgstr "Gib deinen Standort an, falls du Abholung vor Ort anbietest. Grobe Ortsangaben reichen."
 
 #  'title'     => __( 'About Your Store', 'dokan' ),
 #  'desc'      => __( 'Give visitors detailed information about what your store
@@ -4264,7 +4260,7 @@ msgstr "Gast"
 
 #: templates/settings/store-form.php:264
 msgid "Handynummer"
-msgstr ""
+msgstr "Handynummer"
 
 #: includes/Product/functions.php:232
 #: templates/products/edit/product-list-table-inline-edit-form.php:135
@@ -4351,14 +4347,6 @@ msgstr "Nicht vorrätige ausblenden"
 #: modules/product-adv/includes/Admin/Settings.php:121
 msgid "Hide out of stock items from the advertisement list. Note that, if WooCommerce setting for out of stock visibility is checked, product will be hidden despite this setting."
 msgstr "Nicht vorrätige Artikel aus der Anzeigenliste ausblenden. Beachten Sie, dass das Produkt trotz dieser Einstellung ausgeblendet wird, wenn die WooCommerce Einstellung für die Sichtbarkeit von Nichtvorräten aktiviert ist."
-
-#: includes/Admin/Settings.php:588
-msgid "Hide vendor contact info from single store page."
-msgstr "Verbergen Sie die Kontaktinformationen des Anbieters auf der einzelnen Anbieter-Seite."
-
-#: includes/Admin/Settings.php:587
-msgid "Hide Vendor Info"
-msgstr "Anbieter Info verbergen"
 
 #: modules/product-adv/includes/REST/AdvertisementController.php:612
 msgid "How data will be returned"
@@ -4691,7 +4679,7 @@ msgstr ""
 
 #: templates/settings/store-form.php:284
 msgid "Interessenten zahlen 21 Sats via BTCPay, um deine Kontaktdaten zu sehen."
-msgstr ""
+msgstr "Interessenten zahlen 21 Sats via BTCPay, um deine Kontaktdaten zu sehen."
 
 #: modules/product-adv/includes/Manager.php:339
 msgid "Invalid advertisement product id."
@@ -4883,7 +4871,7 @@ msgstr ""
 
 #: templates/settings/store-form.php:188
 msgid "Kartenposition"
-msgstr ""
+msgstr "Kartenposition"
 
 #: includes/Dashboard/Modules/AiCategorizer.php:198
 msgid "Kategorie wird analysiert..."
@@ -5009,15 +4997,15 @@ msgstr ""
 
 #: includes/Dashboard/Modules/ContactDetails.php:359
 msgid "Kontakt"
-msgstr ""
+msgstr "Kontakt"
 
 #: templates/settings/store-form.php:202
 msgid "Kontaktdaten"
-msgstr ""
+msgstr "Kontaktdaten"
 
 #: templates/settings/store-form.php:278
 msgid "Kontaktdetails Paywall"
-msgstr ""
+msgstr "Kontaktdetails Paywall"
 
 #: templates/admin/php-dashboard/feedback.php:67
 msgid "Kurzer Einleitungstext, einfaches HTML erlaubt."
@@ -5069,10 +5057,6 @@ msgstr "Frei lassen für unbegrenzte Downloads."
 msgid "Left"
 msgstr "Links"
 
-#: includes/Admin/Settings.php:513
-msgid "Legacy UI"
-msgstr ""
-
 #: modules/sk-nostr-market/includes/MarketplaceSettings.php:77
 msgid "Leitet Nostr-Nachrichten von Käufern an Vendors weiter und Vendor-Antworten zurück an den Nostr User."
 msgstr ""
@@ -5088,7 +5072,7 @@ msgstr "Lassen Sie Kunden betrügerische oder gefälschte Produkte melden."
 
 #: templates/settings/store-form.php:63
 msgid "Letzte Warnung: Diese Aktion kann NICHT rückgängig gemacht werden. Wirklich löschen?"
-msgstr ""
+msgstr "Letzte Warnung: Diese Aktion kann NICHT rückgängig gemacht werden. Wirklich löschen?"
 
 #: includes/Dashboard/Modules/Feedback.php:104
 msgid "Letztes Feedback"
@@ -5866,10 +5850,6 @@ msgstr "Neue Rezension"
 msgid "New review on #{store_name}"
 msgstr "Neue Rezension zu #{store_name}"
 
-#: includes/Admin/Settings.php:512
-msgid "New UI"
-msgstr ""
-
 #: includes/Emails/NewSeller.php:60
 msgid "New Vendor Registered - {seller_name}"
 msgstr "Neuer Anbieter registriert - {seller_name}"
@@ -6385,7 +6365,7 @@ msgstr ""
 
 #: templates/settings/store-form.php:271
 msgid "Nostr Public Key (npub...)"
-msgstr ""
+msgstr "Nostr Public Key (npub...)"
 
 #: modules/sk-auth/includes/AuthSettings.php:95
 #: modules/sk-notifications/includes/NotificationSettings.php:49
@@ -6522,7 +6502,7 @@ msgstr ""
 
 #: templates/settings/store-form.php:242
 msgid "Nur nötig, wenn du die E-Mail-Adresse änderst."
-msgstr ""
+msgstr "Nur nötig, wenn du die E-Mail-Adresse änderst."
 
 #: modules/sk-auth/includes/AuthSettings.php:53
 msgid "Nur WordPress"
@@ -6805,7 +6785,7 @@ msgstr "PayPal Einstellungen."
 
 #: templates/settings/store-form.php:282
 msgid "Paywall aktivieren (21 Sats)"
-msgstr ""
+msgstr "Paywall aktivieren (21 Sats)"
 
 #: includes/Dashboard/Templates/Settings.php:180
 msgid "Pemission denied"
@@ -7576,7 +7556,7 @@ msgstr ""
 #: modules/sk-auth/includes/AuthSettings.php:109
 #: templates/settings/store-form.php:122
 msgid "Profil"
-msgstr ""
+msgstr "Profil"
 
 #: modules/sk-anti-fraud/includes/StoreNameGuard.php:125
 msgid "Profil des Versuchenden:"
@@ -7584,7 +7564,7 @@ msgstr ""
 
 #: templates/settings/store-form.php:140
 msgid "Profilbild"
-msgstr ""
+msgstr "Profilbild"
 
 #: includes/Dashboard/Templates/Settings.php:279
 msgid "Profilbild ist erforderlich"
@@ -8272,10 +8252,6 @@ msgstr "Bundesland auswählen"
 msgid "Select a store category"
 msgstr "Anbieter-Kategorie auswählen"
 
-#: includes/Admin/Settings.php:548
-msgid "Select a store header for your store."
-msgstr "Wählen Sie eine Kopfzeile für Ihren Anbieter."
-
 #: includes/DigitalProduct.php:46
 msgid "Select a type for vendors what type of product they can sell only"
 msgstr "Wählen Sie einen Typ für Anbieter, welche Art von Produkte sie nur verkaufen können"
@@ -8359,10 +8335,6 @@ msgstr "Wählen Sie die Seite aus, auf der Sie die Abonnementpakete anzeigen mö
 #: includes/DigitalProduct.php:49
 msgid "Select the type of products vendor can sell."
 msgstr "Wählen Sie die Art der Produkte, die der Anbieter verkaufen kann."
-
-#: includes/Admin/Settings.php:508
-msgid "Select the user interface for the vendor dashboard."
-msgstr ""
 
 #: includes/Admin/Hooks.php:89
 msgid "Select vendor"
@@ -9496,10 +9468,6 @@ msgstr "Anbieter-E-Mail Adresse."
 msgid "Store Gravatar"
 msgstr "Anbieter Gravatar"
 
-#: includes/Admin/Settings.php:549
-msgid "Store Header Template"
-msgstr "Anbieter Kopfzeilen Vorlage"
-
 #: includes/REST/StoreController.php:1163
 msgid "Store icon."
 msgstr "Anbieter Icon."
@@ -9654,7 +9622,7 @@ msgstr ""
 
 #: templates/settings/store-form.php:557
 msgid "Store-Link"
-msgstr ""
+msgstr "Store-Link"
 
 #: includes/Admin/ShortcodesButton.php:34
 msgid "Stores List"
@@ -9943,7 +9911,7 @@ msgstr ""
 
 #: templates/settings/store-form.php:250
 msgid "Telegram Handle"
-msgstr ""
+msgstr "Telegram Handle"
 
 #: includes/Admin/Settings.php:492
 msgid "Terms and Conditions Page"
@@ -10537,7 +10505,7 @@ msgstr ""
 
 #: templates/settings/store-form.php:257
 msgid "Twitter / X Handle"
-msgstr ""
+msgstr "Twitter / X Handle"
 
 #: templates/admin/php-dashboard/antifraud.php:185
 msgid "Typ"
@@ -10844,7 +10812,7 @@ msgstr ""
 
 #: templates/settings/store-form.php:570
 msgid "URL-Slug"
-msgstr ""
+msgstr "URL-Slug"
 
 #: modules/sk-auth/includes/NostrLogin.php:398
 msgid "Use Nostr Extension"
@@ -11048,14 +11016,6 @@ msgstr "Anbieter Übersicht"
 #: templates/global/header-menu.php:33
 msgid "Vendor Dashboard"
 msgstr "Anbieter Dashboard"
-
-#: includes/Admin/Settings.php:502
-msgid "Vendor Dashboard Appearance"
-msgstr ""
-
-#: includes/Admin/Settings.php:507
-msgid "Vendor Dashboard Style"
-msgstr ""
 
 #: includes/Privacy.php:31 includes/Privacy.php:34 includes/Privacy.php:143
 msgid "Vendor Data"
@@ -11278,7 +11238,7 @@ msgstr ""
 
 #: includes/Dashboard/Modules/ContactDetails.php:487
 msgid "Veröffentlichung blockiert: Bitte hinterlege in deinem <a href=\"%s\">Shop-Profil</a> mindestens eine Kontaktmethode (z. B. Telegram, Telefonnummer oder eine öffentliche E-Mail-Adresse). Adressen mit @satoshiskleinanzeigen.space zählen nicht."
-msgstr ""
+msgstr "Veröffentlichung blockiert: Bitte hinterlege in deinem <a href=\"%s\">Shop-Profil</a> mindestens eine Kontaktmethode (z. B. Telegram, Telefonnummer oder eine öffentliche E-Mail-Adresse). Adressen mit @satoshiskleinanzeigen.space zählen nicht."
 
 #: modules/sk-feed/templates/feed-card.php:52
 msgid "via Nostr"
@@ -11686,7 +11646,7 @@ msgstr ""
 
 #: templates/settings/store-form.php:46
 msgid "Wird gespeichert…"
-msgstr ""
+msgstr "Wird gespeichert…"
 
 #: modules/sk-auth/includes/AuthSettings.php:112
 msgid "Wohin nach erfolgreichem Nostr-Login weitergeleitet wird."
@@ -12264,7 +12224,7 @@ msgstr "{product_title} aktualisiert von Anbieter {seller_name}"
 
 #: templates/settings/store-form.php:206 templates/settings/store-form.php:218
 msgid "Öffentlich anzeigen"
-msgstr ""
+msgstr "Öffentlich anzeigen"
 
 #: modules/sk-anti-fraud/includes/BanWatcher.php:119
 msgid "Übereinstimmungen:"
@@ -13065,7 +13025,7 @@ msgstr ""
 
 #: plugins/sk-core/modules/sk-zaps/includes/ZapButton.php
 msgid "Du kannst dich nicht selbst zappen."
-msgstr ""
+msgstr "Du kannst dich nicht selbst zappen."
 
 #: plugins/sk-core/modules/sk-zaps/includes/ZapStats.php
 msgid "Keine Zap-Quittung."
@@ -13370,7 +13330,7 @@ msgstr ""
 #: plugins/sk-core/includes/ModuleManager.php
 #: plugins/sk-core/modules/sk-escrow/includes/class-escrow-settings.php
 msgid "Treuhand"
-msgstr ""
+msgstr "Treuhand"
 
 #: plugins/sk-core/includes/ModuleManager.php
 msgid "On-Chain-Treuhand über 2-von-3-Multisig mit PSBT-Ablauf. Setzt eine erreichbare Escrow-API voraus."
@@ -13378,779 +13338,779 @@ msgstr ""
 
 #: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
 msgid "On-Chain-Treuhand über 2-von-3-Multisig"
-msgstr ""
+msgstr "On-Chain-Treuhand über 2-von-3-Multisig"
 
 #: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
 msgid "Treuhand (Escrow)"
-msgstr ""
+msgstr "Treuhand (Escrow)"
 
 #: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
 msgid "Nicht-verwahrende Treuhand für Bestellungen: Käufer, Verkäufer und Marktplatz halten je einen Schlüssel, ausgezahlt wird mit zwei von drei Signaturen über einen PSBT-Ablauf. Setzt eine erreichbare Escrow-API voraus."
-msgstr ""
+msgstr "Nicht-verwahrende Treuhand für Bestellungen: Käufer, Verkäufer und Marktplatz halten je einen Schlüssel, ausgezahlt wird mit zwei von drei Signaturen über einen PSBT-Ablauf. Setzt eine erreichbare Escrow-API voraus."
 
 #: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
 msgid "Escrow-API"
-msgstr ""
+msgstr "Escrow-API"
 
 #: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
 msgid "Zugang zum Escrow-Dienst, der die Multisig-Adressen und PSBTs erzeugt."
-msgstr ""
+msgstr "Zugang zum Escrow-Dienst, der die Multisig-Adressen und PSBTs erzeugt."
 
 #: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
 msgid "Escrow-API Base URL"
-msgstr ""
+msgstr "Escrow-API Base URL"
 
 #: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
 msgid "Beispiel: https://escrow.example.com/api"
-msgstr ""
+msgstr "Beispiel: https://escrow.example.com/api"
 
 #: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
 msgid "API Key"
-msgstr ""
+msgstr "API Key"
 
 #: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
 msgid "Webhook HMAC Secret"
-msgstr ""
+msgstr "Webhook HMAC Secret"
 
 #: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
 msgid "Signiert die Rückmeldungen der Escrow-API."
-msgstr ""
+msgstr "Signiert die Rückmeldungen der Escrow-API."
 
 #: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
 msgid "Schlüssel und Auszahlung"
-msgstr ""
+msgstr "Schlüssel und Auszahlung"
 
 #: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
 msgid "Escrow xpub (eigener Schlüssel)"
-msgstr ""
+msgstr "Escrow xpub (eigener Schlüssel)"
 
 #: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
 msgid "Der dritte Schlüssel im 2-von-3-Multisig."
-msgstr ""
+msgstr "Der dritte Schlüssel im 2-von-3-Multisig."
 
 #: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
 msgid "Fallback Vendor-Payout-Adresse"
-msgstr ""
+msgstr "Fallback Vendor-Payout-Adresse"
 
 #: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
 msgid "Adresse für Verkäufer-Auszahlungen, wenn kein eigener Empfang hinterlegt ist. Ohne gültige Adresse werden Auszahlungen abgebrochen."
-msgstr ""
+msgstr "Adresse für Verkäufer-Auszahlungen, wenn kein eigener Empfang hinterlegt ist. Ohne gültige Adresse werden Auszahlungen abgebrochen."
 
 #: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
 msgid "Ablauf"
-msgstr ""
+msgstr "Ablauf"
 
 #: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
 msgid "Min. Bestätigungen"
-msgstr ""
+msgstr "Min. Bestätigungen"
 
 #: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
 msgid "Signatur-Timeout (Tage)"
-msgstr ""
+msgstr "Signatur-Timeout (Tage)"
 
 #: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
 msgid "Treuhand für Verkäufer aktiv"
-msgstr ""
+msgstr "Treuhand für Verkäufer aktiv"
 
 #: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
 msgid "Verkäufer dürfen Treuhand nutzen. Aus: Treuhand-Funktionen im Dashboard und auf Produktseiten sind für Verkäufer nicht sichtbar."
-msgstr ""
+msgstr "Verkäufer dürfen Treuhand nutzen. Aus: Treuhand-Funktionen im Dashboard und auf Produktseiten sind für Verkäufer nicht sichtbar."
 
 #: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
 msgid "Treuhand nur für Administratoren"
-msgstr ""
+msgstr "Treuhand nur für Administratoren"
 
 #: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
 msgid "Blendet Treuhand-Seite, Einstellungen und Produktaktivierung für Verkäufer aus, während Administratoren sie weiter sehen."
-msgstr ""
+msgstr "Blendet Treuhand-Seite, Einstellungen und Produktaktivierung für Verkäufer aus, während Administratoren sie weiter sehen."
 
 #: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
 msgid "Die Fallback-Auszahlungsadresse ist keine gültige Bech32-Adresse (bc1…) und wurde nicht übernommen."
-msgstr ""
+msgstr "Die Fallback-Auszahlungsadresse ist keine gültige Bech32-Adresse (bc1…) und wurde nicht übernommen."
 
 #: plugins/sk-core/modules/sk-escrow/includes/class-escrow-settings.php
 msgid "Nicht-verwahrende On-Chain-Treuhand: Käufer, Verkäufer und Marktplatz halten je einen Schlüssel, ausgezahlt wird mit zwei von drei Signaturen."
-msgstr ""
+msgstr "Nicht-verwahrende On-Chain-Treuhand: Käufer, Verkäufer und Marktplatz halten je einen Schlüssel, ausgezahlt wird mit zwei von drei Signaturen."
 
 #: plugins/sk-core/modules/sk-escrow/includes/class-escrow-settings.php
 msgid "Einstellungen öffnen"
-msgstr ""
+msgstr "Einstellungen öffnen"
 
 #: plugins/sk-core/modules/sk-escrow/includes/class-escrow-settings.php
 msgid "Escrows"
-msgstr ""
+msgstr "Escrows"
 
 #: plugins/sk-core/modules/sk-escrow/includes/class-escrow-settings.php
 msgid "Disputes"
-msgstr ""
+msgstr "Disputes"
 
 #: plugins/sk-core/modules/sk-escrow/includes/class-escrow-settings.php
 msgid "Bitte eine gültige Fallback-Adresse angeben."
-msgstr ""
+msgstr "Bitte eine gültige Fallback-Adresse angeben."
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Passwort: mindestens 8 Zeichen."
-msgstr ""
+msgstr "Passwort: mindestens 8 Zeichen."
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Die Passwörter stimmen nicht überein."
-msgstr ""
+msgstr "Die Passwörter stimmen nicht überein."
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Bitte bestätige, dass du die 12 Wörter gesichert hast."
-msgstr ""
+msgstr "Bitte bestätige, dass du die 12 Wörter gesichert hast."
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Schlüssel verschlüsselt gespeichert, xpub eingetragen: %s"
-msgstr ""
+msgstr "Schlüssel verschlüsselt gespeichert, xpub eingetragen: %s"
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Dein Schlüssel für diesen Handel liegt verschlüsselt in diesem Browser."
-msgstr ""
+msgstr "Dein Schlüssel für diesen Handel liegt verschlüsselt in diesem Browser."
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Kein Schlüssel in diesem Browser: 12 Wörter importieren oder mit der Hardware-Wallet über das PSBT-Feld signieren."
-msgstr ""
+msgstr "Kein Schlüssel in diesem Browser: 12 Wörter importieren oder mit der Hardware-Wallet über das PSBT-Feld signieren."
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Adresse geprüft: Sie ergibt sich aus dem 2-von-3-Descriptor, und dein Schlüssel ist enthalten."
-msgstr ""
+msgstr "Adresse geprüft: Sie ergibt sich aus dem 2-von-3-Descriptor, und dein Schlüssel ist enthalten."
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "WARNUNG: Die angezeigte Adresse passt nicht zum Descriptor oder dein Schlüssel fehlt darin. Nicht einzahlen, Support kontaktieren."
-msgstr ""
+msgstr "WARNUNG: Die angezeigte Adresse passt nicht zum Descriptor oder dein Schlüssel fehlt darin. Nicht einzahlen, Support kontaktieren."
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Descriptor konnte nicht geprüft werden: %s"
-msgstr ""
+msgstr "Descriptor konnte nicht geprüft werden: %s"
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Bitte zuerst die PSBT erstellen."
-msgstr ""
+msgstr "Bitte zuerst die PSBT erstellen."
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "PSBT konnte nicht gelesen werden: %s"
-msgstr ""
+msgstr "PSBT konnte nicht gelesen werden: %s"
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Diese Transaktion zahlt an:"
-msgstr ""
+msgstr "Diese Transaktion zahlt an:"
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Gebühr: %s sats"
-msgstr ""
+msgstr "Gebühr: %s sats"
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "sats"
-msgstr ""
+msgstr "sats"
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Signiert. Jetzt die PSBT hochladen."
-msgstr ""
+msgstr "Signiert. Jetzt die PSBT hochladen."
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Falsches Passwort."
-msgstr ""
+msgstr "Falsches Passwort."
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Signieren fehlgeschlagen: %s"
-msgstr ""
+msgstr "Signieren fehlgeschlagen: %s"
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Wörter importiert und verschlüsselt gespeichert."
-msgstr ""
+msgstr "Wörter importiert und verschlüsselt gespeichert."
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Diese Wörter gehören nicht zu diesem Schlüssel."
-msgstr ""
+msgstr "Diese Wörter gehören nicht zu diesem Schlüssel."
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Ungültige Wortliste."
-msgstr ""
+msgstr "Ungültige Wortliste."
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Schlüssel im Browser erzeugen"
-msgstr ""
+msgstr "Schlüssel im Browser erzeugen"
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "oder den xpub deiner Hardware-Wallet oben eintragen."
-msgstr ""
+msgstr "oder den xpub deiner Hardware-Wallet oben eintragen."
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Die 12 Wörter werden nur in diesem Browser gespeichert, verschlüsselt mit deinem Passwort. Schreibe sie jetzt auf: Ohne sie kannst du auf einem anderen Gerät nicht signieren. Verlierst du sie, bleibt die Auszahlung über Marktplatz und Gegenpartei möglich. Dieser Code kommt vom Marktplatz; wer dem Server nicht vertraut, signiert stattdessen mit einer Hardware-Wallet."
-msgstr ""
+msgstr "Die 12 Wörter werden nur in diesem Browser gespeichert, verschlüsselt mit deinem Passwort. Schreibe sie jetzt auf: Ohne sie kannst du auf einem anderen Gerät nicht signieren. Verlierst du sie, bleibt die Auszahlung über Marktplatz und Gegenpartei möglich. Dieser Code kommt vom Marktplatz; wer dem Server nicht vertraut, signiert stattdessen mit einer Hardware-Wallet."
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Passwort (mindestens 8 Zeichen)"
-msgstr ""
+msgstr "Passwort (mindestens 8 Zeichen)"
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Passwort wiederholen"
-msgstr ""
+msgstr "Passwort wiederholen"
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Ich habe die 12 Wörter aufgeschrieben und sicher verwahrt."
-msgstr ""
+msgstr "Ich habe die 12 Wörter aufgeschrieben und sicher verwahrt."
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Schlüssel verwenden"
-msgstr ""
+msgstr "Schlüssel verwenden"
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Abbrechen"
-msgstr ""
+msgstr "Abbrechen"
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Im Browser signieren"
-msgstr ""
+msgstr "Im Browser signieren"
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Passwort"
-msgstr ""
+msgstr "Passwort"
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Signieren"
-msgstr ""
+msgstr "Signieren"
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "12 Wörter anzeigen"
-msgstr ""
+msgstr "12 Wörter anzeigen"
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "12 Wörter importieren"
-msgstr ""
+msgstr "12 Wörter importieren"
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "12 Wörter, durch Leerzeichen getrennt"
-msgstr ""
+msgstr "12 Wörter, durch Leerzeichen getrennt"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Nicht eingeloggt."
-msgstr ""
+msgstr "Nicht eingeloggt."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Zu viele Anfragen, bitte kurz warten."
-msgstr ""
+msgstr "Zu viele Anfragen, bitte kurz warten."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Treuhand nicht gefunden."
-msgstr ""
+msgstr "Treuhand nicht gefunden."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Keine Berechtigung für diesen Handel."
-msgstr ""
+msgstr "Keine Berechtigung für diesen Handel."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Dieser Schritt ist im aktuellen Zustand nicht möglich."
-msgstr ""
+msgstr "Dieser Schritt ist im aktuellen Zustand nicht möglich."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Keine Berechtigung für diesen Schritt."
-msgstr ""
+msgstr "Keine Berechtigung für diesen Schritt."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Die Treuhand ist derzeit nicht verfügbar."
-msgstr ""
+msgstr "Die Treuhand ist derzeit nicht verfügbar."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Ungültiger xpub. Bitte einen Schlüssel erzeugen oder einen Mainnet-xpub eintragen."
-msgstr ""
+msgstr "Ungültiger xpub. Bitte einen Schlüssel erzeugen oder einen Mainnet-xpub eintragen."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Bitte eine gültige Auszahlungsadresse (bc1…) angeben."
-msgstr ""
+msgstr "Bitte eine gültige Auszahlungsadresse (bc1…) angeben."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Der Marktplatz-Schlüssel ist nicht korrekt konfiguriert."
-msgstr ""
+msgstr "Der Marktplatz-Schlüssel ist nicht korrekt konfiguriert."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Die drei Schlüssel müssen verschieden sein."
-msgstr ""
+msgstr "Die drei Schlüssel müssen verschieden sein."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Escrow-API hat keine Adresse geliefert."
-msgstr ""
+msgstr "Escrow-API hat keine Adresse geliefert."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Descriptor der Escrow-API passt nicht zu den Schlüsseln."
-msgstr ""
+msgstr "Descriptor der Escrow-API passt nicht zu den Schlüsseln."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Anfrage wurde bereits bearbeitet."
-msgstr ""
+msgstr "Anfrage wurde bereits bearbeitet."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Angenommen. Der Käufer wurde über die Einzahlungsadresse informiert."
-msgstr ""
+msgstr "Angenommen. Der Käufer wurde über die Einzahlungsadresse informiert."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Vom Verkäufer abgelehnt"
-msgstr ""
+msgstr "Vom Verkäufer abgelehnt"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Anfrage abgelehnt."
-msgstr ""
+msgstr "Anfrage abgelehnt."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Vom Käufer zurückgezogen"
-msgstr ""
+msgstr "Vom Käufer zurückgezogen"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Anfrage zurückgezogen."
-msgstr ""
+msgstr "Anfrage zurückgezogen."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Frist abgelaufen (automatisch)"
-msgstr ""
+msgstr "Frist abgelaufen (automatisch)"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Dieser Handel ist bereits abgeschlossen."
-msgstr ""
+msgstr "Dieser Handel ist bereits abgeschlossen."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Du hast bereits signiert. Die Gegenpartei ist dran."
-msgstr ""
+msgstr "Du hast bereits signiert. Die Gegenpartei ist dran."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Für diesen Handel läuft bereits eine andere Transaktion."
-msgstr ""
+msgstr "Für diesen Handel läuft bereits eine andere Transaktion."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Im Dispute entscheidet der Marktplatz, welche Transaktion gebaut wird."
-msgstr ""
+msgstr "Im Dispute entscheidet der Marktplatz, welche Transaktion gebaut wird."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "PSBT konnte nicht erstellt werden."
-msgstr ""
+msgstr "PSBT konnte nicht erstellt werden."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Ungültige PSBT (Base64 erwartet)."
-msgstr ""
+msgstr "Ungültige PSBT (Base64 erwartet)."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Bitte zuerst die PSBT abrufen."
-msgstr ""
+msgstr "Bitte zuerst die PSBT abrufen."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "PSBT konnte nicht zusammengeführt werden."
-msgstr ""
+msgstr "PSBT konnte nicht zusammengeführt werden."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Signatur gespeichert. Die Gegenpartei muss noch signieren."
-msgstr ""
+msgstr "Signatur gespeichert. Die Gegenpartei muss noch signieren."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Beide Signaturen vorhanden, Transaktion gesendet."
-msgstr ""
+msgstr "Beide Signaturen vorhanden, Transaktion gesendet."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Finalisierung fehlgeschlagen."
-msgstr ""
+msgstr "Finalisierung fehlgeschlagen."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Actions.php
 msgid "Broadcast fehlgeschlagen."
-msgstr ""
+msgstr "Broadcast fehlgeschlagen."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Cron.php
 msgid "Abgelaufen: nicht rechtzeitig angenommen"
-msgstr ""
+msgstr "Abgelaufen: nicht rechtzeitig angenommen"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Beim Kauf über Treuhand liegt das Geld auf einer 2-von-3-Multisig-Adresse (Käufer, Verkäufer, Marktplatz). Die Schlüssel entstehen pro Handel im Browser; hier legst du nur fest, ob du Treuhand anbietest und wohin Auszahlungen und Erstattungen gehen."
-msgstr ""
+msgstr "Beim Kauf über Treuhand liegt das Geld auf einer 2-von-3-Multisig-Adresse (Käufer, Verkäufer, Marktplatz). Die Schlüssel entstehen pro Handel im Browser; hier legst du nur fest, ob du Treuhand anbietest und wohin Auszahlungen und Erstattungen gehen."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Der Marktplatz hat die Treuhand derzeit nicht freigeschaltet. Deine Einstellungen werden gespeichert und gelten, sobald sie aktiv ist."
-msgstr ""
+msgstr "Der Marktplatz hat die Treuhand derzeit nicht freigeschaltet. Deine Einstellungen werden gespeichert und gelten, sobald sie aktiv ist."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Treuhand für meine Inserate anbieten"
-msgstr ""
+msgstr "Treuhand für meine Inserate anbieten"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Käufer sehen dann im Sofortkauf die Zahlart „Treuhand“. Jede Anfrage musst du unter „Verkäufe“ annehmen, dabei entsteht dein Schlüssel für diesen Handel."
-msgstr ""
+msgstr "Käufer sehen dann im Sofortkauf die Zahlart „Treuhand“. Jede Anfrage musst du unter „Verkäufe“ annehmen, dabei entsteht dein Schlüssel für diesen Handel."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Auszahlungsadresse als Verkäufer (bc1…)"
-msgstr ""
+msgstr "Auszahlungsadresse als Verkäufer (bc1…)"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Dorthin geht die Auszahlung, wenn der Käufer den Erhalt bestätigt hat. Beim Annehmen einer Anfrage kannst du sie noch ändern."
-msgstr ""
+msgstr "Dorthin geht die Auszahlung, wenn der Käufer den Erhalt bestätigt hat. Beim Annehmen einer Anfrage kannst du sie noch ändern."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Rückerstattungsadresse als Käufer (bc1…)"
-msgstr ""
+msgstr "Rückerstattungsadresse als Käufer (bc1…)"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Wird bei einer Treuhand-Anfrage vorgeschlagen und kann dort geändert werden."
-msgstr ""
+msgstr "Wird bei einer Treuhand-Anfrage vorgeschlagen und kann dort geändert werden."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Ungültiger Sicherheits-Token."
-msgstr ""
+msgstr "Ungültiger Sicherheits-Token."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Ungültige Bitcoin-Adresse, nicht übernommen."
-msgstr ""
+msgstr "Ungültige Bitcoin-Adresse, nicht übernommen."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Ohne gültige Auszahlungsadresse lässt sich die Treuhand nicht anbieten."
-msgstr ""
+msgstr "Ohne gültige Auszahlungsadresse lässt sich die Treuhand nicht anbieten."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Treuhand-Einstellungen gespeichert."
-msgstr ""
+msgstr "Treuhand-Einstellungen gespeichert."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Zum Annehmen erzeugst du einen Schlüssel nur für diesen Handel und bestätigst deine Auszahlungsadresse. Danach erhält der Käufer die Einzahlungsadresse."
-msgstr ""
+msgstr "Zum Annehmen erzeugst du einen Schlüssel nur für diesen Handel und bestätigst deine Auszahlungsadresse. Danach erhält der Käufer die Einzahlungsadresse."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Auszahlungsadresse (bc1…)"
-msgstr ""
+msgstr "Auszahlungsadresse (bc1…)"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Dein Treuhand-Schlüssel (xpub)"
-msgstr ""
+msgstr "Dein Treuhand-Schlüssel (xpub)"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Anfrage annehmen"
-msgstr ""
+msgstr "Anfrage annehmen"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Anfrage zurückziehen"
-msgstr ""
+msgstr "Anfrage zurückziehen"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Einzuzahlen: %s sats"
-msgstr ""
+msgstr "Einzuzahlen: %s sats"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "(Preis %1$s + Reserve für die Netzwerkgebühr %2$s)"
-msgstr ""
+msgstr "(Preis %1$s + Reserve für die Netzwerkgebühr %2$s)"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Adresse kopieren"
-msgstr ""
+msgstr "Adresse kopieren"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "In Wallet öffnen"
-msgstr ""
+msgstr "In Wallet öffnen"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Der Käufer zahlt jetzt ein. Sobald die Einzahlung bestätigt ist, erscheint das hier und im Chat."
-msgstr ""
+msgstr "Der Käufer zahlt jetzt ein. Sobald die Einzahlung bestätigt ist, erscheint das hier und im Chat."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "In der Treuhand: %s sats"
-msgstr ""
+msgstr "In der Treuhand: %s sats"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Erhalten – Auszahlung freigeben"
-msgstr ""
+msgstr "Erhalten – Auszahlung freigeben"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Erstatten"
-msgstr ""
+msgstr "Erstatten"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Erstattung signieren"
-msgstr ""
+msgstr "Erstattung signieren"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Auszahlung signieren"
-msgstr ""
+msgstr "Auszahlung signieren"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Deine Signatur liegt vor. Es fehlt noch die des %s."
-msgstr ""
+msgstr "Deine Signatur liegt vor. Es fehlt noch die des %s."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Käufers"
-msgstr ""
+msgstr "Käufers"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Verkäufers"
-msgstr ""
+msgstr "Verkäufers"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Jetzt signieren"
-msgstr ""
+msgstr "Jetzt signieren"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Dashboard.php
 msgid "Transaktion ansehen"
-msgstr ""
+msgstr "Transaktion ansehen"
 
 #: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
 msgid "Treuhand freigeschaltet"
-msgstr ""
+msgstr "Treuhand freigeschaltet"
 
 #: plugins/sk-core/modules/sk-escrow/includes/EscrowSettings.php
 msgid "Aus: Die Zahlart „Treuhand“ erscheint im Sofortkauf nicht, offene Treuhand-Vorgänge laufen weiter. Setzt API-Zugang und Escrow-xpub voraus."
-msgstr ""
+msgstr "Aus: Die Zahlart „Treuhand“ erscheint im Sofortkauf nicht, offene Treuhand-Vorgänge laufen weiter. Setzt API-Zugang und Escrow-xpub voraus."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Notify.php
 msgid "Treuhand-Anfrage: %s"
-msgstr ""
+msgstr "Treuhand-Anfrage: %s"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Notify.php
 msgid "Ein Käufer möchte %1$s über die Treuhand kaufen (%2$s). Bitte nimm die Anfrage unter „Verkäufe“ an oder lehne sie ab. Unbeantwortete Anfragen laufen nach %3$d Tagen ab."
-msgstr ""
+msgstr "Ein Käufer möchte %1$s über die Treuhand kaufen (%2$s). Bitte nimm die Anfrage unter „Verkäufe“ an oder lehne sie ab. Unbeantwortete Anfragen laufen nach %3$d Tagen ab."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Notify.php
 msgid "Treuhand angenommen: %s"
-msgstr ""
+msgstr "Treuhand angenommen: %s"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Notify.php
 msgid "Der Verkäufer hat deine Treuhand-Anfrage für %1$s angenommen. Bitte zahle %2$s unter „Käufe“ ein."
-msgstr ""
+msgstr "Der Verkäufer hat deine Treuhand-Anfrage für %1$s angenommen. Bitte zahle %2$s unter „Käufe“ ein."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Notify.php
 msgid "Treuhand-Anfrage abgelehnt."
-msgstr ""
+msgstr "Treuhand-Anfrage abgelehnt."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Notify.php
 msgid "Treuhand-Anfrage abgelehnt: %s"
-msgstr ""
+msgstr "Treuhand-Anfrage abgelehnt: %s"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Notify.php
 msgid "Treuhand-Anfrage zurückgezogen."
-msgstr ""
+msgstr "Treuhand-Anfrage zurückgezogen."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Notify.php
 msgid "Treuhand-Anfrage abgelaufen: Der Verkäufer hat nicht rechtzeitig angenommen."
-msgstr ""
+msgstr "Treuhand-Anfrage abgelaufen: Der Verkäufer hat nicht rechtzeitig angenommen."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Notify.php
 msgid "Einzahlung in die Treuhand bestätigt (%s). Der Verkäufer kann jetzt liefern."
-msgstr ""
+msgstr "Einzahlung in die Treuhand bestätigt (%s). Der Verkäufer kann jetzt liefern."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Notify.php
 msgid "Treuhand eingezahlt: %s"
-msgstr ""
+msgstr "Treuhand eingezahlt: %s"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Notify.php
 msgid "Der Käufer hat den Erhalt bestätigt und die Auszahlung signiert. Bitte unter „Verkäufe“ gegenzeichnen, dann wird ausgezahlt."
-msgstr ""
+msgstr "Der Käufer hat den Erhalt bestätigt und die Auszahlung signiert. Bitte unter „Verkäufe“ gegenzeichnen, dann wird ausgezahlt."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Notify.php
 msgid "Auszahlung freigegeben: %s"
-msgstr ""
+msgstr "Auszahlung freigegeben: %s"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Notify.php
 msgid "Der Verkäufer erstattet den Betrag. Bitte unter „Käufe“ gegenzeichnen, dann geht die Erstattung an deine Adresse."
-msgstr ""
+msgstr "Der Verkäufer erstattet den Betrag. Bitte unter „Käufe“ gegenzeichnen, dann geht die Erstattung an deine Adresse."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Notify.php
 msgid "Erstattung angeboten: %s"
-msgstr ""
+msgstr "Erstattung angeboten: %s"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Notify.php
 msgid "Erstattung gesendet. Transaktion: %s"
-msgstr ""
+msgstr "Erstattung gesendet. Transaktion: %s"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Notify.php
 msgid "Auszahlung gesendet. Transaktion: %s"
-msgstr ""
+msgstr "Auszahlung gesendet. Transaktion: %s"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Notify.php
 msgid "Treuhand abgeschlossen: %s"
-msgstr ""
+msgstr "Treuhand abgeschlossen: %s"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Notify.php
 msgid "Problem gemeldet. Die Treuhand ist eingefroren, der Marktplatz prüft und entscheidet über Auszahlung oder Erstattung."
-msgstr ""
+msgstr "Problem gemeldet. Die Treuhand ist eingefroren, der Marktplatz prüft und entscheidet über Auszahlung oder Erstattung."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Notify.php
 msgid "Problem gemeldet: %s"
-msgstr ""
+msgstr "Problem gemeldet: %s"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
 msgid "Kauf über Treuhand"
-msgstr ""
+msgstr "Kauf über Treuhand"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
 msgid "Dein Geld liegt auf einer 2-von-3-Multisig-Adresse, zu der du, der Verkäufer und der Marktplatz je einen Schlüssel halten. Ausgezahlt wird erst, wenn du den Erhalt bestätigst; bei Problemen entscheidet der Marktplatz. Zuerst muss der Verkäufer deine Anfrage annehmen, dann bekommst du die Einzahlungsadresse."
-msgstr ""
+msgstr "Dein Geld liegt auf einer 2-von-3-Multisig-Adresse, zu der du, der Verkäufer und der Marktplatz je einen Schlüssel halten. Ausgezahlt wird erst, wenn du den Erhalt bestätigst; bei Problemen entscheidet der Marktplatz. Zuerst muss der Verkäufer deine Anfrage annehmen, dann bekommst du die Einzahlungsadresse."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
 msgid "Deine Rückerstattungsadresse (bc1…)"
-msgstr ""
+msgstr "Deine Rückerstattungsadresse (bc1…)"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
 msgid "Treuhand-Anfrage senden"
-msgstr ""
+msgstr "Treuhand-Anfrage senden"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
 msgid "Dieses Inserat ist nicht kaufbar."
-msgstr ""
+msgstr "Dieses Inserat ist nicht kaufbar."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
 msgid "Zu viele Versuche. Bitte kurz warten."
-msgstr ""
+msgstr "Zu viele Versuche. Bitte kurz warten."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
 msgid "Dieser Anbieter bietet keine Treuhand an."
-msgstr ""
+msgstr "Dieser Anbieter bietet keine Treuhand an."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
 msgid "Bitte eine Ausführung wählen."
-msgstr ""
+msgstr "Bitte eine Ausführung wählen."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
 msgid "Inserat hat keinen gültigen Preis."
-msgstr ""
+msgstr "Inserat hat keinen gültigen Preis."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
 msgid "Bitte Lieferadresse oder Hinweis angeben."
-msgstr ""
+msgstr "Bitte Lieferadresse oder Hinweis angeben."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
 msgid "Bitte eine gültige Rückerstattungsadresse (bc1…) angeben."
-msgstr ""
+msgstr "Bitte eine gültige Rückerstattungsadresse (bc1…) angeben."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
 msgid "Deine Anfrage läuft bereits. Der Verkäufer muss sie annehmen."
-msgstr ""
+msgstr "Deine Anfrage läuft bereits. Der Verkäufer muss sie annehmen."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
 msgid "Anfrage konnte nicht gespeichert werden."
-msgstr ""
+msgstr "Anfrage konnte nicht gespeichert werden."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Purchase.php
 msgid "Anfrage gesendet. Sobald der Verkäufer annimmt, findest du die Einzahlungsadresse unter „Käufe“ und im Chat."
-msgstr ""
+msgstr "Anfrage gesendet. Sobald der Verkäufer annimmt, findest du die Einzahlungsadresse unter „Käufe“ und im Chat."
 
 #: plugins/sk-core/modules/sk-escrow/includes/Rows.php
 msgid "Anfrage offen – der Verkäufer muss annehmen"
-msgstr ""
+msgstr "Anfrage offen – der Verkäufer muss annehmen"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Rows.php
 msgid "Angenommen – Einzahlung in die Treuhand offen"
-msgstr ""
+msgstr "Angenommen – Einzahlung in die Treuhand offen"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Rows.php
 msgid "Einzahlung bestätigt – Ware kann verschickt werden"
-msgstr ""
+msgstr "Einzahlung bestätigt – Ware kann verschickt werden"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Rows.php
 msgid "Abgeschlossen – Auszahlung gesendet"
-msgstr ""
+msgstr "Abgeschlossen – Auszahlung gesendet"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Rows.php
 msgid "Erhalt bestätigt – Auszahlung wartet auf die zweite Signatur"
-msgstr ""
+msgstr "Erhalt bestätigt – Auszahlung wartet auf die zweite Signatur"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Rows.php
 msgid "Erstattet"
-msgstr ""
+msgstr "Erstattet"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Rows.php
 msgid "Problem gemeldet – der Marktplatz entscheidet"
-msgstr ""
+msgstr "Problem gemeldet – der Marktplatz entscheidet"
 
 #: plugins/sk-core/modules/sk-escrow/includes/Rows.php
 msgid "Anfrage beendet"
-msgstr ""
+msgstr "Anfrage beendet"
 
 #: plugins/sk-core/modules/sk-escrow/includes/class-escrow-admin.php
 msgid "Der Marktplatz hat den Dispute geschlossen. Käufer und Verkäufer können den Handel normal abschliessen."
-msgstr ""
+msgstr "Der Marktplatz hat den Dispute geschlossen. Käufer und Verkäufer können den Handel normal abschliessen."
 
 #: plugins/sk-core/modules/sk-escrow/includes/class-escrow-admin.php
 msgid "Der Marktplatz hat entschieden: Erstattung an den Käufer. Der Käufer signiert unter „Käufe“, der Marktplatz zeichnet gegen."
-msgstr ""
+msgstr "Der Marktplatz hat entschieden: Erstattung an den Käufer. Der Käufer signiert unter „Käufe“, der Marktplatz zeichnet gegen."
 
 #: plugins/sk-core/modules/sk-escrow/includes/class-escrow-admin.php
 msgid "Der Marktplatz hat entschieden: Auszahlung an den Verkäufer. Der Verkäufer signiert unter „Verkäufe“, der Marktplatz zeichnet gegen."
-msgstr ""
+msgstr "Der Marktplatz hat entschieden: Auszahlung an den Verkäufer. Der Verkäufer signiert unter „Verkäufe“, der Marktplatz zeichnet gegen."
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Signiert und übermittelt."
-msgstr ""
+msgstr "Signiert und übermittelt."
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Bitte eine gültige Bitcoin-Adresse (bc1…) angeben."
-msgstr ""
+msgstr "Bitte eine gültige Bitcoin-Adresse (bc1…) angeben."
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Bitte zuerst einen Schlüssel erzeugen oder einen xpub eintragen."
-msgstr ""
+msgstr "Bitte zuerst einen Schlüssel erzeugen oder einen xpub eintragen."
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Bitte warten …"
-msgstr ""
+msgstr "Bitte warten …"
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Verbindungsfehler. Bitte erneut versuchen."
-msgstr ""
+msgstr "Verbindungsfehler. Bitte erneut versuchen."
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Du bestätigst den Erhalt und gibst die Auszahlung an den Verkäufer frei. Das lässt sich nicht rückgängig machen."
-msgstr ""
+msgstr "Du bestätigst den Erhalt und gibst die Auszahlung an den Verkäufer frei. Das lässt sich nicht rückgängig machen."
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Du erstattest den vollen Betrag abzüglich Netzwerkgebühr an den Käufer."
-msgstr ""
+msgstr "Du erstattest den vollen Betrag abzüglich Netzwerkgebühr an den Käufer."
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Anfrage wirklich ablehnen?"
-msgstr ""
+msgstr "Anfrage wirklich ablehnen?"
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Anfrage wirklich zurückziehen?"
-msgstr ""
+msgstr "Anfrage wirklich zurückziehen?"
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Kopiert"
-msgstr ""
+msgstr "Kopiert"
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Stattdessen mit Hardware-Wallet signieren"
-msgstr ""
+msgstr "Stattdessen mit Hardware-Wallet signieren"
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "PSBT (Base64) kopieren, in der Wallet signieren und die signierte PSBT hier einfügen."
-msgstr ""
+msgstr "PSBT (Base64) kopieren, in der Wallet signieren und die signierte PSBT hier einfügen."
 
 #: plugins/sk-core/modules/sk-escrow/includes/helpers.php
 msgid "Signierte PSBT übermitteln"
-msgstr ""
+msgstr "Signierte PSBT übermitteln"
 
 #: plugins/sk-core/modules/sk-payments/includes/ProductPage.php
 msgid "Wohin geht die Bestellung?"
-msgstr ""
+msgstr "Wohin geht die Bestellung?"
 
 #: plugins/sk-core/modules/sk-payments/includes/ProductPage.php
 msgid "Diese Angabe geht in den Chat mit dem Anbieter. Bei digitalen Artikeln reicht ein kurzer Hinweis."
-msgstr ""
+msgstr "Diese Angabe geht in den Chat mit dem Anbieter. Bei digitalen Artikeln reicht ein kurzer Hinweis."
 
 #: plugins/sk-core/modules/sk-payments/includes/ProductPage.php
 msgid "Name, Strasse, PLZ und Ort — oder ein Hinweis"
-msgstr ""
+msgstr "Name, Strasse, PLZ und Ort — oder ein Hinweis"
 
 #: plugins/sk-core/modules/sk-payments/includes/ProductPage.php
 msgid "Weiter zur Zahlung"
-msgstr ""
+msgstr "Weiter zur Zahlung"
 
 #: plugins/sk-core/modules/sk-payments/includes/ProductPage.php
 msgid "Lightning-Zahlung"
-msgstr ""
+msgstr "Lightning-Zahlung"
 
 #: plugins/sk-core/modules/sk-payments/includes/ProductPage.php
 msgid "Schliessen"
-msgstr ""
+msgstr "Schliessen"
 
 #: plugins/sk-core/modules/sk-payments/includes/ProductPage.php
 msgid "Welche Ausführung?"
-msgstr ""
+msgstr "Welche Ausführung?"
 
 #: plugins/sk-core/modules/sk-payments/includes/ProductPage.php
 msgid "Treuhand (2-von-3 Multisig, Freigabe nach Erhalt)"
-msgstr ""
+msgstr "Treuhand (2-von-3 Multisig, Freigabe nach Erhalt)"
 
 #: plugins/sk-core/modules/sk-payments/includes/Notify.php
 msgid "Neue Bestellung: %1$s"
@@ -14182,39 +14142,39 @@ msgstr ""
 
 #: plugins/sk-core/modules/sk-zaps/includes/ZapButton.php
 msgid "Ungültiger Betrag."
-msgstr ""
+msgstr "Ungültiger Betrag."
 
 #: plugins/sk-core/modules/sk-zaps/includes/ZapButton.php
 msgid "Zu viele Zaps, bitte kurz warten."
-msgstr ""
+msgstr "Zu viele Zaps, bitte kurz warten."
 
 #: plugins/sk-core/modules/sk-zaps/includes/ZapButton.php
 msgid "Keine Nostr-Wallet-Connect-Verbindung in deinen Shop-Einstellungen."
-msgstr ""
+msgstr "Keine Nostr-Wallet-Connect-Verbindung in deinen Shop-Einstellungen."
 
 #: plugins/sk-core/modules/sk-zaps/includes/ZapButton.php
 msgid "Tageslimit von %s Sats für Zaps über die verbundene Wallet erreicht."
-msgstr ""
+msgstr "Tageslimit von %s Sats für Zaps über die verbundene Wallet erreicht."
 
 #: plugins/sk-core/modules/sk-zaps/includes/ZapButton.php
 msgid "Dieser Anbieter kann keine Zaps empfangen."
-msgstr ""
+msgstr "Dieser Anbieter kann keine Zaps empfangen."
 
 #: plugins/sk-core/modules/sk-zaps/includes/ZapButton.php
 msgid "Lightning-Adresse konnte nicht aufgelöst werden."
-msgstr ""
+msgstr "Lightning-Adresse konnte nicht aufgelöst werden."
 
 #: plugins/sk-core/modules/sk-zaps/includes/ZapButton.php
 msgid "Betrag muss zwischen %1$d und %2$d Sats liegen."
-msgstr ""
+msgstr "Betrag muss zwischen %1$d und %2$d Sats liegen."
 
 #: plugins/sk-core/modules/sk-zaps/includes/ZapButton.php
 msgid "Invoice-Betrag stimmt nicht mit dem Zap überein."
-msgstr ""
+msgstr "Invoice-Betrag stimmt nicht mit dem Zap überein."
 
 #: plugins/sk-core/modules/sk-zaps/includes/ZapButton.php
 msgid "Zahlung fehlgeschlagen: %s"
-msgstr ""
+msgstr "Zahlung fehlgeschlagen: %s"
 
 #: plugins/sk-core/includes/Admin/Settings.php
 msgid "Wallet-Verbindungen für Anbieter"
@@ -14226,100 +14186,100 @@ msgstr ""
 
 #: plugins/sk-core/modules/sk-zaps/includes/ZapButton.php
 msgid "Wallet-Verbindungen sind auf dieser Seite deaktiviert."
-msgstr ""
+msgstr "Wallet-Verbindungen sind auf dieser Seite deaktiviert."
 
 #: plugins/sk-core/templates/settings/store-form.php
 msgid "Strasse und Hausnummer"
-msgstr ""
+msgstr "Strasse und Hausnummer"
 
 #: plugins/sk-core/templates/settings/store-form.php
 msgid "Musterstrasse 1"
-msgstr ""
+msgstr "Musterstrasse 1"
 
 #: plugins/sk-core/templates/settings/store-form.php
 msgid "Postleitzahl"
-msgstr ""
+msgstr "Postleitzahl"
 
 #: plugins/sk-core/templates/settings/store-form.php
 msgid "Ort"
-msgstr ""
+msgstr "Ort"
 
 #: plugins/sk-core/templates/settings/store-form.php
 msgid "Zürich"
-msgstr ""
+msgstr "Zürich"
 
 #: plugins/sk-core/templates/settings/store-form.php
 msgid "Land"
-msgstr ""
+msgstr "Land"
 
 #: plugins/sk-core/templates/settings/store-form.php
 msgid "— kein Land —"
-msgstr ""
+msgstr "— kein Land —"
 
 #: plugins/sk-core/templates/settings/store-form.php
 msgid "Adresse öffentlich anzeigen"
-msgstr ""
+msgstr "Adresse öffentlich anzeigen"
 
 #: plugins/sk-core/templates/settings/store-form.php
 msgid "Ohne Haken bleibt die Adresse nur für dich sichtbar. Öffentlich steht sie bei den Kontaktdaten unter deinem Banner."
-msgstr ""
+msgstr "Ohne Haken bleibt die Adresse nur für dich sichtbar. Öffentlich steht sie bei den Kontaktdaten unter deinem Banner."
 
 #: plugins/sk-core/includes/Dashboard/Modules/ContactDetails.php
 msgid "Kontakt konnte nicht geladen werden."
-msgstr ""
+msgstr "Kontakt konnte nicht geladen werden."
 
 #: plugins/sk-core/includes/Dashboard/Modules/ContactDetails.php
 msgid "Twitter/X"
-msgstr ""
+msgstr "Twitter/X"
 
 #: plugins/sk-core/includes/Dashboard/Modules/ContactDetails.php
 msgid "anzeigen"
-msgstr ""
+msgstr "anzeigen"
 
 #: plugins/sk-core/includes/Dashboard/Modules/ContactDetails.php
 msgid "Adresse"
-msgstr ""
+msgstr "Adresse"
 
 #: plugins/sk-core/includes/Dashboard/Modules/ContactDetails.php
 msgid "Zu viele Anfragen. Bitte kurz warten."
-msgstr ""
+msgstr "Zu viele Anfragen. Bitte kurz warten."
 
 #: plugins/sk-core/includes/Dashboard/Modules/ContactDetails.php
 msgid "Anbieter nicht gefunden."
-msgstr ""
+msgstr "Anbieter nicht gefunden."
 
 #: plugins/sk-core/includes/Dashboard/Modules/ContactDetails.php
 msgid "Dieser Kontaktweg ist nicht öffentlich."
-msgstr ""
+msgstr "Dieser Kontaktweg ist nicht öffentlich."
 
 #: plugins/sk-core/includes/Dashboard/Modules/ContactDetails.php
 msgid "Unbekannter Kontaktweg."
-msgstr ""
+msgstr "Unbekannter Kontaktweg."
 
 #: plugins/sk-core/includes/Dashboard/Modules/ContactDetails.php
 msgid "E-Mail anzeigen"
-msgstr ""
+msgstr "E-Mail anzeigen"
 
 #: plugins/sk-core/includes/Dashboard/Modules/ContactDetails.php
 msgid "Telegram anzeigen"
-msgstr ""
+msgstr "Telegram anzeigen"
 
 #: plugins/sk-core/includes/Dashboard/Modules/ContactDetails.php
 msgid "X/Twitter anzeigen"
-msgstr ""
+msgstr "X/Twitter anzeigen"
 
 #: plugins/sk-core/includes/Dashboard/Modules/ContactDetails.php
 msgid "Telefon anzeigen"
-msgstr ""
+msgstr "Telefon anzeigen"
 
 #: plugins/sk-core/includes/Dashboard/Modules/ContactDetails.php
 msgid "Nostr anzeigen"
-msgstr ""
+msgstr "Nostr anzeigen"
 
 #: plugins/sk-core/includes/Dashboard/Modules/ContactDetails.php
 msgid "Kontakt anzeigen"
-msgstr ""
+msgstr "Kontakt anzeigen"
 
 #: plugins/sk-core/includes/Dashboard/Modules/ContactDetails.php
 msgid "Bitte gib deinem Shop einen Namen — der automatisch vergebene zählt nicht."
-msgstr ""
+msgstr "Bitte gib deinem Shop einen Namen — der automatisch vergebene zählt nicht."
