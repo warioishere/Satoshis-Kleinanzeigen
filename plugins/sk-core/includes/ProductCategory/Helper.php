@@ -22,16 +22,6 @@ class Helper {
     }
 
     /**
-     * Returns 'true' if select any category option is turned on.
-     *
-     *
-     * @return boolean
-     */
-    public static function is_any_category_selection_enabled() {
-        return 'on' === sk_get_option( 'sk_any_category_selection', 'sk_selling', 'off' );
-    }
-
-    /**
      * Returns products category. If the category selection is single, it will return the first category of the product.
      * If the category selection is multiple, it will return all the categories of the product.
      * If the category selection is single and the product has multiple categories, it will return the first category.
@@ -111,11 +101,6 @@ class Helper {
             $terms = [];
         }
 
-        // If any category selection option is turned we don't need to generate chosen categories, all terms are also chosen category.
-        if ( self::is_any_category_selection_enabled() ) {
-            return $terms;
-        }
-
         foreach ( $terms as $term_id ) {
             $all_ancestors = get_ancestors( $term_id, 'product_cat' );
             $all_children  = get_term_children( $term_id, 'product_cat' );
@@ -169,21 +154,11 @@ class Helper {
             return;
         }
 
-        /**
-         * If enabled any one middle category in sk product multi-step category selection.
-         */
-        $any_category_selection = self::is_any_category_selection_enabled();
-
         $all_ancestors = [];
 
-        // If category middle selection is true, then we will save only the chosen categories or we will save all the ancestors.
-        if ( $any_category_selection ) {
-            $all_ancestors = $chosen_categories;
-        } else {
-            // we need to assign all ancestor of chosen category to add to the given product
-            foreach ( $chosen_categories as $term_id ) {
-                $all_ancestors = array_merge( $all_ancestors, get_ancestors( $term_id, 'product_cat' ), [ $term_id ] );
-            }
+        // we need to assign all ancestor of chosen category to add to the given product
+        foreach ( $chosen_categories as $term_id ) {
+            $all_ancestors = array_merge( $all_ancestors, get_ancestors( $term_id, 'product_cat' ), [ $term_id ] );
         }
 
         // save chosen cat to database
@@ -241,7 +216,6 @@ class Helper {
         $data = [
             'categories' => $all_categories,
             'is_single'  => self::product_category_selection_is_single(),
-            'any_category_selection'  => self::is_any_category_selection_enabled(),
             'i18n'       => [
                 'select_a_category'  => __( 'Select a category', 'sk-core' ),
                 'duplicate_category' => __( 'This category has already been selected', 'sk-core' ),

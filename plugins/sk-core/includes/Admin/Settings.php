@@ -377,13 +377,6 @@ class Settings {
                     'default' => 'automatically',
                     'tooltip' => __( 'If checked, vendors will have permission to sell immediately after registration. If unchecked, newly registered vendors cannot add products until selling capability is activated manually from admin dashboard.', 'sk-core' ),
                 ],
-                'sk_any_category_selection'       => [
-                    'name'    => 'sk_any_category_selection',
-                    'label'   => __( 'Select any category', 'sk-core' ),
-                    'desc'    => __( 'Allow vendors to select any category while creating/editing products.', 'sk-core' ),
-                    'type'    => 'switcher',
-                    'default' => 'off',
-                ],
                 'enable_product_reviews' => [
                     'name'    => 'enable_product_reviews',
                     'label'   => __( 'Produkt-Rezensionen', 'sk-core' ),
