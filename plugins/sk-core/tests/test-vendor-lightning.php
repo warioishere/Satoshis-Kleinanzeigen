@@ -1,0 +1,82 @@
+<?php
+/**
+ * Settings::has_lightning — who can actually be paid over Lightning.
+ *
+ * Every account gets v/<id>@<host> from this site, published in its Nostr
+ * profile and synced back into the shop settings. That address is minted
+ * through the wallet the vendor connected, so on its own it is dead: counting
+ * it as a payment route produced zap buttons and Lightning purchases that could
+ * never succeed.
+ */
+
+require __DIR__ . '/bootstrap.php';
+
+defined( 'ABSPATH' ) || define( 'ABSPATH', '/tmp/' );
+
+const TEST_HOST = 'staging.satoshiskleinanzeigen.space';
+
+function home_url( $path = '' ) { return 'https://' . TEST_HOST . $path; }
+function wp_parse_url( $url, $component = -1 ) { return parse_url( $url, $component ); }
+function add_action( ...$a ) {}
+function add_filter( ...$a ) {}
+
+// The site-wide wallet switch. Flipped by one of the checks below.
+$GLOBALS['wallet_switch'] = 'on';
+function sk_get_option( $key, $group = '', $default = '' ) {
+	return $key === 'wallet_connections' ? $GLOBALS['wallet_switch'] : $default;
+}
+
+// Vendors, by what they have stored.
+$GLOBALS['vendors'] = [
+	1 => [ 'lightning_nwc' => true ],                                   // wallet connected
+	2 => [ 'lightning_lndhub' => true ],                                // other wallet
+	3 => [ 'lightning_address' => 'wario@getalby.com' ],                // own address elsewhere
+	4 => [ 'lightning_address' => 'v/4@' . TEST_HOST ],                 // ours, no wallet
+	5 => [ 'lightning_address' => 'v/5@' . TEST_HOST, 'lightning_nwc' => true ], // ours, with wallet
+	6 => [ 'lightning_address' => 'someshop@' . TEST_HOST ],            // ours by slug, no wallet
+	7 => [],                                                            // nothing at all
+];
+function get_user_meta( $user_id, $key = '', $single = false ) {
+	return $GLOBALS['vendors'][ $user_id ] ?? [];
+}
+
+require SK_TEST_PLUGIN . '/includes/Wallet/Settings.php';
+
+use SK\Core\Wallet\Settings;
+
+$fails = 0;
+function check( $label, $actual, $expected ) {
+	global $fails;
+	$ok = $actual === $expected;
+	if ( ! $ok ) { $fails++; }
+	printf( "%-6s %-52s got=%-10s expected=%s\n", $ok ? 'PASS' : 'FAIL', $label,
+		var_export( $actual, true ), var_export( $expected, true ) );
+}
+
+// --- who can be paid --------------------------------------------------------
+check( 'NWC connected', Settings::has_lightning( 1 ), true );
+check( 'LNDHub connected', Settings::has_lightning( 2 ), true );
+check( 'own address elsewhere', Settings::has_lightning( 3 ), true );
+check( 'our address, no wallet', Settings::has_lightning( 4 ), false );
+check( 'our address, wallet connected', Settings::has_lightning( 5 ), true );
+check( 'our address by slug, no wallet', Settings::has_lightning( 6 ), false );
+check( 'nothing stored', Settings::has_lightning( 7 ), false );
+
+// --- the switch still wins --------------------------------------------------
+$GLOBALS['wallet_switch'] = 'off';
+check( 'wallet connections off: NWC', Settings::has_lightning( 1 ), false );
+check( 'wallet connections off: foreign address', Settings::has_lightning( 3 ), false );
+$GLOBALS['wallet_switch'] = 'on';
+
+// --- which addresses are ours ----------------------------------------------
+check( 'v/<id> on our host', Settings::is_local_address( 'v/4@' . TEST_HOST ), true );
+check( 'slug on our host', Settings::is_local_address( 'someshop@' . TEST_HOST ), true );
+check( 'our host, other case', Settings::is_local_address( 'v/4@' . strtoupper( TEST_HOST ) ), true );
+check( 'foreign host', Settings::is_local_address( 'wario@getalby.com' ), false );
+check( 'our host as a suffix', Settings::is_local_address( 'x@' . TEST_HOST . '.evil.example' ), false );
+check( 'our host as a subdomain', Settings::is_local_address( 'x@mail.' . TEST_HOST ), false );
+check( 'no at sign', Settings::is_local_address( TEST_HOST ), false );
+check( 'empty', Settings::is_local_address( '' ), false );
+
+printf( "\n%s\n", $fails ? "{$fails} FAILURE(S)" : 'all checks passed' );
+exit( $fails ? 1 : 0 );

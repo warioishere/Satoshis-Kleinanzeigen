@@ -187,6 +187,25 @@ class NostrIdentity {
     }
 
     /**
+     * The Lightning address to publish, or '' when there is none.
+     *
+     * Our own v/<id>@<host> is minted through the wallet the vendor connected,
+     * so without one it is a dead address. It used to go out for every account,
+     * and NostrRelaySync wrote it straight back into the shop settings, which
+     * left a pile of vendors carrying an address that can never be paid.
+     */
+    private static function payable_address( int $user_id ): string {
+        if ( \SK\Core\Wallet\Settings::has_nwc( $user_id ) || \SK\Core\Wallet\Settings::has_lndhub( $user_id ) ) {
+            return 'v/' . $user_id . '@' . wp_parse_url( home_url(), PHP_URL_HOST );
+        }
+
+        // Their own address, wherever it is served — but not one of ours.
+        $own = \SK\Core\Wallet\Settings::get_lightning_address( $user_id );
+
+        return \SK\Core\Wallet\Settings::is_local_address( $own ) ? '' : $own;
+    }
+
+    /**
      * Publish Kind 0 profile event for user.
      */
     public static function publish_profile( int $user_id ): ?string {
@@ -200,7 +219,7 @@ class NostrIdentity {
             'picture' => get_user_meta( $user_id, 'nostr_avatar', true ) ?: '',
             'banner'  => $store_info['banner'] ?? '',
             'website' => function_exists( 'sk_get_store_url' ) ? sk_get_store_url( $user_id ) : '',
-            'lud16'   => 'v/' . $user_id . '@' . $domain,
+            'lud16'   => self::payable_address( $user_id ),
             'nip05'   => ( $user ? $user->user_nicename : $user_id ) . '@' . $domain,
         ];
 

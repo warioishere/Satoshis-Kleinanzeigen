@@ -99,20 +99,18 @@ class ZapButton {
         $lightning_address = $settings['lightning_address'] ?? '';
         $nostr_pubkey      = self::vendor_pubkey( $vendor_id );
 
+        $can_invoice = \SK\Core\Wallet\Settings::has_nwc( $vendor_id )
+            || \SK\Core\Wallet\Settings::has_lndhub( $vendor_id );
+
         // Fallback: our own LNURL-Pay endpoint, for vendors who connected a
         // wallet but never typed a Lightning Address. The local part is the
         // store slug — a slash in there is not a valid address for any wallet
         // but ours.
-        if ( empty( $lightning_address ) && class_exists( 'SK\Core\Wallet\Settings' ) ) {
-            $can_invoice = \SK\Core\Wallet\Settings::has_nwc( $vendor_id )
-                || \SK\Core\Wallet\Settings::has_lndhub( $vendor_id );
+        if ( empty( $lightning_address ) && $can_invoice ) {
+            $user = get_user_by( 'ID', $vendor_id );
 
-            if ( $can_invoice ) {
-                $user = get_user_by( 'ID', $vendor_id );
-
-                if ( $user && $user->user_nicename ) {
-                    $lightning_address = $user->user_nicename . '@' . wp_parse_url( home_url(), PHP_URL_HOST );
-                }
+            if ( $user && $user->user_nicename ) {
+                $lightning_address = $user->user_nicename . '@' . wp_parse_url( home_url(), PHP_URL_HOST );
             }
         }
 
@@ -125,6 +123,14 @@ class ZapButton {
             if ( $lightning_address === '' ) {
                 self::queue_lud16_lookup( $vendor_id, $nostr_pubkey );
             }
+        }
+
+        // Whichever source it came from: an address on our own host is minted
+        // through the vendor's connected wallet. The Nostr profile carries one
+        // for every account, so without a wallet it has to be dropped instead
+        // of putting a zap button on someone who cannot be paid.
+        if ( ! $can_invoice && \SK\Core\Wallet\Settings::is_local_address( (string) $lightning_address ) ) {
+            $lightning_address = '';
         }
 
         // No way to receive payment → no zap button. And no Nostr key → no

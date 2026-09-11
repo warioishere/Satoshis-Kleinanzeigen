@@ -34,6 +34,9 @@
 #   test-lnurl-address Resolver::is_own_address. The v/<id>@<host> addresses this
 #                     site hands out reach our own endpoint; a foreign host, a
 #                     lookalike domain and a non-numeric id do not.
+#   test-vendor-lightning  Settings::has_lightning. An address on our own host
+#                     only counts with a wallet behind it, a foreign one always,
+#                     and the site-wide switch overrules both.
 #
 # These tests are built to fail when a CHECK DISAPPEARS, not just when code
 # crashes. If one turns red after your change, it is saying "there was a

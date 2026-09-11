@@ -352,6 +352,15 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
         $oc_xpub        = ! empty( get_user_meta( $current_user, 'sk_xpub', true ) );
         $oc_xpub_ok     = $profile_info['btc_xpub_verified'] ?? false;
         $ln_address     = $profile_info['lightning_address'] ?? '';
+
+        // Addresses on our own host are ours, not the vendor's: the Nostr
+        // profile sync put them there. Showing one as "your Lightning address"
+        // claims a payment route that only exists with a wallet connected, and
+        // the vendor never typed it. Saving the form then clears it for good.
+        if ( \SK\Core\Wallet\Settings::is_local_address( (string) $ln_address ) ) {
+            $ln_address = '';
+        }
+
         $ln_has_nwc     = ! empty( get_user_meta( $current_user, 'sk_nwc_connection', true ) );
         $ln_nwc_ok      = $profile_info['lightning_nwc'] ?? false;
         $ln_has_lndhub  = ! empty( get_user_meta( $current_user, 'sk_lndhub_connection', true ) );

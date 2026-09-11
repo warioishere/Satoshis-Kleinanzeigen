@@ -182,6 +182,14 @@ class NostrRelaySync {
             // Only update if currently empty or set to our generated address.
             if ( empty( $settings['lightning_address'] ) || $settings['lightning_address'] === $our_lud16 ) {
                 $new_lud16 = sanitize_text_field( $profile['lud16'] );
+
+                // An address on our own host says nothing we do not already
+                // know, and older profiles still carry one for accounts with no
+                // wallet at all. Those must not come back as a setting.
+                if ( \SK\Core\Wallet\Settings::is_local_address( $new_lud16 ) ) {
+                    $new_lud16 = $settings['lightning_address'] ?? '';
+                }
+
                 if ( $new_lud16 !== ( $settings['lightning_address'] ?? '' ) ) {
                     $settings['lightning_address'] = $new_lud16;
                     update_user_meta( $user_id, 'sk_profile_settings', $settings );

@@ -617,7 +617,34 @@ class Settings {
         if ( ! self::enabled() ) {
             return false;
         }
-        return self::has_nwc( $vendor_id ) || self::has_lndhub( $vendor_id ) || ! empty( self::get_lightning_address( $vendor_id ) );
+
+        if ( self::has_nwc( $vendor_id ) || self::has_lndhub( $vendor_id ) ) {
+            return true;
+        }
+
+        // An address on our own host is minted by us, so it is already covered
+        // by the two connections above. On its own it means nothing.
+        $address = self::get_lightning_address( $vendor_id );
+
+        return $address !== '' && ! self::is_local_address( $address );
+    }
+
+    /**
+     * Is this an address served by our own LNURL endpoint?
+     *
+     * Every vendor gets one (v/<id>@<host>), and it mints through the wallet
+     * they connected. Without a connection it can never deliver an invoice, so
+     * it must not count as a way to receive — a vendor would get a zap button
+     * and a Lightning purchase that always fail.
+     */
+    public static function is_local_address( string $address ): bool {
+        $at = strrpos( $address, '@' );
+
+        if ( $at === false ) {
+            return false;
+        }
+
+        return strcasecmp( substr( $address, $at + 1 ), (string) wp_parse_url( home_url(), PHP_URL_HOST ) ) === 0;
     }
 
     // ── Lightning: Validate ──
