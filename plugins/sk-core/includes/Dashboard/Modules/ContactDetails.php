@@ -355,8 +355,7 @@ class ContactDetails {
                 break;
 
             case 'nostr':
-                $wert = preg_replace( '/^nostr:/i', '', trim( (string) $info['nostr'] ) );
-                $ziel = 'https://primal.net/p/' . rawurlencode( $wert );
+                $ziel = \SK\Core\Nostr\Keys::profile_url( (string) $info['nostr'] );
                 break;
 
             default:

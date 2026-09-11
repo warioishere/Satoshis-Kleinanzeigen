@@ -133,6 +133,26 @@ final class Keys {
         }
     }
 
+    /** Where a Nostr profile or event opens in the browser. */
+    const VIEWER = 'https://nostrich.org';
+
+    /**
+     * Link to a profile. Takes what it is given — npub, hex or nprofile —
+     * the viewer resolves all three.
+     */
+    public static function profile_url( string $key ): string {
+        $key = trim( preg_replace( '/^nostr:/i', '', $key ) );
+
+        return '' === $key ? '' : self::VIEWER . '/p/' . rawurlencode( $key );
+    }
+
+    /** Link to an event by its hex id or note/nevent. */
+    public static function event_url( string $id ): string {
+        $id = trim( preg_replace( '/^nostr:/i', '', $id ) );
+
+        return '' === $id ? '' : self::VIEWER . '/e/' . rawurlencode( $id );
+    }
+
     /** A fresh key pair, both halves as hex. */
     public static function generate(): array {
         $key  = new \swentel\nostr\Key\Key();

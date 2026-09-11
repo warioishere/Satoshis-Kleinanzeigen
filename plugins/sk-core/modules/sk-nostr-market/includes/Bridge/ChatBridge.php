@@ -1111,7 +1111,7 @@ class ChatBridge {
     public static function contact_url( string $pubkey ): string {
         $npub = self::npub( $pubkey );
 
-        return '' === $npub ? '' : 'https://njump.me/' . $npub;
+        return \SK\Core\Nostr\Keys::profile_url( $npub );
     }
 
     private static function npub( string $pubkey ): string {

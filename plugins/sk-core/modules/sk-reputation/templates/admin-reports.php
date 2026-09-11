@@ -79,10 +79,10 @@ $type_labels = ReportTypes::labels();
                                     <strong><a href="<?php echo esc_url( sk_get_store_url( (int) $r['reporter_user'] ) ); ?>" target="_blank"><?php echo esc_html( sprintf( __( 'Anbieter #%d', 'sk-core' ), (int) $r['reporter_user'] ) ); ?></a></strong>
                                     <?php echo $by ? esc_html( $by->display_name ) : ''; ?><br>
                                 <?php endif; ?>
-                                <a href="<?php echo esc_url( 'https://njump.me/' . $r['reporter'] ); ?>" target="_blank" rel="noopener"><code><?php echo esc_html( substr( $r['reporter'], 0, 12 ) . '…' ); ?></code></a>
+                                <a href="<?php echo esc_url( \SK\Core\Nostr\Keys::profile_url( $r['reporter'] ) ); ?>" target="_blank" rel="noopener"><code><?php echo esc_html( substr( $r['reporter'], 0, 12 ) . '…' ); ?></code></a>
                             </td>
                             <td><?php echo esc_html( $r['content'] !== '' ? $r['content'] : '–' ); ?></td>
-                            <td><a href="<?php echo esc_url( 'https://njump.me/' . $r['id'] ); ?>" target="_blank" rel="noopener">njump</a></td>
+                            <td><a href="<?php echo esc_url( \SK\Core\Nostr\Keys::event_url( $r['id'] ) ); ?>" target="_blank" rel="noopener">nostrich</a></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>

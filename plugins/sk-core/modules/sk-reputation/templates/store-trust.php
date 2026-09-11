@@ -81,7 +81,7 @@ get_header( 'shop' );
                 <div class="sk-trust-card">
                     <h3><i class="fas fa-key"></i> <?php esc_html_e( 'Nostr-Schlüssel', 'sk-core' ); ?></h3>
                     <p>
-                        <a href="<?php echo esc_url( 'https://njump.me/' . ( $nostr['npub'] ?: $nostr['pubkey'] ) ); ?>" target="_blank" rel="noopener" class="sk-trust-key"><?php echo esc_html( $nostr['npub'] ?: $nostr['pubkey'] ); ?></a>
+                        <a href="<?php echo esc_url( \SK\Core\Nostr\Keys::profile_url( $nostr['npub'] ?: $nostr['pubkey'] ) ); ?>" target="_blank" rel="noopener" class="sk-trust-key"><?php echo esc_html( $nostr['npub'] ?: $nostr['pubkey'] ); ?></a>
                     </p>
                     <p><?php echo esc_html( $proof_types[ $nostr['type'] ] ?? '' ); ?></p>
 

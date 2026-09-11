@@ -198,7 +198,7 @@ class UserOnboarding {
 						</div>
 					</div>
 					<p class="uob-tip"><i class="fas fa-lightbulb"></i> <?php _e( 'Tipp: Deine Chats findest du im Dashboard unter "Nachrichten"', 'sk-core' ); ?></p>
-					<p class="uob-tip"><i class="fas fa-lightbulb"></i> <?php printf( __( 'Tipp: Folge uns auf <a href="%s" target="_blank" rel="noopener">Nostr</a> oder tritt dem offiziellen <a href="%s" target="_blank" rel="noopener">Telegram Kanal</a> bei', 'sk-core' ), 'https://primal.net/p/nprofile1qqsg3fglunsprjgg0z2efc0qpcshrjkvyksfk9lracjawpuzs0quy8cqxrg92', 'https://t.me/satoshiskleinanzeige' ); ?></p>
+					<p class="uob-tip"><i class="fas fa-lightbulb"></i> <?php printf( __( 'Tipp: Folge uns auf <a href="%s" target="_blank" rel="noopener">Nostr</a> oder tritt dem offiziellen <a href="%s" target="_blank" rel="noopener">Telegram Kanal</a> bei', 'sk-core' ), 'https://nostrich.org/p/nprofile1qqsg3fglunsprjgg0z2efc0qpcshrjkvyksfk9lracjawpuzs0quy8cqxrg92', 'https://t.me/satoshiskleinanzeige' ); ?></p>
 				</div>
 
 				<!-- Slide 5: Nostr Identity -->

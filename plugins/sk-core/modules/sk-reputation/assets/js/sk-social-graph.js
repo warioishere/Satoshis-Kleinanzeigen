@@ -360,7 +360,7 @@
         distinct.slice(0, NAMES_PER_VENDOR).forEach(function (p) {
             var r = byReporter[p];
             var label = own(cfg.i18n.types, r.type) ? cfg.i18n.types[r.type] : r.type;
-            html += '<li><a href="https://njump.me/' + esc(r.id) + '" target="_blank" rel="noopener">' + esc(names[p] || shortKey(p)) + '</a><span class="sk-trust-pop-type">' + esc(label) + '</span></li>';
+            html += '<li><a href="https://nostrich.org/e/' + esc(r.id) + '" target="_blank" rel="noopener">' + esc(names[p] || shortKey(p)) + '</a><span class="sk-trust-pop-type">' + esc(label) + '</span></li>';
         });
         html += '</ul>';
         var pop = document.createElement('div');
@@ -376,7 +376,7 @@
         var shown = followers.slice(0, NAMES_PER_VENDOR);
         var html = '<div class="sk-trust-pop-note">' + esc(cfg.i18n.why) + '</div><ul>';
         shown.forEach(function (p) {
-            html += '<li><a href="https://njump.me/' + esc(p) + '" target="_blank" rel="noopener">' + esc(names[p] || shortKey(p)) + '</a></li>';
+            html += '<li><a href="https://nostrich.org/p/' + esc(p) + '" target="_blank" rel="noopener">' + esc(names[p] || shortKey(p)) + '</a></li>';
         });
         html += '</ul>';
         if (followers.length > shown.length) {

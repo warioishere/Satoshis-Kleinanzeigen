@@ -21,7 +21,7 @@
         if (href.indexOf('tel:') === 0) return 'tel';
         if (href.indexOf('t.me/') !== -1 || href.indexOf('telegram.me/') !== -1) return 'tg';
         if (href.indexOf('x.com/') !== -1 || href.indexOf('twitter.com/') !== -1) return 'x';
-        if (href.indexOf('primal.net/') !== -1 || href.indexOf('njump.me/') !== -1 || href.indexOf('nostr:') === 0) return 'nostr';
+        if (href.indexOf('nostrich.org/') !== -1 || href.indexOf('primal.net/') !== -1 || href.indexOf('njump.me/') !== -1 || href.indexOf('nostr:') === 0) return 'nostr';
         return '';
     }
 
