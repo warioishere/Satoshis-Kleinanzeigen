@@ -229,9 +229,45 @@
 
     // ── Rendering ────────────────────────────────────────────────────────
 
-    function fill(el, text, icon, why) {
-        el.innerHTML = '<i class="fas ' + icon + '" aria-hidden="true"></i> <span class="sk-trust-graph-text">' + esc(text) + '</span>';
-        el.title = cfg.i18n.why;
+    /**
+     * What a chip says, per place.
+     *
+     * The store banner has room for whole sentences, one per line. The
+     * vendor box on a product page has none: there only the badge shows and
+     * the sentence moves into its tooltip. The feed card keeps its short
+     * one-liner.
+     *
+     * @return {{lines: string[], title: string}}
+     */
+    function compose(ctx, isContact, count) {
+        var full = ctx === 'store' || ctx === 'page';
+        var follow = full ? cfg.i18n.follow : cfg.i18n.followS;
+        var contacts = (count === 1
+            ? (full ? cfg.i18n.contact1 : cfg.i18n.contact1S)
+            : (full ? cfg.i18n.contactN : cfg.i18n.contactNS)).replace('%d', count);
+
+        var lines = [];
+        if (isContact) { lines.push(follow); }
+        if (count) { lines.push(contacts); }
+
+        if (ctx === 'product') {
+            // Badge only; the full sentence is still there on hover.
+            var said = [];
+            if (isContact) { said.push(cfg.i18n.follow); }
+            if (count) { said.push((count === 1 ? cfg.i18n.contact1 : cfg.i18n.contactN).replace('%d', count)); }
+            return { lines: [], title: said.join(' · ') };
+        }
+        if (ctx === 'store') {
+            return { lines: lines, title: cfg.i18n.why };
+        }
+        return { lines: [lines.join(' · ')], title: cfg.i18n.why };
+    }
+    window.skTrustGraphCompose = compose;
+
+    function fill(el, lines, icon, why, title) {
+        var text = lines.length ? ' <span class="sk-trust-graph-text">' + lines.map(esc).join('<br>') + '</span>' : '';
+        el.innerHTML = '<i class="fas ' + icon + '" aria-hidden="true"></i>' + text;
+        el.title = title || cfg.i18n.why;
         if (why) {
             var pop = document.createElement('div');
             pop.className = 'sk-trust-pop';
@@ -365,18 +401,13 @@
                 var g = graph[v] || { f: [], r: [] };
                 var list = g.f;
                 renderReports(c, g.r, names);
-                // Only the store banner and the trust page have room for the full sentence.
-                var short = !c.classList.contains('sk-trust-graph--store') && !c.classList.contains('sk-trust-graph--page');
-                var follow = short ? cfg.i18n.followS : cfg.i18n.follow;
-                var contactsText = list.length === 1
-                    ? (short ? cfg.i18n.contact1S : cfg.i18n.contact1)
-                    : (short ? cfg.i18n.contactNS : cfg.i18n.contactN);
-                contactsText = contactsText.replace('%d', list.length);
+                var ctx = (c.className.match(/sk-trust-graph--(\w+)/) || [])[1] || '';
+                var said = compose(ctx, !!contactSet[v], list.length);
 
                 if (contactSet[v]) {
-                    fill(c, follow + (list.length ? ' · ' + contactsText : ''), 'fa-user-check', list.length ? whyList(list, names) : '');
+                    fill(c, said.lines, 'fa-user-check', list.length ? whyList(list, names) : '', said.title);
                 } else if (list.length) {
-                    fill(c, contactsText, 'fa-users', whyList(list, names));
+                    fill(c, said.lines, 'fa-users', whyList(list, names), said.title);
                 } else if (c.classList.contains('sk-trust-graph--page')) {
                     hint('nomatch');
                 }

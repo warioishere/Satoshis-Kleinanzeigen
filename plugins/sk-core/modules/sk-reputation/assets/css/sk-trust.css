@@ -5,6 +5,8 @@
 /* Store banner: a line under the rating, white on the banner. */
 .sk-store-info .sk-trust-graph { color: #fff; position: relative; }
 .sk-store-info .sk-trust-graph i { color: #8b5cf6; margin-right: 4px; }
+/* One sentence per line under the store banner. */
+.sk-store-info .sk-trust-graph .sk-trust-graph-text { display: inline-block; line-height: 1.4; vertical-align: top; }
 
 /* Product page: at the right end of the vendor box, ahead of the zaps. */
 .sk-vendor-info-wrap .sk-trust-graph {
