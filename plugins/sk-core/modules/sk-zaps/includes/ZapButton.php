@@ -253,6 +253,10 @@ class ZapButton {
             wp_send_json_error( [ 'message' => __( 'Zu viele Zaps, bitte kurz warten.', 'sk-core' ) ] );
         }
 
+        if ( ! \SK\Core\Wallet\Settings::enabled() ) {
+            wp_send_json_error( [ 'message' => __( 'Wallet-Verbindungen sind auf dieser Seite deaktiviert.', 'sk-core' ) ] );
+        }
+
         $client = \SK\Core\Wallet\Settings::get_nwc_client( $user_id );
         if ( ! $client ) {
             wp_send_json_error( [ 'message' => __( 'Keine Nostr-Wallet-Connect-Verbindung in deinen Shop-Einstellungen.', 'sk-core' ) ] );

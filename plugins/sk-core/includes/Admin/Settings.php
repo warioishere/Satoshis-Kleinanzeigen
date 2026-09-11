@@ -542,6 +542,13 @@ class Settings {
                     'type'    => 'switcher',
                     'default' => 'on',
                 ],
+                'wallet_connections'         => [
+                    'name'    => 'wallet_connections',
+                    'label'   => __( 'Wallet-Verbindungen für Anbieter', 'sk-core' ),
+                    'desc'    => __( 'Anbieter können in den Shop-Einstellungen Onchain-Adresse, xpub, Nostr Wallet Connect, LNDHub und Lightning-Adresse hinterlegen. Aus: Der Block ist ausgeblendet, die Lightning-Adresse beim Marktplatz antwortet nicht, Zaps über gespeicherte Verbindungen sind aus. Gespeicherte Daten bleiben erhalten.', 'sk-core' ),
+                    'type'    => 'switcher',
+                    'default' => 'on',
+                ],
                 'store_header_template'      => [
                     'name'    => 'store_header_template',
                     'type'    => 'radio_image',

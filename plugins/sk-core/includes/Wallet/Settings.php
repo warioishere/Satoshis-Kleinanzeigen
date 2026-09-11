@@ -12,6 +12,16 @@ defined( 'ABSPATH' ) || exit;
  */
 class Settings {
 
+    /**
+     * Site-wide switch (SK Admin → Einstellungen → Allgemein). Off hides the
+     * form block, answers the LNURL endpoint with an error and makes the
+     * has_… and get_…_client() methods below report "nothing connected".
+     * Stored data is kept, so switching back on restores everything.
+     */
+    public static function enabled(): bool {
+        return sk_get_option( 'wallet_connections', 'sk_general', 'on' ) === 'on';
+    }
+
     public function __construct() {
         // Fields are rendered directly in the store-form.php template (no hook needed).
         add_action( 'sk_store_profile_saved', [ $this, 'save_field' ], 15, 3 );
@@ -337,6 +347,9 @@ class Settings {
     }
 
     public static function get_nwc_client( int $vendor_id ) {
+        if ( ! self::enabled() ) {
+            return null;
+        }
         // Upgrades legacy CBC ciphertext to GCM on first read.
         $connection_string = Secret::from_user_meta( $vendor_id, 'sk_nwc_connection' );
         if ( empty( $connection_string ) ) {
@@ -348,6 +361,9 @@ class Settings {
     }
 
     public static function has_nwc( int $vendor_id ): bool {
+        if ( ! self::enabled() ) {
+            return false;
+        }
         $settings = get_user_meta( $vendor_id, 'sk_profile_settings', true );
         return is_array( $settings ) && ! empty( $settings['lightning_nwc'] );
     }
@@ -387,6 +403,9 @@ class Settings {
     }
 
     public static function get_lndhub_client( int $vendor_id ) {
+        if ( ! self::enabled() ) {
+            return null;
+        }
         // Upgrades legacy CBC ciphertext to GCM on first read.
         $connection_string = Secret::from_user_meta( $vendor_id, 'sk_lndhub_connection' );
         if ( empty( $connection_string ) ) {
@@ -398,6 +417,9 @@ class Settings {
     }
 
     public static function has_lndhub( int $vendor_id ): bool {
+        if ( ! self::enabled() ) {
+            return false;
+        }
         $settings = get_user_meta( $vendor_id, 'sk_profile_settings', true );
         return is_array( $settings ) && ! empty( $settings['lightning_lndhub'] );
     }
@@ -556,6 +578,9 @@ class Settings {
      * Check if vendor accepts any onchain payment.
      */
     public static function has_onchain( int $vendor_id ): bool {
+        if ( ! self::enabled() ) {
+            return false;
+        }
         return ! empty( self::get_btc_address( $vendor_id ) ) || self::has_xpub( $vendor_id );
     }
 
@@ -563,6 +588,9 @@ class Settings {
      * Check if vendor accepts any Lightning payment.
      */
     public static function has_lightning( int $vendor_id ): bool {
+        if ( ! self::enabled() ) {
+            return false;
+        }
         return self::has_nwc( $vendor_id ) || self::has_lndhub( $vendor_id ) || ! empty( self::get_lightning_address( $vendor_id ) );
     }
 

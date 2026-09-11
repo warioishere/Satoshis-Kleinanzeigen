@@ -69,6 +69,10 @@ class LnurlPayEndpoint {
             return;
         }
 
+        if ( ! Settings::enabled() ) {
+            $this->send_json_error( 'Lightning payments are disabled on this site.' );
+        }
+
         // Find vendor by store slug.
         $vendor_id = $this->get_vendor_id_by_slug( $store_slug );
         if ( ! $vendor_id ) {

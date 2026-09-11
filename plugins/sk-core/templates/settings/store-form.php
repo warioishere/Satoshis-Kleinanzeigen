@@ -291,7 +291,7 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
     <!-- ======================================================
          SECTION 3b: Onchain + Lightning wallet (SK\Core\Wallet\Settings)
     ====================================================== -->
-    <?php
+    <?php if ( \SK\Core\Wallet\Settings::enabled() ) :
         $oc_btc_address = $profile_info['btc_address'] ?? '';
         $oc_xpub        = ! empty( get_user_meta( $current_user, 'sk_xpub', true ) );
         $oc_xpub_ok     = $profile_info['btc_xpub_verified'] ?? false;
@@ -477,6 +477,7 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
             </div>
         </div>
     </div>
+    <?php endif; ?>
 
     <!-- ======================================================
          SECTION 3c: Nostr Marketplace (conditional: sk-nostr-market Modul aktiv)

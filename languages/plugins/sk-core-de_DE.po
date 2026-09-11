@@ -14215,3 +14215,15 @@ msgstr ""
 #: plugins/sk-core/modules/sk-zaps/includes/ZapButton.php
 msgid "Zahlung fehlgeschlagen: %s"
 msgstr ""
+
+#: plugins/sk-core/includes/Admin/Settings.php
+msgid "Wallet-Verbindungen für Anbieter"
+msgstr ""
+
+#: plugins/sk-core/includes/Admin/Settings.php
+msgid "Anbieter können in den Shop-Einstellungen Onchain-Adresse, xpub, Nostr Wallet Connect, LNDHub und Lightning-Adresse hinterlegen. Aus: Der Block ist ausgeblendet, die Lightning-Adresse beim Marktplatz antwortet nicht, Zaps über gespeicherte Verbindungen sind aus. Gespeicherte Daten bleiben erhalten."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-zaps/includes/ZapButton.php
+msgid "Wallet-Verbindungen sind auf dieser Seite deaktiviert."
+msgstr ""
