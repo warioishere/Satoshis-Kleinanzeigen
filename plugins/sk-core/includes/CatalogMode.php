@@ -5,17 +5,15 @@ namespace SK\Core;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Global catalog mode — hides the "Add to cart" button platform-wide.
- * Settings under Admin → SK → Selling options.
+ * Catalog mode: no "Add to cart" anywhere, listings are bought through the
+ * instant purchase flow. Only platform products stay purchasable.
  */
 final class CatalogMode {
 
     public static function init(): void {
-        if ( self::hide_cart() ) {
-            add_filter( 'woocommerce_is_purchasable',          [ __CLASS__, 'filter_purchasable' ], 99, 2 );
-            add_filter( 'woocommerce_product_is_visible',      [ __CLASS__, 'keep_visible' ], 10, 2 );
-            remove_action( 'woocommerce_after_shop_loop_item', 'woocommerce_template_loop_add_to_cart', 10 );
-        }
+        add_filter( 'woocommerce_is_purchasable',          [ __CLASS__, 'filter_purchasable' ], 99, 2 );
+        add_filter( 'woocommerce_product_is_visible',      [ __CLASS__, 'keep_visible' ], 10, 2 );
+        remove_action( 'woocommerce_after_shop_loop_item', 'woocommerce_template_loop_add_to_cart', 10 );
 
         if ( ! self::reviews_enabled() ) {
             add_filter( 'woocommerce_product_tabs', [ __CLASS__, 'remove_reviews_tab' ], 999 );
@@ -46,10 +44,6 @@ final class CatalogMode {
             return $purchasable;
         }
         return false;
-    }
-
-    public static function hide_cart(): bool {
-        return 'on' === sk_get_option( 'catalog_mode_hide_add_to_cart_button', 'sk_selling', 'off' );
     }
 
     /**
