@@ -27,6 +27,7 @@ $address_city    = $profile_info['address']['city']     ?? '';
 $address_zip     = $profile_info['address']['zip']      ?? '';
 $address_country = $profile_info['address']['country']  ?? '';
 $address_state   = $profile_info['address']['state']    ?? '';
+$terms_url       = $profile_info['terms_url'] ?? '';
 
 $map_location = $profile_info['location']     ?? '';
 $map_address  = $profile_info['find_address'] ?? '';
@@ -247,6 +248,18 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
                     <p class="sk-settings-hint"><?php esc_html_e( 'Ohne Haken bleibt die Adresse nur für dich sichtbar. Öffentlich steht sie bei den Kontaktdaten unter deinem Banner.', 'sk-core' ); ?></p>
                 </div>
             </div>
+
+            <?php
+            sk_form_input( [
+                'name'        => 'terms_url',
+                'id'          => 'sk_terms_url',
+                'type'        => 'url',
+                'value'       => $terms_url,
+                'label'       => __( 'AGB (Link)', 'sk-core' ),
+                'placeholder' => 'https://',
+                'hint'        => __( 'Link zu deinen Allgemeinen Geschäftsbedingungen. Er steht bei den Kontaktdaten unter deinem Banner.', 'sk-core' ),
+            ] );
+            ?>
         <?php endif; ?>
 
         <?php if ( sk_has_map_api_key() ) : ?>

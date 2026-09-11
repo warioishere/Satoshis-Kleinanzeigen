@@ -390,6 +390,7 @@ class Settings {
                 );
 
                 $sk_settings['show_address'] = isset( $_POST['show_address'] ) ? '1' : '';
+                $sk_settings['terms_url']    = isset( $_POST['terms_url'] ) ? esc_url_raw( wp_unslash( $_POST['terms_url'] ) ) : '';
             }
 
             // E-Mail Verarbeitung

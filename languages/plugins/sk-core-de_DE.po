@@ -14290,3 +14290,15 @@ msgstr "Digitales Produkt, kein Versand"
 #: plugins/sk-core/templates/products/download-virtual.php
 msgid "Nothing is shipped: the shipping field disappears and a purchase asks for no delivery address."
 msgstr "Es wird nichts verschickt: das Versandfeld verschwindet, und ein Kauf fragt nach keiner Lieferadresse."
+
+#: plugins/sk-core/templates/settings/store-form.php
+msgid "AGB (Link)"
+msgstr "AGB (Link)"
+
+#: plugins/sk-core/templates/settings/store-form.php
+msgid "Link zu deinen Allgemeinen Geschäftsbedingungen. Er steht bei den Kontaktdaten unter deinem Banner."
+msgstr "Link zu deinen Allgemeinen Geschäftsbedingungen. Er steht bei den Kontaktdaten unter deinem Banner."
+
+#: plugins/sk-core/includes/Dashboard/Modules/ContactDetails.php
+msgid "AGB"
+msgstr "AGB"

@@ -100,15 +100,6 @@ class ExtendedAdmin {
      * @return array
      */
     public function add_settings_general_vendor_store_options( $settings_fields ) {
-        $settings_fields['enable_tc_on_reg'] = [
-            'name'    => 'enable_tc_on_reg',
-            'label'   => __( 'Enable Terms and Condition', 'sk-core' ),
-            'desc'    => __( 'Enable the terms & conditions checkbox on vendor registration form.', 'sk-core' ),
-            'type'    => 'switcher',
-            'default' => 'on',
-            'tooltip' => __( 'Prompt terms and condition check for vendors when creating store on your site', 'sk-core' ),
-            'is_lite' => false,
-        ];
         $settings_fields['enable_single_seller_mode'] = [
             'name'    => 'enable_single_seller_mode',
             'label'   => __( 'Enable Single Seller Mode', 'sk-core' ),

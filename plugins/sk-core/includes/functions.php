@@ -1908,6 +1908,21 @@ function sk_public_store_address( $vendor_id, $line_break = true ) {
 }
 
 /**
+ * Link to the vendor's terms and conditions: a shop feature, empty otherwise.
+ */
+function sk_store_terms_url( $vendor_id ): string {
+    $vendor_id = (int) $vendor_id;
+
+    if ( ! $vendor_id || ! sk_is_shop_pack( $vendor_id ) ) {
+        return '';
+    }
+
+    $info = sk_get_store_info( $vendor_id );
+
+    return is_array( $info ) ? (string) ( $info['terms_url'] ?? '' ) : '';
+}
+
+/**
  * Login Redirect
  *
  *

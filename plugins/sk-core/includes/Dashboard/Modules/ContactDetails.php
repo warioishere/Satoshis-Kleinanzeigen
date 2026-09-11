@@ -267,8 +267,9 @@ class ContactDetails {
         // meant to find, and a street is not the scraping target an email
         // or a phone number is.
         $address = function_exists( 'sk_public_store_address' ) ? sk_public_store_address( $vendor_id, false ) : '';
+        $terms   = function_exists( 'sk_store_terms_url' ) ? sk_store_terms_url( $vendor_id ) : '';
 
-        if ( empty( $channels ) && $address === '' ) {
+        if ( empty( $channels ) && $address === '' && $terms === '' ) {
             return '';
         }
 
@@ -299,6 +300,15 @@ class ContactDetails {
                 '<li class="sk-store-address"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> <strong>%s:</strong> %s</li>',
                 esc_html__( 'Adresse', 'sk-core' ),
                 wp_kses_post( $address )
+            );
+        }
+
+        if ( $terms !== '' ) {
+            $html .= sprintf(
+                '<li class="sk-store-terms"><i class="fa-solid fa-file-lines" aria-hidden="true"></i> <strong>%s:</strong> <a href="%s" target="_blank" rel="noopener nofollow">%s</a></li>',
+                esc_html__( 'AGB', 'sk-core' ),
+                esc_url( $terms ),
+                esc_html__( 'anzeigen', 'sk-core' )
             );
         }
 
