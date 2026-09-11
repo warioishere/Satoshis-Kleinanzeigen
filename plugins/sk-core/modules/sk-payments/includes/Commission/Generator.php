@@ -161,6 +161,10 @@ class Generator {
     }
 
     public function add_admin_page() {
+        if ( ! self::is_enabled() ) {
+            return;
+        }
+
         add_submenu_page(
             'sk',
             'Kommissionen',
