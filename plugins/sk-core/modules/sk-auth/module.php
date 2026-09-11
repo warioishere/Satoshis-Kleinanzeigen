@@ -184,7 +184,7 @@ final class Module {
 
         if ( is_user_logged_in() ) {
             $user = wp_get_current_user();
-            $dashboard_url = function_exists( 'sk_get_navigation_url' ) ? sk_get_navigation_url( 'dashboard' ) : home_url( '/dashboard/' );
+            $dashboard_url = function_exists( 'sk_get_navigation_url' ) ? sk_get_navigation_url() : home_url( '/dashboard/' );
             return '<p style="text-align:center;">Hallo <strong>' . esc_html( $user->display_name ) . '</strong>, du bist bereits eingeloggt. <a href="' . esc_url( $dashboard_url ) . '">Zum Dashboard</a></p>';
         }
 

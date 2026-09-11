@@ -105,7 +105,9 @@ class NostrLoginBox {
             $redirect_url = match( $redirect_type ) {
                 'home'      => home_url(),
                 'profile'   => get_edit_profile_url( get_current_user_id() ),
-                'dashboard' => function_exists( 'sk_get_navigation_url' ) ? sk_get_navigation_url( 'dashboard' ) : home_url( '/dashboard/' ),
+                // See NostrLogin: the argument is a sub-page name, not the
+                // dashboard itself.
+                'dashboard' => function_exists( 'sk_get_navigation_url' ) ? sk_get_navigation_url() : home_url( '/dashboard/' ),
                 default     => admin_url(),
             };
             wp_send_json_success( [ 'logged_in' => true, 'redirect' => $redirect_url ] );

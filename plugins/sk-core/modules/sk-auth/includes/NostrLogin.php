@@ -257,7 +257,9 @@ class Nostr_Login_Handler {
             $redirect_url = match($redirect_type) {
                 'home' => home_url(),
                 'profile' => get_edit_profile_url($user->ID),
-                'dashboard' => function_exists('sk_get_navigation_url') ? sk_get_navigation_url('dashboard') : home_url('/dashboard/'),
+                // No argument: the parameter names a sub-page, so passing
+                // 'dashboard' led to /dashboard/dashboard/.
+                'dashboard' => function_exists('sk_get_navigation_url') ? sk_get_navigation_url() : home_url('/dashboard/'),
                 default => admin_url()
             };
             wp_send_json_success(array('redirect' => $redirect_url));
