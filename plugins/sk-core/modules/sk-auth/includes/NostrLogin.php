@@ -311,23 +311,33 @@ class Nostr_Login_Handler {
         return $user_id;
     }
 
+    /**
+     * Carry the Nostr profile into the account at login.
+     *
+     * A login is not a profile update — it has no timestamp to compare, so it
+     * cannot take part in "the newer one wins". It therefore only fills what is
+     * empty here and never overwrites a shop someone has already set up. Real
+     * changes arrive through NostrRelaySync, which does have the timestamp.
+     */
     private function update_user_metadata( $user_id, $sanitized_metadata ) {
-        if ( ! empty( $sanitized_metadata['name'] ) ) {
+        $user = get_userdata( $user_id );
+
+        if ( ! empty( $sanitized_metadata['name'] ) && $user
+            && preg_match( '/^(satoshi-|nostr-|LN-)/', $user->display_name ) ) {
             wp_update_user( array( 'ID' => $user_id, 'display_name' => sanitize_text_field( $sanitized_metadata['name'] ) ) );
         }
-        if ( ! empty( $sanitized_metadata['about'] ) ) {
+        if ( ! empty( $sanitized_metadata['about'] ) && '' === (string) get_user_meta( $user_id, 'description', true ) ) {
             update_user_meta( $user_id, 'description', sanitize_textarea_field( $sanitized_metadata['about'] ) );
         }
         if ( ! empty( $sanitized_metadata['nip05'] ) ) {
             update_user_meta( $user_id, 'nip05', sanitize_text_field( $sanitized_metadata['nip05'] ) );
         }
-        if ( ! empty( $sanitized_metadata['image'] ) ) {
+        if ( ! empty( $sanitized_metadata['image'] ) && '' === (string) get_user_meta( $user_id, 'nostr_avatar', true ) ) {
             $avatar_url = esc_url_raw( $sanitized_metadata['image'] );
             update_user_meta( $user_id, 'nostr_avatar', $avatar_url );
-            $saved_avatar_url = get_user_meta( $user_id, 'nostr_avatar', true );
-            nostr_login_debug_log( "Saved Nostr avatar URL for user $user_id: " . esc_url( $saved_avatar_url ) );
+            nostr_login_debug_log( "Saved Nostr avatar URL for user $user_id: " . esc_url( $avatar_url ) );
         }
-        if ( ! empty( $sanitized_metadata['website'] ) ) {
+        if ( ! empty( $sanitized_metadata['website'] ) && $user && '' === (string) $user->user_url ) {
             wp_update_user( array(
                 'ID'       => $user_id,
                 'user_url' => esc_url_raw( $sanitized_metadata['website'] ),

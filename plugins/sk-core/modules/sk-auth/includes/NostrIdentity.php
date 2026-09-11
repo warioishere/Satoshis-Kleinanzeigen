@@ -24,6 +24,49 @@ class NostrIdentity {
      */
     public static function init_hooks() {
         add_action( 'sk_store_profile_saved', [ __CLASS__, 'on_store_profile_saved' ], 30, 1 );
+
+        // The same shop change for an outside key: built here, signed in the
+        // browser, sent from here.
+        add_action( 'wp_ajax_sk_nostr_profile_event', [ __CLASS__, 'ajax_profile_event' ] );
+        add_action( 'wp_ajax_sk_nostr_publish_profile', [ __CLASS__, 'ajax_publish_profile' ] );
+    }
+
+    /** Hands the browser the unsigned profile event of the current user. */
+    public static function ajax_profile_event(): void {
+        check_ajax_referer( 'sk_nostr_profile', 'nonce' );
+
+        $user_id = get_current_user_id();
+
+        if ( ! $user_id || self::has_identity( $user_id ) ) {
+            // With a key of ours there is nothing to sign outside.
+            wp_send_json_error( [ 'message' => __( 'Kein fremder Schlüssel hinterlegt.', 'sk-core' ) ] );
+        }
+
+        $event = self::unsigned_profile_event( $user_id );
+
+        if ( '' === $event['pubkey'] ) {
+            wp_send_json_error( [ 'message' => __( 'Kein bestätigter Nostr-Schlüssel.', 'sk-core' ) ] );
+        }
+
+        wp_send_json_success( [ 'event' => $event ] );
+    }
+
+    /** Takes the signed profile event back and sends it to the relays. */
+    public static function ajax_publish_profile(): void {
+        check_ajax_referer( 'sk_nostr_profile', 'nonce' );
+
+        $user_id = get_current_user_id();
+        $event   = json_decode( (string) wp_unslash( $_POST['event'] ?? '' ), true );
+
+        if ( ! $user_id || ! is_array( $event ) ) {
+            wp_send_json_error( [ 'message' => __( 'Kein Profil-Event.', 'sk-core' ) ] );
+        }
+
+        if ( ! self::publish_signed( $user_id, $event ) ) {
+            wp_send_json_error( [ 'message' => __( 'Profil konnte nicht veröffentlicht werden.', 'sk-core' ) ] );
+        }
+
+        wp_send_json_success( [ 'id' => (string) ( $event['id'] ?? '' ) ] );
     }
 
     /**
@@ -198,7 +241,94 @@ class NostrIdentity {
         $result = \SK\Core\Nostr\Relays::publish( $event, self::get_relays(), $privkey );
         $report = $result;
 
-        return empty( $result['accepted'] ) ? null : (string) $event['id'];
+        if ( empty( $result['accepted'] ) ) {
+            return null;
+        }
+
+        if ( 0 === $kind ) {
+            self::remember_profile_time( $user_id, (int) $event['created_at'] );
+        }
+
+        return (string) $event['id'];
+    }
+
+    /**
+     * When the newest profile we know of was written.
+     *
+     * Both sides may change a profile now, so the newer one wins — the same
+     * rule every Nostr client follows. Without this, our own publication would
+     * come back through the relay sync and overwrite what was just saved.
+     */
+    public static function remember_profile_time( int $user_id, int $created_at ): void {
+        if ( $created_at > (int) get_user_meta( $user_id, 'sk_nostr_profile_at', true ) ) {
+            update_user_meta( $user_id, 'sk_nostr_profile_at', $created_at );
+        }
+    }
+
+    /** Is this profile event newer than what we already have? */
+    public static function profile_is_newer( int $user_id, int $created_at ): bool {
+        return $created_at > (int) get_user_meta( $user_id, 'sk_nostr_profile_at', true );
+    }
+
+    /**
+     * Has a Nostr profile ever been applied to this account?
+     *
+     * Before that, everything here was built in the shop, and someone linking
+     * their Nostr account would lose a finished shop to whatever their profile
+     * happens to hold. So the first profile only fills what is empty. From then
+     * on both sides are in step and the newer change wins.
+     */
+    public static function profile_seen( int $user_id ): bool {
+        return '' !== (string) get_user_meta( $user_id, 'sk_nostr_profile_at', true );
+    }
+
+    /**
+     * The profile event for a key we do not hold, ready to be signed.
+     *
+     * The shop is the source, the key stays with its owner: we build the event,
+     * the browser extension signs it, and publish_signed() sends it on.
+     */
+    public static function unsigned_profile_event( int $user_id ): array {
+        return [
+            'kind'       => 0,
+            'pubkey'     => \SK\Core\Trust\VendorKey::bound( $user_id ),
+            'created_at' => time(),
+            'tags'       => [],
+            'content'    => self::profile_json( $user_id ),
+        ];
+    }
+
+    /**
+     * Send a profile event that was signed elsewhere.
+     *
+     * Nothing is taken on trust: it has to be a profile, signed by exactly the
+     * key this account is bound to, with a signature that checks out. Anything
+     * else would let a caller publish under someone else's name through us.
+     */
+    public static function publish_signed( int $user_id, array $event ): bool {
+        $bound = \SK\Core\Trust\VendorKey::bound( $user_id );
+
+        if ( '' === $bound || 0 !== (int) ( $event['kind'] ?? -1 ) ) {
+            return false;
+        }
+
+        if ( strcasecmp( (string) ( $event['pubkey'] ?? '' ), $bound ) !== 0 ) {
+            return false;
+        }
+
+        if ( ! Events::verify( $event ) ) {
+            return false;
+        }
+
+        $result = \SK\Core\Nostr\Relays::publish( $event, self::get_relays() );
+
+        if ( empty( $result['accepted'] ) ) {
+            return false;
+        }
+
+        self::remember_profile_time( $user_id, (int) ( $event['created_at'] ?? 0 ) );
+
+        return true;
     }
 
     /**
@@ -241,9 +371,13 @@ class NostrIdentity {
     }
 
     /**
-     * Publish Kind 0 profile event for user.
+     * The shop as a Nostr profile (NIP-01 kind 0 content).
+     *
+     * One builder for both ways out: the key we hold signs on the server, an
+     * outside key signs in the browser. Only fields Nostr knows are carried —
+     * what a shop has beyond that stays here.
      */
-    public static function publish_profile( int $user_id ): ?string {
+    public static function profile_content( int $user_id ): array {
         $store_info = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( $user_id ) : [];
         $user       = get_userdata( $user_id );
         $domain     = wp_parse_url( home_url(), PHP_URL_HOST );
@@ -259,9 +393,19 @@ class NostrIdentity {
         ];
 
         // Remove empty values.
-        $profile = array_filter( $profile );
+        return array_filter( $profile );
+    }
 
-        return self::publish( $user_id, 0, wp_json_encode( $profile, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) );
+    /** The profile content as the JSON that goes into the event. */
+    public static function profile_json( int $user_id ): string {
+        return (string) wp_json_encode( self::profile_content( $user_id ), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+    }
+
+    /**
+     * Publish Kind 0 profile event for user, signed with the key we hold.
+     */
+    public static function publish_profile( int $user_id ): ?string {
+        return self::publish( $user_id, 0, self::profile_json( $user_id ) );
     }
 
     /**

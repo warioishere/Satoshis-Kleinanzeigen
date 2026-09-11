@@ -224,18 +224,22 @@ class Settings {
      * Take a Lightning address found in a vendor's Nostr profile into their
      * shop settings, so it shows in the field and counts everywhere else.
      *
-     * The vendor did not type it here, so it has to pass exactly what the form
-     * demands: reachable, and able to prove that a payment happened (LUD-21).
-     * Without that proof a sale through it could never be settled — the form
-     * refuses such an address, and a back door would be worse than none.
-     * An address of ours is skipped: it only works with a connected wallet.
-     * Anything the vendor entered themselves is never overwritten.
+     * The vendor did not type it here, so a mere find has to pass exactly what
+     * the form demands: reachable, and able to prove that a payment happened
+     * (LUD-21). Without that proof a sale through it could never be settled —
+     * the form refuses such an address, and a back door would be worse than
+     * none. An address of ours is skipped: it only works with a connected
+     * wallet. Anything the vendor entered themselves is never overwritten.
+     *
+     * With $replace the profile is the source — a change the vendor made in a
+     * Nostr client — and then it replaces what stands here either way, with
+     * `lightning_lud21` recording whether a sale can run through it.
      *
      * Makes two outbound requests, so it belongs on cron, never in a render.
      *
      * @return bool True when the address was stored.
      */
-    public static function adopt_discovered_address( int $vendor_id, string $address ): bool {
+    public static function adopt_discovered_address( int $vendor_id, string $address, bool $replace = false ): bool {
         $address = trim( $address );
 
         if ( ! self::enabled() || $vendor_id <= 0 || $address === '' ) {
@@ -246,17 +250,25 @@ class Settings {
             return false;
         }
 
-        if ( ! self::field_is_free( $vendor_id, $address ) ) {
+        if ( ! self::field_is_free( $vendor_id, $address, $replace ) ) {
             return false;
         }
 
-        if ( true !== self::check_lud21( $address ) ) {
+        $provable = true === self::check_lud21( $address );
+
+        /*
+         * A find is only taken over when it can carry a sale. A change the
+         * vendor made on Nostr is taken over either way — it is their address,
+         * and the profile is the source — but it is recorded whether a payment
+         * through it can be proven, so the purchase path can tell.
+         */
+        if ( ! $provable && ! $replace ) {
             return false;
         }
 
         // Read again: the check went out to the network and the vendor may
         // have saved their settings in the meantime.
-        if ( ! self::field_is_free( $vendor_id, $address ) ) {
+        if ( ! self::field_is_free( $vendor_id, $address, $replace ) ) {
             return false;
         }
 
@@ -264,7 +276,7 @@ class Settings {
         $settings = is_array( $settings ) ? $settings : [];
 
         $settings['lightning_address'] = $address;
-        $settings['lightning_lud21']   = true;
+        $settings['lightning_lud21']   = $provable;
 
         update_user_meta( $vendor_id, 'sk_profile_settings', $settings );
 
@@ -278,7 +290,7 @@ class Settings {
      * the vendor's own. An address already equal to the candidate needs no
      * write either.
      */
-    private static function field_is_free( int $vendor_id, string $candidate ): bool {
+    private static function field_is_free( int $vendor_id, string $candidate, bool $replace = false ): bool {
         $settings = get_user_meta( $vendor_id, 'sk_profile_settings', true );
         $current  = is_array( $settings ) ? (string) ( $settings['lightning_address'] ?? '' ) : '';
 
@@ -286,7 +298,7 @@ class Settings {
             return false;
         }
 
-        return $current === '' || self::is_local_address( $current );
+        return $replace || $current === '' || self::is_local_address( $current );
     }
 
     /**

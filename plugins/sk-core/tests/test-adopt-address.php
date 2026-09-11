@@ -111,6 +111,23 @@ $before = $GLOBALS['calls'];
 check( 'the same address again does nothing', Settings::adopt_discovered_address( 1, $good ), false );
 check( 'and costs no request', $GLOBALS['calls'], $before );
 
+// --- Mirroring: the profile is the source -----------------------------------
+// A change the vendor made in a Nostr client replaces what stands here.
+$GLOBALS['user_meta'][7]['sk_profile_settings'] = [ 'lightning_address' => 'alt@example.org', 'lightning_lud21' => true ];
+check( 'a change on Nostr replaces the address', Settings::adopt_discovered_address( 7, $good, true ), true );
+check( 'the new address is in the field', stored( 7 ), $good );
+
+// Without proof it is still taken over, but marked as unusable for a sale.
+$GLOBALS['user_meta'][8]['sk_profile_settings'] = [ 'lightning_address' => 'alt@example.org', 'lightning_lud21' => true ];
+check( 'an address without proof is mirrored too', Settings::adopt_discovered_address( 8, $bad, true ), true );
+check( 'it is in the field', stored( 8 ), $bad );
+check( 'but marked as not provable', $GLOBALS['user_meta'][8]['sk_profile_settings']['lightning_lud21'], false );
+
+// Mirroring never brings one of ours back.
+check( 'mirroring does not adopt our own address',
+	Settings::adopt_discovered_address( 7, 'v/7@staging.satoshiskleinanzeigen.space', true ), false );
+check( 'the real address survives', stored( 7 ), $good );
+
 // --- The site-wide switch stops it ------------------------------------------
 $GLOBALS['wallet_switch'] = 'off';
 check( 'switch off: nothing is adopted', Settings::adopt_discovered_address( 6, $good ), false );

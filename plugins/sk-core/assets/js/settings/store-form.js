@@ -40,6 +40,44 @@ function skStoreToast(message, type) {
         if (!savedState || savedState === 'N/A') $('#sk-states-box').hide();
     });
 
+    /**
+     * Send the shop change to Nostr with a key we do not hold.
+     *
+     * The server builds the profile event, the extension signs it, the server
+     * sends it to the relays. Runs after the settings are already saved, so a
+     * missing extension or a declined signature costs nothing but the update
+     * on Nostr.
+     */
+    function skPublishNostrProfile() {
+        if (!config.nostrSign || !window.nostr) { return; }
+
+        $.post(config.ajaxUrl, { action: 'sk_nostr_profile_event', nonce: config.nostrNonce })
+            .done(function(res) {
+                if (!res || !res.success || !res.data || !res.data.event) { return; }
+
+                skStoreToast(config.nostrSigning, 'info');
+
+                window.nostr.signEvent(res.data.event).then(function(signed) {
+                    if (!signed || !signed.sig) { return; }
+
+                    $.post(config.ajaxUrl, {
+                        action: 'sk_nostr_publish_profile',
+                        nonce: config.nostrNonce,
+                        event: JSON.stringify(signed)
+                    }).done(function(pub) {
+                        skStoreToast(pub && pub.success ? config.nostrSaved : config.nostrFailed,
+                            pub && pub.success ? 'info' : 'error');
+                    }).fail(function() {
+                        skStoreToast(config.nostrFailed, 'error');
+                    });
+                }).catch(function() {
+                    // Signature declined in the extension: the shop is saved,
+                    // Nostr simply stays as it was.
+                    skStoreToast(config.nostrFailed, 'error');
+                });
+            });
+    }
+
     // Save via AJAX
     $('#sk-store-form').on('submit', function(e) {
         e.preventDefault();
@@ -56,6 +94,7 @@ function skStoreToast(message, type) {
                     window.onbeforeunload = null;
                     $form.data('submitted', true);
                     skStoreToast(config.savedMessage, 'info');
+                    skPublishNostrProfile();
                 } else {
                     var errText = (res && res.data) ? (Array.isArray(res.data) ? res.data.join(', ') : res.data) : 'Fehler beim Speichern.';
                     skStoreToast(errText, 'error');

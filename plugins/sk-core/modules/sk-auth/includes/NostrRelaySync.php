@@ -150,31 +150,65 @@ class NostrRelaySync {
             return;
         }
 
+        $created = (int) ( $event['created_at'] ?? 0 );
+
+        /*
+         * The newer profile wins, the rule every Nostr client follows.
+         *
+         * Both sides write now: a shop change goes out to the relays, and what
+         * the vendor changes in a Nostr client comes in here. Without this
+         * check our own publication would come back minutes later and undo
+         * itself, and an old event from a slow relay could revive a value the
+         * vendor had already replaced.
+         */
+        if ( ! NostrIdentity::profile_is_newer( $user_id, $created ) ) {
+            return;
+        }
+
+        // The first profile after linking an account only fills gaps; from the
+        // second one on, the profile is the source. See profile_seen().
+        $replace = NostrIdentity::profile_seen( $user_id );
+
         $updated = false;
 
-        // Sync name → display_name (only if not a placeholder).
+        // Sync name → shop name and display name.
         if ( ! empty( $profile['name'] ) ) {
-            $current = get_userdata( $user_id );
-            if ( $current && ( strpos( $current->display_name, 'satoshi-' ) === 0 || strpos( $current->display_name, 'nostr-' ) === 0 || strpos( $current->display_name, 'LN-' ) === 0 ) ) {
-                wp_update_user( [ 'ID' => $user_id, 'display_name' => sanitize_text_field( $profile['name'] ) ] );
+            $name       = sanitize_text_field( $profile['name'] );
+            $current    = get_userdata( $user_id );
+            $store_name = function_exists( 'sk_get_store_info' ) ? ( sk_get_store_info( $user_id )['store_name'] ?? '' ) : '';
+
+            // A name the vendor never chose: the shop slug we handed out.
+            $placeholder = $store_name === '' || preg_match( '/^(satoshi-|nostr-|LN-)/', $store_name );
+
+            if ( $store_name !== $name && ( $replace || $placeholder ) ) {
+                sk_set_store_name( $user_id, $name );
+                $updated = true;
+            }
+
+            if ( $current && $current->display_name !== $name
+                && ( $replace || preg_match( '/^(satoshi-|nostr-|LN-)/', $current->display_name ) ) ) {
+                wp_update_user( [ 'ID' => $user_id, 'display_name' => $name ] );
                 $updated = true;
             }
         }
 
         // Sync avatar.
         if ( ! empty( $profile['picture'] ) ) {
-            $avatar = esc_url_raw( $profile['picture'] );
-            if ( $avatar !== get_user_meta( $user_id, 'nostr_avatar', true ) ) {
+            $avatar  = esc_url_raw( $profile['picture'] );
+            $current = (string) get_user_meta( $user_id, 'nostr_avatar', true );
+
+            if ( $avatar !== $current && ( $replace || $current === '' ) ) {
                 update_user_meta( $user_id, 'nostr_avatar', $avatar );
                 $updated = true;
             }
         }
 
-        // Sync lud16 → lightning_address. Whether it may be taken over at all
-        // is decided in one place for every path that finds an address on
-        // Nostr, see Wallet\Settings::adopt_discovered_address().
+        // Sync lud16 → lightning_address. This event is the newer one, so it
+        // replaces what stands here, address changes included. Whether the
+        // address can also carry a sale is decided and recorded in
+        // Wallet\Settings::adopt_discovered_address().
         if ( ! empty( $profile['lud16'] ) ) {
-            if ( \SK\Core\Wallet\Settings::adopt_discovered_address( $user_id, sanitize_text_field( $profile['lud16'] ) ) ) {
+            if ( \SK\Core\Wallet\Settings::adopt_discovered_address( $user_id, sanitize_text_field( $profile['lud16'] ), $replace ) ) {
                 $updated = true;
             }
         }
@@ -213,20 +247,6 @@ class NostrRelaySync {
             }
         }
 
-        // Sync name → store_name (if store name is still default/empty).
-        if ( ! empty( $profile['name'] ) ) {
-            $store_info = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( $user_id ) : [];
-            if ( is_array( $store_info ) ) {
-                $store_name = $store_info['store_name'] ?? '';
-                $user = get_userdata( $user_id );
-                // Only update if store name is empty or matches the generated username.
-                if ( empty( $store_name ) || ( $user && $store_name === $user->user_login ) ) {
-                    sk_set_store_name( $user_id, $profile['name'] );
-                    $updated = true;
-                }
-            }
-        }
-
         // Sync NIP-05.
         if ( ! empty( $profile['nip05'] ) ) {
             $nip05 = sanitize_text_field( $profile['nip05'] );
@@ -239,12 +259,17 @@ class NostrRelaySync {
         // Sync website.
         if ( ! empty( $profile['website'] ) ) {
             $website = esc_url_raw( $profile['website'] );
-            $user = get_userdata( $user_id );
-            if ( $user && $user->user_url !== $website ) {
+            $user    = get_userdata( $user_id );
+
+            if ( $user && $user->user_url !== $website && ( $replace || $user->user_url === '' ) ) {
                 wp_update_user( [ 'ID' => $user_id, 'user_url' => $website ] );
                 $updated = true;
             }
         }
+
+        // Seen and applied: an older event may not undo any of it, and neither
+        // may this one a second time.
+        NostrIdentity::remember_profile_time( $user_id, $created );
 
         if ( $updated ) {
             error_log( sprintf( '[NostrRelaySync] Profile updated for user %d from Kind 0 event', $user_id ) );

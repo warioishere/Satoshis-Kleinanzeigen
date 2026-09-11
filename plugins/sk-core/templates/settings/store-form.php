@@ -48,6 +48,16 @@ wp_localize_script(
         'bannerTitle'  => __( 'Banner auswählen', 'sk-core' ),
         'imageTitle'   => __( 'Bild auswählen', 'sk-core' ),
         'selectLabel'  => __( 'Auswählen', 'sk-core' ),
+
+        // A vendor whose Nostr key stays with them signs the profile update in
+        // their own browser; with a key of ours the server does it on save.
+        'nostrSign'    => class_exists( 'SK\Modules\Auth\NostrIdentity' )
+            && \SK\Core\Trust\VendorKey::bound( $current_user ) !== ''
+            && ! \SK\Modules\Auth\NostrIdentity::has_identity( $current_user ),
+        'nostrNonce'   => wp_create_nonce( 'sk_nostr_profile' ),
+        'nostrSigning' => __( 'Nostr-Profil wird signiert…', 'sk-core' ),
+        'nostrSaved'   => __( 'Nostr-Profil aktualisiert.', 'sk-core' ),
+        'nostrFailed'  => __( 'Nostr-Profil nicht aktualisiert. Die Shop-Einstellungen sind gespeichert.', 'sk-core' ),
     ]
 );
 
