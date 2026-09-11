@@ -37,6 +37,9 @@
 #   test-vendor-lightning  Settings::has_lightning. An address on our own host
 #                     only counts with a wallet behind it, a foreign one always,
 #                     and the site-wide switch overrules both.
+#   test-adopt-address  Settings::adopt_discovered_address. An address found on
+#                     Nostr lands in the shop settings only with LUD-21 proof,
+#                     never over one the vendor typed, never one of ours.
 #   test-zap-counting  ZapStats::count_zap. The same receipt seen twice counts
 #                     once, for the vendor and for the post; a foreign post is
 #                     never touched; unusable input changes nothing.

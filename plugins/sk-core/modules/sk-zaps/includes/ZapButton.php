@@ -481,6 +481,12 @@ class ZapButton {
 
         if ( $lud16 !== '' ) {
             update_user_meta( $vendor_id, 'sk_zap_lud16', $lud16 );
+
+            // Into the shop settings as well, where the vendor can see it and
+            // the rest of the site can use it — but only if it can prove a
+            // payment, see adopt_discovered_address(). An address that cannot
+            // stays here and is good for zaps only.
+            \SK\Core\Wallet\Settings::adopt_discovered_address( $vendor_id, $lud16 );
         }
     }
 

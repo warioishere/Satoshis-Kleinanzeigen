@@ -333,17 +333,17 @@ class Nostr_Login_Handler {
                 'user_url' => esc_url_raw( $sanitized_metadata['website'] ),
             ) );
         }
-        // Save Lightning Address (lud16) from Nostr profile for zap support.
+        // Take the Lightning address (lud16) from the Nostr profile into the
+        // shop settings. Whether it may be taken over is decided in one place
+        // for every path (Wallet\Settings::adopt_discovered_address), and that
+        // decision costs two outbound requests — which have no business inside
+        // a login, so it runs right after it.
         if ( ! empty( $sanitized_metadata['lud16'] ) ) {
-            $lud16 = sanitize_text_field( $sanitized_metadata['lud16'] );
-            $settings = get_user_meta( $user_id, 'sk_profile_settings', true );
-            if ( ! is_array( $settings ) ) {
-                $settings = [];
-            }
-            if ( empty( $settings['lightning_address'] ) ) {
-                $settings['lightning_address'] = $lud16;
-                update_user_meta( $user_id, 'sk_profile_settings', $settings );
-            }
+            wp_schedule_single_event(
+                time() + 30,
+                'sk_adopt_lnaddr',
+                [ $user_id, sanitize_text_field( $sanitized_metadata['lud16'] ) ]
+            );
         }
     }
 

@@ -41,6 +41,10 @@ class Settings {
         // Explanation modal for a rejected address, plus the message from the
         // last save attempt.
         add_action( 'wp_footer', [ $this, 'render_reject_modal' ] );
+
+        // An address found on Nostr is adopted off the request: the check
+        // behind it makes two outbound calls and must not sit in a login.
+        add_action( 'sk_adopt_lnaddr', [ __CLASS__, 'adopt_discovered_address' ], 10, 2 );
     }
 
     /**
@@ -214,6 +218,75 @@ class Settings {
         }
 
         return true;
+    }
+
+    /**
+     * Take a Lightning address found in a vendor's Nostr profile into their
+     * shop settings, so it shows in the field and counts everywhere else.
+     *
+     * The vendor did not type it here, so it has to pass exactly what the form
+     * demands: reachable, and able to prove that a payment happened (LUD-21).
+     * Without that proof a sale through it could never be settled — the form
+     * refuses such an address, and a back door would be worse than none.
+     * An address of ours is skipped: it only works with a connected wallet.
+     * Anything the vendor entered themselves is never overwritten.
+     *
+     * Makes two outbound requests, so it belongs on cron, never in a render.
+     *
+     * @return bool True when the address was stored.
+     */
+    public static function adopt_discovered_address( int $vendor_id, string $address ): bool {
+        $address = trim( $address );
+
+        if ( ! self::enabled() || $vendor_id <= 0 || $address === '' ) {
+            return false;
+        }
+
+        if ( ! self::is_valid_lightning_address( $address ) || self::is_local_address( $address ) ) {
+            return false;
+        }
+
+        if ( ! self::field_is_free( $vendor_id, $address ) ) {
+            return false;
+        }
+
+        if ( true !== self::check_lud21( $address ) ) {
+            return false;
+        }
+
+        // Read again: the check went out to the network and the vendor may
+        // have saved their settings in the meantime.
+        if ( ! self::field_is_free( $vendor_id, $address ) ) {
+            return false;
+        }
+
+        $settings = get_user_meta( $vendor_id, 'sk_profile_settings', true );
+        $settings = is_array( $settings ) ? $settings : [];
+
+        $settings['lightning_address'] = $address;
+        $settings['lightning_lud21']   = true;
+
+        update_user_meta( $vendor_id, 'sk_profile_settings', $settings );
+
+        return true;
+    }
+
+    /**
+     * May a discovered address be written into the field?
+     *
+     * Only when nothing is there, or only one of ours, which is no address of
+     * the vendor's own. An address already equal to the candidate needs no
+     * write either.
+     */
+    private static function field_is_free( int $vendor_id, string $candidate ): bool {
+        $settings = get_user_meta( $vendor_id, 'sk_profile_settings', true );
+        $current  = is_array( $settings ) ? (string) ( $settings['lightning_address'] ?? '' ) : '';
+
+        if ( strcasecmp( $current, $candidate ) === 0 ) {
+            return false;
+        }
+
+        return $current === '' || self::is_local_address( $current );
     }
 
     /**
