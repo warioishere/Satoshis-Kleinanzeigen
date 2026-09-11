@@ -4018,12 +4018,6 @@ div.media-sidebar a.edit-attachment {
   margin-left: auto;
   margin-right: auto;
 }
-.sk-single-store .profile-frame .profile-info-box .profile-info-summery-wrapper .profile-info-summery .profile-info-head .profile-img.profile-img-square img {
-  background-color: #fff;
-  border: 1px solid #EDEDED;
-  border-radius: 0;
-  padding: 4px;
-}
 .sk-single-store .profile-frame .profile-info-box .profile-info-summery-wrapper .profile-info-summery .profile-info-head .store-name {
   font-weight: bold;
   padding: 0;
@@ -4221,131 +4215,6 @@ div.media-sidebar a.edit-attachment {
 }
 .sk-single-store .profile-frame .profile-info-box .profile-info-summery-wrapper .profile-info-summery .profile-info .seller-rating {
   display: none;
-}
-.sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper {
-  position: relative;
-  background-color: #fff;
-  color: inherit;
-  border: 1px solid #EDEDED;
-  padding: 0 15px;
-}
-.sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery {
-  color: #444;
-  width: 100%;
-  margin-top: -55px;
-  padding: 0;
-  position: relative;
-  background: none;
-}
-.sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery .profile-info-head {
-  float: left;
-}
-.sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery .profile-info-head .profile-img {
-  margin-bottom: 0;
-}
-.sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery .profile-info-head .profile-img img {
-  width: 150px;
-  height: 150px;
-}
-.sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery .profile-info {
-  float: left;
-  padding: 0;
-}
-.sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery .profile-info .store-name {
-  color: #fff;
-  margin: 10px 0 25px 15px;
-  text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
-  font-weight: bold;
-  font-size: 28px;
-  line-height: 1.1;
-}
-.sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info {
-  padding-left: 40px;
-  font-size: 14px;
-  line-height: 21px;
-  margin-left: 0;
-}
-.sk-single-store .profile-frame.profile-frame-no-banner {
-  background-color: transparent;
-}
-.sk-single-store .profile-frame.profile-frame-no-banner .profile-layout-layout3 .profile-info-img {
-  display: none;
-}
-.sk-single-store .profile-frame.profile-frame-no-banner .profile-layout-layout3 .profile-info-summery-wrapper {
-  border: 1px solid #EDEDED;
-  position: relative;
-}
-.sk-single-store .profile-frame.profile-frame-no-banner .profile-layout-layout3 .profile-info-summery-wrapper .profile-info-summery {
-  background-color: #fff;
-  width: 100%;
-  padding: 10px;
-}
-.sk-single-store .profile-frame.profile-frame-no-banner .profile-layout-layout3 .profile-info-summery-wrapper .profile-info-summery .profile-info-head {
-  width: 20%;
-  float: left;
-}
-.sk-single-store .profile-frame.profile-frame-no-banner .profile-layout-layout3 .profile-info-summery-wrapper .profile-info-summery .profile-info-head .profile-img img {
-  background: #fff;
-  border: 1px solid #ddd;
-  padding: 2px;
-  width: 150px;
-  height: 150px;
-}
-.sk-single-store .profile-frame.profile-frame-no-banner .profile-layout-layout3 .profile-info-summery-wrapper .profile-info-summery .profile-info {
-  float: left;
-  padding: 0 25px;
-  color: #444;
-  width: 80%;
-}
-.sk-single-store .profile-frame.profile-frame-no-banner .profile-layout-layout3 .profile-info-summery-wrapper .profile-info-summery .profile-info .store-name {
-  margin-top: 5px;
-  font-size: 30px;
-  font-weight: bold;
-}
-.sk-single-store .profile-frame.profile-frame-no-banner .profile-layout-layout3 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info {
-  margin: 0;
-  padding-left: 25px;
-  clear: both;
-}
-.sk-single-store .profile-frame.profile-frame-no-banner .profile-layout-layout3 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info .store-open-close-notice #vendor-store-times {
-  left: -30%;
-}
-.sk-single-store .profile-frame.profile-frame-no-banner .profile-layout-layout3 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info .store-open-close-notice:hover span.fa-angle-down:after {
-  right: -2.5px;
-}
-.sk-single-store .profile-frame.profile-frame-no-banner .profile-layout-layout3 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info li {
-  float: left;
-  margin-right: 40px;
-  position: relative;
-}
-.sk-single-store .profile-frame.profile-frame-no-banner .profile-layout-layout3 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info li i {
-  margin-left: -22px;
-}
-.sk-single-store .profile-frame.profile-frame-no-banner .profile-layout-layout3 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info li:before {
-  content: "·";
-  position: absolute;
-  top: 10px;
-  left: -35px;
-  color: #afafaf;
-  font-size: 25px;
-  line-height: 0;
-}
-.sk-single-store .profile-frame.profile-frame-no-banner .profile-layout-layout3 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info li:first-child:before {
-  content: "";
-}
-.sk-single-store .profile-frame.profile-frame-no-banner .profile-layout-layout3 .profile-info-summery-wrapper .profile-info-summery .profile-info .store-social-wrapper {
-  clear: both;
-  position: relative;
-}
-.sk-single-store .profile-frame.profile-frame-no-banner .profile-layout-layout3 .profile-info-summery-wrapper .profile-info-summery .profile-info .store-social-wrapper .store-social {
-  display: flex;
-  padding-left: 0;
-}
-.sk-single-store .profile-frame.profile-frame-no-banner .profile-layout-layout3 .profile-info-summery-wrapper .profile-info-summery .profile-info .store-social-wrapper .store-social li {
-  margin: 0 8px 0 0;
-}
-.sk-single-store .profile-frame.profile-frame-no-banner .profile-layout-layout3 .profile-info-summery-wrapper .profile-info-summery .profile-info .store-social-wrapper .store-social li a i {
-  text-shadow: none;
 }
 .sk-single-store .sk-store-tabs {
   text-align: center;
@@ -4612,94 +4481,6 @@ div.media-sidebar a.edit-attachment {
   .sk-single-store .profile-frame .profile-info-box.profile-layout-default .profile-info-summery-wrapper .profile-info-summery .profile-info ul.sk-store-info {
     margin-bottom: 10px;
   }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery .profile-info .store-social-wrapper {
-    top: 12px;
-    right: 15px;
-    bottom: auto;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout2 {
-    position: relative;
-    width: 100%;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout2 .profile-info-summery-wrapper {
-    position: relative;
-    background-color: #fff;
-    color: #444;
-    border: 1px solid #EDEDED;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout2 .profile-info-summery-wrapper .profile-info-summery {
-    width: 100%;
-    margin-top: -75px;
-    padding-top: 0;
-    background: none;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout2 .profile-info-summery-wrapper .profile-info-summery .profile-info-head {
-    position: relative;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout2 .profile-info-summery-wrapper .profile-info-summery .profile-info-head .profile-img img {
-    background: #fff;
-    border: 1px solid #ddd;
-    padding: 2px;
-    width: 150px;
-    height: 150px;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout2 .profile-info-summery-wrapper .profile-info-summery .profile-info {
-    position: relative;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout2 .profile-info-summery-wrapper .profile-info-summery .profile-info .store-name {
-    color: inherit;
-    font-size: 35px;
-    text-align: center;
-    font-weight: bold;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout2 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info {
-    padding: 0;
-    width: 100%;
-    margin: 0;
-    display: block;
-    text-align: center;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout2 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info .store-open-close-notice {
-    display: inline-block;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout2 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info .store-open-close-notice:hover span.fa-angle-down:after {
-    right: -2.5px;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout2 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info li {
-    text-align: left;
-    display: inline-block;
-    padding-bottom: 15px;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout2 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info li a {
-    color: inherit;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout2 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info li i {
-    display: none;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout2 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info li:after {
-    content: '·';
-    color: #9c9c9c;
-    font-weight: bold;
-    font-size: 18px;
-    position: relative;
-    top: 3px;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout2 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info li:last-child:after {
-    content: '';
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout2 .profile-info-summery-wrapper .profile-info-summery .profile-info .store-social-wrapper {
-    position: relative;
-    text-align: center;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout2 .profile-info-summery-wrapper .profile-info-summery .profile-info .store-social-wrapper .store-social {
-    position: relative;
-    padding: 0;
-    margin: 0;
-    display: inline-block;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout2 .profile-info-summery-wrapper .profile-info-summery .profile-info .store-social-wrapper .store-social li a i {
-    text-shadow: none;
-  }
 }
 @media (max-width: 767px) {
   .sk-store-sidebar,
@@ -4707,9 +4488,6 @@ div.media-sidebar a.edit-attachment {
     margin-right: 3%;
     width: 94%;
     margin-left: 3%;
-  }
-  .sk-single-store .profile-frame.profile-frame-no-banner .profile-info-box.profile-layout-layout3 .profile-info-summery-wrapper .profile-info-summery .profile-info-head {
-    width: 150px;
   }
 }
 @media (max-width: 1199px) {
@@ -4785,111 +4563,6 @@ div.media-sidebar a.edit-attachment {
   }
   .sk-single-store .profile-frame .profile-info-box .profile-info-summery-wrapper .profile-info-summery .profile-info .store-social-wrapper .store-social li {
     margin-left: 8px;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper {
-    padding: 0 8px;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery {
-    margin-top: 0px;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery .profile-info-head {
-    top: 0;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery .profile-info-head .profile-img.profile-img-square {
-    background: none;
-    border: 0;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery .profile-info-head .profile-img img {
-    width: 100px;
-    height: 100px;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery .profile-info .store-name {
-    font-size: 20px;
-    margin-bottom: 8px;
-    color: #444;
-    text-shadow: none;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info {
-    top: 0;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info li {
-    text-align: left;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info li i {
-    display: inline-block;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info .store-open-close-notice {
-    justify-content: flex-start;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery .profile-info .store-social-wrapper {
-    position: absolute;
-    top: -35px;
-    right: 20px;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery .profile-info .store-social-wrapper .store-social {
-    top: 0;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery .profile-info .store-social-wrapper .store-social li {
-    margin-left: 8px;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery .profile-info .store-social-wrapper .store-social li a i {
-    font-size: 25px;
-    text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.55);
-    color: #0B8379;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery .profile-info .store-social-wrapper .store-social li a i.fa-square-x-twitter {
-    color: #000000;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout2 .profile-info-summery-wrapper .profile-info-summery .profile-info {
-    margin-top: 0;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout2 .profile-info-summery-wrapper .profile-info-summery .profile-info .store-name {
-    position: relative;
-    top: 0px;
-    text-align: center;
-    font-size: 20px;
-    margin-bottom: 10px;
-    color: #444;
-    text-shadow: none;
-    font-weight: bold;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout2 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info {
-    top: 0;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout2 .profile-info-summery-wrapper .profile-info-summery .profile-info .store-social-wrapper {
-    top: 0;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout3 .profile-info-summery-wrapper {
-    height: auto;
-    border: 0;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout3 .profile-info-summery-wrapper .profile-info-summery .profile-info-head {
-    top: 0;
-    margin-right: 15px;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout3 .profile-info-summery-wrapper .profile-info-summery .profile-info {
-    padding: 0 0 0 15px;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout3 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info {
-    top: 0;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout3 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info li {
-    float: none;
-    text-align: left;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout3 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info li i {
-    display: inline-block;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout3 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info li:before {
-    content: "";
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout3 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info .store-open-close-notice {
-    justify-content: flex-start;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout3 .profile-info-summery-wrapper .profile-info-summery .profile-info .store-social-wrapper {
-    top: 0;
-    text-align: left;
-    padding: 0 4px;
   }
 }
 .sk-withdraw-content .sk-withdraw-area h1 {
@@ -5301,15 +4974,7 @@ div.media-sidebar a.edit-attachment {
 /*--------------------------------------------------
 :: Responsive Styles
 -------------------------------------------------- */
-@media (max-width: 1366px) {
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info {
-    max-width: 650px;
-  }
-}
 @media (max-width: 1199px) {
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info {
-    max-width: 590px;
-  }
   .sk-dashboard .sk-dashboard-content .sk-table {
     display: block;
     overflow: scroll;
@@ -5328,9 +4993,6 @@ div.media-sidebar a.edit-attachment {
   }
   #sk-seller-listing-wrap.list-view .sk-seller-wrap .sk-single-seller .store-content .store-data-container .store-data .store-address {
     font-size: 14px !important;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info {
-    max-width: 430px;
   }
 }
 @media (max-width: 767px) {
@@ -5424,9 +5086,6 @@ div.media-sidebar a.edit-attachment {
   ul.sk-seller-wrap li.sk-single-seller {
     width: 90%;
     margin-bottom: 50px;
-  }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info {
-    max-width: 500px;
   }
 }
 @media (max-width: 480px) {
@@ -5572,19 +5231,11 @@ div.media-sidebar a.edit-attachment {
   .sk-single-store .profile-frame .profile-info-box {
     width: 100%;
   }
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info {
-    max-width: 280px;
-  }
   .sk-seller-wrap .sk-single-seller .store-wrapper .store-footer {
     display: flex;
   }
 }
 @media (max-width: 375px) {
-}
-@media (max-width: 360px) {
-  .sk-single-store .profile-frame .profile-info-box.profile-layout-layout1 .profile-info-summery-wrapper .profile-info-summery .profile-info .sk-store-info {
-    max-width: 200px;
-  }
 }
 
 

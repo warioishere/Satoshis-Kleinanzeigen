@@ -17,3 +17,12 @@
     color: #e8ecf0 !important;
     opacity: 1;
 }
+
+/*
+ * The global select height of 35px predates this form, where every text
+ * input is 42px tall. Left alone, a native select next to them is short
+ * enough to clip its own text.
+ */
+.sk-settings-input select.sk-form-control {
+    height: 42px;
+}
