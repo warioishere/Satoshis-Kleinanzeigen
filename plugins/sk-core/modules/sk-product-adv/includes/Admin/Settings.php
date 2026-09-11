@@ -108,13 +108,6 @@ class Settings {
                 'type'    => 'switcher',
                 'default' => 'off',
             ],
-            'hide_out_of_stock_items' => [
-                'name'    => 'hide_out_of_stock_items',
-                'label'   => __( 'Out of Stock Visibility', 'sk-core' ),
-                'desc'    => __( 'Hide out of stock items from the advertisement list. Note that, if WooCommerce setting for out of stock visibility is checked, product will be hidden despite this setting.', 'sk-core' ),
-                'type'    => 'switcher',
-                'default' => 'off',
-            ],
         ];
 
         return $fields;

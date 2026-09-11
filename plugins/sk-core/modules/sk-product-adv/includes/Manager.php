@@ -783,19 +783,6 @@ class Manager {
             'post__in'    => $product_ids,
         ];
 
-        if ( Helper::is_hide_out_of_stock_products_enabled() ) {
-            // get post via ids
-            $product_visibility_term_ids = wc_get_product_visibility_term_ids();
-            $query_args['tax_query'][] = array(
-                array(
-                    'taxonomy' => 'product_visibility',
-                    'field'    => 'term_taxonomy_id',
-                    'terms'    => $product_visibility_term_ids['outofstock'],
-                    'operator' => 'NOT IN',
-                ),
-            ); // phpcs:ignore slow query ok.
-        }
-
         $products = new \WP_Query( $query_args );
 
         return $products->have_posts() ? $products : false;

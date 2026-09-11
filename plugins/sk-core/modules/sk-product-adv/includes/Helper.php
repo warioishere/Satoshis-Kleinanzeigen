@@ -69,16 +69,6 @@ class Helper {
     }
 
     /**
-     * This method will return if admin wants to out of stocks products from advertisements.
-     *
-     *
-     * @return bool
-     */
-    public static function is_hide_out_of_stock_products_enabled() {
-        return 'on' === sk_get_option( 'hide_out_of_stock_items', 'sk_product_advertisement', 'off' );
-    }
-
-    /**
      * This method will return advertisement cost for per product
      *
      *
