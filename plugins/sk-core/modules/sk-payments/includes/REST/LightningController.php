@@ -244,7 +244,6 @@ class LightningController extends WP_REST_Controller {
                 if ( ! is_wp_error( $lndhub_result ) ) {
                     $bolt11       = $lndhub_result['pr'];
                     $payment_hash = $lndhub_result['payment_hash'];
-                    $via_nwc      = false;
 
                     if ( empty( $payment_hash ) ) {
                         $payment_hash = Bolt11Parser::get_payment_hash( $bolt11 );
@@ -640,26 +639,7 @@ class LightningController extends WP_REST_Controller {
      * image the payer scans. Only payment payloads are accepted.
      */
     public function get_qr( WP_REST_Request $request ) {
-        $data = trim( (string) $request->get_param( 'data' ) );
-
-        if ( strlen( $data ) > 1000 ) {
-            return new WP_Error( 'qr_too_long', 'Payload zu lang.', [ 'status' => 400 ] );
-        }
-
-        $is_bolt11 = (bool) preg_match( '/^ln[a-z0-9]{20,}$/i', $data );
-        $is_bip21  = (bool) preg_match( '/^bitcoin:[a-zA-Z0-9]{20,90}(?:\?[A-Za-z0-9=&.\-_%]*)?$/', $data );
-
-        if ( ! $is_bolt11 && ! $is_bip21 ) {
-            return new WP_Error( 'qr_invalid', 'Nur bolt11-Invoices und bitcoin:-URIs werden gerendert.', [ 'status' => 400 ] );
-        }
-
-        $uri = $is_bolt11 ? QrImage::bolt11( $data ) : QrImage::data_uri( $data );
-
-        if ( $uri === '' ) {
-            return new WP_Error( 'qr_failed', 'QR-Code konnte nicht erzeugt werden.', [ 'status' => 500 ] );
-        }
-
-        return new WP_REST_Response( [ 'qr' => $uri ], 200 );
+        return QrImage::rest_answer( (string) $request->get_param( 'data' ), 'lightning-qr', true );
     }
 
     public function get_rate( WP_REST_Request $request ) {

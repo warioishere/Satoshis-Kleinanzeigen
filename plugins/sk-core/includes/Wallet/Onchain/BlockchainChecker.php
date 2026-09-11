@@ -341,31 +341,9 @@ class BlockchainChecker {
         ];
     }
 
+    /** @see \SK\Core\BitcoinAddress::convert_bits() — one bech32 regrouping for all. */
     private static function convert_bits( array $data, int $from, int $to, bool $pad ): ?array {
-        $acc    = 0;
-        $bits   = 0;
-        $result = [];
-        $max    = ( 1 << $to ) - 1;
-
-        foreach ( $data as $value ) {
-            if ( $value < 0 || $value >> $from ) {
-                return null;
-            }
-            $acc  = ( $acc << $from ) | $value;
-            $bits += $from;
-            while ( $bits >= $to ) {
-                $bits    -= $to;
-                $result[] = ( $acc >> $bits ) & $max;
-            }
-        }
-
-        if ( $pad && $bits > 0 ) {
-            $result[] = ( $acc << ( $to - $bits ) ) & $max;
-        } elseif ( ! $pad && ( $bits >= $from || ( ( $acc << ( $to - $bits ) ) & $max ) ) ) {
-            return null;
-        }
-
-        return $result;
+        return \SK\Core\BitcoinAddress::convert_bits( $data, $from, $to, $pad );
     }
 
     private static function base58check_decode( string $input ) {

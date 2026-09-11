@@ -140,32 +140,8 @@ class Bolt11Parser {
         return new \WP_Error( 'bolt11_no_hash', 'Kein Payment-Hash in bolt11 gefunden.' );
     }
 
+    /** @see \SK\Core\BitcoinAddress::convert_bits() — one bech32 regrouping for all. */
     private static function convert_bits( array $data, int $from_bits, int $to_bits, bool $pad = true ): ?array {
-        $acc    = 0;
-        $bits   = 0;
-        $result = [];
-        $max    = ( 1 << $to_bits ) - 1;
-
-        foreach ( $data as $value ) {
-            if ( $value < 0 || $value >> $from_bits ) {
-                return null;
-            }
-            $acc  = ( $acc << $from_bits ) | $value;
-            $bits += $from_bits;
-            while ( $bits >= $to_bits ) {
-                $bits    -= $to_bits;
-                $result[] = ( $acc >> $bits ) & $max;
-            }
-        }
-
-        if ( $pad ) {
-            if ( $bits > 0 ) {
-                $result[] = ( $acc << ( $to_bits - $bits ) ) & $max;
-            }
-        } elseif ( $bits >= $from_bits || ( ( $acc << ( $to_bits - $bits ) ) & $max ) ) {
-            return null;
-        }
-
-        return $result;
+        return \SK\Core\BitcoinAddress::convert_bits( $data, $from_bits, $to_bits, $pad );
     }
 }

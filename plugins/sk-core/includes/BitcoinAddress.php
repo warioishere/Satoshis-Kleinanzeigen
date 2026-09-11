@@ -259,7 +259,22 @@ final class BitcoinAddress {
      * @param int[] $data
      * @return int[]|null Null when the leftover bits make the input invalid.
      */
-    private static function convert_bits( array $data, int $from, int $to ): ?array {
+    /**
+     * Regroup bits, the step every bech32 payload needs.
+     *
+     * The same loop stood in five files — the address check, the xpub
+     * derivation, the chain lookup, the LNURL decoder and the bolt11 parser.
+     * One of them silently getting a different rounding rule is the kind of
+     * bug that produces addresses nobody can spend from.
+     *
+     * @param bool $pad Encoding pads the last, partial group with zeroes.
+     *                  Decoding does not: leftover bits must be fewer than one
+     *                  input group and all zero, otherwise the payload is
+     *                  malformed and null comes back.
+     *
+     * @return int[]|null
+     */
+    public static function convert_bits( array $data, int $from, int $to, bool $pad = false ): ?array {
         $acc  = 0;
         $bits = 0;
         $out  = [];
@@ -279,8 +294,11 @@ final class BitcoinAddress {
             }
         }
 
-        // Leftover bits must be fewer than one output group and all zero.
-        if ( $bits >= $from || ( ( $acc << ( $to - $bits ) ) & $max ) !== 0 ) {
+        if ( $pad ) {
+            if ( $bits > 0 ) {
+                $out[] = ( $acc << ( $to - $bits ) ) & $max;
+            }
+        } elseif ( $bits >= $from || ( ( $acc << ( $to - $bits ) ) & $max ) !== 0 ) {
             return null;
         }
 

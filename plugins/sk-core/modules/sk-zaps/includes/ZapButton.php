@@ -178,14 +178,11 @@ class ZapButton {
         set_transient( $throttle_key, 1, 1 );
 
         // Per-IP budget so nobody can use the endpoint to flood vendor wallets.
-        $ip      = function_exists( 'sk_get_client_ip' ) ? sk_get_client_ip() : '';
-        $ip_key  = 'sk_zapip_' . md5( $ip !== '' ? $ip : 'unknown' );
-        $lookups = (int) get_transient( $ip_key );
+        $ip = sk_get_client_ip();
 
-        if ( $lookups >= self::MAX_LOOKUPS_PER_MINUTE ) {
-            wp_send_json_error( [ 'settled' => false, 'message' => 'Zu viele Anfragen.' ] );
+        if ( ! sk_rate_limit( 'zap-lookup-ip:' . md5( $ip !== '' ? $ip : 'unknown' ), self::MAX_LOOKUPS_PER_MINUTE ) ) {
+            wp_send_json_error( [ 'settled' => false, 'message' => __( 'Zu viele Anfragen.', 'sk-core' ) ] );
         }
-        set_transient( $ip_key, $lookups + 1, MINUTE_IN_SECONDS );
 
         // Try NWC first, then LNDHub.
         $client = \SK\Core\Wallet\Settings::get_nwc_client( $vendor_id );
@@ -255,7 +252,7 @@ class ZapButton {
         if ( $vendor_id === $user_id ) {
             wp_send_json_error( [ 'message' => __( 'Du kannst dich nicht selbst zappen.', 'sk-core' ) ] );
         }
-        if ( function_exists( 'sk_rate_limit' ) && ! sk_rate_limit( 'zap-nwc:' . $user_id, 10 ) ) {
+        if ( ! sk_rate_limit( 'zap-nwc:' . $user_id, 10 ) ) {
             wp_send_json_error( [ 'message' => __( 'Zu viele Zaps, bitte kurz warten.', 'sk-core' ) ] );
         }
 
@@ -332,7 +329,7 @@ class ZapButton {
 
         // Our own LNURL endpoint minted the invoice: settle it here like the
         // polling path would, once per hash.
-        $own = self::is_own_address( $data['lightning_address'] );
+        $own = \SK\Core\Wallet\Settings::is_local_address( $data['lightning_address'] );
         if ( $own && $hash !== '' ) {
             $receipt_key = 'sk_zap_receipt_' . $hash;
             if ( ! get_transient( $receipt_key ) ) {
@@ -347,12 +344,6 @@ class ZapButton {
         wp_send_json_success( [ 'payment_hash' => $hash, 'own' => $own, 'preimage' => $paid['preimage'] ] );
     }
 
-    /** Lightning address served by this site's own LNURL endpoint? */
-    private static function is_own_address( string $address ): bool {
-        $at = strrpos( $address, '@' );
-
-        return $at !== false && strtolower( substr( $address, $at + 1 ) ) === strtolower( (string) wp_parse_url( home_url(), PHP_URL_HOST ) );
-    }
 
     /**
      * Publish Kind 9735 Zap Receipt on Nostr relays (NIP-57 compliant).
@@ -444,30 +435,12 @@ class ZapButton {
      * Runs on cron, never during a page render.
      */
     public static function fetch_lud16( int $vendor_id, string $nostr_pubkey ): void {
-        $lud16  = '';
-        $events = null;
+        $lud16 = '';
 
-        // Primal's cache (REST, no WebSocket needed). It answers with a 502
-        // on and off; one attempt left the address unknown for a day.
-        for ( $attempt = 1; $attempt <= ZapStats::PRIMAL_ATTEMPTS; $attempt++ ) {
-            $response = wp_remote_post( 'https://cache.primal.net/api', [
-                'timeout' => 5,
-                'body'    => wp_json_encode( [ 'user_profile', [ 'pubkey' => $nostr_pubkey ] ] ),
-                'headers' => [ 'Content-Type' => 'application/json' ],
-            ] );
-
-            if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
-                $events = json_decode( wp_remote_retrieve_body( $response ), true );
-
-                if ( is_array( $events ) ) {
-                    break;
-                }
-            }
-
-            if ( $attempt < ZapStats::PRIMAL_ATTEMPTS ) {
-                sleep( 1 );
-            }
-        }
+        // Primal's cache (REST, no WebSocket needed), asked the way ZapStats
+        // asks it — it answers with a 502 on and off, and one attempt left the
+        // address unknown for a day.
+        $events = ZapStats::primal_profile( $nostr_pubkey );
 
         foreach ( (array) $events as $event ) {
             if ( isset( $event['kind'] ) && 0 === (int) $event['kind'] && ! empty( $event['content'] ) ) {
@@ -513,37 +486,7 @@ class ZapButton {
     }
 
     public static function rest_qr( \WP_REST_Request $request ) {
-        $ip = function_exists( 'sk_get_client_ip' ) ? sk_get_client_ip() : '';
-
-        if ( function_exists( 'sk_rate_limit' ) && ! sk_rate_limit( 'zap-qr:' . md5( $ip ?: 'unknown' ), 30 ) ) {
-            return new \WP_Error( 'qr_rate', 'Zu viele Anfragen.', [ 'status' => 429 ] );
-        }
-
-        $data = trim( (string) $request->get_param( 'data' ) );
-
-        if ( strlen( $data ) > 1000 || ! preg_match( '/^ln[a-z0-9]{20,}$/i', $data ) ) {
-            return new \WP_Error( 'qr_invalid', 'Nur bolt11-Invoices werden gerendert.', [ 'status' => 400 ] );
-        }
-
-        if ( ! class_exists( 'SK\Core\Wallet\QrImage' ) ) {
-            $file = dirname( SK_ZAPS_PATH ) . '/sk-payments/includes/QrImage.php';
-
-            if ( file_exists( $file ) ) {
-                require_once $file;
-            }
-        }
-
-        if ( ! class_exists( 'SK\Core\Wallet\QrImage' ) ) {
-            return new \WP_Error( 'qr_failed', 'QR-Code konnte nicht erzeugt werden.', [ 'status' => 500 ] );
-        }
-
-        $uri = \SK\Core\Wallet\QrImage::bolt11( $data );
-
-        if ( '' === $uri ) {
-            return new \WP_Error( 'qr_failed', 'QR-Code konnte nicht erzeugt werden.', [ 'status' => 500 ] );
-        }
-
-        return new \WP_REST_Response( [ 'qr' => $uri ], 200 );
+        return \SK\Core\Wallet\QrImage::rest_answer( (string) $request->get_param( 'data' ), 'zap-qr' );
     }
 
     /**

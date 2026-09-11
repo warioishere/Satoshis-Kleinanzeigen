@@ -53,7 +53,7 @@ class QrImage {
 
             $uri = ( new PngWriter() )->write( $qr )->getDataUri();
         } catch ( \Throwable $e ) {
-            error_log( '[SK Payments] QR-Erzeugung fehlgeschlagen: ' . $e->getMessage() );
+            error_log( '[SK Core] QR-Erzeugung fehlgeschlagen: ' . $e->getMessage() );
         }
 
         self::$cache[ $payload ] = $uri;
@@ -69,5 +69,46 @@ class QrImage {
      */
     public static function bolt11( string $bolt11 ): string {
         return self::data_uri( strtoupper( $bolt11 ) );
+    }
+
+    /**
+     * A payment payload as a REST answer, rate limited.
+     *
+     * Two endpoints hand out QR images, one for zaps and one for the instant
+     * purchase, and they have to stay open — a payer is not logged in. The
+     * validation, the limit and the rendering live here, so the two cannot
+     * drift apart; one of them used to have no limit at all.
+     *
+     * @param string $bucket      Rate-limit bucket name of the calling endpoint.
+     * @param bool   $allow_bip21 Whether a bitcoin: URI is acceptable too.
+     *
+     * @return \WP_REST_Response|\WP_Error
+     */
+    public static function rest_answer( string $data, string $bucket, bool $allow_bip21 = false ) {
+        $data = trim( $data );
+        $ip   = sk_get_client_ip();
+
+        if ( ! sk_rate_limit( $bucket . ':' . md5( $ip !== '' ? $ip : 'unknown' ), 30 ) ) {
+            return new \WP_Error( 'qr_rate', __( 'Zu viele Anfragen.', 'sk-core' ), [ 'status' => 429 ] );
+        }
+
+        if ( strlen( $data ) > 1000 ) {
+            return new \WP_Error( 'qr_too_long', __( 'Payload zu lang.', 'sk-core' ), [ 'status' => 400 ] );
+        }
+
+        $is_bolt11 = (bool) preg_match( '/^ln[a-z0-9]{20,}$/i', $data );
+        $is_bip21  = $allow_bip21 && preg_match( '/^bitcoin:[a-zA-Z0-9]{20,90}(?:\?[A-Za-z0-9=&.\-_%]*)?$/', $data );
+
+        if ( ! $is_bolt11 && ! $is_bip21 ) {
+            return new \WP_Error( 'qr_invalid', __( 'Nur Zahlungsdaten werden gerendert.', 'sk-core' ), [ 'status' => 400 ] );
+        }
+
+        $uri = $is_bolt11 ? self::bolt11( $data ) : self::data_uri( $data );
+
+        if ( '' === $uri ) {
+            return new \WP_Error( 'qr_failed', __( 'QR-Code konnte nicht erzeugt werden.', 'sk-core' ), [ 'status' => 500 ] );
+        }
+
+        return new \WP_REST_Response( [ 'qr' => $uri ], 200 );
     }
 }

@@ -4,6 +4,8 @@ cache/
 wflogs/
 
 *.log
+# Rotated debug logs: debug.log.1, debug.log.2.gz and so on.
+*.log.[0-9]*
 *.tmp
 *.md
 .DS_Store

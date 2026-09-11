@@ -57,25 +57,6 @@ class ExchangeRate {
         return $sats;
     }
 
-    public static function eur_to_sats( float $eur ) {
-        return self::fiat_to_sats( $eur, 'EUR' );
-    }
-
-    public static function sats_to_fiat( int $sats, string $currency = 'EUR' ) {
-        $rate = self::get_btc_rate( $currency );
-
-        if ( is_wp_error( $rate ) ) {
-            return $rate;
-        }
-
-        $btc = $sats / 100000000;
-        return round( $btc * $rate, 2 );
-    }
-
-    public static function sats_to_eur( int $sats ) {
-        return self::sats_to_fiat( $sats, 'EUR' );
-    }
-
     private static function fetch_from_mempool( string $currency = 'EUR' ) {
         $response = wp_remote_get( 'https://mempool.space/api/v1/prices', [
             'timeout' => 5,

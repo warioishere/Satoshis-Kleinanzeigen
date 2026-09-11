@@ -33,8 +33,6 @@ class Nostr_Login_Handler {
         add_action( 'edit_user_profile_update', array( $this, 'save_custom_user_profile_fields' ) );
         add_action( 'wp_ajax_nostr_sync_profile', array( $this, 'ajax_nostr_sync_profile' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
-
-        nostr_login_debug_log( "Nostr_Login_Handler class initialized" );
     }
 
     public function add_custom_user_profile_fields( $user ) {

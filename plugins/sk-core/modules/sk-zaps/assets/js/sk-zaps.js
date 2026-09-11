@@ -568,9 +568,6 @@
     }
 
     /**
-     * Track zap amount on feed posts after successful payment.
-     */
-    /**
      * Poll server to check if invoice was paid (for vendors with LNDHub/NWC).
      */
     function pollPaymentStatus(data, amountSats, paymentHash) {

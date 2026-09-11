@@ -104,7 +104,10 @@ class LnurlPayEndpoint {
         // never passed on to the invoice.
         $response = [
             'callback'    => home_url( '/.well-known/lnurlp/v/' . $vendor_id ),
-            'maxSendable' => 100000000000, // 100M msats = 100k sats
+            // 100k sats as msats — the same ceiling handle_callback enforces.
+            // It used to advertise a thousand times that, so a wallet could
+            // offer an amount the callback would then refuse.
+            'maxSendable' => 100000 * 1000,
             'minSendable' => 1000,         // 1 sat
             'metadata'    => self::build_metadata( $vendor_id, $store_slug ),
             'tag'         => 'payRequest',
@@ -240,7 +243,7 @@ class LnurlPayEndpoint {
      * Bounded invoice creation: 10 per caller per minute, 60 per vendor.
      */
     private function rate_allows( int $vendor_id ): bool {
-        $ip = function_exists( 'sk_get_client_ip' ) ? sk_get_client_ip() : '';
+        $ip = sk_get_client_ip();
 
         return sk_rate_limit( 'lnurlp-ip:' . ( $ip !== '' ? $ip : 'unknown' ), 10 )
             && sk_rate_limit( 'lnurlp-vendor:' . $vendor_id, 60 );

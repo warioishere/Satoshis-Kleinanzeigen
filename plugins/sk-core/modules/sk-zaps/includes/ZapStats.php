@@ -128,9 +128,9 @@ class ZapStats {
         $post_id   = absint( $_POST['post_id'] ?? 0 );
         $receipt   = json_decode( (string) wp_unslash( $_POST['receipt'] ?? '' ), true );
 
-        $ip = function_exists( 'sk_get_client_ip' ) ? sk_get_client_ip() : '';
+        $ip = sk_get_client_ip();
 
-        if ( function_exists( 'sk_rate_limit' ) && ! sk_rate_limit( 'zap-receipt:' . md5( $ip ?: 'unknown' ), 20 ) ) {
+        if ( ! sk_rate_limit( 'zap-receipt:' . md5( $ip ?: 'unknown' ), 20 ) ) {
             wp_send_json_error( [ 'message' => __( 'Zu viele Anfragen.', 'sk-core' ) ] );
         }
 
@@ -207,15 +207,14 @@ class ZapStats {
         $data   = ZapButton::get_vendor_zap_data( $vendor_id );
         $addr   = (string) ( $data['lightning_address'] ?? '' );
 
-        if ( preg_match( '/^([^@\s]+)@([^@\s]+)$/', $addr, $m ) ) {
-            $response = wp_remote_get( 'https://' . $m[2] . '/.well-known/lnurlp/' . rawurlencode( $m[1] ), [ 'timeout' => 5 ] );
+        // Through the one resolver, which also refuses an address that answers
+        // with an LNURL error or without a callback.
+        if ( $addr !== '' ) {
+            $meta = \SK\Core\Wallet\LNURL\Resolver::resolve( $addr );
 
-            if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
-                $meta = json_decode( wp_remote_retrieve_body( $response ), true );
-
-                if ( is_array( $meta ) && ! empty( $meta['allowsNostr'] ) && preg_match( '/^[0-9a-f]{64}$/i', (string) ( $meta['nostrPubkey'] ?? '' ) ) ) {
-                    $zapper = strtolower( $meta['nostrPubkey'] );
-                }
+            if ( is_array( $meta ) && ! empty( $meta['allowsNostr'] )
+                && preg_match( '/^[0-9a-f]{64}$/i', (string) ( $meta['nostrPubkey'] ?? '' ) ) ) {
+                $zapper = strtolower( $meta['nostrPubkey'] );
             }
         }
 
@@ -384,11 +383,14 @@ class ZapStats {
     const PRIMAL_ATTEMPTS = 5;
 
     /**
-     * @return array{sats: int, count: int}|null
+     * Ask Primal's cache for a user profile, with the retries it needs.
+     *
+     * Used from here and from the zap button's address lookup, which had the
+     * same loop a second time.
+     *
+     * @return array|null The events Primal answered with, or null.
      */
-    private static function from_primal( string $pubkey ): ?array {
-        $events = null;
-
+    public static function primal_profile( string $pubkey ): ?array {
         for ( $attempt = 1; $attempt <= self::PRIMAL_ATTEMPTS; $attempt++ ) {
             $response = wp_remote_post( 'https://cache.primal.net/api', [
                 'timeout' => 8,
@@ -400,7 +402,7 @@ class ZapStats {
                 $events = json_decode( wp_remote_retrieve_body( $response ), true );
 
                 if ( is_array( $events ) ) {
-                    break;
+                    return $events;
                 }
             }
 
@@ -408,6 +410,15 @@ class ZapStats {
                 sleep( 1 );
             }
         }
+
+        return null;
+    }
+
+    /**
+     * @return array{sats: int, count: int}|null
+     */
+    private static function from_primal( string $pubkey ): ?array {
+        $events = self::primal_profile( $pubkey );
 
         if ( ! is_array( $events ) ) {
             return null;
@@ -488,11 +499,13 @@ class ZapStats {
             }
         }
 
-        // Otherwise the invoice: lnbc<amount><unit>1...
-        if ( ! empty( $tags['bolt11'] ) && preg_match( '/^ln(?:bc|tb|bcrt)(\d+)([munp]?)1/i', $tags['bolt11'], $m ) ) {
-            $factor = [ '' => 100000000000, 'm' => 100000000, 'u' => 100000, 'n' => 100, 'p' => 0.1 ];
+        // Otherwise the invoice, read by the one bolt11 parser.
+        if ( ! empty( $tags['bolt11'] ) ) {
+            $msats = \SK\Core\Wallet\LNURL\Bolt11Parser::get_amount_msats( $tags['bolt11'] );
 
-            return (int) floor( (int) $m[1] * $factor[ strtolower( $m[2] ) ] );
+            if ( ! is_wp_error( $msats ) ) {
+                return (int) $msats;
+            }
         }
 
         return 0;

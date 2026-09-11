@@ -5,8 +5,6 @@ namespace SK\Modules\Auth;
 use SK\Core\Nostr\Events;
 use SK\Core\Nostr\Keys;
 use SK\Core\Secret;
-use swentel\nostr\Event\Event;
-use swentel\nostr\Sign\Sign;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -201,20 +199,6 @@ class NostrIdentity {
      */
     public static function get_nsec( int $user_id ): string {
         return Keys::to_nsec( (string) self::get_private_key( $user_id ) );
-    }
-
-    /**
-     * Sign an Event with the user's private key.
-     */
-    public static function sign_event( int $user_id, Event $event ): bool {
-        $privkey = self::get_private_key( $user_id );
-        if ( ! $privkey ) {
-            return false;
-        }
-
-        $signer = new Sign();
-        $signer->signEvent( $event, $privkey );
-        return true;
     }
 
     /**

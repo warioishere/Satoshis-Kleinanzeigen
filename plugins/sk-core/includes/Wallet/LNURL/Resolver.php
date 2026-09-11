@@ -184,32 +184,8 @@ class Resolver {
         return $url;
     }
 
+    /** @see \SK\Core\BitcoinAddress::convert_bits() — one bech32 regrouping for all. */
     private static function convert_bits( array $data, int $from_bits, int $to_bits, bool $pad = true ): ?array {
-        $acc     = 0;
-        $bits    = 0;
-        $result  = [];
-        $max_val = ( 1 << $to_bits ) - 1;
-
-        foreach ( $data as $value ) {
-            if ( $value < 0 || $value >> $from_bits ) {
-                return null;
-            }
-            $acc  = ( $acc << $from_bits ) | $value;
-            $bits += $from_bits;
-            while ( $bits >= $to_bits ) {
-                $bits    -= $to_bits;
-                $result[] = ( $acc >> $bits ) & $max_val;
-            }
-        }
-
-        if ( $pad ) {
-            if ( $bits > 0 ) {
-                $result[] = ( $acc << ( $to_bits - $bits ) ) & $max_val;
-            }
-        } elseif ( $bits >= $from_bits || ( ( $acc << ( $to_bits - $bits ) ) & $max_val ) ) {
-            return null;
-        }
-
-        return $result;
+        return \SK\Core\BitcoinAddress::convert_bits( $data, $from_bits, $to_bits, $pad );
     }
 }
