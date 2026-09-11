@@ -167,7 +167,7 @@ class Settings {
             );
         }
 
-        include SK_PAYMENTS_PATH . '/templates/lnaddr-reject-modal.php';
+        include SK_CORE_DIR . '/templates/settings/lnaddr-reject-modal.php';
     }
 
     /**
