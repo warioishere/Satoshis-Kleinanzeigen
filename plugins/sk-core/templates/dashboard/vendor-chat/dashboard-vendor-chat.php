@@ -161,6 +161,31 @@ do_action( 'sk_dashboard_wrap_start' );
 							</div>
 						</div>
 						<div class="dvc-chat-actions">
+							<?php
+							/*
+							 * The seller puts the invoice into the chat once the price is
+							 * agreed: the amount starts at the listing price and can be
+							 * changed. Only with a payment route that can prove the
+							 * payment, otherwise the sale could never be confirmed.
+							 */
+							$dvc_invoice = ! empty( $open_chat['is_vendor'] )
+								&& ! $open_chat['is_archived']
+								&& empty( $open_chat['blocked_by_me'] )
+								&& sk_module_active( 'sk_payments' )
+								&& class_exists( '\SK\Modules\Payments\Chat\ChatIntegration' )
+								&& \SK\Core\Wallet\Settings::has_lightning( (int) get_current_user_id() );
+							?>
+							<?php if ( $dvc_invoice ) : ?>
+								<form class="skl-chat-invoice" data-chat-id="<?php echo esc_attr( $open_chat['id'] ); ?>">
+									<input type="number" class="skl-chat-invoice-amount" name="amount_sats" min="1" step="1"
+										value="<?php echo (int) $open_chat['price_sats'] > 0 ? esc_attr( (int) $open_chat['price_sats'] ) : ''; ?>"
+										placeholder="<?php esc_attr_e( 'Sats', 'sk-core' ); ?>"
+										aria-label="<?php esc_attr_e( 'Betrag in Sats', 'sk-core' ); ?>" />
+									<button type="submit" class="dvc-action-btn skl-chat-invoice-btn" title="<?php esc_attr_e( 'Rechnung über diesen Betrag in den Chat stellen', 'sk-core' ); ?>">
+										<i class="fas fa-bolt"></i> <?php esc_html_e( 'Rechnung stellen', 'sk-core' ); ?>
+									</button>
+								</form>
+							<?php endif; ?>
 							<?php if ( $open_chat['is_archived'] ) : ?>
 								<button class="dvc-action-btn dvc-unarchive-btn" data-chat-id="<?php echo esc_attr( $open_chat['id'] ); ?>" title="<?php esc_attr_e( 'Wiederherstellen', 'sk-core' ); ?>">
 									<i class="fas fa-box-open"></i>

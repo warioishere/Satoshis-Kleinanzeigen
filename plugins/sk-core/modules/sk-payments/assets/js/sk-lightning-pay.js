@@ -72,34 +72,6 @@
     // Pre-fetch rate on page load.
     fetchBtcRate();
 
-    /* ─── Lightning Pay Button (Product Page) ─── */
-
-    $(document).on('click', '.sk-lightning-pay-btn', function (e) {
-        e.preventDefault();
-        var $btn = $(this);
-
-        // Vendor, title and price are resolved server-side from the product.
-        var data = {
-            action: 'sk_create_purchase_request',
-            nonce: SKL.nonce,
-            product_id: $btn.data('product-id')
-        };
-
-        $btn.prop('disabled', true).text('⚡ Wird gesendet...');
-
-        $.post(SKL.ajaxurl, data, function (res) {
-            if (res.success && res.data.chat_url) {
-                window.location.href = res.data.chat_url;
-            } else {
-                alert(res.data && res.data.message ? res.data.message : 'Fehler beim Senden der Kaufanfrage.');
-                $btn.prop('disabled', false).html('⚡ Mit Lightning bezahlen');
-            }
-        }).fail(function () {
-            alert('Netzwerkfehler. Bitte erneut versuchen.');
-            $btn.prop('disabled', false).html('⚡ Mit Lightning bezahlen');
-        });
-    });
-
     /* ─── Chat Message Rendering ─── */
 
     /**
@@ -415,6 +387,43 @@
             });
         }, 15000);
     }
+
+    /* ─── Create Invoice (seller, from the chat header) ─── */
+
+    $(document).on('submit', '.skl-chat-invoice', function (e) {
+        e.preventDefault();
+        var $form   = $(this);
+        var $btn    = $form.find('.skl-chat-invoice-btn');
+        var amount  = parseInt($form.find('.skl-chat-invoice-amount').val(), 10);
+
+        if (!amount || amount < 1) {
+            alert('Bitte einen Betrag in Sats angeben.');
+            return;
+        }
+
+        $btn.prop('disabled', true).html('<i class="fas fa-bolt"></i> Wird erstellt…');
+
+        $.post(SKL.ajaxurl, {
+            action: 'sk_create_lightning_invoice',
+            nonce: SKL.nonce,
+            chat_id: $form.data('chat-id'),
+            amount_sats: amount
+        }, function (res) {
+            if (res.success) {
+                if (typeof window.dvcLoadMessages === 'function') {
+                    window.dvcLoadMessages();
+                } else {
+                    location.reload();
+                }
+            } else {
+                alert(res.data && res.data.message ? res.data.message : 'Rechnung konnte nicht erstellt werden.');
+            }
+            $btn.prop('disabled', false).html('<i class="fas fa-bolt"></i> Rechnung stellen');
+        }).fail(function () {
+            alert('Netzwerkfehler.');
+            $btn.prop('disabled', false).html('<i class="fas fa-bolt"></i> Rechnung stellen');
+        });
+    });
 
     /* ─── Create Invoice (Vendor clicks in chat) ─── */
 

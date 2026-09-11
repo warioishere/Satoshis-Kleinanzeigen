@@ -9736,6 +9736,26 @@ a.sk-sub-order-action:hover {
 	gap: 0.5rem;
 }
 
+/* Seller's invoice form in the chat header: amount next to the button,
+   wrapping under the other actions on a narrow screen. */
+.skl-chat-invoice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.skl-chat-invoice-amount {
+  width: 110px;
+  padding: 6px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #e8ecf0;
+  font-size: 13px;
+}
+.skl-chat-invoice-btn {
+  white-space: nowrap;
+}
 .dvc-action-btn {
 	background: transparent;
 	border: 1px solid #2b3240;

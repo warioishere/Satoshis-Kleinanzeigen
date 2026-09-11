@@ -288,13 +288,21 @@ class VendorChat extends DashboardModule {
 				: '';
 		}
 
+		$product_id = (int) $product_id;
+		$product    = $product_id && function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
+
 		return [
 			'id'            => $chat_id,
 			'other_user_id' => $other_user_id,
 			'display_name'  => $display_name,
 			'other_url'     => $other_url,
+			'product_id'    => $product_id,
 			'product_title' => get_the_title( $product_id ),
 			'product_url'   => get_permalink( $product_id ),
+			// The seller of the listing this chat is about — only they may
+			// put an invoice into it.
+			'is_vendor'     => $product_id && (int) get_post_field( 'post_author', $product_id ) === (int) $user_id,
+			'price_sats'    => $product ? (int) $product->get_price() : 0,
 			'is_archived'   => in_array( $user_id, (array) $archived_by ),
 			// Whoever did the blocking can undo it. Whoever was blocked only
 			// sees the closed input field — otherwise the block itself

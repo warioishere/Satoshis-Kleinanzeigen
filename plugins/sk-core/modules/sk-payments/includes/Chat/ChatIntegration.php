@@ -147,6 +147,27 @@ class ChatIntegration {
             wp_send_json_error( [ 'message' => 'Kein Käufer im Chat gefunden.' ] );
         }
 
+        // One open invoice per conversation. A second one would only stack
+        // cards the buyer has to tell apart, and the seller can always issue a
+        // new one once this one is paid or has expired.
+        global $wpdb;
+        $open = $wpdb->get_var( $wpdb->prepare(
+            "SELECT payment_hash FROM {$wpdb->prefix}sk_lightning_payments
+             WHERE vendor_id = %d AND buyer_id = %d AND product_id = %d
+               AND context = 'chat' AND status = 'pending'
+               AND created_at > %s
+             LIMIT 1",
+            $vendor_id,
+            $buyer_id,
+            $product_id,
+            // created_at is written with current_time('mysql'), site time.
+            gmdate( 'Y-m-d H:i:s', current_time( 'timestamp' ) - HOUR_IN_SECONDS )
+        ) );
+
+        if ( $open ) {
+            wp_send_json_error( [ 'message' => __( 'In diesem Chat ist noch eine Rechnung offen. Erst wenn sie bezahlt oder abgelaufen ist, kann eine neue gestellt werden.', 'sk-core' ) ] );
+        }
+
         $request = new \WP_REST_Request( 'POST', '/sk/v1/lightning/invoice' );
         $request->set_param( 'vendor_id', $vendor_id );
         $request->set_param( 'buyer_id', $buyer_id );
