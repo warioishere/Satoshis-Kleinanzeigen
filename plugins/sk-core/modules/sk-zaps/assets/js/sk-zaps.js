@@ -6,7 +6,8 @@
  *   2. Sign with window.nostr.signEvent()
  *   3. Send to vendor's LNURL callback with nostr= parameter
  *   4. Get invoice back
- *   5. Pay with window.webln.sendPayment() or show QR
+ *   5. Pay: the wallet connected in the store settings first, then
+ *      window.webln.sendPayment(), then the QR code
  *
  * With a stored NWC connection (skZaps.hasNwc) but no WebLN, the invoice is
  * paid server-side through that connection; without an extension the whole
@@ -212,12 +213,22 @@
         $btn.prop('disabled', true).text('Wird gesendet...');
         setStatus('<i class="fas fa-spinner fa-spin"></i> Lightning Address wird aufgelöst...', null);
 
+        // Goes false once the connected wallet has refused, so the rest of
+        // this function does not ask it a second time.
+        var nwcAvailable = !!defaults.hasNwc;
+
         try {
             // No extension to sign with, but a wallet connected on the server:
             // the whole zap runs there (anonymous zap request, paid via NWC).
-            if (!window.nostr && defaults.hasNwc) {
-                await payViaNwc(data, amountSats, '');
-                return;
+            if (!window.nostr && nwcAvailable) {
+                try {
+                    await payViaNwc(data, amountSats, '');
+                    return;
+                } catch (nwcErr) {
+                    nwcAvailable = false;
+                    console.warn('[SK Zaps] NWC zap failed:', nwcErr.message);
+                    setStatus('<i class="fas fa-exclamation-circle"></i> ' + escHtml(nwcErr.message), false);
+                }
             }
 
             // If no Lightning Address but has Nostr pubkey, fetch lud16 from Nostr profile.
@@ -328,13 +339,24 @@
             }
 
             // Step 4: Pay the invoice.
-            // Signed by the extension, paid by the connected wallet.
-            if (!window.webln && defaults.hasNwc) {
-                await payViaNwc(data, amountSats, invoice);
-                return;
+            // The wallet the user connected in their store settings goes
+            // first, even when an extension is present: they chose it
+            // deliberately, and it pays without a second confirmation.
+            // Signing stays with the extension above, so the zap is still
+            // attributed to their own key.
+            if (nwcAvailable) {
+                try {
+                    await payViaNwc(data, amountSats, invoice);
+                    return;
+                } catch (nwcErr) {
+                    // Missing pay_invoice permission, budget spent, wallet
+                    // offline: fall through to the extension or the QR code.
+                    console.warn('[SK Zaps] NWC payment failed:', nwcErr.message);
+                    setStatus('<i class="fas fa-exclamation-circle"></i> ' + escHtml(nwcErr.message), false);
+                }
             }
 
-            // Try WebLN first (Alby Hub exposes window.webln).
+            // Then WebLN (Alby Hub exposes window.webln).
             if (window.webln) {
                 try {
                     setStatus('<i class="fas fa-spinner fa-spin"></i> Zahlung wird gesendet...', null);
