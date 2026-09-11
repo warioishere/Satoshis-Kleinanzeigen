@@ -724,7 +724,64 @@ class Settings {
         // by the two connections above. On its own it means nothing.
         $address = self::get_lightning_address( $vendor_id );
 
-        return $address !== '' && ! self::is_local_address( $address );
+        if ( $address === '' || self::is_local_address( $address ) ) {
+            return false;
+        }
+
+        /*
+         * And it has to be able to prove that a payment happened. The form
+         * only ever stored provable addresses, but a profile change on Nostr
+         * is mirrored whatever it says — without this check a buyer could pay
+         * into an address whose payment we can never confirm, and the sale
+         * would hang. Zaps are unaffected: they need no proof.
+         */
+        return self::address_is_provable( $vendor_id );
+    }
+
+    /**
+     * Can a payment to the stored address be proven (LUD-21)?
+     *
+     * Recorded when the address is saved or mirrored. Addresses stored before
+     * the flag existed are checked once in the background, see
+     * verify_stored_address().
+     */
+    public static function address_is_provable( int $vendor_id ): bool {
+        $settings = get_user_meta( $vendor_id, 'sk_profile_settings', true );
+
+        return is_array( $settings ) && ! empty( $settings['lightning_lud21'] );
+    }
+
+    /**
+     * Check a stored address once and record the result.
+     *
+     * For addresses that were saved before the flag existed. Makes two
+     * outbound requests, so it belongs on cron.
+     *
+     * @return bool The flag as it now stands.
+     */
+    public static function verify_stored_address( int $vendor_id ): bool {
+        $settings = get_user_meta( $vendor_id, 'sk_profile_settings', true );
+        $settings = is_array( $settings ) ? $settings : [];
+        $address  = (string) ( $settings['lightning_address'] ?? '' );
+
+        if ( $address === '' || self::is_local_address( $address ) ) {
+            return false;
+        }
+
+        $provable = true === self::check_lud21( $address );
+
+        $settings = get_user_meta( $vendor_id, 'sk_profile_settings', true );
+        $settings = is_array( $settings ) ? $settings : [];
+
+        // Only for the address that was actually checked.
+        if ( (string) ( $settings['lightning_address'] ?? '' ) !== $address ) {
+            return false;
+        }
+
+        $settings['lightning_lud21'] = $provable;
+        update_user_meta( $vendor_id, 'sk_profile_settings', $settings );
+
+        return $provable;
     }
 
     /**

@@ -30,11 +30,15 @@ function sk_get_option( $key, $group = '', $default = '' ) {
 $GLOBALS['vendors'] = [
 	1 => [ 'lightning_nwc' => true ],                                   // wallet connected
 	2 => [ 'lightning_lndhub' => true ],                                // other wallet
-	3 => [ 'lightning_address' => 'wario@getalby.com' ],                // own address elsewhere
+	3 => [ 'lightning_address' => 'wario@getalby.com', 'lightning_lud21' => true ], // own address, provable
 	4 => [ 'lightning_address' => 'v/4@' . TEST_HOST ],                 // ours, no wallet
 	5 => [ 'lightning_address' => 'v/5@' . TEST_HOST, 'lightning_nwc' => true ], // ours, with wallet
 	6 => [ 'lightning_address' => 'someshop@' . TEST_HOST ],            // ours by slug, no wallet
 	7 => [],                                                            // nothing at all
+	// Mirrored from a Nostr profile, but its wallet cannot confirm a payment.
+	10 => [ 'lightning_address' => 'shop@wos.example', 'lightning_lud21' => false ],
+	// Stored before the flag existed: not yet checked.
+	11 => [ 'lightning_address' => 'shop@alt.example' ],
 	8 => [ 'btc_address' => 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq' ],
 ];
 
@@ -69,6 +73,13 @@ check( 'our address, no wallet', Settings::has_lightning( 4 ), false );
 check( 'our address, wallet connected', Settings::has_lightning( 5 ), true );
 check( 'our address by slug, no wallet', Settings::has_lightning( 6 ), false );
 check( 'nothing stored', Settings::has_lightning( 7 ), false );
+
+// A sale needs a payment that can be proven; a zap does not, and reads the
+// address directly.
+check( 'address that cannot prove a payment', Settings::has_lightning( 10 ), false );
+check( 'address not checked yet', Settings::has_lightning( 11 ), false );
+check( 'provable is reported as such', Settings::address_is_provable( 3 ), true );
+check( 'unprovable is reported as such', Settings::address_is_provable( 10 ), false );
 
 // --- the switch still wins --------------------------------------------------
 // Off has to reach the getters too, not just the has_… methods: a caller that
