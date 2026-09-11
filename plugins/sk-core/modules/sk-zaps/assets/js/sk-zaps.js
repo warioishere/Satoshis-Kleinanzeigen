@@ -217,6 +217,10 @@
         // this function does not ask it a second time.
         var nwcAvailable = !!defaults.hasNwc;
 
+        // Why the connected wallet did not pay. Kept so the reason stays on
+        // screen instead of being buried under the next payment dialog.
+        var nwcError = '';
+
         try {
             // No extension to sign with, but a wallet connected on the server:
             // the whole zap runs there (anonymous zap request, paid via NWC).
@@ -226,6 +230,7 @@
                     return;
                 } catch (nwcErr) {
                     nwcAvailable = false;
+                    nwcError = nwcErr.message;
                     console.warn('[SK Zaps] NWC zap failed:', nwcErr.message);
                     setStatus('<i class="fas fa-exclamation-circle"></i> ' + escHtml(nwcErr.message), false);
                 }
@@ -350,14 +355,19 @@
                     return;
                 } catch (nwcErr) {
                     // Missing pay_invoice permission, budget spent, wallet
-                    // offline: fall through to the extension or the QR code.
+                    // offline: say so and leave the payment to the viewer.
+                    nwcAvailable = false;
+                    nwcError = nwcErr.message;
                     console.warn('[SK Zaps] NWC payment failed:', nwcErr.message);
                     setStatus('<i class="fas fa-exclamation-circle"></i> ' + escHtml(nwcErr.message), false);
                 }
             }
 
-            // Then WebLN (Alby Hub exposes window.webln).
-            if (window.webln) {
+            // Then WebLN (Alby Hub exposes window.webln). Not after a refused
+            // wallet: a second payment dialog on top of a silent failure looks
+            // like the connection was ignored. The QR and the invoice below
+            // still lead to the same extension, but the viewer opens them.
+            if (window.webln && !nwcError) {
                 try {
                     setStatus('<i class="fas fa-spinner fa-spin"></i> Zahlung wird gesendet...', null);
                     await window.webln.enable();
@@ -372,7 +382,7 @@
             }
 
             // Fallback: show invoice as QR + deeplink.
-            showInvoiceFallback(invoice, amountSats);
+            showInvoiceFallback(invoice, amountSats, nwcError);
 
             // Poll for payment confirmation.
             if (invoiceResp && invoiceResp.payment_hash) {
@@ -454,8 +464,12 @@
     /**
      * Show invoice as QR code + deeplink when WebLN not available.
      */
-    function showInvoiceFallback(invoice, amountSats) {
+    function showInvoiceFallback(invoice, amountSats, nwcError) {
         var html = '<div style="text-align:center;margin-top:12px;display:flex;flex-direction:column;align-items:center;">';
+        if (nwcError) {
+            html += '<p style="color:#e06c75;font-size:13px;margin-bottom:8px;">' +
+                '<i class="fas fa-exclamation-circle"></i> Verbundene Wallet: ' + escHtml(nwcError) + '</p>';
+        }
         html += '<p style="color:#e8ecf0;font-size:14px;margin-bottom:8px;">' + parseInt(amountSats, 10) + ' Sats</p>';
         // Placeholder — filled by loadZapQr() with a server-rendered image, so
         // the invoice never reaches a third-party QR service.
