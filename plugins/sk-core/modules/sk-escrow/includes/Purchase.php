@@ -2,10 +2,10 @@
 
 namespace SK\Modules\Escrow;
 
+use SK\Core\ClientIp;
+use SK\Core\Product\Variant;
+use SK\Core\Wallet\LNURL\ExchangeRate;
 use SK\Modules\Payments\Chat\ChatIntegration;
-use SK\Modules\Payments\ClientIp;
-use SK\Modules\Payments\LNURL\ExchangeRate;
-use SK\Modules\Payments\Variant;
 
 defined( 'ABSPATH' ) || exit;
 

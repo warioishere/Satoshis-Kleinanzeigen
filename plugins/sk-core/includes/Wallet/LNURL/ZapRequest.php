@@ -1,6 +1,6 @@
 <?php
 
-namespace SK\Modules\Payments\LNURL;
+namespace SK\Core\Wallet\LNURL;
 
 defined( 'ABSPATH' ) || exit;
 

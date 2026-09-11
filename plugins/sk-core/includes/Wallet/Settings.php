@@ -1,10 +1,16 @@
 <?php
 
-namespace SK\Modules\Payments;
+namespace SK\Core\Wallet;
 
 defined( 'ABSPATH' ) || exit;
 
-class StoreSettings {
+/**
+ * A user's wallet connections: onchain address or xpub, NWC, LNDHub,
+ * Lightning address. Saved from the store settings form, validated and
+ * testable here, and handed out as clients to whatever needs to mint or
+ * check an invoice — instant purchase, zaps, the LNURL-pay endpoint.
+ */
+class Settings {
 
     public function __construct() {
         // Fields are rendered directly in the store-form.php template (no hook needed).
@@ -575,43 +581,6 @@ class StoreSettings {
         return ( is_array( $settings ) && ! empty( $settings['lightning_address'] ) )
             ? $settings['lightning_address']
             : '';
-    }
-
-    public static function get_reputation( int $vendor_id ) {
-        global $wpdb;
-        $table = $wpdb->prefix . 'sk_reputation_scores';
-
-        $table_exists = $wpdb->get_var(
-            $wpdb->prepare( 'SHOW TABLES LIKE %s', $table )
-        );
-
-        if ( ! $table_exists ) {
-            return null;
-        }
-
-        $rep = $wpdb->get_row(
-            $wpdb->prepare( "SELECT valid_transactions, valid_volume_sats FROM {$table} WHERE vendor_id = %d", $vendor_id )
-        );
-
-        if ( ! $rep || $rep->valid_transactions < 1 ) {
-            return null;
-        }
-
-        $rep->badge       = '';
-        $rep->badge_label = '';
-
-        if ( $rep->valid_transactions >= 100 ) {
-            $rep->badge       = '⚡⚡⚡';
-            $rep->badge_label = 'Lightning Veteran';
-        } elseif ( $rep->valid_transactions >= 25 ) {
-            $rep->badge       = '⚡⚡';
-            $rep->badge_label = 'Lightning Händler';
-        } elseif ( $rep->valid_transactions >= 5 ) {
-            $rep->badge       = '⚡';
-            $rep->badge_label = 'Lightning Starter';
-        }
-
-        return $rep;
     }
 
 }

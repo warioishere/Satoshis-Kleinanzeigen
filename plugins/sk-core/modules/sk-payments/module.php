@@ -41,12 +41,9 @@ final class Module {
     }
 
     private function includes() {
+        // Wallet connections, LNURL, QR and the like live in sk-core
+        // (SK\Core\Wallet) and load through the autoloader.
         require_once SK_PAYMENTS_INCLUDES . '/Activator.php';
-        require_once SK_PAYMENTS_INCLUDES . '/Secret.php';
-        require_once SK_PAYMENTS_INCLUDES . '/StoreSettings.php';
-        require_once SK_PAYMENTS_INCLUDES . '/QrImage.php';
-        require_once SK_PAYMENTS_INCLUDES . '/ClientIp.php';
-        require_once SK_PAYMENTS_INCLUDES . '/Variant.php';
         require_once SK_PAYMENTS_INCLUDES . '/Notify.php';
         require_once SK_PAYMENTS_INCLUDES . '/Shipping.php';
         require_once SK_PAYMENTS_INCLUDES . '/Revenue.php';
@@ -56,18 +53,9 @@ final class Module {
         require_once SK_PAYMENTS_INCLUDES . '/Chat/PaymentCard.php';
         require_once SK_PAYMENTS_INCLUDES . '/Chat/ChatIntegration.php';
         require_once SK_PAYMENTS_INCLUDES . '/Dashboard/TransactionsPage.php';
-        require_once SK_PAYMENTS_INCLUDES . '/NWC/Client.php';
-        require_once SK_PAYMENTS_INCLUDES . '/LNDHub/Client.php';
-        require_once SK_PAYMENTS_INCLUDES . '/LNURL/Resolver.php';
-        require_once SK_PAYMENTS_INCLUDES . '/LNURL/ZapRequest.php';
-        require_once SK_PAYMENTS_INCLUDES . '/LNURL/Bolt11Parser.php';
-        require_once SK_PAYMENTS_INCLUDES . '/LNURL/ExchangeRate.php';
-        require_once SK_PAYMENTS_INCLUDES . '/Onchain/XpubDerivation.php';
-        require_once SK_PAYMENTS_INCLUDES . '/Onchain/BlockchainChecker.php';
         require_once SK_PAYMENTS_INCLUDES . '/ProductPage.php';
         require_once SK_PAYMENTS_INCLUDES . '/Commission/Generator.php';
         require_once SK_PAYMENTS_INCLUDES . '/Commission/Enforcement.php';
-        require_once SK_PAYMENTS_INCLUDES . '/REST/LnurlPayEndpoint.php';
     }
 
     public function load_hooks() {
@@ -85,14 +73,12 @@ final class Module {
             return;
         }
 
-        new StoreSettings();
         new ProductPage();
         new Notify();
         new RevenueExport();
         new Shipping();
         new Admin\AdminPage();
         new Dashboard\TransactionsPage();
-        new REST\LnurlPayEndpoint();
 
         // Chat integration: only if chat integration is enabled.
         $chat_enabled = sk_get_option( 'sk_lightning_chat_integration', 'sk_lightning', 'on' ) === 'on';

@@ -229,9 +229,9 @@ class ChatBridge {
         $bolt11      = '';
         $btc_address = '';
 
-        if ( class_exists( 'SK\Modules\Payments\StoreSettings' ) ) {
+        if ( self::payments_available() ) {
             // Lightning.
-            if ( \SK\Modules\Payments\StoreSettings::has_lightning( $vendor_id ) ) {
+            if ( \SK\Core\Wallet\Settings::has_lightning( $vendor_id ) ) {
                 $request = new \WP_REST_Request( 'POST', '/sk/v1/lightning/invoice' );
                 $request->set_param( 'vendor_id', $vendor_id );
                 $request->set_param( 'amount_sats', $amount_sats );
@@ -239,19 +239,17 @@ class ChatBridge {
                 $request->set_param( 'chat_id', $chat_id );
                 $request->set_param( 'buyer_id', 0 );
 
-                if ( class_exists( 'SK\Modules\Payments\REST\LightningController' ) ) {
-                    $controller = new \SK\Modules\Payments\REST\LightningController();
-                    $response   = $controller->create_invoice( $request );
-                    if ( ! is_wp_error( $response ) ) {
-                        $data   = $response->get_data();
-                        $bolt11 = $data['payment_request'] ?? '';
-                    }
+                $controller = new \SK\Modules\Payments\REST\LightningController();
+                $response   = $controller->create_invoice( $request );
+                if ( ! is_wp_error( $response ) ) {
+                    $data   = $response->get_data();
+                    $bolt11 = $data['payment_request'] ?? '';
                 }
             }
 
             // Onchain.
-            if ( \SK\Modules\Payments\StoreSettings::has_onchain( $vendor_id ) ) {
-                $btc_address = \SK\Modules\Payments\StoreSettings::get_next_onchain_address( $vendor_id );
+            if ( \SK\Core\Wallet\Settings::has_onchain( $vendor_id ) ) {
+                $btc_address = \SK\Core\Wallet\Settings::get_next_onchain_address( $vendor_id );
             }
         }
 
@@ -819,7 +817,9 @@ class ChatBridge {
      * switch that is off for the whole site.
      */
     private static function payments_available(): bool {
-        return class_exists( 'SK\Modules\Payments\StoreSettings' );
+        // The invoice rows live in the instant-purchase module; the wallet
+        // settings alone (sk-core) are not enough to book a payment.
+        return function_exists( 'sk_module_active' ) && sk_module_active( 'sk_payments' );
     }
 
     public static function render_bridge_invoice_js(): void {

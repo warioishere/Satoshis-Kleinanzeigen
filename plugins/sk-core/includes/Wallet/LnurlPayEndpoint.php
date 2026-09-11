@@ -1,9 +1,8 @@
 <?php
 
-namespace SK\Modules\Payments\REST;
+namespace SK\Core\Wallet;
 
-use SK\Modules\Payments\StoreSettings;
-use SK\Modules\Payments\LNURL\ZapRequest;
+use SK\Core\Wallet\LNURL\ZapRequest;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -50,6 +49,13 @@ class LnurlPayEndpoint {
             'index.php?sk_lnurlp_user=$matches[1]',
             'top'
         );
+
+        // The rules used to be flushed on module activation; now that the
+        // endpoint is part of the core, flush once per install instead.
+        if ( get_option( 'sk_lnurlp_rules' ) !== '2' ) {
+            flush_rewrite_rules();
+            update_option( 'sk_lnurlp_rules', '2' );
+        }
     }
 
     public function add_query_vars( $vars ) {
@@ -72,7 +78,7 @@ class LnurlPayEndpoint {
         // Only NWC and LNDHub can mint an invoice here. A vendor who merely
         // stored a Lightning address has their own LNURL server and must not be
         // advertised through ours — the callback could never deliver.
-        if ( ! StoreSettings::has_nwc( $vendor_id ) && ! StoreSettings::has_lndhub( $vendor_id ) ) {
+        if ( ! Settings::has_nwc( $vendor_id ) && ! Settings::has_lndhub( $vendor_id ) ) {
             $this->send_json_error( 'This user cannot receive Lightning payments.' );
         }
 
@@ -164,7 +170,7 @@ class LnurlPayEndpoint {
         $payment_hash = '';
         $verifiable   = false;
 
-        $nwc_client = StoreSettings::get_nwc_client( $vendor_id );
+        $nwc_client = Settings::get_nwc_client( $vendor_id );
         if ( $nwc_client ) {
             $result = $nwc_client->make_invoice( $amount_sats, '', $description_hash );
             if ( ! is_wp_error( $result ) && ! empty( $result['pr'] ) ) {
@@ -175,7 +181,7 @@ class LnurlPayEndpoint {
         }
 
         if ( ! $invoice ) {
-            $lndhub_client = StoreSettings::get_lndhub_client( $vendor_id );
+            $lndhub_client = Settings::get_lndhub_client( $vendor_id );
             if ( $lndhub_client ) {
                 // LNDHub cannot set a description_hash, so the metadata itself
                 // goes in as the memo — the closest a wallet can still verify.

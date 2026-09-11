@@ -1,6 +1,6 @@
 <?php
 
-namespace SK\Modules\Payments\NWC;
+namespace SK\Core\Wallet\NWC;
 
 use swentel\nostr\Encryption\Nip04;
 
@@ -191,13 +191,13 @@ class Client {
     }
 
     /**
-     * @see \SK\Modules\Payments\Secret Authenticated encryption (AES-256-GCM).
+     * @see \SK\Core\Wallet\Secret Authenticated encryption (AES-256-GCM).
      */
     public static function encrypt_connection_string( string $connection_string ): string {
-        return \SK\Modules\Payments\Secret::encrypt( $connection_string );
+        return \SK\Core\Wallet\Secret::encrypt( $connection_string );
     }
 
     public static function decrypt_connection_string( string $encrypted ): string {
-        return \SK\Modules\Payments\Secret::decrypt( $encrypted );
+        return \SK\Core\Wallet\Secret::decrypt( $encrypted );
     }
 }

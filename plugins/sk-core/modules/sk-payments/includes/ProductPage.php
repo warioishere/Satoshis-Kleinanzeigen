@@ -2,6 +2,12 @@
 
 namespace SK\Modules\Payments;
 
+use SK\Core\ClientIp;
+use SK\Core\Product\Variant;
+use SK\Core\Wallet\LNURL\ExchangeRate;
+use SK\Core\Wallet\QrImage;
+use SK\Core\Wallet\Settings;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -36,8 +42,8 @@ class ProductPage {
             return;
         }
 
-        $has_ln     = StoreSettings::has_lightning( $vendor_id );
-        $has_onchain = StoreSettings::has_onchain( $vendor_id );
+        $has_ln     = Settings::has_lightning( $vendor_id );
+        $has_onchain = Settings::has_onchain( $vendor_id );
         // Escrow is the sk-escrow module's method; it hooks in here so the
         // buyer sees one button with all ways to pay.
         $has_escrow = class_exists( '\SK\Modules\Escrow\Purchase' ) && \SK\Modules\Escrow\Purchase::available( $vendor_id, $buyer_id );
@@ -340,7 +346,7 @@ class ProductPage {
             wp_send_json_error( [ 'message' => 'Du kannst nicht bei dir selbst kaufen.' ] );
         }
 
-        if ( ! StoreSettings::has_lightning( $vendor_id ) ) {
+        if ( ! Settings::has_lightning( $vendor_id ) ) {
             wp_send_json_error( [ 'message' => 'Anbieter akzeptiert keine Lightning-Zahlungen.' ] );
         }
 
@@ -486,7 +492,7 @@ class ProductPage {
             wp_send_json_error( [ 'message' => 'Du kannst nicht bei dir selbst kaufen.' ] );
         }
 
-        if ( ! StoreSettings::has_onchain( $vendor_id ) ) {
+        if ( ! Settings::has_onchain( $vendor_id ) ) {
             wp_send_json_error( [ 'message' => 'Anbieter akzeptiert keine Onchain-Zahlungen.' ] );
         }
 
@@ -542,7 +548,7 @@ class ProductPage {
         }
 
         // Derive a fresh address for this buyer.
-        $address = StoreSettings::get_next_onchain_address( $vendor_id );
+        $address = Settings::get_next_onchain_address( $vendor_id );
         if ( empty( $address ) ) {
             wp_send_json_error( [ 'message' => 'Keine Empfangsadresse verfügbar.' ] );
         }
@@ -552,7 +558,7 @@ class ProductPage {
 
         $payment_hash = hash( 'sha256', $address . $buyer_id . $price_sats . microtime( true ) . random_bytes( 8 ) );
 
-        $rate          = LNURL\ExchangeRate::get_btc_eur_rate();
+        $rate          = ExchangeRate::get_btc_eur_rate();
         $exchange_rate = is_wp_error( $rate ) ? null : $rate;
 
         $wpdb->insert( $table, [

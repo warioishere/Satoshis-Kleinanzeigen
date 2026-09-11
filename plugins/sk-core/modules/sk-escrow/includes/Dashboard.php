@@ -3,7 +3,7 @@
 namespace SK\Modules\Escrow;
 
 use SK\Core\Dashboard\DashboardRegistry;
-use SK\Modules\Payments\QrImage;
+use SK\Core\Wallet\QrImage;
 
 defined( 'ABSPATH' ) || exit;
 

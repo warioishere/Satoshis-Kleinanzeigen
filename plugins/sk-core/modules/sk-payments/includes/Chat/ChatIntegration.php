@@ -3,7 +3,8 @@
 namespace SK\Modules\Payments\Chat;
 
 use SK\Core\Dashboard\ChatMessages;
-use SK\Modules\Payments\StoreSettings;
+use SK\Core\Product\Variant;
+use SK\Core\Wallet\Settings as StoreSettings;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -67,12 +68,12 @@ class ChatIntegration {
         // Vendor and product data come from the product, not from the request.
         $vendor_id     = (int) get_post_field( 'post_author', $product_id );
         $product_title = get_the_title( $product_id );
-        $variant_key   = \SK\Modules\Payments\Variant::posted();
+        $variant_key   = Variant::posted();
 
         // If variants exist, one of them must be selected — otherwise it
         // would be unclear what the vendor is supposed to charge for.
-        if ( \SK\Modules\Payments\Variant::all( $product_id )
-            && ! \SK\Modules\Payments\Variant::find( $product_id, $variant_key ) ) {
+        if ( Variant::all( $product_id )
+            && ! Variant::find( $product_id, $variant_key ) ) {
             wp_send_json_error( [ 'message' => 'Bitte eine Ausführung wählen.' ] );
         }
 

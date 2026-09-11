@@ -2,8 +2,8 @@
 
 namespace SK\Modules\Payments\Admin;
 
-use SK\Modules\Payments\LNURL\Resolver;
-use SK\Modules\Payments\LNURL\ExchangeRate;
+use SK\Core\Wallet\LNURL\Resolver;
+use SK\Core\Wallet\LNURL\ExchangeRate;
 
 defined( 'ABSPATH' ) || exit;
 

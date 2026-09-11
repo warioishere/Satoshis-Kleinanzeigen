@@ -1,6 +1,6 @@
 <?php
 
-namespace SK\Modules\Payments;
+namespace SK\Core;
 
 defined( 'ABSPATH' ) || exit;
 

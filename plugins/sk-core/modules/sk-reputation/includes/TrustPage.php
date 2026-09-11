@@ -175,9 +175,44 @@ class TrustPage {
 
         // Only whether a reputation row exists; the proof list itself is
         // loaded by the page, not for the tab.
-        return Module::payments_available()
-            && class_exists( 'SK\Modules\Payments\StoreSettings' )
-            && (bool) \SK\Modules\Payments\StoreSettings::get_reputation( $vendor_id );
+        return Module::payments_available() && (bool) self::lightning_reputation( $vendor_id );
+    }
+
+    /**
+     * Verified Lightning sales of a vendor with the badge tier, or null.
+     * Reads the score row the reputation cron maintains.
+     */
+    private static function lightning_reputation( int $vendor_id ): ?object {
+        global $wpdb;
+        $table = $wpdb->prefix . 'sk_reputation_scores';
+
+        if ( ! $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) ) {
+            return null;
+        }
+
+        $rep = $wpdb->get_row(
+            $wpdb->prepare( "SELECT valid_transactions, valid_volume_sats FROM {$table} WHERE vendor_id = %d", $vendor_id )
+        );
+
+        if ( ! $rep || $rep->valid_transactions < 1 ) {
+            return null;
+        }
+
+        $rep->badge       = '';
+        $rep->badge_label = '';
+
+        if ( $rep->valid_transactions >= 100 ) {
+            $rep->badge       = '⚡⚡⚡';
+            $rep->badge_label = 'Lightning Veteran';
+        } elseif ( $rep->valid_transactions >= 25 ) {
+            $rep->badge       = '⚡⚡';
+            $rep->badge_label = 'Lightning Händler';
+        } elseif ( $rep->valid_transactions >= 5 ) {
+            $rep->badge       = '⚡';
+            $rep->badge_label = 'Lightning Starter';
+        }
+
+        return $rep;
     }
 
     /**
@@ -241,11 +276,11 @@ class TrustPage {
      * @return array{rep: object, proofs: array}|null
      */
     public static function lightning( int $vendor_id ): ?array {
-        if ( ! Module::payments_available() || ! class_exists( 'SK\Modules\Payments\StoreSettings' ) ) {
+        if ( ! Module::payments_available() ) {
             return null;
         }
 
-        $rep = \SK\Modules\Payments\StoreSettings::get_reputation( $vendor_id );
+        $rep = self::lightning_reputation( $vendor_id );
 
         if ( ! $rep ) {
             return null;

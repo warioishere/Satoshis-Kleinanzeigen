@@ -10,9 +10,9 @@ defined( 'ABSPATH' ) || define( 'ABSPATH', '/tmp/' );
 $GLOBALS['sk_test_salt'] = 'k9Xq2!vLm4Zt7Rw0PbNc8FhJ1sYd6EuA3gTiOa5MnQrVzW+lKpB/eS-XyCfDhGjU';
 function wp_salt( $scheme = 'auth' ) { return $GLOBALS['sk_test_salt']; }
 
-require SK_TEST_PLUGIN . '/modules/sk-payments/includes/Secret.php';
+require SK_TEST_PLUGIN . '/includes/Wallet/Secret.php';
 
-use SK\Modules\Payments\Secret;
+use SK\Core\Wallet\Secret;
 
 $fails = 0;
 function check( $label, $actual, $expected ) {

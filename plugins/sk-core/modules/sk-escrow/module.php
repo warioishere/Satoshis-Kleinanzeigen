@@ -41,7 +41,9 @@ final class Module {
         new EscrowSettings();
         new \WEO_Settings();
 
-        if ( ! class_exists( 'SK\Modules\Payments\StoreSettings' ) ) {
+        // Rows, chat cards and the transactions page belong to the instant
+        // purchase; without it there is nowhere for an escrow to live.
+        if ( ! function_exists( 'sk_module_active' ) || ! sk_module_active( 'sk_payments' ) ) {
             return;
         }
 

@@ -2,12 +2,12 @@
 
 namespace SK\Modules\Payments\REST;
 
-use SK\Modules\Payments\LNURL\Resolver;
-use SK\Modules\Payments\LNURL\Bolt11Parser;
-use SK\Modules\Payments\LNURL\ExchangeRate;
-use SK\Modules\Payments\StoreSettings;
-use SK\Modules\Payments\QrImage;
-use SK\Modules\Payments\ClientIp;
+use SK\Core\ClientIp;
+use SK\Core\Wallet\LNURL\Resolver;
+use SK\Core\Wallet\LNURL\Bolt11Parser;
+use SK\Core\Wallet\LNURL\ExchangeRate;
+use SK\Core\Wallet\QrImage;
+use SK\Core\Wallet\Settings as StoreSettings;
 use WP_Error;
 use WP_REST_Controller;
 use WP_REST_Request;
@@ -879,7 +879,7 @@ class LightningController extends WP_REST_Controller {
             (int) $payment->id
         ) );
 
-        $check = \SK\Modules\Payments\Onchain\BlockchainChecker::check_payment(
+        $check = \SK\Core\Wallet\Onchain\BlockchainChecker::check_payment(
             $address,
             (int) $payment->amount_sats,
             $payment->created_at,

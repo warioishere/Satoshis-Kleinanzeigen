@@ -93,9 +93,9 @@ class ZapButton {
         // wallet but never typed a Lightning Address. The local part is the
         // store slug — a slash in there is not a valid address for any wallet
         // but ours.
-        if ( empty( $lightning_address ) && class_exists( 'SK\Modules\Payments\StoreSettings' ) ) {
-            $can_invoice = \SK\Modules\Payments\StoreSettings::has_nwc( $vendor_id )
-                || \SK\Modules\Payments\StoreSettings::has_lndhub( $vendor_id );
+        if ( empty( $lightning_address ) && class_exists( 'SK\Core\Wallet\Settings' ) ) {
+            $can_invoice = \SK\Core\Wallet\Settings::has_nwc( $vendor_id )
+                || \SK\Core\Wallet\Settings::has_lndhub( $vendor_id );
 
             if ( $can_invoice ) {
                 $user = get_user_by( 'ID', $vendor_id );
@@ -150,7 +150,7 @@ class ZapButton {
             wp_send_json_error( [ 'settled' => false ] );
         }
 
-        if ( ! class_exists( 'SK\Modules\Payments\StoreSettings' ) ) {
+        if ( ! class_exists( 'SK\Core\Wallet\Settings' ) ) {
             wp_send_json_error( [ 'settled' => false ] );
         }
 
@@ -172,9 +172,9 @@ class ZapButton {
         set_transient( $ip_key, $lookups + 1, MINUTE_IN_SECONDS );
 
         // Try NWC first, then LNDHub.
-        $client = \SK\Modules\Payments\StoreSettings::get_nwc_client( $vendor_id );
+        $client = \SK\Core\Wallet\Settings::get_nwc_client( $vendor_id );
         if ( ! $client ) {
-            $client = \SK\Modules\Payments\StoreSettings::get_lndhub_client( $vendor_id );
+            $client = \SK\Core\Wallet\Settings::get_lndhub_client( $vendor_id );
         }
 
         if ( ! $client ) {
@@ -371,7 +371,7 @@ class ZapButton {
             return new \WP_Error( 'qr_invalid', 'Nur bolt11-Invoices werden gerendert.', [ 'status' => 400 ] );
         }
 
-        if ( ! class_exists( 'SK\Modules\Payments\QrImage' ) ) {
+        if ( ! class_exists( 'SK\Core\Wallet\QrImage' ) ) {
             $file = dirname( SK_ZAPS_PATH ) . '/sk-payments/includes/QrImage.php';
 
             if ( file_exists( $file ) ) {
@@ -379,11 +379,11 @@ class ZapButton {
             }
         }
 
-        if ( ! class_exists( 'SK\Modules\Payments\QrImage' ) ) {
+        if ( ! class_exists( 'SK\Core\Wallet\QrImage' ) ) {
             return new \WP_Error( 'qr_failed', 'QR-Code konnte nicht erzeugt werden.', [ 'status' => 500 ] );
         }
 
-        $uri = \SK\Modules\Payments\QrImage::bolt11( $data );
+        $uri = \SK\Core\Wallet\QrImage::bolt11( $data );
 
         if ( '' === $uri ) {
             return new \WP_Error( 'qr_failed', 'QR-Code konnte nicht erzeugt werden.', [ 'status' => 500 ] );

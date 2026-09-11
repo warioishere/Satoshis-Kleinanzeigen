@@ -14,9 +14,9 @@ class WP_Error {
 }
 function is_wp_error( $t ) { return $t instanceof WP_Error; }
 
-require SK_TEST_PLUGIN . '/modules/sk-payments/includes/LNURL/Bolt11Parser.php';
+require SK_TEST_PLUGIN . '/includes/Wallet/LNURL/Bolt11Parser.php';
 
-use SK\Modules\Payments\LNURL\Bolt11Parser;
+use SK\Core\Wallet\LNURL\Bolt11Parser;
 
 $fails = 0;
 function check( $label, $actual, $expected ) {

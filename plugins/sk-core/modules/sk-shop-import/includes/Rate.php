@@ -7,24 +7,9 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Fiat to Sats.
  *
- * Uses the existing rate lookup from sk-payments (mempool.space with Yadio
- * as a fallback). That module can be disabled — so the class file is
- * loaded directly on demand instead of duplicating it.
+ * Uses the core rate lookup (mempool.space with Yadio as a fallback).
  */
 final class Rate {
-
-    private static function ensure_loaded(): bool {
-        if ( class_exists( '\SK\Modules\Payments\LNURL\ExchangeRate' ) ) {
-            return true;
-        }
-
-        $file = SK_CORE_MODULE_DIR . '/sk-payments/includes/LNURL/ExchangeRate.php';
-        if ( is_readable( $file ) ) {
-            require_once $file;
-        }
-
-        return class_exists( '\SK\Modules\Payments\LNURL\ExchangeRate' );
-    }
 
     /**
      * @return int|\WP_Error Sats
@@ -34,11 +19,7 @@ final class Rate {
             return 0;
         }
 
-        if ( ! self::ensure_loaded() ) {
-            return new \WP_Error( 'sk_shop_import_rate', __( 'Die Kursabfrage steht nicht zur Verfügung.', 'sk-core' ) );
-        }
-
-        return \SK\Modules\Payments\LNURL\ExchangeRate::fiat_to_sats( $amount, $currency );
+        return \SK\Core\Wallet\LNURL\ExchangeRate::fiat_to_sats( $amount, $currency );
     }
 
     /**
@@ -47,10 +28,6 @@ final class Rate {
      * @return float|\WP_Error
      */
     public static function btc_rate( string $currency = 'EUR' ) {
-        if ( ! self::ensure_loaded() ) {
-            return new \WP_Error( 'sk_shop_import_rate', __( 'Die Kursabfrage steht nicht zur Verfügung.', 'sk-core' ) );
-        }
-
-        return \SK\Modules\Payments\LNURL\ExchangeRate::get_btc_rate( $currency );
+        return \SK\Core\Wallet\LNURL\ExchangeRate::get_btc_rate( $currency );
     }
 }

@@ -69,6 +69,11 @@ add_action( 'init', [ \SK\Core\Antispam::class, 'init' ], 20 );
 // Buy Now — direct BTCPay checkout for subscriptions & boosts.
 \SK\Core\BuyNow::init();
 
+// Wallet connections of every user (NWC, LNDHub, onchain, Lightning address)
+// and the LNURL-pay endpoint that mints invoices from them.
+new \SK\Core\Wallet\Settings();
+new \SK\Core\Wallet\LnurlPayEndpoint();
+
 // Product description excerpt on shop/category loops.
 \SK\Core\ProductDescriptionExcerpt::init();
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace SK\Modules\Payments;
+namespace SK\Core\Wallet;
 
 use Endroid\QrCode\Color\Color;
 use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelMedium;

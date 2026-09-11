@@ -1,6 +1,6 @@
 <?php
 
-namespace SK\Modules\Payments\Onchain;
+namespace SK\Core\Wallet\Onchain;
 
 defined( 'ABSPATH' ) || exit;
 

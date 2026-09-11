@@ -794,14 +794,14 @@ class Ajax {
 	 * sats, or 0 when it is unsettled or cannot be checked.
 	 */
 	private static function verify_settled_zap( int $vendor_id, string $payment_hash ): int {
-		if ( ! $vendor_id || ! class_exists( 'SK\Modules\Payments\StoreSettings' ) ) {
+		if ( ! $vendor_id || ! class_exists( 'SK\Core\Wallet\Settings' ) ) {
 			return 0;
 		}
 
-		$client = \SK\Modules\Payments\StoreSettings::get_nwc_client( $vendor_id );
+		$client = \SK\Core\Wallet\Settings::get_nwc_client( $vendor_id );
 
 		if ( ! $client ) {
-			$client = \SK\Modules\Payments\StoreSettings::get_lndhub_client( $vendor_id );
+			$client = \SK\Core\Wallet\Settings::get_lndhub_client( $vendor_id );
 		}
 
 		if ( ! $client ) {

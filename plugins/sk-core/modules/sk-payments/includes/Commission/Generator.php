@@ -2,7 +2,7 @@
 
 namespace SK\Modules\Payments\Commission;
 
-use SK\Modules\Payments\LNDHub\Client as LNDHubClient;
+use SK\Core\Wallet\LNDHub\Client as LNDHubClient;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -100,7 +100,7 @@ class Generator {
 
                 // Fallback: extract payment_hash from bolt11 if LNDHub didn't return it.
                 if ( empty( $invoice_hash ) && ! empty( $invoice_pr ) ) {
-                    $extracted = \SK\Modules\Payments\LNURL\Bolt11Parser::get_payment_hash( $invoice_pr );
+                    $extracted = \SK\Core\Wallet\LNURL\Bolt11Parser::get_payment_hash( $invoice_pr );
                     if ( ! is_wp_error( $extracted ) ) {
                         $invoice_hash = $extracted;
                     }

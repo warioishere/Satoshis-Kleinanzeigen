@@ -2,7 +2,7 @@
 
 namespace SK\Modules\Payments\Chat;
 
-use SK\Modules\Payments\QrImage;
+use SK\Core\Wallet\QrImage;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -185,7 +185,7 @@ class PaymentCard {
 		// comes from the product — exactly like the base price.
 		$variant_key = isset( $data['variant'] ) ? (string) $data['variant'] : '';
 
-		$price_sats = \SK\Modules\Payments\Variant::price( $product, $variant_key );
+		$price_sats = \SK\Core\Product\Variant::price( $product, $variant_key );
 		if ( $price_sats < 1 ) {
 			return null;
 		}
@@ -194,7 +194,7 @@ class PaymentCard {
 			'type'          => 'purchase_request',
 			'viewer_is_vendor' => get_current_user_id() === (int) get_post_field( 'post_author', $chat_product ),
 			'product_id'    => $chat_product,
-			'product_title' => \SK\Modules\Payments\Variant::title( $product, $variant_key ),
+			'product_title' => \SK\Core\Product\Variant::title( $product, $variant_key ),
 			'price_sats'    => $price_sats,
 		];
 	}
@@ -241,8 +241,8 @@ class PaymentCard {
 
 		// Can the incoming payment be verified on its own? Then the vendor
 		// doesn't need the manual confirm button.
-		$has_verify = \SK\Modules\Payments\StoreSettings::has_nwc( $vendor_id )
-			|| \SK\Modules\Payments\StoreSettings::has_lndhub( $vendor_id )
+		$has_verify = \SK\Core\Wallet\Settings::has_nwc( $vendor_id )
+			|| \SK\Core\Wallet\Settings::has_lndhub( $vendor_id )
 			|| ! empty( $row->verify_url );
 
 		switch ( $marker ) {

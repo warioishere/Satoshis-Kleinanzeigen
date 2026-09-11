@@ -1,19 +1,19 @@
 <?php
 
-namespace SK\Modules\Payments\LNURL;
+namespace SK\Core\Wallet\LNURL;
 
-use SK\Modules\Payments\StoreSettings;
+use SK\Core\Wallet\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
 class Resolver {
 
     public static function resolve( string $address_or_lnurl ) {
-        if ( StoreSettings::is_valid_lightning_address( $address_or_lnurl ) ) {
+        if ( Settings::is_valid_lightning_address( $address_or_lnurl ) ) {
             return self::resolve_lightning_address( $address_or_lnurl );
         }
 
-        if ( StoreSettings::is_valid_lnurl( $address_or_lnurl ) ) {
+        if ( Settings::is_valid_lnurl( $address_or_lnurl ) ) {
             return self::resolve_lnurl( $address_or_lnurl );
         }
 
