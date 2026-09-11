@@ -420,7 +420,7 @@
     });
 
     // Image preview.
-    $('#sk-feed-image-input').on('change', function () {
+    $(document).on('change', '#sk-feed-image-input', function () {
         var file = this.files[0];
         if (!file) return;
         var reader = new FileReader();
@@ -431,7 +431,70 @@
         reader.readAsDataURL(file);
     });
 
-    $('#sk-feed-remove-image').on('click', function () {
+    /**
+     * Put a file into the picture field of the compose form.
+     *
+     * The form is sent as it stands, so an image only has to land in that one
+     * input and everything below it — preview, upload, removing it again —
+     * works as if it had been chosen by hand.
+     */
+    function skFeedSetImage(file) {
+        var input = document.getElementById('sk-feed-image-input');
+
+        if (!input || typeof DataTransfer === 'undefined' || !file) return false;
+
+        try {
+            var box = new DataTransfer();
+            box.items.add(file);
+            input.files = box.files;
+        } catch (err) {
+            return false;
+        }
+
+        $(input).trigger('change');
+        return true;
+    }
+
+    /**
+     * Paste a picture straight into the text: a screenshot from the clipboard
+     * lands in the picture field below instead of being dropped silently.
+     * Only one picture per post, so a second one replaces the first.
+     */
+    $(document).on('paste', '#sk-feed-content', function (e) {
+        var clip  = e.originalEvent && e.originalEvent.clipboardData;
+        var items = clip ? clip.items : null;
+
+        if (!items) return;
+
+        for (var i = 0; i < items.length; i++) {
+            if (items[i].kind !== 'file' || items[i].type.indexOf('image/') !== 0) continue;
+
+            if (skFeedSetImage(items[i].getAsFile())) {
+                // Otherwise the browser would drop the binary into the text.
+                e.preventDefault();
+            }
+            return;
+        }
+    });
+
+    /**
+     * The same for a picture dragged onto the text box.
+     */
+    $(document).on('dragover', '#sk-feed-content', function (e) {
+        var dt = e.originalEvent && e.originalEvent.dataTransfer;
+        if (dt && $.inArray('Files', dt.types || []) !== -1) e.preventDefault();
+    });
+
+    $(document).on('drop', '#sk-feed-content', function (e) {
+        var dt   = e.originalEvent && e.originalEvent.dataTransfer;
+        var file = dt && dt.files && dt.files[0];
+
+        if (file && file.type.indexOf('image/') === 0 && skFeedSetImage(file)) {
+            e.preventDefault();
+        }
+    });
+
+    $(document).on('click', '#sk-feed-remove-image', function () {
         $('#sk-feed-image-input').val('');
         $('#sk-feed-image-preview').hide();
     });
