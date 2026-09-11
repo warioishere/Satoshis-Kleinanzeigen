@@ -29,16 +29,6 @@ class Helper {
     }
 
     /**
-     * This method will return true if advertisement is enabled for vendor subscription pack
-     *
-     *
-     * @return bool
-     */
-    public static function is_enabled_for_vendor_subscription() {
-        return 'on' === sk_get_option( 'vendor_subscription_enabled', 'sk_product_advertisement', 'off' );
-    }
-
-    /**
      * This method will return true if advertisement is enabled for provided subscription pack
      *
      *
@@ -277,8 +267,8 @@ class Helper {
             return false;
         }
 
-        // check if subscription module is enabled and advertisement is active for subscription
-        if ( ! static::has_vendor_subscription_module() || ! static::is_enabled_for_vendor_subscription() ) {
+        // check if subscription module is enabled
+        if ( ! static::has_vendor_subscription_module() ) {
             return false;
         }
 
@@ -649,9 +639,8 @@ class Helper {
         }
 
         /**
-         * 1. per product purchase is enabled, with or without subscription on top
-         * 2. only subscription is enabled
-         * 3. neither is enabled, global defaults apply
+         * 1. per product purchase is enabled, subscription slots on top
+         * 2. only subscription slots
          */
         if ( static::is_per_product_advertisement_enabled() ) {
             // an advertisement cost of 0 means vendors advertise at no cost
@@ -665,7 +654,7 @@ class Helper {
                 $remaining_slot         = $subscription_remaining_slot;
                 $can_advertise_for_free = true;
             }
-        } elseif ( static::is_enabled_for_vendor_subscription() ) {
+        } else {
             // check if user can advertise this product for free
             if ( false !== $subscription_status && abs( $subscription_remaining_slot ) > 0 ) {
                 $can_advertise_for_free = true;
@@ -809,11 +798,6 @@ class Helper {
             // check permission, don't let vendor staff view this section
             if ( ! current_user_can( 'skdar' ) ) {
                 throw new Exception( __( 'You do not have permission to use this action.', 'sk-core' ), 400 );
-            }
-
-            // check if purchasing advertisement settings is enabled
-            if ( ! static::is_per_product_advertisement_enabled() && ! static::is_enabled_for_vendor_subscription() ) {
-                throw new Exception( __( 'Purchasing advertisement is restricted by admin.', 'sk-core' ), 403 );
             }
 
             // get advertisement data

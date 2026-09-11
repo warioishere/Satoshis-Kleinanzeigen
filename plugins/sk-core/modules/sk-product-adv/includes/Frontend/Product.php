@@ -48,11 +48,6 @@ class Product {
             return;
         }
 
-        // check if purchasing advertisement settings is enabled
-        if ( ! Helper::is_per_product_advertisement_enabled() && ! Helper::is_enabled_for_vendor_subscription() ) {
-            return;
-        }
-
         $advertisement_data = Helper::get_advertisement_data_by_product( $post_id );
 
         if ( empty( $advertisement_data ) ) {

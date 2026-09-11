@@ -94,13 +94,6 @@ class Settings {
                     ],
                 ],
             ],
-            'vendor_subscription_enabled' => [
-                'name'    => 'vendor_subscription_enabled',
-                'label'   => __( 'Enable Advertisement In Subscription', 'sk-core' ),
-                'desc'    => __( 'If you check this checkbox, vendor will be able to advertise their products without any additional cost based on the plan they are subscribed to.', 'sk-core' ),
-                'type'    => 'switcher',
-                'default' => 'off',
-            ],
             'featured' => [
                 'name'    => 'featured',
                 'label'   => __( 'Mark Advertised Product as Featured?', 'sk-core' ),

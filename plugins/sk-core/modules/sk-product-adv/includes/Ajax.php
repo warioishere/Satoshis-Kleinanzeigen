@@ -70,11 +70,6 @@ class Ajax {
             wp_send_json_error( [ 'message' => __( 'You do not have permission to use this action.', 'sk-core' ) ], 400 );
         }
 
-        // check if product advertisement is enabled or not for vendors
-        if ( ! Helper::is_per_product_advertisement_enabled() && ! Helper::is_enabled_for_vendor_subscription() ) {
-            wp_send_json_error( [ 'message' => __( 'Purchasing advertisement is restricted by admin.', 'sk-core' ) ], 400 );
-        }
-
         // now get required data from
         $product_id = isset( $_REQUEST['product_id'] ) ? absint( wp_unslash( $_REQUEST['product_id'] ) ) : 0;
 
