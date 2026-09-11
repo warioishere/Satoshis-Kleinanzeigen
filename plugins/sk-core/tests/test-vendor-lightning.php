@@ -35,8 +35,16 @@ $GLOBALS['vendors'] = [
 	5 => [ 'lightning_address' => 'v/5@' . TEST_HOST, 'lightning_nwc' => true ], // ours, with wallet
 	6 => [ 'lightning_address' => 'someshop@' . TEST_HOST ],            // ours by slug, no wallet
 	7 => [],                                                            // nothing at all
+	8 => [ 'btc_address' => 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq' ],
 ];
+
+// The xpub lives in its own meta key, not in the settings array.
+$GLOBALS['xpubs'] = [ 9 => 'zpub6rFR7y4Q2AijBEqTUquhVz398htDFrtymD9xYYfG1m4wAcvPhXNfE3EfH1r1ADqtfSdVCToUG868RvUUkgDKf31mGDtKsAYz2oz2AGutZYs' ];
+
 function get_user_meta( $user_id, $key = '', $single = false ) {
+	if ( $key === 'sk_xpub' ) {
+		return $GLOBALS['xpubs'][ $user_id ] ?? '';
+	}
 	return $GLOBALS['vendors'][ $user_id ] ?? [];
 }
 
@@ -63,9 +71,20 @@ check( 'our address by slug, no wallet', Settings::has_lightning( 6 ), false );
 check( 'nothing stored', Settings::has_lightning( 7 ), false );
 
 // --- the switch still wins --------------------------------------------------
+// Off has to reach the getters too, not just the has_… methods: a caller that
+// asks for the address directly can mint an invoice from it, and that is what
+// the switch exists to stop.
+check( 'switch on: address handed out', Settings::get_lightning_address( 3 ), 'wario@getalby.com' );
+check( 'switch on: onchain address handed out', Settings::get_btc_address( 8 ), 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq' );
+check( 'switch on: xpub seen', Settings::has_xpub( 9 ), true );
+
 $GLOBALS['wallet_switch'] = 'off';
-check( 'wallet connections off: NWC', Settings::has_lightning( 1 ), false );
-check( 'wallet connections off: foreign address', Settings::has_lightning( 3 ), false );
+check( 'switch off: NWC', Settings::has_lightning( 1 ), false );
+check( 'switch off: foreign address', Settings::has_lightning( 3 ), false );
+check( 'switch off: no address handed out', Settings::get_lightning_address( 3 ), '' );
+check( 'switch off: no onchain address', Settings::get_btc_address( 8 ), '' );
+check( 'switch off: xpub not seen', Settings::has_xpub( 9 ), false );
+check( 'switch off: onchain reports nothing', Settings::has_onchain( 8 ), false );
 $GLOBALS['wallet_switch'] = 'on';
 
 // --- which addresses are ours ----------------------------------------------

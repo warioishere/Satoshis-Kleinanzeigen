@@ -14,8 +14,11 @@ class Settings {
 
     /**
      * Site-wide switch (SK Admin → Einstellungen → Allgemein). Off hides the
-     * form block, answers the LNURL endpoint with an error and makes the
-     * has_… and get_…_client() methods below report "nothing connected".
+     * form block, answers the LNURL endpoint with an error and makes every
+     * has_…, get_…_client() and address getter below report "nothing
+     * connected" — the getters included, because a caller that asks for the
+     * address directly can mint an invoice with it, which is exactly what the
+     * switch is there to stop.
      * Stored data is kept, so switching back on restores everything.
      */
     public static function enabled(): bool {
@@ -536,6 +539,10 @@ class Settings {
     }
 
     public static function get_btc_address( int $vendor_id ): string {
+        if ( ! self::enabled() ) {
+            return '';
+        }
+
         $settings = get_user_meta( $vendor_id, 'sk_profile_settings', true );
         return ( is_array( $settings ) && ! empty( $settings['btc_address'] ) )
             ? $settings['btc_address']
@@ -543,6 +550,10 @@ class Settings {
     }
 
     public static function has_xpub( int $vendor_id ): bool {
+        if ( ! self::enabled() ) {
+            return false;
+        }
+
         return ! empty( get_user_meta( $vendor_id, 'sk_xpub', true ) );
     }
 
@@ -658,6 +669,10 @@ class Settings {
     }
 
     public static function get_lightning_address( int $vendor_id ): string {
+        if ( ! self::enabled() ) {
+            return '';
+        }
+
         $settings = get_user_meta( $vendor_id, 'sk_profile_settings', true );
         return ( is_array( $settings ) && ! empty( $settings['lightning_address'] ) )
             ? $settings['lightning_address']
