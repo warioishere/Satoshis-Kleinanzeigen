@@ -28,7 +28,6 @@ class Settings {
         add_filter( 'sk_admin_localize_script', [ $this, 'add_admin_settings_nonce' ] );
         add_action( 'wp_ajax_sk_refresh_admin_settings_field_options', [ $this, 'refresh_admin_settings_field_options' ] );
         add_filter( 'sk_settings_general_site_options', [ $this, 'add_sk_data_clear_setting' ], 310 );
-        add_filter( 'sk_get_settings_values', [ $this, 'set_vendor_latest_layout' ], 20, 2 );
     }
 
     /**
@@ -496,23 +495,6 @@ class Settings {
                 ],
             ],
             'sk_appearance' => [
-                'vendor_layout_options'      => [
-                    'name'        => 'vendor_layout_options',
-                    'type'        => 'sub_section',
-                    'label'       => esc_html__( 'Vendor Dashboard Appearance', 'sk-core' ),
-                    'description' => esc_html__( 'Configure the appearance and style of the vendor dashboard.', 'sk-core' ),
-                ],
-                'vendor_layout_style'        => [
-                    'name'    => 'vendor_layout_style',
-                    'label'   => esc_html__( 'Vendor Dashboard Style', 'sk-core' ),
-                    'desc'    => esc_html__( 'Select the user interface for the vendor dashboard.', 'sk-core' ),
-                    'type'    => 'radio',
-                    'default' => 'legacy',
-                    'options' => [
-                        'latest' => esc_html__( 'New UI', 'sk-core' ),
-                        'legacy' => esc_html__( 'Legacy UI', 'sk-core' ),
-                    ],
-                ],
                 'appearance_options'         => [
                     'name'          => 'appearance_options',
                     'type'          => 'sub_section',
@@ -778,20 +760,4 @@ class Settings {
         return $value;
     }
 
-    /**
-     * Set the default settings for vendor layout.
-     *
-     *
-     * @param mixed $option_name
-     * @param mixed $option_value
-     *
-     * @return void|mixed $option_value
-     */
-    public function set_vendor_latest_layout( $option_value, $option_name ) {
-        if ( 'sk_appearance' === $option_name && empty( $option_value['vendor_layout_style'] ) ) {
-            $option_value['vendor_layout_style'] = 'legacy';
-        }
-
-        return $option_value;
-    }
 }
