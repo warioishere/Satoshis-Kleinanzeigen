@@ -20,7 +20,6 @@ class ProductBlock {
         return apply_filters(
             'sk_get_product_block_configurations',
             [
-                'disable_popup' => 'on' === sk_get_option( 'disable_product_popup', 'sk_selling', 'off' ),
                 'statuses' => sk_get_available_post_status(),
                 'visibility_options' => sk_get_product_visibility_options(),
                 'manage_stocks' => 'yes' === get_option( 'woocommerce_manage_stock' ),

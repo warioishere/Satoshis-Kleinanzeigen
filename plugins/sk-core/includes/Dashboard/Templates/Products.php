@@ -30,8 +30,6 @@ class Products {
         add_action( 'sk_render_new_product_template', [ $this, 'render_new_product_template' ], 10 );
         add_action( 'sk_render_product_edit_template', [ $this, 'load_product_edit_template' ], 11 );
         add_action( 'template_redirect', [ $this, 'render_product_edit_page_for_email' ], 1 );
-        add_action( 'sk_after_listing_product', [ $this, 'load_add_new_product_popup' ], 10 );
-        add_action( 'sk_after_listing_product', [ $this, 'load_add_new_product_modal' ], 10 );
         add_action( 'sk_product_edit_after_title', [ __CLASS__, 'load_download_virtual_template' ], 10, 2 );
         add_action( 'sk_product_edit_after_main', [ __CLASS__, 'load_inventory_template' ], 5, 2 );
         add_action( 'sk_product_edit_after_inventory_variants', [ __CLASS__, 'load_others_template' ], 85, 2 );
@@ -549,20 +547,6 @@ class Products {
 
         wp_safe_redirect( add_query_arg( [ 'message' => 'success' ], $redirect ) );
         exit;
-    }
-
-    public function load_add_new_product_popup() {
-        sk_get_template_part( 'products/tmpl-add-product-popup' );
-    }
-
-    /**
-     * Add new product open modal html
-     *
-     *
-     * @return void
-     */
-    public function load_add_new_product_modal() {
-        sk_get_template_part( 'products/add-new-product-modal' );
     }
 
     /**

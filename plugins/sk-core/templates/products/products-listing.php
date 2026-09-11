@@ -40,15 +40,8 @@
                     </div>
 
                     <?php
-                    $one_step_product_create = 'on' === sk_get_option( 'one_step_product_create', 'sk_selling', 'on' );
-                    $disable_product_popup   = $one_step_product_create || 'on' === sk_get_option( 'disable_product_popup', 'sk_selling', 'off' );
-                    $new_product_url         = $one_step_product_create ? sk_edit_product_url( 0, true ) : add_query_arg(
-                        [
-                            '_sk_add_product_nonce' => wp_create_nonce( 'sk_add_product_nonce' ),
-                        ],
-                        sk_get_navigation_url( 'new-product' )
-                    );
-                    $product_listing_args    = [
+                    $new_product_url      = sk_edit_product_url( 0, true );
+                    $product_listing_args = [
                         'author'         => sk_get_current_user_id(),
                         'posts_per_page' => 1,
                         'post_status'    => apply_filters(
@@ -68,7 +61,7 @@
                         <div class="sk-product-listing-header sk-product-listing-header--stacked">
                             <?php if ( sk_is_seller_enabled( sk_get_current_user_id() ) && current_user_can( 'sk_add_product' ) ) : ?>
                                 <div class="sk-product-listing-actions">
-                                    <a href="<?php echo esc_url( $new_product_url ); ?>" class="sk-btn sk-btn-btc <?php echo $disable_product_popup ? '' : 'sk-add-new-product'; ?>">
+                                    <a href="<?php echo esc_url( $new_product_url ); ?>" class="sk-btn sk-btn-btc">
                                         + <?php esc_html_e( 'Inserat erstellen', 'sk-core' ); ?>
                                     </a>
                                     <?php if ( sk_module_active( 'sk_shop_import' ) && current_user_can( 'sk_view_overview_menu' ) ) : ?>
@@ -253,7 +246,7 @@
 
                                 <span class="sk-add-product-link">
                                     <?php if ( current_user_can( 'sk_add_product' ) ) : ?>
-                                        <a href="<?php echo esc_url( $new_product_url ); ?>" class="sk-btn sk-btn-theme <?php echo $disable_product_popup ? '' : 'sk-add-new-product'; ?>">
+                                        <a href="<?php echo esc_url( $new_product_url ); ?>" class="sk-btn sk-btn-theme">
                                             <i class="fas fa-briefcase">&nbsp;</i>
                                             <?php esc_html_e( 'Add new product', 'sk-core' ); ?>
                                         </a>

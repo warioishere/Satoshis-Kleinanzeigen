@@ -16,7 +16,6 @@
             this.gallery.init();
             this.manageStock();
             this.saleSchedule();
-            this.addProductPopup();
             this.tags();
             this.formValidation();
         },
@@ -176,56 +175,6 @@
             });
         },
 
-        /* ── Add New Product Popup ── */
-        addProductPopup: function () {
-            if (!$.fn.iziModal) return;
-
-            var $popup = $('#sk-add-product-popup');
-            if (!$popup.length) return;
-
-            $popup.iziModal({
-                headerColor: (window.sk && sk.modal_header_color) || '#f7931a',
-                overlayColor: 'rgba(0,0,0,0.6)',
-                width: 740,
-                onOpened: function () {
-                    $(document.body).trigger('sk-product-editor-popup-opened');
-                }
-            });
-
-            $(document).on('click', '.sk-add-new-product', function (e) {
-                e.preventDefault();
-                $popup.iziModal('open');
-            });
-
-            $(document).on('submit', '#sk-add-product-popup form', function (e) {
-                e.preventDefault();
-                var $form = $(this);
-                var $btn = $form.find('input[type=submit], button[type=submit]');
-                var $success = $form.find('span.sk-show-add-product-success');
-                var $error = $form.find('span.sk-show-add-product-error');
-
-                $btn.prop('disabled', true);
-                $success.html('').hide();
-                $error.html('').hide();
-
-                $.post(ajaxurl, $form.serialize() + '&action=sk_create_new_product&_wpnonce=' + nonce, function (res) {
-                    if (res.success) {
-                        $success.html(res.data).show();
-                        if (res.data && typeof res.data === 'string' && res.data.indexOf('http') === 0) {
-                            window.location = res.data;
-                        } else {
-                            setTimeout(function () { window.location.reload(); }, 1000);
-                        }
-                    } else {
-                        $error.html(res.data || 'Error').show();
-                        $btn.prop('disabled', false);
-                    }
-                }).fail(function () {
-                    $btn.prop('disabled', false);
-                });
-            });
-        },
-
         /* ── Product Tags (Select2 AJAX) ── */
         tags: function () {
             var $tagInput = $('select.product_tag_search');
@@ -287,7 +236,7 @@
     };
 
     $(function () {
-        if ($('.product-edit-container, .product-edit-new-container, #sk-add-product-popup').length) {
+        if ($('.product-edit-container, .product-edit-new-container').length) {
             ProductEdit.init();
         }
     });
