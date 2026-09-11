@@ -147,6 +147,26 @@ class Review extends DashboardModule {
     }
 
     /**
+     * May the current user moderate this comment?
+     *
+     * The listing only shows a vendor their own products, but the ids come
+     * back from the browser: without this check any vendor could moderate
+     * any comment on the site by passing its id.
+     */
+    private function may_moderate( $comment ): bool {
+        if ( ! $comment instanceof \WP_Comment ) {
+            return false;
+        }
+
+        // Not moderate_comments: the vendor role carries that one too.
+        if ( current_user_can( 'manage_options' ) ) {
+            return true;
+        }
+
+        return (int) get_post_field( 'post_author', $comment->comment_post_ID ) === sk_get_current_user_id();
+    }
+
+    /**
      * Hanlde Ajax Comment Status
      *
      *
@@ -170,6 +190,11 @@ class Review extends DashboardModule {
 
         $comment = get_comment( $comment_id );
         if ( empty( $comment ) ) {
+            return;
+        }
+
+        if ( ! $this->may_moderate( $comment ) ) {
+            wp_send_json_error( __( 'You have no permission to manage this review', 'sk-core' ) );
             return;
         }
 
@@ -273,7 +298,6 @@ class Review extends DashboardModule {
                 'pro'            => true,
                 'post_type'      => $post_type,
                 'comment_status' => $comment_status,
-                'manage_review'  => sk_get_option( 'seller_review_manage', 'sk_selling', 'on' ),
             ]
         );
 
@@ -293,10 +317,6 @@ class Review extends DashboardModule {
         $comment_status = isset( $_GET['comment_status'] )
             ? sanitize_text_field( $_GET['comment_status'] )
             : $comment_status;
-
-        if ( sk_get_option( 'seller_review_manage', 'sk_selling', 'on' ) !== 'on' ) {
-            return;
-        }
 
         if ( ! current_user_can( 'sk_manage_reviews' ) ) {
             return;
@@ -687,7 +707,7 @@ class Review extends DashboardModule {
 
         foreach ( $_POST['commentid'] as $commentid ) {
             $comment = get_comment( $commentid );
-            if ( ! $comment ) {
+            if ( ! $comment || ! $this->may_moderate( $comment ) ) {
                 continue;
             }
 

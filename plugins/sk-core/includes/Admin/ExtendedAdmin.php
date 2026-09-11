@@ -163,15 +163,6 @@ class ExtendedAdmin {
             'is_lite' => false,
         ];
 
-        $settings_fields['seller_review_manage'] = array(
-            'name'    => 'seller_review_manage',
-            'label'   => __( 'Vendor Product Review Status Change', 'sk-core' ),
-            'desc'    => __( 'Vendor can change product review status from vendor dashboard', 'sk-core' ),
-            'type'    => 'switcher',
-            'default' => 'on',
-            'is_lite' => false,
-        );
-
         return $settings_fields;
     }
 
@@ -186,7 +177,6 @@ class ExtendedAdmin {
     public function admin_settings_rearrange_map( $map ) {
         return array_merge(
             $map, array(
-                'seller_review_manage_sk_general' => array( 'seller_review_manage', 'sk_selling' ),
                 'store_banner_width_sk_general'   => array( 'store_banner_width', 'sk_appearance' ),
                 'store_banner_height_sk_general'  => array( 'store_banner_height', 'sk_appearance' ),
             )

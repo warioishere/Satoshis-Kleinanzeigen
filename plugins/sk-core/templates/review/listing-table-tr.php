@@ -4,7 +4,7 @@
  *
  */
 
-$can_manage = current_user_can( 'sk_manage_reviews' ) && sk_get_option( 'seller_review_manage', 'sk_selling', 'on' ) === 'on';
+$can_manage = current_user_can( 'sk_manage_reviews' );
 $rating     = intval( get_comment_meta( $comment->comment_ID, 'rating', true ) );
 ?>
 <div class="sk-review-card <?php echo esc_attr( $comment_status ); ?>">
