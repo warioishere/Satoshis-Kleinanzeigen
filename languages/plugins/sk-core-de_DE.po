@@ -14283,3 +14283,10 @@ msgstr "Kontakt anzeigen"
 #: plugins/sk-core/includes/Dashboard/Modules/ContactDetails.php
 msgid "Bitte gib deinem Shop einen Namen — der automatisch vergebene zählt nicht."
 msgstr "Bitte gib deinem Shop einen Namen — der automatisch vergebene zählt nicht."
+#: plugins/sk-core/templates/products/download-virtual.php
+msgid "Digital product, no shipping"
+msgstr "Digitales Produkt, kein Versand"
+
+#: plugins/sk-core/templates/products/download-virtual.php
+msgid "Nothing is shipped: the shipping field disappears and a purchase asks for no delivery address."
+msgstr "Es wird nichts verschickt: das Versandfeld verschwindet, und ein Kauf fragt nach keiner Lieferadresse."

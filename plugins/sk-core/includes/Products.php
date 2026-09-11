@@ -523,7 +523,6 @@ class Products {
             'stock_quantity'    => $product->get_stock_quantity(),
             'stock_status'      => $product->get_stock_status(),
             'backorders'        => $product->get_backorders(),
-            'selling_type'      => sk_ext()->digital_product->get_selling_product_type(),
         );
 
         $args['options']['post_statuses'] = sk_get_available_post_status( $product->get_id() );

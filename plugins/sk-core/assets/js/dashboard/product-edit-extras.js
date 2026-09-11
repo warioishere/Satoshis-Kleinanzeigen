@@ -102,6 +102,16 @@ document.addEventListener('DOMContentLoaded', function () {
     if (converterBox) target.parentElement.insertBefore(converterBox, target);
 });
 
+/* ── Digital product: no shipping, the checkbox hides the field ────────── */
+document.addEventListener('DOMContentLoaded', function () {
+    var virtualBox  = document.getElementById('_virtual');
+    var shippingBox = document.querySelector('[data-togglehandler="p2p_shipping_box"]');
+    if (!virtualBox || !shippingBox) return;
+    virtualBox.addEventListener('change', function () {
+        shippingBox.style.display = virtualBox.checked ? 'none' : '';
+    });
+});
+
 /* ── Map hint paragraph ────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', function () {
     var label = document.querySelector('label[for="setting_map"]');

@@ -90,7 +90,6 @@ class Bootstrap {
         $this->container['products']             = new Products();
         $this->container['review']               = sk_get_container()->get( Review::class );
         $this->container['store_category']       = sk_get_container()->get( StoreCategory::class );
-        $this->container['digital_product']      = sk_get_container()->get( DigitalProduct::class );
 
         if ( is_user_logged_in() ) {
             new Dashboard\ExtendedDashboard();

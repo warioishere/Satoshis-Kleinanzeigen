@@ -34,7 +34,6 @@ class Products {
         add_action( 'sk_after_listing_product', [ $this, 'load_add_new_product_modal' ], 10 );
         add_action( 'sk_product_edit_after_title', [ __CLASS__, 'load_download_virtual_template' ], 10, 2 );
         add_action( 'sk_product_edit_after_main', [ __CLASS__, 'load_inventory_template' ], 5, 2 );
-        add_action( 'sk_product_edit_after_main', [ __CLASS__, 'load_downloadable_template' ], 10, 2 );
         add_action( 'sk_product_edit_after_inventory_variants', [ __CLASS__, 'load_others_template' ], 85, 2 );
     }
 
@@ -77,24 +76,12 @@ class Products {
      * @return void
      */
     public static function load_download_virtual_template( $post, $post_id ) {
-        $_downloadable   = get_post_meta( $post_id, '_downloadable', true );
-        $_virtual        = get_post_meta( $post_id, '_virtual', true );
-        $is_downloadable = 'yes' === $_downloadable;
-        $is_virtual      = 'yes' === $_virtual;
-        $digital_mode    = sk_get_option( 'global_digital_mode', 'sk_general', 'sell_both' );
-
-        if ( 'sell_physical' === $digital_mode ) {
-            return;
-        }
-
         sk_get_template_part(
             'products/download-virtual', '', [
-                'post_id'         => $post_id,
-                'post'            => $post,
-                'is_downloadable' => $is_downloadable,
-                'is_virtual'      => $is_virtual,
-                'digital_mode'    => $digital_mode,
-                'class'           => 'show_if_subscription hide_if_variable-subscription show_if_simple',
+                'post_id'    => $post_id,
+                'post'       => $post,
+                'is_virtual' => 'yes' === get_post_meta( $post_id, '_virtual', true ),
+                'class'      => 'show_if_subscription hide_if_variable-subscription show_if_simple',
             ]
         );
     }
@@ -138,12 +125,6 @@ class Products {
      * @return void
      */
     public static function load_downloadable_template( $post, $post_id ) {
-        $digital_mode = sk_get_option( 'global_digital_mode', 'sk_general', 'sell_both' );
-
-        if ( 'sell_physical' === $digital_mode ) {
-            return;
-        }
-
         sk_get_template_part(
             'products/downloadable', '', [
                 'post_id' => $post_id,

@@ -103,8 +103,10 @@ class ProductForm {
 
     public function output_shipping_field( $post, $post_id ): void {
         $value = get_post_meta( $post_id, '_p2p_shipping_note', true );
+        // Hidden for a digital product; the checkbox toggles it live (product-edit-extras.js).
+        $style = 'yes' === get_post_meta( $post_id, '_virtual', true ) ? ' style="display:none"' : '';
         ?>
-        <div class="sk-edit-row sk-other-options sk-clearfix" data-togglehandler="p2p_shipping_box">
+        <div class="sk-edit-row sk-other-options sk-clearfix" data-togglehandler="p2p_shipping_box"<?php echo $style; // phpcs:ignore WordPress.Security.EscapeOutput ?>>
             <div class="sk-section-heading">
                 <h2><i class="fas fa-truck"></i> P2P Versandkosten</h2>
             </div>
@@ -120,7 +122,7 @@ class ProductForm {
 
     public function output_shipping_display(): void {
         global $post;
-        if ( ! $post ) return;
+        if ( ! $post || 'yes' === get_post_meta( $post->ID, '_virtual', true ) ) return;
         $value = get_post_meta( $post->ID, '_p2p_shipping_note', true );
         if ( ! empty( $value ) ) {
             echo '<div class="p2p-shipping-note" style="margin-top: 15px; font-weight: bold; color: #444;">Versand: ' . esc_html( $value ) . '</div>';
