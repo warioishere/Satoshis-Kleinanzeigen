@@ -110,21 +110,37 @@ get_header( 'shop' );
                     <?php endif; ?>
 
                     <?php
-                    // NIP-05 for the shop: answered by this site for every proven
-                    // key. Nothing to set up; a vendor may put it into their Nostr
-                    // profile, then every client shows the site's check mark.
-                    $nip05 = $store_user->user_nicename . '@' . \SK\Core\Trust\VendorKey::site();
+                    /*
+                     * NIP-05 for the shop, answered by this site for every proven key.
+                     * It is only a fact when the vendor actually uses it: with an
+                     * identity this site generated the profile carries it, and a
+                     * vendor with their own key may have put it into their profile.
+                     * Otherwise visitors see nothing, and the vendor sees the offer.
+                     */
+                    $nip05    = $store_user->user_nicename . '@' . \SK\Core\Trust\VendorKey::site();
+                    $in_use   = ( class_exists( '\SK\Modules\Auth\NostrIdentity' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $vendor_id ) )
+                        || strcasecmp( (string) get_user_meta( $vendor_id, 'nip05', true ), $nip05 ) === 0;
+                    $is_owner = get_current_user_id() === $vendor_id;
                     ?>
-                    <p class="sk-trust-nip05">
-                        <span class="sk-trust-note"><?php esc_html_e( 'NIP-05-Adresse dieses Shops:', 'sk-core' ); ?></span>
-                        <code><?php echo esc_html( $nip05 ); ?></code>
-                    </p>
-                    <p class="sk-trust-note">
-                        <?php esc_html_e( 'Prüfen: Diese Seite beantwortet die Adresse mit genau diesem Schlüssel. Steht sie im Nostr-Profil des Anbieters, zeigt jeder Nostr-Client das Häkchen dieser Seite.', 'sk-core' ); ?>
-                        <?php if ( get_current_user_id() === $vendor_id ) : ?>
-                            <?php esc_html_e( 'Du kannst sie in deinem Nostr-Profil als NIP-05 eintragen; einrichten musst du hier nichts.', 'sk-core' ); ?>
-                        <?php endif; ?>
-                    </p>
+                    <?php if ( $in_use ) : ?>
+                        <p class="sk-trust-nip05">
+                            <span class="sk-trust-note"><?php esc_html_e( 'NIP-05-Adresse dieses Shops:', 'sk-core' ); ?></span>
+                            <code><?php echo esc_html( $nip05 ); ?></code>
+                        </p>
+                        <p class="sk-trust-note">
+                            <?php esc_html_e( 'Prüfen: Diese Seite beantwortet die Adresse mit genau diesem Schlüssel, und sie steht im Nostr-Profil des Anbieters. Jeder Nostr-Client zeigt dafür das Häkchen dieser Seite.', 'sk-core' ); ?>
+                        </p>
+                    <?php elseif ( $is_owner ) : ?>
+                        <p class="sk-trust-note">
+                            <?php
+                            printf(
+                                /* translators: %s: NIP-05 address */
+                                esc_html__( 'Diese Seite beantwortet für deinen Schlüssel die NIP-05-Adresse %s. Trägst du sie in deinem Nostr-Profil ein, zeigt jeder Nostr-Client das Häkchen dieser Seite. Einrichten musst du hier nichts.', 'sk-core' ),
+                                '<code>' . esc_html( $nip05 ) . '</code>'
+                            );
+                            ?>
+                        </p>
+                    <?php endif; ?>
                 </div>
                 <?php endif; ?>
 
