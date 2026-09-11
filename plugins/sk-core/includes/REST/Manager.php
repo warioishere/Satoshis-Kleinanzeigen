@@ -119,6 +119,10 @@ class Manager {
             unset( $data['phone'] );
         }
 
+        if ( sk_public_store_address( $vendor_id ) === '' ) {
+            unset( $data['address'] );
+        }
+
         if ( empty( $data['show_email'] ) ) {
             unset( $data['email'] );
         }

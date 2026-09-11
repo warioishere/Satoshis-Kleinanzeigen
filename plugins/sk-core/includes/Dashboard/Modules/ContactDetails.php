@@ -261,7 +261,14 @@ class ContactDetails {
 
     private function render_contact_list( int $vendor_id, array $info, string $css_class ): string {
         $channels = $this->public_channels( $info );
-        if ( empty( $channels ) ) {
+
+        // The shop address, when the vendor publishes one. Printed in full
+        // rather than behind a reveal link: it is the address customers are
+        // meant to find, and a street is not the scraping target an email
+        // or a phone number is.
+        $address = function_exists( 'sk_public_store_address' ) ? sk_public_store_address( $vendor_id, false ) : '';
+
+        if ( empty( $channels ) && $address === '' ) {
             return '';
         }
 
@@ -284,6 +291,14 @@ class ContactDetails {
                 esc_attr( $key ),
                 $vendor_id,
                 esc_html__( 'anzeigen', 'sk-core' )
+            );
+        }
+
+        if ( $address !== '' ) {
+            $html .= sprintf(
+                '<li class="sk-store-address"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> <strong>%s:</strong> %s</li>',
+                esc_html__( 'Adresse', 'sk-core' ),
+                wp_kses_post( $address )
             );
         }
 

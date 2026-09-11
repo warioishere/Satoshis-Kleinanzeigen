@@ -5,8 +5,6 @@ $social_info   = $store_user->get_social_profiles();
 $store_tabs    = sk_get_store_tabs( $store_user->get_id() );
 $social_fields = sk_get_social_profile_fields();
 
-$store_address    = sk_get_seller_short_address( $store_user->get_id(), false );
-
 $general_settings = get_option( 'sk_general', [] );
 $banner_width     = sk_get_vendor_store_banner_width();
 
@@ -50,20 +48,14 @@ $banner_width     = sk_get_vendor_store_banner_width();
 
                     <div class="profile-info">
                         <ul class="sk-store-info">
-                            <?php if ( ! empty( $store_address ) ) { ?>
-                                <li class="sk-store-address"><i class="fas fa-map-marker-alt"></i>
-                                    <?php echo wp_kses_post( $store_address ); ?>
-                                </li>
-                            <?php } ?>
-
                             <?php
                             /*
-                             * The email address used to sit here as a mailto
-                             * link in the source. antispambot() only encodes
-                             * a few characters as HTML entities — any scraper
-                             * decodes that in one line. It now appears below
-                             * the banner in the contact list and is only
-                             * loaded on click.
+                             * Email and address both used to sit here. The
+                             * email as a mailto link in the source, which
+                             * antispambot() barely hid from a scraper; the
+                             * address unconditionally. Both are part of the
+                             * contact list below the banner now, and both
+                             * only appear when the vendor published them.
                              */
                             ?>
 

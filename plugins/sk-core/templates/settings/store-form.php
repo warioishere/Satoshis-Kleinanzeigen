@@ -181,7 +181,63 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
         <?php endif; ?>
 
 
-        <?php /* Address */ ?>
+        <?php
+        /*
+         * Shop address — part of the shop features, so from the Delphin
+         * package upwards. Private unless the vendor ticks the box; it then
+         * appears with the contact details below the store banner.
+         */
+        if ( sk_is_shop_pack( $current_user ) ) :
+            $show_address = ! empty( $profile_info['show_address'] );
+            ?>
+            <?php
+            sk_form_input( [
+                'name'        => 'address[street_1]',
+                'id'          => 'sk_address_street',
+                'value'       => $address_street1,
+                'label'       => __( 'Strasse und Hausnummer', 'sk-core' ),
+                'placeholder' => __( 'Musterstrasse 1', 'sk-core' ),
+            ] );
+
+            sk_form_input( [
+                'name'        => 'address[zip]',
+                'id'          => 'sk_address_zip',
+                'value'       => $address_zip,
+                'label'       => __( 'Postleitzahl', 'sk-core' ),
+                'placeholder' => '8000',
+            ] );
+
+            sk_form_input( [
+                'name'        => 'address[city]',
+                'id'          => 'sk_address_city',
+                'value'       => $address_city,
+                'label'       => __( 'Ort', 'sk-core' ),
+                'placeholder' => __( 'Zürich', 'sk-core' ),
+            ] );
+            ?>
+
+            <div class="sk-settings-field">
+                <label class="sk-settings-label" for="sk_address_country"><?php esc_html_e( 'Land', 'sk-core' ); ?></label>
+                <div class="sk-settings-input">
+                    <select class="sk-form-control" name="address[country]" id="sk_address_country">
+                        <option value=""><?php esc_html_e( '— kein Land —', 'sk-core' ); ?></option>
+                        <?php
+                        $sk_countries = class_exists( 'WC_Countries' ) ? ( new WC_Countries() )->get_countries() : [];
+                        foreach ( $sk_countries as $sk_code => $sk_name ) :
+                            ?>
+                            <option value="<?php echo esc_attr( $sk_code ); ?>" <?php selected( $address_country, $sk_code ); ?>>
+                                <?php echo esc_html( $sk_name ); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <label class="sk-settings-checkbox">
+                        <input type="checkbox" name="show_address" value="1" <?php checked( $show_address ); ?>>
+                        <?php esc_html_e( 'Adresse öffentlich anzeigen', 'sk-core' ); ?>
+                    </label>
+                    <p class="sk-settings-hint"><?php esc_html_e( 'Ohne Haken bleibt die Adresse nur für dich sichtbar. Öffentlich steht sie bei den Kontaktdaten unter deinem Banner.', 'sk-core' ); ?></p>
+                </div>
+            </div>
+        <?php endif; ?>
 
         <?php if ( sk_has_map_api_key() ) : ?>
         <div class="sk-settings-field">

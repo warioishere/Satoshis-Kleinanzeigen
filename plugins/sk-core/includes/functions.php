@@ -1836,8 +1836,11 @@ function sk_get_seller_short_address( $store_id, $line_break = true ) {
         $short_address[] = "<span class='{$address_classes[0]} {$address_classes[1]}'> {$store_address['street_1']}, {$store_address['street_2']}</span>";
     }
 
-    if ( ! empty( $store_address['city'] ) && ! empty( $store_address['city'] ) ) {
-        $short_address[] = "<span class='{$address_classes[2]}'> {$store_address['city']},</span>";
+    if ( ! empty( $store_address['city'] ) ) {
+        // Postcode in front of the town, the way an address is written here.
+        $town = trim( ( $store_address['zip'] ?? '' ) . ' ' . $store_address['city'] );
+
+        $short_address[] = "<span class='{$address_classes[2]}'> {$town},</span>";
     }
 
     if ( ! empty( $store_address['state'] ) && ! empty( $store_address['country'] ) ) {
@@ -1853,6 +1856,55 @@ function sk_get_seller_short_address( $store_id, $line_break = true ) {
     }
 
     return apply_filters( 'sk_store_header_adress', $formatted_address, $store_address, $short_address );
+}
+
+/**
+ * Does this vendor's package include the shop features?
+ *
+ * The same rule the catalog import and the revenue report use: from the
+ * Delphin package upwards, measured by the number of listings it allows.
+ *
+ * @param int $vendor_id
+ *
+ * @return bool
+ */
+function sk_is_shop_pack( $vendor_id = 0 ) {
+    $vendor_id = (int) ( $vendor_id ?: sk_get_current_user_id() );
+
+    if ( ! $vendor_id || ! class_exists( \SK\Modules\ShopImport\Variants::class ) ) {
+        return false;
+    }
+
+    return \SK\Modules\ShopImport\Variants::is_allowed( $vendor_id );
+}
+
+/**
+ * The vendor's shop address, ready to print, or '' when it stays private.
+ *
+ * Three conditions, all of them the vendor's own: their package includes
+ * the shop features, they switched the address to public, and they entered
+ * one. There is no site-wide override — the operator does not decide who
+ * shows an address.
+ *
+ * @param int  $vendor_id
+ * @param bool $line_break
+ *
+ * @return string HTML, already escaped by sk_get_seller_short_address()
+ */
+function sk_public_store_address( $vendor_id, $line_break = true ) {
+    $vendor_id = (int) $vendor_id;
+
+    if ( ! $vendor_id || ! sk_is_shop_pack( $vendor_id ) ) {
+        return '';
+    }
+
+    $info = sk_get_store_info( $vendor_id );
+
+    if ( ! is_array( $info ) || empty( $info['show_address'] ) ) {
+        return '';
+    }
+
+    return (string) sk_get_seller_short_address( $vendor_id, $line_break );
 }
 
 /**

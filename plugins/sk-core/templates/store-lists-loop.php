@@ -11,7 +11,7 @@
                     $is_store_featured        = $vendor->is_featured();
                     $store_phone              = $vendor->get_phone();
                     $store_info               = $vendor->get_shop_info();
-                    $store_address            = sk_get_seller_short_address( $seller->ID );
+                    $store_address            = sk_public_store_address( $seller->ID );
                     $store_banner_url         = $vendor->get_banner();
                     ?>
 

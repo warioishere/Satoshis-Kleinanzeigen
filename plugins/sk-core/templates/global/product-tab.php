@@ -31,11 +31,12 @@
             </span>
         </li>
     <?php endif; ?>
-    <?php if ( ! empty( $store_info['address'] ) ) { ?>
+    <?php $sk_store_address = sk_public_store_address( $author->ID, false ); ?>
+    <?php if ( $sk_store_address !== '' ) { ?>
         <li class="store-address">
             <span><b><?php esc_html_e( 'Address:', 'sk-core' ); ?></b></span>
             <span class="details">
-                <?php echo wp_kses_post( sk_get_seller_address( $author->ID ) ); ?>
+                <?php echo wp_kses_post( $sk_store_address ); ?>
             </span>
         </li>
     <?php } ?>

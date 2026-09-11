@@ -373,6 +373,25 @@ class Settings {
                 'show_nostr'           => isset( $_POST['show_nostr'] ) ? '1' : '',
             ];
 
+            /*
+             * Shop address — only for packages that include the shop
+             * features, checked here and not just in the form. Merged into
+             * what is stored so the parts the form does not show (second
+             * line, state) survive.
+             */
+            if ( function_exists( 'sk_is_shop_pack' ) && sk_is_shop_pack( $store_id ) ) {
+                $posted_address = isset( $_POST['address'] ) && is_array( $_POST['address'] )
+                    ? array_map( 'sanitize_text_field', wp_unslash( $_POST['address'] ) )
+                    : [];
+
+                $sk_settings['address'] = array_merge(
+                    (array) ( $prev_sk_settings['address'] ?? [] ),
+                    array_intersect_key( $posted_address, array_flip( [ 'street_1', 'zip', 'city', 'country' ] ) )
+                );
+
+                $sk_settings['show_address'] = isset( $_POST['show_address'] ) ? '1' : '';
+            }
+
             // E-Mail Verarbeitung
             $user = get_userdata( $store_id );
             $current_email = $user instanceof \WP_User ? (string) $user->user_email : '';
