@@ -445,6 +445,17 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
                     <?php if ( $ln_nwc_ok ) : ?>
                         <p class="sk-settings-status sk-settings-status--ok">
                             NWC verbunden — automatische Verifizierung aktiv.
+                            <?php
+                            // Whether the connection may also send is recorded when it is
+                            // saved; an older one carries no answer yet.
+                            if ( array_key_exists( 'lightning_nwc_pay', (array) $profile_info ) ) {
+                                echo empty( $profile_info['lightning_nwc_pay'] )
+                                    ? '<br>Diese Verbindung kann nur empfangen. Zum Zappen ohne Extension brauchst du eine Verbindung mit <strong>pay_invoice</strong>.'
+                                    : '<br>Diese Verbindung darf auch zahlen — Zaps laufen darüber, auch ohne Extension.';
+                            } else {
+                                echo '<br>Ob diese Verbindung auch zahlen darf, ist noch nicht geprüft. Einmal neu speichern klärt das.';
+                            }
+                            ?>
                             <a href="#" class="sk-payment-remove-link" data-remove-field="nwc_remove" data-input-field="nwc_connection" data-default-placeholder="nostr+walletconnect://...">Entfernen</a>
                         </p>
                     <?php else : ?>

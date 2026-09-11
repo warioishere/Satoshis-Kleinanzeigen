@@ -628,8 +628,9 @@ class ZapButton {
             'currentUserId' => get_current_user_id(),
             'currentPubkey' => is_user_logged_in() ? strtolower( (string) get_user_meta( get_current_user_id(), 'nostr_public_key', true ) ) : '',
             'i18nSelfZap'   => __( 'Du kannst dich nicht selbst zappen.', 'sk-core' ),
-            // A stored NWC connection lets the viewer zap without an extension.
-            'hasNwc'        => is_user_logged_in() && \SK\Core\Wallet\Settings::has_nwc( get_current_user_id() ),
+            // A stored NWC connection lets the viewer zap without an
+            // extension — but only one that is allowed to send.
+            'hasNwc'        => is_user_logged_in() && \SK\Core\Wallet\Settings::nwc_can_pay( get_current_user_id() ),
             'nwcNonce'      => wp_create_nonce( 'sk_zap_nwc' ),
             'relays'        => array_values( $relays ),
             // QR codes are rendered on our own server, never by a third party.

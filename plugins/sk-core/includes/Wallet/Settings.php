@@ -315,7 +315,8 @@ class Settings {
     private function save_nwc( int $store_id, array &$settings ) {
         if ( ! empty( $_POST['nwc_remove'] ) && $_POST['nwc_remove'] === '1' ) {
             delete_user_meta( $store_id, 'sk_nwc_connection' );
-            $settings['lightning_nwc'] = false;
+            $settings['lightning_nwc']     = false;
+            $settings['lightning_nwc_pay'] = false;
             update_user_meta( $store_id, 'sk_profile_settings', $settings );
             return;
         }
@@ -343,6 +344,12 @@ class Settings {
 
         update_user_meta( $store_id, 'sk_nwc_connection', $encrypted );
         $settings['lightning_nwc'] = $nwc_works;
+        // A connection granted only make_invoice and lookup_invoice can
+        // receive but not send. Asked once here, where the wallet is being
+        // contacted anyway, instead of on every page that offers a zap.
+        $settings['lightning_nwc_pay'] = $nwc_works
+            && is_array( $info )
+            && in_array( 'pay_invoice', (array) ( $info['methods'] ?? [] ), true );
         update_user_meta( $store_id, 'sk_profile_settings', $settings );
     }
 
@@ -358,6 +365,25 @@ class Settings {
 
         $client = NWC\Client::from_connection_string( $connection_string );
         return is_wp_error( $client ) ? null : $client;
+    }
+
+    /**
+     * May this connection send payments?
+     *
+     * Recorded when the connection is saved. Connections stored before that
+     * check existed carry no flag; those are treated as able to pay, and a
+     * refusal by the wallet is caught where the payment is made.
+     */
+    public static function nwc_can_pay( int $vendor_id ): bool {
+        if ( ! self::has_nwc( $vendor_id ) ) {
+            return false;
+        }
+
+        $settings = get_user_meta( $vendor_id, 'sk_profile_settings', true );
+
+        return ! is_array( $settings ) || ! array_key_exists( 'lightning_nwc_pay', $settings )
+            ? true
+            : (bool) $settings['lightning_nwc_pay'];
     }
 
     public static function has_nwc( int $vendor_id ): bool {
