@@ -2,7 +2,7 @@
 
 namespace SK\Modules\Payments\Admin;
 
-use SK\Core\Wallet\Secret;
+use SK\Core\Secret;
 
 defined( 'ABSPATH' ) || exit;
 

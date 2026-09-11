@@ -167,15 +167,4 @@ class Client {
 
         return [ 'authenticated' => true ];
     }
-
-    /**
-     * @see \SK\Core\Wallet\Secret Authenticated encryption (AES-256-GCM).
-     */
-    public static function encrypt_connection_string( string $connection_string ): string {
-        return \SK\Core\Wallet\Secret::encrypt( $connection_string );
-    }
-
-    public static function decrypt_connection_string( string $encrypted ): string {
-        return \SK\Core\Wallet\Secret::decrypt( $encrypted );
-    }
 }

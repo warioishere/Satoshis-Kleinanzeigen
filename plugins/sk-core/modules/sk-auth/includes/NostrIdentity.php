@@ -4,6 +4,7 @@ namespace SK\Modules\Auth;
 
 use SK\Core\Nostr\Events;
 use SK\Core\Nostr\Keys;
+use SK\Core\Secret;
 use swentel\nostr\Event\Event;
 use swentel\nostr\Sign\Sign;
 
@@ -13,12 +14,10 @@ defined( 'ABSPATH' ) || exit;
  * Nostr Identity Manager — generates, stores and uses Nostr keypairs per user.
  *
  * Every vendor can have a Nostr identity (secp256k1 keypair).
- * Private keys are stored encrypted (AES-256-CBC) in user meta.
+ * Private keys are stored encrypted in user meta through SK\Core\Secret.
  * Public keys are stored unencrypted for fast lookup.
  */
 class NostrIdentity {
-
-    private static $encryption_method = 'aes-256-cbc';
 
     /**
      * Register hooks for profile sync.
@@ -122,13 +121,29 @@ class NostrIdentity {
 
     /**
      * Get user's private key (decrypted hex). Returns null if no generated identity.
+     *
+     * A key still stored under the old scheme is rewritten here on first read,
+     * so the move to authenticated encryption needs no migration run and no
+     * user has to enter anything again.
      */
     public static function get_private_key( int $user_id ): ?string {
-        $encrypted = get_user_meta( $user_id, 'sk_nostr_private_key', true );
-        if ( empty( $encrypted ) ) {
+        $encrypted = (string) get_user_meta( $user_id, 'sk_nostr_private_key', true );
+        if ( $encrypted === '' ) {
             return null;
         }
-        return self::decrypt( $encrypted );
+
+        $privkey = self::decrypt( $encrypted );
+
+        if ( $privkey !== '' && Secret::needs_upgrade( $encrypted, Secret::NOSTR ) ) {
+            $upgraded = self::encrypt( $privkey );
+
+            // Never write an empty value over a key we can still read.
+            if ( $upgraded !== '' ) {
+                update_user_meta( $user_id, 'sk_nostr_private_key', $upgraded );
+            }
+        }
+
+        return $privkey;
     }
 
     /**
@@ -255,20 +270,27 @@ class NostrIdentity {
 
     // ── Encryption ──
 
+    /**
+     * Private keys live in the same store as every other secret of this plugin
+     * (SK\Core\Secret): AES-256-GCM under a key namespace of their own. Keys
+     * written by the old unauthenticated AES-256-CBC scheme are still read and
+     * are rewritten on first use, see get_private_key().
+     */
     private static function encrypt( string $data ): string {
-        $key    = hash( 'sha256', wp_salt( 'auth' ), true );
-        $iv_len = openssl_cipher_iv_length( self::$encryption_method );
-        $iv     = openssl_random_pseudo_bytes( $iv_len );
-        $cipher = openssl_encrypt( $data, self::$encryption_method, $key, OPENSSL_RAW_DATA, $iv );
-        return base64_encode( $iv . $cipher );
+        return Secret::encrypt( $data, Secret::NOSTR );
     }
 
     private static function decrypt( string $data ): string {
-        $key    = hash( 'sha256', wp_salt( 'auth' ), true );
-        $raw    = base64_decode( $data );
-        $iv_len = openssl_cipher_iv_length( self::$encryption_method );
-        $iv     = substr( $raw, 0, $iv_len );
-        $cipher = substr( $raw, $iv_len );
-        return openssl_decrypt( $cipher, self::$encryption_method, $key, OPENSSL_RAW_DATA, $iv ) ?: '';
+        $plaintext = Secret::decrypt( $data, Secret::NOSTR );
+
+        // CBC without authentication can return garbage under a wrong key
+        // instead of failing, so the result has to look like a key before it is
+        // handed to a signer.
+        return self::is_privkey( $plaintext ) ? $plaintext : '';
+    }
+
+    /** A Nostr private key is 32 bytes as lowercase hex. */
+    private static function is_privkey( string $value ): bool {
+        return (bool) preg_match( '/^[0-9a-f]{64}$/', $value );
     }
 }

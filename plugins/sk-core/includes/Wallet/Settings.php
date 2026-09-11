@@ -2,6 +2,8 @@
 
 namespace SK\Core\Wallet;
 
+use SK\Core\Secret;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
