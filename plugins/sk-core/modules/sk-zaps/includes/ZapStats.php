@@ -74,6 +74,47 @@ class ZapStats {
     }
 
     /**
+     * Count a paid zap once — for the vendor, and for the post it was zapped on.
+     *
+     * Three places learn that a zap was paid: the browser handing in a
+     * receipt, the feed's invoice lookup, and the relay sync. Each used to add
+     * up on its own, and the relay sync had no guard at all, so one receipt
+     * seen on two relays counted twice while the vendor's own total never
+     * moved. Both locks live here now, one per vendor and key, one per post
+     * and key.
+     *
+     * @param string $key     Payment hash or receipt id, 64 hex.
+     * @param int    $post_id The zapped feed post, 0 when there is none.
+     *
+     * @return array{counted:bool,post_total:?int} Whether this call counted it,
+     *                                             and the post's total if it has one.
+     */
+    public static function count_zap( int $vendor_id, string $key, int $sats, int $post_id = 0 ): array {
+        $counted    = self::add_received( $vendor_id, $key, $sats );
+        $post_total = null;
+
+        if ( $post_id > 0 ) {
+            $post = get_post( $post_id );
+
+            // Only the vendor's own feed post — a zap must not raise the count
+            // on someone else's.
+            $owned = $post
+                && (int) $post->post_author === $vendor_id
+                && ( ! class_exists( 'SK\Modules\Feed\PostType' ) || \SK\Modules\Feed\PostType::POST_TYPE === $post->post_type );
+
+            if ( $owned ) {
+                if ( $counted && add_post_meta( $post_id, '_sk_zap_hash_' . strtolower( $key ), $sats, true ) ) {
+                    update_post_meta( $post_id, '_sk_zap_total_sats', (int) get_post_meta( $post_id, '_sk_zap_total_sats', true ) + $sats );
+                }
+
+                $post_total = (int) get_post_meta( $post_id, '_sk_zap_total_sats', true );
+            }
+        }
+
+        return [ 'counted' => $counted, 'post_total' => $post_total ];
+    }
+
+    /**
      * AJAX: a zap receipt (kind 9735) the browser saw arrive for a vendor
      * with an outside Lightning address.
      *
@@ -141,27 +182,12 @@ class ZapStats {
             wp_send_json_error( [ 'message' => __( 'Betrag unlesbar.', 'sk-core' ) ] );
         }
 
-        $counted = self::add_received( $vendor_id, $receipt['id'], $sats );
-
-        // The post it was zapped on, when the vendor wrote it.
-        $post_total = null;
-
-        if ( $post_id && class_exists( 'SK\Modules\Feed\PostType' ) ) {
-            $post = get_post( $post_id );
-
-            if ( $post && \SK\Modules\Feed\PostType::POST_TYPE === $post->post_type && (int) $post->post_author === $vendor_id ) {
-                if ( $counted && add_post_meta( $post_id, '_sk_zap_hash_' . strtolower( $receipt['id'] ), $sats, true ) ) {
-                    update_post_meta( $post_id, '_sk_zap_total_sats', (int) get_post_meta( $post_id, '_sk_zap_total_sats', true ) + $sats );
-                }
-
-                $post_total = (int) get_post_meta( $post_id, '_sk_zap_total_sats', true );
-            }
-        }
+        $result = self::count_zap( $vendor_id, (string) $receipt['id'], $sats, $post_id );
 
         wp_send_json_success( [
-            'counted'      => $counted,
+            'counted'      => $result['counted'],
             'vendor_total' => (int) get_user_meta( $vendor_id, self::SATS_META, true ),
-            'post_total'   => $post_total,
+            'post_total'   => $result['post_total'],
         ] );
     }
 

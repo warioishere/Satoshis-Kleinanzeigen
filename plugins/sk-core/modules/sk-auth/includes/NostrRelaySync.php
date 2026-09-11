@@ -198,15 +198,23 @@ class NostrRelaySync {
             }
         }
 
-        // Sync banner → store banner.
+        /*
+         * Sync banner → store banner, but only while the vendor has none of
+         * their own: what they picked in the shop settings stays.
+         *
+         * The address used to be written straight into the field, where every
+         * reader expects the id of an uploaded image — so those shops showed no
+         * banner at all. The image is taken into the media library instead, and
+         * a leftover address counts as "none" so it repairs itself.
+         */
         if ( ! empty( $profile['banner'] ) ) {
-            $banner_url = esc_url_raw( $profile['banner'] );
             $store_info = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( $user_id ) : [];
-            if ( is_array( $store_info ) ) {
-                $current_banner = $store_info['banner'] ?? '';
-                if ( $banner_url !== $current_banner ) {
-                    $store_info['banner'] = $banner_url;
-                    // skdar_profile_settings is never read anywhere — this sync went nowhere.
+
+            if ( is_array( $store_info ) && absint( $store_info['banner'] ?? 0 ) === 0 ) {
+                $attachment_id = self::sideload_banner( $user_id, esc_url_raw( $profile['banner'] ) );
+
+                if ( $attachment_id > 0 ) {
+                    $store_info['banner'] = $attachment_id;
                     update_user_meta( $user_id, 'sk_profile_settings', $store_info );
                     $updated = true;
                 }
@@ -263,6 +271,60 @@ class NostrRelaySync {
     }
 
     /**
+     * Take a banner image from a Nostr profile into the media library.
+     *
+     * @return int Attachment id, or 0 when nothing was taken over.
+     */
+    private static function sideload_banner( int $user_id, string $url ): int {
+        if ( ! preg_match( '#^https://#i', $url ) ) {
+            return 0;
+        }
+
+        // The same image is not fetched again on every run, and a failed
+        // attempt is not retried every hour either.
+        if ( (string) get_user_meta( $user_id, 'sk_nostr_banner_src', true ) === $url ) {
+            return 0;
+        }
+
+        update_user_meta( $user_id, 'sk_nostr_banner_src', $url );
+
+        $name = basename( (string) wp_parse_url( $url, PHP_URL_PATH ) );
+
+        // media_handle_sideload goes by the file name, so one without a usable
+        // extension would be refused anyway.
+        if ( ! preg_match( '/\.(jpe?g|png|gif|webp)$/i', $name ) ) {
+            return 0;
+        }
+
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/media.php';
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+
+        $tmp = download_url( $url, 20 );
+
+        if ( is_wp_error( $tmp ) ) {
+            return 0;
+        }
+
+        $attachment_id = media_handle_sideload(
+            [ 'name' => $name, 'tmp_name' => $tmp ],
+            0,
+            null,
+            [ 'post_author' => $user_id ]
+        );
+
+        if ( is_wp_error( $attachment_id ) ) {
+            if ( file_exists( $tmp ) ) {
+                wp_delete_file( $tmp );
+            }
+
+            return 0;
+        }
+
+        return (int) $attachment_id;
+    }
+
+    /**
      * Handle Kind 9735 Zap Receipt.
      */
     private static function handle_zap_receipt( int $user_id, array $event ) {
@@ -298,17 +360,24 @@ class NostrRelaySync {
         }
 
         // Find the SK feed post linked to this Nostr event.
+        $post_id = 0;
+
         if ( ! empty( $zapped_event_id ) ) {
             global $wpdb;
             $post_id = (int) $wpdb->get_var( $wpdb->prepare(
                 "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_sk_nostr_event_id' AND meta_value = %s LIMIT 1",
                 $zapped_event_id
             ) );
+        }
 
-            if ( $post_id ) {
-                $current = (int) get_post_meta( $post_id, '_sk_zap_total_sats', true );
-                update_post_meta( $post_id, '_sk_zap_total_sats', $current + $amount_sats );
-            }
+        /*
+         * Counting happens in one place for every path (see ZapStats::count_zap).
+         * This one used to add up on its own, without a lock: the same receipt
+         * coming in from a second relay counted twice, and the vendor's own
+         * total was never touched at all.
+         */
+        if ( class_exists( 'SK\Modules\Zaps\ZapStats' ) ) {
+            \SK\Modules\Zaps\ZapStats::count_zap( $user_id, (string) ( $event['id'] ?? '' ), $amount_sats, $post_id );
         }
 
         do_action( 'sk_nostr_zap_received', $user_id, $amount_sats, $zapper_pubkey, $event );

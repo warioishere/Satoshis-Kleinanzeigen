@@ -781,7 +781,12 @@ class Ajax {
 		$total = (int) get_post_meta( $post_id, '_sk_zap_total_sats', true ) + $amount;
 		update_post_meta( $post_id, '_sk_zap_total_sats', $total );
 
-		// The vendor's own total moves with it, counted once per hash.
+		/*
+		 * The vendor's own total moves with it, counted once per hash. The post
+		 * lock above is the same one ZapStats::count_zap takes — this path has
+		 * to claim it before the wallet lookup, which is why it counts the post
+		 * itself and asks ZapStats only for the vendor side.
+		 */
 		if ( class_exists( 'SK\Modules\Zaps\ZapStats' ) ) {
 			\SK\Modules\Zaps\ZapStats::add_received( (int) $post->post_author, $payment_hash, $amount );
 		}

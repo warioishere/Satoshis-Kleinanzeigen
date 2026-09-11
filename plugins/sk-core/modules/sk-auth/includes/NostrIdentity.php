@@ -221,6 +221,26 @@ class NostrIdentity {
     }
 
     /**
+     * The shop banner as an address, or ''.
+     *
+     * The banner is stored as the id of an uploaded image, and a profile wants
+     * a URL. Publishing the field as it is put a bare number into the Nostr
+     * profile where an address belongs.
+     */
+    private static function banner_url( $banner ): string {
+        $id = absint( $banner );
+
+        if ( $id > 0 ) {
+            $url = wp_get_attachment_url( $id );
+
+            return is_string( $url ) ? $url : '';
+        }
+
+        // Older rows hold the address itself, written by the relay sync.
+        return is_string( $banner ) && preg_match( '#^https?://#i', $banner ) ? $banner : '';
+    }
+
+    /**
      * Publish Kind 0 profile event for user.
      */
     public static function publish_profile( int $user_id ): ?string {
@@ -232,7 +252,7 @@ class NostrIdentity {
             'name'    => $store_info['store_name'] ?? ( $user ? $user->display_name : '' ),
             'about'   => $store_info['store_description'] ?? '',
             'picture' => get_user_meta( $user_id, 'nostr_avatar', true ) ?: '',
-            'banner'  => $store_info['banner'] ?? '',
+            'banner'  => self::banner_url( $store_info['banner'] ?? '' ),
             'website' => function_exists( 'sk_get_store_url' ) ? sk_get_store_url( $user_id ) : '',
             'lud16'   => self::payable_address( $user_id ),
             'nip05'   => ( $user ? $user->user_nicename : $user_id ) . '@' . $domain,
