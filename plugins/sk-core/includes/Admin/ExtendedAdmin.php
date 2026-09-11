@@ -153,16 +153,6 @@ class ExtendedAdmin {
             'is_lite' => false,
         );
 
-        $settings_fields['hide_customer_info'] = [
-            'name'    => 'hide_customer_info',
-            'label'   => __( 'Hide Customer Info', 'sk-core' ),
-            'desc'    => __( 'Hide customer information from order details of vendors', 'sk-core' ),
-            'type'    => 'switcher',
-            'default' => 'off',
-            'tooltip' => __( 'It will hide customer information from the "General Details" section of the single order details page.', 'sk-core' ),
-            'is_lite' => false,
-        ];
-
         return $settings_fields;
     }
 
