@@ -66,20 +66,16 @@ function nap_get_options(): array {
 }
 
 /**
- * Resolve the private key (constant > option > filter).
- * Returns: string|false
+ * Resolve the private key (constant > option > filter) as hex, or false.
+ *
+ * The order lives in SK\Core\Nostr\Keys, which is the only place that reads
+ * the key. The option holds it encrypted, so reading it here directly would
+ * hand the signer a ciphertext.
  */
 function nap_resolve_private_key() {
-    if (defined('NAP_NOSTR_PRIVKEY') && NAP_NOSTR_PRIVKEY) {
-        return NAP_NOSTR_PRIVKEY;
-    }
-    $opts = nap_get_options();
-    $key  = trim((string)($opts['private_key'] ?? ''));
-    if ($key !== '') return $key;
+    $hex = class_exists('SK\Core\Nostr\Keys') ? \SK\Core\Nostr\Keys::marketplace_privkey() : '';
 
-    // allow external sources
-    $key = apply_filters('nap_nostr_private_key', '');
-    return $key ? $key : false;
+    return $hex !== '' ? $hex : false;
 }
 
 /**

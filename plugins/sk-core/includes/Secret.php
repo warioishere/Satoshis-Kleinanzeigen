@@ -36,6 +36,9 @@ class Secret {
     /** Private keys of Nostr identities this site generated. */
     const NOSTR = 'nostr';
 
+    /** The marketplace's own Nostr key, when it is kept in an option. */
+    const MARKETPLACE = 'marketplace';
+
     /**
      * Key namespaces per purpose, newest first.
      *
@@ -52,6 +55,9 @@ class Secret {
         ],
         self::NOSTR  => [
             'sk-core/nostr-identity/v2',
+        ],
+        self::MARKETPLACE => [
+            'sk-core/nostr-marketplace/v2',
         ],
     ];
 
@@ -241,9 +247,15 @@ class Secret {
      * The CBC keys this purpose was written with before GCM.
      *
      * The wallet passed the salt itself, the Nostr identities its SHA-256
-     * digest. Both are kept so no stored value becomes unreadable.
+     * digest. Both are kept so no stored value becomes unreadable. The
+     * marketplace key was never encrypted at all — it lay in the option as
+     * plain text, and that case is handled where it is read.
      */
     private static function legacy_cbc_keys( string $purpose ): array {
+        if ( $purpose === self::MARKETPLACE ) {
+            return [];
+        }
+
         if ( $purpose === self::NOSTR ) {
             return [ hash( 'sha256', wp_salt( 'auth' ), true ) ];
         }

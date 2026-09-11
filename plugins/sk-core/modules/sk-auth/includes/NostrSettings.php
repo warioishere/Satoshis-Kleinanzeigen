@@ -76,7 +76,7 @@ class NostrSettings {
                 'label'   => __( 'Privater Schlüssel', 'sk-core' ),
                 'type'    => 'text',
                 'default' => '',
-                'desc'    => __( 'Hex oder nsec. Wird nicht in dieser Sektion abgelegt, sondern beim Speichern in die Auto-Poster-Option übernommen. Sicherer ist NAP_NOSTR_PRIVKEY in der wp-config.php; dann verschwindet dieses Feld.', 'sk-core' ),
+                'desc'    => __( 'Hex oder nsec. Wird nicht in dieser Sektion abgelegt, sondern beim Speichern verschlüsselt in der Auto-Poster-Option hinterlegt. Sicherer ist NAP_NOSTR_PRIVKEY in der wp-config.php; dann verschwindet dieses Feld.', 'sk-core' ),
             ];
         }
 
@@ -214,9 +214,17 @@ class NostrSettings {
             return;
         }
 
+        // Encrypted at rest like every other secret; a database dump must not
+        // hand over the key the whole marketplace signs with.
+        $encrypted = \SK\Core\Secret::encrypt( $key, \SK\Core\Secret::MARKETPLACE );
+
+        if ( '' === $encrypted ) {
+            return;
+        }
+
         $opts                = get_option( 'nap_nostr_options', [] );
         $opts                = is_array( $opts ) ? $opts : [];
-        $opts['private_key'] = $key;
+        $opts['private_key'] = $encrypted;
 
         update_option( 'nap_nostr_options', $opts );
         \SK\Core\Nostr\Keys::forget_marketplace();

@@ -2,6 +2,8 @@
 
 namespace SK\Core\Nostr;
 
+use SK\Core\Secret;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -153,17 +155,53 @@ final class Keys {
             }
         }
 
-        if ( function_exists( 'nap_resolve_private_key' ) ) {
-            $hex = self::nsec_to_hex( (string) nap_resolve_private_key() );
+        $hex = self::stored_marketplace_privkey();
 
-            if ( '' !== $hex ) {
-                return $hex;
-            }
+        if ( '' !== $hex ) {
+            return $hex;
         }
 
-        $opts = get_option( 'nap_nostr_options', [] );
+        return self::nsec_to_hex( (string) apply_filters( 'nap_nostr_private_key', '' ) );
+    }
 
-        return self::nsec_to_hex( is_array( $opts ) ? (string) ( $opts['private_key'] ?? '' ) : '' );
+    /**
+     * The marketplace key from the option, decrypted.
+     *
+     * It used to sit there in plain text, readable for anyone who got at the
+     * options table or a database dump. Such a value is encrypted in place the
+     * first time it is read, so it cleans itself up without anyone re-entering
+     * the key. The wp-config constant above stays the better place: a file the
+     * web user cannot write.
+     */
+    private static function stored_marketplace_privkey(): string {
+        $opts   = get_option( 'nap_nostr_options', [] );
+        $stored = is_array( $opts ) ? trim( (string) ( $opts['private_key'] ?? '' ) ) : '';
+
+        if ( '' === $stored ) {
+            return '';
+        }
+
+        $hex = self::nsec_to_hex( Secret::decrypt( $stored, Secret::MARKETPLACE ) );
+
+        if ( '' !== $hex ) {
+            return $hex;
+        }
+
+        // Nothing decrypted: the stored value is the key itself.
+        $hex = self::nsec_to_hex( $stored );
+
+        if ( '' === $hex ) {
+            return '';
+        }
+
+        $encrypted = Secret::encrypt( $hex, Secret::MARKETPLACE );
+
+        if ( '' !== $encrypted ) {
+            $opts['private_key'] = $encrypted;
+            update_option( 'nap_nostr_options', $opts );
+        }
+
+        return $hex;
     }
 
     /** The marketplace's public key as hex, or ''. Cached for the request. */
