@@ -46,6 +46,9 @@
 #   test-zap-counting  ZapStats::count_zap. The same receipt seen twice counts
 #                     once, for the vendor and for the post; a foreign post is
 #                     never touched; unusable input changes nothing.
+#   test-api-key      AiCategorizer::api_key. The Claude API key is encrypted in
+#                     its own option; a plain-text leftover in the settings
+#                     section is moved on first read; an empty field keeps it.
 #   test-marketplace-key  Keys::marketplace_privkey. A key left in the option as
 #                     plain text is encrypted on first read, keeps opening under
 #                     its own namespace and under no other, garbage is untouched.

@@ -15,6 +15,7 @@ class AiCategorizer {
 		self::migrate_legacy_options();
 
 		add_filter( 'sk_settings_fields', [ $this, 'add_fields' ], 22 );
+		add_filter( 'sk_save_settings_value', [ __CLASS__, 'strip_api_key' ], 10, 2 );
 		add_action( 'wp_ajax_skai_suggest', [ $this, 'handle_suggest' ] );
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_assets' ] );
 	}
@@ -37,7 +38,8 @@ class AiCategorizer {
 
 		if ( ! isset( $section['skai_enabled'] ) ) {
 			$section['skai_enabled']    = get_option( 'skai_enabled', 0 ) ? 'on' : 'off';
-			$section['skai_api_key']    = get_option( 'skai_api_key', '' );
+			self::store_api_key( (string) get_option( 'skai_api_key', '' ) );
+			$section['skai_api_key']    = '';
 			$section['skai_model']      = get_option( 'skai_model', 'claude-haiku-4-5-20251001' );
 			$section['skai_auto_apply'] = get_option( 'skai_auto_apply', 0 ) ? 'on' : 'off';
 			update_option( 'sk_product_advertisement', $section );
@@ -46,6 +48,63 @@ class AiCategorizer {
 		foreach ( $legacy_keys as $key ) {
 			delete_option( $key );
 		}
+	}
+
+	/** Option holding the encrypted API key. */
+	const KEY_OPTION = 'skai_api_key_encrypted';
+
+	/**
+	 * Keeps the API key out of the settings section: a submitted key is
+	 * stored encrypted on its own, an empty field leaves the stored one alone.
+	 */
+	public static function strip_api_key( $value, $option_name ) {
+		if ( 'sk_product_advertisement' === $option_name && is_array( $value ) && array_key_exists( 'skai_api_key', $value ) ) {
+			self::store_api_key( (string) $value['skai_api_key'] );
+			$value['skai_api_key'] = '';
+		}
+
+		return $value;
+	}
+
+	public static function store_api_key( string $key ): void {
+		$key = trim( $key );
+
+		if ( '' === $key ) {
+			return;
+		}
+
+		$encrypted = \SK\Core\Secret::encrypt( $key, \SK\Core\Secret::API_KEY );
+
+		if ( '' !== $encrypted ) {
+			update_option( self::KEY_OPTION, $encrypted );
+		}
+	}
+
+	/**
+	 * The API key, decrypted.
+	 *
+	 * A key still sitting in the settings section in plain text is moved into
+	 * the encrypted option the first time it is read, and blanked there.
+	 */
+	public static function api_key(): string {
+		$key = \SK\Core\Secret::from_option( self::KEY_OPTION, \SK\Core\Secret::API_KEY );
+
+		if ( '' !== $key ) {
+			return $key;
+		}
+
+		$section = get_option( 'sk_product_advertisement' );
+		$plain   = is_array( $section ) ? trim( (string) ( $section['skai_api_key'] ?? '' ) ) : '';
+
+		if ( '' === $plain ) {
+			return '';
+		}
+
+		self::store_api_key( $plain );
+		$section['skai_api_key'] = '';
+		update_option( 'sk_product_advertisement', $section );
+
+		return $plain;
 	}
 
 	/**
@@ -71,11 +130,14 @@ class AiCategorizer {
 				'default' => 'off',
 			],
 			'skai_api_key' => [
-				'name'    => 'skai_api_key',
-				'label'   => __( 'Claude API Key', 'sk-core' ),
-				'type'    => 'text',
-				'default' => '',
-				'desc'    => __( 'API Key von console.anthropic.com', 'sk-core' ),
+				'name'        => 'skai_api_key',
+				'label'       => __( 'Claude API Key', 'sk-core' ),
+				'type'        => 'text',
+				'default'     => '',
+				'placeholder' => self::api_key() !== '' ? 'sk-ant-******** (gespeichert)' : 'sk-ant-…',
+				'desc'        => self::api_key() !== ''
+					? __( 'Der Schlüssel ist verschlüsselt gespeichert. Neuen Schlüssel eingeben zum Ändern, leer lassen zum Beibehalten.', 'sk-core' )
+					: __( 'API Key von console.anthropic.com. Wird verschlüsselt gespeichert.', 'sk-core' ),
 			],
 			'skai_model' => [
 				'name'    => 'skai_model',
@@ -170,7 +232,7 @@ class AiCategorizer {
 			wp_send_json_error( [ 'message' => 'disabled' ] );
 		}
 
-		$api_key = sk_get_option( 'skai_api_key', 'sk_product_advertisement', '' );
+		$api_key = self::api_key();
 		if ( empty( $api_key ) ) {
 			wp_send_json_error( [ 'message' => 'no_api_key' ] );
 		}

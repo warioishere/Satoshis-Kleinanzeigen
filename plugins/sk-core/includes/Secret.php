@@ -39,6 +39,9 @@ class Secret {
     /** The marketplace's own Nostr key, when it is kept in an option. */
     const MARKETPLACE = 'marketplace';
 
+    /** Keys for outside services, such as the categorizer's Claude API key. */
+    const API_KEY = 'api_key';
+
     /**
      * Key namespaces per purpose, newest first.
      *
@@ -58,6 +61,9 @@ class Secret {
         ],
         self::MARKETPLACE => [
             'sk-core/nostr-marketplace/v2',
+        ],
+        self::API_KEY => [
+            'sk-core/api-key/v2',
         ],
     ];
 
@@ -252,7 +258,7 @@ class Secret {
      * plain text, and that case is handled where it is read.
      */
     private static function legacy_cbc_keys( string $purpose ): array {
-        if ( $purpose === self::MARKETPLACE ) {
+        if ( $purpose === self::MARKETPLACE || $purpose === self::API_KEY ) {
             return [];
         }
 
