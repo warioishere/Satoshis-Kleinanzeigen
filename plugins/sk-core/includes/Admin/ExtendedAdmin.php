@@ -26,7 +26,6 @@ class ExtendedAdmin {
         add_action( 'wp_ajax_create_pages', array( $this, 'create_default_pages' ) );
         \SK\Core\Admin\PhpDashboard\ModulesPage::register_ajax();
         add_filter( 'sk_settings_fields', array( $this, 'load_settings_sections_fields' ), 10, 2 );
-        add_filter( 'sk_settings_general_vendor_store_options', array( $this, 'add_settings_general_vendor_store_options' ), 9 );
         add_filter( 'sk_settings_selling_option_vendor_capability', array( $this, 'add_settings_selling_option_vendor_capability' ), 9 );
         add_filter( 'sk_admin_settings_rearrange_map', array( $this, 'admin_settings_rearrange_map' ) );
         add_action( 'sk_render_admin_toolbar', array( $this, 'render_pro_admin_toolbar' ) );
@@ -89,28 +88,6 @@ class ExtendedAdmin {
      */
     public function remove_add_on_menu() {
         remove_submenu_page( 'sk', 'sk-addons' );
-    }
-
-    /**
-     * Add vendor store options in general settings
-     *
-     *
-     * @param array $settings_fields
-     *
-     * @return array
-     */
-    public function add_settings_general_vendor_store_options( $settings_fields ) {
-        $settings_fields['enable_single_seller_mode'] = [
-            'name'    => 'enable_single_seller_mode',
-            'label'   => __( 'Enable Single Seller Mode', 'sk-core' ),
-            'desc'    => __( 'Enable single seller mode', 'sk-core' ),
-            'type'    => 'switcher',
-            'default' => 'off',
-            'tooltip' => __( 'Restrict customers from buying from multiple vendors at a time.', 'sk-core' ),
-            'is_lite' => false,
-        ];
-
-        return $settings_fields;
     }
 
     /**

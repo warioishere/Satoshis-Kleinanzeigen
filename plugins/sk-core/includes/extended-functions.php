@@ -136,19 +136,6 @@ function sk_set_default_store_category_id( $category_id ) {
 
 
 /**
- * SK is single seller mode enable
- *
- *
- * @return boolean
- */
-function sk_is_single_seller_mode_enable() {
-    $is_single_seller_mode = apply_filters_deprecated( 'sk_signle_seller_mode', [ sk_get_option( 'enable_single_seller_mode', 'sk_general', 'off' ) ], '3.0.0', 'sk_single_seller_mode' );
-
-    return apply_filters( 'sk_single_seller_mode', $is_single_seller_mode );
-}
-
-
-/**
  * Get script suffic and version for sk
  *
  *
