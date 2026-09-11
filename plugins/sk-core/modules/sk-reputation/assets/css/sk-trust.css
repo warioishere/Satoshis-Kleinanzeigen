@@ -34,7 +34,9 @@
     text-align: left; white-space: normal; cursor: default;
 }
 .sk-vendor-info-wrap .sk-trust-pop { left: auto; right: 0; }
-.sk-trust-pop.is-open { display: block; }
+/* Open lists sit on the viewport (placed by the script), so the banner's
+   overflow cannot cut them off; a long list scrolls inside itself. */
+.sk-trust-pop.is-open { display: block; position: fixed; max-height: 60vh; overflow: auto; }
 .sk-trust-pop ul { list-style: none; margin: 6px 0 0; padding: 0; }
 .sk-trust-pop li { margin: 0; padding: 2px 0; }
 .sk-trust-pop a { color: #4c1d95; text-decoration: none; }

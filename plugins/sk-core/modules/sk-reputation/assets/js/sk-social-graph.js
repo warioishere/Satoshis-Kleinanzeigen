@@ -276,15 +276,53 @@
             el.classList.add('sk-trust-graph--why');
             el.addEventListener('click', function (ev) {
                 ev.stopPropagation();
-                pop.classList.toggle('is-open');
+                toggle(pop, el);
             });
         }
         el.hidden = false;
     }
 
-    document.addEventListener('click', function () {
+    /**
+     * Open or close a list under its chip.
+     *
+     * The list is placed relative to the viewport, not inside the chip's
+     * box: the store banner clips everything that leaves it, and the list
+     * of followers always does. Aligned to the chip's left edge, or to its
+     * right edge where the chip sits at the right of a vendor box.
+     */
+    function place(pop, el) {
+        var r = el.getBoundingClientRect();
+        var alignRight = !!el.closest('.sk-vendor-info-wrap');
+        pop.style.top = Math.round(r.bottom + 6) + 'px';
+        // Never past the bottom of the window: what does not fit scrolls inside.
+        pop.style.maxHeight = Math.max(120, Math.round(window.innerHeight - r.bottom - 18)) + 'px';
+        if (alignRight) {
+            pop.style.left = 'auto';
+            pop.style.right = Math.max(8, Math.round(window.innerWidth - r.right)) + 'px';
+        } else {
+            pop.style.right = 'auto';
+            pop.style.left = Math.max(8, Math.round(r.left)) + 'px';
+        }
+    }
+    window.skTrustGraphPlace = place;
+
+    function toggle(pop, el) {
+        var open = !pop.classList.contains('is-open');
+        closeAll();
+        if (open) {
+            place(pop, el);
+            pop.classList.add('is-open');
+        }
+    }
+
+    function closeAll() {
         document.querySelectorAll('.sk-trust-pop.is-open').forEach(function (p) { p.classList.remove('is-open'); });
-    });
+    }
+
+    document.addEventListener('click', closeAll);
+    // A fixed list would drift away from its chip while the page scrolls.
+    window.addEventListener('scroll', closeAll, { passive: true });
+    window.addEventListener('resize', closeAll);
 
     /**
      * The trust page explains an empty result; everywhere else silence.
@@ -329,7 +367,7 @@
         pop.className = 'sk-trust-pop';
         pop.innerHTML = html;
         el.appendChild(pop);
-        el.addEventListener('click', function (ev) { ev.stopPropagation(); pop.classList.toggle('is-open'); });
+        el.addEventListener('click', function (ev) { ev.stopPropagation(); toggle(pop, el); });
 
         chip.parentNode.insertBefore(el, chip.nextSibling);
     }
