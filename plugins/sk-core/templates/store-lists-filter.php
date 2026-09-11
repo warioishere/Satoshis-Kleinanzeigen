@@ -78,7 +78,8 @@ defined( 'ABSPATH' ) || exit; ?>
     ?>
 
     <div class="apply-filter">
-        <button id="cancel-filter-btn" class="sk-btn sk-btn-theme"><?php esc_html_e( 'Cancel', 'sk-core' ); ?></button>
+        <?php // type="button": without it this is the form's first submit button, and Enter in any field would cancel instead of search. ?>
+        <button id="cancel-filter-btn" class="sk-btn sk-btn-theme" type="button"><?php esc_html_e( 'Cancel', 'sk-core' ); ?></button>
         <button id="apply-filter-btn" class="sk-btn sk-btn-theme" type="submit"><?php esc_html_e( 'Apply', 'sk-core' ); ?></button>
     </div>
 
