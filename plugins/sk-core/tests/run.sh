@@ -31,6 +31,9 @@
 #   test-origin       sk_is_same_origin_request, sk_account_has_password.
 #                     cross-site rejected even with a friendly Origin,
 #                     lookalike domains and subdomains fail, five account types.
+#   test-lnurl-address Resolver::is_own_address. The v/<id>@<host> addresses this
+#                     site hands out reach our own endpoint; a foreign host, a
+#                     lookalike domain and a non-numeric id do not.
 #
 # These tests are built to fail when a CHECK DISAPPEARS, not just when code
 # crashes. If one turns red after your change, it is saying "there was a

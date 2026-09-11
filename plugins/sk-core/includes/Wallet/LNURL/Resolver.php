@@ -9,7 +9,7 @@ defined( 'ABSPATH' ) || exit;
 class Resolver {
 
     public static function resolve( string $address_or_lnurl ) {
-        if ( Settings::is_valid_lightning_address( $address_or_lnurl ) ) {
+        if ( Settings::is_valid_lightning_address( $address_or_lnurl ) || self::is_own_address( $address_or_lnurl ) ) {
             return self::resolve_lightning_address( $address_or_lnurl );
         }
 
@@ -18,6 +18,20 @@ class Resolver {
         }
 
         return new \WP_Error( 'invalid_address', 'Ungültige Lightning-Adresse oder LNURL.' );
+    }
+
+    /**
+     * The address this site hands out for its own vendors: v/<id>@<host>.
+     *
+     * A slash is not allowed in a Lightning address anywhere else, so the
+     * general format check rejects it. Without this every payment and every
+     * server-side zap towards a vendor who never typed an address of their own
+     * died as "invalid address" instead of reaching our own endpoint.
+     */
+    public static function is_own_address( string $address ): bool {
+        $host = (string) wp_parse_url( home_url(), PHP_URL_HOST );
+
+        return (bool) preg_match( '#^v/\d+@' . preg_quote( $host, '#' ) . '$#i', $address );
     }
 
     private static function resolve_lightning_address( string $address ) {
