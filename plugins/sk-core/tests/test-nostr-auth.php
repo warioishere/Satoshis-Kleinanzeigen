@@ -43,6 +43,9 @@ $GLOBALS['transients'] = [];
 function get_transient( $k ) { return $GLOBALS['transients'][ $k ] ?? false; }
 function set_transient( $k, $v, $ttl = 0 ) { $GLOBALS['transients'][ $k ] = $v; return true; }
 
+// Id and signature are verified by the core, not by the auth module itself.
+require SK_TEST_PLUGIN . '/includes/Nostr/Keys.php';
+require SK_TEST_PLUGIN . '/includes/Nostr/Events.php';
 require SK_TEST_PLUGIN . '/modules/sk-auth/includes/Connector/NostrIntegration.php';
 
 $fails = 0;
