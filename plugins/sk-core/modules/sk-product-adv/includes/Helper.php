@@ -69,16 +69,6 @@ class Helper {
     }
 
     /**
-     * This method will return if admin wants to set purchased advertisement products as featured.
-     *
-     *
-     * @return bool
-     */
-    public static function is_catalog_priority_enabled() {
-        return 'on' === sk_get_option( 'catalog_priority', 'sk_product_advertisement', 'on' );
-    }
-
-    /**
      * This method will return if admin wants to out of stocks products from advertisements.
      *
      *

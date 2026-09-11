@@ -108,13 +108,6 @@ class Settings {
                 'type'    => 'switcher',
                 'default' => 'off',
             ],
-            'catalog_priority' => [
-                'name'    => 'catalog_priority',
-                'label'   => __( 'Display Advertised Product on Top?', 'sk-core' ),
-                'desc'    => __( 'If you check this checkbox, advertised products will be displayed on top of the catalog listing eg: shop page, single store page etc.', 'sk-core' ),
-                'type'    => 'switcher',
-                'default' => 'on',
-            ],
             'hide_out_of_stock_items' => [
                 'name'    => 'hide_out_of_stock_items',
                 'label'   => __( 'Out of Stock Visibility', 'sk-core' ),

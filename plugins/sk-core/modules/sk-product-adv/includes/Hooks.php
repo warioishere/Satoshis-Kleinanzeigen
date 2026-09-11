@@ -33,8 +33,8 @@ class Hooks {
         // remove advertisement base product after advertisement product has been deleted
         add_action( 'delete_post', [ $this, 'delete_advertisement_base_product' ], 20 );
 
-        //display advertised products on top
-        add_action( 'posts_results', [ $this, 'display_advertised_products_on_top' ], 10, 2 );
+        // Advertised products on top; late, after WooCommerce's price/popularity/rating clauses set their orderby.
+        add_filter( 'posts_clauses', [ $this, 'display_advertised_products_on_top' ], 99, 2 );
 
         //render advertise product section in single store page
         add_filter( 'sk_product_sections_container', [ $this, 'render_product_section' ], 99, 1 );
@@ -199,59 +199,31 @@ class Hooks {
     }
 
     /**
-     * Display advertised products on top
+     * Advertised products first in the catalog, newest advertisement on top,
+     * then the chosen sorting. Done in the query so it holds across pages.
      *
-     *
-     * @param array $posts
-     * @param object $query query arguments
+     * @param array     $clauses
+     * @param \WP_Query $query
      *
      * @return array
      */
-    public function display_advertised_products_on_top( $posts, $query ) {
-        global $wp_query;
-        if ( ! is_admin() &&
-            Helper::is_catalog_priority_enabled() &&
-            $query->is_main_query() &&
-            (
-                is_search() ||
-                ( is_a( $wp_query, 'WP_Query' ) && ! empty( $wp_query->get_queried_object() ) && is_shop() ) ||
-                is_product_category() ||
-                ( is_a( $wp_query, 'WP_Query' ) && sk_is_store_page() )
-            )
-        ) {
-            $non_advertised = [];
-            $advertised    = [];
-            // get all advertised products
-            $manager = new Manager();
-            $advertised_products = $manager->all(
-                [
-                    'status'   => 1,
-                    'per_page' => -1,
-                    'return'   => 'product_ids',
-                ]
-            );
+    public function display_advertised_products_on_top( $clauses, $query ) {
+        global $wpdb;
 
-            foreach ( $posts as $post ) {
-                if ( in_array( (string) $post->ID, $advertised_products, true ) ) {
-                    $advertised[] = $post;
-                } else {
-                    $non_advertised[] = $post;
-                }
-            }
-
-            if ( sk_is_store_page() ) {
-                //todo: hack applied here, our store page ordering wasn't setting query var order,
-                //we are putting advertised products at top
-                $posts = array_merge( $advertised, $non_advertised );
-            } else {
-                /* if order is ASC put featured at top, otherwise put featured at bottom */
-                $posts = ( 'ASC' === strtoupper( $query->get( 'order' ) ) )
-                    ? array_merge( $advertised, $non_advertised )
-                    : array_merge( $non_advertised, $advertised );
-            }
+        if ( is_admin() || ! $query->is_main_query()
+            || ! ( is_search() || is_shop() || is_product_category() || sk_is_store_page() ) ) {
+            return $clauses;
         }
 
-        return $posts;
+        $clauses['join'] .= $wpdb->prepare(
+            " LEFT JOIN ( SELECT product_id, MAX(added) AS added FROM {$wpdb->prefix}sk_advertised_products WHERE status = 1 AND expires_at > %d GROUP BY product_id ) sk_adv ON sk_adv.product_id = {$wpdb->posts}.ID",
+            time()
+        );
+
+        $clauses['orderby'] = '(sk_adv.added IS NOT NULL) DESC, sk_adv.added DESC'
+            . ( empty( $clauses['orderby'] ) ? '' : ', ' . $clauses['orderby'] );
+
+        return $clauses;
     }
 
     /**
