@@ -2901,6 +2901,29 @@ function sk_verified_badge( int $user_id ): string {
 }
 
 /**
+ * NIP-05 badge: the vendor's Nostr address once its domain has confirmed
+ * the key. Links to the trust page, which explains the check.
+ */
+function sk_nip05_badge( int $user_id ): string {
+    if ( ! class_exists( \SK\Core\Nostr\Nip05::class ) ) {
+        return '';
+    }
+
+    $address = \SK\Core\Nostr\Nip05::shown( $user_id );
+
+    if ( null === $address ) {
+        return '';
+    }
+
+    return sprintf(
+        '<a class="sk-verify-badge sk-nip05-badge" href="%1$s" title="%2$s"><i class="sk-nostr-icon" aria-hidden="true"></i><span class="screen-reader-text">%3$s</span></a>',
+        esc_url( sk_get_store_url( $user_id, 'vertrauen' ) ),
+        esc_attr( sprintf( 'NIP-05: %s', $address ) ),
+        esc_html__( 'Nostr-Adresse geprüft', 'sk-core' )
+    );
+}
+
+/**
  * Filter vendor listing to only show vendors with a non-empty store name.
  */
 add_filter( 'sk_seller_listing_args', function ( $args, $requested_data ) {

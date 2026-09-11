@@ -123,11 +123,7 @@ get_header( 'shop' );
                     // The address the vendor's profile carries, once its domain has
                     // confirmed the key (checked in the relay sync, read here). For an
                     // identity this site generated that is our own address.
-                    $verified = \SK\Core\Nostr\Nip05::verified( $vendor_id );
-
-                    if ( null === $verified && class_exists( '\SK\Modules\Auth\NostrIdentity' ) && \SK\Modules\Auth\NostrIdentity::has_identity( $vendor_id ) ) {
-                        $verified = $nip05;
-                    }
+                    $verified = \SK\Core\Nostr\Nip05::shown( $vendor_id );
 
                     $verified_domain = $verified ? substr( $verified, strrpos( $verified, '@' ) + 1 ) : '';
                     ?>

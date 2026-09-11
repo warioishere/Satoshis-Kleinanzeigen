@@ -23,6 +23,7 @@ namespace {
 	$GLOBALS['user_meta'] = [];
 	function get_user_meta( $id, $key = '', $single = false ) { return $GLOBALS['user_meta'][ $id ][ $key ] ?? ''; }
 	function update_user_meta( $id, $key, $value ) { $GLOBALS['user_meta'][ $id ][ $key ] = $value; return true; }
+	function get_userdata( $id ) { return (object) [ 'user_nicename' => 'vendor' . $id ]; }
 
 	$GLOBALS['KEY']   = str_repeat( 'ab', 32 );
 	$GLOBALS['OTHER'] = str_repeat( 'cd', 32 );
@@ -53,6 +54,14 @@ namespace {
 namespace SK\Core\Trust {
 	class VendorKey {
 		public static function bound( int $user_id ): string { return $user_id === 1 ? $GLOBALS['KEY'] : ''; }
+		public static function site(): string { return 'sk.example'; }
+	}
+}
+
+// Vendor 3 has an identity this site generated.
+namespace SK\Modules\Auth {
+	class NostrIdentity {
+		public static function has_identity( int $user_id ): bool { return $user_id === 3; }
 	}
 }
 
@@ -110,6 +119,11 @@ namespace {
 	$GLOBALS['user_meta'][2]['nip05'] = 'x@iris.example';
 	check( 'vendor without a bound key', Nip05::check( 2 ), null );
 	check( 'no request for them', $GLOBALS['requests'], 3 );
+
+	// --- shown(): the verified address, else this site's for a generated identity
+	check( 'shown: verified address wins', Nip05::shown( 1 ), 'mario@iris.example' );
+	check( 'shown: nothing for a foreign key without verdict', Nip05::shown( 2 ), null );
+	check( 'shown: site address for a generated identity', Nip05::shown( 3 ), 'vendor3@sk.example' );
 
 	printf( "\n%s\n", $fails ? "{$fails} FAILURE(S)" : 'all checks passed' );
 	exit( $fails ? 1 : 0 );
