@@ -11,9 +11,14 @@ defined( 'ABSPATH' ) || exit;
  */
 class AiCategorizer {
 
+	/** Settings section of its own, right after Produktbewerbung. */
+	const SECTION = 'sk_ai_categorizer';
+
 	public function __construct() {
 		self::migrate_legacy_options();
+		self::migrate_section();
 
+		add_filter( 'sk_settings_sections', [ $this, 'add_section' ], 22 );
 		add_filter( 'sk_settings_fields', [ $this, 'add_fields' ], 22 );
 		add_filter( 'sk_save_settings_value', [ __CLASS__, 'strip_api_key' ], 10, 2 );
 		add_action( 'wp_ajax_skai_suggest', [ $this, 'handle_suggest' ] );
@@ -33,21 +38,61 @@ class AiCategorizer {
 			return;
 		}
 
-		$section = get_option( 'sk_product_advertisement' );
+		$section = get_option( self::SECTION );
 		$section = is_array( $section ) ? $section : [];
 
 		if ( ! isset( $section['skai_enabled'] ) ) {
 			$section['skai_enabled']    = get_option( 'skai_enabled', 0 ) ? 'on' : 'off';
 			self::store_api_key( (string) get_option( 'skai_api_key', '' ) );
-			$section['skai_api_key']    = '';
 			$section['skai_model']      = get_option( 'skai_model', 'claude-haiku-4-5-20251001' );
 			$section['skai_auto_apply'] = get_option( 'skai_auto_apply', 0 ) ? 'on' : 'off';
-			update_option( 'sk_product_advertisement', $section );
+			update_option( self::SECTION, $section );
 		}
 
 		foreach ( $legacy_keys as $key ) {
 			delete_option( $key );
 		}
+	}
+
+	/**
+	 * The settings used to sit inside the Produktbewerbung section; they are
+	 * carried over into the section of their own once.
+	 */
+	private static function migrate_section(): void {
+		if ( is_array( get_option( self::SECTION, null ) ) ) {
+			return;
+		}
+
+		$old = get_option( 'sk_product_advertisement' );
+		$old = is_array( $old ) ? $old : [];
+		$new = [];
+
+		foreach ( [ 'skai_enabled', 'skai_model', 'skai_auto_apply' ] as $key ) {
+			if ( isset( $old[ $key ] ) ) {
+				$new[ $key ] = $old[ $key ];
+				unset( $old[ $key ] );
+			}
+		}
+
+		// The key itself moves into the encrypted option, see api_key().
+		self::store_api_key( (string) ( $old['skai_api_key'] ?? '' ) );
+		unset( $old['skai_api_key'], $old['skai_header'] );
+
+		update_option( self::SECTION, $new );
+		update_option( 'sk_product_advertisement', $old );
+	}
+
+	public function add_section( $sections ) {
+		$sections[] = [
+			'id'                   => self::SECTION,
+			'title'                => __( 'KI Kategorisierung', 'sk-core' ),
+			'icon_url'             => '',
+			'description'          => __( 'Kategorievorschlag über Claude AI', 'sk-core' ),
+			'settings_title'       => __( 'KI Kategorisierung', 'sk-core' ),
+			'settings_description' => __( 'Analysiert Produkttitel und -beschreibung mit Claude AI und schlägt automatisch die passende Kategorie vor.', 'sk-core' ),
+		];
+
+		return $sections;
 	}
 
 	/** Option holding the encrypted API key. */
@@ -58,7 +103,7 @@ class AiCategorizer {
 	 * stored encrypted on its own, an empty field leaves the stored one alone.
 	 */
 	public static function strip_api_key( $value, $option_name ) {
-		if ( 'sk_product_advertisement' === $option_name && is_array( $value ) && array_key_exists( 'skai_api_key', $value ) ) {
+		if ( self::SECTION === $option_name && is_array( $value ) && array_key_exists( 'skai_api_key', $value ) ) {
 			self::store_api_key( (string) $value['skai_api_key'] );
 			$value['skai_api_key'] = '';
 		}
@@ -107,22 +152,8 @@ class AiCategorizer {
 		return $plain;
 	}
 
-	/**
-	 * Adds the KI Kategorisierung fields into the Product Advertisement
-	 * section, registered by SK\Modules\ProductAdvertisement\Admin\Settings.
-	 */
 	public function add_fields( $fields ) {
-		if ( ! isset( $fields['sk_product_advertisement'] ) || ! is_array( $fields['sk_product_advertisement'] ) ) {
-			$fields['sk_product_advertisement'] = [];
-		}
-
-		$fields['sk_product_advertisement'] = array_merge( $fields['sk_product_advertisement'], [
-			'skai_header' => [
-				'name'  => 'skai_header',
-				'label' => __( 'KI Kategorisierung', 'sk-core' ),
-				'type'  => 'sub_section',
-				'desc'  => __( 'Analysiert Produkttitel und -beschreibung mit Claude AI und schlägt automatisch die passende Kategorie vor.', 'sk-core' ),
-			],
+		$fields[ self::SECTION ] = [
 			'skai_enabled' => [
 				'name'    => 'skai_enabled',
 				'label'   => __( 'KI-Kategorisierung aktivieren', 'sk-core' ),
@@ -157,7 +188,7 @@ class AiCategorizer {
 				'default' => 'off',
 				'desc'    => __( 'Kategorie direkt eintragen, ohne Bestätigung durch den Anbieter. Wenn deaktiviert, wird nur ein Vorschlag angezeigt.', 'sk-core' ),
 			],
-		] );
+		];
 
 		return $fields;
 	}
@@ -165,7 +196,7 @@ class AiCategorizer {
 	// ── Frontend Assets ────────────────────────────────────────────────────────
 
 	public function enqueue_assets(): void {
-		if ( sk_get_option( 'skai_enabled', 'sk_product_advertisement', 'off' ) !== 'on' ) {
+		if ( sk_get_option( 'skai_enabled', self::SECTION, 'off' ) !== 'on' ) {
 			return;
 		}
 		if ( ! function_exists( 'sk_is_seller_dashboard' ) || ! sk_is_seller_dashboard() ) {
@@ -193,7 +224,7 @@ class AiCategorizer {
 		wp_localize_script( 'sk-ai-cat', 'skAiCat', [
 			'ajaxurl'         => admin_url( 'admin-ajax.php' ),
 			'nonce'           => wp_create_nonce( 'skai_suggest' ),
-			'autoApply'       => sk_get_option( 'skai_auto_apply', 'sk_product_advertisement', 'off' ) === 'on',
+			'autoApply'       => sk_get_option( 'skai_auto_apply', self::SECTION, 'off' ) === 'on',
 			'uncategorizedId' => (function () {
 				$t = get_term_by( 'slug', 'unkategorisiert', 'product_cat' );
 				return $t ? (int) $t->term_id : 15;
@@ -228,7 +259,7 @@ class AiCategorizer {
 	public function handle_suggest(): void {
 		check_ajax_referer( 'skai_suggest', 'nonce' );
 
-		if ( sk_get_option( 'skai_enabled', 'sk_product_advertisement', 'off' ) !== 'on' ) {
+		if ( sk_get_option( 'skai_enabled', self::SECTION, 'off' ) !== 'on' ) {
 			wp_send_json_error( [ 'message' => 'disabled' ] );
 		}
 
@@ -285,7 +316,7 @@ class AiCategorizer {
 	}
 
 	private function call_claude( string $api_key, string $prompt ): array|\WP_Error {
-		$model  = sk_get_option( 'skai_model', 'sk_product_advertisement', 'claude-haiku-4-5-20251001' );
+		$model  = sk_get_option( 'skai_model', self::SECTION, 'claude-haiku-4-5-20251001' );
 		$system = 'Du bist ein Kategorisierungs-Assistent für einen Bitcoin-Marktplatz (Kleinanzeigen). '
 			. 'Wähle die am besten passende Kategorie aus der Liste für das gegebene Produkt. '
 			. 'Antworte NUR mit einem JSON-Objekt: {"term_id": <zahl>, "term_name": "<name>", "path": "<Eltern > Kind>"}. '

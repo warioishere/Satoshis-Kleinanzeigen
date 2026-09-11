@@ -60,12 +60,12 @@ check( 'second read returns the key', AiCategorizer::api_key(), $key );
 check( 'no rewrite on the second read', stored(), $cipher );
 
 // --- Saving the settings ----------------------------------------------------
-$saved = AiCategorizer::strip_api_key( [ 'skai_enabled' => 'off', 'skai_api_key' => '' ], 'sk_product_advertisement' );
+$saved = AiCategorizer::strip_api_key( [ 'skai_enabled' => 'off', 'skai_api_key' => '' ], 'sk_ai_categorizer' );
 check( 'empty field keeps the stored key', AiCategorizer::api_key(), $key );
 check( 'section saved without the key', $saved['skai_api_key'], '' );
 
 $new   = 'sk-ant-api03-' . str_repeat( 'y', 80 ) . 'BB';
-$saved = AiCategorizer::strip_api_key( [ 'skai_enabled' => 'on', 'skai_api_key' => $new ], 'sk_product_advertisement' );
+$saved = AiCategorizer::strip_api_key( [ 'skai_enabled' => 'on', 'skai_api_key' => $new ], 'sk_ai_categorizer' );
 check( 'new key replaces the old one', AiCategorizer::api_key(), $new );
 check( 'section never carries the new key', $saved['skai_api_key'], '' );
 check( 'other section is left alone', AiCategorizer::strip_api_key( [ 'skai_api_key' => 'zzz' ], 'sk_general' )['skai_api_key'], 'zzz' );
