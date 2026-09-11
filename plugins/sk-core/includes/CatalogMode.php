@@ -5,8 +5,8 @@ namespace SK\Core;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Global catalog mode — hides the "Add to cart" button platform-wide, and
- * optionally the price. Settings under Admin → SK → Selling options.
+ * Global catalog mode — hides the "Add to cart" button platform-wide.
+ * Settings under Admin → SK → Selling options.
  */
 final class CatalogMode {
 
@@ -15,10 +15,6 @@ final class CatalogMode {
             add_filter( 'woocommerce_is_purchasable',          [ __CLASS__, 'filter_purchasable' ], 99, 2 );
             add_filter( 'woocommerce_product_is_visible',      [ __CLASS__, 'keep_visible' ], 10, 2 );
             remove_action( 'woocommerce_after_shop_loop_item', 'woocommerce_template_loop_add_to_cart', 10 );
-        }
-
-        if ( self::hide_price() ) {
-            add_filter( 'woocommerce_get_price_html', [ __CLASS__, 'filter_price_html' ], 99, 2 );
         }
 
         if ( ! self::reviews_enabled() ) {
@@ -52,20 +48,8 @@ final class CatalogMode {
         return false;
     }
 
-    public static function filter_price_html( $price_html, $product ) {
-        if ( self::is_platform_product( $product ) ) {
-            return $price_html;
-        }
-        return '';
-    }
-
     public static function hide_cart(): bool {
         return 'on' === sk_get_option( 'catalog_mode_hide_add_to_cart_button', 'sk_selling', 'off' );
-    }
-
-    public static function hide_price(): bool {
-        return self::hide_cart()
-            && 'on' === sk_get_option( 'catalog_mode_hide_product_price', 'sk_selling', 'off' );
     }
 
     /**
