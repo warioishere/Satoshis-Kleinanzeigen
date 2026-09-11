@@ -13,6 +13,15 @@ class ZapButton {
     /** Wallet lookups a single IP may trigger per minute on the public verify endpoint. */
     const MAX_LOOKUPS_PER_MINUTE = 20;
 
+    /**
+     * Sats one account may send per day through its stored NWC connection.
+     * ponytail: fixed cap, make it a setting if anyone ever hits it.
+     */
+    const NWC_DAILY_SATS = 100000;
+
+    /** Largest single zap through NWC, matching the LNURL endpoint's ceiling. */
+    const NWC_MAX_SATS = 100000;
+
     public function __construct() {
         // Store page — next to follow button in tab bar.
         if ( sk_get_option( 'sk_zaps_on_store', 'sk_zaps', 'on' ) === 'on' ) {
@@ -26,6 +35,7 @@ class ZapButton {
 
         add_action( 'wp_ajax_sk_zap_check_payment', [ __CLASS__, 'ajax_check_payment' ] );
         add_action( 'wp_ajax_nopriv_sk_zap_check_payment', [ __CLASS__, 'ajax_check_payment' ] );
+        add_action( 'wp_ajax_sk_zap_pay_nwc', [ __CLASS__, 'ajax_pay_nwc' ] );
 
         // The QR for the invoice, rendered here so it works without sk_payments.
         add_action( 'rest_api_init', [ __CLASS__, 'register_qr_route' ] );
@@ -204,6 +214,134 @@ class ZapButton {
         }
 
         wp_send_json_success( [ 'settled' => $settled ] );
+    }
+
+    /**
+     * Zap without a browser extension: the invoice is paid through the
+     * viewer's own NWC connection from the store settings.
+     *
+     * Two modes. With an `invoice` the browser already holds one (zap
+     * request signed by the extension, but no WebLN to pay it) and only the
+     * payment happens here. Without one the whole zap runs here: resolve the
+     * address, sign an anonymous zap request with a throwaway key, fetch the
+     * invoice, pay. Anonymous because the site never has the viewer's Nostr
+     * key; the recipient still gets a receipt.
+     *
+     * The stored connection can spend. A stolen session or a compromised
+     * server could drain it up to the wallet's budget, so there is a daily
+     * cap here on top of the budget the user should set in the wallet.
+     */
+    public static function ajax_pay_nwc(): void {
+        check_ajax_referer( 'sk_zap_nwc', 'nonce' );
+
+        if ( ! is_user_logged_in() ) {
+            wp_send_json_error( [ 'message' => __( 'Nicht eingeloggt.', 'sk-core' ) ] );
+        }
+
+        $user_id   = get_current_user_id();
+        $vendor_id = absint( $_POST['vendor_id'] ?? 0 );
+        $amount    = absint( $_POST['amount_sats'] ?? 0 );
+        $invoice   = sanitize_text_field( wp_unslash( $_POST['invoice'] ?? '' ) );
+
+        if ( ! $vendor_id || $amount < 1 || $amount > self::NWC_MAX_SATS ) {
+            wp_send_json_error( [ 'message' => __( 'Ungültiger Betrag.', 'sk-core' ) ] );
+        }
+        if ( $vendor_id === $user_id ) {
+            wp_send_json_error( [ 'message' => __( 'Du kannst dich nicht selbst zappen.', 'sk-core' ) ] );
+        }
+        if ( function_exists( 'sk_rate_limit' ) && ! sk_rate_limit( 'zap-nwc:' . $user_id, 10 ) ) {
+            wp_send_json_error( [ 'message' => __( 'Zu viele Zaps, bitte kurz warten.', 'sk-core' ) ] );
+        }
+
+        $client = \SK\Core\Wallet\Settings::get_nwc_client( $user_id );
+        if ( ! $client ) {
+            wp_send_json_error( [ 'message' => __( 'Keine Nostr-Wallet-Connect-Verbindung in deinen Shop-Einstellungen.', 'sk-core' ) ] );
+        }
+
+        $day_key = 'sk_zap_nwc_day_' . $user_id;
+        $spent   = (int) get_transient( $day_key );
+        if ( $spent + $amount > self::NWC_DAILY_SATS ) {
+            wp_send_json_error( [ 'message' => sprintf( __( 'Tageslimit von %s Sats für Zaps über die verbundene Wallet erreicht.', 'sk-core' ), number_format_i18n( self::NWC_DAILY_SATS ) ) ] );
+        }
+
+        $data = self::get_vendor_zap_data( $vendor_id );
+        if ( ! $data ) {
+            wp_send_json_error( [ 'message' => __( 'Dieser Anbieter kann keine Zaps empfangen.', 'sk-core' ) ] );
+        }
+
+        $msats = $amount * 1000;
+
+        if ( $invoice === '' ) {
+            $lnurl = \SK\Core\Wallet\LNURL\Resolver::resolve( $data['lightning_address'] );
+            if ( is_wp_error( $lnurl ) || empty( $lnurl['callback'] ) ) {
+                wp_send_json_error( [ 'message' => __( 'Lightning-Adresse konnte nicht aufgelöst werden.', 'sk-core' ) ] );
+            }
+
+            $min = (int) ( $lnurl['minSendable'] ?? 1000 );
+            $max = (int) ( $lnurl['maxSendable'] ?? 100000000000 );
+            if ( $msats < $min || $msats > $max ) {
+                wp_send_json_error( [ 'message' => sprintf( __( 'Betrag muss zwischen %1$d und %2$d Sats liegen.', 'sk-core' ), (int) ceil( $min / 1000 ), (int) floor( $max / 1000 ) ) ] );
+            }
+
+            $zap_request = '';
+            if ( ! empty( $lnurl['allowsNostr'] ) && ! empty( $data['nostr_pubkey'] ) ) {
+                $key   = \SK\Core\Nostr\Keys::generate();
+                $tags  = [
+                    [ 'p', $data['nostr_pubkey'] ],
+                    [ 'amount', (string) $msats ],
+                    array_merge( [ 'relays' ], array_values( \SK\Core\Nostr\Relays::list() ) ),
+                    [ 'lnurl', $data['lightning_address'] ],
+                ];
+                $event = \SK\Core\Nostr\Events::sign( 9734, '', $tags, $key['priv'] );
+                $zap_request = (string) wp_json_encode( $event, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+            }
+
+            $resp = \SK\Core\Wallet\LNURL\Resolver::request_invoice( (string) $lnurl['callback'], $msats, $zap_request );
+            if ( is_wp_error( $resp ) ) {
+                wp_send_json_error( [ 'message' => $resp->get_error_message() ] );
+            }
+            $invoice = (string) $resp['pr'];
+        }
+
+        // Whatever produced the invoice, it has to ask for exactly the amount
+        // the viewer agreed to.
+        $inv_msats = \SK\Core\Wallet\LNURL\Bolt11Parser::get_amount_msats( $invoice );
+        if ( is_wp_error( $inv_msats ) || (int) $inv_msats !== $msats ) {
+            wp_send_json_error( [ 'message' => __( 'Invoice-Betrag stimmt nicht mit dem Zap überein.', 'sk-core' ) ] );
+        }
+
+        $hash = \SK\Core\Wallet\LNURL\Bolt11Parser::get_payment_hash( $invoice );
+        $hash = is_wp_error( $hash ) ? '' : strtolower( (string) $hash );
+
+        $paid = $client->pay_invoice( $invoice );
+        if ( is_wp_error( $paid ) ) {
+            wp_send_json_error( [ 'message' => sprintf( __( 'Zahlung fehlgeschlagen: %s', 'sk-core' ), $paid->get_error_message() ) ] );
+        }
+
+        set_transient( $day_key, $spent + $amount, DAY_IN_SECONDS );
+
+        // Our own LNURL endpoint minted the invoice: settle it here like the
+        // polling path would, once per hash.
+        $own = self::is_own_address( $data['lightning_address'] );
+        if ( $own && $hash !== '' ) {
+            $receipt_key = 'sk_zap_receipt_' . $hash;
+            if ( ! get_transient( $receipt_key ) ) {
+                set_transient( $receipt_key, 1, DAY_IN_SECONDS );
+                self::publish_zap_receipt( $vendor_id, $hash, [ 'pr' => $invoice, 'preimage' => $paid['preimage'] ] );
+            }
+            if ( class_exists( 'SK\Modules\Zaps\ZapStats' ) ) {
+                ZapStats::add_received( $vendor_id, $hash, $amount );
+            }
+        }
+
+        wp_send_json_success( [ 'payment_hash' => $hash, 'own' => $own, 'preimage' => $paid['preimage'] ] );
+    }
+
+    /** Lightning address served by this site's own LNURL endpoint? */
+    private static function is_own_address( string $address ): bool {
+        $at = strrpos( $address, '@' );
+
+        return $at !== false && strtolower( substr( $address, $at + 1 ) ) === strtolower( (string) wp_parse_url( home_url(), PHP_URL_HOST ) );
     }
 
     /**
@@ -486,6 +624,9 @@ class ZapButton {
             'currentUserId' => get_current_user_id(),
             'currentPubkey' => is_user_logged_in() ? strtolower( (string) get_user_meta( get_current_user_id(), 'nostr_public_key', true ) ) : '',
             'i18nSelfZap'   => __( 'Du kannst dich nicht selbst zappen.', 'sk-core' ),
+            // A stored NWC connection lets the viewer zap without an extension.
+            'hasNwc'        => is_user_logged_in() && \SK\Core\Wallet\Settings::has_nwc( get_current_user_id() ),
+            'nwcNonce'      => wp_create_nonce( 'sk_zap_nwc' ),
             'relays'        => array_values( $relays ),
             // QR codes are rendered on our own server, never by a third party.
             'qrUrl'         => rest_url( 'sk/v1/zaps/qr' ),

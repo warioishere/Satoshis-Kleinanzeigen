@@ -129,7 +129,37 @@ class Client {
         return $response['result'] ?? [];
     }
 
-    private function send_request( string $method, array $params ) {
+    /**
+     * Pay a bolt11 invoice from the connected wallet (NIP-47 pay_invoice).
+     *
+     * The connection string is the spending credential; whoever calls this
+     * has to have checked the amount against what the user agreed to. A
+     * payment may take a while to route, so the wait is longer than for the
+     * read-only requests.
+     *
+     * @return array{preimage:string}|\WP_Error
+     */
+    public function pay_invoice( string $bolt11 ): mixed {
+        $response = $this->send_request( 'pay_invoice', [ 'invoice' => $bolt11 ], 40 );
+
+        if ( is_wp_error( $response ) ) {
+            return $response;
+        }
+
+        if ( ! empty( $response['error'] ) ) {
+            return new \WP_Error( 'nwc_error', $response['error']['message'] ?? 'Unbekannter NWC-Fehler' );
+        }
+
+        $preimage = strtolower( (string) ( $response['result']['preimage'] ?? '' ) );
+
+        if ( ! preg_match( '/^[0-9a-f]{64}$/', $preimage ) ) {
+            return new \WP_Error( 'nwc_no_preimage', 'Keine Zahlungsbestätigung vom Wallet.' );
+        }
+
+        return [ 'preimage' => $preimage ];
+    }
+
+    private function send_request( string $method, array $params, int $timeout = 10 ) {
         // Nostr libs loaded via sk-core/lib/autoload.php (centralized).
         if ( ! class_exists( '\swentel\nostr\Event\Event' ) ) {
             return new \WP_Error( 'nwc_no_library', 'Nostr PHP Library nicht gefunden. sk-core/lib/ fehlt.' );
@@ -153,7 +183,7 @@ class Client {
                 error_log( '[SK NWC] request not accepted by ' . $this->relay_url . ': ' . wp_json_encode( $sent['rejected'] ) );
             }
 
-            $response = $this->wait_for_response( (string) $event['id'] );
+            $response = $this->wait_for_response( (string) $event['id'], $timeout );
 
             return $response;
         } catch ( \Exception $e ) {
@@ -161,7 +191,7 @@ class Client {
         }
     }
 
-    private function wait_for_response( string $request_event_id ) {
+    private function wait_for_response( string $request_event_id, int $timeout = 10 ) {
         $filter = [
             'kinds'   => [ 23195 ],
             '#e'      => [ $request_event_id ],
@@ -171,7 +201,7 @@ class Client {
 
         // The wallet's relay, through the shared breaker; the answer must be
         // signed by the wallet itself.
-        $result = \SK\Core\Nostr\Relays::fetch( $this->relay_url, [ $filter ], [ 'timeout' => 10, 'max' => 1 ] );
+        $result = \SK\Core\Nostr\Relays::fetch( $this->relay_url, [ $filter ], [ 'timeout' => $timeout, 'max' => 1 ] );
 
         foreach ( $result['events'] as $response_event ) {
             if ( empty( $response_event['content'] ) || strtolower( (string) ( $response_event['pubkey'] ?? '' ) ) !== strtolower( $this->wallet_pubkey ) ) {

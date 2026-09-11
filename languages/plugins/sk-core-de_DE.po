@@ -14179,3 +14179,39 @@ msgstr ""
 #: plugins/sk-core/modules/sk-payments/includes/Notify.php
 msgid "Deine Bestellung bei %1$s"
 msgstr ""
+
+#: plugins/sk-core/modules/sk-zaps/includes/ZapButton.php
+msgid "Ungültiger Betrag."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-zaps/includes/ZapButton.php
+msgid "Zu viele Zaps, bitte kurz warten."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-zaps/includes/ZapButton.php
+msgid "Keine Nostr-Wallet-Connect-Verbindung in deinen Shop-Einstellungen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-zaps/includes/ZapButton.php
+msgid "Tageslimit von %s Sats für Zaps über die verbundene Wallet erreicht."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-zaps/includes/ZapButton.php
+msgid "Dieser Anbieter kann keine Zaps empfangen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-zaps/includes/ZapButton.php
+msgid "Lightning-Adresse konnte nicht aufgelöst werden."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-zaps/includes/ZapButton.php
+msgid "Betrag muss zwischen %1$d und %2$d Sats liegen."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-zaps/includes/ZapButton.php
+msgid "Invoice-Betrag stimmt nicht mit dem Zap überein."
+msgstr ""
+
+#: plugins/sk-core/modules/sk-zaps/includes/ZapButton.php
+msgid "Zahlung fehlgeschlagen: %s"
+msgstr ""

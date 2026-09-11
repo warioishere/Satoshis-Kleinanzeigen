@@ -8,7 +8,11 @@
  *   4. Get invoice back
  *   5. Pay with window.webln.sendPayment() or show QR
  *
- * Fallback (no extension):
+ * With a stored NWC connection (skZaps.hasNwc) but no WebLN, the invoice is
+ * paid server-side through that connection; without an extension the whole
+ * zap runs server-side as an anonymous zap (sk_zap_pay_nwc).
+ *
+ * Fallback (no extension, no NWC):
  *   1. Resolve vendor's Lightning Address via LNURL
  *   2. Request invoice for amount
  *   3. Show QR code + deeplink
@@ -29,7 +33,7 @@
     var nostr = window.skNostr;
 
     function revealButtons() {
-        if (!window.nostr) {
+        if (!window.nostr && !defaults.hasNwc) {
             return;
         }
         $('.sk-zap-btn[hidden]').prop('hidden', false);
@@ -147,7 +151,7 @@
         $('#sk-zap-modal').remove();
 
         var hasNostr = !!data.nostrPubkey && !!window.nostr;
-        var subtitle = hasNostr ? 'NIP-57 Zap' : 'Lightning Tip';
+        var subtitle = hasNostr ? 'NIP-57 Zap' : (defaults.hasNwc ? 'Zap über deine verbundene Wallet' : 'Lightning Tip');
 
         var html = '<div id="sk-zap-modal" class="sk-zap-modal">';
         html += '<div class="sk-zap-modal-inner">';
@@ -209,6 +213,13 @@
         setStatus('<i class="fas fa-spinner fa-spin"></i> Lightning Address wird aufgelöst...', null);
 
         try {
+            // No extension to sign with, but a wallet connected on the server:
+            // the whole zap runs there (anonymous zap request, paid via NWC).
+            if (!window.nostr && defaults.hasNwc) {
+                await payViaNwc(data, amountSats, '');
+                return;
+            }
+
             // If no Lightning Address but has Nostr pubkey, fetch lud16 from Nostr profile.
             if (!data.lnAddress && data.nostrPubkey) {
                 setStatus('<i class="fas fa-spinner fa-spin"></i> Lightning Address wird von Nostr geladen...', null);
@@ -317,6 +328,12 @@
             }
 
             // Step 4: Pay the invoice.
+            // Signed by the extension, paid by the connected wallet.
+            if (!window.webln && defaults.hasNwc) {
+                await payViaNwc(data, amountSats, invoice);
+                return;
+            }
+
             // Try WebLN first (Alby Hub exposes window.webln).
             if (window.webln) {
                 try {
@@ -352,8 +369,35 @@
     }
 
     /**
-     * Resolve a Lightning Address to LNURL-pay metadata.
+     * Pay through the viewer's NWC connection stored on the server. With an
+     * invoice only the payment happens there; without one the server builds
+     * the zap itself. Errors surface in sendZap's catch.
      */
+    function payViaNwc(data, amountSats, invoice) {
+        setStatus('<i class="fas fa-spinner fa-spin"></i> Zahlung über deine verbundene Wallet...', null);
+
+        return new Promise(function (resolve, reject) {
+            $.post(ajaxUrl(), {
+                action: 'sk_zap_pay_nwc',
+                nonce: defaults.nwcNonce,
+                vendor_id: data.vendorId,
+                amount_sats: amountSats,
+                invoice: invoice || ''
+            }).done(function (res) {
+                if (!res || !res.success) {
+                    reject(new Error(res && res.data && res.data.message ? res.data.message : 'Zahlung fehlgeschlagen.'));
+                    return;
+                }
+                setStatus('<i class="fas fa-bolt"></i> Zap gesendet!', true);
+                zapConfirmed(data, amountSats, res.data.own ? res.data.payment_hash : null, null);
+                setTimeout(function () { $('#sk-zap-modal').remove(); }, 2000);
+                resolve();
+            }).fail(function () {
+                reject(new Error('Verbindungsfehler.'));
+            });
+        });
+    }
+
     /**
      * Fetch lud16 (Lightning Address) from a Nostr profile via relay.
      */

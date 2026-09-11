@@ -376,11 +376,14 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
                        placeholder="<?php echo $ln_has_nwc ? 'nostr+walletconnect://******** (gespeichert — leer lassen um beizubehalten)' : 'nostr+walletconnect://...'; ?>" />
                 <p class="description">
                     NWC Connection-String aus deiner Wallet (Alby Hub, LNbits, etc.).
-                    Ermöglicht automatische Invoice-Erstellung und Zahlungsverifizierung. Verschlüsselt gespeichert.
+                    Empfangen: automatische Invoice-Erstellung und Zahlungsverifizierung.
+                    Senden: Zaps ohne Browser-Extension laufen über diese Verbindung. Verschlüsselt gespeichert.
                 </p>
                 <div class="sk-settings-notice sk-settings-notice--warn">
-                    Benötigte Berechtigungen: <strong class="ok">make_invoice</strong> + <strong class="ok">lookup_invoice</strong>.<br>
-                    <strong class="warn">pay_invoice nicht aktivieren</strong> — wird nicht benötigt und wäre ein Sicherheitsrisiko.
+                    Zum Empfangen reichen <strong class="ok">make_invoice</strong> + <strong class="ok">lookup_invoice</strong>.<br>
+                    Wer ohne Extension zappen will, braucht zusätzlich <strong class="ok">pay_invoice</strong> —
+                    <strong class="warn">dann in der Wallet unbedingt ein Budget setzen</strong>: die Verbindung kann Geld ausgeben,
+                    der Marktplatz begrenzt Zaps zusätzlich auf <?php echo esc_html( number_format_i18n( \SK\Modules\Zaps\ZapButton::NWC_DAILY_SATS ) ); ?> Sats pro Tag.
                 </div>
                 <?php if ( $ln_has_nwc ) : ?>
                     <?php if ( $ln_nwc_ok ) : ?>

@@ -88,9 +88,16 @@ class Resolver {
         return $body;
     }
 
-    public static function request_invoice( string $callback_url, int $amount_msats ) {
+    /**
+     * @param string $zap_request Signed kind 9734 event as JSON for a NIP-57
+     *                            zap, '' for a plain LNURL-pay invoice.
+     */
+    public static function request_invoice( string $callback_url, int $amount_msats, string $zap_request = '' ) {
         $separator = ( strpos( $callback_url, '?' ) !== false ) ? '&' : '?';
         $url = $callback_url . $separator . 'amount=' . $amount_msats;
+        if ( $zap_request !== '' ) {
+            $url .= '&nostr=' . rawurlencode( $zap_request );
+        }
 
         $response = wp_safe_remote_get( $url, [
             'timeout' => 15,
