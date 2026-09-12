@@ -318,6 +318,10 @@ class Assets {
         $bootstrap_deps = [ 'wp-i18n', 'wp-hooks' ];
 
         $scripts = [
+            'sk-slider-tap'          => [
+                'src'  => $asset_url . '/js/sk-slider-tap.js',
+                'deps' => [],
+            ],
             'sk-store-listing'       => [
                 'src'  => $asset_url . '/js/modules/sk-store-listing.js',
                 'deps' => [ 'jquery' ],
@@ -490,6 +494,9 @@ class Assets {
         if ( ! function_exists( 'WC' ) ) {
             return;
         }
+
+        // Product sliders sit in page content, so the handler goes everywhere.
+        wp_enqueue_script( 'sk-slider-tap' );
 
         // load sk style on every pages. requires for shortcodes in other pages
         if ( SK_CORE_LOAD_STYLE ) {
