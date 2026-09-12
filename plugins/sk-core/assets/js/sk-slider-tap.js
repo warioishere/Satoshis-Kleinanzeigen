@@ -1,28 +1,24 @@
 /**
- * Tapping a moving slide.
+ * Tapping a slide on a touch device.
  *
- * The product slider animates for three of every three and a half seconds.
- * A finger that lands while a slide travels lifts over a different element
- * than it touched, so the browser synthesises no click at all and the
- * listing simply does not open. Waiting for a standstill is the only way in.
+ * The product slider glides for three seconds at a time. A finger that
+ * lands during that glide never opens the listing: the slider treats the
+ * touch as a drag, snaps to the next slide on release, and the browser —
+ * whose target has moved away underneath — synthesises no click at all.
+ * Waiting for a full standstill was the only way in.
  *
- * So the tap is carried out here: the link is remembered on touchstart and
- * followed on touchend, but only when the slide really moved in between —
- * a still slider keeps the browser's own click, and a swipe or a long press
- * is left alone.
+ * So the tap is carried out here: the link is remembered when the finger
+ * lands and followed when it lifts. A swipe and a long press are left to
+ * the slider; on a slide that stands still the browser's own click follows
+ * to the same address, which costs nothing.
  */
 (function () {
     'use strict';
 
-    var MOVED_FINGER = 10;  // px of finger travel that makes it a swipe
-    var MOVED_SLIDE  = 2;   // px of slide travel that kills the browser click
-    var MAX_TAP      = 700; // ms; longer is a press, not a tap
+    var MOVED   = 10;  // px of finger travel that makes it a swipe
+    var MAX_TAP = 700; // ms; longer is a press, not a tap
 
     var tap = null;
-
-    function left(el) {
-        return el.getBoundingClientRect().left;
-    }
 
     document.addEventListener('touchstart', function (e) {
         tap = null;
@@ -38,10 +34,9 @@
         }
 
         tap = {
-            link: link,
+            href: link.href,
             x: e.touches[0].clientX,
             y: e.touches[0].clientY,
-            left: left(link),
             at: Date.now()
         };
     }, { passive: true, capture: true });
@@ -51,8 +46,8 @@
             return;
         }
 
-        if (Math.abs(e.touches[0].clientX - tap.x) > MOVED_FINGER ||
-            Math.abs(e.touches[0].clientY - tap.y) > MOVED_FINGER) {
+        if (Math.abs(e.touches[0].clientX - tap.x) > MOVED ||
+            Math.abs(e.touches[0].clientY - tap.y) > MOVED) {
             tap = null;
         }
     }, { passive: true, capture: true });
@@ -61,16 +56,9 @@
         var t = tap;
         tap = null;
 
-        if (!t || Date.now() - t.at > MAX_TAP) {
-            return;
+        if (t && Date.now() - t.at <= MAX_TAP) {
+            window.location.assign(t.href);
         }
-
-        // The slide stood still: the browser fires its own click.
-        if (Math.abs(left(t.link) - t.left) <= MOVED_SLIDE) {
-            return;
-        }
-
-        window.location.assign(t.link.href);
     }, { passive: true, capture: true });
 
     document.addEventListener('touchcancel', function () {
