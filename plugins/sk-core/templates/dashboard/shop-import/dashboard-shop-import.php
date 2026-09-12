@@ -485,13 +485,15 @@ do_action( 'sk_dashboard_wrap_start' );
                         </div>
                     </form>
 
-                    <p class="sk-import-hint"><?php esc_html_e( 'Kein Shopify-Shop? Dann nimm den Weg über die Datei darunter.', 'sk-core' ); ?></p>
+                    <p class="sk-import-hint"><?php esc_html_e( 'Kein Shopify-Shop? Dann nimm den Weg über WooCommerce darunter.', 'sk-core' ); ?></p>
                 </div>
 
-                <div class="sk-section-heading"><h3><?php esc_html_e( 'Katalog hochladen', 'sk-core' ); ?></h3></div>
+                <div class="sk-section-heading"><h3><?php esc_html_e( 'WooCommerce-Shop', 'sk-core' ); ?></h3></div>
                 <div class="sk-section-content">
+                    <p><?php esc_html_e( 'Läuft dein Shop auf WooCommerce, exportierst du deinen Katalog als CSV-Datei und lädst sie hier hoch. Die Spalten erkennen wir selbst, du kannst die Zuordnung danach prüfen und ändern.', 'sk-core' ); ?></p>
+
                     <ol class="sk-import-howto">
-                        <li><?php esc_html_e( 'Öffne in deinem eigenen Shop den Bereich Produkte und klicke oben auf „Exportieren".', 'sk-core' ); ?></li>
+                        <li><?php esc_html_e( 'Öffne in deinem WooCommerce-Shop unter Produkte die Liste und klicke oben auf „Exportieren".', 'sk-core' ); ?></li>
                         <li><?php esc_html_e( 'Alle Spalten und alle Kategorien auswählen, dann die CSV erzeugen und herunterladen.', 'sk-core' ); ?></li>
                         <li><?php esc_html_e( 'Datei hier hochladen. Im nächsten Schritt siehst du, was passieren würde, bevor etwas angelegt wird.', 'sk-core' ); ?></li>
                     </ol>
