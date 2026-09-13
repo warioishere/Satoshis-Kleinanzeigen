@@ -14376,3 +14376,15 @@ msgstr "Sammelbearbeitung"
 #: plugins/sk-core/modules/sk-shop-import/templates/pack-info-modal.php
 msgid "Mehrere Inserate auswählen und in einem Zug ändern: veröffentlichen, auf Entwurf setzen oder den Preis um einen Prozentsatz oder einen Sats-Betrag anheben und senken. Inserate mit Preis in Euro oder Franken bleiben dabei unangetastet, weil dort der tägliche Kurslauf den Sats-Preis bestimmt."
 msgstr "Mehrere Inserate auswählen und in einem Zug ändern: veröffentlichen, auf Entwurf setzen oder den Preis um einen Prozentsatz oder einen Sats-Betrag anheben und senken. Inserate mit Preis in Euro oder Franken bleiben dabei unangetastet, weil dort der tägliche Kurslauf den Sats-Preis bestimmt."
+
+#: plugins/sk-core/templates/dashboard/shop-import/dashboard-shop-import.php
+msgid "Katalog aus deinem Shop holen"
+msgstr "Katalog aus deinem Shop holen"
+
+#: plugins/sk-core/templates/dashboard/shop-import/dashboard-shop-import.php
+msgid "Katalog als Datei hochladen"
+msgstr "Katalog als Datei hochladen"
+
+#: plugins/sk-core/modules/sk-shop-import/includes/Source.php
+msgid "Unter dieser Adresse ist kein Katalog zu holen. Weder WooCommerce noch Shopify antworten dort mit Produkten. Läuft dein Shop auf etwas anderem, oder ist die Schnittstelle abgeschaltet, nimm den Weg über die CSV-Datei."
+msgstr "Unter dieser Adresse ist kein Katalog zu holen. Weder WooCommerce noch Shopify antworten dort mit Produkten. Läuft dein Shop auf etwas anderem, oder ist die Schnittstelle abgeschaltet, nimm den Weg über die CSV-Datei."

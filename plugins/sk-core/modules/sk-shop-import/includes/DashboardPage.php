@@ -167,15 +167,15 @@ class DashboardPage extends DashboardModule {
                 exit;
             }
 
-            $products = Shopify::fetch( $shop );
+            $catalog = Source::fetch( $shop );
 
-            if ( is_wp_error( $products ) ) {
-                set_transient( 'sk_import_msg_' . $vendor_id, $products->get_error_message(), 120 );
+            if ( is_wp_error( $catalog ) ) {
+                set_transient( 'sk_import_msg_' . $vendor_id, $catalog->get_error_message(), 120 );
                 wp_safe_redirect( $this->url() );
                 exit;
             }
 
-            $path = Storage::put_catalog( (string) wp_json_encode( [ 'products' => $products ] ), $vendor_id );
+            $path = Storage::put_catalog( (string) wp_json_encode( $catalog ), $vendor_id );
 
             if ( is_wp_error( $path ) ) {
                 set_transient( 'sk_import_msg_' . $vendor_id, $path->get_error_message(), 120 );

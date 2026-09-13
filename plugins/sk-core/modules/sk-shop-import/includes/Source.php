@@ -14,9 +14,38 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Source {
 
-    /** A fetched Shopify catalog is stored as JSON, an export as CSV. */
+    /** A fetched catalog is stored as JSON, an export as CSV. */
     public static function is_json( string $path ): bool {
         return strtolower( (string) pathinfo( $path, PATHINFO_EXTENSION ) ) === 'json';
+    }
+
+    /**
+     * Fetch a shop's catalog, whichever system it runs on.
+     *
+     * Both systems hand out their catalog publicly, only under different
+     * addresses, so the dealer does not have to say which one they use —
+     * we simply ask both. WooCommerce first: its answer is the one that
+     * also tells a wrong address apart from a switched-off endpoint.
+     *
+     * @return array{source:string,products:array}|\WP_Error
+     */
+    public static function fetch( string $shop_url ) {
+        $woo = Woo::fetch( $shop_url );
+
+        if ( ! is_wp_error( $woo ) ) {
+            return [ 'source' => 'woo', 'products' => $woo ];
+        }
+
+        $shopify = Shopify::fetch( $shop_url );
+
+        if ( ! is_wp_error( $shopify ) ) {
+            return [ 'source' => 'shopify', 'products' => $shopify ];
+        }
+
+        return new \WP_Error(
+            'sk_source_fetch',
+            __( 'Unter dieser Adresse ist kein Katalog zu holen. Weder WooCommerce noch Shopify antworten dort mit Produkten. Läuft dein Shop auf etwas anderem, oder ist die Schnittstelle abgeschaltet, nimm den Weg über die CSV-Datei.', 'sk-core' )
+        );
     }
 
     /**
@@ -30,7 +59,11 @@ final class Source {
         if ( self::is_json( $path ) ) {
             $products = self::products( $path );
 
-            return is_wp_error( $products ) ? $products : Shopify::build( $products );
+            if ( is_wp_error( $products ) ) {
+                return $products;
+            }
+
+            return 'woo' === self::system( $path ) ? Woo::build( $products ) : Shopify::build( $products );
         }
 
         $csv = Csv::read( $path );
@@ -58,6 +91,18 @@ final class Source {
         $csv = Csv::read( $path );
 
         return is_wp_error( $csv ) ? 0 : (int) $csv['count'];
+    }
+
+    /**
+     * Which shop system the stored catalog came from.
+     *
+     * Files written before WooCommerce could be fetched carry no marker;
+     * back then only Shopify was possible.
+     */
+    private static function system( string $path ): string {
+        $data = is_readable( $path ) ? json_decode( (string) file_get_contents( $path ), true ) : null;
+
+        return is_array( $data ) && 'woo' === ( $data['source'] ?? '' ) ? 'woo' : 'shopify';
     }
 
     /**

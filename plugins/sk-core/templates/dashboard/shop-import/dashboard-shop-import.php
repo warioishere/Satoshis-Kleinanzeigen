@@ -253,7 +253,7 @@ do_action( 'sk_dashboard_wrap_start' );
                                 </li>
                             <?php endif; ?>
                             <?php if ( $summary['drafts'] > 0 ) : ?>
-                                <li><?php printf( esc_html__( '%d Artikel sind in deinem Shop nicht öffentlich — sie werden als Entwurf angelegt.', 'sk-core' ), (int) $summary['drafts'] ); ?></li>
+                                <li><?php printf( esc_html__( '%d Artikel sind in deinem Shop nicht verfügbar oder ausverkauft — sie werden als Entwurf angelegt.', 'sk-core' ), (int) $summary['drafts'] ); ?></li>
                             <?php endif; ?>
                             <li><?php printf( esc_html__( 'Preise werden in Sats umgerechnet und täglich am Kurs nachgeführt. Höchstens %d Bilder je Inserat.', 'sk-core' ), (int) Importer::IMAGES_PER_PRODUCT ); ?></li>
                             <?php if ( $summary['without_price'] > 0 ) : ?>
@@ -463,9 +463,9 @@ do_action( 'sk_dashboard_wrap_start' );
 
             <?php else : ?>
 
-                <div class="sk-section-heading"><h3><?php esc_html_e( 'Shopify-Shop', 'sk-core' ); ?></h3></div>
+                <div class="sk-section-heading"><h3><?php esc_html_e( 'Katalog aus deinem Shop holen', 'sk-core' ); ?></h3></div>
                 <div class="sk-section-content">
-                    <p><?php esc_html_e( 'Läuft dein Shop auf Shopify, brauchst du keine Datei: trag die Adresse ein, dann holen wir den Katalog direkt. Ausführungen und Bilder kommen dabei vollständig mit, Spalten musst du keine zuordnen. Im nächsten Schritt siehst du, was passieren würde, bevor etwas angelegt wird.', 'sk-core' ); ?></p>
+                    <p><?php esc_html_e( 'Läuft dein Shop auf WooCommerce oder Shopify, brauchst du keine Datei: trag die Adresse ein, dann holen wir den Katalog direkt. Welches der beiden es ist, finden wir selbst heraus. Ausführungen, Bilder und Kategorien kommen mit, Spalten musst du keine zuordnen. Im nächsten Schritt siehst du, was passieren würde, bevor etwas angelegt wird.', 'sk-core' ); ?></p>
 
                     <form method="post" action="<?php echo esc_url( $url ); ?>">
                         <?php wp_nonce_field( DashboardPage::NONCE, 'sk_shop_import_nonce' ); ?>
@@ -476,7 +476,7 @@ do_action( 'sk_dashboard_wrap_start' );
                             <div class="sk-w9">
                                 <input class="sk-form-control" type="url" name="sk_shop_url" id="sk_shop_url"
                                        value="<?php echo esc_attr( $shop_url ); ?>"
-                                       placeholder="https://mein-shop.myshopify.com" required>
+                                       placeholder="https://mein-shop.ch" required>
                             </div>
                         </div>
 
@@ -485,15 +485,15 @@ do_action( 'sk_dashboard_wrap_start' );
                         </div>
                     </form>
 
-                    <p class="sk-import-hint"><?php esc_html_e( 'Kein Shopify-Shop? Dann nimm den Weg über WooCommerce darunter.', 'sk-core' ); ?></p>
+                    <p class="sk-import-hint"><?php esc_html_e( 'Läuft dein Shop auf etwas anderem, oder antwortet er nicht? Dann nimm den Weg über die Datei darunter.', 'sk-core' ); ?></p>
                 </div>
 
-                <div class="sk-section-heading"><h3><?php esc_html_e( 'WooCommerce-Shop', 'sk-core' ); ?></h3></div>
+                <div class="sk-section-heading"><h3><?php esc_html_e( 'Katalog als Datei hochladen', 'sk-core' ); ?></h3></div>
                 <div class="sk-section-content">
-                    <p><?php esc_html_e( 'Läuft dein Shop auf WooCommerce, exportierst du deinen Katalog als CSV-Datei und lädst sie hier hoch. Die Spalten erkennen wir selbst, du kannst die Zuordnung danach prüfen und ändern.', 'sk-core' ); ?></p>
+                    <p><?php esc_html_e( 'Der Weg für alles andere, und der Rückfall, wenn die Schnittstelle deines Shops abgeschaltet ist. Die Spalten erkennen wir selbst, du kannst die Zuordnung danach prüfen und ändern.', 'sk-core' ); ?></p>
 
                     <ol class="sk-import-howto">
-                        <li><?php esc_html_e( 'Öffne in deinem WooCommerce-Shop unter Produkte die Liste und klicke oben auf „Exportieren".', 'sk-core' ); ?></li>
+                        <li><?php esc_html_e( 'Öffne in deinem Shop die Produktliste und exportiere sie als CSV-Datei.', 'sk-core' ); ?></li>
                         <li><?php esc_html_e( 'Alle Spalten und alle Kategorien auswählen, dann die CSV erzeugen und herunterladen.', 'sk-core' ); ?></li>
                         <li><?php esc_html_e( 'Datei hier hochladen. Im nächsten Schritt siehst du, was passieren würde, bevor etwas angelegt wird.', 'sk-core' ); ?></li>
                     </ol>
