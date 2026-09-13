@@ -99,7 +99,7 @@ class Frontend {
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_burst_time_tracking_script' ], 0 );
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_burst_tracking_script' ], 0 );
 		add_filter( 'script_loader_tag', [ $this, 'defer_burst_tracking_script' ], 10, 3 );
-		add_action( 'init', [ $this, 'use_logged_out_state_for_tests' ] );
+		add_action( 'init', [ $this, 'use_logged_out_state_for_tests' ], 0 );
 		add_action( 'wp_ajax_burst_tracking_error', [ $this, 'log_tracking_error' ] );
 		add_action( 'wp_ajax_nopriv_burst_tracking_error', [ $this, 'log_tracking_error' ] );
 		// Priority 20: both callbacks discard collected errors (re-arm wipes them,
@@ -214,7 +214,16 @@ class Frontend {
 	}
 
 	/**
-	 * Get an identifier for the current page
+	 * Get an identifier for the current page.
+	 *
+	 * The ID is a WP post id or 0 — never a term or user id. The tracker
+	 * stores it as statistics.page_id, whose key space is hard split:
+	 * positive = WP post id, negative = burst_page_urls.ID (assigned by the
+	 * tracker for urls that resolve to no post, see Tracking::track_hit()).
+	 * Archives (category, tag, taxonomy, author, post type) therefore report
+	 * 0: their queried object id is a term, user or post type — a value that
+	 * collides with post ids under page-grain grouping, so the archive's hits
+	 * would merge into an unrelated post or hydrate to an empty url.
 	 *
 	 * @return array<string, int|string>
 	 */
@@ -247,7 +256,7 @@ class Frontend {
 		// Category archives.
 		if ( is_category() ) {
 			return [
-				'ID'   => get_queried_object_id(),
+				'ID'   => 0,
 				'type' => 'category',
 			];
 		}
@@ -255,7 +264,7 @@ class Frontend {
 		// Tag archives.
 		if ( is_tag() ) {
 			return [
-				'ID'   => get_queried_object_id(),
+				'ID'   => 0,
 				'type' => 'tag',
 			];
 		}
@@ -263,7 +272,7 @@ class Frontend {
 		// Custom taxonomy archives.
 		if ( is_tax() ) {
 			return [
-				'ID'   => get_queried_object_id(),
+				'ID'   => 0,
 				'type' => 'tax',
 			];
 		}
@@ -271,7 +280,7 @@ class Frontend {
 		// Author archives.
 		if ( is_author() ) {
 			return [
-				'ID'   => get_queried_object_id(),
+				'ID'   => 0,
 				'type' => 'author',
 			];
 		}
@@ -300,7 +309,7 @@ class Frontend {
 
 		if ( is_post_type_archive() ) {
 			return [
-				'ID'   => get_queried_object_id(),
+				'ID'   => 0,
 				'type' => 'archive',
 			];
 		}
@@ -580,23 +589,31 @@ class Frontend {
 	}
 
 	/**
-	 * When a tracking test is running, we don't want to show the logged in state, as caching plugins often show uncached content to logged in users.
-	 * Also handles the force logged out functionality for previewing click goals.
+	 * When a tracking test or iframe preview is running, we don't want to show the logged in state.
+	 * Forces logged out user state and hides the admin bar for previewing click goals and per-page modal previews.
 	 */
 	public function use_logged_out_state_for_tests(): void {
-		// Verify nonce while user is still authenticated.
-		// This is the nonce verification, unslash done in verify_nonce().
-        // phpcs:ignore
-        if ( ! isset( $_GET['nonce'] ) || ! $this->verify_nonce( $_GET['nonce'], 'burst_nonce' ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$is_preview = isset( $_GET['burst_preview'] ) && '1' === (string) sanitize_text_field( wp_unslash( $_GET['burst_preview'] ) );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$is_force_logged_out = isset( $_GET['burst_force_logged_out'] ) && '1' === (string) sanitize_text_field( wp_unslash( $_GET['burst_force_logged_out'] ) );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$is_test_hit = isset( $_GET['burst_test_hit'] );
+
+		if ( ! $is_preview && ! $is_force_logged_out && ! $is_test_hit ) {
 			return;
 		}
 
-		// Nonce is verified above.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( isset( $_GET['burst_test_hit'] ) || ( isset( $_GET['burst_force_logged_out'] ) && $_GET['burst_force_logged_out'] === '1' ) ) {
-			add_filter( 'determine_current_user', '__return_null', 100 );
-			wp_set_current_user( 0 );
+		$nonce = isset( $_GET['nonce'] ) ? sanitize_text_field( wp_unslash( $_GET['nonce'] ) ) : '';
+		if ( '' === $nonce || false === wp_verify_nonce( $nonce, 'burst_nonce' ) ) {
+			return;
 		}
+
+		add_filter( 'determine_current_user', '__return_null', 999999 );
+		add_filter( 'show_admin_bar', '__return_false', 999999 );
+		wp_set_current_user( 0 );
+		show_admin_bar( false );
 	}
 
 	/**

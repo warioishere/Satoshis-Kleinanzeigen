@@ -39,10 +39,11 @@ export interface FilterConfig {
 	pro: boolean;
 	category: FilterCategory;
 	reloadOnSearch?: boolean;
+	coming_soon?: boolean;
 	exclusion_allowed?: boolean;
 	multi_select?: boolean;
 
-	/** When set, shows a time-limited "New" badge. */
+	/** When set, shows a time-limited "New" badge. Remove coming_soon and add this when launching a feature. */
 	new_badge?: { version: string; days: number; tooltip?: string };
 
 	/** Singular/plural noun used in the collapsed multi-value chip count badge, e.g. "page" / "pages". */
@@ -137,6 +138,14 @@ export const FILTER_CONFIG: Record<string, FilterConfig> = {
 		category: 'behavior',
 		exclusion_allowed: false
 	},
+	bounce_rate: {
+		label: __( 'Bounce Rate', 'burst-statistics' ),
+		icon: 'bounce',
+		type: 'int',
+		pro: true,
+		category: 'behavior',
+		coming_soon: true
+	},
 	entry_exit_pages: {
 		label: __( 'Page type', 'burst-statistics' ),
 		icon: 'bounce',
@@ -144,6 +153,14 @@ export const FILTER_CONFIG: Record<string, FilterConfig> = {
 		pro: true,
 		category: 'behavior',
 		exclusion_allowed: false
+	},
+	conversion_rate: {
+		label: __( 'Conversion Rate', 'burst-statistics' ),
+		icon: 'conversion',
+		type: 'int',
+		pro: true,
+		category: 'behavior',
+		coming_soon: true
 	},
 	parameter: {
 		label: __( 'URL parameter', 'burst-statistics' ),
@@ -382,6 +399,28 @@ export const splitFilterValues = ( value: string | undefined ): string[] => {
 		return [];
 	}
 	return value.split( ',' ).map( ( v ) => v.trim() ).filter( Boolean );
+};
+
+/**
+ * Normalizes a filter value to the string form every filter consumer expects.
+ *
+ * Filter values travel through the URL search params and the saved-filter
+ * store as strings, and the display and setup components call string methods
+ * on them (split, startsWith, trim). Callers that pass a numeric id straight
+ * from an API response (the devices block sets device_id from the lookup id)
+ * would otherwise store a number: TanStack Router round-trips it as a number,
+ * so the chip builder and the device setup view throw on it and the filter
+ * never shows as active.
+ *
+ * @param value - The raw filter value, e.g. a string, a numeric id, or empty.
+ *
+ * @return The string value, or '' for null/undefined.
+ */
+export const normalizeFilterValue = ( value: unknown ): string => {
+	if ( null === value || value === undefined ) {
+		return '';
+	}
+	return String( value );
 };
 
 /**

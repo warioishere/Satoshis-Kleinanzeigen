@@ -562,6 +562,25 @@ class Subscriptions_For_Woocommerce_Admin {
 				'class' => 'sfw-checkbox-class',
 			),
 			array(
+				// Teaser only — this field is never read anywhere and is always
+				// rendered disabled, regardless of Pro's active state. The real,
+				// functional toggle lives in the Pro plugin's own Advance Settings
+				// tab (option `wsp_enable_gift_subscription`). Including
+				// `wps_pro_settings` in the class is what makes
+				// wps_sfw_plug_generate_html() apply the "PRO" lock treatment and
+				// the click-to-upgrade popup while Pro is inactive.
+				'title' => __( 'Enable Gifting Subscription', 'subscriptions-for-woocommerce' ),
+				'type'  => 'checkbox',
+				'description'  => __( 'Let a customer buy a subscription as a gift for another registered user.', 'subscriptions-for-woocommerce' ),
+				'subtitle'  => __( 'Gift Subscription is a Pro feature: the recipient becomes the owner and can manage it themselves, while the gifter keeps visibility and pays renewals. Manage it from the Pro plugin\'s Advance Settings tab.', 'subscriptions-for-woocommerce' ),
+				'control_label' => __( 'Let a customer buy a subscription as a gift for another registered user.', 'subscriptions-for-woocommerce' ),
+				'id'    => 'wps_sfw_gift_subscription_teaser',
+				'checked' => 'off',
+				'value' => 'on',
+				'attr'  => 'disabled',
+				'class' => 'sfw-checkbox-class wps_pro_settings',
+			),
+			array(
 				'type'        => 'section',
 				'id'          => 'wps_sfw_section_customer_dashboard',
 				'eyebrow'     => __( 'Customer Dashboard', 'subscriptions-for-woocommerce' ),
@@ -2299,10 +2318,48 @@ class Subscriptions_For_Woocommerce_Admin {
 	}
 
 	/**
+	 * Add "Retry Renewal Payment" to the WooCommerce order actions dropdown
+	 * for failed renewal orders.
+	 *
+	 * @param array    $actions Existing order actions.
+	 * @param WC_Order $order   The current order.
+	 * @return array
+	 */
+	public function wps_sfw_add_retry_payment_order_action( $actions, $order ) {
+		$order_id        = $order->get_id();
+		$is_renewal      = wps_sfw_get_meta_data( $order_id, 'wps_sfw_renewal_order', true );
+		$subscription_id = wps_sfw_get_meta_data( $order_id, 'wps_sfw_subscription', true );
+		if ( 'yes' === $is_renewal && $subscription_id && $order->has_status( 'failed' ) ) {
+			$actions['wps_sfw_retry_renewal_payment'] = __( 'Retry Renewal Payment', 'subscriptions-for-woocommerce' );
+		}
+		return $actions;
+	}
+
+	/**
+	 * Process the "Retry Renewal Payment" order action.
+	 *
+	 * Resets the order to pending and fires the renewal payment hook so the
+	 * gateway can attempt to charge the customer again.
+	 *
+	 * @param WC_Order $order The order being processed.
+	 */
+	public function wps_sfw_process_retry_renewal_payment( $order ) {
+		$order_id        = $order->get_id();
+		$subscription_id = wps_sfw_get_meta_data( $order_id, 'wps_sfw_subscription', true );
+		if ( ! $subscription_id ) {
+			$order->add_order_note( __( 'Retry failed: no linked subscription found.', 'subscriptions-for-woocommerce' ) );
+			return;
+		}
+		$payment_method = $order->get_payment_method();
+		$order->update_status( 'pending', __( 'Retry renewal payment triggered by admin.', 'subscriptions-for-woocommerce' ) );
+		do_action( 'wps_sfw_other_payment_gateway_renewal', $order, $subscription_id, $payment_method );
+	}
+
+	/**
 	 * Add content for 'Contains Subscription' column on orders page.
 	 *
-	 * @param mixed $column column.
-	 * @param mixed $post_id post ID.
+	 * @param mixed $column  Column name.
+	 * @param mixed $post_id Post ID.
 	 * @since 3.5.0
 	 */
 	public function wps_sfw_add_contains_subscription_column_content( $column, $post_id ) {

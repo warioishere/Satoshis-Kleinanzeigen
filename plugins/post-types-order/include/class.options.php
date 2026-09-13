@@ -36,14 +36,15 @@
                             $options['show_reorder_interfaces']             =   isset ( $_POST['show_reorder_interfaces'] )             ?   array_map( 'sanitize_key', (array) $_POST['show_reorder_interfaces'] )  :   array();
                             $options['allow_reorder_default_interfaces']    =   isset ( $_POST['allow_reorder_default_interfaces'] )    ?   array_map( 'sanitize_key', (array) $_POST['allow_reorder_default_interfaces'] ) :   '';
                                 
-                            $options['capability']              = isset ( $_POST['capability'] )            ?  sanitize_key($_POST['capability'])  :   '';
+                            $options['capability']                  = isset ( $_POST['capability'] )            ?  sanitize_key($_POST['capability'])  :   '';
                             
-                            $options['autosort']                = isset($_POST['autosort'])                 ? intval($_POST['autosort'])    : '';
-                            $options['adminsort']               = isset($_POST['adminsort'])                ? intval($_POST['adminsort'])   : '';
-                            $options['use_query_ASC_DESC']      = isset($_POST['use_query_ASC_DESC'])       ? intval($_POST['use_query_ASC_DESC'])   : '';
+                            $options['autosort']                    = isset($_POST['autosort'])                 ? intval($_POST['autosort'])    : '';
+                            $options['adminsort']                   = isset($_POST['adminsort'])                ? intval($_POST['adminsort'])   : '';
+                            $options['use_query_ASC_DESC']          = isset($_POST['use_query_ASC_DESC'])       ? intval($_POST['use_query_ASC_DESC'])   : '';
                             
-                            $options['edit_view_links']         = isset($_POST['edit_view_links'])          ? intval($_POST['edit_view_links'])   : '';
-                            $options['navigation_sort_apply']   = isset($_POST['navigation_sort_apply'])    ? intval($_POST['navigation_sort_apply'])   : '';
+                            $options['edit_view_links']             = isset($_POST['edit_view_links'])          ? intval($_POST['edit_view_links'])   : '';
+                            $options['navigation_sort_apply']       = isset($_POST['navigation_sort_apply'])    ? intval($_POST['navigation_sort_apply'])   : '';
+                            $options['navigation_sort_revert']      = isset($_POST['navigation_sort_revert'])    ? intval($_POST['navigation_sort_revert'])   : '';
                                                 
                             update_option('cpto_options', $options);
                             update_option('CPT_configured', 'TRUE');
@@ -220,6 +221,16 @@
                                             </td>
                                         </tr>
                                         
+                                        <tr valign="top" id="navigation_sort_revert_row" style="display: <?php echo $options['navigation_sort_apply'] ? 'table-row' : 'none'; ?>;">
+                                            <th scope="row" style="text-align: right;"><label for="navigation_sort_revert"><?php esc_html_e('Revert Previous/Next Links', 'post-types-order') ?></label></th>
+                                            <td>
+                                                <p>
+                                                    <input type="checkbox" <?php checked( '1', $options['navigation_sort_revert'] ); ?> id="navigation_sort_revert" value="1" name="navigation_sort_revert">
+                                                    <?php esc_html_e("Reverse the order of Previous/Next navigation links.", 'post-types-order') ?>
+                                                </p>
+                                            </td>
+                                        </tr>
+                                        
                                     </tbody>
                                 </table>
                                                
@@ -232,6 +243,14 @@
                                 
                                 
                            </form>
+                           
+                           <script type="text/javascript">
+                                jQuery(document).ready(function($) {
+                                    $('#navigation_sort_apply').on('change', function() {
+                                        $('#navigation_sort_revert_row').toggle(this.checked);
+                                    });
+                                });
+                            </script>
 
                         </div>        
                     <?php          

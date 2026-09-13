@@ -10,12 +10,14 @@ import {
 	FILTER_KEYS,
 	INITIAL_FILTERS,
 	TRAILING_PARAM_KEY,
+	normalizeFilterValue,
 	type FilterKey,
 	type FilterSearchParams,
 	type FilterConfig as FilterConfigType
 
 } from '@/config/filterConfig';
 import { useWizardStore } from '@/store/reports/useWizardStore';
+import { isFilterEnabledRoute, isPerPageRoute } from '@/utils/routeUtils';
 
 interface BurstGlobalSettings {
 	pinned_filters?: Record<string, string>;
@@ -40,20 +42,17 @@ const getPinnedFilters = (): Record<string, string> => {
 	return result;
 };
 
-const FILTER_ENABLED_ROUTES = [ '/statistics', '/engagement', '/sources', '/sales', '/table' ];
-
-export const isFilterEnabledRoute = ( pathname: string ): boolean => {
-	return FILTER_ENABLED_ROUTES.some( ( route ) => pathname.startsWith( route ) );
-};
-
 const buildSearchParams = (
-	params: Record<string, string | undefined>
+	params: Record<string, string | number | undefined>
 ): Record<string, string> => {
 	const result: Record<string, string> = {};
 
+	// Every value is written as a string: a number would be parsed back as a
+	// number by the router and break the string-based filter consumers (see
+	// normalizeFilterValue).
 	Object.keys( params ).forEach( ( key ) => {
 		if ( key !== TRAILING_PARAM_KEY && params[key] !== undefined ) {
-			result[key] = params[key] as string;
+			result[key] = normalizeFilterValue( params[key]);
 		}
 	});
 
@@ -116,9 +115,13 @@ export const useFilters = ( reportBlockIndex?: number ) => {
 		}
 
 		// URL mode: get from URL params (only on filter routes)
+		const perPage = isPerPageRoute( location.pathname );
 		const result: FilterSearchParams = { ...INITIAL_FILTERS };
 		if ( isFilterRoute ) {
 			FILTER_KEYS.forEach( ( key ) => {
+				if ( perPage && 'page_url' === key ) {
+					return;
+				}
 				if ( searchParams[key]) {
 					result[key] = searchParams[key];
 				}
@@ -126,7 +129,7 @@ export const useFilters = ( reportBlockIndex?: number ) => {
 		}
 		return result;
 		// eslint-disable-next-line
-	}, [ searchParams, isFilterRoute, isBlockMode, reportBlockIndex, getReportFilters, wizardContent ]);
+	}, [ searchParams, isFilterRoute, isBlockMode, reportBlockIndex, getReportFilters, wizardContent, location.pathname ] );
 
 	const [ pinnedFilters, setPinnedFiltersState ] = useState<Record<string, string>>( getPinnedFilters );
 
@@ -222,17 +225,21 @@ export const useFilters = ( reportBlockIndex?: number ) => {
 	const setFilters = useCallback(
 
 		// fallow-ignore-next-line complexity
-		( filter: string, value: string ) => {
+		( filter: string, rawValue: string | number | null | undefined ) => {
 			if ( ! filter.length ) {
 				return;
 			}
+
+			// Callers pass ids straight from API responses (a numeric device_id
+			// from the devices block); the filter contract is string-only.
+			const value = normalizeFilterValue( rawValue );
 
 			// Block mode: update wizard store
 			if ( isBlockMode ) {
 				const currentFilters = getReportFilters( reportBlockIndex ) || {};
 				const newFilters = { ...currentFilters };
 
-				if ( '' === value || null === value || value === undefined ) {
+				if ( '' === value ) {
 					delete newFilters[filter];
 				} else {
 					newFilters[filter] = value;
@@ -252,7 +259,7 @@ export const useFilters = ( reportBlockIndex?: number ) => {
 				const newParams = { ...prev };
 				delete newParams[TRAILING_PARAM_KEY];
 
-				if ( '' === value || null === value || value === undefined ) {
+				if ( '' === value ) {
 					delete newParams[filter];
 				} else {
 					newParams[filter] = value;
@@ -434,8 +441,4 @@ export const useFilters = ( reportBlockIndex?: number ) => {
 
 export default useFilters;
 
-export {
-	FILTER_KEYS,
-	TRAILING_PARAM_KEY,
-	type FilterSearchParams
-} from '@/config/filterConfig';
+export { type FilterSearchParams } from '@/config/filterConfig';

@@ -660,7 +660,6 @@
                         }
 
                     $edit_start_at = ( $paged - 1 ) * $objects_per_page;
-                    $expected_ids  = array_slice( $object_ids, $edit_start_at, $objects_per_page );
                     $submitted_ids = array();
 
                     foreach ( $order_data['post'] as $submitted_id )
@@ -675,22 +674,7 @@
 
                             $submitted_ids[] = absint( $submitted_id );
                         }
-
-                    sort( $expected_ids );
-                    $comparison_ids = $submitted_ids;
-                    sort( $comparison_ids );
-
-                    if (
-                        count( $submitted_ids ) !== count( $expected_ids )
-                        || $comparison_ids !== $expected_ids
-                    )
-                        {
-                            wp_send_json_error(
-                                array( 'message' => __( 'The submitted items do not match this archive page.', 'post-types-order' ) ),
-                                400
-                            );
-                        }
-
+           
                     array_splice(
                         $object_ids,
                         $edit_start_at,
@@ -709,7 +693,7 @@
                             if (
                                 ! $post
                                 || $post->post_type !== $post_type
-                                || ! current_user_can( 'edit_post', $id )
+                               // || ! current_user_can( 'edit_post', $id )     //commented out, so the editor roles can still re-order
                             )
                                 {
                                     wp_send_json_error(

@@ -351,6 +351,13 @@
                                        name="_post_type"
                                        value="<?php echo esc_attr( $current_post_type->name ); ?>" />
 
+                                <?php
+                                
+                                if ( apply_filters( 'cpto/interface/show_available_posts', TRUE, $current_location['post_types'] ) )
+                                    { 
+                                
+                                ?>
+                                       
                                 <h2 class="subtitle">
                                     <?php esc_html_e( 'Available Post Types', 'post-types-order' ); ?>
                                 </h2>
@@ -391,6 +398,9 @@
                                         ?>
                                     </tbody>
                                 </table>
+                                
+                                <?php }  ?>
+                                
                             </form>
                         <?php endif; ?>
                         

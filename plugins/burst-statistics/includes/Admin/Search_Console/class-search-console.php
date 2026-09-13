@@ -27,10 +27,15 @@ class Search_Console {
 	private Token_Store|null $token_store = null;
 
 	/**
+	 * Search Console state store instance.
+	 */
+	private State_Store|null $state_store = null;
+
+	/**
 	 * Transient holding the in-flight connect attempt: the CSRF nonce and the
 	 * PKCE verifier, bound to the user who started it. Existence acts as a
-	 * single-flight lock. TTL is 5 minutes (see start_connect()), matching the
-	 * relay's 5-minute state expiry.
+	 * single-flight lock. TTL is 15 minutes (see start_connect()), matching the
+	 * relay's 15-minute state expiry, so a slow Google login with 2FA still lands.
 	 */
 	private const TRANSIENT = 'burst_gsc_connect';
 
@@ -53,6 +58,16 @@ class Search_Console {
 			$this->token_store = new Token_Store();
 		}
 		return $this->token_store;
+	}
+
+	/**
+	 * Lazily instantiate the Search Console state store.
+	 */
+	private function state_store(): State_Store {
+		if ( null === $this->state_store ) {
+			$this->state_store = new State_Store();
+		}
+		return $this->state_store;
 	}
 
 	/**
@@ -183,7 +198,7 @@ class Search_Console {
 				'nonce'         => $nonce,
 				'code_verifier' => $verifier,
 			],
-			5 * MINUTE_IN_SECONDS
+			15 * MINUTE_IN_SECONDS
 		);
 		// add_query_arg does not encode the values it appends (only the base
 		// URL's pre-existing query string), so encode them here. The relay
@@ -292,7 +307,8 @@ class Search_Console {
 		// different Google account), but keep the resolved property, sync cursor and
 		// fetched terms. resolve_property() resumes the daily increment when the same
 		// property resolves again, and clears the stale data + state when it differs.
-		delete_option( 'burst_gsc_property_checked' );
+		$this->state_store()->clear_property_checked();
+		do_action( 'burst_gsc_disconnected' );
 		$this->log( 'oauth.disconnect', 'info', 'Google Search Console connection was disconnected.' );
 		return [ 'status' => 'disconnected' ];
 	}
@@ -321,7 +337,7 @@ class Search_Console {
 	/**
 	 * Record that the current user's in-flight connect attempt ended without
 	 * success, so the status poll can stop the "connecting" spinner immediately
-	 * instead of waiting for the 5-minute timeout. Bound to the user who started
+	 * instead of waiting for the 15-minute timeout. Bound to the user who started
 	 * the attempt; consumed by status_payload().
 	 */
 	private function flag_connect_failed(): void {
@@ -366,15 +382,9 @@ class Search_Console {
 			// Property + match state are resolved and cached server-side by the sync
 			// (no API call here). The UI uses these to choose between the data table
 			// and the "no matching site" notice.
-			$property = (string) get_option( 'burst_gsc_property', '' );
-			$checked  = (bool) get_option( 'burst_gsc_property_checked', false );
-			$state    = (string) get_option( 'burst_gsc_property_status', '' );
-			$retry_at = (int) get_option( 'burst_gsc_property_retry_at', 0 );
-			if ( ! $checked ) {
-				$state = 'pending';
-			} elseif ( ! in_array( $state, [ 'matched', 'none', 'paused' ], true ) ) {
-				$state = '' === $property ? 'none' : 'matched';
-			}
+			$property = $this->state_store()->property();
+			$state    = $this->state_store()->property_status();
+			$retry_at = $this->state_store()->property_retry_at();
 
 			$payload['property']        = 'none' === $state ? '' : $property;
 			$payload['property_status'] = $state;
