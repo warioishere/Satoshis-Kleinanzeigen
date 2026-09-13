@@ -163,6 +163,39 @@ class Helper {
      *                0 = no advertisements allowed
      *               >0 = specific number of slots available
      */
+    /**
+     * Free boosts this vendor already took in the running calendar month.
+     *
+     * The package grants a monthly amount, not a number of boosts running
+     * side by side: a booking that has expired stays counted until the
+     * month is over. Otherwise the package length would decide how much
+     * advertising a vendor gets — a one-month package would hand out the
+     * same amount as a yearly one.
+     *
+     * @param int $vendor_id
+     *
+     * @return int
+     */
+    public static function count_free_boosts_this_month( $vendor_id ) {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'sk_advertised_products';
+        $start = strtotime( gmdate( 'Y-m-01 00:00:00', current_time( 'timestamp' ) ) );
+
+        return (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(featured.id)
+                   FROM {$table} AS featured
+                   LEFT JOIN {$wpdb->posts} AS post ON featured.product_id = post.ID
+                  WHERE post.post_author = %d
+                    AND featured.created_via = 'subscription'
+                    AND featured.added >= %d",
+                (int) $vendor_id,
+                $start
+            )
+        );
+    }
+
     public static function get_available_advertisement_slot_count_by_vendor_subscription( $vendor_id ) {
         // check if vendor subscription module is enabled and user is under a subscription
         $subscription = static::check_subscription_status_for_vendor( $vendor_id );
@@ -180,18 +213,7 @@ class Helper {
             return $subscription_total_available_slot_count;
         }
 
-        $manager = new Manager();
-        // now calculate available slot for vendor
-        $active_advertised_products = $manager->all(
-            [
-                'vendor_id' => $vendor_id,
-                'status'    => 1,
-                'per_page'  => -1,
-                'return'    => 'count',
-            ]
-        );
-
-        $available = $subscription_total_available_slot_count - $active_advertised_products;
+        $available = $subscription_total_available_slot_count - static::count_free_boosts_this_month( $vendor_id );
 
         // for negative available value, return 0, otherwise return $available as it is
         return $available >= 0 ? $available : 0;
@@ -663,6 +685,15 @@ class Helper {
             } else {
                 $remaining_slot = 0;
             }
+        }
+
+        /*
+         * The site-wide slot count is the ceiling for a free boost too.
+         * Without this a subscriber would book past it and crowd out the
+         * paid boost, which is the one that earns.
+         */
+        if ( -1 !== $global_remaining_slot && -1 !== $remaining_slot ) {
+            $remaining_slot = min( $remaining_slot, $global_remaining_slot );
         }
 
         //todo: return this as object
