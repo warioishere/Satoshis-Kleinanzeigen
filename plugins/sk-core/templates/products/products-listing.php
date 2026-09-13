@@ -80,9 +80,35 @@
 
                             <form id="product-filter" method="POST">
                                 <?php wp_nonce_field( 'bulk_product_status_change', 'security' ); ?>
+
+                                <?php
+                                // Editing many listings at once — a larger package's feature.
+                                $sk_bulk = sk_can_bulk_edit();
+
+                                if ( $sk_bulk ) :
+                                    ?>
+                                    <div class="sk-bulk-bar" hidden>
+                                        <span class="sk-bulk-bar__count" data-role="count">0</span>
+                                        <select name="status" class="sk-form-control sk-bulk-bar__action">
+                                            <option value="-1"><?php esc_html_e( 'Sammelaktion', 'sk-core' ); ?></option>
+                                            <option value="publish"><?php esc_html_e( 'Veröffentlichen', 'sk-core' ); ?></option>
+                                            <option value="draft"><?php esc_html_e( 'Auf Entwurf setzen', 'sk-core' ); ?></option>
+                                            <option value="sk_price"><?php esc_html_e( 'Preis ändern', 'sk-core' ); ?></option>
+                                        </select>
+                                        <span class="sk-bulk-bar__percent" hidden>
+                                            <input type="number" name="price_percent" class="sk-form-control" step="1" min="-90" max="900" placeholder="-10">
+                                            <span>%</span>
+                                        </span>
+                                        <button type="submit" class="sk-btn sk-btn-theme sk-bulk-bar__apply"><?php esc_html_e( 'Anwenden', 'sk-core' ); ?></button>
+                                    </div>
+                                <?php endif; ?>
+
                                 <table class="sk-table product-listing-table sk-inline-editable-table" id="sk-product-list-table">
                                     <thead>
                                         <tr>
+                                            <?php if ( $sk_bulk ) : ?>
+                                                <th class="col-bulk"><input type="checkbox" class="sk-bulk-all" aria-label="<?php esc_attr_e( 'Alle auswählen', 'sk-core' ); ?>"></th>
+                                            <?php endif; ?>
                                             <th class="col-thumb"><?php esc_html_e( 'Inserat', 'sk-core' ); ?></th>
                                             <th class="col-status"><?php esc_html_e( 'Status', 'sk-core' ); ?></th>
                                             <?php do_action( 'sk_product_list_table_after_status_table_header' ); ?>

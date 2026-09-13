@@ -43,6 +43,14 @@ final class Variants {
      */
     const IMPORT_MIN_PRODUCTS = 21;
 
+    /**
+     * From how many products bulk editing is included.
+     *
+     * Editing many listings at once only becomes work worth saving once
+     * there are many of them.
+     */
+    const BULK_MIN_PRODUCTS = 50;
+
     public function __construct() {
         add_action( 'sk_product_edit_after_pricing_fields', [ $this, 'render_field' ], 10, 2 );
         add_action( 'sk_process_product_meta', [ $this, 'save' ], 20 );
@@ -137,6 +145,33 @@ final class Variants {
         }
 
         return self::import_pack_allows( (int) get_user_meta( $vendor_id, 'product_package_id', true ) );
+    }
+
+    /**
+     * Does bulk editing belong to this package?
+     */
+    public static function bulk_pack_allows( int $pack_id ): bool {
+        if ( $pack_id <= 0 ) {
+            return false;
+        }
+
+        $count = (int) get_post_meta( $pack_id, '_no_of_product', true );
+
+        // -1 means unlimited, see allowed_packs().
+        return $count === -1 || $count >= self::BULK_MIN_PRODUCTS;
+    }
+
+    /**
+     * Does this vendor's package include bulk editing?
+     */
+    public static function bulk_allowed( int $vendor_id = 0 ): bool {
+        $vendor_id = $vendor_id ?: get_current_user_id();
+
+        if ( ! $vendor_id ) {
+            return false;
+        }
+
+        return self::bulk_pack_allows( (int) get_user_meta( $vendor_id, 'product_package_id', true ) );
     }
 
     /**

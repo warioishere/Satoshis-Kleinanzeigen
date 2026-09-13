@@ -20,6 +20,7 @@ class Hooks {
         add_action( 'template_redirect', [ $this, 'bulk_product_status_change' ] );
         add_action( 'sk_bulk_product_status_change', [ $this, 'bulk_product_delete' ], 10, 2 );
         add_action( 'sk_bulk_product_status_change', [ $this, 'bulk_product_status_update' ], 10, 2 );
+        add_action( 'sk_bulk_product_status_change', [ $this, 'bulk_product_price_change' ], 10, 2 );
         add_action( 'sk_store_profile_frame_after', [ $this, 'store_products_orderby' ], 30, 2 );
         add_action( 'wp_ajax_sk_store_product_search_action', [ $this, 'store_product_search_action' ], 10, 2 );
         add_action( 'wp_ajax_nopriv_sk_store_product_search_action', [ $this, 'store_product_search_action' ], 10, 2 );
@@ -254,6 +255,72 @@ class Hooks {
         do_action( 'sk_product_bulk_deleted', $products );
 
         wp_safe_redirect( add_query_arg( [ 'message' => 'product_deleted' ], sk_get_navigation_url( 'products' ) ) );
+        exit;
+    }
+
+    /**
+     * Raise or lower the price of several listings at once.
+     *
+     * A package feature, so it is checked here as well and not only in the
+     * listing table — the form can be sent without the table.
+     *
+     * Listings priced in a fiat currency are left alone: their sats price
+     * is recalculated daily from the fiat amount, so a change here would be
+     * overwritten by the next run and the vendor would wonder why.
+     *
+     * @param string $status   Target status; 'sk_price' is this one.
+     * @param array  $products Product IDs.
+     */
+    public function bulk_product_price_change( $status, $products ) {
+        if ( 'sk_price' !== $status || empty( $products ) ) {
+            return;
+        }
+
+        if ( ! function_exists( 'sk_can_bulk_edit' ) || ! sk_can_bulk_edit() ) {
+            return;
+        }
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified in bulk_product_status_change().
+        $percent = isset( $_POST['price_percent'] ) ? (float) wp_unslash( $_POST['price_percent'] ) : 0;
+
+        if ( $percent < -90 || $percent > 900 || 0.0 === $percent ) {
+            return;
+        }
+
+        $changed = 0;
+
+        foreach ( $products as $product_id ) {
+            $product_id = absint( $product_id );
+
+            if ( ! $product_id || ! sk_is_product_author( $product_id ) ) {
+                continue;
+            }
+
+            $product = wc_get_product( $product_id );
+
+            if ( ! $product || '' === $product->get_regular_price() ) {
+                continue;
+            }
+
+            // Priced in fiat: the daily conversion owns the sats price.
+            if ( '' !== (string) $product->get_meta( '_sk_fiat_currency' ) ) {
+                continue;
+            }
+
+            $price = (int) round( (float) $product->get_regular_price() * ( 1 + $percent / 100 ) );
+            $price = max( 1, $price );
+
+            $product->set_regular_price( $price );
+
+            if ( '' !== $product->get_sale_price() ) {
+                $product->set_sale_price( min( $price, max( 1, (int) round( (float) $product->get_sale_price() * ( 1 + $percent / 100 ) ) ) ) );
+            }
+
+            $product->save();
+            $changed++;
+        }
+
+        wp_safe_redirect( add_query_arg( [ 'message' => 'product_price_changed', 'changed' => $changed ], sk_get_navigation_url( 'products' ) ) );
         exit;
     }
 

@@ -1868,6 +1868,19 @@ function sk_get_seller_short_address( $store_id, $line_break = true ) {
  *
  * @return bool
  */
+/**
+ * May this vendor edit several listings at once? A larger package's feature.
+ */
+function sk_can_bulk_edit( $vendor_id = 0 ) {
+    $vendor_id = (int) ( $vendor_id ?: sk_get_current_user_id() );
+
+    if ( ! $vendor_id || ! class_exists( \SK\Modules\ShopImport\Variants::class ) ) {
+        return false;
+    }
+
+    return \SK\Modules\ShopImport\Variants::bulk_allowed( $vendor_id );
+}
+
 function sk_is_shop_pack( $vendor_id = 0 ) {
     $vendor_id = (int) ( $vendor_id ?: sk_get_current_user_id() );
 

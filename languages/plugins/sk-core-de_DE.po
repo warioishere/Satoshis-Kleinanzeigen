@@ -14334,3 +14334,37 @@ msgstr "%d Monate"
 #: plugins/sk-core/modules/sk-subscription/templates/dashboard/pack-listing.php
 msgid "Laufzeit"
 msgstr "Laufzeit"
+
+#: plugins/sk-core/templates/products/products-listing.php
+msgid "Sammelaktion"
+msgstr "Sammelaktion"
+
+#: plugins/sk-core/templates/products/products-listing.php
+msgid "Veröffentlichen"
+msgstr "Veröffentlichen"
+
+#: plugins/sk-core/templates/products/products-listing.php
+msgid "Auf Entwurf setzen"
+msgstr "Auf Entwurf setzen"
+
+#: plugins/sk-core/templates/products/products-listing.php
+msgid "Preis ändern"
+msgstr "Preis ändern"
+
+#: plugins/sk-core/templates/products/products-listing.php
+msgid "Anwenden"
+msgstr "Anwenden"
+
+#: plugins/sk-core/templates/products/products-listing.php
+msgid "Alle auswählen"
+msgstr "Alle auswählen"
+
+#: plugins/sk-core/templates/products/products-listing-row.php
+msgid "Inserat auswählen"
+msgstr "Inserat auswählen"
+
+#: plugins/sk-core/includes/template-tags.php
+msgid "Preis von %d Inserat geändert."
+msgid_plural "Preis von %d Inseraten geändert."
+msgstr[0] "Preis von %d Inserat geändert."
+msgstr[1] "Preis von %d Inseraten geändert."

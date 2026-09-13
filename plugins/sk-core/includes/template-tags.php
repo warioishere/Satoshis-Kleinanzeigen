@@ -160,6 +160,16 @@ function sk_product_dashboard_errors() {
                 )
             );
             break;
+        case 'product_price_changed':
+            $changed = isset( $_GET['changed'] ) ? absint( wp_unslash( $_GET['changed'] ) ) : 0; //phpcs:ignore
+            sk_get_template_part(
+                'global/sk-success', '', [
+                    'deleted' => false,
+                    /* translators: %d: number of listings whose price changed */
+                    'message' => sprintf( _n( 'Preis von %d Inserat geändert.', 'Preis von %d Inseraten geändert.', $changed, 'sk-core' ), $changed ),
+                ]
+            );
+            break;
         case 'product_duplicated':
             sk_get_template_part(
                 'global/sk-success', '', [

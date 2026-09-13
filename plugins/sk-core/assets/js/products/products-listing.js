@@ -41,9 +41,56 @@
         });
     }
 
+    /**
+     * Bulk bar: appears once something is picked, and the percent field
+     * only for the price action. Sending with nothing picked would apply
+     * the action to nothing, so the button stays out of reach until then.
+     */
+    function initBulkBar() {
+        var bar = document.querySelector('.sk-bulk-bar');
+        if (!bar) return;
+
+        var form   = bar.closest('form');
+        var action = bar.querySelector('.sk-bulk-bar__action');
+        var pct    = bar.querySelector('.sk-bulk-bar__percent');
+        var count  = bar.querySelector('[data-role=count]');
+        var all    = form.querySelector('.sk-bulk-all');
+
+        function picked() {
+            return form.querySelectorAll('.sk-bulk-pick:checked').length;
+        }
+
+        function refresh() {
+            var n = picked();
+            bar.hidden = n === 0;
+            count.textContent = n;
+            pct.hidden = action.value !== 'sk_price';
+        }
+
+        form.addEventListener('change', function (e) {
+            if (e.target === all) {
+                form.querySelectorAll('.sk-bulk-pick').forEach(function (box) { box.checked = all.checked; });
+            }
+            refresh();
+        });
+
+        form.addEventListener('submit', function (e) {
+            if (action.value === '-1' || !picked()) {
+                e.preventDefault();
+                return;
+            }
+            if (action.value === 'sk_price' && !pct.querySelector('input').value) {
+                e.preventDefault();
+            }
+        });
+
+        refresh();
+    }
+
     function init() {
         initDesktopCollapse();
         initToggleRow();
+        initBulkBar();
     }
 
     document.addEventListener('DOMContentLoaded', init);

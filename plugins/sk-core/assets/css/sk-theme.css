@@ -11914,3 +11914,47 @@ textarea.wp-editor-area.post_content {
 .dvc-chat-partner img {
 	display: block;
 }
+
+/* === Sammelbearbeitung in der Inseratsliste ============================= */
+.sk-bulk-bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 12px;
+	padding: 10px 14px;
+	border: 1px solid rgba(247, 147, 26, 0.35);
+	border-radius: 8px;
+	background: rgba(247, 147, 26, 0.08);
+}
+
+.sk-bulk-bar__count {
+	min-width: 26px;
+	padding: 2px 8px;
+	border-radius: 999px;
+	background: #f7931a;
+	color: #fff;
+	font-weight: 700;
+	text-align: center;
+}
+
+.sk-bulk-bar .sk-form-control {
+	width: auto;
+	min-width: 150px;
+	margin: 0;
+}
+
+.sk-bulk-bar__percent {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.sk-bulk-bar__percent .sk-form-control {
+	min-width: 90px;
+}
+
+.product-listing-table .col-bulk {
+	width: 34px;
+	text-align: center;
+}

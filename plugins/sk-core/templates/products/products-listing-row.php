@@ -49,6 +49,12 @@ if ( '0000-00-00 00:00:00' === $post->post_date ) {
 }
 ?>
 <tr class="<?php echo esc_attr( $tr_class ); ?>">
+    <?php if ( sk_can_bulk_edit() ) : ?>
+        <td class="col-bulk">
+            <input type="checkbox" class="sk-bulk-pick" name="bulk_products[]" value="<?php echo (int) $post->ID; ?>"
+                   aria-label="<?php esc_attr_e( 'Inserat auswählen', 'sk-core' ); ?>">
+        </td>
+    <?php endif; ?>
     <td class="col-thumb" data-title="<?php esc_attr_e( 'Inserat', 'sk-core' ); ?>">
         <div class="sk-product-row-inner">
             <?php if ( current_user_can( 'sk_edit_product' ) ) : ?>
