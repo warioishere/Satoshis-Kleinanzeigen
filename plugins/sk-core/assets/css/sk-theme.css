@@ -11961,10 +11961,16 @@ textarea.wp-editor-area.post_content {
 	text-align: center;
 }
 
-.sk-bulk-bar .sk-form-control {
+/* The selects come without a radius and a hair taller than the input and
+   the button, which shows in a single row. */
+.sk-bulk-bar .sk-form-control,
+.sk-bulk-bar .sk-btn {
 	width: auto;
 	min-width: 150px;
+	height: 36px;
 	margin: 0;
+	border-radius: 6px;
+	box-sizing: border-box;
 }
 
 .sk-bulk-bar__amount {
