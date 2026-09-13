@@ -52,7 +52,7 @@
 
         var form   = bar.closest('form');
         var action = bar.querySelector('.sk-bulk-bar__action');
-        var pct    = bar.querySelector('.sk-bulk-bar__percent');
+        var pct    = bar.querySelector('.sk-bulk-bar__amount');
         var count  = bar.querySelector('[data-role=count]');
         var all    = form.querySelector('.sk-bulk-all');
 

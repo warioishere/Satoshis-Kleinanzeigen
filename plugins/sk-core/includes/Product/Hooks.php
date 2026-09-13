@@ -264,6 +264,9 @@ class Hooks {
      * A package feature, so it is checked here as well and not only in the
      * listing table — the form can be sent without the table.
      *
+     * The amount is either a percentage or a number of sats, both signed:
+     * -10 % and -1000 sats both lower the price.
+     *
      * Listings priced in a fiat currency are left alone: their sats price
      * is recalculated daily from the fiat amount, so a change here would be
      * overwritten by the next run and the vendor would wonder why.
@@ -280,10 +283,16 @@ class Hooks {
             return;
         }
 
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified in bulk_product_status_change().
-        $percent = isset( $_POST['price_percent'] ) ? (float) wp_unslash( $_POST['price_percent'] ) : 0;
+        // phpcs:disable WordPress.Security.NonceVerification.Missing -- verified in bulk_product_status_change().
+        $amount = isset( $_POST['price_change'] ) ? (float) wp_unslash( $_POST['price_change'] ) : 0;
+        $unit   = isset( $_POST['price_unit'] ) && 'sats' === $_POST['price_unit'] ? 'sats' : 'percent';
+        // phpcs:enable WordPress.Security.NonceVerification.Missing
 
-        if ( $percent < -90 || $percent > 900 || 0.0 === $percent ) {
+        if ( 0.0 === $amount ) {
+            return;
+        }
+
+        if ( 'percent' === $unit && ( $amount < -90 || $amount > 900 ) ) {
             return;
         }
 
@@ -307,13 +316,19 @@ class Hooks {
                 continue;
             }
 
-            $price = (int) round( (float) $product->get_regular_price() * ( 1 + $percent / 100 ) );
-            $price = max( 1, $price );
+            $shift = static function ( $value ) use ( $amount, $unit ) {
+                $value = (float) $value;
+                $value = 'sats' === $unit ? $value + $amount : $value * ( 1 + $amount / 100 );
+
+                return max( 1, (int) round( $value ) );
+            };
+
+            $price = $shift( $product->get_regular_price() );
 
             $product->set_regular_price( $price );
 
             if ( '' !== $product->get_sale_price() ) {
-                $product->set_sale_price( min( $price, max( 1, (int) round( (float) $product->get_sale_price() * ( 1 + $percent / 100 ) ) ) ) );
+                $product->set_sale_price( min( $price, $shift( $product->get_sale_price() ) ) );
             }
 
             $product->save();

@@ -6599,6 +6599,29 @@ ul.sk-store-custom-fields ul {
     padding: 14px 14px 8px;
   }
 
+  /* The card stacks everything but the thumb cell away, so the tick box
+     for bulk editing rides in the corner of the card instead. */
+  .sk-dashboard #sk-product-list-table tbody tr {
+    position: relative;
+  }
+
+  /* tbody in the selector: the rule that collapses the card hides every
+     cell but the thumb at the same weight, and it comes later. */
+  .sk-dashboard #sk-product-list-table tbody td.col-bulk {
+    display: block;
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    width: auto;
+    padding: 0;
+    z-index: 2;
+  }
+
+  .sk-dashboard #sk-product-list-table tbody td.col-bulk .sk-bulk-pick {
+    width: 22px;
+    height: 22px;
+  }
+
   /* ── Stack image → title → buttons vertically, centred ────── */
   .sk-dashboard #sk-product-list-table .sk-product-row-inner {
     flex-direction: column;
@@ -11944,14 +11967,20 @@ textarea.wp-editor-area.post_content {
 	margin: 0;
 }
 
-.sk-bulk-bar__percent {
+.sk-bulk-bar__amount {
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
 }
 
-.sk-bulk-bar__percent .sk-form-control {
+.sk-bulk-bar__amount .sk-form-control {
 	min-width: 90px;
+}
+
+/* Ohne das schlaegt das display oben das hidden-Attribut. */
+.sk-bulk-bar[hidden],
+.sk-bulk-bar__amount[hidden] {
+	display: none;
 }
 
 .product-listing-table .col-bulk {

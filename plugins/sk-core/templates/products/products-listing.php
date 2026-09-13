@@ -95,9 +95,12 @@
                                             <option value="draft"><?php esc_html_e( 'Auf Entwurf setzen', 'sk-core' ); ?></option>
                                             <option value="sk_price"><?php esc_html_e( 'Preis ändern', 'sk-core' ); ?></option>
                                         </select>
-                                        <span class="sk-bulk-bar__percent" hidden>
-                                            <input type="number" name="price_percent" class="sk-form-control" step="1" min="-90" max="900" placeholder="-10">
-                                            <span>%</span>
+                                        <span class="sk-bulk-bar__amount" hidden>
+                                            <input type="number" name="price_change" class="sk-form-control" step="1" placeholder="-10">
+                                            <select name="price_unit" class="sk-form-control">
+                                                <option value="percent">%</option>
+                                                <option value="sats"><?php esc_html_e( 'Sats', 'sk-core' ); ?></option>
+                                            </select>
                                         </span>
                                         <button type="submit" class="sk-btn sk-btn-theme sk-bulk-bar__apply"><?php esc_html_e( 'Anwenden', 'sk-core' ); ?></button>
                                     </div>
