@@ -171,14 +171,19 @@ use SK\Modules\Subscription\Helper;
                             && \SK\Modules\ShopImport\Variants::pack_allows( (int) get_the_ID() ) ) :
                             ?>
                             <ul class="pack_features">
-                                <li><i class="fas fa-file-import"></i> Woo &amp; Shopify Produkt Import</li>
+                                <li><i class="fas fa-location-dot"></i> Shop-Adresse &amp; Impressum</li>
                                 <li><i class="fas fa-layer-group"></i> Variable Produkte</li>
                                 <li><i class="fas fa-bolt"></i> Adaptive Preise in Sats</li>
+                                <?php if ( \SK\Modules\ShopImport\Variants::import_pack_allows( (int) get_the_ID() ) ) : ?>
+                                    <li><i class="fas fa-file-import"></i> Woo &amp; Shopify Produkt Import</li>
+                                <?php endif; ?>
                                 <?php if ( \SK\Modules\ShopImport\Variants::revenue_pack_allows( (int) get_the_ID() ) ) : ?>
                                     <li><i class="fas fa-chart-bar"></i> Umsatz &amp; CSV-Export</li>
                                 <?php endif; ?>
-                                <li><i class="fas fa-envelope"></i> Bestellungen per E-Mail</li>
-                                <li><i class="fas fa-truck"></i> Sendungsverfolgung</li>
+                                <?php if ( sk_module_active( 'sk_payments' ) ) : ?>
+                                    <li><i class="fas fa-envelope"></i> Bestellungen per E-Mail</li>
+                                    <li><i class="fas fa-truck"></i> Sendungsverfolgung</li>
+                                <?php endif; ?>
                             </ul>
                             <button type="button" class="pack_feature_more" data-sk-pack-info>
                                 Mehr erfahren

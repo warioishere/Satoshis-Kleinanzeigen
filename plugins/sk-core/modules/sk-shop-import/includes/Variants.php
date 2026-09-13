@@ -34,6 +34,15 @@ final class Variants {
      */
     const REVENUE_MIN_PRODUCTS = 50;
 
+    /**
+     * From how many products the catalog import is included.
+     *
+     * Above DEFAULT_MIN_PRODUCTS: the smaller shop package carries the
+     * shop basics — address, adaptive prices, variants — while a whole
+     * catalog belongs to the larger one.
+     */
+    const IMPORT_MIN_PRODUCTS = 21;
+
     public function __construct() {
         add_action( 'sk_product_edit_after_pricing_fields', [ $this, 'render_field' ], 10, 2 );
         add_action( 'sk_process_product_meta', [ $this, 'save' ], 20 );
@@ -74,6 +83,33 @@ final class Variants {
      */
     public static function pack_allows( int $pack_id ): bool {
         return $pack_id > 0 && in_array( $pack_id, self::allowed_packs(), true );
+    }
+
+    /**
+     * Does the catalog import belong to this package?
+     */
+    public static function import_pack_allows( int $pack_id ): bool {
+        if ( $pack_id <= 0 ) {
+            return false;
+        }
+
+        $count = (int) get_post_meta( $pack_id, '_no_of_product', true );
+
+        // -1 means unlimited, see allowed_packs().
+        return $count === -1 || $count >= self::IMPORT_MIN_PRODUCTS;
+    }
+
+    /**
+     * Does this vendor's package include the catalog import?
+     */
+    public static function import_allowed( int $vendor_id = 0 ): bool {
+        $vendor_id = $vendor_id ?: get_current_user_id();
+
+        if ( ! $vendor_id ) {
+            return false;
+        }
+
+        return self::import_pack_allows( (int) get_user_meta( $vendor_id, 'product_package_id', true ) );
     }
 
     /**
