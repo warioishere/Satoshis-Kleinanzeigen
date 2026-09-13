@@ -284,10 +284,6 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
                                         <?php if ( \SK\Modules\ShopImport\Variants::revenue_pack_allows( (int) get_the_ID() ) ) : ?>
                                             <li><i class="fas fa-chart-bar"></i> Umsatz &amp; CSV-Export</li>
                                         <?php endif; ?>
-                                        <?php if ( sk_module_active( 'sk_payments' ) ) : ?>
-                                            <li><i class="fas fa-envelope"></i> Bestellungen per E-Mail</li>
-                                            <li><i class="fas fa-truck"></i> Sendungsverfolgung</li>
-                                        <?php endif; ?>
                                     </ul>
                                     <button type="button" class="pack_feature_more" data-sk-pack-info>
                                         Mehr erfahren
