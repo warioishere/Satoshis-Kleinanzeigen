@@ -2,7 +2,7 @@
 # This file is distributed under the same license as the Plugins - WP Fastest Cache &#8211; WordPress Cache Plugin - Stable (latest release) package.
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2026-05-28 19:52:39+0000\n"
+"PO-Revision-Date: 2026-09-07 03:31:42+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -101,7 +101,7 @@ msgstr "Werkzeugleisten-Einstellungen"
 msgid "Clear Cache of All Sites"
 msgstr "Cache aller Websites leeren"
 
-#: wpFastestCache.php:429
+#: wpFastestCache.php:468
 msgid "<a href=\"%s\">Settings</a>"
 msgstr "<a href=\"%s\">Einstellungen</a>"
 
@@ -140,10 +140,6 @@ msgstr "Datenbank aufräumen"
 #: inc/admin.php:2006
 msgid "Exclude Pages"
 msgstr "Seiten ausschließen"
-
-#: inc/admin.php:1429 inc/admin.php:1435 inc/admin.php:1442
-msgid "Google Fonts"
-msgstr "Google Fonts"
 
 #: inc/admin.php:1403 inc/admin.php:1409 inc/admin.php:1416
 msgid "Render Blocking Js"
@@ -523,23 +519,27 @@ msgstr "Alle"
 msgid "Archives"
 msgstr "Archiv"
 
-#: wpFastestCache.php:2467
+#: inc/admin.php:1429 inc/admin.php:1435 inc/admin.php:1442
+msgid "Google Fonts"
+msgstr "Google Fonts"
+
+#: wpFastestCache.php:2518
 msgid "Once Every 15 Days"
 msgstr "Einmal alle 15 Tage"
 
-#: wpFastestCache.php:2455
+#: wpFastestCache.php:2506
 msgid "Once Every 7 Days"
 msgstr "Einmal alle 7 Tage"
 
-#: wpFastestCache.php:2449
+#: wpFastestCache.php:2500
 msgid "Once Every 3 Days"
 msgstr "Einmal alle 3 Tage"
 
-#: wpFastestCache.php:2389
+#: wpFastestCache.php:2440
 msgid "Once Every 2 Hours"
 msgstr "Einmal alle 2 Stunden"
 
-#: wpFastestCache.php:2461
+#: wpFastestCache.php:2512
 msgid "Once Every 10 Days"
 msgstr "Einmal alle 10 Tage"
 
@@ -553,27 +553,27 @@ msgstr "Emre Vona"
 msgid "http://wordpress.org/plugins/wp-fastest-cache/"
 msgstr "http://de.wordpress.org/plugins/wp-fastest-cache/"
 
-#: wpFastestCache.php:2479
+#: wpFastestCache.php:2530
 msgid "Once a Year"
 msgstr "Einmal pro Jahr"
 
-#: wpFastestCache.php:2383
+#: wpFastestCache.php:2434
 msgid "Once an Hour"
 msgstr "Einmal pro Stunde"
 
-#: wpFastestCache.php:2359
+#: wpFastestCache.php:2410
 msgid "Once Every 1 Minute"
 msgstr "Einmal pro Minute"
 
-#: wpFastestCache.php:2371
+#: wpFastestCache.php:2422
 msgid "Once Every 15 Minutes"
 msgstr "Einmal alle 15 Minuten"
 
-#: wpFastestCache.php:2365
+#: wpFastestCache.php:2416
 msgid "Once Every 5 Minutes"
 msgstr "Einmal alle 5 Minuten"
 
-#: wpFastestCache.php:2413
+#: wpFastestCache.php:2464
 msgid "Once Every 6 Hours"
 msgstr "Einmal alle 6 Stunden"
 
@@ -582,7 +582,7 @@ msgstr "Einmal alle 6 Stunden"
 msgid "The simplest and fastest WP Cache system"
 msgstr "Das einfachste und schnellste Cache-System für WordPress"
 
-#: wpFastestCache.php:2377
+#: wpFastestCache.php:2428
 msgid "Twice an Hour"
 msgstr "Zweimal pro Stunde"
 
@@ -591,38 +591,38 @@ msgstr "Zweimal pro Stunde"
 msgid "WP Fastest Cache"
 msgstr "WP Fastest Cache"
 
-#: wpFastestCache.php:2437
+#: wpFastestCache.php:2488
 msgid "Once Every 10 Hours"
 msgstr "Einmal alle 10 Stunden"
 
-#: wpFastestCache.php:2431
+#: wpFastestCache.php:2482
 msgid "Once Every 9 Hours"
 msgstr "Einmal alle 9 Stunden"
 
-#: wpFastestCache.php:2425
+#: wpFastestCache.php:2476
 msgid "Once Every 8 Hours"
 msgstr "Einmal alle 8 Stunden"
 
-#: wpFastestCache.php:2419
+#: wpFastestCache.php:2470
 msgid "Once Every 7 Hours"
 msgstr "Einmal alle 7 Stunden"
 
-#: wpFastestCache.php:2407
+#: wpFastestCache.php:2458
 msgid "Once Every 5 Hours"
 msgstr "Einmal alle 5 Stunden"
 
-#: wpFastestCache.php:2401
+#: wpFastestCache.php:2452
 msgid "Once Every 4 Hours"
 msgstr "Einmal alle 4 Stunden"
 
-#: wpFastestCache.php:2395
+#: wpFastestCache.php:2446
 msgid "Once Every 3 Hours"
 msgstr "Einmal alle 3 Stunden"
 
-#: wpFastestCache.php:2473
+#: wpFastestCache.php:2524
 msgid "Once a Month"
 msgstr "Monatlich"
 
-#: wpFastestCache.php:2443
+#: wpFastestCache.php:2494
 msgid "Once a Day"
 msgstr "Täglich"

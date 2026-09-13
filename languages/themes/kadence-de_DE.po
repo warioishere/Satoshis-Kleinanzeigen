@@ -2,12 +2,12 @@
 # This file is distributed under the same license as the Themes - Kadence package.
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2026-07-28 21:27:59+0000\n"
+"PO-Revision-Date: 2026-09-13 17:14:03+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: GlotPress/4.0.3\n"
+"X-Generator: GlotPress/4.1.0\n"
 "Language: de\n"
 "Project-Id-Version: Themes - Kadence\n"
 
@@ -22,6 +22,15 @@ msgstr "Kadence"
 #, gp-priority: high
 msgid "Kadence Theme is a lightweight yet full featured WordPress theme for creating beautiful fast loading and accessible websites, easier than ever. It features an easy to use drag and drop header and footer builder to build any type of header in minutes. It features a full library of gorgeous starter templates that are easy to modify with our intelligent global font and color controls. With extensive integration with the most popular 3rd party plugins, you can quickly build impressive ecommerce websites, course websites, business websites, and more."
 msgstr "Das Kadence-Theme ist ein schlankes und dennoch voll ausgestattetes WordPress-Theme für die Erstellung schöner, schnell ladender und barrierefreier Websites, einfacher denn je. Es verfügt über einen einfach zu bedienenden Drag-and-Drop-Header- und Footer-Builder, mit dem du jede Art von Header in wenigen Minuten erstellen kannst. Es verfügt über eine vollständige Bibliothek von wunderschönen Starter-Templates, die mit unseren intelligenten globalen Schrift- und Farbsteuerungen einfach zu ändern sind. Durch die umfassende Integration mit den beliebtesten Plugins von Drittanbietern kannst du schnell beeindruckende E-Commerce-Websites, Kurs-Websites, Business-Websites und vieles mehr erstellen."
+
+#. translators: %s: link to Shop Kit Image Swap settings
+#: inc/customizer/options/product-archive-layout-options.php:663
+msgid "This setting is being overridden by Shop Kit's Image Swap Module. <a target=\"_blank\" href=\"%s\">Click here</a> to manage Image Swap settings."
+msgstr "Diese Einstellung wird durch das „Image Swap“-Modul von Shop Kit überschrieben. <a target=\"_blank\" href=\"%s\">Klicke hier</a>, um die Einstellungen für „Image Swap“ zu verwalten."
+
+#: inc/customizer/options/product-archive-layout-options.php:602
+msgid "Default Archive View"
+msgstr "Standard-Archivansicht"
 
 #: inc/components/style_guide/component.php:299
 msgid "Quote"
@@ -132,6 +141,10 @@ msgstr "Erfolgreich"
 msgid "Site Title & Logo"
 msgstr "Titel und Logo der Website"
 
+#: inc/components/style_guide/component.php:294
+msgid "This is your website's main body text; it represents the standard paragraph style used across pages and posts. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur cursus pellentesque sem, ac maximus tortor venenatis ac. Aenean convallis metus libero, ut sagittis nisi commodo nec. Sed tempor tempor erat, blandit pellentesque tortor. Proin ipsum velit, dictum ac luctus a, eleifend et sapien."
+msgstr "Dies ist der Haupttext deiner Website; er stellt den Standardabsatzstil dar, der auf allen Seiten und Beiträgen verwendet wird. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur cursus pellentesque sem, ac maximus tortor venenatis ac. Aenean convallis metus libero, ut sagittis nisi commodo nec. Sed tempor tempor erat, blandit pellentesque tortor. Proin ipsum velit, dictum ac luctus a, eleifend et sapien."
+
 #: inc/components/style_guide/component.php:301
 msgid "Good typography is invisible. Bad typography is everywhere."
 msgstr "Gute Typografie ist unsichtbar. Schlechte Typografie ist überall."
@@ -148,10 +161,6 @@ msgstr "Button-Stile bearbeiten"
 msgid "Secondary Button"
 msgstr "Sekundärer Button"
 
-#: inc/components/style_guide/component.php:294
-msgid "This is your website's main body text; it represents the standard paragraph style used across pages and posts. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur cursus pellentesque sem, ac maximus tortor venenatis ac. Aenean convallis metus libero, ut sagittis nisi commodo nec. Sed tempor tempor erat, blandit pellentesque tortor. Proin ipsum velit, dictum ac luctus a, eleifend et sapien."
-msgstr "Dies ist der Haupttext deiner Website; er stellt den Standardabsatzstil dar, der auf allen Seiten und Beiträgen verwendet wird. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur cursus pellentesque sem, ac maximus tortor venenatis ac. Aenean convallis metus libero, ut sagittis nisi commodo nec. Sed tempor tempor erat, blandit pellentesque tortor. Proin ipsum velit, dictum ac luctus a, eleifend et sapien."
-
 #: inc/components/style_guide/component.php:297
 msgid "Experiment with various font families, sizes, weights, and styles to establish a clear hierarchy and visual rhythm across your website. Each level of text, from bold, attention-grabbing headings to clean, readable body copy, works together to create balance, enhance readability, and guide users smoothly through your content. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur cursus pellentesque sem, ac maximus tortor venenatis ac. Aenean convallis metus libero, ut sagittis nisi commodo nec. Sed tempor tempor erat, blandit pellentesque tortor."
 msgstr "Experimentiere mit verschiedenen Schriftfamilien, Größen, Gewichtungen und Stilen, um eine klare Hierarchie und einen visuellen Rhythmus auf deiner Website zu schaffen. Jede Textebene, von fettgedruckten, aufmerksamkeitsstarken Überschriften bis hin zu klaren, lesbaren Texten, sorgt für Ausgewogenheit, verbessert die Lesbarkeit und führt die Nutzer/innen reibungslos durch deine Inhalte. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur cursus pellentesque sem, ac maximus tortor venenatis ac. Aenean convallis metus libero, ut sagittis nisi commodo nec. Sed tempor tempor erat, blandit pellentesque tortor."
@@ -159,6 +168,10 @@ msgstr "Experimentiere mit verschiedenen Schriftfamilien, Größen, Gewichtungen
 #: inc/components/style_guide/component.php:112
 msgid "Strong text"
 msgstr "Fettgedruckter Text"
+
+#: inc/customizer/class-theme-customizer.php:699
+msgid "Outline Button"
+msgstr "Button mit Kontur"
 
 #: inc/template-functions/header-functions.php:601
 msgid "Primary Mobile"
@@ -883,14 +896,6 @@ msgstr "Zurück Link Schrift"
 msgid "Event Above Area Background"
 msgstr "Veranstaltung über Bereich Hintergrund"
 
-#: inc/customizer/options/tec-event-layout-options.php:741
-msgid "Event Background"
-msgstr "Veranstaltung Hintergrund"
-
-#: inc/customizer/options/tec-event-layout-options.php:760
-msgid "Event Content Background"
-msgstr "Veranstaltung Inhalt Hintergrund"
-
 #: inc/customizer/options/tec-event-layout-options.php:419
 msgid "Event Title Background"
 msgstr "Veranstaltungstitel Hintergrund"
@@ -976,6 +981,14 @@ msgstr "Seitenleiste für Veranstaltungen"
 #: inc/customizer/options/tec-event-layout-options.php:571
 msgid "Event Default Sidebar"
 msgstr "Standardseitenleiste für Veranstaltungen"
+
+#: inc/customizer/options/tec-event-layout-options.php:741
+msgid "Event Background"
+msgstr "Hintergrund für Veranstaltungen"
+
+#: inc/customizer/options/tec-event-layout-options.php:760
+msgid "Event Content Background"
+msgstr "Hintergrund für den Veranstaltungsinhalt"
 
 #: inc/customizer/options/header-mobile-nav-options.php:291
 msgid "Entire parent menu item expands sub menu"
@@ -2911,10 +2924,6 @@ msgstr "Stil der Kurslektion"
 msgid "Dropdown Navigation"
 msgstr "Drop-down-Navigation"
 
-#: inc/customizer/options/header-search-options.php:395
-msgid "Modal Options"
-msgstr "Modal-Optionen"
-
 #: inc/customizer/options/custom-layout-options.php:1726
 #: inc/customizer/options/post-archive-layout-options.php:700
 msgid "Post Item Title Font"
@@ -2925,6 +2934,10 @@ msgstr "Schrift des Beitragstitels"
 #: inc/customizer/react/src/palette/palette-component.js:73
 msgid "7 - Subtle Background"
 msgstr "7 – subtiler Hintergrund"
+
+#: inc/customizer/options/header-search-options.php:395
+msgid "Modal Options"
+msgstr "Modal-Optionen"
 
 #: inc/customizer/options/my-account-layout-options.php:18
 msgid "My Account Navigation"
@@ -5389,10 +5402,6 @@ msgstr "Thementyp:"
 msgid "Forum:"
 msgstr "Forum:"
 
-#: bbpress/form-topic.php:91
-msgid "Topic Title (Maximum Length: %d):"
-msgstr "Themen-Titel (Maximale Länge: %d Zeichen):"
-
 #: bbpress/loop-search-reply.php:20
 msgid "In reply to:"
 msgstr "In Antwort auf:"
@@ -5408,10 +5417,6 @@ msgstr "Antworten"
 #: bbpress/loop-topics.php:19
 msgid "Last Post"
 msgstr "Letzter Beitrag"
-
-#: bbpress/form-reply.php:217 bbpress/form-topic.php:243
-msgid "The forum &#8216;%s&#8217; is closed to new topics and replies."
-msgstr "Das Forum &#8216;%s&#8217; ist für neue Themen und Antworten geschlossen."
 
 #: bbpress/form-reply.php:114 bbpress/form-topic.php:180
 msgid "Notify the author of follow-up replies via email"
@@ -6430,10 +6435,6 @@ msgstr "Einzelbeitrag Boxed Abstand"
 msgid "Slice"
 msgstr "Schneiden"
 
-#: bbpress/form-reply.php:182 bbpress/form-topic.php:219
-msgid "Submit"
-msgstr "Senden"
-
 #: bbpress/form-reply.php:96
 msgid "Tags:"
 msgstr "Tags:"
@@ -6442,10 +6443,6 @@ msgstr "Tags:"
 #: inc/class-theme.php:119
 msgid "The theme component %1$s does not implement the %2$s interface."
 msgstr "Die Theme-Komponente %1$s implementiert nicht die Schnittstelle %2$s."
-
-#: bbpress/form-reply.php:207
-msgid "The topic &#8216;%s&#8217; is closed to new replies."
-msgstr "Das Thema &#8216;%s&#8217; ist für neue Antworten geschlossen."
 
 #: bbpress/form-reply.php:54
 msgid "This forum is closed to new content, however your posting capabilities still allow you to post."
@@ -6689,6 +6686,11 @@ msgstr "Element-Trenner"
 msgid "You cannot reply to this topic."
 msgstr "Du kannst auf dieses Thema nicht antworten."
 
+#: inc/customizer/options/header-cart-options.php:93
+#: inc/customizer/options/header-mobile-cart-options.php:92
+msgid "Cart Click Action"
+msgstr "Warenkorb Klick-Aktion"
+
 #: inc/customizer/options/custom-layout-options.php:395
 #: inc/customizer/options/custom-layout-options.php:461
 #: inc/customizer/options/custom-layout-options.php:524
@@ -6733,11 +6735,6 @@ msgstr "Du kannst auf dieses Thema nicht antworten."
 #: inc/customizer/options/tutor-course-archive-layout-options.php:303
 msgid "Link Hover Color"
 msgstr "Linkfarbe bei Mauszeigerkontakt"
-
-#: inc/customizer/options/header-cart-options.php:93
-#: inc/customizer/options/header-mobile-cart-options.php:92
-msgid "Cart Click Action"
-msgstr "Warenkorb Klick-Aktion"
 
 #: inc/customizer/custom-controls/class-kadence-control-import-export.php:58
 msgid "Click the button to reset all theme settings."
@@ -6877,10 +6874,6 @@ msgstr "E-Mail"
 #: inc/customizer/options/general-typography-options.php:259
 msgid "Latin Extended"
 msgstr "Latein, erweitert"
-
-#: bbpress/form-reply.php:64 bbpress/form-topic.php:76
-msgid "Your account has the ability to post unrestricted HTML content."
-msgstr "Mit diesem Konto darfst du uneingeschränkt HTML-Inhalte verwenden."
 
 #: bbpress/form-reply.php:229
 msgid "You must be logged in to reply to this topic."
@@ -7793,6 +7786,18 @@ msgstr "Klicken, um dieses Element zu bearbeiten."
 msgid "Next:"
 msgstr "Nächster:"
 
+#: bbpress/form-reply.php:159 bbpress/form-topic.php:200
+msgid "Keep a log of this edit:"
+msgstr "Diese Bearbeitung protokollieren:"
+
+#: bbpress/loop-single-topic.php:67
+msgid "Started by: %1$s"
+msgstr "Erstellt von: %1$s"
+
+#: bbpress/form-reply.php:44
+msgid "This topic is marked as closed to new replies, however your posting capabilities still allow you to reply."
+msgstr "Dieses Thema ist für neue Antworten geschlossen, aber deine Veröffentlichungsberechtigungen ermöglichen es dir, dennoch zu antworten."
+
 #: inc/customizer/class-theme-customizer.php:1012
 #: inc/customizer/class-theme-customizer.php:1017
 #: inc/customizer/options/custom-layout-options.php:1484
@@ -7821,18 +7826,6 @@ msgstr "Nächster:"
 #: inc/customizer/options/tutor-course-archive-layout-options.php:434
 msgid "Archive Layout"
 msgstr "Archiv-Layout"
-
-#: bbpress/form-reply.php:159 bbpress/form-topic.php:200
-msgid "Keep a log of this edit:"
-msgstr "Diese Bearbeitung protokollieren:"
-
-#: bbpress/loop-single-topic.php:67
-msgid "Started by: %1$s"
-msgstr "Erstellt von: %1$s"
-
-#: bbpress/form-reply.php:44
-msgid "This topic is marked as closed to new replies, however your posting capabilities still allow you to reply."
-msgstr "Dieses Thema ist für neue Antworten geschlossen, aber deine Veröffentlichungsberechtigungen ermöglichen es dir, dennoch zu antworten."
 
 #: bbpress/form-topic.php:66
 msgid "This forum is marked as closed to new topics, however your posting capabilities still allow you to create a topic."
@@ -7876,6 +7869,26 @@ msgstr "Soziale Netzwerke"
 #: inc/customizer/options/product-layout-options.php:78
 msgid "Breadcrumbs"
 msgstr "Navigationspfad"
+
+#: bbpress/form-reply.php:182 bbpress/form-topic.php:219
+msgid "Submit"
+msgstr "Absenden"
+
+#: bbpress/form-reply.php:217 bbpress/form-topic.php:243
+msgid "The forum &#8216;%s&#8217; is closed to new topics and replies."
+msgstr "Das Forum „%s“ ist für neue Themen und Antworten geschlossen."
+
+#: bbpress/form-reply.php:64 bbpress/form-topic.php:76
+msgid "Your account has the ability to post unrestricted HTML content."
+msgstr "Mit diesem Konto darfst du uneingeschränkt HTML-Inhalte veröffentlichen."
+
+#: bbpress/form-topic.php:91
+msgid "Topic Title (Maximum Length: %d):"
+msgstr "Thementitel (maximale Länge: %d):"
+
+#: bbpress/form-reply.php:207
+msgid "The topic &#8216;%s&#8217; is closed to new replies."
+msgstr "Das Thema „%s“ ist für neue Antworten geschlossen."
 
 #. Theme URI of the theme
 #: style.css

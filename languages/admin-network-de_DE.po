@@ -2,7 +2,7 @@
 # This file is distributed under the same license as the WordPress - 7.1.x - Development - Administration - Network Admin package.
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2026-08-19 18:39:12+0000\n"
+"PO-Revision-Date: 2026-09-09 19:23:44+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -214,7 +214,7 @@ msgstr "j.n.Y, G:i:s"
 #. translators: %s: Documentation URL.
 #: wp-admin/includes/network.php:682
 msgid "It seems your network is running with Nginx web server. <a href=\"%s\">Learn more about further configuration</a>."
-msgstr "Es sieht so aus, als würde dein Netzwerk mit einem Nginx-Webserver laufen. <a href=\"%s\">Erfahre hier mehr über die weitere Konfiguration (engl.)</a>."
+msgstr "Es sieht so aus, als würde dein Netzwerk auf einem Nginx-Webserver betrieben. <a href=\"%s\">Erfahre mehr über die weitere Konfiguration (engl.)</a>."
 
 #. translators: %s: Number of sites.
 #: wp-admin/includes/class-wp-ms-sites-list-table.php:258
@@ -690,7 +690,7 @@ msgstr "<a href=\"https://codex.wordpress.org/Network_Admin_Themes_Screen\">Doku
 #. translators: 1: Site URL, 2: Server error message.
 #: wp-admin/network/upgrade.php:100
 msgid "Warning! Problem updating %1$s. Your server may not be able to connect to sites running on it. Error message: %2$s"
-msgstr "Warnung! Es ist ein Problem bei der Aktualisierung von %1$s aufgetreten. Dein Server könnte Probleme damit haben, sich mit Websites zu verbinden, die darauf laufen. Fehlermeldung: %2$s"
+msgstr "Warnung! Bei der Aktualisierung von %1$s ist ein Problem aufgetreten. Dein Server kann möglicherweise keine Verbindung zu den darauf betriebenen Websites herstellen. Fehlermeldung: %2$s"
 
 #. translators: %s: Number of themes.
 #: wp-admin/network/themes.php:416
@@ -815,7 +815,7 @@ msgstr "Netzwerk aktualisieren"
 #: wp-admin/includes/network.php:280 wp-admin/includes/network.php:660
 #: wp-admin/includes/network.php:722
 msgid "Subdirectory networks may not be fully compatible with custom wp-content directories."
-msgstr "Unterverzeichnis-Netzwerke sind möglicherweise nicht vollständig mit individuellen wp-content-Verzeichnissen kompatibel."
+msgstr "Unterverzeichnis-Netzwerke sind möglicherweise nicht vollständig mit individuellen „wp-content“-Verzeichnissen kompatibel."
 
 #: wp-admin/network.php:64
 msgid "Add the designated lines of code to wp-config.php (just before <code>/*...stop editing...*/</code>) and <code>.htaccess</code> (replacing the existing WordPress rules)."
@@ -1184,7 +1184,7 @@ msgstr "Wenn noch keine Versionsaktualisierung des Cores stattgefunden hat, hat 
 
 #: wp-admin/network/themes.php:315
 msgid "If the network admin disables a theme that is in use, it can still remain selected on that site. If another theme is chosen, the disabled theme will not appear in the site&#8217;s Appearance > Themes screen."
-msgstr "Wenn ein Netzwerk-Administrator ein Theme deaktiviert, das noch benutzt wird, kann es auf der betreffenden Website immer noch ausgewählt bleiben. Erst wenn ein anderes Theme gewählt wird, erscheint das deaktivierte Theme nicht mehr in der Ansicht unter Design > Themes dieser Website."
+msgstr "Wenn ein Netzwerk-Administrator ein Theme deaktiviert, das noch benutzt wird, kann es auf der betreffenden Website immer noch ausgewählt bleiben. Erst wenn ein anderes Theme gewählt wird, erscheint das deaktivierte Theme nicht mehr in der Ansicht unter „Design > Themes“ dieser Website."
 
 #: wp-admin/network/themes.php:314
 msgid "This screen enables and disables the inclusion of themes available to choose in the Appearance menu for each site. It does not activate or deactivate which theme a site is currently using."

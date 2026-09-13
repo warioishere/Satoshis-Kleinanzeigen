@@ -2,7 +2,7 @@
 # This file is distributed under the same license as the Plugins - Kadence Blocks — Page Builder Toolkit for Gutenberg Editor - Stable (latest release) package.
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2026-08-23 11:03:53+0000\n"
+"PO-Revision-Date: 2026-09-12 15:28:19+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -2265,20 +2265,6 @@ msgstr "Dynamischer Inhalt"
 msgid "Custom Fonts"
 msgstr "Individuelle Schriften"
 
-#: includes/settings/class-kadence-blocks-settings.php:1396
-#: dist/blocks-accordion.js:11 dist/blocks-advanced-form.js:12
-#: dist/blocks-advancedbtn.js:32 dist/blocks-advancedgallery.js:11
-#: dist/blocks-advancedheading.js:41 dist/blocks-countdown.js:11
-#: dist/blocks-countup.js:11 dist/blocks-form.js:11 dist/blocks-header.js:32
-#: dist/blocks-iconlist.js:32 dist/blocks-identity.js:2 dist/blocks-image.js:11
-#: dist/blocks-infobox.js:11 dist/blocks-navigation.js:32
-#: dist/blocks-posts.js:2 dist/blocks-progress-bar.js:11
-#: dist/blocks-search.js:11 dist/blocks-singlebtn.js:32 dist/blocks-table.js:11
-#: dist/blocks-tableofcontents.js:11 dist/blocks-tabs.js:11
-#: dist/blocks-testimonials.js:11 dist/components.js:41
-msgid "Google Fonts"
-msgstr "Google Fonts"
-
 #: includes/advanced-form/advanced-form-ajax.php:60 includes/form-ajax.php:459
 msgid "Submission rejected, invalid security token. Reload the page and try again."
 msgstr "Übermittlung abgelehnt, ungültiges Sicherheitstoken. Lade die Seite neu und versuche es erneut."
@@ -2290,6 +2276,23 @@ msgstr "Beitrags-Kategorie einschließen"
 #: includes/class-kadence-blocks-posts-rest-api.php:517
 msgid "Check if using a custom Taxonomy"
 msgstr "Bei Verwendung individueller Taxonomie anhaken"
+
+#: includes/class-kadence-blocks-posts-rest-api.php:507
+msgid "Number of items to offset in query."
+msgstr "Anzahl der zu verschiebenden Elemente in der Abfrage."
+
+#: includes/class-kadence-blocks-posts-rest-api.php:503
+msgid "Exclude Category."
+msgstr "Kategorie ausschließen"
+
+#: includes/class-kadence-blocks-posts-rest-api.php:498
+msgid "Allow Sticky in Query."
+msgstr "Erlaube oben gehalten in der Abfrage"
+
+#: includes/class-kadence-blocks-posts-rest-api.php:494
+#: includes/class-kadence-blocks-posts-rest-api.php:522
+msgid "Define Query Order By."
+msgstr "Definiere Abfrage-Reihenfolge nach"
 
 #: includes/class-kadence-blocks-editor-assets.php:529
 #: includes/class-kadence-blocks-editor-assets.php:635
@@ -2308,23 +2311,6 @@ msgstr "Bei Verwendung individueller Taxonomie anhaken"
 #: dist/blocks-testimonials.js:11 dist/components.js:41 dist/components.js:42
 msgid "Thin 100"
 msgstr "Dünn 100"
-
-#: includes/class-kadence-blocks-posts-rest-api.php:507
-msgid "Number of items to offset in query."
-msgstr "Anzahl der zu verschiebenden Elemente in der Abfrage."
-
-#: includes/class-kadence-blocks-posts-rest-api.php:503
-msgid "Exclude Category."
-msgstr "Kategorie ausschließen"
-
-#: includes/class-kadence-blocks-posts-rest-api.php:498
-msgid "Allow Sticky in Query."
-msgstr "Erlaube oben gehalten in der Abfrage"
-
-#: includes/class-kadence-blocks-posts-rest-api.php:494
-#: includes/class-kadence-blocks-posts-rest-api.php:522
-msgid "Define Query Order By."
-msgstr "Definiere Abfrage-Reihenfolge nach"
 
 #: includes/class-kadence-blocks-posts-rest-api.php:490
 msgid "Define Query Order."
@@ -2365,6 +2351,20 @@ msgstr "Stadt"
 #: dist/blocks-advanced-form.js:1 dist/components.js:42
 msgid "Address Line 2"
 msgstr "Adresszeile 2"
+
+#: includes/settings/class-kadence-blocks-settings.php:1396
+#: dist/blocks-accordion.js:11 dist/blocks-advanced-form.js:12
+#: dist/blocks-advancedbtn.js:32 dist/blocks-advancedgallery.js:11
+#: dist/blocks-advancedheading.js:41 dist/blocks-countdown.js:11
+#: dist/blocks-countup.js:11 dist/blocks-form.js:11 dist/blocks-header.js:32
+#: dist/blocks-iconlist.js:32 dist/blocks-identity.js:2 dist/blocks-image.js:11
+#: dist/blocks-infobox.js:11 dist/blocks-navigation.js:32
+#: dist/blocks-posts.js:2 dist/blocks-progress-bar.js:11
+#: dist/blocks-search.js:11 dist/blocks-singlebtn.js:32 dist/blocks-table.js:11
+#: dist/blocks-tableofcontents.js:11 dist/blocks-tabs.js:11
+#: dist/blocks-testimonials.js:11 dist/components.js:41
+msgid "Google Fonts"
+msgstr "Google Fonts"
 
 #: includes/settings/class-kadence-blocks-site-health.php:325
 #: dist/blocks-advanced-form.js:1 dist/blocks-form.js:12 dist/components.js:42
@@ -2506,14 +2506,6 @@ msgstr "Übertragung fehlgeschlagen"
 msgid "Accept"
 msgstr "Zustimmen"
 
-#. translators: 'Home' as in a website's home page.
-#: includes/settings/class-kadence-blocks-settings.php:704
-#: includes/settings/class-kadence-blocks-settings.php:713
-#: dist/blocks-navigation.js:33 dist/blocks-navigation.js:35
-#: dist/blocks-rowlayout.js:1
-msgid "Home"
-msgstr "Zu Hause"
-
 #: includes/advanced-form/advanced-form-ajax.php:110
 msgid "Submission rejected."
 msgstr "Submission rejected."
@@ -2522,6 +2514,14 @@ msgstr "Submission rejected."
 #: dist/blocks-advanced-form.js:1 dist/blocks-form.js:12 dist/components.js:42
 msgid "Address Line 1"
 msgstr "Adresszeile 1"
+
+#. translators: 'Home' as in a website's home page.
+#: includes/settings/class-kadence-blocks-settings.php:704
+#: includes/settings/class-kadence-blocks-settings.php:713
+#: dist/blocks-navigation.js:33 dist/blocks-navigation.js:35
+#: dist/blocks-rowlayout.js:1
+msgid "Home"
+msgstr "Start"
 
 #: includes/blocks/class-kadence-blocks-row-layout-block.php:1664
 #: dist/blocks-rowlayout.js:60
@@ -2826,12 +2826,6 @@ msgstr "Aktualisiert"
 msgid "Updating"
 msgstr "Aktualisierung"
 
-#: includes/settings/class-kadence-blocks-settings.php:723
-#: dist/blocks-header.js:33 dist/blocks-navigation.js:1
-#: dist/plugin-kadence-control.js:8
-msgid "Close"
-msgstr "Schließen"
-
 #: includes/settings/class-kadence-blocks-settings.php:724
 #: dist/admin-kadence-home.js:1 dist/admin-kadence-home.js:14
 #: dist/blocks-accordion.js:12 dist/blocks-advanced-form.js:34
@@ -2853,6 +2847,12 @@ msgstr "Schließen"
 #: dist/plugin-kadence-control.js:8
 msgid "Save"
 msgstr "Speichern"
+
+#: includes/settings/class-kadence-blocks-settings.php:723
+#: dist/blocks-header.js:33 dist/blocks-navigation.js:1
+#: dist/plugin-kadence-control.js:8
+msgid "Close"
+msgstr "Schließen"
 
 #: includes/settings/class-kadence-blocks-settings.php:915
 msgid "Config Kadence Block Settings"
@@ -2910,6 +2910,37 @@ msgstr "Hinweis: Die „content_width“ des derzeit aktiven Themes ist:"
 msgid "Fullwidth"
 msgstr "Volle Breite"
 
+#: includes/settings/class-kadence-blocks-settings.php:1211
+#: includes/settings/class-kadence-blocks-settings.php:1224
+#: dist/blocks-accordion.js:1 dist/blocks-accordion.js:12
+#: dist/blocks-advanced-form.js:11 dist/blocks-advanced-form.js:13
+#: dist/blocks-advancedbtn.js:1 dist/blocks-advancedgallery.js:1
+#: dist/blocks-advancedgallery.js:12 dist/blocks-advancedheading.js:1
+#: dist/blocks-advancedheading.js:42 dist/blocks-column.js:1
+#: dist/blocks-column.js:31 dist/blocks-countdown.js:10
+#: dist/blocks-countdown.js:11 dist/blocks-countdown.js:12
+#: dist/blocks-countup.js:10 dist/blocks-countup.js:12 dist/blocks-form.js:10
+#: dist/blocks-form.js:12 dist/blocks-googlemaps.js:1 dist/blocks-header.js:31
+#: dist/blocks-icon.js:1 dist/blocks-icon.js:10 dist/blocks-iconlist.js:1
+#: dist/blocks-iconlist.js:33 dist/blocks-identity.js:1
+#: dist/blocks-identity.js:3 dist/blocks-image.js:1 dist/blocks-image.js:33
+#: dist/blocks-infobox.js:1 dist/blocks-infobox.js:12 dist/blocks-lottie.js:1
+#: dist/blocks-navigation-link.js:1 dist/blocks-navigation-link.js:3
+#: dist/blocks-navigation.js:1 dist/blocks-navigation.js:33
+#: dist/blocks-posts.js:1 dist/blocks-posts.js:11
+#: dist/blocks-progress-bar.js:10 dist/blocks-progress-bar.js:12
+#: dist/blocks-rowlayout.js:1 dist/blocks-rowlayout.js:30
+#: dist/blocks-search.js:10 dist/blocks-search.js:33 dist/blocks-show-more.js:1
+#: dist/blocks-single-icon.js:1 dist/blocks-single-icon.js:10
+#: dist/blocks-singlebtn.js:1 dist/blocks-table.js:10
+#: dist/blocks-tableofcontents.js:1 dist/blocks-tabs.js:1
+#: dist/blocks-tabs.js:10 dist/blocks-testimonial.js:10
+#: dist/blocks-testimonials.js:10 dist/blocks-vector.js:1
+#: dist/blocks-videopopup.js:10 dist/components.js:10 dist/components.js:40
+#: dist/helpers.js:1 dist/plugin-kadence-control.js:1
+msgid "Large"
+msgstr "Groß"
+
 #: includes/settings/class-kadence-blocks-settings.php:1190
 #: includes/settings/class-kadence-blocks-settings.php:1200
 #: dist/blocks-advancedheading.js:1 dist/components.js:42
@@ -2942,45 +2973,6 @@ msgstr "Ermöglicht die Änderung der Editorbreite pro Seite/Beitrag mit voreing
 msgid "Enable Editor Width"
 msgstr "Editorbreite aktivieren"
 
-#: includes/settings/class-kadence-blocks-settings.php:1144
-msgid "Page Default"
-msgstr "Seitenstandard"
-
-#: includes/settings/class-kadence-blocks-settings.php:1143
-msgid "Post default"
-msgstr "Beitragsstandard"
-
-#: includes/settings/class-kadence-blocks-settings.php:1211
-#: includes/settings/class-kadence-blocks-settings.php:1224
-#: dist/blocks-accordion.js:1 dist/blocks-accordion.js:12
-#: dist/blocks-advanced-form.js:11 dist/blocks-advanced-form.js:13
-#: dist/blocks-advancedbtn.js:1 dist/blocks-advancedgallery.js:1
-#: dist/blocks-advancedgallery.js:12 dist/blocks-advancedheading.js:1
-#: dist/blocks-advancedheading.js:42 dist/blocks-column.js:1
-#: dist/blocks-column.js:31 dist/blocks-countdown.js:10
-#: dist/blocks-countdown.js:11 dist/blocks-countdown.js:12
-#: dist/blocks-countup.js:10 dist/blocks-countup.js:12 dist/blocks-form.js:10
-#: dist/blocks-form.js:12 dist/blocks-googlemaps.js:1 dist/blocks-header.js:31
-#: dist/blocks-icon.js:1 dist/blocks-icon.js:10 dist/blocks-iconlist.js:1
-#: dist/blocks-iconlist.js:33 dist/blocks-identity.js:1
-#: dist/blocks-identity.js:3 dist/blocks-image.js:1 dist/blocks-image.js:33
-#: dist/blocks-infobox.js:1 dist/blocks-infobox.js:12 dist/blocks-lottie.js:1
-#: dist/blocks-navigation-link.js:1 dist/blocks-navigation-link.js:3
-#: dist/blocks-navigation.js:1 dist/blocks-navigation.js:33
-#: dist/blocks-posts.js:1 dist/blocks-posts.js:11
-#: dist/blocks-progress-bar.js:10 dist/blocks-progress-bar.js:12
-#: dist/blocks-rowlayout.js:1 dist/blocks-rowlayout.js:30
-#: dist/blocks-search.js:10 dist/blocks-search.js:33 dist/blocks-show-more.js:1
-#: dist/blocks-single-icon.js:1 dist/blocks-single-icon.js:10
-#: dist/blocks-singlebtn.js:1 dist/blocks-table.js:10
-#: dist/blocks-tableofcontents.js:1 dist/blocks-tabs.js:1
-#: dist/blocks-tabs.js:10 dist/blocks-testimonial.js:10
-#: dist/blocks-testimonials.js:10 dist/blocks-vector.js:1
-#: dist/blocks-videopopup.js:10 dist/components.js:10 dist/components.js:40
-#: dist/helpers.js:1 dist/plugin-kadence-control.js:1
-msgid "Large"
-msgstr "Groß"
-
 #: includes/settings/class-kadence-blocks-settings.php:1210
 #: includes/settings/class-kadence-blocks-settings.php:1223
 #: dist/blocks-accordion.js:1 dist/blocks-accordion.js:12
@@ -3011,6 +3003,14 @@ msgstr "Groß"
 #: dist/helpers.js:1 dist/plugin-kadence-control.js:1
 msgid "Small"
 msgstr "Klein"
+
+#: includes/settings/class-kadence-blocks-settings.php:1144
+msgid "Page Default"
+msgstr "Seitenstandard"
+
+#: includes/settings/class-kadence-blocks-settings.php:1143
+msgid "Post default"
+msgstr "Beitragsstandard"
 
 #: includes/settings/class-kadence-blocks-settings.php:1141
 msgid "Large Template"
