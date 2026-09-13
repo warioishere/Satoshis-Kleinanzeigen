@@ -337,6 +337,8 @@ class Module {
         $sub_data = array(
             'cancel_string'   => __( 'Do you really want to cancel the subscription?', 'sk-core' ),
             'activate_string' => __( 'Want to activate the subscription again?', 'sk-core' ),
+            'days_string'     => __( 'Tage', 'sk-core' ),
+            'listings_string' => __( 'Inserate', 'sk-core' ),
         );
         wp_localize_script( 'dps-custom-js', 'skSubscription', $sub_data );
 

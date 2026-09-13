@@ -160,7 +160,7 @@ use SK\Modules\Subscription\Helper;
                             if ( '-1' === $no_of_product ) {
                                 echo sprintf( '<strong>%s</strong> %s <br />', __( 'Unlimited', 'sk-core' ), __( 'Products', 'sk-core' ) );
                             } else {
-                                echo sprintf( '<strong>%d</strong> %s <br />', $no_of_product, __( 'Products', 'sk-core' ) );
+                                echo sprintf( '<strong class="pack_limit">%d</strong> %s <br />', $no_of_product, __( 'Products', 'sk-core' ) );
                             }
                             ?>
                             <?php
@@ -243,6 +243,8 @@ use SK\Modules\Subscription\Helper;
         if ( class_exists( \SK\Modules\ShopImport\Variants::class ) ) {
             include SK_SHOP_IMPORT_PATH . '/templates/pack-info-modal.php';
         }
+
+        sk_get_template_part( 'dashboard/pack-confirm-modal', '', [ 'is_subscription' => true ] );
         ?>
 
         <?php

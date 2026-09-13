@@ -149,7 +149,7 @@
   flex-wrap: wrap;
   gap: 6px;
   justify-content: center;
-  margin: 0 16px 12px;
+  margin: 18px 16px 12px;
 }
 .pack_term {
   flex: 1 1 auto;
@@ -178,4 +178,42 @@
   font-size: 11px;
   font-weight: 700;
   opacity: 0.85;
+}
+
+/* Bestaetigung vor der Zahlung — nutzt die Kaesten-Klassen aus sk-pack-info */
+.sk-pack-confirm__summary {
+  text-align: center;
+  margin-bottom: 18px;
+}
+.sk-pack-confirm__summary strong {
+  display: block;
+  font-size: 24px;
+  color: #f7931a;
+}
+.sk-pack-confirm__summary span {
+  font-size: 14px;
+  opacity: 0.8;
+}
+.sk-pack-confirm__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+}
+.sk-pack-confirm__go {
+  display: inline-block;
+  padding: 10px 22px;
+  border-radius: 6px;
+  background: #f7931a;
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}
+.sk-pack-confirm__go:hover {
+  background: #e0850f;
+  color: #fff;
+}
+.sk-pack-confirm__actions .sk-pack-info__close {
+  margin: 0;
 }

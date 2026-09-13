@@ -14302,3 +14302,35 @@ msgstr "Link zu deinen Allgemeinen Geschäftsbedingungen. Er steht bei den Konta
 #: plugins/sk-core/includes/Dashboard/Modules/ContactDetails.php
 msgid "AGB"
 msgstr "AGB"
+
+#: plugins/sk-core/modules/sk-subscription/templates/dashboard/pack-confirm-modal.php
+msgid "Dein Paket"
+msgstr "Dein Paket"
+
+#: plugins/sk-core/modules/sk-subscription/templates/dashboard/pack-confirm-modal.php
+msgid "Weiter geht es zur Zahlung. Das Paket startet, sobald die Zahlung bestätigt ist."
+msgstr "Weiter geht es zur Zahlung. Das Paket startet, sobald die Zahlung bestätigt ist."
+
+#: plugins/sk-core/modules/sk-subscription/templates/dashboard/pack-confirm-modal.php
+msgid "Zur Zahlung"
+msgstr "Zur Zahlung"
+
+#: plugins/sk-core/modules/sk-subscription/templates/dashboard/pack-confirm-modal.php
+msgid "Abbrechen"
+msgstr "Abbrechen"
+
+#: plugins/sk-core/modules/sk-subscription/module.php
+msgid "Tage"
+msgstr "Tage"
+
+#: plugins/sk-core/modules/sk-subscription/includes/classes/Durations.php
+msgid "1 Monat"
+msgstr "1 Monat"
+
+#: plugins/sk-core/modules/sk-subscription/includes/classes/Durations.php
+msgid "%d Monate"
+msgstr "%d Monate"
+
+#: plugins/sk-core/modules/sk-subscription/templates/dashboard/pack-listing.php
+msgid "Laufzeit"
+msgstr "Laufzeit"

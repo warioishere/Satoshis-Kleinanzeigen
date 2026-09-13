@@ -257,7 +257,7 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
                                     if ( '-1' === $no_of_product ) {
                                         echo sprintf( '<strong>%s</strong> %s <br />', esc_html__( 'Unlimited', 'sk-core' ), esc_html__( 'Products', 'sk-core' ) );
                                     } else {
-                                        echo sprintf( '<strong>%d</strong> %s <br />', (int) $no_of_product, esc_html__( 'Products', 'sk-core' ) );
+                                        echo sprintf( '<strong class="pack_limit">%d</strong> %s <br />', (int) $no_of_product, esc_html__( 'Products', 'sk-core' ) );
                                     }
                                     ?>
                                     <?php
@@ -344,6 +344,8 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
                 if ( class_exists( \SK\Modules\ShopImport\Variants::class ) ) {
                     include SK_SHOP_IMPORT_PATH . '/templates/pack-info-modal.php';
                 }
+
+                sk_get_template_part( 'dashboard/pack-confirm-modal', '', [ 'is_subscription' => true ] );
                 ?>
 
             <?php else : ?>
