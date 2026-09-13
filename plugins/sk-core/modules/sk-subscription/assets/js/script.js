@@ -36,4 +36,19 @@
         }
     });
 
+    // Term buttons on a package card: pick the sibling pack the buy button
+    // leads to, and show its price.
+    $(document).on('click', '.pack_term', function () {
+        var $btn  = $(this);
+        var $card = $btn.closest('.product_pack_item');
+
+        $card.find('.pack_term').removeClass('is-active');
+        $btn.addClass('is-active');
+        $card.find('.dps-amount').text($btn.data('price'));
+        $card.find('.pack_days').text($btn.data('days'));
+
+        var url = $btn.data('url');
+        if (url) $card.find('.buy_product_pack').attr('href', url);
+    });
+
 })(jQuery);

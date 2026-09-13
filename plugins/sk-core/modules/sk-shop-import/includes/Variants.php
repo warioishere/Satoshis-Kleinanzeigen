@@ -57,7 +57,7 @@ final class Variants {
     public static function allowed_packs(): array {
         $stored = get_option( self::OPTION_PACKS, [] );
         if ( is_array( $stored ) && ! empty( $stored ) ) {
-            return array_map( 'intval', $stored );
+            return self::with_terms( array_map( 'intval', $stored ) );
         }
 
         global $wpdb;
@@ -76,6 +76,33 @@ final class Variants {
         }
 
         return $packs;
+    }
+
+    /**
+     * The same packages in their other terms.
+     *
+     * A package listed here is meant as a package, not as one term of it —
+     * so the three-month and yearly siblings unlock the same features
+     * without having to be listed again.
+     *
+     * @param int[] $ids
+     *
+     * @return int[]
+     */
+    private static function with_terms( array $ids ): array {
+        if ( ! class_exists( \SK\Modules\Subscription\Durations::class ) ) {
+            return $ids;
+        }
+
+        foreach ( $ids as $id ) {
+            $group = \SK\Modules\Subscription\Durations::group( $id );
+
+            if ( '' !== $group ) {
+                $ids = array_merge( $ids, \SK\Modules\Subscription\Durations::siblings( $group ) );
+            }
+        }
+
+        return array_values( array_unique( $ids ) );
     }
 
     /**

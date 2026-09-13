@@ -142,3 +142,40 @@
 #sk-subscription-pack {
   margin-top: 5px;
 }
+
+/* Laufzeit-Schalter auf der Paketkarte */
+.pack_terms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin: 0 16px 12px;
+}
+.pack_term {
+  flex: 1 1 auto;
+  min-width: 78px;
+  padding: 6px 10px;
+  border: 1px solid #2e3846;
+  border-radius: 6px;
+  background: #1a1f28;
+  color: #c5ccd6;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  cursor: pointer;
+}
+.pack_term:hover:not(.is-active) {
+  border-color: rgba(247, 147, 26, 0.45);
+  color: #e8ecf0;
+}
+.pack_term.is-active {
+  background: #f7931a;
+  border-color: #f7931a;
+  color: #fff;
+}
+.pack_term__saving {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.85;
+}

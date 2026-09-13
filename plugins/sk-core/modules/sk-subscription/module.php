@@ -318,6 +318,7 @@ class Module {
         require_once DPS_PATH . '/includes/classes/Shortcode.php';
         require_once DPS_PATH . '/includes/Abstracts/VendorSubscription.php';
         require_once DPS_PATH . '/includes/classes/SubscriptionPack.php';
+        require_once DPS_PATH . '/includes/classes/Durations.php';
         require_once DPS_PATH . '/includes/classes/ProductStatusChanger.php';
         require_once DPS_PATH . '/includes/classes/SubscriptionOrderMetaBuilder.php';
         require_once DPS_PATH . '/includes/classes/SubscriptionInvoice.php';

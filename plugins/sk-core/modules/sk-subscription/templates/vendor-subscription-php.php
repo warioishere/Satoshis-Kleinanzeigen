@@ -12,6 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+use SK\Modules\Subscription\Durations;
 use SK\Modules\Subscription\Helper;
 
 wp_enqueue_style( 'dps-custom-style' );
@@ -195,9 +196,17 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
                     while ( $subscription_packs->have_posts() ) :
                         $subscription_packs->the_post();
 
+                        // One card per package: the longer terms of the same
+                        // package are siblings and become the buttons on it.
+                        if ( ! Durations::is_card( (int) get_the_ID() ) ) {
+                            continue;
+                        }
+
                         $sub_pack           = sk()->subscription->get( get_the_ID() );
                         $pack_id            = apply_filters( 'sk_vendor_subscription_package_id', get_the_ID() );
-                        $is_current         = Helper::is_vendor_subscribed_pack( $pack_id ) || Helper::pack_renew_seller( $pack_id );
+                        $terms              = Durations::options( (int) get_the_ID() );
+                        $is_current         = Helper::is_vendor_subscribed_pack( $pack_id ) || Helper::pack_renew_seller( $pack_id )
+                            || Durations::holds_group( sk_get_current_user_id(), (int) get_the_ID() );
                         ?>
                         <div class="product_pack_item <?php echo $is_current ? 'current_pack' : ''; ?>">
 
@@ -255,7 +264,7 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
                                     if ( empty( $sub_pack->get_pack_valid_days() ) ) {
                                         echo sprintf( '%1$s<br /><strong>%2$s</strong> %3$s', esc_html__( 'For', 'sk-core' ), esc_html__( 'Unlimited', 'sk-core' ), esc_html__( 'Days', 'sk-core' ) );
                                     } else {
-                                        echo sprintf( '%1$s<br /><strong>%2$s</strong> %3$s', esc_html__( 'For', 'sk-core' ), esc_html( $sub_pack->get_pack_valid_days() ), esc_html__( 'Days', 'sk-core' ) );
+                                        echo sprintf( '%1$s<br /><strong class="pack_days">%2$s</strong> %3$s', esc_html__( 'For', 'sk-core' ), esc_html( $sub_pack->get_pack_valid_days() ), esc_html__( 'Days', 'sk-core' ) );
                                     }
                                     ?>                                </div>
 
@@ -285,6 +294,24 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
                                     </button>
                                 <?php endif; ?>
                             </div>
+
+                            <?php if ( $terms ) : ?>
+                                <div class="pack_terms" role="group" aria-label="<?php esc_attr_e( 'Laufzeit', 'sk-core' ); ?>">
+                                    <?php foreach ( $terms as $sk_i => $sk_term ) : ?>
+                                        <button type="button"
+                                                class="pack_term<?php echo 0 === $sk_i ? ' is-active' : ''; ?>"
+                                                data-pack="<?php echo (int) $sk_term['id']; ?>"
+                                                data-price="<?php echo esc_attr( wp_strip_all_tags( wc_price( $sk_term['price'] ) ) ); ?>"
+                                        data-days="<?php echo (int) get_post_meta( $sk_term['id'], '_pack_validity', true ); ?>"
+                                                data-url="<?php echo esc_url( do_shortcode( '[add_to_cart_url id="' . (int) $sk_term['id'] . '"]' ) ); ?>">
+                                            <?php echo esc_html( $sk_term['label'] ); ?>
+                                            <?php if ( $sk_term['saving'] > 0 ) : ?>
+                                                <span class="pack_term__saving">−<?php echo (int) $sk_term['saving']; ?>&nbsp;%</span>
+                                            <?php endif; ?>
+                                        </button>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
 
                             <div class="buy_pack_button">
                                 <?php if ( Helper::is_vendor_subscribed_pack( $pack_id ) ) : ?>
