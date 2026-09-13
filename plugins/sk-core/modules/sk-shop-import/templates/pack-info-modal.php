@@ -38,6 +38,13 @@ defined( 'ABSPATH' ) || exit;
                 </span>
             </li>
             <li>
+                <i class="fas fa-list-check"></i>
+                <span>
+                    <strong><?php esc_html_e( 'Sammelbearbeitung', 'sk-core' ); ?> <span class="sk-pack-info__from"><?php esc_html_e( 'ab Hai', 'sk-core' ); ?></span></strong>
+                    <?php esc_html_e( 'Mehrere Inserate auswählen und in einem Zug ändern: veröffentlichen, auf Entwurf setzen oder den Preis um einen Prozentsatz oder einen Sats-Betrag anheben und senken. Inserate mit Preis in Euro oder Franken bleiben dabei unangetastet, weil dort der tägliche Kurslauf den Sats-Preis bestimmt.', 'sk-core' ); ?>
+                </span>
+            </li>
+            <li>
                 <i class="fas fa-chart-bar"></i>
                 <span>
                     <strong><?php esc_html_e( 'Umsatz & CSV-Export', 'sk-core' ); ?> <span class="sk-pack-info__from"><?php esc_html_e( 'ab Hai', 'sk-core' ); ?></span></strong>

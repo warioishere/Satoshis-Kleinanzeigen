@@ -14368,3 +14368,11 @@ msgid "Preis von %d Inserat geändert."
 msgid_plural "Preis von %d Inseraten geändert."
 msgstr[0] "Preis von %d Inserat geändert."
 msgstr[1] "Preis von %d Inseraten geändert."
+
+#: plugins/sk-core/modules/sk-shop-import/templates/pack-info-modal.php
+msgid "Sammelbearbeitung"
+msgstr "Sammelbearbeitung"
+
+#: plugins/sk-core/modules/sk-shop-import/templates/pack-info-modal.php
+msgid "Mehrere Inserate auswählen und in einem Zug ändern: veröffentlichen, auf Entwurf setzen oder den Preis um einen Prozentsatz oder einen Sats-Betrag anheben und senken. Inserate mit Preis in Euro oder Franken bleiben dabei unangetastet, weil dort der tägliche Kurslauf den Sats-Preis bestimmt."
+msgstr "Mehrere Inserate auswählen und in einem Zug ändern: veröffentlichen, auf Entwurf setzen oder den Preis um einen Prozentsatz oder einen Sats-Betrag anheben und senken. Inserate mit Preis in Euro oder Franken bleiben dabei unangetastet, weil dort der tägliche Kurslauf den Sats-Preis bestimmt."

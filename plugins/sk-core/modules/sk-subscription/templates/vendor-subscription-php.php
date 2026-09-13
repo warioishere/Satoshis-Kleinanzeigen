@@ -281,6 +281,9 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
                                         <?php if ( \SK\Modules\ShopImport\Variants::import_pack_allows( (int) get_the_ID() ) ) : ?>
                                             <li><i class="fas fa-file-import"></i> Woo &amp; Shopify Produkt Import</li>
                                         <?php endif; ?>
+                                        <?php if ( \SK\Modules\ShopImport\Variants::bulk_pack_allows( (int) get_the_ID() ) ) : ?>
+                                            <li><i class="fas fa-list-check"></i> Sammelbearbeitung</li>
+                                        <?php endif; ?>
                                         <?php if ( \SK\Modules\ShopImport\Variants::revenue_pack_allows( (int) get_the_ID() ) ) : ?>
                                             <li><i class="fas fa-chart-bar"></i> Umsatz &amp; CSV-Export</li>
                                         <?php endif; ?>
