@@ -38,7 +38,9 @@
     transition: background-color .15s, border-color .15s, color .15s;
 }
 
-.sk-pv-btn:hover:not(:disabled) {
+/* :not(.sk-pv-active) — otherwise the hover rule outweighs the chosen state
+   and the button stays grey under the cursor that just clicked it. */
+.sk-pv-btn:hover:not(:disabled):not(.sk-pv-active) {
     background: #232b36;
     color: #e8ecf0;
     border-color: rgba(247, 147, 26, 0.45);
