@@ -51,10 +51,24 @@
         if (url) $card.find('.buy_product_pack').attr('href', url);
     });
 
-    // Last look before the payment page: what was picked, and what it
-    // contains. Filled from the card, so the list can never drift from it.
-    $(document).on('click', '.buy_product_pack', function (e) {
-        var $link = $(this);
+    /*
+     * Last look before the payment page: what was picked, and what it
+     * contains. Filled from the card, so the list can never drift from it.
+     *
+     * Caught while the click travels down, not up: sk-buynow.js listens for
+     * the same link and opens the BTCPay window straight away, which would
+     * otherwise appear behind this box — and an invoice would exist before
+     * anyone confirmed anything. The button inside the box carries the same
+     * class and is let through, so the usual purchase runs from there.
+     */
+    document.addEventListener('click', function (e) {
+        var link = e.target.closest && e.target.closest('.buy_product_pack');
+
+        if (!link || link.closest('#sk-pack-confirm')) {
+            return;
+        }
+
+        var $link = $(link);
         var href  = $link.attr('href') || '';
         var $box  = $('#sk-pack-confirm');
 
@@ -62,6 +76,7 @@
         if (!$box.length || href.indexOf('add-to-cart=') === -1) return;
 
         e.preventDefault();
+        e.stopPropagation();
 
         var $card = $link.closest('.product_pack_item');
         var $term = $card.find('.pack_term.is-active');
@@ -100,7 +115,7 @@
 
         $box.addClass('is-visible');
         $box.find('.sk-pack-info__close').trigger('focus');
-    });
+    }, true );
 
     $(document).on('click', '#sk-pack-confirm .sk-pack-info__close, #sk-pack-confirm .sk-pack-info__backdrop', function (e) {
         e.preventDefault();

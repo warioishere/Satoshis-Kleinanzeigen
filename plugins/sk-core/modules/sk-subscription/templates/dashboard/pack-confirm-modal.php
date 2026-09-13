@@ -27,7 +27,8 @@ defined( 'ABSPATH' ) || exit;
         </p>
 
         <div class="sk-pack-confirm__actions">
-            <a href="#" class="sk-pack-confirm__go" data-role="go"><?php esc_html_e( 'Zur Zahlung', 'sk-core' ); ?></a>
+            <?php // buy_product_pack: from here the usual purchase runs, sk-buynow.js picks it up. ?>
+            <a href="#" class="sk-pack-confirm__go buy_product_pack" data-role="go"><?php esc_html_e( 'Zur Zahlung', 'sk-core' ); ?></a>
             <button type="button" class="sk-pack-info__close"><?php esc_html_e( 'Abbrechen', 'sk-core' ); ?></button>
         </div>
     </div>
