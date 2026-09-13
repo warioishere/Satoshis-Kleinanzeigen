@@ -14388,3 +14388,23 @@ msgstr "Katalog als Datei hochladen"
 #: plugins/sk-core/modules/sk-shop-import/includes/Source.php
 msgid "Unter dieser Adresse ist kein Katalog zu holen. Weder WooCommerce noch Shopify antworten dort mit Produkten. Läuft dein Shop auf etwas anderem, oder ist die Schnittstelle abgeschaltet, nimm den Weg über die CSV-Datei."
 msgstr "Unter dieser Adresse ist kein Katalog zu holen. Weder WooCommerce noch Shopify antworten dort mit Produkten. Läuft dein Shop auf etwas anderem, oder ist die Schnittstelle abgeschaltet, nimm den Weg über die CSV-Datei."
+
+#: plugins/sk-core/templates/dashboard/shop-import/dashboard-shop-import.php
+msgid "Jede Nacht abgleichen"
+msgstr "Jede Nacht abgleichen"
+
+#: plugins/sk-core/templates/dashboard/shop-import/dashboard-shop-import.php
+msgid "Katalog nächtlich abgleichen"
+msgstr "Katalog nächtlich abgleichen"
+
+#: plugins/sk-core/templates/dashboard/shop-import/dashboard-shop-import.php
+msgid "Einmal pro Nacht holen wir deinen Katalog erneut und gleichen ab, was du hier schon eingestellt hast: Preise und Ausführungen werden nachgeführt, und was in deinem Shop verschwunden oder ausverkauft ist, wird zum Entwurf. Gelöscht wird nie. Neue Artikel aus deinem Shop werden nur gezählt und nicht von allein eingestellt — die wählst du beim Import selbst aus. Bilder bleiben, wie sie beim Import geholt wurden."
+msgstr "Einmal pro Nacht holen wir deinen Katalog erneut und gleichen ab, was du hier schon eingestellt hast: Preise und Ausführungen werden nachgeführt, und was in deinem Shop verschwunden oder ausverkauft ist, wird zum Entwurf. Gelöscht wird nie. Neue Artikel aus deinem Shop werden nur gezählt und nicht von allein eingestellt — die wählst du beim Import selbst aus. Bilder bleiben, wie sie beim Import geholt wurden."
+
+#: plugins/sk-core/templates/dashboard/shop-import/dashboard-shop-import.php
+msgid "Letzter Lauf am %1$s: %2$d aktualisiert, %3$d als Entwurf, %4$d neue Artikel in deinem Shop."
+msgstr "Letzter Lauf am %1$s: %2$d aktualisiert, %3$d als Entwurf, %4$d neue Artikel in deinem Shop."
+
+#: plugins/sk-core/templates/dashboard/shop-import/dashboard-shop-import.php
+msgid "Letzter Lauf am %1$s ohne Erfolg: %2$s"
+msgstr "Letzter Lauf am %1$s ohne Erfolg: %2$s"

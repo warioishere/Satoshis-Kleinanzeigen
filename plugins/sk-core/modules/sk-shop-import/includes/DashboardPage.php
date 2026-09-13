@@ -123,6 +123,17 @@ class DashboardPage extends DashboardModule {
             exit;
         }
 
+        if ( 'sync' === $step ) {
+            // The dealer decides; the package and the confirmed shop are
+            // checked again in Sync::active() before every run.
+            if ( Sync::allowed( $vendor_id ) ) {
+                update_user_meta( $vendor_id, Sync::META_ON, isset( $_POST['sk_sync'] ) ? '1' : '' );
+            }
+
+            wp_safe_redirect( $this->url() );
+            exit;
+        }
+
         if ( $step === 'holen' ) {
             /*
              * The dealer enters the URL themselves — they know where their
@@ -451,9 +462,14 @@ class DashboardPage extends DashboardModule {
         $url        = $this->url();
         // Only the most recently fetched one. The URL from the dealer
         // profile doesn't belong here — it describes the dealer's shop,
-        // not the source of a Shopify fetch, and would show up as a
-        // suggestion for a WooCommerce dealer that could never work.
+        // not the source of the last fetch.
         $shop_url   = (string) get_user_meta( $vendor_id, self::META_FETCH_URL, true );
+
+        // The nightly comparison: whether the package includes it, whether
+        // the dealer switched it on, and what the last run did.
+        $sync_allowed = Sync::allowed( $vendor_id );
+        $sync_on      = '1' === (string) get_user_meta( $vendor_id, Sync::META_ON, true );
+        $sync_last    = (array) get_user_meta( $vendor_id, Sync::META_LAST, true );
 
         // Which hosts this dealer has confirmed — the fetch is restricted
         // to those.
@@ -495,7 +511,10 @@ class DashboardPage extends DashboardModule {
             'currency_guess',
             'variants_allowed',
             'variants_pack',
-            'blocked'
+            'blocked',
+            'sync_allowed',
+            'sync_on',
+            'sync_last'
         );
     }
 }

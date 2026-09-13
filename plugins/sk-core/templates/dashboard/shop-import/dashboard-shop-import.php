@@ -488,6 +488,53 @@ do_action( 'sk_dashboard_wrap_start' );
                     <p class="sk-import-hint"><?php esc_html_e( 'Läuft dein Shop auf etwas anderem, oder antwortet er nicht? Dann nimm den Weg über die Datei darunter.', 'sk-core' ); ?></p>
                 </div>
 
+                <?php if ( ! empty( $sync_allowed ) ) : ?>
+                    <div class="sk-section-heading"><h3><?php esc_html_e( 'Jede Nacht abgleichen', 'sk-core' ); ?></h3></div>
+                    <div class="sk-section-content">
+                        <p><?php esc_html_e( 'Einmal pro Nacht holen wir deinen Katalog erneut und gleichen ab, was du hier schon eingestellt hast: Preise und Ausführungen werden nachgeführt, und was in deinem Shop verschwunden oder ausverkauft ist, wird zum Entwurf. Gelöscht wird nie. Neue Artikel aus deinem Shop werden nur gezählt und nicht von allein eingestellt — die wählst du beim Import selbst aus. Bilder bleiben, wie sie beim Import geholt wurden.', 'sk-core' ); ?></p>
+
+                        <form method="post" action="<?php echo esc_url( $url ); ?>">
+                            <?php wp_nonce_field( DashboardPage::NONCE, 'sk_shop_import_nonce' ); ?>
+                            <input type="hidden" name="sk_step" value="sync">
+
+                            <div class="sk-form-group">
+                                <label class="sk-settings-checkbox">
+                                    <input type="checkbox" name="sk_sync" value="1" <?php checked( ! empty( $sync_on ) ); ?>>
+                                    <?php esc_html_e( 'Katalog nächtlich abgleichen', 'sk-core' ); ?>
+                                </label>
+                            </div>
+
+                            <?php if ( ! empty( $sync_last['at'] ) ) : ?>
+                                <p class="sk-import-hint">
+                                    <?php
+                                    if ( ! empty( $sync_last['error'] ) ) {
+                                        printf(
+                                            /* translators: 1: date, 2: error message */
+                                            esc_html__( 'Letzter Lauf am %1$s ohne Erfolg: %2$s', 'sk-core' ),
+                                            esc_html( wp_date( 'd.m.Y H:i', (int) $sync_last['at'] ) ),
+                                            esc_html( $sync_last['error'] )
+                                        );
+                                    } else {
+                                        printf(
+                                            /* translators: 1: date, 2: updated, 3: drafted, 4: new in the shop */
+                                            esc_html__( 'Letzter Lauf am %1$s: %2$d aktualisiert, %3$d als Entwurf, %4$d neue Artikel in deinem Shop.', 'sk-core' ),
+                                            esc_html( wp_date( 'd.m.Y H:i', (int) $sync_last['at'] ) ),
+                                            (int) ( $sync_last['updated'] ?? 0 ),
+                                            (int) ( $sync_last['drafted'] ?? 0 ),
+                                            (int) ( $sync_last['fresh'] ?? 0 )
+                                        );
+                                    }
+                                    ?>
+                                </p>
+                            <?php endif; ?>
+
+                            <div class="sk-form-group">
+                                <button type="submit" class="sk-btn sk-btn-theme"><?php esc_html_e( 'Speichern', 'sk-core' ); ?></button>
+                            </div>
+                        </form>
+                    </div>
+                <?php endif; ?>
+
                 <div class="sk-section-heading"><h3><?php esc_html_e( 'Katalog als Datei hochladen', 'sk-core' ); ?></h3></div>
                 <div class="sk-section-content">
                     <p><?php esc_html_e( 'Der Weg für alles andere, und der Rückfall, wenn die Schnittstelle deines Shops abgeschaltet ist. Die Spalten erkennen wir selbst, du kannst die Zuordnung danach prüfen und ändern.', 'sk-core' ); ?></p>
