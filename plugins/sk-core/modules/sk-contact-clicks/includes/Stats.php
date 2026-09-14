@@ -42,6 +42,65 @@ final class Stats {
     }
 
     /**
+     * One vendor's contacts in a time range.
+     *
+     * @return array{clicks:int,unique:int}
+     */
+    public static function vendor_totals( int $vendor_id, string $from, string $to ): array {
+        global $wpdb;
+
+        if ( $vendor_id <= 0 ) {
+            return [ 'clicks' => 0, 'unique' => 0 ];
+        }
+
+        $row = $wpdb->get_row(
+            $wpdb->prepare(
+                'SELECT COALESCE(SUM(clicks),0) c, COUNT(DISTINCT visitor_hash, click_day) u FROM ' . self::table() . '
+                 WHERE vendor_id = %d AND click_day BETWEEN %s AND %s',
+                $vendor_id,
+                $from,
+                $to
+            ),
+            ARRAY_A
+        );
+
+        return [ 'clicks' => (int) ( $row['c'] ?? 0 ), 'unique' => (int) ( $row['u'] ?? 0 ) ];
+    }
+
+    /**
+     * Contacts per listing for one vendor.
+     *
+     * @return array<int,int> product id => contacts
+     */
+    public static function vendor_by_product( int $vendor_id, string $from, string $to ): array {
+        global $wpdb;
+
+        if ( $vendor_id <= 0 ) {
+            return [];
+        }
+
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                'SELECT product_id, COALESCE(SUM(clicks),0) c FROM ' . self::table() . '
+                 WHERE vendor_id = %d AND product_id > 0 AND click_day BETWEEN %s AND %s
+                 GROUP BY product_id',
+                $vendor_id,
+                $from,
+                $to
+            ),
+            ARRAY_A
+        );
+
+        $out = [];
+
+        foreach ( (array) $rows as $r ) {
+            $out[ (int) $r['product_id'] ] = (int) $r['c'];
+        }
+
+        return $out;
+    }
+
+    /**
      * @return array<string,array{clicks:int,unique:int}>
      */
     public static function by_channel( string $from, string $to ): array {

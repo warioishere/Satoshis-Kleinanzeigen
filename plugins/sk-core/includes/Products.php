@@ -316,6 +316,31 @@ class Products {
         $clone_product = $wc_duplicator->product_duplicate( $product );
         $clone_product->update_meta_data( '_sk_new_product_email_sent', 'no' );
 
+        /*
+         * WooCommerce copies every meta field, which hands the copy things
+         * that belong to the original alone:
+         *
+         * - the Telegram message and the Nostr events it was announced with.
+         *   Deleting the copy would then delete the original's announcement.
+         * - the view counter, so a fresh listing would start with someone
+         *   else's numbers.
+         * - the import key, which is what the catalog is matched by. Two
+         *   listings under one key and the nightly run updates the wrong one.
+         */
+        foreach ( [
+            '_telegram_message_id',
+            '_nap_nostr_event_id',
+            '_nap_nostr_relays',
+            '_sk_nostr_market_event_id',
+            '_sk_nostr_market_relays',
+            'pageview',
+            '_sk_import_key',
+            '_sk_import_run',
+            '_sk_import_source',
+        ] as $own_to_the_original ) {
+            $clone_product->delete_meta_data( $own_to_the_original );
+        }
+
         // Make the newly created product status to "draft", before saving.
         $clone_product->set_status( 'draft' );
         $clone_product->save();

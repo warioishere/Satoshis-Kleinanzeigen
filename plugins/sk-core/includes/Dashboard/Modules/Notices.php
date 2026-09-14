@@ -27,12 +27,16 @@ class Notices {
 
     public function output_welcome_box(): void {
         $abo_url      = esc_url( home_url( '/dashboard/subscription/' ) );
-        $feedback_url = 'https://new.satoshiskleinanzeigen.space/feedback/';
+        $feedback_url = home_url( '/feedback/' );
+
+        // The number comes from the free package itself, so the greeting
+        // cannot drift away from it the next time the limit is moved.
+        $free = (int) get_post_meta( \SK\Core\FreePack::FREE_PACK_PRODUCT_ID, '_no_of_product', true );
         ?>
         <div id="welcome-box">
             <h2>Willkommen im Anbieter-Dashboard!</h2>
             <p>Hier kannst du deine Inserate verwalten, neue Gesuche einstellen und deine Angebote organisieren.</p>
-            <p>Standardmäßig kannst du bis zu <strong>6 Inserate kostenlos</strong> einstellen und bearbeiten.
+            <p>Standardmäßig kannst du bis zu <strong><?php echo (int) $free; ?> Inserate kostenlos</strong> einstellen und bearbeiten.
                Wenn du mehr Inserate gleichzeitig online haben möchtest, kannst du uns mit einem
                <a href="<?php echo $abo_url; ?>">Abo</a> unterstützen.</p>
             <p>Wir möchten bewusst <strong>keine Verkaufsgebühren</strong> erheben – denn damit würden in vielen Ländern rechtliche KYC-Pflichten greifen.

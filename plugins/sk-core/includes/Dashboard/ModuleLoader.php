@@ -22,6 +22,7 @@ class ModuleLoader {
 
         new Modules\Performance();
         new Modules\Notices();
+        new Modules\VendorStats();
         new Modules\Merkliste();
         new Modules\Gesuche();
         new Modules\ContactDetails();

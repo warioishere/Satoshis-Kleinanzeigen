@@ -460,13 +460,14 @@ class Module {
      *
      * @return boolean
      */
+    /**
+     * A copy costs no quota, so a full pack does not stand in its way.
+     *
+     * The copy is created as a draft and only published listings count.
+     * Publishing it is where the limit applies, and make_product_draft()
+     * already holds that line.
+     */
     public function vendor_can_duplicate_product() {
-        $vendor_id = sk_get_current_user_id();
-
-        if ( ! Helper::get_vendor_remaining_products( $vendor_id ) ) {
-            return false;
-        }
-
         return true;
     }
 
@@ -1788,22 +1789,10 @@ class Module {
      * @return bool|mixed|null
      */
     public function sk_can_duplicate_product_on_subscription( $can_duplicate ) {
-
-        if( ! $can_duplicate ) {
-            return $can_duplicate;
-        }
-
-        // If the user is vendor staff, we are getting the specific vendor for that staff
-        $user_id = (int) sk_get_current_user_id();
-
-        /** We are getting the subscription of the vendor
-         * and checking if the vendor has remaining product based on active subscription
-         **/
-        if ( ! Helper::get_vendor_remaining_products( $user_id ) ) {
-            return false;
-        }
-
-        return true;
+        // Same reasoning as vendor_can_duplicate_product(): the copy is a
+        // draft, so hiding the action at a full pack only takes away a way
+        // of working without protecting anything.
+        return $can_duplicate;
     }
 
     /**

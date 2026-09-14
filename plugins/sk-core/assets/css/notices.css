@@ -26,3 +26,114 @@
     width: auto;
     border-radius: 8px;
 }
+
+/**
+ * Views and contacts of the vendor's own listings, under the welcome box.
+ */
+
+.sk-vendor-stats {
+    background: #252d38;
+    color: #fff;
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 6px;
+}
+
+.sk-vendor-stats__title {
+    margin: 0 0 16px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.sk-vendor-stats__title i { color: #F7931A; margin-right: 6px; }
+
+.sk-vendor-stats__figures {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.sk-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 14px 16px;
+    background: #1e2530;
+    border-radius: 8px;
+    border-left: 3px solid #F7931A;
+    min-width: 0;
+}
+
+.sk-stat__value {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: #fff;
+}
+
+.sk-stat__of { font-size: 16px; font-weight: 600; color: #8a9bb0; }
+.sk-stat__label { font-size: 13px; color: #c4cdd8; }
+.sk-stat__note { font-size: 11px; color: #8a9bb0; }
+
+.sk-vendor-stats__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    /* Fixed, otherwise a long title widens its cell and pushes the two
+       number columns out of the card instead of being shortened. */
+    table-layout: fixed;
+}
+
+.sk-vendor-stats__table th,
+.sk-vendor-stats__table td {
+    padding: 9px 8px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, .07);
+}
+
+.sk-vendor-stats__table th {
+    font-size: 12px;
+    font-weight: 600;
+    color: #8a9bb0;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+}
+
+.sk-vendor-stats__table tr:last-child td { border-bottom: none; }
+.sk-vendor-stats__table .sk-num { text-align: right; white-space: nowrap; width: 80px; }
+
+.sk-vendor-stats__table td a {
+    color: #fff;
+    text-decoration: none;
+    /* Long listing titles must not push the two number columns off-screen. */
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sk-vendor-stats__table td a:hover { color: #F7931A; }
+
+.sk-vendor-stats__hint {
+    margin: 12px 0 0;
+    font-size: 12px;
+    color: #8a9bb0;
+    line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+    .sk-vendor-stats { padding: 16px; }
+    .sk-vendor-stats__figures { grid-template-columns: 1fr; gap: 8px; }
+    .sk-stat { flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: 8px; padding: 10px 12px; }
+    .sk-stat__value { font-size: 22px; }
+    .sk-stat__label { font-size: 14px; }
+    .sk-stat__note { margin-left: auto; }
+    .sk-vendor-stats__table { font-size: 13px; }
+    .sk-vendor-stats__table th, .sk-vendor-stats__table td { padding: 8px 4px; }
+    .sk-vendor-stats__table .sk-num { width: 54px; }
+    /* Gesperrte Grossbuchstaben passen in 54 px nicht mehr. */
+    .sk-vendor-stats__table th { font-size: 11px; text-transform: none; letter-spacing: 0; }
+    .sk-vendor-stats__table th.sk-num { white-space: normal; }
+}
