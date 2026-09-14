@@ -118,7 +118,7 @@ do_action( 'sk_dashboard_wrap_start' );
                                         <td><a href="<?php echo esc_url( $link['url'] ); ?>" target="_blank" rel="noopener nofollow"><?php echo esc_html( $link['host'] ); ?></a></td>
                                         <td>
                                             <?php if ( $link['status'] === VerifiedLinks::OK ) : ?>
-                                                <span class="sk-verify-badge"><i class="fas fa-circle-check"></i></span> <?php esc_html_e( 'bestätigt', 'sk-core' ); ?>
+                                                <?php esc_html_e( 'bestätigt', 'sk-core' ); ?> <span class="sk-verify-badge"><i class="fas fa-circle-check"></i></span>
                                             <?php elseif ( $link['status'] === VerifiedLinks::UNREACHABLE ) : ?>
                                                 <?php esc_html_e( 'nicht erreichbar', 'sk-core' ); ?>
                                             <?php else : ?>

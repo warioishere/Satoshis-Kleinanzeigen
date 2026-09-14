@@ -12148,16 +12148,46 @@ textarea.wp-editor-area.post_content {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Untereinander braucht das Knopfpaar rund 80 px weniger Breite — genug,
-   damit die Tabelle auf dem Telefon ohne Scrollen hineinpasst. */
+/* Auf dem Telefon reichen vier Spalten nicht nebeneinander. Die drei
+   Angaben bleiben in einer Zeile, das Knopfpaar rutscht darunter — dann
+   passt alles in die Breite und nichts muss geschoben werden. */
 @media (max-width: 600px) {
-  .sk-table-scroll .sk-table td:last-child .sk-btn {
+  .sk-table-scroll .sk-table,
+  .sk-table-scroll .sk-table > tbody {
     display: block;
-    width: 100%;
-    margin: 0 0 6px;
   }
 
-  .sk-table-scroll .sk-table td:last-child .sk-btn:last-child {
-    margin-bottom: 0;
+  .sk-table-scroll .sk-table > tbody > tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    padding: 10px 0;
+  }
+
+  .sk-table-scroll .sk-table > tbody > tr > td {
+    display: block;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0 6px 0 0;
+    border: none;
+  }
+
+  .sk-table-scroll .sk-table > tbody > tr > td:last-child {
+    flex: 0 0 100%;
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    padding-right: 0;
+  }
+
+  .sk-table-scroll .sk-table > tbody > tr > td:last-child .sk-btn {
+    flex: 1 1 0;
+    width: auto;
+    margin: 0;
+  }
+
+  /* Der Trenner sitzt jetzt an der Zeile, nicht mehr an der ersten Zelle. */
+  .sk-dashboard .sk-table > tbody > tr + tr {
+    border-top: 1px solid rgba(255, 255, 255, .06);
   }
 }
