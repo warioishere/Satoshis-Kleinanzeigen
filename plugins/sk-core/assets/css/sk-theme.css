@@ -6881,12 +6881,20 @@ ul.sk-store-custom-fields ul {
   background: #252d38;
   border: 1px solid rgba(255,255,255,0.08);
   color: #e8ecf0;
-  padding: 10px 30px;
+  padding: 10px 12px;
   font-size: 16px;
   width: 100%;
   box-sizing: border-box;
   transition: border-color 0.15s;
 }
+
+/* Nur das Mapbox-Suchfeld braucht links Platz: seine Lupe sitzt absolut im
+   Feld und endet bei 35 px. Die Klasse allein verliert gegen die Regel oben,
+   deshalb steht der Typ mit drin. */
+.sk-settings-form input[type="text"].mapboxgl-ctrl-geocoder--input {
+  padding-left: 45px;
+}
+
 .sk-settings-form input[type="text"]:focus,
 .sk-settings-form input[type="email"]:focus,
 .sk-settings-form input[type="password"]:focus,
@@ -10155,13 +10163,18 @@ body:has(.dvc-modal) .dkp-contact-icons {
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath fill='%23fff' d='M210.8 199.4c0 3.1-2.5 5.7-5.7 5.7h-68c-3.1 0-5.7-2.5-5.7-5.7v-15.5c.3-19 2.3-37.2 6.5-45.5 2.5-5 6.7-7.7 11.5-9.1 9.1-2.7 24.9-.9 31.7-1.2 0 0 20.4.8 20.4-10.7s-9.1-8.6-9.1-8.6c-10 .3-17.7-.4-22.6-2.4-8.3-3.3-8.6-9.2-8.6-11.2-.4-23.1-34.5-25.9-64.5-20.1-32.8 6.2.4 53.3.4 116.1v8.4c0 3.1-2.6 5.6-5.7 5.6H57.7c-3.1 0-5.7-2.5-5.7-5.7v-144c0-3.1 2.5-5.7 5.7-5.7h31.7c3.1 0 5.7 2.5 5.7 5.7 0 4.7 5.2 7.2 9 4.5 11.4-8.2 26-12.5 42.4-12.5 36.6 0 64.4 21.4 64.4 68.7v83.2ZM150 99.3c0-6.7-5.4-12.1-12.1-12.1s-12.1 5.4-12.1 12.1 5.4 12.1 12.1 12.1S150 106 150 99.3Z'/%3E%3C/svg%3E") no-repeat center;
   background-size: 22px 22px;
 }
+/* Als Maske statt Hintergrundbild: so nimmt das Zeichen die Farbe seiner
+   Umgebung an und steht neben den Font-Awesome-Symbolen im selben Orange. */
 .sk-nostr-icon--inline {
   display: inline-block;
   width: 18px;
   height: 18px;
   vertical-align: middle;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath fill='%23fff' d='M210.8 199.4c0 3.1-2.5 5.7-5.7 5.7h-68c-3.1 0-5.7-2.5-5.7-5.7v-15.5c.3-19 2.3-37.2 6.5-45.5 2.5-5 6.7-7.7 11.5-9.1 9.1-2.7 24.9-.9 31.7-1.2 0 0 20.4.8 20.4-10.7s-9.1-8.6-9.1-8.6c-10 .3-17.7-.4-22.6-2.4-8.3-3.3-8.6-9.2-8.6-11.2-.4-23.1-34.5-25.9-64.5-20.1-32.8 6.2.4 53.3.4 116.1v8.4c0 3.1-2.6 5.6-5.7 5.6H57.7c-3.1 0-5.7-2.5-5.7-5.7v-144c0-3.1 2.5-5.7 5.7-5.7h31.7c3.1 0 5.7 2.5 5.7 5.7 0 4.7 5.2 7.2 9 4.5 11.4-8.2 26-12.5 42.4-12.5 36.6 0 64.4 21.4 64.4 68.7v83.2ZM150 99.3c0-6.7-5.4-12.1-12.1-12.1s-12.1 5.4-12.1 12.1 5.4 12.1 12.1 12.1S150 106 150 99.3Z'/%3E%3C/svg%3E") no-repeat center;
-  background-size: contain;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M210.8 199.4c0 3.1-2.5 5.7-5.7 5.7h-68c-3.1 0-5.7-2.5-5.7-5.7v-15.5c.3-19 2.3-37.2 6.5-45.5 2.5-5 6.7-7.7 11.5-9.1 9.1-2.7 24.9-.9 31.7-1.2 0 0 20.4.8 20.4-10.7s-9.1-8.6-9.1-8.6c-10 .3-17.7-.4-22.6-2.4-8.3-3.3-8.6-9.2-8.6-11.2-.4-23.1-34.5-25.9-64.5-20.1-32.8 6.2.4 53.3.4 116.1v8.4c0 3.1-2.6 5.6-5.7 5.6H57.7c-3.1 0-5.7-2.5-5.7-5.7v-144c0-3.1 2.5-5.7 5.7-5.7h31.7c3.1 0 5.7 2.5 5.7 5.7 0 4.7 5.2 7.2 9 4.5 11.4-8.2 26-12.5 42.4-12.5 36.6 0 64.4 21.4 64.4 68.7v83.2ZM150 99.3c0-6.7-5.4-12.1-12.1-12.1s-12.1 5.4-12.1 12.1 5.4 12.1 12.1 12.1S150 106 150 99.3Z'/%3E%3C/svg%3E") no-repeat center;
+  -webkit-mask-size: contain;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M210.8 199.4c0 3.1-2.5 5.7-5.7 5.7h-68c-3.1 0-5.7-2.5-5.7-5.7v-15.5c.3-19 2.3-37.2 6.5-45.5 2.5-5 6.7-7.7 11.5-9.1 9.1-2.7 24.9-.9 31.7-1.2 0 0 20.4.8 20.4-10.7s-9.1-8.6-9.1-8.6c-10 .3-17.7-.4-22.6-2.4-8.3-3.3-8.6-9.2-8.6-11.2-.4-23.1-34.5-25.9-64.5-20.1-32.8 6.2.4 53.3.4 116.1v8.4c0 3.1-2.6 5.6-5.7 5.6H57.7c-3.1 0-5.7-2.5-5.7-5.7v-144c0-3.1 2.5-5.7 5.7-5.7h31.7c3.1 0 5.7 2.5 5.7 5.7 0 4.7 5.2 7.2 9 4.5 11.4-8.2 26-12.5 42.4-12.5 36.6 0 64.4 21.4 64.4 68.7v83.2ZM150 99.3c0-6.7-5.4-12.1-12.1-12.1s-12.1 5.4-12.1 12.1 5.4 12.1 12.1 12.1S150 106 150 99.3Z'/%3E%3C/svg%3E") no-repeat center;
+  mask-size: contain;
 }
 .dkp-contact-icon--mail,
 .dkp-contact-icon--tel,
@@ -12284,13 +12297,7 @@ textarea.wp-editor-area.post_content {
 .sk-hours__day { font-size: 14px; color: #c4cdd8; }
 .sk-hours__dash { color: #8a9bb0; }
 
-/* Die 30 px Polsterung der normalen Felder lassen von einem Zeitfeld nur
-   59 px Inhalt uebrig — zu wenig fuer "09:00" samt Uhr-Symbol. */
-.sk-hours .sk-form-control {
-  min-width: 0;
-  padding-left: 10px;
-  padding-right: 8px;
-}
+.sk-hours .sk-form-control { min-width: 0; }
 
 .sk-vacation-range { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
 .sk-vacation-range label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #8a9bb0; }
