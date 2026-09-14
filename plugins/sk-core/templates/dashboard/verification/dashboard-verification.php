@@ -102,6 +102,7 @@ do_action( 'sk_dashboard_wrap_start' );
                 <?php if ( ! empty( $links ) ) : ?>
                     <div class="sk-settings-field">
                         <div class="sk-settings-input">
+                            <div class="sk-table-scroll">
                             <table class="sk-table">
                                 <thead>
                                     <tr>
@@ -135,6 +136,7 @@ do_action( 'sk_dashboard_wrap_start' );
                                 <?php endforeach; ?>
                                 </tbody>
                             </table>
+                            </div>
                         </div>
                     </div>
                 <?php endif; ?>

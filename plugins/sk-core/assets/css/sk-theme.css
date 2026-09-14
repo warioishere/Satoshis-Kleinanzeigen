@@ -12098,3 +12098,66 @@ textarea.wp-editor-area.post_content {
   .sk-store-gallery__item { flex: 0 0 96px; }
   .sk-store-impressions { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ==========================================================================
+   Tabellen im Dashboard: der helle Bootstrap-Rahmen passt nicht auf dunkel
+   ========================================================================== */
+
+/* #EDEDED ist auf dem dunklen Grund fast weiss, und die 2 px unter der
+   Kopfzeile lesen sich zusammen mit dem Rand der ersten Zeile als
+   Doppelstrich. Dieselben gedaempften Toene wie in den Einstellungskarten. */
+.sk-dashboard .sk-table > thead > tr > th,
+.sk-dashboard .sk-table > tbody > tr > th,
+.sk-dashboard .sk-table > tfoot > tr > th,
+.sk-dashboard .sk-table > thead > tr > td,
+.sk-dashboard .sk-table > tbody > tr > td,
+.sk-dashboard .sk-table > tfoot > tr > td {
+  border-top: 1px solid rgba(255, 255, 255, .06);
+}
+
+.sk-dashboard .sk-table > thead > tr > th {
+  border-bottom: 1px solid rgba(255, 255, 255, .1);
+  font-size: 12px;
+  font-weight: 600;
+  color: #8a9bb0;
+}
+
+.sk-dashboard .sk-table > tbody + tbody {
+  border-top: 1px solid rgba(255, 255, 255, .1);
+}
+
+/* Erste Zeile ohne eigenen Rand, sonst sitzt er direkt unter dem der Kopfzeile. */
+.sk-dashboard .sk-table > tbody > tr:first-child > td,
+.sk-dashboard .sk-table > tbody > tr:first-child > th {
+  border-top: none;
+}
+
+/* Unter 768 px zog eine alte Regel ein weisses Gitter um jede Zelle — Rest
+   eines Karten-Layouts, das hier nie fertig wurde. Nur Zeilentrenner. */
+.sk-dashboard .sk-table > tbody > tr > td,
+.sk-dashboard .sk-table > tbody > tr > th {
+  border-right: none;
+  border-left: none;
+  border-bottom: none;
+}
+
+/* Vier Spalten mit zwei Knoepfen passen auf einem Telefon nicht nebeneinander.
+   Statt sie abzuschneiden, scrollt die Tabelle in ihrer eigenen Huelle. */
+.sk-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Untereinander braucht das Knopfpaar rund 80 px weniger Breite — genug,
+   damit die Tabelle auf dem Telefon ohne Scrollen hineinpasst. */
+@media (max-width: 600px) {
+  .sk-table-scroll .sk-table td:last-child .sk-btn {
+    display: block;
+    width: 100%;
+    margin: 0 0 6px;
+  }
+
+  .sk-table-scroll .sk-table td:last-child .sk-btn:last-child {
+    margin-bottom: 0;
+  }
+}
