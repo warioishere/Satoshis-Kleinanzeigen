@@ -322,6 +322,10 @@ class Assets {
                 'src'  => $asset_url . '/js/sk-slider-tap.js',
                 'deps' => [],
             ],
+            'sk-store-impressions'   => [
+                'src'  => $asset_url . '/js/sk-store-impressions.js',
+                'deps' => [],
+            ],
             'sk-store-listing'       => [
                 'src'  => $asset_url . '/js/modules/sk-store-listing.js',
                 'deps' => [ 'jquery' ],

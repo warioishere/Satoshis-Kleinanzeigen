@@ -23,6 +23,7 @@ class Store {
 
         // vendor biography
         add_action( 'sk_rewrite_rules_loaded', array( $this, 'load_biography_rewrite_rules' ) );
+        add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_biography_assets' ) );
         add_filter( 'sk_store_tabs', array( $this, 'add_vendor_biography_tab' ), 10, 2 );
         add_filter( 'template_include', array( $this, 'load_vendor_biography_template' ), 99 );
     }
@@ -96,6 +97,17 @@ class Store {
         }
 
         return $template;
+    }
+
+    /**
+     * The click-to-enlarge handler, only where there are pictures to enlarge.
+     */
+    public function enqueue_biography_assets() {
+        if ( ! get_query_var( 'biography' ) ) {
+            return;
+        }
+
+        wp_enqueue_script( 'sk-store-impressions' );
     }
 
     /**

@@ -55,9 +55,11 @@ get_header( 'shop' );
                                 'large',
                                 false,
                                 [
-                                    'alt'      => esc_attr( $store_user->display_name ),
-                                    'loading'  => 'lazy',
-                                    'decoding' => 'async',
+                                    'alt'       => esc_attr( $store_user->display_name ),
+                                    'loading'   => 'lazy',
+                                    'decoding'  => 'async',
+                                    // The tile is a crop, the overlay shows it whole.
+                                    'data-full' => esc_url( (string) wp_get_attachment_image_url( $sk_picture_id, 'full' ) ),
                                 ]
                             );
                             ?>
