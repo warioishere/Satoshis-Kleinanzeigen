@@ -379,8 +379,8 @@ class Settings {
                 ],
                 'enable_product_reviews' => [
                     'name'    => 'enable_product_reviews',
-                    'label'   => __( 'Produkt-Rezensionen', 'sk-core' ),
-                    'desc'    => __( 'Zeigt den Rezensionen-Tab und das Kommentarformular auf Produktseiten.', 'sk-core' ),
+                    'label'   => __( 'Produkt-Bewertungen', 'sk-core' ),
+                    'desc'    => __( 'Zeigt den Bewertungen-Tab und das Bewertungsformular auf Produktseiten.', 'sk-core' ),
                     'type'    => 'switcher',
                     'default' => 'on',
                 ],

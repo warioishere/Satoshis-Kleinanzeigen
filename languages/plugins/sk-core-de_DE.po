@@ -50,7 +50,7 @@ msgstr " Mehr anzeigen"
 
 #: modules/store-reviews/classes/DSR_View.php:97
 msgid " Write a Review "
-msgstr " Eine Rezension schreiben "
+msgstr " Eine Bewertung schreiben "
 
 #. translators: %1: from name, %2: from name
 #: includes/Emails/Manager.php:313
@@ -209,16 +209,16 @@ msgstr "%s von 5"
 #, php-format
 msgid "%s rating from %d review"
 msgid_plural "%s rating from %d reviews"
-msgstr[0] "%s Bewertung von %d Rezension"
-msgstr[1] "%s Bewertung von %d Rezensionen"
+msgstr[0] "%s Sterne aus %d Bewertung"
+msgstr[1] "%s Sterne aus %d Bewertungen"
 
 #. translators: %d reviews count
 #: templates/vendor-store-info.php:30
 #, php-format
 msgid "%s Review"
 msgid_plural "%s Reviews"
-msgstr[0] "%s Rezension"
-msgstr[1] "%s Rezensionen"
+msgstr[0] "%s Bewertung"
+msgstr[1] "%s Bewertungen"
 
 #. translators: 1) argument name
 #. translators: 1) name of the key
@@ -779,7 +779,7 @@ msgstr "Neues Produkt in der Einzelseitenansicht hinzufügen"
 
 #: modules/store-reviews/module.php:125
 msgid "Add New review"
-msgstr "Neue Rezension hinzufügen"
+msgstr "Neue Bewertung hinzufügen"
 
 #: includes/functions.php:2609
 msgid "Add product"
@@ -946,7 +946,7 @@ msgstr "Alle Produkte"
 
 #: modules/store-reviews/module.php:124
 msgid "All Reviews"
-msgstr "Alle Rezensionen"
+msgstr "Alle Bewertungen"
 
 #: includes/Admin/ExtendedAdmin.php:374
 msgid "All the default pages has been created!"
@@ -1031,7 +1031,7 @@ msgstr "Erlauben Sie oooooo, nur eine Menge dieses Produkts in einer einzigen Be
 
 #: includes/REST/ProductController.php:2049
 msgid "Allow reviews."
-msgstr "Rezensionen erlauben."
+msgstr "Bewertungen erlauben."
 
 #: includes/Admin/ExtendedAdmin.php:151
 msgid "Allow vendor to duplicate their product"
@@ -1098,7 +1098,7 @@ msgstr ""
 
 #: includes/REST/ProductController.php:2061
 msgid "Amount of reviews that the product have."
-msgstr "Anzahl der Rezensionen, die das Produkt hat."
+msgstr "Anzahl der Bewertungen, die das Produkt hat."
 
 #: includes/REST/ProductController.php:1874
 msgid "Amount of sales."
@@ -2376,7 +2376,7 @@ msgstr "Zugriff konnte nicht gewährt werden - der Benutzer hat möglicherweise 
 
 #: modules/store-reviews/classes/api/class-store-reviews-controller.php:320
 msgid "Could not restore this review"
-msgstr "Diese Rezension konnte nicht wiederhergestellt werden"
+msgstr "Diese Bewertung konnte nicht wiederhergestellt werden"
 
 #: includes/Admin/UserProfile.php:94 includes/Privacy.php:221
 #: includes/Vendor/SettingsApi/Settings/Pages/Store.php:216
@@ -3110,7 +3110,7 @@ msgstr "Produkt bearbeiten"
 
 #: modules/store-reviews/module.php:128
 msgid "Edit review"
-msgstr "Rezension bearbeiten"
+msgstr "Bewertung bearbeiten"
 
 #: modules/product-votes/includes/Display.php:41
 #: modules/product-votes/includes/Display.php:61
@@ -3263,7 +3263,7 @@ msgstr "Aktivieren Sie die Datenschutzrichtlinie für das Kontaktformular des An
 
 #: templates/products/others.php:52
 msgid "Enable product reviews"
-msgstr "Produkt Rezensionen erlauben"
+msgstr "Produkt Bewertungen erlauben"
 
 #: templates/products/inventory.php:41
 msgid "Enable product stock management"
@@ -3272,7 +3272,7 @@ msgstr "Aktivieren Sie die Produktbestandsverwaltung"
 #: templates/products/edit/options.php:14
 #: templates/products/edit/product-list-table-inline-edit-form.php:54
 msgid "Enable Reviews"
-msgstr "Rezensionen erlauben"
+msgstr "Bewertungen erlauben"
 
 #: includes/Admin/Settings.php:374 templates/admin/php-dashboard/vendors.php:99
 msgid "Enable Selling"
@@ -5353,7 +5353,7 @@ msgstr "Rückerstattung verwalten"
 
 #: includes/functions.php:2605
 msgid "Manage reviews"
-msgstr "Rezensionen verwalten"
+msgstr "Bewertungen verwalten"
 
 #: templates/products/edit/product-list-table-inline-edit-form.php:161
 msgid "Manage Stock"
@@ -5795,7 +5795,7 @@ msgstr "Neue Kundenbestellung: #{order_number}"
 
 #: modules/store-reviews/classes/Emails/NewStoreReview.php:70
 msgid "New emails are sent to chosen recipient(s) when a new store review is submitted."
-msgstr "Neue E-Mails werden an ausgewählte Empfänger gesendet, wenn eine neue Anbieter-Rezension eingereicht wird."
+msgstr "Neue E-Mails werden an ausgewählte Empfänger gesendet, wenn eine neue Anbieter-Bewertung eingereicht wird."
 
 #: includes/Emails/VendorNewOrder.php:25
 msgid "New order emails are sent to the vendor when a new order is received."
@@ -5840,7 +5840,7 @@ msgstr "Neue Produkte"
 
 #: modules/store-reviews/module.php:127
 msgid "New review"
-msgstr "Neue Rezension"
+msgstr "Neue Bewertung"
 
 #  public function get_default_subject() {
 #  return __( 'New review on #{store_name}', 'dokan' );
@@ -5848,7 +5848,7 @@ msgstr "Neue Rezension"
 #: modules/store-reviews/classes/Emails/NewStoreReview.php:96
 #: modules/store-reviews/classes/Emails/NewStoreReview.php:116
 msgid "New review on #{store_name}"
-msgstr "Neue Rezension zu #{store_name}"
+msgstr "Neue Bewertung zu #{store_name}"
 
 #: includes/Emails/NewSeller.php:60
 msgid "New Vendor Registered - {seller_name}"
@@ -6099,7 +6099,7 @@ msgstr "Kein Ergebnis gefunden"
 #: modules/store-reviews/classes/api/class-store-reviews-controller.php:196
 #: modules/store-reviews/classes/api/class-store-reviews-controller.php:314
 msgid "No review found"
-msgstr "Keine Rezension gefunden"
+msgstr "Keine Bewertung gefunden"
 
 #: includes/REST/ReviewsController.php:396
 #: includes/REST/ReviewsController.php:592
@@ -6107,23 +6107,23 @@ msgstr "Keine Rezension gefunden"
 #: includes/REST/ReviewsController.php:685
 #: modules/store-reviews/classes/api/class-store-reviews-controller.php:213
 msgid "No review id found"
-msgstr "Keine Rezension ID gefunden"
+msgstr "Keine Bewertung ID gefunden"
 
 #: includes/REST/ReviewsController.php:400
 msgid "No review status found for updating review"
-msgstr "Zum Aktualisieren der Rezension wurde kein Rezension Status gefunden"
+msgstr "Zum Aktualisieren der Bewertung wurde kein Bewertung Status gefunden"
 
 #: includes/Review.php:823
 msgid "No Reviews Found"
-msgstr "Keine Rezensionen gefunden"
+msgstr "Keine Bewertungen gefunden"
 
 #: modules/store-reviews/module.php:210
 msgid "No Reviews found"
-msgstr "Keine Rezensionen gefunden"
+msgstr "Keine Bewertungen gefunden"
 
 #: includes/REST/StoreController.php:626 includes/REST/StoreController.php:645
 msgid "No reviews found"
-msgstr "Keine Rezensionen gefunden"
+msgstr "Keine Bewertungen gefunden"
 
 #: includes/REST/ProductController.php:339
 #: includes/REST/ProductController.php:382
@@ -6803,7 +6803,7 @@ msgstr "Ausstehende Produkt E-Mails werden an ausgewählte Empfänger gesendet, 
 #: modules/subscription/includes/admin/admin.php:639
 #: templates/products/edit/product-list-table-inline-edit-form.php:62
 msgid "Pending Review"
-msgstr "Ausstehende Rezension"
+msgstr "Ausstehende Bewertung"
 
 #: includes/Admin/UserList.php:45
 msgid "Pending Vendor"
@@ -7530,7 +7530,7 @@ msgid "Produkt vervollständigen"
 msgstr ""
 
 #: includes/Admin/Settings.php:417
-msgid "Produkt-Rezensionen"
+msgid "Produkt-Bewertungen"
 msgstr ""
 
 #: includes/Dashboard/Modules/UserOnboarding.php:159
@@ -7891,15 +7891,15 @@ msgstr ""
 
 #: includes/functions.php:2645
 msgid "Review"
-msgstr "Rezension"
+msgstr "Bewertung"
 
 #: modules/store-reviews/classes/api/class-store-reviews-controller.php:221
 msgid "Review content must be required"
-msgstr "Rezension Inhalt ist erforderlich"
+msgstr "Bewertung Inhalt ist erforderlich"
 
 #: includes/REST/ReviewsController.php:109
 msgid "Review content."
-msgstr "Rezension Inhalt."
+msgstr "Bewertung Inhalt."
 
 #: includes/REST/ReviewsController.php:604
 msgid "Review deleted successfully"
@@ -7907,28 +7907,28 @@ msgstr ""
 
 #: includes/Review.php:136
 msgid "Review disabled."
-msgstr "Rezension deaktiviert."
+msgstr "Bewertung deaktiviert."
 
 #: includes/REST/ReviewsController.php:114
 msgid "Review rating"
-msgstr "Rezension Bewertung"
+msgstr "Bewertung Bewertung"
 
 #: includes/REST/ReviewsController.php:547
 msgid "Review rating (0 to 5)."
-msgstr "Rezension Bewertung (von 0 bis 5)."
+msgstr "Bewertung Bewertung (von 0 bis 5)."
 
 #: includes/REST/ReviewsController.php:78
 #: includes/REST/ReviewsController.php:144
 msgid "Review Status"
-msgstr "Rezension Status"
+msgstr "Bewertung Status"
 
 #: modules/store-reviews/classes/api/class-store-reviews-controller.php:217
 msgid "Review title must be required"
-msgstr "Rezension Titel ist erforderlich"
+msgstr "Bewertung Titel ist erforderlich"
 
 #: includes/REST/ReviewsController.php:104
 msgid "Review title."
-msgstr "Rezension Titel."
+msgstr "Bewertung Titel."
 
 #: modules/store-reviews/templates/emails/new-store-review-email.php:28
 msgid "Reviewed by"
@@ -7953,11 +7953,11 @@ msgstr "Name des Bewertenden."
 #: includes/Review.php:23 includes/Review.php:105 includes/Store.php:73
 #: templates/products/edit/options.php:11
 msgid "Reviews"
-msgstr "Rezensionen"
+msgstr "Bewertungen"
 
 #: includes/REST/ProductController.php:2055
 msgid "Reviews average rating."
-msgstr "Durchschnittliche Kunden Rezension."
+msgstr "Durchschnittliche Kunden Bewertung."
 
 #: includes/wc-functions.php:935
 msgid "Reviews cannot be posted for products that you own."
@@ -8149,7 +8149,7 @@ msgstr "Live Produkte suchen"
 
 #: modules/store-reviews/module.php:131
 msgid "Search review"
-msgstr "Rezension suchen"
+msgstr "Bewertung suchen"
 
 #: includes/REST/CustomersController.php:38
 msgid "Search string."
@@ -9173,11 +9173,11 @@ msgstr "Entschuldigung, Sie haben keine Berechtigung dazu, da es nicht Ihr Produ
 
 #: modules/store-reviews/classes/DSR_View.php:146
 msgid "Sorry, You must be logged in to leave a review!"
-msgstr "Du musst angemeldet sein, um eine Rezension abgeben zu können!"
+msgstr "Du musst angemeldet sein, um eine Bewertung abgeben zu können!"
 
 #: modules/store-reviews/classes/DSR_View.php:145
 msgid "Sorry, You need to be a verified owner to leave a review."
-msgstr "Du musst ein bestätigter Käufer sein, um eine Rezension abgeben zu können."
+msgstr "Du musst ein bestätigter Käufer sein, um eine Bewertung abgeben zu können."
 
 #: templates/emails/plain/vendor-disabled.php:25
 #: templates/emails/vendor-disabled.php:20
@@ -9580,11 +9580,11 @@ msgstr "Anbieter Produkte pro Seite"
 #: modules/store-reviews/module.php:137
 #: templates/admin/php-dashboard/store-reviews.php:19
 msgid "Store Reviews"
-msgstr "Anbieter-Rezensionen"
+msgstr "Anbieter-Bewertungen"
 
 #: modules/store-reviews/module.php:138
 msgid "Store Reviews by customer"
-msgstr "Anbieter-Rezensionen von Kunden"
+msgstr "Anbieter-Bewertungen von Kunden"
 
 #: includes/Admin/Settings.php:263
 #: includes/Vendor/SettingsApi/Settings/Pages/Store.php:29
@@ -9960,7 +9960,7 @@ msgstr "Ankündigung wurde bereits widerlegt."
 
 #: includes/REST/ReviewsController.php:532
 msgid "The content of the review."
-msgstr "Der Inhalt der Rezension."
+msgstr "Der Inhalt der Bewertung."
 
 #: includes/REST/ProductController.php:2174
 #: includes/REST/ProductVariationController.php:861
@@ -10000,11 +10000,11 @@ msgstr "Das Datum, an dem das Produkt zuletzt geändert wurde, in der Zeitzone d
 
 #: includes/REST/ReviewsController.php:542
 msgid "The date the review was created, as GMT."
-msgstr "Das Datum, an dem die Rezension erstellt wurde, als GMT."
+msgstr "Das Datum, an dem die Bewertung erstellt wurde, als GMT."
 
 #: includes/REST/ReviewsController.php:537
 msgid "The date the review was created, in the site's timezone."
-msgstr "Das Datum, an dem die Rezension erstellt wurde, in der Zeitzone der Seite."
+msgstr "Das Datum, an dem die Bewertung erstellt wurde, in der Zeitzone der Seite."
 
 #: includes/REST/ProductVariationController.php:622
 msgid "The date the variation was created, in the site's timezone."
@@ -10061,12 +10061,12 @@ msgstr "Die Ressource kann nicht gelöscht werden."
 
 #: modules/store-reviews/classes/api/class-store-reviews-controller.php:296
 msgid "The review cannot be deleted."
-msgstr "Die Rezension kann nicht gelöscht werden."
+msgstr "Die Bewertung kann nicht gelöscht werden."
 
 #: templates/emails/plain/vendor-product-review.php:33
 #: templates/emails/vendor-product-review.php:34
 msgid "The review text is as follows:"
-msgstr "Der Rezensionstext lautet wie folgt:"
+msgstr "Der Bewertungstext lautet wie folgt:"
 
 #: includes/Admin/ExtendedAdmin.php:137 includes/Admin/ExtendedAdmin.php:140
 msgid "The status of a product when a vendor creates or updates it."
@@ -10720,7 +10720,7 @@ msgstr ""
 
 #: modules/store-reviews/module.php:129
 msgid "Update review"
-msgstr "Rezension aktualisieren"
+msgstr "Bewertung aktualisieren"
 
 #: includes/Assets.php:874 templates/settings/social.php:36
 msgid "Update Settings"
@@ -10989,7 +10989,7 @@ msgstr "Biografie des Anbieters."
 
 #: includes/Admin/ExtendedAdmin.php:201
 msgid "Vendor can change product review status from vendor dashboard"
-msgstr "Der Anbieter kann den Status der Produkt Rezension über das Anbieter Dashboard ändern"
+msgstr "Der Anbieter kann den Status der Produkt Bewertung über das Anbieter Dashboard ändern"
 
 #: modules/product-adv/includes/Admin/Settings.php:79
 msgid "Vendor Can Purchase Advertisement"
@@ -11089,7 +11089,7 @@ msgstr "Anbieter Zahlungseinstellungen"
 
 #: includes/Admin/ExtendedAdmin.php:200
 msgid "Vendor Product Review Status Change"
-msgstr "Statusänderung der Produkt Rezension des Anbieters"
+msgstr "Statusänderung der Produkt Bewertung des Anbieters"
 
 #: includes/REST/AnnouncementController.php:926
 msgid "Vendor read status of the single notice"
@@ -11308,19 +11308,19 @@ msgstr "Produktstatus Bericht anzeigen"
 
 #: modules/store-reviews/module.php:130
 msgid "View review"
-msgstr "Rezension anzeigen"
+msgstr "Bewertung anzeigen"
 
 #: includes/functions.php:2621
 msgid "View review menu"
-msgstr "Rezension Menü anzeigen"
+msgstr "Bewertung Menü anzeigen"
 
 #: includes/functions.php:2581
 msgid "View review report"
-msgstr "Rezension Bericht anzeigen"
+msgstr "Bewertung Bericht anzeigen"
 
 #: includes/functions.php:2604
 msgid "View reviews"
-msgstr "Rezensionen anzeigen"
+msgstr "Bewertungen anzeigen"
 
 #: includes/functions.php:2577
 msgid "View sales overview"
@@ -11489,13 +11489,13 @@ msgstr "Wir freuen uns über Ihre Teilnahme an unserer Plattform und hoffen, das
 #: templates/emails/plain/vendor-product-review.php:26
 #, php-format
 msgid "We are happy to inform you that your product %1$s has received a new review on our website. The review was written by %2$s and has a rating of %3$s out of 5 stars."
-msgstr "Wir freuen uns, Ihnen mitteilen zu können, dass Ihr Produkt %1$s eine neue Bewertung auf unserer Website erhalten hat. Die Rezension wurde von %2$s verfasst und hat eine Bewertung von %3$s von 5 Sternen."
+msgstr "Wir freuen uns, Ihnen mitteilen zu können, dass Ihr Produkt %1$s eine neue Bewertung auf unserer Website erhalten hat. Die Bewertung wurde von %2$s verfasst und hat eine Bewertung von %3$s von 5 Sternen."
 
 #. translators: 1) product name, 2) customer name, 3) rating
 #: templates/emails/vendor-product-review.php:25
 #, php-format
 msgid "We are happy to inform you that your product <strong>%1$s</strong> has received a new review on our website. The review was written by <strong>%2$s</strong> and has a rating of <strong>%3$s</strong> out of 5 stars."
-msgstr "Wir freuen uns, Ihnen mitteilen zu können, dass Ihr Produkt <strong>%1$s</strong> eine neue Bewertung auf unserer Website erhalten hat. Die Rezension wurde von <strong>%2$s</strong> verfasst und hat eine Bewertung von <strong>%3$s</strong> von 5 Sternen."
+msgstr "Wir freuen uns, Ihnen mitteilen zu können, dass Ihr Produkt <strong>%1$s</strong> eine neue Bewertung auf unserer Website erhalten hat. Die Bewertung wurde von <strong>%2$s</strong> verfasst und hat eine Bewertung von <strong>%3$s</strong> von 5 Sternen."
 
 #: includes/Privacy.php:50
 msgid "We collect information about you during the checkout process on our store."
@@ -11511,7 +11511,7 @@ msgstr "Wir geben Informationen an Dritte weiter, die uns dabei helfen, unsere B
 
 #: includes/Privacy.php:73
 msgid "We will also store comments or reviews, if you choose to leave them."
-msgstr "Wir speichern auch Kommentare oder Rezensionen, wenn Sie diese hinterlassen möchten."
+msgstr "Wir speichern auch Kommentare oder Bewertungen, wenn Sie diese hinterlassen möchten."
 
 #: includes/functions.php:2708
 msgid "Wed"
@@ -11821,7 +11821,7 @@ msgstr "Du kannst dieses Produkt nicht bewerben. Produkte müssen veröffentlich
 
 #: includes/Review.php:687
 msgid "You can not edit reviews!"
-msgstr "Sie können keine Rezensionen bearbeiten!"
+msgstr "Sie können keine Bewertungen bearbeiten!"
 
 #: includes/REST/ProductController.php:363
 msgid "You can not select more than category"
@@ -11923,11 +11923,11 @@ msgstr "Sie haben keine Berechtigung, Einstellungswerte zu erhalten"
 
 #: includes/Review.php:203
 msgid "You have no permission to manage this review"
-msgstr "Sie haben keine Berechtigung, diese Rezension Seite zu verwalten"
+msgstr "Sie haben keine Berechtigung, diese Bewertung Seite zu verwalten"
 
 #: includes/Review.php:128
 msgid "You have no permission to view review page"
-msgstr "Sie haben keine Berechtigung zum Anzeigen dieser Rezension Seite"
+msgstr "Sie haben keine Berechtigung zum Anzeigen dieser Bewertung Seite"
 
 #: includes/Dashboard/DashboardRegistry.php:310
 #: includes/Dashboard/Templates/Products.php:210
@@ -12131,7 +12131,7 @@ msgid "Zap Button auf Einzelproduktseiten anzeigen."
 msgstr ""
 
 #: includes/Admin/Settings.php:418
-msgid "Zeigt den Rezensionen-Tab und das Kommentarformular auf Produktseiten."
+msgid "Zeigt den Bewertungen-Tab und das Bewertungsformular auf Produktseiten."
 msgstr ""
 
 #: modules/sk-zaps/includes/ZapSettings.php:34
@@ -12417,12 +12417,12 @@ msgstr ""
 #: modules/store-reviews/module.php:119
 msgctxt "Post Type General Name"
 msgid "Store Reviews"
-msgstr "Anbieter-Rezensionen"
+msgstr "Anbieter-Bewertungen"
 
 #: modules/store-reviews/module.php:120
 msgctxt "Post Type Singular Name"
 msgid "Store Review"
-msgstr "Anbieter-Rezension"
+msgstr "Anbieter-Bewertung"
 
 #: includes/template-tags.php:49
 msgctxt "Previous post link"
