@@ -138,14 +138,6 @@ use SK\Modules\Subscription\Helper;
                 ?>
 
                 <div class="product_pack_item <?php echo ( Helper::is_vendor_subscribed_pack( $pack_id ) || Helper::pack_renew_seller( $pack_id ) || Durations::holds_group( $user_id, (int) get_the_ID() ) ) ? 'current_pack' : ''; ?>">
-                    <div class="pack_price">
-
-                            <span class="dps-amount">
-                                <?php echo wc_price( $sub_pack->get_price() ); ?>
-                            </span>
-
-                    </div><!-- .pack_price -->
-
                     <div class="pack_content">
                         <h2><?php echo $sub_pack->get_package_title(); ?></h2>
                         <?php if ( has_post_thumbnail() ) : ?>
@@ -218,6 +210,10 @@ use SK\Modules\Subscription\Helper;
                             <?php endforeach; ?>
                         </div>
                     <?php endif; ?>
+
+                    <div class="pack_price">
+                        <span class="dps-amount"><?php echo wc_price( $sub_pack->get_price() ); ?></span>
+                    </div><!-- .pack_price -->
 
                     <div class="buy_pack_button">
                         <?php if ( Helper::is_vendor_subscribed_pack( $pack_id ) ) : ?>

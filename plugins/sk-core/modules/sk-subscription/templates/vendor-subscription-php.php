@@ -210,10 +210,6 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
                         ?>
                         <div class="product_pack_item <?php echo $is_current ? 'current_pack' : ''; ?>">
 
-                            <div class="pack_price">
-                                <span class="dps-amount"><?php echo wp_kses_post( wc_price( $sub_pack->get_price() ) ); ?></span>
-                            </div>
-
                             <?php
                             // Strip Gutenberg image blocks from raw markup before rendering
                             $raw = get_the_content();
@@ -314,6 +310,10 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
                                     <?php endforeach; ?>
                                 </div>
                             <?php endif; ?>
+
+                            <div class="pack_price">
+                                <span class="dps-amount"><?php echo wp_kses_post( wc_price( $sub_pack->get_price() ) ); ?></span>
+                            </div>
 
                             <div class="buy_pack_button">
                                 <?php if ( Helper::is_vendor_subscribed_pack( $pack_id ) ) : ?>

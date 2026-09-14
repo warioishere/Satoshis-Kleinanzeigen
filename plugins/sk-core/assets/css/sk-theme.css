@@ -5395,33 +5395,28 @@ ul.product_list_widget li div[style*="font-size: 0.8em"] {
   }
 }
 
-/* ===== Preis-/Anzahl-Kreis oben: BTC-Orange, zentriert, Text weiss ===== */
-/* !important noetig (color): schlaegt (inline. */
+/* ===== Preis ueber dem Kaufknopf ===== */
+/* Nur der Betrag wird hell gesetzt, die Fiat-Zeile darunter bleibt grau. */
 .sk-subscription-content .pack_content_wrapper .product_pack_item .pack_price,
-.sk-subscription-content .pack_content_wrapper .product_pack_item .pack_price *,
 .sk-subscription-content .pack_content_wrapper .product_pack_item .pack_price .woocommerce-Price-amount,
 .sk-subscription-content .pack_content_wrapper .product_pack_item .pack_price .woocommerce-Price-amount bdi {
-  color: #fff !important; /* Weiss nur im Kreis */
+  color: #fff;
 }
 
 .sk-subscription-content .pack_content_wrapper .product_pack_item .pack_price {
-  width: 100px;
-  height: 100px;
-  position: absolute;
-  left: 50%;
-  top: -52px;
-  transform: translateX(-50%);
-  background: #F7931A;
-  border-radius: 50%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
+  width: 100%;
+  text-align: center;
+  font-size: 20px;
   font-weight: 700;
-  line-height: 1.1;
-  padding: 0;
-  box-shadow: 0 6px 20px rgba(247,147,26,0.4), 0 2px 4px rgba(0,0,0,.3);
+  line-height: 1.3;
+}
+
+/* Das Kuerzel gehoert zum Preis; global ist es ueberall sonst ausgeblendet.
+   !important noetig (font-size): schlaegt die globale 0-Regel. */
+.sk-subscription-content .pack_content_wrapper .product_pack_item .pack_price .woocommerce-Price-currencySymbol {
+  display: inline;
+  font-size: inherit !important;
+  color: inherit;
 }
 
 /* ===== Buttons in Bitcoin-Orange ===== */
@@ -5491,10 +5486,6 @@ ul.product_list_widget li div[style*="font-size: 0.8em"] {
 
 
 /*-- Subscrptions --*/
-
-.sk-subscription-content .pack_content_wrapper .product_pack_item .pack_price {
-  background-color: #F7931A !important;
-}
 
 /* Paket-Titel in Orange */
 .sk-subscription-content .pack_content_wrapper .product_pack_item .pack_content h2 {
@@ -5686,10 +5677,6 @@ ul.product_list_widget li div[style*="font-size: 0.8em"] {
  * SK: nur den Inhaltsbereich (Article) als graue Karte
  * mit Innenabstand darstellen – Sidebar bleibt unberührt
  * ---------------------------------------------------------- */
-
-.sk-subscription-content .pack_content_wrapper .product_pack_item .pack_price .dps-rec-period {
-  color: #fff !important;
-}
 
 /* Preiszahl in den Abopaketen mittig ausrichten */
 .sk-subscription-content .pack_price {
@@ -7897,15 +7884,12 @@ a.sk-review-action.delete:hover {
   transform: translateY(-1px);
 }
 
-/* Pack listing grid — extra top margin for floating price circle */
+/* Pack listing grid */
 .sk-subscription-content .pack_content_wrapper {
-  margin-top: 60px;
+  margin-top: 24px;
 }
 
-/* Ensure pack content clears the absolute-positioned price circle above.
-   Mirrors dps-custom-style which is only loaded on a hard page load. */
 .sk-subscription-content .pack_content_wrapper .product_pack_item .pack_content {
-  margin-top: 60px;
   width: 100%;
   text-align: center;
 }
