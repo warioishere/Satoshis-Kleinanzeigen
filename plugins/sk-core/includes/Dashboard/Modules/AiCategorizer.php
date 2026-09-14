@@ -111,45 +111,49 @@ class AiCategorizer {
 		return $value;
 	}
 
-	public static function store_api_key( string $key ): void {
+	/** @return bool Whether the key reached the encrypted option. */
+	public static function store_api_key( string $key ): bool {
 		$key = trim( $key );
 
 		if ( '' === $key ) {
-			return;
+			return false;
 		}
 
 		$encrypted = \SK\Core\Secret::encrypt( $key, \SK\Core\Secret::API_KEY );
 
-		if ( '' !== $encrypted ) {
-			update_option( self::KEY_OPTION, $encrypted );
+		if ( '' === $encrypted ) {
+			return false;
 		}
+
+		return update_option( self::KEY_OPTION, $encrypted ) || get_option( self::KEY_OPTION ) === $encrypted;
 	}
 
 	/**
 	 * The API key, decrypted.
 	 *
-	 * A key still sitting in the settings section in plain text is moved into
-	 * the encrypted option the first time it is read, and blanked there.
+	 * A key sitting in a settings section in plain text takes precedence: it is
+	 * the last one somebody entered, while the encrypted option may still hold
+	 * one that has since been revoked. It is moved into the encrypted option
+	 * and blanked in the section — but only once it is safely stored.
 	 */
 	public static function api_key(): string {
-		$key = \SK\Core\Secret::from_option( self::KEY_OPTION, \SK\Core\Secret::API_KEY );
+		foreach ( [ self::SECTION, 'sk_product_advertisement' ] as $option ) {
+			$section = get_option( $option );
+			$plain   = is_array( $section ) ? trim( (string) ( $section['skai_api_key'] ?? '' ) ) : '';
 
-		if ( '' !== $key ) {
-			return $key;
+			if ( '' === $plain ) {
+				continue;
+			}
+
+			if ( self::store_api_key( $plain ) ) {
+				$section['skai_api_key'] = '';
+				update_option( $option, $section );
+			}
+
+			return $plain;
 		}
 
-		$section = get_option( 'sk_product_advertisement' );
-		$plain   = is_array( $section ) ? trim( (string) ( $section['skai_api_key'] ?? '' ) ) : '';
-
-		if ( '' === $plain ) {
-			return '';
-		}
-
-		self::store_api_key( $plain );
-		$section['skai_api_key'] = '';
-		update_option( 'sk_product_advertisement', $section );
-
-		return $plain;
+		return \SK\Core\Secret::from_option( self::KEY_OPTION, \SK\Core\Secret::API_KEY );
 	}
 
 	public function add_fields( $fields ) {
@@ -304,6 +308,9 @@ class AiCategorizer {
 		$result = $this->call_claude( $api_key, $prompt );
 
 		if ( is_wp_error( $result ) ) {
+			// The browser drops the box without a word, so a rejected key or a
+			// dead endpoint would otherwise leave no trace anywhere.
+			error_log( '[SK AI] ' . $result->get_error_message() );
 			wp_send_json_error( [ 'message' => $result->get_error_message() ] );
 		}
 
