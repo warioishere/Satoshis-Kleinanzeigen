@@ -89,30 +89,20 @@ new \SK\Core\Wallet\LnurlPayEndpoint();
 // Vendor avatar + name on product cards.
 \SK\Core\ProductVendorInfo::init();
 
-// "Rezension(en)" → "Kommentar(e)" on product pages (tab, form, headings).
-// Rezension is feminine (die), Kommentar is masculine (der) — the article
-// needs swapping too, otherwise you get a grammar error like "die erste Kommentar".
-add_filter( 'gettext', function ( $translation, $text, $domain ) {
-    if ( $domain !== 'woocommerce' ) {
-        return $translation;
-    }
-    // strtr matches the longest substring first → longer phrases before shorter ones.
-    $map = [
-        'Schreibe die erste Rezension für' => 'Schreibe den ersten Kommentar zu',
-        'die erste Rezension'              => 'den ersten Kommentar',
-        'eine Rezension'                   => 'einen Kommentar',
-        'Deine Rezension'                  => 'Dein Kommentar',
-        'Rezensionen'                      => 'Kommentare',
-        'Rezension'                        => 'Kommentar',
-    ];
-    return strtr( $translation, $map );
+// "Rezension(en)" → "Bewertung(en)" on product pages (tab, form, headings).
+// These carry a star rating, so the plainer word fits — and it is feminine
+// like Rezension, so no article has to be rewritten along with it. Questions
+// live in their own tab, see SK\Core\Product\QuestionsTab.
+$sk_review_wording = [
+    'Rezensionen' => 'Bewertungen',
+    'Rezension'   => 'Bewertung',
+];
+
+add_filter( 'gettext', function ( $translation, $text, $domain ) use ( $sk_review_wording ) {
+    // strtr matches the longest substring first → plural before singular.
+    return 'woocommerce' === $domain ? strtr( $translation, $sk_review_wording ) : $translation;
 }, 20, 3 );
-add_filter( 'ngettext', function ( $translation, $single, $plural, $number, $domain ) {
-    if ( $domain !== 'woocommerce' ) {
-        return $translation;
-    }
-    return strtr( $translation, [
-        'Rezensionen' => 'Kommentare',
-        'Rezension'   => 'Kommentar',
-    ] );
+
+add_filter( 'ngettext', function ( $translation, $single, $plural, $number, $domain ) use ( $sk_review_wording ) {
+    return 'woocommerce' === $domain ? strtr( $translation, $sk_review_wording ) : $translation;
 }, 20, 5 );
