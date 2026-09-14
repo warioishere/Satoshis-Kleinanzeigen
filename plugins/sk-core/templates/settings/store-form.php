@@ -105,6 +105,11 @@ $cd_feewall_enabled   = $cd_feewall_available && isset( $profile_info['cdf_enabl
 /* --- Biography --- */
 $vendor_biography = ! empty( $profile_info['vendor_biography'] ) ? $profile_info['vendor_biography'] : '';
 
+/* --- Reachability: the break is for everybody, the hours for shops --- */
+$vacation = (array) ( $profile_info['vacation'] ?? [] );
+$hours_on = function_exists( 'sk_is_shop_pack' ) && sk_is_shop_pack( $current_user );
+$hours    = $hours_on ? (array) ( $profile_info['hours'] ?? [] ) : [];
+
 /* --- Impressions: a few pictures of the shop, from the shop packages upward --- */
 $gallery_on  = function_exists( 'sk_is_shop_pack' ) && sk_is_shop_pack( $current_user );
 $gallery_ids = $gallery_on && function_exists( 'sk_store_gallery_ids' ) ? sk_store_gallery_ids( $current_user ) : [];
@@ -649,6 +654,79 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
         <?php endif; ?>
     </div>
     <?php endif; ?>
+
+    <!-- ======================================================
+         SECTION 3d: Erreichbarkeit — Ferienmodus und Öffnungszeiten
+    ====================================================== -->
+    <div class="sk-settings-section">
+        <div class="sk-settings-section-title">
+            <i class="fas fa-clock"></i> <?php esc_html_e( 'Erreichbarkeit', 'sk-core' ); ?>
+        </div>
+
+        <div class="sk-settings-field">
+            <label class="sk-settings-label" for="sk_vacation_on"><?php esc_html_e( 'Pause', 'sk-core' ); ?></label>
+            <div class="sk-settings-input">
+                <label class="sk-checkbox-line">
+                    <input type="checkbox" name="sk_vacation_on" id="sk_vacation_on" value="1" <?php checked( ! empty( $vacation['on'] ) ); ?>>
+                    <span><?php esc_html_e( 'Ich bin gerade nicht erreichbar', 'sk-core' ); ?></span>
+                </label>
+                <p class="description">
+                    <?php esc_html_e( 'Der Hinweis erscheint auf deiner Anbieterseite und auf jedem deiner Inserate, bevor jemand dich anschreibt. Deine Inserate bleiben online.', 'sk-core' ); ?>
+                </p>
+            </div>
+        </div>
+
+        <div class="sk-settings-field">
+            <label class="sk-settings-label" for="sk_vacation_to"><?php esc_html_e( 'Zeitraum', 'sk-core' ); ?></label>
+            <div class="sk-settings-input sk-vacation-range">
+                <label>
+                    <span><?php esc_html_e( 'von', 'sk-core' ); ?></span>
+                    <input type="date" name="sk_vacation_from" id="sk_vacation_from" class="sk-form-control" value="<?php echo esc_attr( $vacation['from'] ?? '' ); ?>">
+                </label>
+                <label>
+                    <span><?php esc_html_e( 'bis', 'sk-core' ); ?></span>
+                    <input type="date" name="sk_vacation_to" id="sk_vacation_to" class="sk-form-control" value="<?php echo esc_attr( $vacation['to'] ?? '' ); ?>">
+                </label>
+                <p class="description">
+                    <?php esc_html_e( 'Beides freiwillig. Mit Enddatum verschwindet der Hinweis von selbst, ohne bleibt er stehen, bis du den Haken wieder entfernst.', 'sk-core' ); ?>
+                </p>
+            </div>
+        </div>
+
+        <div class="sk-settings-field">
+            <label class="sk-settings-label" for="sk_vacation_note"><?php esc_html_e( 'Hinweis', 'sk-core' ); ?></label>
+            <div class="sk-settings-input">
+                <input type="text" name="sk_vacation_note" id="sk_vacation_note" class="sk-form-control" maxlength="160"
+                       value="<?php echo esc_attr( $vacation['note'] ?? '' ); ?>"
+                       placeholder="<?php esc_attr_e( 'Bin bis Ende Monat unterwegs, Versand danach.', 'sk-core' ); ?>">
+            </div>
+        </div>
+
+        <?php if ( $hours_on ) : ?>
+            <div class="sk-settings-field sk-settings-field--hours">
+                <label class="sk-settings-label"><?php esc_html_e( 'Öffnungszeiten', 'sk-core' ); ?></label>
+                <div class="sk-settings-input">
+                    <ul class="sk-hours">
+                        <?php foreach ( sk_store_weekdays() as $sk_day => $sk_label ) : ?>
+                            <li class="sk-hours__row">
+                                <span class="sk-hours__day"><?php echo esc_html( $sk_label ); ?></span>
+                                <input type="time" name="sk_hours[<?php echo esc_attr( $sk_day ); ?>][from]" class="sk-form-control"
+                                       value="<?php echo esc_attr( $hours[ $sk_day ]['from'] ?? '' ); ?>"
+                                       aria-label="<?php echo esc_attr( sprintf( __( '%s, von', 'sk-core' ), $sk_label ) ); ?>">
+                                <span class="sk-hours__dash">–</span>
+                                <input type="time" name="sk_hours[<?php echo esc_attr( $sk_day ); ?>][to]" class="sk-form-control"
+                                       value="<?php echo esc_attr( $hours[ $sk_day ]['to'] ?? '' ); ?>"
+                                       aria-label="<?php echo esc_attr( sprintf( __( '%s, bis', 'sk-core' ), $sk_label ) ); ?>">
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                    <p class="description">
+                        <?php esc_html_e( 'Leer lassen heisst geschlossen. Die Zeiten stehen im Kontaktblock deiner Anbieterseite.', 'sk-core' ); ?>
+                    </p>
+                </div>
+            </div>
+        <?php endif; ?>
+    </div>
 
     <!-- ======================================================
          SECTION 4: Biografie

@@ -1928,6 +1928,109 @@ function sk_is_shop_pack( $vendor_id = 0 ) {
 defined( 'SK_STORE_GALLERY_MAX' ) || define( 'SK_STORE_GALLERY_MAX', 5 );
 
 /**
+ * The weekdays of the opening hours, in the order they are shown.
+ *
+ * Keys are stable and never translated — they are what gets stored.
+ *
+ * @return array<string,string>
+ */
+function sk_store_weekdays(): array {
+    return [
+        'mon' => __( 'Montag', 'sk-core' ),
+        'tue' => __( 'Dienstag', 'sk-core' ),
+        'wed' => __( 'Mittwoch', 'sk-core' ),
+        'thu' => __( 'Donnerstag', 'sk-core' ),
+        'fri' => __( 'Freitag', 'sk-core' ),
+        'sat' => __( 'Samstag', 'sk-core' ),
+        'sun' => __( 'Sonntag', 'sk-core' ),
+    ];
+}
+
+/**
+ * This vendor's opening hours, or [] when none are set.
+ *
+ * Only days with both a start and an end come back. The package is checked
+ * here too: a vendor who drops to the free package keeps what is stored but
+ * stops showing it.
+ *
+ * @return array<string,array{from:string,to:string}>
+ */
+function sk_store_hours( $vendor_id = 0 ): array {
+    $vendor_id = (int) ( $vendor_id ?: sk_get_current_user_id() );
+
+    if ( ! $vendor_id || ! sk_is_shop_pack( $vendor_id ) ) {
+        return [];
+    }
+
+    $stored = (array) ( sk_get_store_info( $vendor_id )['hours'] ?? [] );
+    $out    = [];
+
+    foreach ( array_keys( sk_store_weekdays() ) as $day ) {
+        $from = sk_store_time( (string) ( $stored[ $day ]['from'] ?? '' ) );
+        $to   = sk_store_time( (string) ( $stored[ $day ]['to'] ?? '' ) );
+
+        if ( '' !== $from && '' !== $to ) {
+            $out[ $day ] = [ 'from' => $from, 'to' => $to ];
+        }
+    }
+
+    return $out;
+}
+
+/** A HH:MM time, or '' when it is not one. */
+function sk_store_time( string $value ): string {
+    return preg_match( '/^([01]\d|2[0-3]):[0-5]\d$/', trim( $value ) ) ? trim( $value ) : '';
+}
+
+/** A YYYY-MM-DD date that really exists, or ''. */
+function sk_store_date( string $value ): string {
+    $value = trim( $value );
+    $date  = \DateTimeImmutable::createFromFormat( '!Y-m-d', $value );
+
+    return $date && $date->format( 'Y-m-d' ) === $value ? $value : '';
+}
+
+/**
+ * Is this vendor away right now?
+ *
+ * A break with no end never ends — that is deliberate, somebody who forgets
+ * to switch it off should look closed rather than silently reachable again.
+ * A start in the future is not a break yet.
+ *
+ * @return array{note:string,until:string}|null
+ */
+function sk_store_vacation( $vendor_id = 0 ): ?array {
+    $vendor_id = (int) ( $vendor_id ?: sk_get_current_user_id() );
+
+    if ( ! $vendor_id ) {
+        return null;
+    }
+
+    $break = (array) ( sk_get_store_info( $vendor_id )['vacation'] ?? [] );
+
+    if ( empty( $break['on'] ) ) {
+        return null;
+    }
+
+    $today = current_time( 'Y-m-d' );
+    $from  = (string) ( $break['from'] ?? '' );
+    $until = (string) ( $break['to'] ?? '' );
+
+    if ( '' !== $from && $today < $from ) {
+        return null;
+    }
+
+    if ( '' !== $until && $today > $until ) {
+        return null;
+    }
+
+    return [
+        'note'  => (string) ( $break['note'] ?? '' ),
+        'until' => $until,
+    ];
+}
+
+/**
  * The pictures on this vendor's page, in the order they were arranged.
  *
  * Attachments that were deleted in the meantime are dropped here rather

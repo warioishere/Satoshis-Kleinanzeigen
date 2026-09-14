@@ -28,6 +28,7 @@ class ContactDetails {
 
         // Contact icons in product loops
         add_action( 'woocommerce_after_shop_loop_item',   [ $this, 'output_loop_icons' ], 99 );
+        add_action( 'woocommerce_single_product_summary', [ $this, 'output_single_vacation' ], 24 );
         add_action( 'woocommerce_single_product_summary', [ $this, 'output_single_icons' ], 25 );
 
         // AJAX validation
@@ -513,6 +514,23 @@ class ContactDetails {
         if ( ! $vendor ) return;
         $icons = $this->collect_icons( sk_get_store_info( $vendor->get_id() ), $vendor->get_id(), $product->get_id(), 'loop' );
         if ( ! empty( $icons ) ) echo $this->render_icons( $icons, 'loop' ); // phpcs:ignore
+    }
+
+    /**
+     * The vendor's break, right above the ways to contact them.
+     *
+     * Most visitors arrive on a listing and write from there, never seeing
+     * the vendor page — so the notice has to be here as well.
+     */
+    public function output_single_vacation(): void {
+        if ( ! function_exists( 'sk_get_vendor_by_product' ) ) return;
+        global $product;
+        if ( ! $product ) return;
+        $vendor = sk_get_vendor_by_product( $product );
+        if ( ! $vendor ) return;
+        $break = sk_store_vacation( $vendor->get_id() );
+        if ( ! $break ) return;
+        sk_get_template_part( 'store-vacation', '', $break );
     }
 
     public function output_single_icons(): void {

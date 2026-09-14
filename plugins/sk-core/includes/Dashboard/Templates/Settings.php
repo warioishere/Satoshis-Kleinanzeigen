@@ -371,6 +371,14 @@ class Settings {
                 'show_phone_number'    => isset( $_POST['show_phone_number'] ) ? '1' : '',
                 'nostr'                => isset( $_POST['nostr'] ) ? sanitize_text_field( $_POST['nostr'] ) : ( $prev_sk_settings['nostr'] ?? '' ),
                 'show_nostr'           => isset( $_POST['show_nostr'] ) ? '1' : '',
+
+                // The break is open to everyone — a private seller goes away too.
+                'vacation'             => [
+                    'on'   => isset( $_POST['sk_vacation_on'] ) ? 1 : 0,
+                    'from' => isset( $_POST['sk_vacation_from'] ) ? sk_store_date( wp_unslash( $_POST['sk_vacation_from'] ) ) : '',
+                    'to'   => isset( $_POST['sk_vacation_to'] ) ? sk_store_date( wp_unslash( $_POST['sk_vacation_to'] ) ) : '',
+                    'note' => isset( $_POST['sk_vacation_note'] ) ? mb_substr( sanitize_text_field( wp_unslash( $_POST['sk_vacation_note'] ) ), 0, 160 ) : '',
+                ],
             ];
 
             /*
@@ -406,6 +414,25 @@ class Settings {
                     0,
                     SK_STORE_GALLERY_MAX
                 );
+
+                // Opening hours. A day is only kept when both times are
+                // there and the end is after the start.
+                $posted_hours = isset( $_POST['sk_hours'] ) && is_array( $_POST['sk_hours'] )
+                    ? wp_unslash( $_POST['sk_hours'] )
+                    : [];
+
+                $hours = [];
+
+                foreach ( array_keys( sk_store_weekdays() ) as $day ) {
+                    $from = sk_store_time( (string) ( $posted_hours[ $day ]['from'] ?? '' ) );
+                    $to   = sk_store_time( (string) ( $posted_hours[ $day ]['to'] ?? '' ) );
+
+                    if ( '' !== $from && '' !== $to && $to > $from ) {
+                        $hours[ $day ] = [ 'from' => $from, 'to' => $to ];
+                    }
+                }
+
+                $sk_settings['hours'] = $hours;
             }
 
             // E-Mail Verarbeitung

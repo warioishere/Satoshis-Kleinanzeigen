@@ -97,9 +97,21 @@ $banner_width     = sk_get_vendor_store_banner_width();
     // Contact methods below the banner instead of inside it: in the header
     // they sat between address and rating and got lost as soon as the
     // vendor offered more than one method.
+    // Above the contact methods, not behind a tab: this has to be read
+    // before somebody writes, not after they went looking for it.
+    $sk_break = sk_store_vacation( $store_user->get_id() );
+    if ( $sk_break ) {
+        sk_get_template_part( 'store-vacation', '', $sk_break );
+    }
+
     $sk_contacts = \SK\Core\Dashboard\Modules\ContactDetails::contact_list_html( $store_user->get_id() );
     if ( $sk_contacts !== '' ) {
         echo '<div class="sk-store-contacts">' . $sk_contacts . '</div>'; // phpcs:ignore
+    }
+
+    $sk_hours = sk_store_hours( $store_user->get_id() );
+    if ( $sk_hours ) {
+        sk_get_template_part( 'store-hours', '', [ 'hours' => $sk_hours, 'away' => (bool) $sk_break ] );
     }
     ?>
 
