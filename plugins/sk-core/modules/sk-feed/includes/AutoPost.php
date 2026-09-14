@@ -29,6 +29,11 @@ class AutoPost {
 			return;
 		}
 
+		// Packages and the marketplace's own products are no listings.
+		if ( function_exists( 'sk_is_platform_product' ) && sk_is_platform_product( $post->ID ) ) {
+			return;
+		}
+
 		$vendor_id = (int) $post->post_author;
 
 		// Check vendor opt-in (default: on).

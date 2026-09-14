@@ -180,6 +180,12 @@ add_action('sk_new_product_added', function($post_id, $postdata) {
         return;
     }
 
+    // Packages and the marketplace's own products are no listings.
+    if (function_exists('sk_is_platform_product') && sk_is_platform_product($post_id)) {
+        nap_log(sprintf('sk_new_product_added: id=%d ist ein Plattformprodukt, uebersprungen', $post_id));
+        return;
+    }
+
     // Already sent?
     if (get_post_meta($post_id, NAP_META_EVENT_ID, true)) {
         nap_log('Aborting: a Nostr event already exists.');
@@ -197,6 +203,7 @@ add_action('sk_new_product_added', function($post_id, $postdata) {
 add_action('transition_post_status', function($new_status, $old_status, $post) {
     if ($new_status !== 'publish' || $new_status === $old_status) return;
     if (!$post || $post->post_type !== 'product') return;
+    if (function_exists('sk_is_platform_product') && sk_is_platform_product($post->ID)) return;
     if (get_post_meta($post->ID, NAP_META_EVENT_ID, true)) return;
 
     global $_nap_shutdown_queue;

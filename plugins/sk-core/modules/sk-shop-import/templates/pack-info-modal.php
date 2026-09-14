@@ -45,6 +45,13 @@ defined( 'ABSPATH' ) || exit;
                 </span>
             </li>
             <li>
+                <i class="fas fa-rotate"></i>
+                <span>
+                    <strong><?php esc_html_e( 'Nächtlicher Shop-Abgleich', 'sk-core' ); ?> <span class="sk-pack-info__from"><?php esc_html_e( 'ab Wal', 'sk-core' ); ?></span></strong>
+                    <?php esc_html_e( 'Einmal pro Nacht holen wir deinen Katalog erneut und gleichen ab, was du hier eingestellt hast: Preise und Ausführungen werden nachgeführt, Verschwundenes und Ausverkauftes wird zum Entwurf. Neue Artikel werden nur gemeldet, eingestellt wird nichts von allein. Du schaltest den Abgleich im Shop-Import ein.', 'sk-core' ); ?>
+                </span>
+            </li>
+            <li>
                 <i class="fas fa-chart-bar"></i>
                 <span>
                     <strong><?php esc_html_e( 'Umsatz & CSV-Export', 'sk-core' ); ?> <span class="sk-pack-info__from"><?php esc_html_e( 'ab Hai', 'sk-core' ); ?></span></strong>

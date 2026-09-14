@@ -191,6 +191,9 @@ use SK\Modules\Subscription\Helper;
                                 <?php if ( \SK\Modules\ShopImport\Variants::revenue_pack_allows( (int) get_the_ID() ) ) : ?>
                                     <li><i class="fas fa-chart-bar"></i> Umsatz &amp; CSV-Export</li>
                                 <?php endif; ?>
+                                <?php if ( class_exists( \SK\Modules\ShopImport\Sync::class ) && \SK\Modules\ShopImport\Sync::pack_allows( (int) get_the_ID() ) ) : ?>
+                                    <li><i class="fas fa-rotate"></i> N&auml;chtlicher Shop-Abgleich</li>
+                                <?php endif; ?>
                             </ul>
                             <button type="button" class="pack_feature_more" data-sk-pack-info>
                                 Mehr erfahren

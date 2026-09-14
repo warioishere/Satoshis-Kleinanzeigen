@@ -132,6 +132,11 @@ class ProductPublisher {
             return null;
         }
 
+        // Packages and the marketplace's own products are no listings.
+        if ( function_exists( 'sk_is_platform_product' ) && sk_is_platform_product( $post_id ) ) {
+            return null;
+        }
+
         $product = function_exists( 'wc_get_product' ) ? wc_get_product( $post_id ) : null;
         if ( ! $product ) {
             return null;

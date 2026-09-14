@@ -749,6 +749,11 @@ function telegram_queue_on_new_product($post_id, $postdata) {
         error_log("[TG] SKIP #$post_id: status/type check failed");
         return;
     }
+    // Packages and the marketplace's own products are no listings.
+    if (function_exists('sk_is_platform_product') && sk_is_platform_product($post_id)) {
+        error_log("[TG] SKIP #$post_id: Plattformprodukt");
+        return;
+    }
     if (empty(trim($post->post_title)) || strtolower($post->post_title) === 'auto-draft') {
         error_log("[TG] SKIP #$post_id: title empty or auto-draft");
         return;

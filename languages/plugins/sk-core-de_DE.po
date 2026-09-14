@@ -14408,3 +14408,15 @@ msgstr "Letzter Lauf am %1$s: %2$d aktualisiert, %3$d als Entwurf, %4$d neue Art
 #: plugins/sk-core/templates/dashboard/shop-import/dashboard-shop-import.php
 msgid "Letzter Lauf am %1$s ohne Erfolg: %2$s"
 msgstr "Letzter Lauf am %1$s ohne Erfolg: %2$s"
+
+#: plugins/sk-core/modules/sk-shop-import/templates/pack-info-modal.php
+msgid "Nächtlicher Shop-Abgleich"
+msgstr "Nächtlicher Shop-Abgleich"
+
+#: plugins/sk-core/modules/sk-shop-import/templates/pack-info-modal.php
+msgid "ab Wal"
+msgstr "ab Wal"
+
+#: plugins/sk-core/modules/sk-shop-import/templates/pack-info-modal.php
+msgid "Einmal pro Nacht holen wir deinen Katalog erneut und gleichen ab, was du hier eingestellt hast: Preise und Ausführungen werden nachgeführt, Verschwundenes und Ausverkauftes wird zum Entwurf. Neue Artikel werden nur gemeldet, eingestellt wird nichts von allein. Du schaltest den Abgleich im Shop-Import ein."
+msgstr "Einmal pro Nacht holen wir deinen Katalog erneut und gleichen ab, was du hier eingestellt hast: Preise und Ausführungen werden nachgeführt, Verschwundenes und Ausverkauftes wird zum Entwurf. Neue Artikel werden nur gemeldet, eingestellt wird nichts von allein. Du schaltest den Abgleich im Shop-Import ein."

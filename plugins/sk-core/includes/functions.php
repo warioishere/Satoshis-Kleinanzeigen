@@ -1869,6 +1869,39 @@ function sk_get_seller_short_address( $store_id, $line_break = true ) {
  * @return bool
  */
 /**
+ * Is this product the marketplace's own, not somebody's listing?
+ *
+ * Subscription packages, the advertising base product and the sponsor
+ * credit are products in WooCommerce's sense, so every check that only
+ * asks for the post type treats them as listings. They then get announced
+ * to Telegram, Nostr and the community feed like a used bicycle — which
+ * is what happened when the term packages were created.
+ *
+ * @param int|WP_Post|WC_Product $product
+ */
+function sk_is_platform_product( $product ): bool {
+    $product = is_numeric( $product ) || $product instanceof WP_Post ? wc_get_product( $product ) : $product;
+
+    if ( ! $product instanceof WC_Product ) {
+        return false;
+    }
+
+    if ( in_array( $product->get_type(), [ 'product_pack', 'subscription' ], true ) ) {
+        return true;
+    }
+
+    $own = array_filter(
+        [
+            (int) get_option( 'sk_advertisement_product_id', 0 ),
+            (int) get_option( 'sk_sponsor_credit_product_id', 0 ),
+            (int) get_option( 'sk_reverse_withdrawal_product_id', 0 ),
+        ]
+    );
+
+    return in_array( (int) $product->get_id(), $own, true );
+}
+
+/**
  * May this vendor edit several listings at once? A larger package's feature.
  */
 function sk_can_bulk_edit( $vendor_id = 0 ) {
