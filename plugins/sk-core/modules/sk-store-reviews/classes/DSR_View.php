@@ -268,6 +268,17 @@ class DSR_View {
                                     <p><?php echo $review->post_content ?></p>
                                 </div>
                                 <?php
+                                    // The vendor's reply, written in their dashboard.
+                                    $sk_reply = \SK\Core\StoreReviews::reply_of( (int) $review->ID );
+
+                                    if ( '' !== $sk_reply ) :
+                                ?>
+                                    <div class="sk-store-review-reply">
+                                        <span class="sk-store-review-reply__who"><?php esc_html_e( 'Antwort des Anbieters', 'sk-core' ); ?></span>
+                                        <p><?php echo esc_html( $sk_reply ); ?></p>
+                                    </div>
+                                <?php endif; ?>
+                                <?php
                                     if ( get_current_user_id() == $review->post_author ) {
                                         $seller_id = get_post_meta( $review->ID, 'store_id', true );
                                         ob_start();
