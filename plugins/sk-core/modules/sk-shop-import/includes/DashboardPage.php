@@ -270,7 +270,7 @@ class DashboardPage extends DashboardModule {
 
         // The quota applies to dealers too — anyone wanting to list more
         // needs a bigger pack or has to select fewer items.
-        $quota = Quota::check( $vendor_id, count( $items ) );
+        $quota = Quota::check( $vendor_id, Quota::new_items( $vendor_id, $items ) );
         if ( ! $quota['ok'] ) {
             set_transient( 'sk_import_quota_' . $vendor_id, $quota, 600 );
             wp_safe_redirect( add_query_arg( 'schritt', 'kontingent', $this->url() ) );
@@ -375,7 +375,7 @@ class DashboardPage extends DashboardModule {
                     $items      = $built;
                     $item_count = count( $items );
                     $csv_cats   = Catalog::categories( $items );
-                    $quota      = Quota::check( $vendor_id, $item_count );
+                    $quota      = Quota::check( $vendor_id, Quota::new_items( $vendor_id, $items ) );
                     $rows       = Source::count( $path );
                 }
             }

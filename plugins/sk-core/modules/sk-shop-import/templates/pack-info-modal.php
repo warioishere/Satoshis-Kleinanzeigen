@@ -19,8 +19,8 @@ defined( 'ABSPATH' ) || exit;
             <li>
                 <i class="fas fa-file-import"></i>
                 <span>
-                    <strong><?php esc_html_e( 'Woo & Shopify Produkt Import', 'sk-core' ); ?></strong>
-                    <?php esc_html_e( 'Läuft dein Shop auf Shopify, holen wir den Katalog direkt — du gibst nur die Adresse an. Bei WooCommerce exportierst du eine CSV-Datei und lädst sie hoch. Bilder und Kategorien kommen mit, bis zu fünf Bilder je Artikel. Vor dem Import wählst du aus, was übernommen wird.', 'sk-core' ); ?>
+                    <strong><?php esc_html_e( 'Woo & Shopify Produkt Import', 'sk-core' ); ?> <span class="sk-pack-info__from"><?php esc_html_e( 'ab Delphin', 'sk-core' ); ?></span></strong>
+                    <?php esc_html_e( 'Läuft dein Shop auf WooCommerce oder Shopify, holen wir den Katalog direkt — du gibst nur die Adresse an. Für alles andere lädst du eine CSV-Datei hoch. Bilder und Kategorien kommen mit, bis zu fünf Bilder je Artikel. Vor dem Import wählst du aus, was übernommen wird.', 'sk-core' ); ?>
                 </span>
             </li>
             <li>

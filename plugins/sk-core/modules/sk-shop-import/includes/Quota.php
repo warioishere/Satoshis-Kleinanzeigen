@@ -38,6 +38,38 @@ final class Quota {
     }
 
     /**
+     * How many of these items would become new listings?
+     *
+     * Re-importing a catalog mostly updates what is already here, and an
+     * update costs no quota. Counting every selected row would lock out a
+     * dealer whose shop merely fills their pack.
+     *
+     * @param array<int,array> $items
+     */
+    public static function new_items( int $vendor_id, array $items ): int {
+        global $wpdb;
+
+        $known = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value LIKE %s",
+                Importer::META_KEY,
+                $wpdb->esc_like( $vendor_id . ':' ) . '%'
+            )
+        );
+
+        $known = array_flip( $known );
+        $new   = 0;
+
+        foreach ( $items as $item ) {
+            if ( ! isset( $known[ Importer::key_for( $vendor_id, (array) $item ) ] ) ) {
+                $new++;
+            }
+        }
+
+        return $new;
+    }
+
+    /**
      * Is the quota enough for this many listings?
      *
      * @return array{ok:bool,remaining:?int,needed:int,missing:int}

@@ -17,8 +17,8 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Notify {
 
-    /** From this many listings, a package counts as the shop tier (Delphin). */
-    const SHOP_MIN_PRODUCTS = 21;
+    /** Pack groups that count as a shop, see Variants::LADDER. */
+    const SHOP_GROUPS = [ 'krabbe', 'delphin', 'hai', 'wal' ];
 
     public function __construct() {
         add_action( 'sk_order_placed', [ __CLASS__, 'on_order_placed' ] );
@@ -27,7 +27,7 @@ final class Notify {
     }
 
     /**
-     * Does the vendor have a package at Delphin tier or above?
+     * Does the vendor hold one of the shop packages?
      *
      * Same rule as for the catalog import. Deliberately duplicated here so
      * the notification doesn't depend on the import module being active.
@@ -38,13 +38,12 @@ final class Notify {
         }
 
         $pack = (int) get_user_meta( $vendor_id, 'product_package_id', true );
+
         if ( ! $pack ) {
             return false;
         }
 
-        $count = (int) get_post_meta( $pack, '_no_of_product', true );
-
-        return $count === -1 || $count >= self::SHOP_MIN_PRODUCTS;
+        return in_array( (string) get_post_meta( $pack, '_sk_pack_group', true ), self::SHOP_GROUPS, true );
     }
 
     /**

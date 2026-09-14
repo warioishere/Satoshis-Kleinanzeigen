@@ -17,39 +17,18 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Variants {
 
-    /** Packages that allow variants. Empty = derived from package size. */
-    const OPTION_PACKS = 'sk_variants_packs';
-
-    /** From this listing count a package counts as large enough (Delphin: 21). */
-    const DEFAULT_MIN_PRODUCTS = 21;
-
     /**
-     * From how many products the revenue report is included.
+     * The shop packages as a ladder, smallest first.
      *
-     * Higher than DEFAULT_MIN_PRODUCTS: import and variants are available
-     * from Delphin upward, the report only from Hai upward. Deliberately
-     * based on the product count and not the package name — packages can
-     * be renamed, and a fixed ID would become wrong after the next one is
-     * created.
-     */
-    const REVENUE_MIN_PRODUCTS = 50;
-
-    /**
-     * From how many products the catalog import is included.
+     * A rung is a pack group, not a listing count. The limits belong to
+     * pricing and get moved around; a feature must not change hands because
+     * a number was raised. The group also survives renaming the package and
+     * is shared by all terms of it, so the three-month and yearly siblings
+     * sit on the same rung without being listed.
      *
-     * Above DEFAULT_MIN_PRODUCTS: the smaller shop package carries the
-     * shop basics — address, adaptive prices, variants — while a whole
-     * catalog belongs to the larger one.
+     * A package outside this list — the free one — unlocks nothing.
      */
-    const IMPORT_MIN_PRODUCTS = 21;
-
-    /**
-     * From how many products bulk editing is included.
-     *
-     * Editing many listings at once only becomes work worth saving once
-     * there are many of them.
-     */
-    const BULK_MIN_PRODUCTS = 50;
+    const LADDER = [ 'krabbe', 'delphin', 'hai', 'wal' ];
 
     public function __construct() {
         add_action( 'sk_product_edit_after_pricing_fields', [ $this, 'render_field' ], 10, 2 );
@@ -58,27 +37,44 @@ final class Variants {
     }
 
     /**
+     * The group a package belongs to, e.g. "krabbe".
+     */
+    private static function group_of( int $pack_id ): string {
+        if ( $pack_id <= 0 ) {
+            return '';
+        }
+
+        return class_exists( \SK\Modules\Subscription\Durations::class )
+            ? \SK\Modules\Subscription\Durations::group( $pack_id )
+            : (string) get_post_meta( $pack_id, \SK\Modules\Subscription\Durations::META_GROUP, true );
+    }
+
+    /**
+     * Does this package sit at $group or higher on the ladder?
+     *
+     * A package off the ladder answers no, so a new one unlocks nothing
+     * until it is listed — the safe direction.
+     */
+    public static function from_group( int $pack_id, string $group ): bool {
+        $needed = array_search( $group, self::LADDER, true );
+        $rung   = array_search( self::group_of( $pack_id ), self::LADDER, true );
+
+        return false !== $needed && false !== $rung && $rung >= $needed;
+    }
+
+    /**
      * Packages that allow variants.
      *
      * @return int[]
      */
     public static function allowed_packs(): array {
-        $stored = get_option( self::OPTION_PACKS, [] );
-        if ( is_array( $stored ) && ! empty( $stored ) ) {
-            return self::with_terms( array_map( 'intval', $stored ) );
-        }
-
         global $wpdb;
 
         $ids   = $wpdb->get_col( "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_pack_validity'" );
         $packs = [];
 
         foreach ( $ids as $id ) {
-            $count = (int) get_post_meta( $id, '_no_of_product', true );
-
-            // -1 means unlimited. Without this branch, the largest package
-            // would be the one excluded from unlocking, because -1 is less than 21.
-            if ( $count === -1 || $count >= self::DEFAULT_MIN_PRODUCTS ) {
+            if ( self::pack_allows( (int) $id ) ) {
                 $packs[] = (int) $id;
             }
         }
@@ -87,51 +83,17 @@ final class Variants {
     }
 
     /**
-     * The same packages in their other terms.
-     *
-     * A package listed here is meant as a package, not as one term of it —
-     * so the three-month and yearly siblings unlock the same features
-     * without having to be listed again.
-     *
-     * @param int[] $ids
-     *
-     * @return int[]
-     */
-    private static function with_terms( array $ids ): array {
-        if ( ! class_exists( \SK\Modules\Subscription\Durations::class ) ) {
-            return $ids;
-        }
-
-        foreach ( $ids as $id ) {
-            $group = \SK\Modules\Subscription\Durations::group( $id );
-
-            if ( '' !== $group ) {
-                $ids = array_merge( $ids, \SK\Modules\Subscription\Durations::siblings( $group ) );
-            }
-        }
-
-        return array_values( array_unique( $ids ) );
-    }
-
-    /**
      * Does this package allow variants? For the package card in the subscription area.
      */
     public static function pack_allows( int $pack_id ): bool {
-        return $pack_id > 0 && in_array( $pack_id, self::allowed_packs(), true );
+        return self::from_group( $pack_id, 'krabbe' );
     }
 
     /**
      * Does the catalog import belong to this package?
      */
     public static function import_pack_allows( int $pack_id ): bool {
-        if ( $pack_id <= 0 ) {
-            return false;
-        }
-
-        $count = (int) get_post_meta( $pack_id, '_no_of_product', true );
-
-        // -1 means unlimited, see allowed_packs().
-        return $count === -1 || $count >= self::IMPORT_MIN_PRODUCTS;
+        return self::from_group( $pack_id, 'delphin' );
     }
 
     /**
@@ -151,14 +113,7 @@ final class Variants {
      * Does bulk editing belong to this package?
      */
     public static function bulk_pack_allows( int $pack_id ): bool {
-        if ( $pack_id <= 0 ) {
-            return false;
-        }
-
-        $count = (int) get_post_meta( $pack_id, '_no_of_product', true );
-
-        // -1 means unlimited, see allowed_packs().
-        return $count === -1 || $count >= self::BULK_MIN_PRODUCTS;
+        return self::from_group( $pack_id, 'hai' );
     }
 
     /**
@@ -178,14 +133,7 @@ final class Variants {
      * Does the revenue report belong to this package?
      */
     public static function revenue_pack_allows( int $pack_id ): bool {
-        if ( $pack_id <= 0 ) {
-            return false;
-        }
-
-        $count = (int) get_post_meta( $pack_id, '_no_of_product', true );
-
-        // -1 means unlimited, see allowed_packs().
-        return $count === -1 || $count >= self::REVENUE_MIN_PRODUCTS;
+        return self::from_group( $pack_id, 'hai' );
     }
 
     /**

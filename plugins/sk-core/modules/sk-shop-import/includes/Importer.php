@@ -51,7 +51,7 @@ final class Importer {
         $vendor_id = (int) ( $args['vendor_id'] ?? 0 );
         $currency  = strtoupper( (string) ( $args['currency'] ?? 'EUR' ) );
         $image_cap = (int) ( $args['image_cap'] ?? self::DEFAULT_IMAGE_CAP );
-        $status    = in_array( $args['status'] ?? 'publish', [ 'publish', 'draft' ], true ) ? $args['status'] : 'publish';
+        $status    = in_array( $args['status'] ?? 'publish', [ 'publish', 'draft', 'keep' ], true ) ? $args['status'] : 'publish';
         $cat_map   = (array) ( $args['category_map'] ?? [] );
         $default   = (int) ( $args['default_cat'] ?? 0 );
         $source    = (string) ( $args['source'] ?? '' );
@@ -65,6 +65,10 @@ final class Importer {
         }
 
         $geo = self::vendor_location( $vendor_id );
+
+        // Room left in the pack, null when the pack is unlimited.
+        $room    = Quota::remaining( $vendor_id );
+        $blocked = 0;
 
         // No items with variants without a matching pack — otherwise the
         // import would be a detour around the editor's pack limit.
@@ -85,16 +89,34 @@ final class Importer {
                 continue;
             }
 
-            // Without a SKU, a second import would create a duplicate; the
-            // title is then the most stable fallback. Catalog assigns the
-            // same key so the form's selection matches it.
-            $sku = (string) ( $item['sku'] ?? '' );
-            $key = $vendor_id . ':' . ( (string) ( $item['key'] ?? '' ) !== '' ? $item['key'] : ( $sku !== '' ? $sku : md5( $name ) ) );
-
+            $key      = self::key_for( $vendor_id, $item );
             $existing = self::find_by_key( $key );
+
+            // A new listing needs room in the pack, an update does not —
+            // it changes something that is already counted. Enforced here
+            // rather than only in the form that starts an import, because a
+            // queued job runs later and the nightly run has no form at all.
+            if ( ! $existing && null !== $room ) {
+                if ( $room <= 0 ) {
+                    $blocked++;
+                    continue;
+                }
+
+                $room--;
+            }
 
             // Whatever is private in the shop doesn't become public here.
             $row_status = ! empty( $item['draft'] ) ? 'draft' : $status;
+
+            /*
+             * "keep" leaves the listing where the vendor put it. The nightly
+             * run asks for this: it is there to carry prices over, not to
+             * republish what somebody drafted — which would also push a full
+             * pack over its limit, because only published listings count.
+             */
+            if ( 'keep' === $row_status ) {
+                $row_status = $existing ? (string) get_post_status( $existing ) : 'draft';
+            }
 
             /*
              * Create via the WooCommerce API, not via wp_insert_post. A
@@ -164,9 +186,41 @@ final class Importer {
 
         Silence::stop();
 
+        if ( $blocked > 0 ) {
+            $result['skipped'] += $blocked;
+            $result['errors'][] = sprintf(
+                /* translators: %d: number of articles */
+                _n(
+                    '%d Artikel wurde nicht angelegt, dein Paket ist voll.',
+                    '%d Artikel wurden nicht angelegt, dein Paket ist voll.',
+                    $blocked,
+                    'sk-core'
+                ),
+                $blocked
+            );
+        }
+
         update_user_meta( $vendor_id, Dealer::META_LAST_RUN, time() );
 
         return $result;
+    }
+
+    /**
+     * The key a listing of this vendor is looked up by.
+     *
+     * Without a SKU a second import would create a duplicate; the title is
+     * then the most stable fallback. Catalog assigns the same key, so the
+     * form's selection matches it.
+     */
+    public static function key_for( int $vendor_id, array $item ): string {
+        $key = (string) ( $item['key'] ?? '' );
+
+        if ( '' === $key ) {
+            $sku = (string) ( $item['sku'] ?? '' );
+            $key = '' !== $sku ? $sku : md5( (string) ( $item['name'] ?? '' ) );
+        }
+
+        return $vendor_id . ':' . $key;
     }
 
     /**

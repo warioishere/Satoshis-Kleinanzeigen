@@ -22,6 +22,10 @@ defined( 'ABSPATH' ) || exit;
  * answers oddly for one night would otherwise wipe out a catalogue, and a
  * draft can be brought back by hand.
  *
+ * It never publishes either: a listing the dealer drafted stays drafted.
+ * The run can therefore not raise the number of published listings, and
+ * the pack limit holds without the run having to know about it.
+ *
  * Only the largest package, and only after the dealer switches it on: the
  * run fetches from an outside host and writes to their listings.
  */
@@ -35,13 +39,8 @@ final class Sync {
     /** User meta: report of the last run, for the dashboard. */
     const META_LAST = '_sk_import_sync_last';
 
-    /**
-     * From how many products a package includes the nightly run.
-     *
-     * Above the bulk editing threshold: this is the largest package's
-     * feature, and a number rather than a package id survives renaming.
-     */
-    const MIN_PRODUCTS = 100;
+    /** The rung of the ladder this belongs to, see Variants::LADDER. */
+    const PACK_GROUP = 'wal';
 
     /** Shops per run, so one night's cron stays bounded. */
     const SHOPS_PER_RUN = 3;
@@ -61,14 +60,7 @@ final class Sync {
      * Does this package include the nightly run?
      */
     public static function pack_allows( int $pack_id ): bool {
-        if ( $pack_id <= 0 ) {
-            return false;
-        }
-
-        $count = (int) get_post_meta( $pack_id, '_no_of_product', true );
-
-        // -1 means unlimited, see Variants::allowed_packs().
-        return -1 === $count || $count >= self::MIN_PRODUCTS;
+        return Variants::from_group( $pack_id, self::PACK_GROUP );
     }
 
     public static function allowed( int $vendor_id = 0 ): bool {
@@ -196,7 +188,7 @@ final class Sync {
                     'default_cat'  => Settings::default_category( $vendor_id ),
                     'category_map' => Settings::category_map( $vendor_id ),
                     'image_cap'    => 0,
-                    'status'       => 'publish',
+                    'status'       => 'keep',
                     'source'       => 'sync',
                 ]
             );
