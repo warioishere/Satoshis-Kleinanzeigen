@@ -74,6 +74,9 @@ add_action( 'init', [ \SK\Core\Antispam::class, 'init' ], 20 );
 new \SK\Core\Wallet\Settings();
 new \SK\Core\Wallet\LnurlPayEndpoint();
 
+// Public questions on a listing, with the vendor answering from the dashboard.
+\SK\Core\Product\QuestionsTab::init();
+
 // Product description excerpt on shop/category loops.
 \SK\Core\ProductDescriptionExcerpt::init();
 

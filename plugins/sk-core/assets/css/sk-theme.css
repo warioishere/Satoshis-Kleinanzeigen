@@ -12314,3 +12314,139 @@ textarea.wp-editor-area.post_content {
   .sk-vacation-range { gap: 12px; }
   .sk-vacation-range label { flex: 1 1 auto; }
 }
+
+/* ==========================================================================
+   Fragen am Inserat — Tab auf der Produktseite und Seite im Dashboard
+   ========================================================================== */
+
+.sk-product-questions__list {
+  margin: 0 0 24px;
+  padding: 0;
+  list-style: none;
+}
+
+.sk-product-questions__list li {
+  margin: 0 0 18px;
+  padding: 0 0 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, .06);
+}
+
+.sk-product-questions__list li:last-child { border-bottom: none; }
+
+.sk-product-questions__who {
+  font-weight: 600;
+  color: #e8ecf0;
+  margin-right: 8px;
+}
+
+.sk-product-questions__when { font-size: 12px; color: #8a9bb0; }
+.sk-product-questions__q p { margin: 4px 0 0; }
+
+/* Die Antwort eingerückt und abgesetzt: man sieht auf einen Blick, wer spricht. */
+.sk-product-questions__a {
+  margin: 10px 0 0 20px;
+  padding: 10px 14px;
+  background: rgba(247, 147, 26, .07);
+  border-left: 3px solid #F7931A;
+  border-radius: 0 8px 8px 0;
+}
+
+.sk-product-questions__a .sk-product-questions__who { color: #F7931A; }
+.sk-product-questions__a p { margin: 4px 0 0; }
+
+.sk-product-questions__empty,
+.sk-product-questions__hint { color: #8a9bb0; font-size: 14px; }
+
+.sk-product-questions__notice {
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  background: rgba(76, 175, 125, .12);
+  border-left: 3px solid #4caf7d;
+  border-radius: 0 8px 8px 0;
+}
+
+.sk-product-questions__form { max-width: 640px; }
+.sk-product-questions__form label { display: block; font-weight: 600; margin-bottom: 6px; }
+
+.sk-product-questions__form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: #252d38;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 6px;
+  color: #e8ecf0;
+  padding: 10px 12px;
+  font-size: 16px;
+}
+
+.sk-product-questions__form textarea:focus {
+  border-color: rgba(247, 147, 26, .5);
+  outline: none;
+}
+
+.sk-product-questions__form .sk-product-questions__hint { margin: 8px 0 12px; }
+
+/* Dashboard: Reiter offen / beantwortet / alle, wie die Store-Tabs */
+.sk-questions-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.sk-questions-tabs li { margin: 0; }
+
+.sk-questions-tabs a {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: #1e2633;
+  border: 1px solid rgba(255, 255, 255, .07);
+  color: #c4cdd8;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.sk-questions-tabs a:hover { color: #F7931A; border-color: rgba(247, 147, 26, .3); }
+
+.sk-questions-tabs li.active a {
+  background: rgba(247, 147, 26, .12);
+  border-color: #F7931A;
+  color: #F7931A;
+  font-weight: 600;
+}
+
+.sk-question { margin-bottom: 12px; }
+.sk-question .sk-settings-section-title a { color: #F7931A; text-decoration: none; }
+
+.sk-question__flag {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(247, 147, 26, .15);
+  color: #F7931A;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+}
+
+.sk-question__when { display: block; font-size: 12px; color: #8a9bb0; font-weight: 400; }
+.sk-question__text { margin: 0; color: #e8ecf0; }
+
+.sk-question__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.sk-question__reject:hover { color: #c0392b !important; border-color: rgba(192, 57, 43, .4) !important; }
+
+@media (max-width: 600px) {
+  .sk-product-questions__a { margin-left: 10px; }
+  .sk-question__actions .sk-btn { flex: 1 1 auto; }
+  .sk-questions-tabs a { padding: 7px 12px; font-size: 13px; }
+}
