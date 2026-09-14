@@ -6714,6 +6714,14 @@ ul.sk-store-custom-fields ul {
     text-align: center;
   }
 
+  /* The 6 px belong to the horizontal list on desktop. Stacked they only
+     pull every button but the last 3 px off centre, so "mehr" as the last
+     one looks misplaced when in fact it is the only one sitting straight.
+     Needs :not(:last-child) to match the specificity of the rule above. */
+  .sk-dashboard #sk-product-list-table .row-actions > span:not(:last-child) {
+    margin-right: 0;
+  }
+
   .sk-dashboard #sk-product-list-table .row-actions > span > a {
     display: inline-block;
     padding: 9px 22px;
