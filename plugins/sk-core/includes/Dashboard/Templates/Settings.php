@@ -391,6 +391,21 @@ class Settings {
 
                 $sk_settings['show_address'] = isset( $_POST['show_address'] ) ? '1' : '';
                 $sk_settings['terms_url']    = isset( $_POST['terms_url'] ) ? esc_url_raw( wp_unslash( $_POST['terms_url'] ) ) : '';
+
+                /*
+                 * Pictures for the vendor page. Capped here as well as in the
+                 * form, and every id has to be an image that exists — the
+                 * field is a list of numbers the browser sends.
+                 */
+                $posted_gallery = isset( $_POST['sk_store_gallery'] )
+                    ? array_filter( array_map( 'absint', explode( ',', sanitize_text_field( wp_unslash( $_POST['sk_store_gallery'] ) ) ) ) )
+                    : [];
+
+                $sk_settings['gallery'] = array_slice(
+                    array_values( array_filter( array_unique( $posted_gallery ), 'wp_attachment_is_image' ) ),
+                    0,
+                    SK_STORE_GALLERY_MAX
+                );
             }
 
             // E-Mail Verarbeitung

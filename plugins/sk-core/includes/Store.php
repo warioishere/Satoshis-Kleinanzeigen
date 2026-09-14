@@ -109,8 +109,11 @@ class Store {
      */
     public function add_vendor_biography_tab( $tabs, $store_id ) {
         $store_info = sk_get_store_info( $store_id );
+        $pictures   = function_exists( 'sk_store_gallery_ids' ) ? sk_store_gallery_ids( $store_id ) : [];
 
-        if ( empty( $store_info['vendor_biography'] ) ) {
+        // Pictures alone are reason enough for the tab — otherwise a shop
+        // that uploads some but writes nothing has a page nobody can reach.
+        if ( empty( $store_info['vendor_biography'] ) && empty( $pictures ) ) {
             return $tabs;
         }
 

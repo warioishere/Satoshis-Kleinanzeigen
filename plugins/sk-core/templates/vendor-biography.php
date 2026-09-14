@@ -42,6 +42,31 @@ get_header( 'shop' );
             <h2 class="headline"><?php echo apply_filters( 'sk_vendor_biography_title', __( 'Vendor Biography', 'sk-core' ) ); ?></h2>
 
             <?php
+            $sk_pictures = function_exists( 'sk_store_gallery_ids' ) ? sk_store_gallery_ids( $store_user->ID ) : [];
+
+            if ( $sk_pictures ) :
+                ?>
+                <ul class="sk-store-impressions">
+                    <?php foreach ( $sk_pictures as $sk_picture_id ) : ?>
+                        <li>
+                            <?php
+                            echo wp_get_attachment_image(
+                                $sk_picture_id,
+                                'large',
+                                false,
+                                [
+                                    'alt'      => esc_attr( $store_user->display_name ),
+                                    'loading'  => 'lazy',
+                                    'decoding' => 'async',
+                                ]
+                            );
+                            ?>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+
+            <?php
             if ( ! empty( $store_info['vendor_biography'] ) ) {
                 printf(
                     '%s',

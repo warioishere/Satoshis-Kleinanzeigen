@@ -336,7 +336,8 @@ class Assets {
             ],
             'sk-store-settings-form' => [
                 'src'  => $asset_url . '/js/settings/store-form.js',
-                'deps' => [ 'jquery' ],
+                // Sortable for arranging the vendor page pictures.
+                'deps' => [ 'jquery', 'jquery-ui-sortable' ],
             ],
             'sk-store-delete-account' => [
                 'src'  => $asset_url . '/js/settings/store-delete-account.js',

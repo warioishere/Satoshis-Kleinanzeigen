@@ -1924,6 +1924,33 @@ function sk_is_shop_pack( $vendor_id = 0 ) {
     return \SK\Modules\ShopImport\Variants::is_allowed( $vendor_id );
 }
 
+/** How many pictures a shop may put on its vendor page. */
+defined( 'SK_STORE_GALLERY_MAX' ) || define( 'SK_STORE_GALLERY_MAX', 5 );
+
+/**
+ * The pictures on this vendor's page, in the order they were arranged.
+ *
+ * Attachments that were deleted in the meantime are dropped here rather
+ * than rendered as broken images. The pack is checked on the way out too,
+ * not only when saving: a vendor who drops back to the free package keeps
+ * the stored ids but stops showing them.
+ *
+ * @return int[]
+ */
+function sk_store_gallery_ids( $vendor_id = 0 ): array {
+    $vendor_id = (int) ( $vendor_id ?: sk_get_current_user_id() );
+
+    if ( ! $vendor_id || ! sk_is_shop_pack( $vendor_id ) ) {
+        return [];
+    }
+
+    $info  = sk_get_store_info( $vendor_id );
+    $ids   = array_filter( array_map( 'absint', (array) ( $info['gallery'] ?? [] ) ) );
+    $ids   = array_slice( array_values( array_unique( $ids ) ), 0, SK_STORE_GALLERY_MAX );
+
+    return array_values( array_filter( $ids, static fn( $id ) => wp_attachment_is_image( $id ) ) );
+}
+
 /**
  * The vendor's shop address, ready to print, or '' when it stays private.
  *

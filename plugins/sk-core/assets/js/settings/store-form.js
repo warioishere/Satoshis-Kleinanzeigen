@@ -155,6 +155,88 @@ function skStoreToast(message, type) {
         $component.find('.gravatar-button-area').removeClass('sk-hide');
     });
 
+    // Store gallery — a handful of pictures for the vendor page.
+    // The hidden field is the truth; the list is only what you see.
+    (function () {
+        var $gallery = $('#sk-store-gallery');
+        if (!$gallery.length) { return; }
+
+        var $field = $('#sk_store_gallery');
+        var max    = parseInt($gallery.data('max'), 10) || 5;
+        var frame;
+
+        function ids() {
+            return ($field.val() || '').split(',').filter(Boolean);
+        }
+
+        function sync() {
+            var list = [];
+            $gallery.find('.sk-store-gallery__item').each(function () {
+                list.push(String($(this).data('attachment-id')));
+            });
+            $field.val(list.join(','));
+            // Nothing left to add once the limit is reached, and no empty
+            // strip of nothing before the first picture.
+            $gallery.find('.sk-store-gallery__list').toggleClass('sk-hide', list.length === 0);
+            $gallery.find('.sk-store-gallery__pick').toggleClass('sk-hide', list.length >= max);
+        }
+
+        $gallery.on('click', '.sk-store-gallery__pick', function (e) {
+            e.preventDefault();
+
+            if (!window.wp || !wp.media) { return; }
+
+            if (!frame) {
+                frame = wp.media({
+                    title: config.galleryTitle || config.imageTitle,
+                    button: { text: config.selectLabel },
+                    library: { type: 'image' },
+                    multiple: true
+                });
+
+                frame.on('select', function () {
+                    var have = ids();
+
+                    frame.state().get('selection').forEach(function (attachment) {
+                        var att = attachment.toJSON();
+
+                        if (have.length >= max || have.indexOf(String(att.id)) !== -1) { return; }
+                        have.push(String(att.id));
+
+                        var url = att.sizes && att.sizes.medium ? att.sizes.medium.url : att.url;
+
+                        $gallery.find('.sk-store-gallery__list').append(
+                            $('<li class="sk-store-gallery__item">')
+                                .attr('data-attachment-id', att.id)
+                                .append($('<img alt="">').attr('src', url))
+                                .append($('<button type="button" class="sk-store-gallery__remove">').text('×'))
+                        );
+                    });
+
+                    sync();
+                });
+            }
+
+            frame.open();
+        });
+
+        $gallery.on('click', '.sk-store-gallery__remove', function (e) {
+            e.preventDefault();
+            $(this).closest('.sk-store-gallery__item').remove();
+            sync();
+        });
+
+        if ($.fn.sortable) {
+            $gallery.find('.sk-store-gallery__list').sortable({
+                items: '.sk-store-gallery__item',
+                cursor: 'move',
+                update: sync
+            });
+        }
+
+        sync();
+    })();
+
     // Store slug preview
     (function() {
         var input = document.getElementById('store_slug');

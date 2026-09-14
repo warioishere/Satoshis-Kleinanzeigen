@@ -48,6 +48,7 @@ wp_localize_script(
         'savedMessage' => __( 'Einstellungen gespeichert.', 'sk-core' ),
         'bannerTitle'  => __( 'Banner auswählen', 'sk-core' ),
         'imageTitle'   => __( 'Bild auswählen', 'sk-core' ),
+        'galleryTitle' => __( 'Bilder für deine Anbieterseite', 'sk-core' ),
         'selectLabel'  => __( 'Auswählen', 'sk-core' ),
 
         // A vendor whose Nostr key stays with them signs the profile update in
@@ -103,6 +104,11 @@ $cd_feewall_enabled   = $cd_feewall_available && isset( $profile_info['cdf_enabl
 
 /* --- Biography --- */
 $vendor_biography = ! empty( $profile_info['vendor_biography'] ) ? $profile_info['vendor_biography'] : '';
+
+/* --- Impressions: a few pictures of the shop, from the shop packages upward --- */
+$gallery_on  = function_exists( 'sk_is_shop_pack' ) && sk_is_shop_pack( $current_user );
+$gallery_ids = $gallery_on && function_exists( 'sk_store_gallery_ids' ) ? sk_store_gallery_ids( $current_user ) : [];
+$gallery_max = defined( 'SK_STORE_GALLERY_MAX' ) ? SK_STORE_GALLERY_MAX : 5;
 
 /* --- Store category (sk-pro) --- */
 $store_categories_on = function_exists( 'sk_is_store_categories_feature_on' ) && sk_is_store_categories_feature_on();
@@ -652,6 +658,36 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
         <div class="sk-settings-section-title">
             <i class="fas fa-pen"></i> <?php esc_html_e( 'Biografie', 'sk-core' ); ?>
         </div>
+        <?php if ( $gallery_on ) : ?>
+        <div class="sk-settings-field sk-settings-field--gallery">
+            <div class="sk-settings-input">
+                <div id="sk-store-gallery" class="sk-store-gallery" data-max="<?php echo (int) $gallery_max; ?>">
+                    <input type="hidden" name="sk_store_gallery" id="sk_store_gallery" value="<?php echo esc_attr( implode( ',', $gallery_ids ) ); ?>">
+                    <ul class="sk-store-gallery__list<?php echo $gallery_ids ? '' : ' sk-hide'; ?>">
+                        <?php foreach ( $gallery_ids as $sk_att_id ) : ?>
+                            <li class="sk-store-gallery__item" data-attachment-id="<?php echo (int) $sk_att_id; ?>">
+                                <img src="<?php echo esc_url( (string) wp_get_attachment_image_url( $sk_att_id, 'medium' ) ); ?>" alt="">
+                                <button type="button" class="sk-store-gallery__remove" aria-label="<?php esc_attr_e( 'Bild entfernen', 'sk-core' ); ?>">&times;</button>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                    <button type="button" class="sk-btn sk-btn-default sk-store-gallery__pick">
+                        <i class="fas fa-cloud-upload-alt"></i> <?php esc_html_e( 'Bilder hinzufügen', 'sk-core' ); ?>
+                    </button>
+                </div>
+                <p class="description">
+                    <?php
+                    printf(
+                        /* translators: %d: number of pictures */
+                        esc_html__( 'Bis zu %d Bilder deines Ladens, deiner Werkstatt oder deiner Ware. Sie stehen auf deiner Anbieterseite über dem Text. Ziehen ändert die Reihenfolge.', 'sk-core' ),
+                        (int) $gallery_max
+                    );
+                    ?>
+                </p>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <div class="sk-settings-field sk-settings-field--bio">
             <div class="sk-settings-input">
                 <textarea name="vendor_biography" id="vendor_biography" rows="8" class="sk-form-control sk-biography-textarea"><?php echo esc_textarea( $vendor_biography ); ?></textarea>

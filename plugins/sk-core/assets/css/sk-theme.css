@@ -11977,3 +11977,103 @@ textarea.wp-editor-area.post_content {
 	width: 34px;
 	text-align: center;
 }
+
+/* ==========================================================================
+   Bilder der Anbieterseite — Auswahl in den Einstellungen und Anzeige
+   ========================================================================== */
+
+.sk-settings-field--gallery { padding: 16px 20px 4px; }
+.sk-settings-field--gallery .sk-settings-input { width: 100%; }
+
+.sk-store-gallery__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.sk-store-gallery__list.sk-hide { display: none; }
+
+.sk-store-gallery__item {
+  position: relative;
+  flex: 0 0 120px;
+  aspect-ratio: 4 / 3;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.sk-store-gallery__item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.sk-store-gallery__item { cursor: move; }
+
+.sk-store-gallery__remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  /* Feste Groesse und keine Polsterung: die Theme-Regeln fuer button
+     machen den Kreis sonst breiter als hoch und schieben das x aus der Mitte. */
+  box-sizing: border-box;
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  min-height: 24px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, .65);
+  color: #fff;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.sk-store-gallery__remove:hover { background: #c0392b; }
+
+.sk-store-gallery__pick.sk-hide { display: none; }
+
+/* Platzhalter beim Umsortieren */
+.sk-store-gallery__list .ui-sortable-placeholder {
+  visibility: visible !important;
+  background: rgba(247, 147, 26, .12);
+  border: 1px dashed #F7931A;
+  border-radius: 8px;
+}
+
+/* Anzeige auf der Anbieterseite, über dem Text */
+.sk-store-impressions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 0 0 24px;
+  padding: 0;
+  list-style: none;
+}
+
+.sk-store-impressions li {
+  margin: 0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.sk-store-impressions img {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+}
+
+@media (max-width: 480px) {
+  .sk-store-gallery__item { flex: 0 0 96px; }
+  .sk-store-impressions { grid-template-columns: repeat(2, 1fr); }
+}
