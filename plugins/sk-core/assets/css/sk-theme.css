@@ -12562,7 +12562,17 @@ textarea.wp-editor-area.post_content {
   font-size: 15px;
 }
 
-.sk-pakete__note { margin: 18px 0 0; font-size: 13px; color: #8a9bb0; text-align: center; }
+/* Zwei Klassen tief, weil die Absatzregel des Themes (.single-content p)
+   sonst gewinnt und den Abstand auf null setzt. */
+.sk-pakete .sk-pakete__note {
+  margin: 24px 0 0;
+  font-size: 13px;
+  color: #8a9bb0;
+  text-align: center;
+}
+
+.sk-pakete .sk-pakete__lead { margin-bottom: 18px; }
+.sk-pakete .sk-pakete__scroll { margin-bottom: 4px; }
 
 @media (max-width: 600px) {
   .sk-pakete__lead { font-size: 16px; }
