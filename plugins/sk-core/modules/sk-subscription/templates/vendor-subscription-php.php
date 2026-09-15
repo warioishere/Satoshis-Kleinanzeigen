@@ -274,6 +274,7 @@ $order_count  = ! empty( $orders_data['total_orders'] ) ? (int) $orders_data['to
                                         <li><i class="fas fa-location-dot"></i> Shop-Adresse &amp; Impressum</li>
                                         <li><i class="fas fa-layer-group"></i> Variable Produkte</li>
                                         <li><i class="fas fa-bolt"></i> Adaptive Preise in Sats</li>
+                                        <li><i class="fas fa-bag-shopping"></i> Sofortkauf mit Bestellmail &amp; Sendungsverfolgung</li>
                                         <?php if ( \SK\Modules\ShopImport\Variants::import_pack_allows( (int) get_the_ID() ) ) : ?>
                                             <li><i class="fas fa-file-import"></i> Woo &amp; Shopify Produkt Import</li>
                                         <?php endif; ?>

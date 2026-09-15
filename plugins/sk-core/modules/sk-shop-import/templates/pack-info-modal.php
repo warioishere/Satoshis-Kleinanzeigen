@@ -59,6 +59,13 @@ defined( 'ABSPATH' ) || exit;
                 </span>
             </li>
             <li>
+                <i class="fas fa-bag-shopping"></i>
+                <span>
+                    <strong><?php esc_html_e( 'Sofortkauf', 'sk-core' ); ?></strong>
+                    <?php esc_html_e( 'Ein Knopf am Inserat, über den direkt gekauft und bezahlt wird — per Lightning oder Onchain, an deine eigene Wallet. Ohne Shop-Paket läuft der Verkauf weiter über den Chat: dort stellst du die Rechnung selbst, und bestätigte Zahlungen zählen genauso für deine Reputation.', 'sk-core' ); ?>
+                </span>
+            </li>
+            <li>
                 <i class="fas fa-envelope"></i>
                 <span>
                     <strong><?php esc_html_e( 'Bestellungen per E-Mail', 'sk-core' ); ?></strong>
