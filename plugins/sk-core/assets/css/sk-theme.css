@@ -12485,3 +12485,94 @@ textarea.wp-editor-area.post_content {
 
 .sk-stars i { color: #F7931A; font-size: 13px; }
 .sk-stars i.is-empty { color: rgba(255, 255, 255, .18); }
+
+/* ==========================================================================
+   Seite "Inserate Abonnement": Übersicht über den Paketkarten
+   ========================================================================== */
+
+.sk-pakete { max-width: 1000px; margin: 0 auto 32px; }
+.sk-pakete__lead { text-align: center; font-size: 18px; margin: 0 0 18px; }
+
+.sk-pakete__facts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 0 24px;
+  padding: 0;
+  list-style: none;
+}
+
+.sk-pakete__facts li {
+  margin: 0;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(247, 147, 26, .1);
+  border: 1px solid rgba(247, 147, 26, .3);
+  font-size: 14px;
+}
+
+.sk-pakete__facts span { font-weight: 700; color: #F7931A; }
+
+/* Sechs Spalten passen auf einem Telefon nicht — dann wird geschoben statt
+   abgeschnitten, und die Merkmalsspalte bleibt dabei stehen. */
+.sk-pakete__scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sk-pakete__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  min-width: 620px;
+}
+
+.sk-pakete__table th,
+.sk-pakete__table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, .07);
+}
+
+.sk-pakete__table thead th {
+  font-size: 13px;
+  color: #8a9bb0;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.sk-pakete__table thead th:first-child,
+.sk-pakete__table tbody th { text-align: left; }
+.sk-pakete__table thead small { display: block; font-size: 11px; font-weight: 400; color: #F7931A; }
+.sk-pakete__table tbody th { font-weight: 400; color: #c4cdd8; }
+.sk-pakete__table td { text-align: center; color: #4caf7d; font-weight: 700; }
+
+.sk-pakete__table thead th:first-child,
+.sk-pakete__table tbody th:first-child {
+  position: sticky;
+  left: 0;
+  background: #1a2230;
+  min-width: 230px;
+}
+
+.sk-pakete__break th {
+  padding-top: 20px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.sk-pakete__note { margin: 18px 0 0; font-size: 13px; color: #8a9bb0; text-align: center; }
+
+@media (max-width: 600px) {
+  .sk-pakete__lead { font-size: 16px; }
+
+  /* Enger, damit neben der feststehenden Merkmalsspalte ueberhaupt noch
+     Haekchen zu sehen sind — sonst schiebt man blind. */
+  .sk-pakete__table { font-size: 12px; min-width: 470px; }
+  .sk-pakete__table th, .sk-pakete__table td { padding: 8px 6px; }
+  .sk-pakete__table thead th:first-child,
+  .sk-pakete__table tbody th:first-child { min-width: 150px; padding-left: 0; }
+  .sk-pakete__break th { font-size: 13px; }
+  .sk-pakete__facts li { padding: 6px 12px; font-size: 13px; }
+}
