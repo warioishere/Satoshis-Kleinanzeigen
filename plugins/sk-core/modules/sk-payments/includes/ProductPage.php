@@ -42,6 +42,12 @@ class ProductPage {
             return;
         }
 
+        // Same gate the handlers use, so the button never offers what the
+        // request behind it would refuse.
+        if ( ! self::is_purchasable( $product->get_id() ) ) {
+            return;
+        }
+
         $has_ln     = Settings::has_lightning( $vendor_id );
         $has_onchain = Settings::has_onchain( $vendor_id );
         // Escrow is the sk-escrow module's method; it hooks in here so the
@@ -202,8 +208,32 @@ class ProductPage {
      * A draft is invisible to everyone; without this check it could still be
      * ordered via its ID and would then show up with its title in the chat.
      */
-    private static function is_purchasable( int $product_id ): bool {
-        return get_post_status( $product_id ) === 'publish';
+    /**
+     * May this listing be bought straight away?
+     *
+     * The instant purchase is a shop counter: fixed price, delivery address,
+     * order mail, shipping. Without an arbiter, "pay first" is only fair
+     * when the seller is identifiable — which is what a shop package brings
+     * with it (address, Impressum, opening hours).
+     *
+     * A private seller is not cut off from selling. They invoice from the
+     * chat, which produces the same confirmed payments and therefore the
+     * same reputation; only the counter itself is a shop.
+     *
+     * Checked here rather than at the button: the two AJAX handlers can be
+     * called directly, and a check that only hides a button protects
+     * nothing.
+     */
+    public static function is_purchasable( int $product_id ): bool {
+        if ( get_post_status( $product_id ) !== 'publish' ) {
+            return false;
+        }
+
+        if ( ! function_exists( 'sk_is_shop_pack' ) ) {
+            return true;
+        }
+
+        return sk_is_shop_pack( (int) get_post_field( 'post_author', $product_id ) );
     }
 
     /**
