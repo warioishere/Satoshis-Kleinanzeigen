@@ -43,7 +43,7 @@ $server->onHandshake( function ( $server, $conn, $request, $response ) {
     $conn->text( json_encode( [ 'AUTH', $conn->getMeta( 'challenge' ) ] ) );
 } );
 
-$server->onText( function ( $server, $conn, $message ) use ( $events, $log ) {
+$server->onText( function ( $server, $conn, $message ) use ( $events, $log, $port ) {
     $msg = json_decode( $message->getContent(), true );
 
     if ( ! is_array( $msg ) || ! isset( $msg[0] ) ) {
@@ -53,22 +53,33 @@ $server->onText( function ( $server, $conn, $message ) use ( $events, $log ) {
     fwrite( $log, json_encode( [ 'in' => $msg[0], 'payload' => array_slice( $msg, 1 ) ] ) . "\n" );
 
     if ( 'AUTH' === $msg[0] ) {
-        // NIP-42: a signed kind 22242 for this relay's challenge; then the
-        // connection may read private kinds.
-        $ok = is_array( $msg[1] ?? null ) && 22242 === (int) ( $msg[1]['kind'] ?? 0 )
+        // NIP-42: a signed kind 22242 for this relay's challenge and this
+        // relay's address; then the connection may read the private kinds
+        // addressed to the key that signed it.
+        $tags = (array) ( $msg[1]['tags'] ?? [] );
+        $ok   = is_array( $msg[1] ?? null ) && 22242 === (int) ( $msg[1]['kind'] ?? 0 )
             && ( new swentel\nostr\Event\Event() )->verify( json_encode( $msg[1] ) )
-            && in_array( [ 'challenge', (string) $conn->getMeta( 'challenge' ) ], (array) ( $msg[1]['tags'] ?? [] ), true );
-        $conn->setMeta( 'authed', $ok );
-        $conn->text( json_encode( [ 'OK', $msg[1]['id'] ?? '', $ok, $ok ? '' : 'auth-required: bad answer' ] ) );
+            && in_array( [ 'challenge', (string) $conn->getMeta( 'challenge' ) ], $tags, true )
+            && in_array( [ 'relay', 'ws://127.0.0.1:' . $port ], $tags, true );
+        $conn->setMeta( 'authed', $ok ? strtolower( (string) $msg[1]['pubkey'] ) : '' );
+        $conn->text( json_encode( [ 'OK', $msg[1]['id'] ?? '', $ok, $ok ? '' : 'error: bad auth answer' ] ) );
         return;
     }
 
     if ( 'REQ' === $msg[0] ) {
         $sub  = $msg[1];
 
-        // Private kinds need auth first, refused the way relay.damus.io does.
+        // Relays cap the filters per request; this one at ten.
+        if ( count( $msg ) - 2 > 10 ) {
+            $conn->text( json_encode( [ 'CLOSED', $sub, 'error: too many filters' ] ) );
+            return;
+        }
+
+        // Private kinds are served to the authed key's mailbox only, refused
+        // the way relay.damus.io words it.
         foreach ( array_slice( $msg, 2 ) as $f ) {
-            if ( array_intersect( [ 4, 1059 ], (array) ( $f['kinds'] ?? [] ) ) && ! $conn->getMeta( 'authed' ) ) {
+            if ( array_intersect( [ 4, 1059 ], (array) ( $f['kinds'] ?? [] ) )
+                && array_diff( (array) ( $f['#p'] ?? [ '' ] ), [ (string) $conn->getMeta( 'authed' ) ] ) ) {
                 $conn->text( json_encode( [ 'CLOSED', $sub, 'ERROR: auth-required: requested filter requires authentication' ] ) );
                 return;
             }

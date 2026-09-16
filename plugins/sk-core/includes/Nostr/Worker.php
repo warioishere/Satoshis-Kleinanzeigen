@@ -48,6 +48,9 @@ final class Worker {
     /** @var array<string, int> url => earliest next dial */
     private array $retry_at = [];
 
+    /** @var array<string, bool> url => the breaker skip was logged */
+    private array $skipped = [];
+
     /** @var array<string, array{filters: array, on_event: callable, beat: callable}> */
     private array $subs = [];
 
@@ -69,7 +72,7 @@ final class Worker {
         }
 
         if ( empty( $relays ) ) {
-            self::log( 'no relays configured' );
+            self::idle( 'no relays configured', $lifetime );
 
             return 0;
         }
@@ -77,6 +80,17 @@ final class Worker {
         ( new self() )->run( $relays, $lifetime );
 
         return 0;
+    }
+
+    /**
+     * Nothing to do: wait the lifetime out instead of ending. systemd
+     * starts the process again whenever it ends, and a process that ends
+     * at once is a restart storm — one that trips the unit's start limit
+     * and leaves it stopped for good.
+     */
+    private static function idle( string $why, int $lifetime ): void {
+        self::log( "$why; waiting {$lifetime}s" );
+        sleep( $lifetime );
     }
 
     /**
@@ -92,16 +106,35 @@ final class Worker {
             $boxes = \SK\Modules\NostrMarket\Bridge\NostrDMListener::mailboxes();
 
             if ( $boxes ) {
+                // The one mailbox key every process holds answers NIP-42. A
+                // relay that insists on it serves that key's mailbox only;
+                // the vendors' mailboxes there are out of reach for this
+                // process, and the subscription falls back to ours.
+                $this->auth_privkey = (string) \SK\Modules\NostrMarket\EventSender::get_privkey();
+                $own                = strtolower( (string) \SK\Modules\NostrMarket\EventSender::get_pubkey() );
+
                 // Two days back, as the poll asks: a gift wrap carries a
-                // made-up timestamp up to that far in the past.
-                $subs['dm'] = [
-                    'filters'  => [ [ 'kinds' => [ 4, 1059 ], '#p' => $boxes, 'since' => time() - 2 * DAY_IN_SECONDS ] ],
-                    'on_event' => [ \SK\Modules\NostrMarket\Bridge\NostrDMListener::class, 'handle' ],
-                    'beat'     => static fn() => update_option( \SK\Modules\NostrMarket\Bridge\NostrDMListener::LAST_SEEN_KEY, time() ),
+                // made-up timestamp up to that far in the past. One filter
+                // per mailbox with its own limit, as the poll does: with
+                // one filter for all, a flooded mailbox pushed the others'
+                // stored messages out of the relay's answer. Relays cap
+                // the filters per request, so the mailboxes come in groups.
+                $listener = \SK\Modules\NostrMarket\Bridge\NostrDMListener::class;
+                $mailbox  = static fn( string $box ) => [
+                    'kinds' => [ 4, 1059 ],
+                    '#p'    => [ $box ],
+                    'since' => time() - 2 * DAY_IN_SECONDS,
+                    'limit' => $listener::PER_MAILBOX_LIMIT,
                 ];
 
-                // The one mailbox key every process holds answers NIP-42.
-                $this->auth_privkey = (string) \SK\Modules\NostrMarket\EventSender::get_privkey();
+                foreach ( array_chunk( $boxes, $listener::FILTERS_PER_REQ ) as $i => $group ) {
+                    $subs[ 'dm' . ( $i ? $i + 1 : '' ) ] = [
+                        'filters'  => array_map( $mailbox, $group ),
+                        'own'      => '' !== $own && in_array( $own, $group, true ) ? [ $mailbox( $own ) ] : null,
+                        'on_event' => [ $listener, 'handle' ],
+                        'beat'     => static fn() => update_option( $listener::LAST_SEEN_KEY, time() ),
+                    ];
+                }
             }
         }
 
@@ -127,7 +160,7 @@ final class Worker {
         $this->subs = $this->subscriptions();
 
         if ( empty( $this->subs ) ) {
-            self::log( 'nothing to listen for (modules off or no keys); exiting' );
+            self::idle( 'nothing to listen for (modules off or no keys)', $lifetime );
 
             return;
         }
@@ -160,7 +193,15 @@ final class Worker {
             }
 
             foreach ( RelaySession::wait( $open, self::TICK ) as $url => $session ) {
-                if ( ! $session->pump() ) {
+                // The breaker mark around the read, as around the dial: a
+                // relay has taken a PHP process down mid-read before, and a
+                // read that never returns leaves the mark for the next
+                // process to skip that relay.
+                Relays::mark_attempt( $url );
+                $alive = $session->pump();
+                Relays::clear_attempt( $url );
+
+                if ( ! $alive ) {
                     self::log( "$url: connection ended" );
                     $this->retry_at[ $url ] = time() + 5;
                 }
@@ -169,8 +210,38 @@ final class Worker {
             if ( time() - $last_beat >= self::HEARTBEAT ) {
                 $last_beat = time();
 
-                foreach ( $this->subs as $sub ) {
-                    ( $sub['beat'] )();
+                // A socket the network dropped without a word looks open
+                // here for good, and a checkpoint taken while it was silent
+                // would skip whatever only that relay had. So every relay
+                // is pinged, and the checkpoint moves only once each one
+                // answered the last ping; one that did not is re-dialled,
+                // with the filters' since from the start of this process.
+                $all_alive = true;
+
+                foreach ( $this->sessions as $url => $session ) {
+                    if ( ! $session->is_open() ) {
+                        continue;
+                    }
+
+                    if ( ! $session->answered() ) {
+                        self::log( "$url: no pong, connection dropped" );
+                        $session->close();
+                        $this->retry_at[ $url ] = time() + 5;
+                        $all_alive              = false;
+                        continue;
+                    }
+
+                    if ( ! $session->ping() ) {
+                        self::log( "$url: connection ended" );
+                        $this->retry_at[ $url ] = time() + 5;
+                        $all_alive              = false;
+                    }
+                }
+
+                if ( $all_alive ) {
+                    foreach ( $this->subs as $sub ) {
+                        ( $sub['beat'] )();
+                    }
                 }
             }
         }
@@ -186,7 +257,10 @@ final class Worker {
     private function ensure( string $url ): void {
         $session = $this->sessions[ $url ] ?? null;
 
-        if ( $session && $session->is_open() && $session->subscribed() > 0 ) {
+        // Held, unless the relay closed one of the subscriptions for a
+        // reason a fresh connection may get past; then it is dialled again
+        // after the usual pause, with the filters' since from the start.
+        if ( $session && $session->is_open() && $session->subscribed() > 0 && 0 === $session->lost() ) {
             return;
         }
 
@@ -202,10 +276,16 @@ final class Worker {
         }
 
         if ( Relays::stalled( $url ) ) {
-            self::log( "$url: skipped, an earlier attempt never returned" );
+            // Said once per mark, not every RETRY seconds for six hours.
+            if ( empty( $this->skipped[ $url ] ) ) {
+                $this->skipped[ $url ] = true;
+                self::log( "$url: skipped, an earlier attempt never returned" );
+            }
 
             return;
         }
+
+        $this->skipped[ $url ] = false;
 
         $session = Relays::session( $url, [
             'timeout'      => self::READ_TIMEOUT,
@@ -220,7 +300,19 @@ final class Worker {
         }
 
         foreach ( $this->subs as $name => $sub ) {
-            if ( null === $session->subscribe( $sub['filters'], $sub['on_event'] ) ) {
+            $handler = $sub['on_event'];
+
+            // The object cache keeps a per-process copy that no other
+            // process invalidates. A handler that read a vendor's meta
+            // minutes ago and writes the array back would undo what the
+            // vendor saved in the browser since; so every event starts
+            // from what Redis holds now.
+            $on_event = static function ( array $event ) use ( $handler ) {
+                wp_cache_flush_runtime();
+                $handler( $event );
+            };
+
+            if ( null === $session->subscribe( $sub['filters'], $on_event, $sub['own'] ?? null ) ) {
                 self::log( "$url: lost while subscribing $name" );
 
                 return;

@@ -48,9 +48,21 @@ final class RelaySession {
 
     private float $deadline = 0.0;
 
-    // NIP-42 state for this connection.
-    private ?string $auth_id = null;
-    private bool $authed    = false;
+    /** A ping went out and its pong has not come back yet. */
+    private bool $awaiting_pong = false;
+
+    /** This session holds the breaker mark; another caller's mark is left alone. */
+    private bool $marked = false;
+
+    /** Subscriptions the relay closed for a reason other than auth: worth a new dial later. */
+    private int $lost = 0;
+
+    // NIP-42 state for this connection: the answer sent, whether the relay
+    // took it, and whether it refused it (then nothing refused for lack of
+    // auth is ever sent again).
+    private ?string $auth_id    = null;
+    private bool $authed        = false;
+    private bool $auth_refused  = false;
 
     /**
      * @param array $opts timeout (s, for the whole session), verify (default
@@ -70,6 +82,7 @@ final class RelaySession {
         }
 
         Relays::mark_attempt( $this->url );
+        $this->marked = true;
 
         try {
             $this->streams = new StreamCollection();
@@ -100,9 +113,17 @@ final class RelaySession {
             return true;
         } catch ( \Throwable $e ) {
             $this->client = null;
-            Relays::clear_attempt( $this->url );
+            $this->unmark();
 
             return false;
+        }
+    }
+
+    /** Lift the breaker mark, but only the one this session set. */
+    private function unmark(): void {
+        if ( $this->marked ) {
+            $this->marked = false;
+            Relays::clear_attempt( $this->url );
         }
     }
 
@@ -159,6 +180,17 @@ final class RelaySession {
                         $this->client->text( $req );
                         $resent = true;
                     }
+
+                    // The relay took no auth: a refused request will never
+                    // be answered, so there is nothing to wait for.
+                    if ( ! $this->authed ) {
+                        $this->auth_refused = true;
+                        error_log( '[SK Nostr] ' . $this->url . ' refused the auth answer: ' . (string) ( $data[3] ?? '' ) );
+
+                        if ( $reopen ) {
+                            break;
+                        }
+                    }
                     continue;
                 }
 
@@ -167,7 +199,7 @@ final class RelaySession {
                     continue;
                 }
 
-                if ( 'CLOSED' === $data[0] && null !== $this->auth_id && ! $resent && Relays::wants_auth( (string) ( $data[2] ?? '' ) ) ) {
+                if ( 'CLOSED' === $data[0] && null !== $this->auth_id && ! $this->auth_refused && ! $resent && Relays::wants_auth( (string) ( $data[2] ?? '' ) ) ) {
                     $reopen = true;
 
                     if ( $this->authed ) {
@@ -218,11 +250,16 @@ final class RelaySession {
      * later, goes to $on_event( array $event ). Returns the subscription
      * id, or null when the connection is gone.
      *
+     * A relay that wants NIP-42 serves private kinds only to the key that
+     * answered its challenge. $own_filters, when given, is what is asked
+     * for instead once the relay refuses $filters although the answer was
+     * taken: the same request cut down to that key's mailbox.
+     *
      * Lifts the breaker mark: the dial is over, and the mark would keep
      * every other caller off this relay for as long as the subscription
      * is held.
      */
-    public function subscribe( array $filters, callable $on_event ): ?string {
+    public function subscribe( array $filters, callable $on_event, ?array $own_filters = null ): ?string {
         if ( null === $this->client ) {
             return null;
         }
@@ -238,9 +275,14 @@ final class RelaySession {
             return null;
         }
 
-        $this->subs[ $sub ] = [ 'req' => $req, 'on_event' => $on_event, 'auth' => '' ];
+        $this->subs[ $sub ] = [
+            'req'      => $req,
+            'own'      => $own_filters ? wp_json_encode( array_merge( [ 'REQ', $sub ], array_values( $own_filters ) ) ) : null,
+            'on_event' => $on_event,
+            'auth'     => '',
+        ];
 
-        Relays::clear_attempt( $this->url );
+        $this->unmark();
 
         return $sub;
     }
@@ -248,6 +290,38 @@ final class RelaySession {
     /** Subscriptions the relay has not closed. */
     public function subscribed(): int {
         return count( $this->subs );
+    }
+
+    /** Subscriptions the relay closed for a reason a new dial may get past. */
+    public function lost(): int {
+        return $this->lost;
+    }
+
+    /**
+     * Send a ping. A socket the network dropped without a word stays
+     * "open" here for good; only a pong that comes back (see answered())
+     * proves the relay is still on the other end.
+     */
+    public function ping(): bool {
+        if ( null === $this->client ) {
+            return false;
+        }
+
+        try {
+            $this->client->ping();
+            $this->awaiting_pong = true;
+
+            return true;
+        } catch ( \Throwable $e ) {
+            $this->close();
+
+            return false;
+        }
+    }
+
+    /** Did the last ping get its pong? True as well when none was sent. */
+    public function answered(): bool {
+        return ! $this->awaiting_pong;
     }
 
     /**
@@ -273,6 +347,12 @@ final class RelaySession {
                 return false;
             }
 
+            if ( 'pong' === $message->getOpcode() ) {
+                $this->awaiting_pong = false;
+
+                return true;
+            }
+
             if ( 'text' !== $message->getOpcode() ) {
                 return true;
             }
@@ -296,6 +376,12 @@ final class RelaySession {
 
                         if ( $this->authed ) {
                             $this->resend_refused();
+                        } else {
+                            // Nothing refused for lack of auth will ever be
+                            // served on this connection.
+                            $this->auth_refused = true;
+                            error_log( '[SK Nostr] ' . $this->url . ' refused the auth answer: ' . (string) ( $data[3] ?? '' ) );
+                            $this->drop_refused( 'auth refused' );
                         }
                     }
                     break;
@@ -307,10 +393,12 @@ final class RelaySession {
                         break;
                     }
 
+                    $wants_auth = '' !== $this->auth_privkey && ! $this->auth_refused && Relays::wants_auth( (string) ( $data[2] ?? '' ) );
+
                     // Refused for lack of auth: kept, and sent again once the
                     // relay has taken the answer — whether its challenge came
                     // before this or comes after.
-                    if ( '' === $this->subs[ $sub ]['auth'] && '' !== $this->auth_privkey && Relays::wants_auth( (string) ( $data[2] ?? '' ) ) ) {
+                    if ( $wants_auth && '' === $this->subs[ $sub ]['auth'] ) {
                         $this->subs[ $sub ]['auth'] = 'refused';
 
                         if ( $this->authed ) {
@@ -319,7 +407,25 @@ final class RelaySession {
                         break;
                     }
 
+                    // Refused again with the answer taken: the relay serves
+                    // private kinds to the auth key's mailbox only. Ask for
+                    // that one, when the caller said what it is.
+                    if ( $wants_auth && 'resent' === $this->subs[ $sub ]['auth'] && null !== $this->subs[ $sub ]['own'] ) {
+                        $this->subs[ $sub ]['auth'] = 'own';
+                        $this->client->text( $this->subs[ $sub ]['own'] );
+                        error_log( '[SK Nostr] ' . $this->url . ' serves the auth key only; subscription narrowed to its mailbox' );
+                        break;
+                    }
+
+                    // Closed for another reason (a rate limit, too many
+                    // filters): gone on this connection. Auth refusals are
+                    // final, this may pass with a fresh dial later.
                     unset( $this->subs[ $sub ] );
+
+                    if ( ! Relays::wants_auth( (string) ( $data[2] ?? '' ) ) ) {
+                        $this->lost++;
+                    }
+
                     error_log( '[SK Nostr] ' . $this->url . ' closed a subscription: ' . (string) ( $data[2] ?? '' ) );
                     break;
 
@@ -353,6 +459,16 @@ final class RelaySession {
             if ( 'refused' === $entry['auth'] ) {
                 $this->subs[ $sub ]['auth'] = 'resent';
                 $this->client->text( $entry['req'] );
+            }
+        }
+    }
+
+    /** Forget every subscription still waiting for auth. */
+    private function drop_refused( string $why ): void {
+        foreach ( $this->subs as $sub => $entry ) {
+            if ( 'refused' === $entry['auth'] ) {
+                unset( $this->subs[ $sub ] );
+                error_log( '[SK Nostr] ' . $this->url . ' closed a subscription: ' . $why );
             }
         }
     }
@@ -402,10 +518,12 @@ final class RelaySession {
             $this->client = null;
         }
 
-        $this->streams = null;
-        $this->subs    = [];
+        $this->streams       = null;
+        $this->subs          = [];
+        $this->lost          = 0;
+        $this->awaiting_pong = false;
 
-        Relays::clear_attempt( $this->url );
+        $this->unmark();
     }
 
     public function __destruct() {

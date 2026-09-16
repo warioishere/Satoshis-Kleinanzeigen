@@ -9,16 +9,19 @@
 #   systemctl enable --now sk-nostr-worker@staging
 #   journalctl -u sk-nostr-worker@staging -f
 #
-# The worker ends itself every few minutes and is started again here.
-# More than ten starts in five minutes means it is crashing, and the unit
-# stops instead of looping; the cron poll keeps the mailboxes served.
+# The worker ends itself every few minutes and is started again here, and
+# it is started again after a crash as well. There is no start limit: a
+# database that is away for a minute must not leave the unit stopped for
+# good, and a relay that takes the process down is marked by the worker's
+# own breaker and skipped on the next start, so a crash loop heals itself.
+# When there is nothing to listen for, the worker waits its lifetime out
+# instead of ending, so it is not a restart storm either.
 
 [Unit]
 Description=SK-Core Nostr relay worker (%i)
 After=network-online.target mariadb.service redis-server.service
 Wants=network-online.target
-StartLimitIntervalSec=300
-StartLimitBurst=10
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
@@ -27,9 +30,12 @@ Group=satoshiskleinazeigen
 WorkingDirectory=/home/users/satoshiskleinazeigen/www/%i.satoshiskleinanzeigen.space
 ExecStart=/opt/keyhelp/php/8.3/bin/php /home/users/satoshiskleinazeigen/www/%i.satoshiskleinanzeigen.space/wp-content/plugins/sk-core/tools/nostr-worker.php
 Restart=always
-RestartSec=2
+RestartSec=5
 KillSignal=SIGTERM
-TimeoutStopSec=15
+# A handler in flight is not interrupted by SIGTERM; a stranger's name
+# lookup or an image sideload may hold it for over a minute. Only then
+# does SIGKILL cut it off mid-write.
+TimeoutStopSec=90
 MemoryMax=512M
 Nice=10
 StandardOutput=journal

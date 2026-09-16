@@ -25,10 +25,12 @@ sk_check( '' !== $priv && $pub === \SK\Core\Trust\VendorKey::bound( $generated )
 add_filter( 'pre_http_request', fn() => new WP_Error( 'test', 'offline' ) );
 
 $saved = [];
-foreach ( [ 'description', 'sk_nostr_profile_at', 'nip05', 'nip05_checked_at', 'nip05_verified', ZapStats::SATS_META, ZapStats::COUNT_META, ZapStats::TIME_META ] as $k ) {
+foreach ( [ 'description', 'sk_nostr_profile_at', 'nip05', 'nip05_checked_at', 'nip05_verified', 'sk_profile_settings', 'sk_store_name', \SK\Core\Nostr\Handle::META, ZapStats::SATS_META, ZapStats::COUNT_META, ZapStats::TIME_META ] as $k ) {
     $saved[ $k ] = get_user_meta( $generated, $k, true );
 }
-$saved_sync = get_option( NostrRelaySync::LAST_SYNC_KEY );
+$saved_display = (string) get_userdata( $generated )->display_name;
+$saved_sync    = get_option( NostrRelaySync::LAST_SYNC_KEY );
+$saved_zapper  = get_transient( 'sk_zap_zapper_' . $generated );
 
 // ── filters() ─────────────────────────────────────────────────────────────
 $f = NostrRelaySync::filters( 1700000000 );
@@ -56,7 +58,17 @@ $request = sk_test_sign( sk_test_keypair()['priv'], 9734, [ [ 'p', $pub ], [ 'am
 $receipt = sk_test_sign( $zapper['priv'], 9735, [ [ 'p', $pub ], [ 'description', json_encode( $request ) ] ], '', $now + 2 );
 $sats0   = (int) get_user_meta( $generated, ZapStats::SATS_META, true );
 
-sk_check_eq( NostrRelaySync::handle( $receipt ), true, 'handle(): zap receipt naming the test user is taken (author is the zap service)' );
+// A receipt from a key that is not the vendor's zap service, before that
+// service is known here at all (the address cannot be resolved offline).
+$forged_receipt = sk_test_sign( sk_test_keypair()['priv'], 9735, [ [ 'p', $pub ], [ 'description', json_encode( $request ) ] ], '', $now + 2 );
+sk_check_eq( NostrRelaySync::handle( $forged_receipt ), false, 'handle(): a receipt from an unknown signer is refused' );
+sk_check_eq( NostrRelaySync::handle( $receipt ), false, 'handle(): no receipt counts while the zap service key is unknown' );
+sk_check_eq( (int) get_user_meta( $generated, ZapStats::SATS_META, true ), $sats0, 'handle(): nothing counted so far' );
+
+// The vendor's Lightning address names $zapper as its zap service (memory only).
+add_filter( 'pre_transient_sk_zap_zapper_' . $generated, fn() => $zapper['pub'] );
+sk_check_eq( NostrRelaySync::handle( $forged_receipt ), false, 'handle(): a receipt signed by another key is still refused' );
+sk_check_eq( NostrRelaySync::handle( $receipt ), true, 'handle(): zap receipt from the zap service naming the test user is taken' );
 sk_check_eq( (int) get_user_meta( $generated, ZapStats::SATS_META, true ), $sats0 + 21, 'handle(): 21 sats counted for the zapped user' );
 sk_check_eq( NostrRelaySync::handle( $receipt ), false, 'handle(): the same receipt is not counted twice' );
 $elsewhere = sk_test_sign( $priv, 9735, [ [ 'p', str_repeat( 'a', 64 ) ], [ 'description', json_encode( $request ) ] ], '', $now + 3 );
@@ -72,7 +84,7 @@ sk_check_eq( get_user_meta( $generated, 'description', true ), $about . ' cron',
 // ── the worker binary against the mock ────────────────────────────────────
 $php  = PHP_BINARY;
 $tool = dirname( __DIR__, 2 ) . '/nostr-worker.php';
-$proc = proc_open( [ $php, $tool, '--relay=' . $mock, '--lifetime=8' ], [ 1 => [ 'pipe', 'w' ], 2 => [ 'pipe', 'w' ] ], $pipes );
+$proc = proc_open( [ $php, $tool, '--relay=' . $mock, '--lifetime=16' ], [ 1 => [ 'pipe', 'w' ], 2 => [ 'pipe', 'w' ] ], $pipes );
 sk_check( is_resource( $proc ), 'worker: started' );
 usleep( 2500000 ); // boot + dial
 
@@ -85,6 +97,38 @@ while ( microtime( true ) - $t0 < 5 && get_user_meta( $generated, 'description',
 }
 sk_check_eq( get_user_meta( $generated, 'description', true ), $about . ' worker', 'worker: the pushed profile was applied without a cron run' );
 sk_check( microtime( true ) - $t0 < 3, 'worker: applied in under 3 s', sprintf( '%.2fs', microtime( true ) - $t0 ) );
+
+// A profile older than the one just applied (but inside the subscription's
+// since window) is read and dropped: it loads this user's meta into the
+// worker's process cache without writing anything that would clear it
+// again. A change made elsewhere afterwards must survive the next profile
+// the worker applies: a name change goes through sk_set_store_name(),
+// which reads the settings array and writes it back whole.
+$prime = sk_test_sign( $priv, 0, [], json_encode( [ 'about' => 'old' ] ), $now + 15 );
+\SK\Core\Nostr\Relays::publish( $prime, [ $mock ] );
+$t0 = microtime( true );
+while ( microtime( true ) - $t0 < 3 && ! get_transient( 'sk_nsync_' . substr( $prime['id'], 0, 16 ) ) ) {
+    usleep( 100000 );
+    wp_cache_flush_runtime();
+}
+sk_check( (bool) get_transient( 'sk_nsync_' . substr( $prime['id'], 0, 16 ) ), 'worker: the older profile was read' );
+usleep( 300000 );
+
+$settings                   = get_user_meta( $generated, 'sk_profile_settings', true );
+$settings                   = is_array( $settings ) ? $settings : [];
+$settings['sk_test_marker'] = 'saved in the browser';
+update_user_meta( $generated, 'sk_profile_settings', $settings );
+
+$renamed = sk_test_sign( $priv, 0, [], json_encode( [ 'name' => 'Sync ' . $now ] ), $now + 30 );
+\SK\Core\Nostr\Relays::publish( $renamed, [ $mock ] );
+$t0 = microtime( true );
+while ( microtime( true ) - $t0 < 5 && ( get_user_meta( $generated, 'sk_profile_settings', true )['store_name'] ?? '' ) !== 'Sync ' . $now ) {
+    usleep( 100000 );
+    clean_user_cache( $generated );
+}
+$after = get_user_meta( $generated, 'sk_profile_settings', true );
+sk_check_eq( $after['store_name'] ?? '', 'Sync ' . $now, 'worker: the second profile renamed the store' );
+sk_check_eq( $after['sk_test_marker'] ?? '', 'saved in the browser', 'worker: a setting changed by another process meanwhile is kept' );
 
 $out = stream_get_contents( $pipes[1] );
 $err = stream_get_contents( $pipes[2] );
@@ -101,12 +145,19 @@ foreach ( $saved as $k => $v ) {
     }
 }
 delete_user_meta( $generated, '_sk_zap_seen_' . strtolower( $receipt['id'] ) );
+wp_update_user( [ 'ID' => $generated, 'display_name' => $saved_display ] );
+remove_all_filters( 'pre_transient_sk_zap_zapper_' . $generated );
+if ( false === $saved_zapper ) {
+    delete_transient( 'sk_zap_zapper_' . $generated );
+} else {
+    set_transient( 'sk_zap_zapper_' . $generated, $saved_zapper, DAY_IN_SECONDS );
+}
 if ( false === $saved_sync ) {
     delete_option( NostrRelaySync::LAST_SYNC_KEY );
 } else {
     update_option( NostrRelaySync::LAST_SYNC_KEY, $saved_sync );
 }
-foreach ( [ $event, $forged, $receipt, $later, $live ] as $e ) {
+foreach ( [ $event, $forged, $receipt, $later, $live, $prime, $renamed ] as $e ) {
     delete_transient( 'sk_nsync_' . substr( $e['id'], 0, 16 ) );
 }
 sk_check_eq( get_user_meta( $generated, 'description', true ), $saved['description'], 'restore: bio as before' );

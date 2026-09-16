@@ -57,6 +57,12 @@ $drain( [ 'a' => $a, 'b' => $b ], 0.5 );
 sk_check_eq( $got, [ 'a' => [ 'live' ], 'b' => [ 'live' ] ], 'pump(): the pushed event reached both callbacks' );
 sk_check( microtime( true ) - $t0 < 1.5, 'delivery took under 1.5 s', sprintf( '%.3fs', microtime( true ) - $t0 ) );
 
+// A ping is answered; until it is, answered() says so.
+sk_check_eq( [ $b->ping(), $b->answered() ], [ true, false ], 'ping(): sent, pong outstanding' );
+$drain( [ 'b' => $b ], 0.4 );
+sk_check_eq( $b->answered(), true, 'pump(): the pong came back' );
+sk_check_eq( $d->ping(), false, 'ping() on a closed session is false' );
+
 // A forged event: dropped where verification is on, passed where it is off.
 $forged = $good; $forged['content'] = 'forged'; $forged['created_at']++; $forged['id'] = Events::id( $forged );
 Relays::publish( $forged, [ $mock ] );
@@ -111,6 +117,68 @@ $hit = 0;
 $r   = $p->request( $dm, function () use ( &$hit ) { $hit++; } );
 sk_check_eq( [ $r['eose'], $hit ], [ true, 1 ], 'auth: request() answers the challenge, re-sends and reads the stored DM' );
 $p->close();
+
+// Several mailboxes in one filter: an auth relay serves the auth key's only.
+// With own filters the subscription is narrowed to it, without them dropped.
+$other  = sk_test_keypair();
+$both   = [ [ 'kinds' => [ 4 ], '#p' => [ $box['pub'], $other['pub'] ] ] ];
+$got_dm = [];
+$w = Relays::session( $mock, [ 'timeout' => 5, 'verify' => false, 'auth_privkey' => $box['priv'] ] );
+$w->open();
+$w->subscribe( $both, function ( $e ) use ( &$got_dm ) { $got_dm[] = $e['content']; }, [ [ 'kinds' => [ 4 ], '#p' => [ $box['pub'] ] ] ] );
+$drain( [ 'w' => $w ], 0.8 ); // refused, answer, OK, re-sent, refused again, narrowed, EOSE
+sk_check_eq( $w->subscribed(), 1, 'auth: refused again after the answer, the subscription is narrowed and kept' );
+Relays::publish( sk_test_sign( sk_test_keypair()['priv'], 4, [ [ 'p', $other['pub'] ] ], 'not ours', time() ), [ $mock ] );
+Relays::publish( sk_test_sign( sk_test_keypair()['priv'], 4, [ [ 'p', $box['pub'] ] ], 'ours', time() ), [ $mock ] );
+$drain( [ 'w' => $w ], 0.5 );
+// 'secret' is the stored DM to the same mailbox from above.
+sk_check_eq( $got_dm, [ 'secret', 'ours' ], 'auth: the narrowed subscription delivers the auth key\'s mailbox only' );
+$w->close();
+
+$x = Relays::session( $mock, [ 'timeout' => 5, 'verify' => false, 'auth_privkey' => $box['priv'] ] );
+$x->open();
+$x->subscribe( $both, function () {} );
+$drain( [ 'x' => $x ], 0.8 );
+sk_check_eq( $x->subscribed(), 0, 'auth: refused again and nothing to narrow to, the subscription is dropped' );
+$x->close();
+
+// The relay refuses the answer itself (its address does not match the
+// relay tag, as relay.damus.io does today): nothing waits for it.
+$bad = $mock . '/elsewhere';
+$r   = Relays::session( $bad, [ 'timeout' => 5, 'verify' => false, 'auth_privkey' => $box['priv'] ] );
+$r->open();
+$r->subscribe( $dm, function () {} );
+$drain( [ 'r' => $r ], 0.8 );
+sk_check_eq( $r->subscribed(), 0, 'auth refused by the relay: the held subscription is dropped' );
+$r->close();
+$r = Relays::session( $bad, [ 'timeout' => 5, 'verify' => false, 'auth_privkey' => $box['priv'] ] );
+$r->open();
+$t0  = microtime( true );
+$res = $r->request( $dm, function () {} );
+sk_check( ! $res['eose'] && microtime( true ) - $t0 < 2, 'auth refused by the relay: request() gives up at once', sprintf( '%.2fs eose=%d', microtime( true ) - $t0, (int) $res['eose'] ) );
+$r->close();
+
+// A subscription the relay closes for another reason is gone, and counted
+// as lost so the worker dials again; an auth refusal is not.
+$l = Relays::session( $mock, [ 'timeout' => 5, 'verify' => false ] );
+$l->open();
+$l->subscribe( array_fill( 0, 11, $filter[0] ), function () {} );
+$l->subscribe( $filter, function () {} );
+$drain( [ 'l' => $l ], 0.5 );
+sk_check_eq( [ $l->subscribed(), $l->lost() ], [ 1, 1 ], 'lost(): a subscription closed with "too many filters" counts, the other is held' );
+$l->close();
+sk_check_eq( [ $x->lost(), $r->lost(), $l->lost() ], [ 0, 0, 0 ], 'lost(): auth refusals do not count, close() resets' );
+
+// A mark another caller set (a poll dialling the same relay) is not the
+// session's to lift.
+$m = Relays::session( $mock, [ 'timeout' => 5, 'verify' => false ] );
+$m->open();
+$m->subscribe( $filter, function () {} );
+Relays::mark_attempt( $mock );
+$m->close();
+sk_check_eq( Relays::stalled( $mock ), true, 'close(): leaves a mark it did not set' );
+Relays::clear_attempt( $mock );
+
 sk_check_eq( Relays::wants_auth( 'ERROR: auth-required: requested filter requires authentication' ), true, 'wants_auth(): the damus wording counts' );
 sk_check_eq( Relays::wants_auth( 'error: too many filters' ), false, 'wants_auth(): another error does not' );
 
