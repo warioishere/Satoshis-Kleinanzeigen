@@ -32,14 +32,14 @@ final class Handle {
      * Stored on the way out so it stays put afterwards, whatever happens to
      * the shop name or the shop link.
      */
-    public static function get( int $user_id ): string {
+    public static function get( int $user_id, string $wish = '' ): string {
         $stored = (string) get_user_meta( $user_id, self::META, true );
 
         if ( '' !== $stored ) {
             return $stored;
         }
 
-        $name = self::pick( $user_id );
+        $name = self::pick( $user_id, $wish );
 
         if ( '' !== $name ) {
             update_user_meta( $user_id, self::META, $name );
@@ -96,16 +96,20 @@ final class Handle {
     }
 
     /**
-     * Pick a free name: shop name first, then the shop link, then the id.
+     * Pick a free name: the caller's wish, then the shop name, then the shop
+     * link, then the id.
      *
      * A number is the last resort rather than the default — it says nothing
      * about the vendor, and that was the whole complaint.
      */
-    private static function pick( int $user_id ): string {
+    private static function pick( int $user_id, string $wish = '' ): string {
         $info = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( $user_id ) : [];
         $user = get_userdata( $user_id );
 
+        // A caller that just wrote the shop name passes it in: sk_get_store_info()
+        // caches per request and would still hand out the name from before.
         $wishes = [
+            $wish,
             (string) ( $info['store_name'] ?? '' ),
             $user ? $user->user_nicename : '',
             'sk-' . $user_id,
