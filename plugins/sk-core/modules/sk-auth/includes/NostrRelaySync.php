@@ -284,6 +284,29 @@ class NostrRelaySync {
                 update_user_meta( $user_id, 'nostr_avatar', $avatar );
                 $updated = true;
             }
+
+            /*
+             * The shop reads the profile picture from the media library, not
+             * from this URL — so the banner arrived while the picture stayed
+             * the default one. Taken over the same way, and only while the
+             * vendor has none of their own.
+             *
+             * Read from the meta, not through sk_get_store_info(): that caches
+             * per request and the banner below would write back a copy from
+             * before this line.
+             */
+            $settings = get_user_meta( $user_id, 'sk_profile_settings', true );
+            $settings = is_array( $settings ) ? $settings : [];
+
+            if ( absint( $settings['gravatar'] ?? 0 ) === 0 ) {
+                $attachment_id = self::sideload_image( $user_id, $avatar, 'avatar' );
+
+                if ( $attachment_id > 0 ) {
+                    $settings['gravatar'] = $attachment_id;
+                    update_user_meta( $user_id, 'sk_profile_settings', $settings );
+                    $updated = true;
+                }
+            }
         }
 
         // Sync lud16 → lightning_address. This event is the newer one, so it
@@ -306,14 +329,15 @@ class NostrRelaySync {
          * a leftover address counts as "none" so it repairs itself.
          */
         if ( ! empty( $profile['banner'] ) ) {
-            $store_info = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( $user_id ) : [];
+            $settings = get_user_meta( $user_id, 'sk_profile_settings', true );
+            $settings = is_array( $settings ) ? $settings : [];
 
-            if ( is_array( $store_info ) && absint( $store_info['banner'] ?? 0 ) === 0 ) {
-                $attachment_id = self::sideload_banner( $user_id, esc_url_raw( $profile['banner'] ) );
+            if ( absint( $settings['banner'] ?? 0 ) === 0 ) {
+                $attachment_id = self::sideload_image( $user_id, esc_url_raw( $profile['banner'] ), 'banner' );
 
                 if ( $attachment_id > 0 ) {
-                    $store_info['banner'] = $attachment_id;
-                    update_user_meta( $user_id, 'sk_profile_settings', $store_info );
+                    $settings['banner'] = $attachment_id;
+                    update_user_meta( $user_id, 'sk_profile_settings', $settings );
                     $updated = true;
                 }
             }
@@ -365,22 +389,27 @@ class NostrRelaySync {
     }
 
     /**
-     * Take a banner image from a Nostr profile into the media library.
+     * Take an image from a Nostr profile into the media library.
+     *
+     * @param string $kind 'banner' or 'avatar' — decides which source URL is
+     *                     remembered, so one does not block the other.
      *
      * @return int Attachment id, or 0 when nothing was taken over.
      */
-    private static function sideload_banner( int $user_id, string $url ): int {
+    private static function sideload_image( int $user_id, string $url, string $kind ): int {
         if ( ! preg_match( '#^https://#i', $url ) ) {
             return 0;
         }
 
+        $seen_key = 'banner' === $kind ? 'sk_nostr_banner_src' : 'sk_nostr_avatar_src';
+
         // The same image is not fetched again on every run, and a failed
         // attempt is not retried every hour either.
-        if ( (string) get_user_meta( $user_id, 'sk_nostr_banner_src', true ) === $url ) {
+        if ( (string) get_user_meta( $user_id, $seen_key, true ) === $url ) {
             return 0;
         }
 
-        update_user_meta( $user_id, 'sk_nostr_banner_src', $url );
+        update_user_meta( $user_id, $seen_key, $url );
 
         $name = basename( (string) wp_parse_url( $url, PHP_URL_PATH ) );
 
