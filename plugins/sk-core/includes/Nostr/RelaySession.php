@@ -2,6 +2,9 @@
 
 namespace SK\Core\Nostr;
 
+use Phrity\Net\StreamCollection;
+use Phrity\Net\StreamFactory;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -18,6 +21,13 @@ defined( 'ABSPATH' ) || exit;
  * session's auth key, and a REQ that the relay closed with "auth-required"
  * is sent again after the answer was accepted.
  *
+ * The second way to use it is to stay: subscribe() sends a REQ and keeps
+ * it, wait() blocks on the sockets of several sessions at once, and
+ * pump() reads one message and hands an event to the subscription's
+ * callback. That is the resident worker's loop; the circuit breaker
+ * covers the dial and is lifted as soon as a subscription is held, since
+ * the connection then outlives every other caller's attempt.
+ *
  * Obtained through Relays::session(); never runs while a page renders.
  */
 final class RelaySession {
@@ -29,6 +39,12 @@ final class RelaySession {
 
     /** @var \WebSocket\Client|null */
     private $client = null;
+
+    /** The client's stream collection, held here so wait() can select on it. */
+    private ?StreamCollection $streams = null;
+
+    /** Subscriptions kept open: id => req (JSON), on_event, auth ('' | 'refused' | 'resent'). */
+    private array $subs = [];
 
     private float $deadline = 0.0;
 
@@ -56,8 +72,26 @@ final class RelaySession {
         Relays::mark_attempt( $this->url );
 
         try {
+            $this->streams = new StreamCollection();
+            $shared        = $this->streams;
+
             $this->client = new \WebSocket\Client( $this->url );
             $this->client->setTimeout( $this->timeout );
+            // The client attaches its socket to the collection its factory
+            // hands out; handing out ours is how wait() gets to select on it.
+            $this->client->setStreamFactory( new class( $shared ) extends StreamFactory {
+                public function __construct( private StreamCollection $shared ) {
+                    parent::__construct();
+                }
+
+                public function createStreamCollection(): StreamCollection {
+                    return $this->shared;
+                }
+            } );
+            // Answer pings and close handshakes; a held connection is dropped
+            // by the relay otherwise.
+            $this->client->addMiddleware( new \WebSocket\Middleware\CloseHandler() );
+            $this->client->addMiddleware( new \WebSocket\Middleware\PingResponder() );
             // The library dials lazily on the first send; connect here so an
             // unreachable relay is known before any request is built.
             $this->client->connect();
@@ -177,6 +211,182 @@ final class RelaySession {
         return $out;
     }
 
+    // ── Staying: subscriptions held open ─────────────────────────────────
+
+    /**
+     * Send a REQ and keep it: every event the relay sends for it, now or
+     * later, goes to $on_event( array $event ). Returns the subscription
+     * id, or null when the connection is gone.
+     *
+     * Lifts the breaker mark: the dial is over, and the mark would keep
+     * every other caller off this relay for as long as the subscription
+     * is held.
+     */
+    public function subscribe( array $filters, callable $on_event ): ?string {
+        if ( null === $this->client ) {
+            return null;
+        }
+
+        $sub = bin2hex( random_bytes( 8 ) );
+        $req = wp_json_encode( array_merge( [ 'REQ', $sub ], array_values( $filters ) ) );
+
+        try {
+            $this->client->text( $req );
+        } catch ( \Throwable $e ) {
+            $this->close();
+
+            return null;
+        }
+
+        $this->subs[ $sub ] = [ 'req' => $req, 'on_event' => $on_event, 'auth' => '' ];
+
+        Relays::clear_attempt( $this->url );
+
+        return $sub;
+    }
+
+    /** Subscriptions the relay has not closed. */
+    public function subscribed(): int {
+        return count( $this->subs );
+    }
+
+    /**
+     * Read one message and deal with it: an event goes to its
+     * subscription's callback, AUTH and OK keep the NIP-42 state, CLOSED
+     * ends a subscription (or re-sends it once the relay took the auth
+     * answer), everything else is dropped. Blocks until a message is
+     * there, so call it after wait() said one is.
+     *
+     * @return bool False once the connection is gone.
+     */
+    public function pump(): bool {
+        if ( null === $this->client ) {
+            return false;
+        }
+
+        try {
+            $message = $this->client->receive();
+
+            if ( ! $this->client->isConnected() ) {
+                $this->close();
+
+                return false;
+            }
+
+            if ( 'text' !== $message->getOpcode() ) {
+                return true;
+            }
+
+            $data = json_decode( $message->getContent(), true );
+
+            if ( ! is_array( $data ) || ! isset( $data[0] ) ) {
+                return true;
+            }
+
+            switch ( $data[0] ) {
+                case 'AUTH':
+                    if ( null === $this->auth_id && '' !== $this->auth_privkey && is_string( $data[1] ?? null ) && '' !== $data[1] ) {
+                        $this->auth_id = Relays::answer_challenge( $this->client, $this->url, $data[1], $this->auth_privkey );
+                    }
+                    break;
+
+                case 'OK':
+                    if ( null !== $this->auth_id && ( $data[1] ?? '' ) === $this->auth_id ) {
+                        $this->authed = ! empty( $data[2] );
+
+                        if ( $this->authed ) {
+                            $this->resend_refused();
+                        }
+                    }
+                    break;
+
+                case 'CLOSED':
+                    $sub = (string) ( $data[1] ?? '' );
+
+                    if ( ! isset( $this->subs[ $sub ] ) ) {
+                        break;
+                    }
+
+                    if ( null !== $this->auth_id && '' === $this->subs[ $sub ]['auth'] && Relays::wants_auth( (string) ( $data[2] ?? '' ) ) ) {
+                        $this->subs[ $sub ]['auth'] = 'refused';
+
+                        if ( $this->authed ) {
+                            $this->resend_refused();
+                        }
+                        break;
+                    }
+
+                    unset( $this->subs[ $sub ] );
+                    error_log( '[SK Nostr] ' . $this->url . ' closed a subscription: ' . (string) ( $data[2] ?? '' ) );
+                    break;
+
+                case 'EVENT':
+                    $sub = (string) ( $data[1] ?? '' );
+
+                    if ( ! isset( $this->subs[ $sub ] ) || ! is_array( $data[2] ?? null ) || ! is_string( $data[2]['id'] ?? null ) ) {
+                        break;
+                    }
+
+                    if ( $this->verify && ! Events::verify( $data[2] ) ) {
+                        break;
+                    }
+
+                    ( $this->subs[ $sub ]['on_event'] )( $data[2] );
+                    break;
+            }
+
+            return true;
+        } catch ( \Throwable $e ) {
+            // A timeout mid-frame or a dropped socket; the caller re-dials.
+            $this->close();
+
+            return false;
+        }
+    }
+
+    /** Send every subscription the relay refused for lack of auth, once. */
+    private function resend_refused(): void {
+        foreach ( $this->subs as $sub => $entry ) {
+            if ( 'refused' === $entry['auth'] ) {
+                $this->subs[ $sub ]['auth'] = 'resent';
+                $this->client->text( $entry['req'] );
+            }
+        }
+    }
+
+    /**
+     * Block until one of the sessions has something to read, at most
+     * $timeout seconds. Returns the ready ones under their original keys;
+     * closed sessions are left out.
+     *
+     * @param array<int|string, RelaySession> $sessions
+     * @return array<int|string, RelaySession>
+     */
+    public static function wait( array $sessions, float $timeout ): array {
+        $all = new StreamCollection();
+        $map = [];
+
+        foreach ( $sessions as $key => $session ) {
+            if ( null === $session->client || null === $session->streams ) {
+                continue;
+            }
+
+            foreach ( $session->streams as $stream ) {
+                $map[ $all->attach( $stream ) ] = $key;
+            }
+        }
+
+        $ready = [];
+
+        if ( count( $all ) > 0 ) {
+            foreach ( $all->waitRead( $timeout ) as $name => $stream ) {
+                $ready[ $map[ $name ] ] = $sessions[ $map[ $name ] ];
+            }
+        }
+
+        return $ready;
+    }
+
     /** Disconnect and lift the breaker mark. Safe to call twice. */
     public function close(): void {
         if ( null !== $this->client ) {
@@ -188,6 +398,9 @@ final class RelaySession {
 
             $this->client = null;
         }
+
+        $this->streams = null;
+        $this->subs    = [];
 
         Relays::clear_attempt( $this->url );
     }

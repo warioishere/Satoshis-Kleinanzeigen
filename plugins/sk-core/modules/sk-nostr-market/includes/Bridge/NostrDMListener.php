@@ -166,10 +166,63 @@ class NostrDMListener {
 
     const LOCK_NAME = 'sk_nostr_market_poll';
 
-    private static function acquire_lock(): bool {
+    /** Seconds a single event waits for a running poll to finish. */
+    const LOCK_WAIT = 15;
+
+    /** @param int $wait Seconds to wait for the lock; 0 gives up at once. */
+    private static function acquire_lock( int $wait = 0 ): bool {
         global $wpdb;
 
-        return '1' === (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK( %s, 0 )', self::LOCK_NAME ) );
+        return '1' === (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK( %s, %d )', self::LOCK_NAME, $wait ) );
+    }
+
+    /**
+     * Every mailbox this site reads, lowercase hex — for a subscription
+     * that asks the relay to push whatever arrives there.
+     *
+     * @return string[]
+     */
+    public static function mailboxes(): array {
+        return array_keys( self::key_ring() );
+    }
+
+    /**
+     * One event as the relay pushed it, for the resident worker.
+     *
+     * Same shaping and same processing as the poll, one event at a time.
+     * The poll lock is taken for the duration: whoever processes must be
+     * alone, or a new sender's first two messages get two chats. The
+     * per-event claim in SeenEvents keeps the poll from taking the same
+     * event again afterwards.
+     */
+    public static function handle( array $raw ): void {
+        $event = self::valid_event( $raw );
+
+        if ( null === $event ) {
+            return;
+        }
+
+        if ( ! self::acquire_lock( self::LOCK_WAIT ) ) {
+            error_log( '[SK Nostr Market Bridge] Event ' . substr( $event['id'], 0, 12 ) . ' waited ' . self::LOCK_WAIT . 's for the poll lock; left for the next run' );
+
+            return;
+        }
+
+        // The new-chat budget is per run for the poll; here a run is a minute.
+        static $window = 0;
+
+        if ( time() - $window >= MINUTE_IN_SECONDS ) {
+            self::$new_chats = 0;
+            $window          = time();
+        }
+
+        try {
+            self::process_dm( $event, self::key_ring() );
+        } catch ( \Throwable $e ) {
+            error_log( '[SK Nostr Market Bridge] Event ' . substr( $event['id'], 0, 12 ) . ' failed: ' . $e->getMessage() );
+        } finally {
+            self::release_lock();
+        }
     }
 
     private static function release_lock(): void {

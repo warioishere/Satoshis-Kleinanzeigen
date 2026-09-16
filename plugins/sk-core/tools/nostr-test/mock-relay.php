@@ -4,7 +4,8 @@
  *
  * Serves the events in an events file that match a REQ filter (kinds,
  * authors, #p, since, until, limit; newest first), then EOSE. Answers every
- * EVENT with OK true. Logs what it receives, one JSON line per message. The
+ * EVENT with OK true and pushes it to every open subscription it matches.
+ * Logs what it receives, one JSON line per message. The
  * events file is re-read on every REQ, so a test can swap scenarios while
  * the relay runs.
  *
@@ -54,27 +55,7 @@ $server->onText( function ( $server, $conn, $message ) use ( $events, $log ) {
             $sent = 0;
 
             foreach ( $list as $e ) {
-                if ( isset( $f['kinds'] ) && ! in_array( $e['kind'], $f['kinds'], true ) ) {
-                    continue;
-                }
-                if ( isset( $f['authors'] ) && ! in_array( $e['pubkey'], $f['authors'], true ) ) {
-                    continue;
-                }
-                if ( isset( $f['#p'] ) ) {
-                    $hit = false;
-                    foreach ( (array) ( $e['tags'] ?? [] ) as $t ) {
-                        if ( 'p' === ( $t[0] ?? '' ) && in_array( $t[1] ?? '', $f['#p'], true ) ) {
-                            $hit = true;
-                        }
-                    }
-                    if ( ! $hit ) {
-                        continue;
-                    }
-                }
-                if ( isset( $f['since'] ) && $e['created_at'] < $f['since'] ) {
-                    continue;
-                }
-                if ( isset( $f['until'] ) && $e['created_at'] > $f['until'] ) {
+                if ( ! mock_matches( $f, $e ) ) {
                     continue;
                 }
                 if ( isset( $f['limit'] ) && $sent >= $f['limit'] ) {
@@ -87,11 +68,58 @@ $server->onText( function ( $server, $conn, $message ) use ( $events, $log ) {
         }
 
         $conn->text( json_encode( [ 'EOSE', $sub ] ) );
+
+        // Kept open: whatever is published later and matches is pushed.
+        $subs         = (array) $conn->getMeta( 'subs' );
+        $subs[ $sub ] = array_slice( $msg, 2 );
+        $conn->setMeta( 'subs', $subs );
     } elseif ( 'EVENT' === $msg[0] ) {
         $conn->text( json_encode( [ 'OK', $msg[1]['id'] ?? '', true, '' ] ) );
+
+        foreach ( $server->getConnections() as $other ) {
+            foreach ( (array) $other->getMeta( 'subs' ) as $sub => $filters ) {
+                foreach ( $filters as $f ) {
+                    if ( mock_matches( $f, $msg[1] ) ) {
+                        $other->text( json_encode( [ 'EVENT', $sub, $msg[1] ] ) );
+                        break;
+                    }
+                }
+            }
+        }
     } elseif ( 'CLOSE' === $msg[0] ) {
-        // Nothing to do; the subscription ended with EOSE anyway.
+        $subs = (array) $conn->getMeta( 'subs' );
+        unset( $subs[ $msg[1] ?? '' ] );
+        $conn->setMeta( 'subs', $subs );
     }
 } );
+
+/** Does the event pass the filter (kinds, authors, #p, since, until)? */
+function mock_matches( array $f, array $e ): bool {
+    if ( isset( $f['kinds'] ) && ! in_array( $e['kind'], $f['kinds'], true ) ) {
+        return false;
+    }
+    if ( isset( $f['authors'] ) && ! in_array( $e['pubkey'], $f['authors'], true ) ) {
+        return false;
+    }
+    if ( isset( $f['#p'] ) ) {
+        $hit = false;
+        foreach ( (array) ( $e['tags'] ?? [] ) as $t ) {
+            if ( 'p' === ( $t[0] ?? '' ) && in_array( $t[1] ?? '', $f['#p'], true ) ) {
+                $hit = true;
+            }
+        }
+        if ( ! $hit ) {
+            return false;
+        }
+    }
+    if ( isset( $f['since'] ) && $e['created_at'] < $f['since'] ) {
+        return false;
+    }
+    if ( isset( $f['until'] ) && $e['created_at'] > $f['until'] ) {
+        return false;
+    }
+
+    return true;
+}
 
 $server->start();
