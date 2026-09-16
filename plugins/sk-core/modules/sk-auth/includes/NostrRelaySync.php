@@ -155,8 +155,6 @@ class NostrRelaySync {
      * is empty on this first contact — nothing the vendor entered here is
      * touched.
      *
-     * The same filters serve the cron run and the resident worker's held
-     * subscription.
      */
     public static function filters( int $since ): array {
         // The key each account is asked for is its proven one — the same

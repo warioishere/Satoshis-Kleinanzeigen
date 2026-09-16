@@ -1,8 +1,7 @@
 <?php
 /**
  * NostrRelaySync::filters() and handle(): the profile update and the zap
- * receipt through the one door the cron and the resident worker share.
- * Then the worker itself, as a subprocess against the mock relay.
+ * receipt through the one door, then run() against the mock relay.
  *
  * Needs the mock relay running (see run.sh). SK_TEST_GENERATED is a user
  * with a key this site holds; its metas are restored at the end.
@@ -81,61 +80,6 @@ sk_test_relay_events( [ $later, $forged ] );
 NostrRelaySync::run();
 sk_check_eq( get_user_meta( $generated, 'description', true ), $about . ' cron', 'run(): fetches raw, handle() verifies and applies' );
 
-// ── the worker binary against the mock ────────────────────────────────────
-$php  = PHP_BINARY;
-$tool = dirname( __DIR__, 2 ) . '/nostr-worker.php';
-$proc = proc_open( [ $php, $tool, '--relay=' . $mock, '--lifetime=16' ], [ 1 => [ 'pipe', 'w' ], 2 => [ 'pipe', 'w' ] ], $pipes );
-sk_check( is_resource( $proc ), 'worker: started' );
-usleep( 2500000 ); // boot + dial
-
-$live = sk_test_sign( $priv, 0, [], json_encode( [ 'about' => $about . ' worker' ] ), $now + 20 );
-sk_check_eq( \SK\Core\Nostr\Relays::publish( $live, [ $mock ] )['accepted'], [ $mock ], 'worker: profile published to the mock while it listens' );
-$t0 = microtime( true );
-while ( microtime( true ) - $t0 < 5 && get_user_meta( $generated, 'description', true ) !== $about . ' worker' ) {
-    usleep( 100000 );
-    clean_user_cache( $generated );
-}
-sk_check_eq( get_user_meta( $generated, 'description', true ), $about . ' worker', 'worker: the pushed profile was applied without a cron run' );
-sk_check( microtime( true ) - $t0 < 3, 'worker: applied in under 3 s', sprintf( '%.2fs', microtime( true ) - $t0 ) );
-
-// A profile older than the one just applied (but inside the subscription's
-// since window) is read and dropped: it loads this user's meta into the
-// worker's process cache without writing anything that would clear it
-// again. A change made elsewhere afterwards must survive the next profile
-// the worker applies: a name change goes through sk_set_store_name(),
-// which reads the settings array and writes it back whole.
-$prime = sk_test_sign( $priv, 0, [], json_encode( [ 'about' => 'old' ] ), $now + 15 );
-\SK\Core\Nostr\Relays::publish( $prime, [ $mock ] );
-$t0 = microtime( true );
-while ( microtime( true ) - $t0 < 3 && ! get_transient( 'sk_nsync_' . substr( $prime['id'], 0, 16 ) ) ) {
-    usleep( 100000 );
-    wp_cache_flush_runtime();
-}
-sk_check( (bool) get_transient( 'sk_nsync_' . substr( $prime['id'], 0, 16 ) ), 'worker: the older profile was read' );
-usleep( 300000 );
-
-$settings                   = get_user_meta( $generated, 'sk_profile_settings', true );
-$settings                   = is_array( $settings ) ? $settings : [];
-$settings['sk_test_marker'] = 'saved in the browser';
-update_user_meta( $generated, 'sk_profile_settings', $settings );
-
-$renamed = sk_test_sign( $priv, 0, [], json_encode( [ 'name' => 'Sync ' . $now ] ), $now + 30 );
-\SK\Core\Nostr\Relays::publish( $renamed, [ $mock ] );
-$t0 = microtime( true );
-while ( microtime( true ) - $t0 < 5 && ( get_user_meta( $generated, 'sk_profile_settings', true )['store_name'] ?? '' ) !== 'Sync ' . $now ) {
-    usleep( 100000 );
-    clean_user_cache( $generated );
-}
-$after = get_user_meta( $generated, 'sk_profile_settings', true );
-sk_check_eq( $after['store_name'] ?? '', 'Sync ' . $now, 'worker: the second profile renamed the store' );
-sk_check_eq( $after['sk_test_marker'] ?? '', 'saved in the browser', 'worker: a setting changed by another process meanwhile is kept' );
-
-$out = stream_get_contents( $pipes[1] );
-$err = stream_get_contents( $pipes[2] );
-proc_close( $proc );
-sk_check( str_contains( $out, 'subscriptions ' ) && str_contains( $out, 'connected' ) && str_contains( $out, 'lifetime over' ), 'worker: log shows subscribe, connect and self-termination', $out );
-sk_check( '' === trim( preg_replace( '/.*WP_CACHE_KEY_SALT.*\n?/', '', $err ) ), 'worker: nothing on stderr', $err );
-
 // ── restore ───────────────────────────────────────────────────────────────
 foreach ( $saved as $k => $v ) {
     if ( '' === $v || null === $v ) {
@@ -157,7 +101,7 @@ if ( false === $saved_sync ) {
 } else {
     update_option( NostrRelaySync::LAST_SYNC_KEY, $saved_sync );
 }
-foreach ( [ $event, $forged, $receipt, $later, $live, $prime, $renamed ] as $e ) {
+foreach ( [ $event, $forged, $receipt, $later ] as $e ) {
     delete_transient( 'sk_nsync_' . substr( $e['id'], 0, 16 ) );
 }
 sk_check_eq( get_user_meta( $generated, 'description', true ), $saved['description'], 'restore: bio as before' );

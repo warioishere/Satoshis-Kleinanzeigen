@@ -1074,9 +1074,7 @@ class ChatBridge {
         $pubkey = strtolower( $pubkey );
 
         // The first relay that has a signed profile is enough; short timeout,
-        // this runs while a message is being delivered — under the poll
-        // lock, and in the resident worker with every relay unread until
-        // it returns.
+        // this runs while a message is being delivered, under the poll lock.
         $best = null;
 
         foreach ( EventSender::get_relays() as $relay_url ) {
