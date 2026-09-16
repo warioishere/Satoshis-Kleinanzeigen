@@ -8,42 +8,11 @@ class UAC_Nostr_Profile_Sync {
     /**
      * Initialize the sync functionality.
      */
-    public function __construct() {
-        // Hook into WordPress login to check if Nostr user needs syncing
-        add_action('wp_login', array($this, 'sync_on_login'), 20, 2);
-    }
-
-    /**
-     * Flag a new Nostr user as needing the sync choice on their first login.
-     *
-     * @param string  $user_login
-     * @param WP_User $user
+    /*
+     * A linked key brings its profile along by itself, see
+     * NostrRelaySync::pull_profile(). What is left of this class is the
+     * button in the connector that fetches it again on demand.
      */
-    public function sync_on_login($user_login, $user) {
-        $nostr_pubkey = get_user_meta($user->ID, 'nostr_public_key', true);
-        if (empty($nostr_pubkey)) {
-            return;
-        }
-
-        if (!class_exists('SK_Core')) {
-            return;
-        }
-
-        // Check if this is a vendor
-        if (!sk_is_user_seller($user->ID)) {
-            return;
-        }
-
-        // Check user's sync preference
-        $sync_preference = get_user_meta($user->ID, 'uac_nostr_sync_preference', true);
-
-        // If preference not set, this is their first time - set a flag to ask them
-        if (empty($sync_preference)) {
-            update_user_meta($user->ID, 'uac_nostr_sync_ask_pending', '1');
-        }
-
-        // NO automatic syncing on login - users must manually trigger sync if they want
-    }
 
     /**
      * Copy Nostr profile data into sk_profile_settings.
@@ -220,37 +189,6 @@ class UAC_Nostr_Profile_Sync {
         delete_user_meta($user_id, 'uac_nostr_last_sync');
 
         return $this->sync_nostr_to_sk($user_id);
-    }
-
-    /**
-     * Check if user needs to be asked about sync preference.
-     *
-     * @param int $user_id WordPress user ID
-     * @return bool True if user needs to be asked, false otherwise
-     */
-    public function needs_sync_choice($user_id) {
-        $ask_pending = get_user_meta($user_id, 'uac_nostr_sync_ask_pending', true);
-        return !empty($ask_pending);
-    }
-
-    /**
-     * Set user's sync preference.
-     *
-     * @param int $user_id WordPress user ID
-     * @param bool $enabled Whether to enable sync
-     * @return bool True on success
-     */
-    public function set_sync_preference($user_id, $enabled) {
-        $preference = $enabled ? 'enabled' : 'disabled';
-        update_user_meta($user_id, 'uac_nostr_sync_preference', $preference);
-        delete_user_meta($user_id, 'uac_nostr_sync_ask_pending');
-
-        // If enabled, trigger an immediate sync
-        if ($enabled) {
-            $this->manual_sync($user_id);
-        }
-
-        return true;
     }
 
     /**

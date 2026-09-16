@@ -3251,12 +3251,11 @@ function sk_set_store_name( int $user_id, string $name ): string {
     update_user_meta( $user_id, 'sk_profile_settings', $settings );
     update_user_meta( $user_id, 'sk_store_name', $name );
 
-    // First name a vendor with a Nostr key gets is the one their NIP-05 keeps.
-    // Without this the address is only fixed when we publish a profile for
-    // them — which never happens for a key we do not hold, so a later rename
-    // would move an address other people have already verified.
+    // The NIP-05 address follows the shop name. The name passed in rather
+    // than read back, because sk_get_store_info() caches per request and
+    // would still hand out the previous one.
     if ( '' !== $name && get_user_meta( $user_id, 'nostr_public_key', true ) ) {
-        \SK\Core\Nostr\Handle::get( $user_id, $name );
+        \SK\Core\Nostr\Handle::adopt( $user_id, $name );
     }
 
     return $name;

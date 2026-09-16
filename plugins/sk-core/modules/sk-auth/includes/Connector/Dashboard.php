@@ -70,34 +70,12 @@ class SK_Auth_Dashboard extends \SK\Core\Dashboard\DashboardModule {
         $original_lnurl = get_user_meta($user_id, 'lnurl-auth-bjm-id', true);
         $original_nostr = get_user_meta($user_id, 'nostr_public_key', true);
 
-        // Check if user needs to be asked about Nostr profile sync
-        $profile_sync = new UAC_Nostr_Profile_Sync();
-        $show_sync_choice = $original_nostr && $profile_sync->needs_sync_choice($user_id);
-
         ?>
         <div class="sk-review-page-header">
             <h2><i class="fas fa-link"></i> Nostr / LN Linking</h2>
         </div>
 
         <div class="uac-content">
-                        <?php if ($show_sync_choice): ?>
-                            <div class="sk-alert sk-alert-warning uac-sync-choice-notice" id="uac-sync-choice-notice">
-                                <h3 style="margin-top: 0;">🎨 Nostr-Profil jetzt synchronisieren?</h3>
-                                <p>
-                                    Möchtest Du Dein Nostr-Profil (Name, Bild, Banner und Biografie) <strong>einmalig</strong> mit Deinem SK-Shop synchronisieren?
-                                </p>
-                                <p style="margin-bottom: 15px;">
-                                    <small>Dies ist ein einmaliger Vorgang. Spätere Änderungen an Deinem Nostr-Profil werden nicht automatisch übernommen.</small>
-                                </p>
-                                <button type="button" class="button button-primary" id="uac-enable-sync">
-                                    Ja, jetzt synchronisieren
-                                </button>
-                                <button type="button" class="button" id="uac-disable-sync">
-                                    Nein, überspringen
-                                </button>
-                            </div>
-                        <?php endif; ?>
-
                         <div class="sk-alert sk-alert-info">
                             <p>
                                 Verknüpfe mehrere Authentifizierungsmethoden mit Deinem Konto. Nach der Verknüpfung kannst Du Dich mit jeder verbundenen Methode anmelden. Falls die andere Methode bereits ein eigenes Konto hat, werden die Konten automatisch zusammengeführt — das Konto mit Deinen Shop-Daten bleibt erhalten.
@@ -346,7 +324,6 @@ class SK_Auth_Dashboard extends \SK\Core\Dashboard\DashboardModule {
 
         $user_id = get_current_user_id();
         $authtoken = isset($_POST['authtoken']) ? sanitize_text_field(wp_unslash($_POST['authtoken'])) : '';
-        $sync_profile = isset($_POST['sync_profile']) ? filter_var($_POST['sync_profile'], FILTER_VALIDATE_BOOLEAN) : false;
 
         if (empty($authtoken)) {
             wp_send_json_error(array('message' => 'Authentifizierungstoken erforderlich.'));
@@ -410,13 +387,12 @@ class SK_Auth_Dashboard extends \SK\Core\Dashboard\DashboardModule {
 
         $message = 'Nostr-Konto erfolgreich verknüpft!';
 
-        // If user wants to sync profile and is an SK vendor, do it now
-        if ($sync_profile && class_exists('SK_Core') && function_exists('sk_is_user_seller') && sk_is_user_seller($user_id)) {
-            $profile_sync = new UAC_Nostr_Profile_Sync();
-            $synced = $profile_sync->manual_sync($user_id);
-
-            if ($synced) {
-                $message .= ' Profil erfolgreich synchronisiert!';
+        // A linked key brings its profile with it — no question asked. Only
+        // empty fields are filled, so nothing entered in the shop is lost,
+        // and the button below re-runs it whenever the vendor wants.
+        if (class_exists('SK_Core') && function_exists('sk_is_user_seller') && sk_is_user_seller($user_id)) {
+            if (\SK\Modules\Auth\NostrRelaySync::pull_profile($user_id)) {
+                $message .= ' Profil übernommen!';
             }
         }
 
@@ -587,29 +563,6 @@ class SK_Auth_Dashboard extends \SK\Core\Dashboard\DashboardModule {
         } else {
             wp_send_json_error(array('message' => 'Ungültiger Authentifizierungstyp.'));
         }
-    }
-
-    /**
-     * AJAX handler for setting Nostr sync preference.
-     */
-    public function ajax_set_sync_preference() {
-        check_ajax_referer('uac_nonce', 'nonce');
-
-        if (!is_user_logged_in()) {
-            wp_send_json_error(array('message' => 'Du musst angemeldet sein.'));
-        }
-
-        $user_id = get_current_user_id();
-        $enabled = isset($_POST['enabled']) ? filter_var($_POST['enabled'], FILTER_VALIDATE_BOOLEAN) : false;
-
-        $profile_sync = new UAC_Nostr_Profile_Sync();
-        $profile_sync->set_sync_preference($user_id, $enabled);
-
-        $message = $enabled ?
-            'Dein Nostr-Profil wurde erfolgreich synchronisiert!' :
-            'Synchronisierung übersprungen.';
-
-        wp_send_json_success(array('message' => $message));
     }
 
     /**

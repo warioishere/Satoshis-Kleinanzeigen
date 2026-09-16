@@ -141,7 +141,6 @@ final class Module {
             add_action( 'wp_ajax_uac_link_lnurl', [ $sk_dashboard, 'ajax_link_lnurl' ] );
             add_action( 'wp_ajax_uac_unlink_auth', [ $sk_dashboard, 'ajax_unlink_auth' ] );
             add_action( 'wp_ajax_uac_verify_lnurl_link', [ $sk_dashboard, 'ajax_verify_lnurl_link' ] );
-            add_action( 'wp_ajax_uac_set_sync_preference', [ $sk_dashboard, 'ajax_set_sync_preference' ] );
             add_action( 'wp_ajax_uac_manual_sync', [ $sk_dashboard, 'ajax_manual_sync' ] );
 
             new \UAC_Nostr_Profile_Sync();

@@ -16,6 +16,7 @@ class NostrLoginBox {
         add_action( 'added_user_meta',   [ __CLASS__, 'sync_npub' ], 10, 4 );
         add_action( 'updated_user_meta', [ __CLASS__, 'sync_npub' ], 10, 4 );
         add_action( 'set_auth_cookie',   [ __CLASS__, 'sync_on_login' ], 10, 4 );
+        add_action( 'set_auth_cookie',   [ __CLASS__, 'pull_profile_once' ], 20, 4 );
 
         // Shortcode.
         add_shortcode( 'nostr_login_box', [ __CLASS__, 'render_shortcode' ] );
@@ -68,6 +69,30 @@ class NostrLoginBox {
         }
 
         self::sync_npub( null, $user_id, 'nostr_public_key', $hex_pubkey );
+    }
+
+    /**
+     * Take over the Nostr profile of a linked key, once.
+     *
+     * Someone who signs in with their own key has usually had a profile for
+     * years — older than any window the relay sync asks for, so it would
+     * never arrive and the shop stayed empty next to it. Only gaps are
+     * filled; what the vendor entered here is never overwritten.
+     *
+     * Deferred to shutdown: a relay round trip has no business inside a login.
+     */
+    public static function pull_profile_once( $auth_cookie, $expire, $expiration, $user_id ): void {
+        $user_id = (int) $user_id;
+
+        if ( ! get_user_meta( $user_id, 'nostr_public_key', true ) ) {
+            return;
+        }
+
+        if ( \SK\Modules\Auth\NostrIdentity::profile_seen( $user_id ) ) {
+            return;
+        }
+
+        register_shutdown_function( [ \SK\Modules\Auth\NostrRelaySync::class, 'pull_profile_deferred' ], $user_id );
     }
 
     /**

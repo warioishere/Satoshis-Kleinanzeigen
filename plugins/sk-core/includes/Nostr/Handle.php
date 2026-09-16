@@ -7,18 +7,20 @@ defined( 'ABSPATH' ) || exit;
 /**
  * The name in front of the @ in a vendor's NIP-05 address.
  *
- * It used to be the WordPress slug, which had two faults: someone who set a
- * shop name still ended up as "satoshi-247@…", and changing the shop link
- * silently changed their Nostr identity — every verification anybody had
- * already done broke.
+ * It follows the shop name: rename the shop and the address reads the same
+ * way again. What it does not do is hand the old address to somebody else —
+ * every name a vendor has ever used stays theirs and keeps resolving, so a
+ * contact saved a year ago still verifies and nobody inherits a name whose
+ * reputation they did not earn.
  *
- * So the name is chosen once from the shop name and then kept. A NIP-05
- * address is an identifier: it may be ugly, but it must not move.
+ * The shop link is deliberately not part of this: it used to decide the
+ * address, which left vendors with "satoshi-247@..." although they had given
+ * their shop a name.
  */
 final class Handle {
 
-    /** User meta holding the chosen name. */
-    const META = 'sk_nip05_name';
+    /** Every name this vendor has held, newest first. */
+    const META = 'sk_nip05_names';
 
     /**
      * Names nobody may take, because the directory answers them itself or
@@ -27,25 +29,43 @@ final class Handle {
     const RESERVED = [ '_', 'admin', 'administrator', 'root', 'support', 'sk', 'satoshiskleinanzeigen' ];
 
     /**
-     * This vendor's name, assigning one on first use.
-     *
-     * Stored on the way out so it stays put afterwards, whatever happens to
-     * the shop name or the shop link.
+     * This vendor's current name, assigning one on first use.
      */
-    public static function get( int $user_id, string $wish = '' ): string {
-        $stored = (string) get_user_meta( $user_id, self::META, true );
+    public static function get( int $user_id ): string {
+        $names = self::history( $user_id );
 
-        if ( '' !== $stored ) {
-            return $stored;
+        if ( isset( $names[0] ) && '' !== $names[0] ) {
+            return $names[0];
         }
 
-        $name = self::pick( $user_id, $wish );
+        return self::adopt( $user_id, (string) ( self::store_name( $user_id ) ) );
+    }
 
-        if ( '' !== $name ) {
-            update_user_meta( $user_id, self::META, $name );
+    /**
+     * Take on the name that goes with this shop name.
+     *
+     * Called wherever a shop name is written. Keeps the previous one on the
+     * list so the old address does not stop working, and leaves everything
+     * alone when the wanted name belongs to someone else.
+     */
+    public static function adopt( int $user_id, string $shop_name ): string {
+        $names   = self::history( $user_id );
+        $current = (string) ( $names[0] ?? '' );
+        $wanted  = self::clean( $shop_name );
+
+        if ( '' === $wanted || ! self::free( $wanted, $user_id ) ) {
+            // Nothing usable in the shop name — fall back once, then keep it.
+            $wanted = '' !== $current ? $current : self::fallback( $user_id );
         }
 
-        return $name;
+        if ( '' === $wanted || $wanted === $current ) {
+            return $current;
+        }
+
+        array_unshift( $names, $wanted );
+        update_user_meta( $user_id, self::META, array_values( array_unique( $names ) ) );
+
+        return $wanted;
     }
 
     /** The full address, or '' when no name could be found. */
@@ -57,7 +77,7 @@ final class Handle {
 
     /**
      * Who owns this name? Falls back to the shop link and the shop name so
-     * addresses that were published before this existed keep resolving.
+     * addresses published before this existed keep resolving.
      */
     public static function owner( string $name ): ?\WP_User {
         $name = strtolower( trim( $name ) );
@@ -67,13 +87,18 @@ final class Handle {
         }
 
         $found = get_users( [
-            'meta_key'   => self::META, // phpcs:ignore WordPress.DB.SlowDBQuery
-            'meta_value' => $name,      // phpcs:ignore WordPress.DB.SlowDBQuery
-            'number'     => 1,
+            'meta_key'     => self::META,  // phpcs:ignore WordPress.DB.SlowDBQuery
+            'meta_value'   => '"' . $name . '"', // phpcs:ignore WordPress.DB.SlowDBQuery
+            'meta_compare' => 'LIKE',
+            'number'       => 5,
         ] );
 
-        if ( $found ) {
-            return $found[0];
+        // LIKE on the serialized array can only narrow the field — the match
+        // itself is made on the unserialized list.
+        foreach ( $found as $candidate ) {
+            if ( in_array( $name, self::history( (int) $candidate->ID ), true ) ) {
+                return $candidate;
+            }
         }
 
         $user = get_user_by( 'slug', $name );
@@ -83,11 +108,7 @@ final class Handle {
         }
 
         foreach ( get_users( [ 'role__in' => [ 'seller', 'administrator' ], 'number' => 500 ] ) as $candidate ) {
-            $shop = function_exists( 'sk_get_store_info' )
-                ? (string) ( sk_get_store_info( $candidate->ID )['store_name'] ?? '' )
-                : '';
-
-            if ( '' !== $shop && strtolower( $shop ) === $name ) {
+            if ( strtolower( self::store_name( (int) $candidate->ID ) ) === $name ) {
                 return $candidate;
             }
         }
@@ -95,38 +116,29 @@ final class Handle {
         return null;
     }
 
-    /**
-     * Pick a free name: the caller's wish, then the shop name, then the shop
-     * link, then the id.
-     *
-     * A number is the last resort rather than the default — it says nothing
-     * about the vendor, and that was the whole complaint.
-     */
-    private static function pick( int $user_id, string $wish = '' ): string {
-        $info = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( $user_id ) : [];
+    /** Every name this vendor has held, newest first. */
+    public static function history( int $user_id ): array {
+        $names = get_user_meta( $user_id, self::META, true );
+
+        return is_array( $names ) ? array_values( array_filter( $names ) ) : [];
+    }
+
+    /** Shop link, then the id — used when the shop name yields nothing. */
+    private static function fallback( int $user_id ): string {
         $user = get_userdata( $user_id );
+        $slug = self::clean( $user ? $user->user_nicename : '' );
 
-        // A caller that just wrote the shop name passes it in: sk_get_store_info()
-        // caches per request and would still hand out the name from before.
-        $wishes = [
-            $wish,
-            (string) ( $info['store_name'] ?? '' ),
-            $user ? $user->user_nicename : '',
-            'sk-' . $user_id,
-        ];
-
-        foreach ( $wishes as $wish ) {
-            $name = self::clean( $wish );
-
-            if ( '' !== $name && self::free( $name, $user_id ) ) {
-                return $name;
-            }
+        if ( '' !== $slug && self::free( $slug, $user_id ) ) {
+            return $slug;
         }
 
-        // Every wish taken: hang the id on the best one we had.
-        $base = self::clean( (string) ( $info['store_name'] ?? '' ) ) ?: 'sk';
+        return 'sk-' . $user_id;
+    }
 
-        return $base . '-' . $user_id;
+    private static function store_name( int $user_id ): string {
+        return function_exists( 'sk_get_store_info' )
+            ? (string) ( sk_get_store_info( $user_id )['store_name'] ?? '' )
+            : '';
     }
 
     /** Down to what a NIP-05 name may contain: a-z, 0-9, -_.+ */

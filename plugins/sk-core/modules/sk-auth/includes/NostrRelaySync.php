@@ -22,6 +22,7 @@ class NostrRelaySync {
     const LAST_SYNC_KEY     = 'sk_nostr_relay_last_sync';
     const RELAY_FAIL_TTL    = 3600;  // Skip a failing relay for 1h after a bad run.
     const RELAY_TIMEOUT_SEC = 5;     // Socket/read timeout per relay (was 10).
+    const FIRST_CONTACT_MAX = 25;    // Accounts asked for without a time limit per run.
 
     public static function init() {
         add_action( self::CRON_HOOK, [ __CLASS__, 'run' ] );
@@ -63,6 +64,29 @@ class NostrRelaySync {
             $pubkey_to_user[ $u['pubkey'] ] = $u['user_id'];
         }
 
+        /*
+         * Somebody who links their own key has usually had a profile for
+         * years. It is older than every sync window, so the run below would
+         * never see it and their picture, banner and bio stayed empty here
+         * although they were one query away.
+         *
+         * Accounts we have never read a profile for are therefore asked for
+         * without a time limit. They fall out of this list as soon as one
+         * arrives, and handle_profile_update() only fills what is empty on
+         * this first contact — nothing the vendor entered here is touched.
+         */
+        $first_contact = [];
+
+        foreach ( $users as $u ) {
+            if ( count( $first_contact ) >= self::FIRST_CONTACT_MAX ) {
+                break;
+            }
+
+            if ( ! NostrIdentity::profile_seen( (int) $u['user_id'] ) ) {
+                $first_contact[] = $u['pubkey'];
+            }
+        }
+
         // Fetch events from each relay. Skip relays that failed recently so a
         // single bad relay can't drag the whole cron run past the 40s mark
         // (relay.nostr.band is flaky for us — this keeps it from blocking the
@@ -74,7 +98,7 @@ class NostrRelaySync {
             }
 
             try {
-                $events = self::fetch_events( $relay_url, $pubkeys, $since );
+                $events = self::fetch_events( $relay_url, $pubkeys, $since, $first_contact );
                 foreach ( $events as $event ) {
                     $author = $event['pubkey'] ?? '';
                     $user_id = $pubkey_to_user[ $author ] ?? 0;
@@ -116,6 +140,44 @@ class NostrRelaySync {
         update_option( self::LAST_SYNC_KEY, time() );
     }
 
+    /**
+     * Fetch this vendor's profile from the relays right now and apply it.
+     *
+     * Used when a key is linked: waiting up to five minutes for the cron to
+     * come around would show the vendor an empty shop next to a Nostr profile
+     * that has had a picture for years.
+     */
+    public static function pull_profile( int $user_id ): bool {
+        $pubkey = (string) get_user_meta( $user_id, 'nostr_public_key', true );
+
+        if ( '' === $pubkey ) {
+            return false;
+        }
+
+        $events = \SK\Core\Nostr\Relays::latest( 0, [ $pubkey ] );
+        $event  = $events[ $pubkey ] ?? null;
+
+        if ( ! $event ) {
+            return false;
+        }
+
+        self::handle_profile_update( $user_id, $event );
+
+        return true;
+    }
+
+    /**
+     * The same, but only after the response has left — a relay round trip
+     * has no business holding up a login.
+     */
+    public static function pull_profile_deferred( int $user_id ): void {
+        if ( function_exists( 'fastcgi_finish_request' ) ) {
+            fastcgi_finish_request();
+        }
+
+        self::pull_profile( $user_id );
+    }
+
     private static function relay_fail_key( string $relay_url ): string {
         return 'sk_nostr_relay_fail_' . md5( $relay_url );
     }
@@ -125,15 +187,21 @@ class NostrRelaySync {
      * Kind 1 notes are intentionally not queried — we only sync profile
      * updates and zap receipts, no timeline content.
      */
-    private static function fetch_events( string $relay_url, array $pubkeys, int $since ): array {
-        // One REQ with both filters; every event verified (a profile update
+    private static function fetch_events( string $relay_url, array $pubkeys, int $since, array $first_contact = [] ): array {
+        $filters = [
+            [ 'authors' => $pubkeys, 'kinds' => [ 0 ], 'since' => $since ],
+            [ 'kinds' => [ 9735 ], '#p' => $pubkeys, 'since' => $since ],
+        ];
+
+        if ( $first_contact ) {
+            $filters[] = [ 'authors' => $first_contact, 'kinds' => [ 0 ] ];
+        }
+
+        // One REQ with all filters; every event verified (a profile update
         // rewrites display names and avatars, so a forged one must not count).
         $result = \SK\Core\Nostr\Relays::fetch(
             $relay_url,
-            [
-                [ 'authors' => $pubkeys, 'kinds' => [ 0 ], 'since' => $since ],
-                [ 'kinds' => [ 9735 ], '#p' => $pubkeys, 'since' => $since ],
-            ],
+            $filters,
             [ 'timeout' => self::RELAY_TIMEOUT_SEC ]
         );
 

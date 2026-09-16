@@ -24,8 +24,6 @@
             $(document).on('click', '.uac-unlink-btn', this.handleUnlink.bind(this));
 
             // Sync preference buttons
-            $(document).on('click', '#uac-enable-sync', this.handleEnableSync.bind(this));
-            $(document).on('click', '#uac-disable-sync', this.handleDisableSync.bind(this));
 
             // Manual sync button
             $(document).on('click', '#uac-manual-sync-btn', this.handleManualSync.bind(this));
@@ -46,7 +44,6 @@
                 return;
             }
 
-            const syncProfile = false;
 
             $button.prop('disabled', true).text(uacData.i18n.linking);
             this.showMessage($status, 'info', 'Requesting authentication from Nostr extension...');
@@ -59,7 +56,6 @@
                         action: 'uac_link_nostr',
                         nonce: uacData.nonce,
                         authtoken: authtoken,
-                        sync_profile: syncProfile,
                         force: force ? '1' : '0'
                     }
                 });
@@ -288,83 +284,6 @@
             });
         },
 
-        /**
-         * Handle enabling Nostr sync
-         */
-        handleEnableSync: function(e) {
-            e.preventDefault();
-
-            const $button = $(e.currentTarget);
-            const $notice = $('#uac-sync-choice-notice');
-
-            $button.prop('disabled', true).text('Aktiviere...');
-
-            $.ajax({
-                url: uacData.ajaxurl,
-                type: 'POST',
-                data: {
-                    action: 'uac_set_sync_preference',
-                    nonce: uacData.nonce,
-                    enabled: true
-                }
-            }).then((response) => {
-                if (response.success) {
-                    $notice.removeClass('sk-alert-warning').addClass('sk-alert-success');
-                    $notice.html('<p><strong>✓ ' + response.data.message + '</strong></p>');
-
-                    // Reload after 2 seconds
-                    setTimeout(() => {
-                        location.reload();
-                    }, 2000);
-                } else {
-                    alert(response.data.message || uacData.i18n.error);
-                    $button.prop('disabled', false).text('Ja, jetzt synchronisieren');
-                }
-            }).catch((error) => {
-                console.error('Sync preference error:', error);
-                alert(uacData.i18n.error);
-                $button.prop('disabled', false).text('Ja, jetzt synchronisieren');
-            });
-        },
-
-        /**
-         * Handle disabling Nostr sync
-         */
-        handleDisableSync: function(e) {
-            e.preventDefault();
-
-            const $button = $(e.currentTarget);
-            const $notice = $('#uac-sync-choice-notice');
-
-            $button.prop('disabled', true).text('Deaktiviere...');
-
-            $.ajax({
-                url: uacData.ajaxurl,
-                type: 'POST',
-                data: {
-                    action: 'uac_set_sync_preference',
-                    nonce: uacData.nonce,
-                    enabled: false
-                }
-            }).then((response) => {
-                if (response.success) {
-                    $notice.removeClass('sk-alert-warning').addClass('sk-alert-info');
-                    $notice.html('<p><strong>✓ ' + response.data.message + '</strong></p>');
-
-                    // Reload after 2 seconds
-                    setTimeout(() => {
-                        location.reload();
-                    }, 2000);
-                } else {
-                    alert(response.data.message || uacData.i18n.error);
-                    $button.prop('disabled', false).text('Nein, überspringen');
-                }
-            }).catch((error) => {
-                console.error('Sync preference error:', error);
-                alert(uacData.i18n.error);
-                $button.prop('disabled', false).text('Nein, überspringen');
-            });
-        },
 
         /**
          * Handle manual profile sync
