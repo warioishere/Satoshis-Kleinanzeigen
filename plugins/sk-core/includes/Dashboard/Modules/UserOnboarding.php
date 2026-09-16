@@ -20,6 +20,8 @@ class UserOnboarding {
 		add_action( 'wp_ajax_sk_create_nostr_identity', [ $this, 'ajax_create_nostr_identity' ] );
 		add_action( 'wp_ajax_sk_delete_nostr_identity', [ $this, 'ajax_delete_nostr_identity' ] );
 		add_action( 'wp_ajax_sk_get_nostr_nsec', [ $this, 'ajax_get_nostr_nsec' ] );
+		add_action( 'wp_ajax_uob_save_shop', [ $this, 'ajax_save_shop' ] );
+		add_action( 'wp_ajax_uob_upload_image', [ $this, 'ajax_upload_image' ] );
 		add_action( 'deleted_user', [ $this, 'cleanup' ] );
 
 		// Dashboard banner for existing users who missed onboarding.
@@ -67,6 +69,15 @@ class UserOnboarding {
 			'ajaxurl' => admin_url( 'admin-ajax.php' ),
 			'nonce'   => wp_create_nonce( 'uob_ajax_nonce' ),
 		] );
+
+		// Its own object: the Nostr banner script localizes uobAjax as well,
+		// and whichever prints last would drop the other one's keys.
+		// The location field rides on the geocoding proxy the settings page
+		// already uses — rate limited and cached over there.
+		wp_localize_script( 'sk-onboarding', 'uobShop', [
+			'geoNonce' => wp_create_nonce( 'sk_geo_geocode' ),
+			'hasGeo'   => has_action( 'wp_ajax_sk_geo_geocode' ) ? 1 : 0,
+		] );
 	}
 
 	// ── Modal Output ───────────────────────────────────────────────────────
@@ -96,6 +107,7 @@ class UserOnboarding {
 					<span class="uob-dot" data-slide="3"></span>
 					<span class="uob-dot" data-slide="4"></span>
 					<span class="uob-dot" data-slide="5"></span>
+					<span class="uob-dot" data-slide="6"></span>
 				</div>
 
 				<button type="button" class="uob-close" aria-label="<?php esc_attr_e( 'Schließen', 'sk-core' ); ?>">
@@ -147,7 +159,7 @@ class UserOnboarding {
 							<i class="fas fa-user-circle"></i>
 							<div>
 								<strong><?php _e( 'Shop-Profil erstellen', 'sk-core' ); ?></strong>
-								<span><?php _e( 'Dashboard → Shop Info. Anfragen erreichen dich per Chat; eigene Kontaktwege sind freiwillig', 'sk-core' ); ?></span>
+								<span><?php _e( 'Gleich im nächsten Schritt. Anfragen erreichen dich per Chat; eigene Kontaktwege sind freiwillig', 'sk-core' ); ?></span>
 							</div>
 						</li>
 						<li>
@@ -167,8 +179,61 @@ class UserOnboarding {
 					</ul>
 				</div>
 
-				<!-- Slide 4: Communication -->
+				<!-- Slide 4: Your shop — the only slide that asks for something -->
+				<?php
+				$uob_info   = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( get_current_user_id() ) : [];
+				$uob_name   = (string) ( $uob_info['store_name'] ?? '' );
+				$uob_place  = (string) ( $uob_info['find_address'] ?? '' );
+				$uob_avatar = (int) ( $uob_info['gravatar'] ?? 0 );
+				$uob_banner = (int) ( $uob_info['banner'] ?? 0 );
+				?>
 				<div class="uob-slide" data-slide="3">
+					<h2><?php _e( 'Dein Auftritt', 'sk-core' ); ?></h2>
+					<p><?php _e( 'Vier Angaben — alle freiwillig und später änderbar.', 'sk-core' ); ?></p>
+
+					<div class="uob-form">
+						<label class="uob-field">
+							<span class="uob-field-label"><?php _e( 'Anbietername', 'sk-core' ); ?></span>
+							<input type="text" id="uob-store-name" maxlength="60" value="<?php echo esc_attr( $uob_name ); ?>"
+							       placeholder="<?php esc_attr_e( 'z. B. Bitcoin Werkstatt', 'sk-core' ); ?>">
+							<span class="uob-field-hint"><?php _e( 'Steht über deinen Inseraten und bestimmt deine Nostr-Adresse.', 'sk-core' ); ?></span>
+						</label>
+
+						<div class="uob-images">
+							<div class="uob-image" data-kind="gravatar">
+								<span class="uob-field-label"><?php _e( 'Profilbild', 'sk-core' ); ?></span>
+								<label class="uob-drop uob-drop--round">
+									<input type="file" accept="image/*" hidden>
+									<img alt="" <?php echo $uob_avatar ? 'src="' . esc_url( (string) wp_get_attachment_image_url( $uob_avatar, 'thumbnail' ) ) . '"' : 'hidden'; ?>>
+									<i class="fas fa-user" <?php echo $uob_avatar ? 'hidden' : ''; ?>></i>
+								</label>
+							</div>
+
+							<div class="uob-image uob-image--wide" data-kind="banner">
+								<span class="uob-field-label"><?php _e( 'Banner', 'sk-core' ); ?></span>
+								<label class="uob-drop">
+									<input type="file" accept="image/*" hidden>
+									<img alt="" <?php echo $uob_banner ? 'src="' . esc_url( (string) wp_get_attachment_image_url( $uob_banner, 'medium' ) ) . '"' : 'hidden'; ?>>
+									<i class="fas fa-image" <?php echo $uob_banner ? 'hidden' : ''; ?>></i>
+								</label>
+							</div>
+						</div>
+
+						<label class="uob-field uob-field--place">
+							<span class="uob-field-label"><?php _e( 'Ort', 'sk-core' ); ?></span>
+							<input type="text" id="uob-place" autocomplete="off" value="<?php echo esc_attr( $uob_place ); ?>"
+							       placeholder="<?php esc_attr_e( 'Stadt oder Region genügt', 'sk-core' ); ?>">
+							<span class="uob-field-hint"><?php _e( 'Nur so genau, wie du magst — für Abholung und die Umkreissuche.', 'sk-core' ); ?></span>
+							<ul class="uob-place-list" hidden></ul>
+						</label>
+					</div>
+
+					<p class="uob-tip"><i class="fas fa-lightbulb"></i> <?php printf( __( 'Kontaktwege, Adresse und Öffnungszeiten folgen später in den <a href="%s" target="_blank" rel="noopener">Einstellungen</a>.', 'sk-core' ), esc_url( home_url( '/dashboard/settings/store/' ) ) ); ?></p>
+					<div id="uob-shop-status" class="uob-status"></div>
+				</div>
+
+				<!-- Slide 5: Communication -->
+				<div class="uob-slide" data-slide="4">
 					<div class="uob-slide-icon"><i class="fas fa-comments"></i></div>
 					<h2><?php _e( 'Kommunikation', 'sk-core' ); ?></h2>
 					<p><?php _e( 'Der Chat ist der direkte Weg zum Anbieter — er steht auf jedem Inserat und du brauchst dafür nichts weiter als dein Konto hier.', 'sk-core' ); ?></p>
@@ -201,9 +266,9 @@ class UserOnboarding {
 					<p class="uob-tip"><i class="fas fa-lightbulb"></i> <?php printf( __( 'Tipp: Folge uns auf <a href="%s" target="_blank" rel="noopener">Nostr</a> oder tritt dem offiziellen <a href="%s" target="_blank" rel="noopener">Telegram Kanal</a> bei', 'sk-core' ), 'https://nostrich.org/p/nprofile1qqsg3fglunsprjgg0z2efc0qpcshrjkvyksfk9lracjawpuzs0quy8cqxrg92', 'https://t.me/satoshiskleinanzeige' ); ?></p>
 				</div>
 
-				<!-- Slide 5: Nostr Identity -->
+				<!-- Slide 6: Nostr Identity -->
 				<?php $has_nostr = ! empty( get_user_meta( get_current_user_id(), 'nostr_public_key', true ) ); ?>
-				<div class="uob-slide" data-slide="4" <?php if ( $has_nostr ) echo 'data-skip="true"'; ?>>
+				<div class="uob-slide" data-slide="5" <?php if ( $has_nostr ) echo 'data-skip="true"'; ?>>
 					<div class="uob-slide-icon"><i class="fas fa-key"></i></div>
 					<h2><?php _e( 'Nostr-Identität erstellen', 'sk-core' ); ?></h2>
 					<p><?php _e( 'Wir empfehlen dir, eine Nostr-Identität zu erstellen. Damit werden deine Inserate kryptographisch signiert und deine Reputation nachweisbar.', 'sk-core' ); ?></p>
@@ -263,8 +328,8 @@ class UserOnboarding {
 					<?php endif; ?>
 				</div>
 
-				<!-- Slide 6: Get Started -->
-				<div class="uob-slide" data-slide="5">
+				<!-- Slide 7: Get Started -->
+				<div class="uob-slide" data-slide="6">
 					<div class="uob-slide-icon"><i class="fas fa-rocket"></i></div>
 					<h2><?php _e( 'Los geht\'s!', 'sk-core' ); ?></h2>
 					<p><?php _e( 'Du bist startklar! Hier sind deine nächsten Schritte:', 'sk-core' ); ?></p>
@@ -304,6 +369,131 @@ class UserOnboarding {
 	}
 
 	// ── AJAX ───────────────────────────────────────────────────────────────
+
+	/**
+	 * Save what the shop slide asked for.
+	 *
+	 * Coordinates are only taken when they came with a picked suggestion —
+	 * free text alone sets the written address but never a position, so
+	 * nobody lands in the middle of nowhere because of a typo.
+	 */
+	public function ajax_save_shop(): void {
+		check_ajax_referer( 'uob_ajax_nonce', 'nonce' );
+
+		$user_id = get_current_user_id();
+
+		if ( ! $user_id ) {
+			wp_send_json_error( [ 'message' => __( 'Nicht angemeldet.', 'sk-core' ) ] );
+		}
+
+		$settings = (array) get_user_meta( $user_id, 'sk_profile_settings', true );
+
+		$name = isset( $_POST['store_name'] )
+			? mb_substr( sanitize_text_field( wp_unslash( $_POST['store_name'] ) ), 0, 60 )
+			: '';
+
+		// The same collision check the settings form runs — otherwise onboarding
+		// would be the one door through which an established name can be taken.
+		if ( '' !== $name ) {
+			$check = apply_filters( 'sk_validate_store_name', null, $name, $user_id );
+
+			if ( is_wp_error( $check ) ) {
+				wp_send_json_error( [
+					'field'   => 'store_name',
+					'message' => $check->get_error_message(),
+				] );
+			}
+		}
+
+		$place = isset( $_POST['place'] )
+			? mb_substr( sanitize_text_field( wp_unslash( $_POST['place'] ) ), 0, 120 )
+			: '';
+
+		$lat = isset( $_POST['lat'] ) ? (float) wp_unslash( $_POST['lat'] ) : 0.0;
+		$lng = isset( $_POST['lng'] ) ? (float) wp_unslash( $_POST['lng'] ) : 0.0;
+
+		if ( '' !== $place ) {
+			$previous = (string) ( $settings['find_address'] ?? '' );
+
+			$settings['find_address'] = $place;
+			update_user_meta( $user_id, 'sk_geo_address', $place );
+
+			if ( abs( $lat ) <= 90 && abs( $lng ) <= 180 && ( $lat || $lng ) ) {
+				$settings['location'] = $lat . ',' . $lng;
+				update_user_meta( $user_id, 'sk_geo_latitude', (string) $lat );
+				update_user_meta( $user_id, 'sk_geo_longitude', (string) $lng );
+				update_user_meta( $user_id, 'sk_geo_public', 1 );
+			} elseif ( $place !== $previous ) {
+				// Typed over a picked place: no pin at all beats a pin on the
+				// town they just replaced.
+				$settings['location'] = '';
+				delete_user_meta( $user_id, 'sk_geo_latitude' );
+				delete_user_meta( $user_id, 'sk_geo_longitude' );
+				delete_user_meta( $user_id, 'sk_geo_public' );
+			}
+		}
+
+		update_user_meta( $user_id, 'sk_profile_settings', $settings );
+
+		// Writes the sk_store_name meta the uniqueness check reads.
+		if ( '' !== $name ) {
+			sk_set_store_name( $user_id, $name );
+		}
+
+		// No sk_store_profile_saved here: its listeners read the settings form
+		// out of $_POST and would blank what this request does not send.
+		wp_send_json_success( [ 'store_name' => $name ] );
+	}
+
+	/**
+	 * One picture for the profile or the banner.
+	 */
+	public function ajax_upload_image(): void {
+		check_ajax_referer( 'uob_ajax_nonce', 'nonce' );
+
+		$user_id = get_current_user_id();
+
+		if ( ! $user_id ) {
+			wp_send_json_error( [ 'message' => __( 'Nicht angemeldet.', 'sk-core' ) ] );
+		}
+
+		if ( ! current_user_can( 'upload_files' ) ) {
+			wp_send_json_error( [ 'message' => __( 'Keine Berechtigung zum Hochladen.', 'sk-core' ) ] );
+		}
+
+		$kind = sanitize_key( wp_unslash( $_POST['kind'] ?? '' ) );
+
+		if ( ! in_array( $kind, [ 'gravatar', 'banner' ], true ) || empty( $_FILES['file'] ) ) {
+			wp_send_json_error( [ 'message' => __( 'Kein Bild erhalten.', 'sk-core' ) ] );
+		}
+
+		$type = wp_check_filetype( $_FILES['file']['name'] ?? '' );
+
+		if ( ! $type['type'] || ! str_starts_with( (string) $type['type'], 'image/' ) ) {
+			wp_send_json_error( [ 'message' => __( 'Bitte ein Bild wählen.', 'sk-core' ) ] );
+		}
+
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		require_once ABSPATH . 'wp-admin/includes/media.php';
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+
+		$attachment_id = media_handle_upload( 'file', 0 );
+
+		if ( is_wp_error( $attachment_id ) ) {
+			wp_send_json_error( [ 'message' => $attachment_id->get_error_message() ] );
+		}
+
+		wp_update_post( [ 'ID' => $attachment_id, 'post_author' => $user_id ] );
+
+		$settings          = (array) get_user_meta( $user_id, 'sk_profile_settings', true );
+		$settings[ $kind ] = (int) $attachment_id;
+		update_user_meta( $user_id, 'sk_profile_settings', $settings );
+
+		wp_send_json_success( [
+			'id'  => (int) $attachment_id,
+			'url' => wp_get_attachment_image_url( $attachment_id, 'gravatar' === $kind ? 'thumbnail' : 'medium' ),
+		] );
+	}
 
 	public function ajax_complete(): void {
 		check_ajax_referer( 'uob_ajax_nonce', 'nonce' );

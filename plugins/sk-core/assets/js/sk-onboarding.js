@@ -6,7 +6,11 @@
 
 	var UOB = {
 		currentSlide: 0,
-		totalSlides: 6,
+		totalSlides: 7,
+
+		// The shop slide is the only one that asks for input.
+		shopSlide: 3,
+		place: { lat: 0, lng: 0 },
 
 		init: function () {
 			this.showModal();
@@ -89,9 +93,16 @@
 				}
 			});
 
+			this.bindShopSlide();
+
 			// Keyboard navigation
 			$(document).on('keydown', function (e) {
 				if (!$('.uob-modal').is(':visible')) {
+					return;
+				}
+
+				// Arrows and Enter belong to the field while one is focused.
+				if ($(e.target).is('input, textarea')) {
 					return;
 				}
 
@@ -147,6 +158,13 @@
 				return;
 			}
 
+			// Leaving the shop slide saves it first — by Next, by a dot or by
+			// arrow key. A rejected name keeps the user here to correct it.
+			if (this.currentSlide === this.shopSlide && index !== this.shopSlide && !this.saving) {
+				this.saveShop(function () { UOB.goToSlide(index); });
+				return;
+			}
+
 			// Update current slide
 			this.currentSlide = index;
 
@@ -195,6 +213,144 @@
 				$('.uob-btn-next').show();
 				$('.uob-btn-finish').hide();
 			}
+		},
+
+		// ── Shop slide ────────────────────────────────────────────────
+
+		// Its own config object, and defensively read: a browser holding the
+		// previous file version would otherwise throw here.
+		shopConfig: function () {
+			return window.uobShop || {};
+		},
+
+		bindShopSlide: function () {
+			$('.uob-image input[type="file"]').on('change', function () {
+				UOB.uploadImage($(this).closest('.uob-image'), this.files[0]);
+			});
+
+			var timer;
+
+			$('#uob-place').on('input', function () {
+				// A typed change invalidates the picked position: the written
+				// address would otherwise keep coordinates of another place.
+				UOB.place = { lat: 0, lng: 0 };
+
+				var query = $.trim(this.value);
+
+				clearTimeout(timer);
+
+				if (!UOB.shopConfig().hasGeo || query.length < 3) {
+					$('.uob-place-list').empty().prop('hidden', true);
+					return;
+				}
+
+				timer = setTimeout(function () { UOB.suggestPlaces(query); }, 300);
+			});
+
+			// mousedown, not click: the list sits inside a <label>, so a click
+			// would refocus the input and reopen what was just chosen.
+			$('.uob-place-list').on('mousedown', 'li', function (e) {
+				e.preventDefault();
+
+				UOB.place = { lat: $(this).data('lat'), lng: $(this).data('lng') };
+				$('#uob-place').val($(this).text());
+				$('.uob-place-list').empty().prop('hidden', true);
+			});
+
+			$(document).on('click', function (e) {
+				if (!$(e.target).closest('.uob-field--place').length) {
+					$('.uob-place-list').empty().prop('hidden', true);
+				}
+			});
+		},
+
+		suggestPlaces: function (query) {
+			$.post(uobAjax.ajaxurl, {
+				action: 'sk_geo_geocode',
+				nonce: UOB.shopConfig().geoNonce,
+				q: query
+			}, function (res) {
+				var features = (res && res.success && res.data && res.data.features) || [];
+				var $list = $('.uob-place-list').empty();
+
+				$.each(features, function (i, feature) {
+					$('<li></li>')
+						.text(feature.place_name)
+						.attr('data-lng', feature.geometry.coordinates[0])
+						.attr('data-lat', feature.geometry.coordinates[1])
+						.appendTo($list);
+				});
+
+				$list.prop('hidden', !features.length);
+			});
+		},
+
+		uploadImage: function ($box, file) {
+			if (!file) {
+				return;
+			}
+
+			var data = new FormData();
+			data.append('action', 'uob_upload_image');
+			data.append('nonce', uobAjax.nonce);
+			data.append('kind', $box.data('kind'));
+			data.append('file', file);
+
+			$box.addClass('is-busy');
+
+			$.ajax({
+				url: uobAjax.ajaxurl,
+				type: 'POST',
+				data: data,
+				processData: false,
+				contentType: false
+			}).always(function () {
+				$box.removeClass('is-busy');
+			}).done(function (res) {
+				if (res && res.success) {
+					$box.find('img').attr('src', res.data.url).prop('hidden', false);
+					$box.find('i').prop('hidden', true);
+					UOB.shopStatus('');
+					return;
+				}
+
+				UOB.shopStatus((res && res.data && res.data.message) || 'Upload fehlgeschlagen', true);
+			}).fail(function () {
+				UOB.shopStatus('Upload fehlgeschlagen', true);
+			});
+		},
+
+		saveShop: function (done) {
+			this.saving = true;
+
+			$.post(uobAjax.ajaxurl, {
+				action: 'uob_save_shop',
+				nonce: uobAjax.nonce,
+				store_name: $('#uob-store-name').val() || '',
+				place: $('#uob-place').val() || '',
+				lat: this.place.lat,
+				lng: this.place.lng
+			}).done(function (res) {
+				if (res && res.success) {
+					UOB.shopStatus('');
+					done();
+					return;
+				}
+
+				UOB.shopStatus((res && res.data && res.data.message) || 'Konnte nicht gespeichert werden', true);
+				$('#uob-store-name').trigger('focus');
+			}).fail(function () {
+				// A failing request must not trap anybody in the modal.
+				done();
+			}).always(function () {
+				UOB.saving = false;
+			});
+		},
+
+		shopStatus: function (message, isError) {
+			$('#uob-shop-status')
+				.toggleClass('is-error', !!isError)
+				.text(message || '');
 		},
 
 		skipOnboarding: function () {
