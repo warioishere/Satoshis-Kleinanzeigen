@@ -29,6 +29,7 @@ class TrustPage {
 
     public function __construct() {
         add_filter( 'sk_store_tabs', [ $this, 'add_store_tab' ], 10, 2 );
+        add_filter( 'woocommerce_product_tabs', [ $this, 'add_product_tab' ], 20 );
         add_action( 'sk_rewrite_rules_loaded', [ $this, 'add_rewrite_rule' ] );
         add_filter( 'query_vars', [ $this, 'add_query_var' ] );
         add_filter( 'template_include', [ $this, 'load_template' ], 100 );
@@ -46,6 +47,61 @@ class TrustPage {
         ];
 
         return $tabs;
+    }
+
+    /**
+     * The same signals on a listing, where the buyer actually decides.
+     *
+     * Replaces the old vendor tab, which repeated the shop name, the link
+     * and the rating — all of it already on the page. Without a signal
+     * there is no tab, as on the store page.
+     */
+    public function add_product_tab( array $tabs ): array {
+        $vendor_id = self::product_vendor_id();
+
+        if ( ! $vendor_id || ! self::has_signals( $vendor_id ) ) {
+            return $tabs;
+        }
+
+        $tabs['sk_trust'] = [
+            'title'    => __( 'Vertrauen', 'sk-core' ),
+            'priority' => 90,
+            'callback' => [ __CLASS__, 'render_product_tab' ],
+        ];
+
+        return $tabs;
+    }
+
+    public static function render_product_tab(): void {
+        $vendor_id = self::product_vendor_id();
+
+        if ( ! $vendor_id ) {
+            return;
+        }
+
+        echo '<div class="sk-trust-page sk-trust-page--tab">';
+
+        printf(
+            '<p class="sk-trust-note">%s <a href="%s">%s</a></p>',
+            esc_html__( 'Nachprüfbare Fakten zu diesem Anbieter — keine Bewertung, und was fehlt, fehlt einfach.', 'sk-core' ),
+            esc_url( sk_get_store_url( $vendor_id, self::SLUG ) ),
+            esc_html__( 'Auf der Anbieterseite ansehen', 'sk-core' )
+        );
+
+        include SK_REPUTATION_TEMPLATES . '/trust-signals.php';
+
+        echo '</div>';
+    }
+
+    /** The vendor behind the product being shown, or 0. */
+    private static function product_vendor_id(): int {
+        global $product;
+
+        if ( ! $product instanceof \WC_Product ) {
+            return 0;
+        }
+
+        return (int) get_post_field( 'post_author', $product->get_id() );
     }
 
     public function add_rewrite_rule( $store_base ) {

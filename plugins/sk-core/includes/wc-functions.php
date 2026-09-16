@@ -379,16 +379,6 @@ function check_more_seller_product_tab() {
 }
 
 /**
- * Check if Vendor Info tab enabled in single product page.
- *
- *
- * @return boolean
- */
-function is_enabled_vendor_info_product_tab() {
-    return 'on' === sk_get_option( 'show_vendor_info', 'sk_general', 'off' );
-}
-
-/**
  * Get top-rated products
  *
  * Shown on homepage

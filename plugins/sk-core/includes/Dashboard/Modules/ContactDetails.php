@@ -19,10 +19,6 @@ class ContactDetails {
         // The shop page's contact block is output in store-header.php below
         // the banner, no longer in the header itself.
 
-        // The seller tab is filled by sk_product_seller_tab(); the
-        // woocommerce_product_tab_content_seller filter is applied nowhere
-        // and has always been a no-op.
-
         // Font Awesome
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_font_awesome' ] );
 

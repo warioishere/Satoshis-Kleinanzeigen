@@ -29,57 +29,6 @@ function sk_product_seller_info( $item_data, $cart_item ) {
 add_filter( 'woocommerce_get_item_data', 'sk_product_seller_info', 10, 2 );
 
 /**
- * Adds a seller tab in product single page
- *
- * @param array $tabs
- *
- * @return array
- */
-function sk_seller_product_tab( $tabs ) {
-    if ( is_enabled_vendor_info_product_tab() ) {
-        $tabs['seller'] = [
-            'title' => __( 'Vendor Info', 'sk-core' ),
-            'priority' => 90,
-            'callback' => 'sk_product_seller_tab',
-        ];
-    }
-
-    return $tabs;
-}
-
-add_filter( 'woocommerce_product_tabs', 'sk_seller_product_tab' );
-
-/**
- * Prints seller info in product single page
- *
- * @global WC_Product $product
- */
-function sk_product_seller_tab() {
-    global $product;
-
-    if ( ! $product instanceof WC_Product ) {
-        return;
-    }
-
-    $vendor = sk_get_vendor_by_product( $product );
-    if ( ! $vendor instanceof Vendor ) {
-        return;
-    }
-
-    $store_info = $vendor->get_shop_info();
-    $author     = get_user_by( 'id', $vendor->get_id() );
-
-    sk_get_template_part(
-        'global/product-tab',
-        '',
-        [
-            'author'     => $author,
-            'store_info' => $store_info,
-        ]
-    );
-}
-
-/**
  * Show sub-orders on a parent order if available
  *
  * @param WC_Order $parent_order
