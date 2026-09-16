@@ -289,21 +289,12 @@ final class Module {
             exit;
         }
 
-        // Lookup user by nicename (slug).
-        $user = get_user_by( 'slug', $name );
-
-        if ( ! $user ) {
-            // Try by store name (case-insensitive).
-            $users = get_users( [ 'role__in' => [ 'seller', 'administrator' ], 'number' => 200 ] );
-            foreach ( $users as $u ) {
-                $info = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( $u->ID ) : [];
-                $store_name = $info['store_name'] ?? '';
-                if ( $store_name && strtolower( $store_name ) === strtolower( $name ) ) {
-                    $user = $u;
-                    break;
-                }
-            }
-        }
+        /*
+         * The assigned name first, then the shop link and the shop name.
+         * The last two are only kept so addresses published before the name
+         * was pinned down keep resolving.
+         */
+        $user = \SK\Core\Nostr\Handle::owner( $name );
 
         $names  = [];
         $relays = [];

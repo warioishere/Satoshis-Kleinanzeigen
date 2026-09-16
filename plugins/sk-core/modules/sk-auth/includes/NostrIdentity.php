@@ -373,7 +373,7 @@ class NostrIdentity {
             'banner'  => self::banner_url( $store_info['banner'] ?? '' ),
             'website' => function_exists( 'sk_get_store_url' ) ? sk_get_store_url( $user_id ) : '',
             'lud16'   => self::payable_address( $user_id ),
-            'nip05'   => ( $user ? $user->user_nicename : $user_id ) . '@' . $domain,
+            'nip05'   => \SK\Core\Nostr\Handle::address( $user_id ),
         ];
 
         // Remove empty values.
