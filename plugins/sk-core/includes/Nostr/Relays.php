@@ -79,6 +79,26 @@ final class Relays {
         return 'sk_relay_stalled_' . md5( $url );
     }
 
+    // ── Relays that will not serve a private request ─────────────────────
+
+    /** How long a relay's refusal to serve a request under NIP-42 is remembered. */
+    const AUTH_REFUSED_TTL = 12 * HOUR_IN_SECONDS;
+
+    /**
+     * Note that a relay refused a request even with the auth answer given
+     * (or refused the answer itself). Such a relay must not be announced
+     * as a place to send us private messages: whatever lands there is
+     * never read.
+     */
+    public static function note_auth_refused( string $url ): void {
+        set_transient( 'sk_relay_auth_refused_' . md5( $url ), 1, self::AUTH_REFUSED_TTL );
+    }
+
+    /** Did this relay refuse a private request lately? */
+    public static function auth_refused( string $url ): bool {
+        return (bool) get_transient( 'sk_relay_auth_refused_' . md5( $url ) );
+    }
+
     // ── Reading ──────────────────────────────────────────────────────────
 
     /**
@@ -94,101 +114,25 @@ final class Relays {
      * @return array{events: array<int, array>, eose: bool}
      */
     public static function fetch( string $relay, array $filters, array $opts = [] ): array {
-        $timeout = (int) ( $opts['timeout'] ?? self::READ_TIMEOUT );
         $max     = (int) ( $opts['max'] ?? self::MAX_EVENTS );
-        $verify  = (bool) ( $opts['verify'] ?? true );
-        $privkey = isset( $opts['auth_privkey'] ) && is_string( $opts['auth_privkey'] ) ? $opts['auth_privkey'] : '';
+        $session = self::session( $relay, $opts );
 
-        $none = [ 'events' => [], 'eose' => false ];
-
-        if ( ! class_exists( '\WebSocket\Client' ) || self::stalled( $relay ) ) {
-            return $none;
+        if ( ! $session->open() ) {
+            return [ 'events' => [], 'eose' => false ];
         }
-
-        self::mark_attempt( $relay );
 
         $events = [];
-        $eose   = false;
-        $sub    = bin2hex( random_bytes( 8 ) );
-        $req    = wp_json_encode( array_merge( [ 'REQ', $sub ], array_values( $filters ) ) );
 
-        // NIP-42 state: the answer sent, whether it was accepted, whether
-        // the REQ was refused for lack of auth and whether it went out again.
-        $auth_id = null;
-        $authed  = false;
-        $reopen  = false;
-        $resent  = false;
+        // The relay was asked for a limit; not every relay honours it.
+        $result = $session->request( $filters, static function ( array $event ) use ( &$events, $max ): bool {
+            $events[] = $event;
 
-        try {
-            $client = new \WebSocket\Client( $relay );
-            $client->setTimeout( $timeout );
-            $client->text( $req );
+            return count( $events ) < $max;
+        } );
 
-            $deadline = microtime( true ) + $timeout;
+        $session->close();
 
-            while ( microtime( true ) < $deadline && count( $events ) < $max ) {
-                $data = json_decode( $client->receive()->getContent(), true );
-
-                if ( ! is_array( $data ) || ! isset( $data[0] ) ) {
-                    continue;
-                }
-
-                if ( 'AUTH' === $data[0] ) {
-                    if ( null === $auth_id && '' !== $privkey && is_string( $data[1] ?? null ) && '' !== $data[1] ) {
-                        $auth_id = self::answer_challenge( $client, $relay, $data[1], $privkey );
-                    }
-                    continue;
-                }
-
-                if ( 'OK' === $data[0] && null !== $auth_id && ( $data[1] ?? '' ) === $auth_id ) {
-                    $authed = ! empty( $data[2] );
-
-                    if ( $authed && $reopen && ! $resent ) {
-                        $client->text( $req );
-                        $resent = true;
-                    }
-                    continue;
-                }
-
-                if ( ( $data[1] ?? '' ) !== $sub ) {
-                    continue;
-                }
-
-                if ( 'CLOSED' === $data[0] && null !== $auth_id && ! $resent && self::wants_auth( (string) ( $data[2] ?? '' ) ) ) {
-                    $reopen = true;
-
-                    if ( $authed ) {
-                        $client->text( $req );
-                        $resent = true;
-                    }
-                    continue;
-                }
-
-                if ( 'EOSE' === $data[0] || 'CLOSED' === $data[0] ) {
-                    $eose = true;
-                    break;
-                }
-
-                if ( 'EVENT' === $data[0] && is_array( $data[2] ?? null ) && is_string( $data[2]['id'] ?? null ) ) {
-                    if ( ! $verify || Events::verify( $data[2] ) ) {
-                        $events[] = $data[2];
-                    }
-                }
-            }
-
-            try {
-                $client->text( wp_json_encode( [ 'CLOSE', $sub ] ) );
-                $client->close();
-            } catch ( \Throwable $ignored ) {
-                // The relay may already be gone.
-            }
-        } catch ( \Throwable $e ) {
-            // A silent or unreachable relay contributes nothing.
-        }
-
-        self::clear_attempt( $relay );
-
-        return [ 'events' => $events, 'eose' => $eose ];
+        return [ 'events' => $events, 'eose' => $result['eose'] ];
     }
 
     /**

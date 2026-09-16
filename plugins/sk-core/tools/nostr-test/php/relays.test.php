@@ -100,4 +100,23 @@ foreach ( [
     sk_check_eq( Relays::is_public_url( $url ), $expected, 'is_public_url(' . $url . ')' );
 }
 
+// NIP-42: the mock serves a private kind to the authed mailbox. With the
+// key, fetch() answers the challenge and reads; when the relay refuses
+// the answer (its address does not match the relay tag, as relay.damus.io
+// does today), fetch() gives up at once and the relay is noted as one no
+// kind 10050 may name.
+$box    = sk_test_keypair();
+$secret = sk_test_sign( sk_test_keypair()['priv'], 4, [ [ 'p', $box['pub'] ] ], 'secret', 1700000600 );
+$dm     = [ [ 'kinds' => [ 4 ], '#p' => [ $box['pub'] ] ] ];
+sk_test_relay_events( [ $secret ] );
+$r = Relays::fetch( $mock, $dm, [ 'verify' => false, 'auth_privkey' => $box['priv'] ] );
+sk_check_eq( [ $r['eose'], count( $r['events'] ) ], [ true, 1 ], 'fetch(): answers the NIP-42 challenge and reads the private kind' );
+sk_check_eq( Relays::auth_refused( $mock ), false, 'auth_refused(): a served request leaves no note' );
+$bad = $mock . '/elsewhere';
+$t0  = microtime( true );
+$r   = Relays::fetch( $bad, $dm, [ 'verify' => false, 'auth_privkey' => $box['priv'], 'timeout' => 5 ] );
+sk_check( ! $r['eose'] && microtime( true ) - $t0 < 2, 'fetch(): gives up at once when the relay refuses the auth answer', sprintf( '%.2fs', microtime( true ) - $t0 ) );
+sk_check_eq( Relays::auth_refused( $bad ), true, 'auth_refused(): the refusing relay is noted' );
+delete_transient( 'sk_relay_auth_refused_' . md5( $bad ) );
+
 sk_test_done();

@@ -142,6 +142,10 @@ class NostrSettings {
      */
     public function migrate_once(): void {
         if ( get_option( self::MIGRATED_OPTION ) ) {
+            // The section the market switches lived in before the migration
+            // below; every read of it is redirected here, so the row is dead.
+            delete_option( 'sk_nostr_market' );
+
             return;
         }
 

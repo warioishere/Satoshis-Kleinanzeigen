@@ -563,7 +563,6 @@ class NostrRelaySync {
             \SK\Modules\Zaps\ZapStats::count_zap( $user_id, (string) ( $event['id'] ?? '' ), $amount_sats, $post_id );
         }
 
-        do_action( 'sk_nostr_zap_received', $user_id, $amount_sats, $zapper_pubkey, $event );
         error_log( sprintf(
             '[NostrRelaySync] Zap receipt: %d sats to user %d from %s%s',
             $amount_sats, $user_id, substr( $zapper_pubkey, 0, 12 ),

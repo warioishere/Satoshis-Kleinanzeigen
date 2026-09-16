@@ -137,6 +137,7 @@ final class RelaySession {
                         error_log( '[SK Nostr] ' . $this->url . ' refused the auth answer: ' . (string) ( $data[3] ?? '' ) );
 
                         if ( $reopen ) {
+                            Relays::note_auth_refused( $this->url );
                             break;
                         }
                     }
@@ -156,6 +157,12 @@ final class RelaySession {
                         $resent = true;
                     }
                     continue;
+                }
+
+                if ( 'CLOSED' === $data[0] && $resent && Relays::wants_auth( (string) ( $data[2] ?? '' ) ) ) {
+                    // Refused again with the answer taken: this relay
+                    // serves the request to nobody it lets us be.
+                    Relays::note_auth_refused( $this->url );
                 }
 
                 if ( 'EOSE' === $data[0] || 'CLOSED' === $data[0] ) {

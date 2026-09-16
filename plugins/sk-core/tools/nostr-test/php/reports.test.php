@@ -87,6 +87,10 @@ try {
     // run and put it back afterwards (notify_admin sets it again anyway).
     $had_throttle = (bool) get_transient( Reports::MAIL_THROTTLE );
     delete_transient( Reports::MAIL_THROTTLE );
+
+    // Run A composed a mail too whenever the throttle was not set before
+    // this test; only the mail for the run below is counted.
+    $GLOBALS['sk_test_mail'] = [];
     $vendor_priv = \SK\Modules\Auth\NostrIdentity::get_private_key( $generated );
     sk_check( (bool) $vendor_priv, "user {$generated} has a key this site holds" );
 

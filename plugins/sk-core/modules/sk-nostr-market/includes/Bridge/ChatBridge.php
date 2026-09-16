@@ -58,7 +58,7 @@ class ChatBridge {
         }
 
         $privkey = EventSender::get_privkey();
-        $relays  = EventSender::get_relays();
+        $relays  = self::readable_dm_relays();
 
         if ( ! $privkey || empty( $relays ) ) {
             return;
@@ -80,6 +80,17 @@ class ChatBridge {
         };
 
         register_shutdown_function( $announce );
+    }
+
+    /**
+     * The relays a kind 10050 may name: the ones the poll reads, minus any
+     * that refused a private request under NIP-42 lately. A message a
+     * client delivers to such a relay is never read here.
+     *
+     * @return string[]
+     */
+    private static function readable_dm_relays(): array {
+        return array_values( array_filter( EventSender::get_relays(), static fn( string $relay ) => ! \SK\Core\Nostr\Relays::auth_refused( $relay ) ) );
     }
 
     /** User meta: hash of the relay list a vendor's kind 10050 last carried. */
@@ -108,7 +119,7 @@ class ChatBridge {
             return;
         }
 
-        $relays = EventSender::get_relays();
+        $relays = self::readable_dm_relays();
 
         if ( empty( $relays ) ) {
             return;
