@@ -228,15 +228,16 @@ final class Relays {
      * @param string[]      $authors
      * @param int|null      $answered Set to the number of relay requests that reached EOSE.
      * @param string[]|null $relays
+     * @param array         $opts     As for fetch(); `timeout` for a caller that cannot wait long.
      * @return array<string, array> author => event
      */
-    public static function latest( int $kind, array $authors, ?int &$answered = null, ?array $relays = null ): array {
+    public static function latest( int $kind, array $authors, ?int &$answered = null, ?array $relays = null, array $opts = [] ): array {
         $latest   = [];
         $answered = 0;
         $authors  = array_values( array_unique( array_filter( array_map( [ Keys::class, 'to_hex' ], $authors ) ) ) );
 
         foreach ( array_chunk( $authors, 100 ) as $chunk ) {
-            $result = self::query( [ [ 'kinds' => [ $kind ], 'authors' => $chunk ] ], $relays );
+            $result = self::query( [ [ 'kinds' => [ $kind ], 'authors' => $chunk ] ], $relays, $opts );
             $answered += $result['answered'];
 
             foreach ( $result['events'] as $event ) {

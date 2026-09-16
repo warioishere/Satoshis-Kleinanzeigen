@@ -1074,11 +1074,13 @@ class ChatBridge {
         $pubkey = strtolower( $pubkey );
 
         // The first relay that has a signed profile is enough; short timeout,
-        // this runs while a message is being delivered.
+        // this runs while a message is being delivered — under the poll
+        // lock, and in the resident worker with every relay unread until
+        // it returns.
         $best = null;
 
         foreach ( EventSender::get_relays() as $relay_url ) {
-            $found = \SK\Core\Nostr\Relays::latest( 0, [ $pubkey ], $answered, [ $relay_url ] )[ $pubkey ] ?? null;
+            $found = \SK\Core\Nostr\Relays::latest( 0, [ $pubkey ], $answered, [ $relay_url ], [ 'timeout' => 3 ] )[ $pubkey ] ?? null;
 
             if ( $found ) {
                 $best = $found;

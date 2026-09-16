@@ -195,7 +195,7 @@ class ZapStats {
      * The key that signs zap receipts for the vendor's Lightning address
      * (the "nostrPubkey" of its LNURL-pay metadata), cached for a day.
      */
-    private static function zapper_pubkey_for( int $vendor_id ): string {
+    public static function zapper_pubkey_for( int $vendor_id ): string {
         $cache_key = 'sk_zap_zapper_' . $vendor_id;
         $cached    = get_transient( $cache_key );
 
@@ -218,7 +218,9 @@ class ZapStats {
             }
         }
 
-        set_transient( $cache_key, $zapper, DAY_IN_SECONDS );
+        // A failed lookup is retried sooner: while it stands, every receipt
+        // for this vendor is refused.
+        set_transient( $cache_key, $zapper, '' === $zapper ? 6 * HOUR_IN_SECONDS : DAY_IN_SECONDS );
 
         return $zapper;
     }

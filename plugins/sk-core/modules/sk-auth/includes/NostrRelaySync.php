@@ -159,23 +159,33 @@ class NostrRelaySync {
      * subscription.
      */
     public static function filters( int $since ): array {
-        $users   = self::get_nostr_users();
-        $pubkeys = array_column( $users, 'pubkey' );
+        // The key each account is asked for is its proven one — the same
+        // handle() maps an event back to the account by. The meta alone
+        // may name another key than the one held here.
+        $pubkeys = [];
+
+        foreach ( self::get_nostr_users() as $u ) {
+            $bound = \SK\Core\Trust\VendorKey::bound( (int) $u['user_id'] );
+
+            if ( '' !== $bound ) {
+                $pubkeys[ (int) $u['user_id'] ] = $bound;
+            }
+        }
 
         $filters = [
-            [ 'authors' => $pubkeys, 'kinds' => [ 0 ], 'since' => $since ],
-            [ 'kinds' => [ 9735 ], '#p' => $pubkeys, 'since' => $since ],
+            [ 'authors' => array_values( $pubkeys ), 'kinds' => [ 0 ], 'since' => $since ],
+            [ 'kinds' => [ 9735 ], '#p' => array_values( $pubkeys ), 'since' => $since ],
         ];
 
         $first_contact = [];
 
-        foreach ( $users as $u ) {
+        foreach ( $pubkeys as $user_id => $pubkey ) {
             if ( count( $first_contact ) >= self::FIRST_CONTACT_MAX ) {
                 break;
             }
 
-            if ( ! NostrIdentity::profile_seen( (int) $u['user_id'] ) ) {
-                $first_contact[] = $u['pubkey'];
+            if ( ! NostrIdentity::profile_seen( $user_id ) ) {
+                $first_contact[] = $pubkey;
             }
         }
 
@@ -208,6 +218,15 @@ class NostrRelaySync {
         $user_id = \SK\Core\Trust\VendorKey::holder_of( (string) ( 0 === $kind ? $event['pubkey'] : self::zapped_pubkey( $event ) ) );
 
         if ( ! $user_id ) {
+            return false;
+        }
+
+        // Anyone can sign an event that names the vendor and claims an
+        // amount. A receipt counts only from the key the vendor's Lightning
+        // address publishes for its zaps, the same rule the browser path
+        // applies (ZapStats::ajax_receipt()).
+        if ( 9735 === $kind && ( ! class_exists( 'SK\Modules\Zaps\ZapStats' )
+            || strtolower( (string) $event['pubkey'] ) !== \SK\Modules\Zaps\ZapStats::zapper_pubkey_for( $user_id ) ) ) {
             return false;
         }
 

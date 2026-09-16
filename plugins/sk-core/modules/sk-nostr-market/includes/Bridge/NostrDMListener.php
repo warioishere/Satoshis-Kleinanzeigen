@@ -351,6 +351,15 @@ class NostrDMListener {
             $work[ $pubkey ] = [ 'until' => null, 'pages' => 0 ];
         }
 
+        // The mailbox whose key answers NIP-42 goes first and alone: a relay
+        // that insists on auth serves that mailbox only and refuses a
+        // request as a whole when any other is in it.
+        $own = strtolower( (string) EventSender::get_pubkey() );
+
+        if ( isset( $work[ $own ] ) ) {
+            $work = [ $own => $work[ $own ] ] + $work;
+        }
+
         $events = [];
         $ids    = [];
         $bytes  = 0;
@@ -379,6 +388,10 @@ class NostrDMListener {
 
             $batch   = array_slice( array_keys( $work ), 0, self::FILTERS_PER_REQ );
             $filters = [];
+
+            if ( count( $batch ) > 1 && in_array( $own, $batch, true ) ) {
+                $batch = [ $own ];
+            }
 
             foreach ( $batch as $pubkey ) {
                 $filter = [
