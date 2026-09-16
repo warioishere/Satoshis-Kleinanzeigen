@@ -80,4 +80,38 @@ sk_check_eq( end( $got['b'] ), 'after-close', 'pump(): the open session keeps re
 sk_check_eq( $a->pump(), false, 'pump() on a closed session is false' );
 $b->close();
 
+// ── NIP-42: the mock refuses kind 4 until the challenge is answered ──────
+$box    = sk_test_keypair();
+$dm     = [ [ 'kinds' => [ 4 ], '#p' => [ $box['pub'] ] ] ];
+$got_dm = [];
+
+$c = Relays::session( $mock, [ 'timeout' => 5, 'verify' => false, 'auth_privkey' => $box['priv'] ] );
+sk_check_eq( $c->open(), true, 'auth: session with a key opens' );
+sk_check( is_string( $c->subscribe( $dm, function ( $e ) use ( &$got_dm ) { $got_dm[] = $e['content']; } ) ), 'auth: DM subscription sent' );
+$drain( [ 'c' => $c ], 0.8 ); // challenge, refusal, answer, OK, re-sent REQ, EOSE
+sk_check_eq( $c->subscribed(), 1, 'auth: the refused subscription is kept and re-sent' );
+$secret = sk_test_sign( sk_test_keypair()['priv'], 4, [ [ 'p', $box['pub'] ] ], 'secret', time() );
+Relays::publish( $secret, [ $mock ] );
+$drain( [ 'c' => $c ], 0.5 );
+sk_check_eq( $got_dm, [ 'secret' ], 'auth: after the answer the private kind is delivered' );
+$c->close();
+
+$n = Relays::session( $mock, [ 'timeout' => 5, 'verify' => false ] );
+$n->open();
+$n->subscribe( $dm, function () {} );
+$drain( [ 'n' => $n ], 0.5 );
+sk_check_eq( $n->subscribed(), 0, 'auth: without a key the refused subscription is dropped' );
+$n->close();
+
+// The poll's request() on the same relay, same key; the DM is a stored event now.
+sk_test_relay_events( [ $secret ] );
+$p   = Relays::session( $mock, [ 'timeout' => 5, 'verify' => false, 'auth_privkey' => $box['priv'] ] );
+$p->open();
+$hit = 0;
+$r   = $p->request( $dm, function () use ( &$hit ) { $hit++; } );
+sk_check_eq( [ $r['eose'], $hit ], [ true, 1 ], 'auth: request() answers the challenge, re-sends and reads the stored DM' );
+$p->close();
+sk_check_eq( Relays::wants_auth( 'ERROR: auth-required: requested filter requires authentication' ), true, 'wants_auth(): the damus wording counts' );
+sk_check_eq( Relays::wants_auth( 'error: too many filters' ), false, 'wants_auth(): another error does not' );
+
 sk_test_done();

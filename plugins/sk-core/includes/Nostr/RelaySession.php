@@ -307,7 +307,10 @@ final class RelaySession {
                         break;
                     }
 
-                    if ( null !== $this->auth_id && '' === $this->subs[ $sub ]['auth'] && Relays::wants_auth( (string) ( $data[2] ?? '' ) ) ) {
+                    // Refused for lack of auth: kept, and sent again once the
+                    // relay has taken the answer — whether its challenge came
+                    // before this or comes after.
+                    if ( '' === $this->subs[ $sub ]['auth'] && '' !== $this->auth_privkey && Relays::wants_auth( (string) ( $data[2] ?? '' ) ) ) {
                         $this->subs[ $sub ]['auth'] = 'refused';
 
                         if ( $this->authed ) {

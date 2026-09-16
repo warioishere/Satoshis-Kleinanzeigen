@@ -454,9 +454,14 @@ final class Relays {
         return Keys::generate()['priv'];
     }
 
-    /** Does a relay's reason say it wants NIP-42 first? */
+    /**
+     * Does a relay's reason say it wants NIP-42 first? The prefix NIP-01
+     * defines is "auth-required:", but relay.damus.io puts "ERROR: " in
+     * front of it, and with a strict prefix match its refusal read as an
+     * ordinary close — no DM from there ever reached the poll.
+     */
     public static function wants_auth( string $reason ): bool {
-        return 0 === strpos( $reason, 'auth-required' );
+        return (bool) preg_match( '/^(?:error:\s*)?auth-required/i', $reason );
     }
 
     // ── Foreign relay URLs ───────────────────────────────────────────────

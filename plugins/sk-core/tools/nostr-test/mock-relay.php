@@ -5,6 +5,8 @@
  * Serves the events in an events file that match a REQ filter (kinds,
  * authors, #p, since, until, limit; newest first), then EOSE. Answers every
  * EVENT with OK true and pushes it to every open subscription it matches.
+ * Sends a NIP-42 challenge on connect; kinds 4 and 1059 are refused with
+ * "ERROR: auth-required" until it was answered.
  * Logs what it receives, one JSON line per message. The
  * events file is re-read on every REQ, so a test can swap scenarios while
  * the relay runs.
@@ -33,7 +35,12 @@ $server->addMiddleware( new WebSocket\Middleware\PingResponder() );
 $server->onHandshake( function ( $server, $conn, $request, $response ) {
     if ( 0 !== strpos( (string) $conn->getRemoteName(), '127.0.0.1:' ) ) {
         $conn->close();
+        return;
     }
+
+    // Like a relay that wants NIP-42: the challenge goes out on connect.
+    $conn->setMeta( 'challenge', bin2hex( random_bytes( 8 ) ) );
+    $conn->text( json_encode( [ 'AUTH', $conn->getMeta( 'challenge' ) ] ) );
 } );
 
 $server->onText( function ( $server, $conn, $message ) use ( $events, $log ) {
@@ -45,8 +52,27 @@ $server->onText( function ( $server, $conn, $message ) use ( $events, $log ) {
 
     fwrite( $log, json_encode( [ 'in' => $msg[0], 'payload' => array_slice( $msg, 1 ) ] ) . "\n" );
 
+    if ( 'AUTH' === $msg[0] ) {
+        // NIP-42: a signed kind 22242 for this relay's challenge; then the
+        // connection may read private kinds.
+        $ok = is_array( $msg[1] ?? null ) && 22242 === (int) ( $msg[1]['kind'] ?? 0 )
+            && ( new swentel\nostr\Event\Event() )->verify( json_encode( $msg[1] ) )
+            && in_array( [ 'challenge', (string) $conn->getMeta( 'challenge' ) ], (array) ( $msg[1]['tags'] ?? [] ), true );
+        $conn->setMeta( 'authed', $ok );
+        $conn->text( json_encode( [ 'OK', $msg[1]['id'] ?? '', $ok, $ok ? '' : 'auth-required: bad answer' ] ) );
+        return;
+    }
+
     if ( 'REQ' === $msg[0] ) {
         $sub  = $msg[1];
+
+        // Private kinds need auth first, refused the way relay.damus.io does.
+        foreach ( array_slice( $msg, 2 ) as $f ) {
+            if ( array_intersect( [ 4, 1059 ], (array) ( $f['kinds'] ?? [] ) ) && ! $conn->getMeta( 'authed' ) ) {
+                $conn->text( json_encode( [ 'CLOSED', $sub, 'ERROR: auth-required: requested filter requires authentication' ] ) );
+                return;
+            }
+        }
         $list = json_decode( (string) @file_get_contents( $events ), true ) ?: [];
 
         usort( $list, static fn( $a, $b ) => ( $b['created_at'] ?? 0 ) <=> ( $a['created_at'] ?? 0 ) );
