@@ -105,6 +105,21 @@ final class Worker {
             }
         }
 
+        if ( sk_module_active( 'sk_auth' ) && class_exists( 'SK\Modules\Auth\NostrRelaySync' ) ) {
+            // From the last checkpoint, a minute of overlap for the restart
+            // gap; handle() takes every event once.
+            $since   = (int) get_option( \SK\Modules\Auth\NostrRelaySync::LAST_SYNC_KEY, time() - 600 ) - MINUTE_IN_SECONDS;
+            $filters = \SK\Modules\Auth\NostrRelaySync::filters( max( 0, $since ) );
+
+            if ( ! empty( $filters[0]['authors'] ) ) {
+                $subs['sync'] = [
+                    'filters'  => $filters,
+                    'on_event' => [ \SK\Modules\Auth\NostrRelaySync::class, 'handle' ],
+                    'beat'     => static fn() => update_option( \SK\Modules\Auth\NostrRelaySync::LAST_SYNC_KEY, time() ),
+                ];
+            }
+        }
+
         return $subs;
     }
 

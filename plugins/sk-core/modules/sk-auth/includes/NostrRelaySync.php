@@ -50,41 +50,11 @@ class NostrRelaySync {
             return;
         }
 
-        $pubkeys = array_column( $users, 'pubkey' );
-        $since   = (int) get_option( self::LAST_SYNC_KEY, time() - 600 );
+        $filters = self::filters( (int) get_option( self::LAST_SYNC_KEY, time() - 600 ) );
 
         $relays = NostrIdentity::get_relays();
         if ( empty( $relays ) ) {
             return;
-        }
-
-        // Build user lookup map.
-        $pubkey_to_user = [];
-        foreach ( $users as $u ) {
-            $pubkey_to_user[ $u['pubkey'] ] = $u['user_id'];
-        }
-
-        /*
-         * Somebody who links their own key has usually had a profile for
-         * years. It is older than every sync window, so the run below would
-         * never see it and their picture, banner and bio stayed empty here
-         * although they were one query away.
-         *
-         * Accounts we have never read a profile for are therefore asked for
-         * without a time limit. They fall out of this list as soon as one
-         * arrives, and handle_profile_update() only fills what is empty on
-         * this first contact — nothing the vendor entered here is touched.
-         */
-        $first_contact = [];
-
-        foreach ( $users as $u ) {
-            if ( count( $first_contact ) >= self::FIRST_CONTACT_MAX ) {
-                break;
-            }
-
-            if ( ! NostrIdentity::profile_seen( (int) $u['user_id'] ) ) {
-                $first_contact[] = $u['pubkey'];
-            }
         }
 
         // Fetch events from each relay. Skip relays that failed recently so a
@@ -98,23 +68,8 @@ class NostrRelaySync {
             }
 
             try {
-                $events = self::fetch_events( $relay_url, $pubkeys, $since, $first_contact );
-                foreach ( $events as $event ) {
-                    $author = $event['pubkey'] ?? '';
-                    $user_id = $pubkey_to_user[ $author ] ?? 0;
-                    if ( ! $user_id ) {
-                        continue;
-                    }
-
-                    $kind = (int) ( $event['kind'] ?? 0 );
-
-                    // Kind 1 notes are intentionally NOT handled here: Nostr → SK is
-                    // a one-way street. Only SK → Nostr (via feed post publish).
-                    if ( 0 === $kind ) {
-                        self::handle_profile_update( $user_id, $event );
-                    } elseif ( 9735 === $kind ) {
-                        self::handle_zap_receipt( $user_id, $event );
-                    }
+                foreach ( self::fetch_events( $relay_url, $filters ) as $event ) {
+                    self::handle( $event );
                 }
             } catch ( \Throwable $e ) {
                 error_log( '[NostrRelaySync] Error from ' . $relay_url . ': ' . $e->getMessage() );
@@ -186,26 +141,113 @@ class NostrRelaySync {
     }
 
     /**
-     * Fetch Kind 0 profile + Kind 9735 zap-receipt events from a relay.
-     * Kind 1 notes are intentionally not queried — we only sync profile
-     * updates and zap receipts, no timeline content.
+     * What this sync asks the relays for: Kind 0 profiles of every account
+     * with a key, Kind 9735 zap receipts naming one of them, both from
+     * $since on. Kind 1 notes are intentionally not queried — Nostr → SK
+     * carries profile updates and zap receipts, no timeline content.
+     *
+     * Somebody who links their own key has usually had a profile for
+     * years. It is older than every sync window, so a run would never see
+     * it and their picture, banner and bio stayed empty here although they
+     * were one query away. Accounts we have never read a profile for are
+     * therefore asked for without a time limit. They fall out of this list
+     * as soon as one arrives, and handle_profile_update() only fills what
+     * is empty on this first contact — nothing the vendor entered here is
+     * touched.
+     *
+     * The same filters serve the cron run and the resident worker's held
+     * subscription.
      */
-    private static function fetch_events( string $relay_url, array $pubkeys, int $since, array $first_contact = [] ): array {
+    public static function filters( int $since ): array {
+        $users   = self::get_nostr_users();
+        $pubkeys = array_column( $users, 'pubkey' );
+
         $filters = [
             [ 'authors' => $pubkeys, 'kinds' => [ 0 ], 'since' => $since ],
             [ 'kinds' => [ 9735 ], '#p' => $pubkeys, 'since' => $since ],
         ];
 
+        $first_contact = [];
+
+        foreach ( $users as $u ) {
+            if ( count( $first_contact ) >= self::FIRST_CONTACT_MAX ) {
+                break;
+            }
+
+            if ( ! NostrIdentity::profile_seen( (int) $u['user_id'] ) ) {
+                $first_contact[] = $u['pubkey'];
+            }
+        }
+
         if ( $first_contact ) {
             $filters[] = [ 'authors' => $first_contact, 'kinds' => [ 0 ] ];
         }
 
-        // One REQ with all filters; every event verified (a profile update
-        // rewrites display names and avatars, so a forged one must not count).
+        return $filters;
+    }
+
+    /**
+     * One event from a relay, as it came: verified, taken once, handed to
+     * the handler for its kind. A profile update is the vendor's own
+     * (Kind 0 by the author); a zap receipt names the vendor in its `p`
+     * tag, its author is the zap service.
+     *
+     * A forged event must not count — a profile update rewrites display
+     * names and avatars — so the signature is checked here, whatever the
+     * caller did.
+     *
+     * @return bool True when the event was handled now.
+     */
+    public static function handle( array $event ): bool {
+        $kind = (int) ( $event['kind'] ?? 0 );
+
+        if ( ! in_array( $kind, [ 0, 9735 ], true ) || ! \SK\Core\Nostr\Events::verify( $event, $kind ) ) {
+            return false;
+        }
+
+        $user_id = \SK\Core\Trust\VendorKey::holder_of( (string) ( 0 === $kind ? $event['pubkey'] : self::zapped_pubkey( $event ) ) );
+
+        if ( ! $user_id ) {
+            return false;
+        }
+
+        $dedup_key = 'sk_nsync_' . substr( (string) $event['id'], 0, 16 );
+
+        if ( get_transient( $dedup_key ) ) {
+            return false;
+        }
+
+        set_transient( $dedup_key, 1, DAY_IN_SECONDS );
+
+        if ( 0 === $kind ) {
+            self::handle_profile_update( $user_id, $event );
+        } else {
+            self::handle_zap_receipt( $user_id, $event );
+        }
+
+        return true;
+    }
+
+    /** The key a zap receipt was paid to: its `p` tag. */
+    private static function zapped_pubkey( array $event ): string {
+        foreach ( (array) ( $event['tags'] ?? [] ) as $tag ) {
+            if ( is_array( $tag ) && 'p' === ( $tag[0] ?? '' ) && is_string( $tag[1] ?? null ) ) {
+                return $tag[1];
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * One REQ against one relay with the sync filters, events until EOSE.
+     * Raw: handle() verifies.
+     */
+    private static function fetch_events( string $relay_url, array $filters ): array {
         $result = \SK\Core\Nostr\Relays::fetch(
             $relay_url,
             $filters,
-            [ 'timeout' => self::RELAY_TIMEOUT_SEC ]
+            [ 'timeout' => self::RELAY_TIMEOUT_SEC, 'verify' => false ]
         );
 
         if ( ! $result['eose'] ) {
@@ -213,18 +255,7 @@ class NostrRelaySync {
             throw new \RuntimeException( 'no EOSE within ' . self::RELAY_TIMEOUT_SEC . 's' );
         }
 
-        $events = [];
-
-        foreach ( $result['events'] as $event ) {
-            $dedup_key = 'sk_nsync_' . substr( (string) ( $event['id'] ?? '' ), 0, 16 );
-
-            if ( ! get_transient( $dedup_key ) ) {
-                set_transient( $dedup_key, 1, DAY_IN_SECONDS );
-                $events[] = $event;
-            }
-        }
-
-        return $events;
+        return $result['events'];
     }
 
     /**
@@ -259,9 +290,14 @@ class NostrRelaySync {
 
         // Sync name → shop name and display name.
         if ( ! empty( $profile['name'] ) ) {
-            $name       = sanitize_text_field( $profile['name'] );
-            $current    = get_userdata( $user_id );
-            $store_name = function_exists( 'sk_get_store_info' ) ? ( sk_get_store_info( $user_id )['store_name'] ?? '' ) : '';
+            $name    = sanitize_text_field( $profile['name'] );
+            $current = get_userdata( $user_id );
+
+            // From the meta, not sk_get_store_info(): that caches per
+            // process, and a resident process would compare against the
+            // name from before its own last write.
+            $settings   = get_user_meta( $user_id, 'sk_profile_settings', true );
+            $store_name = is_array( $settings ) ? (string) ( $settings['store_name'] ?? '' ) : '';
 
             // A name the vendor never chose: the shop slug we handed out.
             $placeholder = $store_name === '' || preg_match( '/^(satoshi-|nostr-|LN-)/', $store_name );
