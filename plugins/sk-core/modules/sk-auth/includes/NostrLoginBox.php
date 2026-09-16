@@ -84,7 +84,7 @@ class NostrLoginBox {
     public static function pull_profile_once( $auth_cookie, $expire, $expiration, $user_id ): void {
         $user_id = (int) $user_id;
 
-        if ( ! get_user_meta( $user_id, 'nostr_public_key', true ) ) {
+        if ( '' === \SK\Core\Trust\VendorKey::bound( $user_id ) ) {
             return;
         }
 

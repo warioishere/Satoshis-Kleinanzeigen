@@ -148,7 +148,10 @@ class NostrRelaySync {
      * that has had a picture for years.
      */
     public static function pull_profile( int $user_id ): bool {
-        $pubkey = (string) get_user_meta( $user_id, 'nostr_public_key', true );
+        // The proven key, not the meta: it also covers a key linked in the
+        // connector or an npub typed and then signed for — and it is never a
+        // key somebody merely claims.
+        $pubkey = \SK\Core\Trust\VendorKey::bound( $user_id );
 
         if ( '' === $pubkey ) {
             return false;
