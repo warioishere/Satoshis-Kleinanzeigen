@@ -231,9 +231,29 @@ class NostrIdentity {
 
         if ( 0 === $kind ) {
             self::remember_profile_time( $user_id, (int) $event['created_at'] );
+            self::remember_published_nip05( $user_id, $content );
         }
 
         return (string) $event['id'];
+    }
+
+    /**
+     * Keep the address our own publication put into the profile.
+     *
+     * The relay sync writes this field when a newer profile arrives, but our
+     * own event never counts as newer than itself — so after publishing, the
+     * trust page went on showing the address from before.
+     */
+    private static function remember_published_nip05( int $user_id, string $content ): void {
+        $profile = json_decode( $content, true );
+        $nip05   = is_array( $profile ) ? trim( (string) ( $profile['nip05'] ?? '' ) ) : '';
+
+        if ( '' === $nip05 || $nip05 === (string) get_user_meta( $user_id, 'nip05', true ) ) {
+            return;
+        }
+
+        update_user_meta( $user_id, 'nip05', $nip05 );
+        \SK\Core\Nostr\Nip05::check( $user_id, true );
     }
 
     /**
@@ -311,6 +331,7 @@ class NostrIdentity {
         }
 
         self::remember_profile_time( $user_id, (int) ( $event['created_at'] ?? 0 ) );
+        self::remember_published_nip05( $user_id, (string) ( $event['content'] ?? '' ) );
 
         return true;
     }
