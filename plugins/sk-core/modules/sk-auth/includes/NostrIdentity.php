@@ -335,6 +335,36 @@ class NostrIdentity {
     }
 
     /**
+     * The shop profile picture as an address, or ''.
+     *
+     * The picture the vendor set here wins: it is the one their shop shows,
+     * and it used to stay behind while the banner beside it went out. Only
+     * when there is none does the address from their Nostr profile stand in,
+     * so nothing is blanked for somebody who never uploaded one here.
+     */
+    private static function avatar_url( int $user_id, $gravatar ): string {
+        $id      = absint( $gravatar );
+        $from_us = (int) get_user_meta( $user_id, 'sk_nostr_avatar_att', true );
+        $theirs  = (string) get_user_meta( $user_id, 'nostr_avatar', true );
+
+        // Their own picture, which we only copied into the library: publish
+        // the address they host rather than rewriting their profile to us.
+        if ( $id > 0 && $id === $from_us && '' !== $theirs ) {
+            return $theirs;
+        }
+
+        if ( $id > 0 ) {
+            $url = wp_get_attachment_url( $id );
+
+            if ( is_string( $url ) && '' !== $url ) {
+                return $url;
+            }
+        }
+
+        return $theirs;
+    }
+
+    /**
      * The shop banner as an address, or ''.
      *
      * The banner is stored as the id of an uploaded image, and a profile wants
@@ -369,7 +399,7 @@ class NostrIdentity {
         $profile = [
             'name'    => $store_info['store_name'] ?? ( $user ? $user->display_name : '' ),
             'about'   => $store_info['store_description'] ?? '',
-            'picture' => get_user_meta( $user_id, 'nostr_avatar', true ) ?: '',
+            'picture' => self::avatar_url( $user_id, $store_info['gravatar'] ?? 0 ),
             'banner'  => self::banner_url( $store_info['banner'] ?? '' ),
             'website' => function_exists( 'sk_get_store_url' ) ? sk_get_store_url( $user_id ) : '',
             'lud16'   => self::payable_address( $user_id ),

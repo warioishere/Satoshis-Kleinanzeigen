@@ -307,6 +307,10 @@ class NostrRelaySync {
                 if ( $attachment_id > 0 ) {
                     $settings['gravatar'] = $attachment_id;
                     update_user_meta( $user_id, 'sk_profile_settings', $settings );
+
+                    // Noted so the profile we publish can keep pointing at
+                    // their own copy instead of rehosting it on us.
+                    update_user_meta( $user_id, 'sk_nostr_avatar_att', $attachment_id );
                     $updated = true;
                 }
             }
