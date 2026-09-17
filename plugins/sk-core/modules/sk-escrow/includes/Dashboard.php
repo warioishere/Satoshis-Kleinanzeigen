@@ -213,14 +213,25 @@ final class Dashboard {
                         <p><button type="button" class="sk-btn sk-btn-sm weo-sign-start" data-type="refund" data-confirm="refund"><i class="fas fa-undo"></i> <?php esc_html_e( 'Erstatten', 'sk-core' ); ?></button></p>
                     <?php endif; ?>
 
+                    <?php if ( $role === 'buyer' && $status === 'confirmed' && $type === '' && Deadlines::may_report( $p ) === '' ) : ?>
+                        <p class="weo-report">
+                            <button type="button" class="sk-btn sk-btn-sm weo-report-go" data-kind="not_received"><i class="fas fa-flag"></i> <?php esc_html_e( 'Nicht erhalten', 'sk-core' ); ?></button>
+                            <button type="button" class="sk-btn sk-btn-sm weo-report-go" data-kind="not_as_described"><i class="fas fa-flag"></i> <?php esc_html_e( 'Nicht wie beschrieben', 'sk-core' ); ?></button>
+                        </p>
+                    <?php endif; ?>
+
+                    <?php if ( $status === 'disputed' ) : ?>
+                        <?php self::render_dispute( $p, $role, $type ); ?>
+                    <?php endif; ?>
+
                     <?php
-                    // In a dispute the admin picks the transaction; only the
-                    // favoured party gets a button.
-                    $may_counter = $status !== 'disputed' || $role === ( $type === 'payout' ? 'seller' : 'buyer' );
+                    // A split is signed by both parties; every other transaction
+                    // in a dispute by the favoured party only.
+                    $may_counter = $status !== 'disputed' || $type === 'split' || $role === ( $type === 'payout' ? 'seller' : 'buyer' );
                     ?>
                     <?php if ( $type !== '' && ! $mine && $may_counter ) : ?>
                         <p><button type="button" class="sk-btn sk-btn-theme sk-btn-sm weo-sign-start" data-type="<?php echo esc_attr( $type ); ?>"><i class="fas fa-pen"></i>
-                            <?php echo $type === 'payout' ? esc_html__( 'Auszahlung signieren', 'sk-core' ) : esc_html__( 'Erstattung signieren', 'sk-core' ); ?></button></p>
+                            <?php echo $type === 'payout' ? esc_html__( 'Auszahlung signieren', 'sk-core' ) : ( $type === 'split' ? esc_html__( 'Aufteilung signieren', 'sk-core' ) : esc_html__( 'Erstattung signieren', 'sk-core' ) ); ?></button></p>
                     <?php elseif ( $type !== '' && $mine ) : ?>
                         <p class="description"><?php echo esc_html( sprintf( __( 'Deine Signatur liegt vor. Es fehlt noch die des %s.', 'sk-core' ), $other === 'buyer' ? __( 'Käufers', 'sk-core' ) : __( 'Verkäufers', 'sk-core' ) ) ); ?></p>
                     <?php endif; ?>
@@ -238,6 +249,64 @@ final class Dashboard {
             <?php endif; ?>
 
             <p class="weo-msg" aria-live="polite"></p>
+        </div>
+        <?php
+    }
+
+    /** What an open dispute shows the party: the case, the return, the settlement, the decision. */
+    private static function render_dispute( object $p, string $role, string $type ): void {
+        $d        = Dispute::get( $p );
+        $kind     = (string) ( $d['kind'] ?? '' );
+        $decision = $d['decision'] ?? null;
+        $proposal = $d['proposal'] ?? null;
+        $carriers = class_exists( '\SK\Modules\Payments\Shipping' ) ? \SK\Modules\Payments\Shipping::carriers() : [];
+        ?>
+        <div class="weo-dispute">
+            <?php if ( $kind !== '' ) : ?>
+                <p><strong><?php echo $kind === 'not_received' ? esc_html__( 'Gemeldet: nicht erhalten (§4)', 'sk-core' ) : esc_html__( 'Gemeldet: nicht wie beschrieben (§5)', 'sk-core' ); ?></strong></p>
+            <?php else : ?>
+                <p><strong><?php echo esc_html( (string) ( Rows::all_meta( $p )['dispute_reason'] ?? __( 'Problem gemeldet', 'sk-core' ) ) ); ?></strong></p>
+            <?php endif; ?>
+
+            <?php if ( $kind === 'not_as_described' && $role === 'buyer' && empty( $d['return_shipping'] ) && ! $decision && $carriers ) : ?>
+                <p class="description"><?php echo esc_html( sprintf( __( 'Bitte innerhalb von %d Werktagen mit Sendungsverfolgung an die Adresse des Verkäufers zurückschicken und die Nummer hier eintragen.', 'sk-core' ), Dispute::RETURN_BUSINESS_DAYS ) ); ?></p>
+                <p class="weo-return">
+                    <select class="weo-return-carrier">
+                        <?php foreach ( $carriers as $key => $carrier ) : if ( $key === 'andere' ) { continue; } ?>
+                            <option value="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $carrier['label'] ); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <input type="text" class="weo-return-number" placeholder="<?php esc_attr_e( 'Sendungsnummer', 'sk-core' ); ?>">
+                    <button type="button" class="sk-btn sk-btn-theme sk-btn-sm weo-return-go"><i class="fas fa-truck"></i> <?php esc_html_e( 'Rücksendung eintragen', 'sk-core' ); ?></button>
+                </p>
+            <?php elseif ( ! empty( $d['return_shipping'] ) ) : ?>
+                <p class="description"><?php echo esc_html( sprintf( __( 'Rücksendung: %1$s %2$s', 'sk-core' ), $carriers[ $d['return_shipping']['carrier'] ]['label'] ?? $d['return_shipping']['carrier'], $d['return_shipping']['number'] ) ); ?></p>
+            <?php endif; ?>
+
+            <?php if ( $decision ) : ?>
+                <p><strong><?php esc_html_e( 'Entscheidung nach dem Regelwerk:', 'sk-core' ); ?></strong> <?php echo esc_html( Dispute::outcome_text( $decision ) ); ?><br>
+                    <span class="description"><?php echo esc_html( (string) $decision['reasoning'] ); ?> <?php echo esc_html( $decision['rules_applied'] ? '(' . implode( ', ', $decision['rules_applied'] ) . ')' : '' ); ?></span><br>
+                    <span class="description"><?php echo empty( $d['confirmed'] ) ? esc_html__( 'Der Marktplatz prüft und bestätigt die Entscheidung.', 'sk-core' ) : esc_html( Dispute::signing_hint( (string) $d['confirmed']['type'] ) ); ?></span></p>
+            <?php elseif ( $kind === 'not_as_described' ) : ?>
+                <p class="description"><?php esc_html_e( 'Entschieden wird, sobald die Rücksendung zugestellt ist oder ihre Frist abgelaufen ist.', 'sk-core' ); ?></p>
+            <?php endif; ?>
+
+            <?php if ( $type === '' ) : ?>
+                <?php if ( $proposal && empty( $proposal['accepted_at'] ) && ( $proposal['by'] ?? '' ) !== $role ) : ?>
+                    <p><?php echo esc_html( sprintf( __( 'Vorschlag der Gegenseite: %1$d %% an den Käufer, %2$d %% an den Verkäufer.', 'sk-core' ), (int) $proposal['buyer_pct'], 100 - (int) $proposal['buyer_pct'] ) ); ?>
+                        <button type="button" class="sk-btn sk-btn-theme sk-btn-sm weo-accept-proposal"><i class="fas fa-handshake"></i> <?php esc_html_e( 'Annehmen', 'sk-core' ); ?></button></p>
+                <?php elseif ( $proposal && empty( $proposal['accepted_at'] ) ) : ?>
+                    <p class="description"><?php echo esc_html( sprintf( __( 'Dein Vorschlag: %d %% an den Käufer. Die Gegenseite kann annehmen.', 'sk-core' ), (int) $proposal['buyer_pct'] ) ); ?></p>
+                <?php endif; ?>
+                <p class="weo-propose">
+                    <label><?php esc_html_e( 'Einigung vorschlagen (§6), Anteil des Käufers in %', 'sk-core' ); ?>
+                        <input type="number" class="weo-propose-pct" min="0" max="100" step="1" style="width:70px;"></label>
+                    <button type="button" class="sk-btn sk-btn-sm weo-propose-go"><i class="fas fa-percent"></i> <?php esc_html_e( 'Vorschlagen', 'sk-core' ); ?></button>
+                </p>
+                <p class="weo-statement">
+                    <button type="button" class="sk-btn sk-btn-sm weo-statement-go"><i class="fas fa-comment"></i> <?php esc_html_e( 'Stellungnahme abgeben', 'sk-core' ); ?></button>
+                </p>
+            <?php endif; ?>
         </div>
         <?php
     }

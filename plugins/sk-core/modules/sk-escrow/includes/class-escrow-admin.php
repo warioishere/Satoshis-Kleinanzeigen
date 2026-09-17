@@ -3,6 +3,7 @@ if (!defined('ABSPATH')) exit;
 
 use SK\Modules\Escrow\Actions;
 use SK\Modules\Escrow\Deadlines;
+use SK\Modules\Escrow\Dispute;
 use SK\Modules\Escrow\Notify;
 use SK\Modules\Escrow\Rows;
 
@@ -143,6 +144,7 @@ class WEO_Admin {
 
       $fee = (int) ($meta['fee_sat'] ?? 0);
       echo '<p>Servicegebühr in der Treuhand: ' . esc_html(number_format_i18n($fee)) . ' sats · Regelwerk ' . esc_html((string) ($meta['rules_version'] ?? '–')) . '</p>';
+      echo $this->dispute_block($r, $nonce); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 
       foreach ([
         'payout'     => 'Auszahlung an Verkäufer bauen (Gebühr an Marktplatz)',
@@ -168,10 +170,82 @@ class WEO_Admin {
     echo '</div>';
   }
 
+  /** The case, the facts, the decision and the buttons to obtain or confirm it. */
+  private function dispute_block(object $r, string $nonce): string {
+    $d    = Dispute::get($r);
+    $kind = (string) ($d['kind'] ?? '');
+    $html = '<div style="border:1px solid #ccd0d4;padding:8px;margin:8px 0;">';
+    $html .= '<p><strong>Fall:</strong> ' . esc_html($kind !== '' ? ($kind === 'not_received' ? 'nicht erhalten (§4)' : 'nicht wie beschrieben (§5)') : 'Fristablauf oder Meldung ohne Art') . '</p>';
+    $html .= '<p><strong>Angaben (keine Tatsachen):</strong> Käufer: ' . esc_html((string) ($d['statements']['buyer'] ?? '–')) . ' · Verkäufer: ' . esc_html((string) ($d['statements']['seller'] ?? '–')) . '</p>';
+    $html .= '<details><summary>Tatsachen, wie das Modell sie bekommt</summary><pre style="white-space:pre-wrap;font-size:11px;">' . esc_html(wp_json_encode(Dispute::facts($r), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)) . '</pre></details>';
+
+    if ($kind === 'not_as_described') {
+      $rs = $d['return_shipping'] ?? null;
+      $rt = $d['return_tracking'] ?? [];
+      $html .= '<p><strong>Rücksendung:</strong> ' . ($rs ? esc_html($rs['carrier'] . ' ' . $rs['number'] . ', eingetragen ' . wp_date('d.m.Y', (int) $rs['at'])) : 'noch keine');
+      if ($rt) {
+        $html .= ' · Status ' . esc_html((string) ($rt['state'] ?? '')) . (!empty($rt['delivered_at']) ? ', zugestellt ' . esc_html(wp_date('d.m.Y', (int) $rt['delivered_at'])) : '') . (!empty($rt['weight_g']) ? ', ' . (int) $rt['weight_g'] . ' g' : '');
+      }
+      $html .= '</p>';
+      if ($rs && empty($d['decision'])) {
+        $html .= '<form method="post" style="margin:4px 0;"><input type="hidden" name="hash" value="' . esc_attr($r->payment_hash) . '"><input type="hidden" name="weo_nonce" value="' . esc_attr($nonce) . '"><input type="hidden" name="weo_action" value="return_tracking">'
+          . 'Rücksendung laut Versender: <select name="state"><option value="in_transit">unterwegs</option><option value="delivered">zugestellt</option><option value="refused">Annahme verweigert</option><option value="lost">verloren</option></select> '
+          . '<input type="date" name="delivered_at" value="' . esc_attr(wp_date('Y-m-d')) . '" style="width:130px;"> <input type="number" name="weight_g" placeholder="Gramm" min="0" style="width:80px;"> '
+          . '<button class="button button-small">Eintragen</button></form>';
+      }
+    }
+
+    $c = $d['decision'] ?? null;
+    if ($c) {
+      $html .= '<p><strong>Entscheidung (' . esc_html((string) ($c['model'] ?? '')) . ', ' . esc_html(wp_date('d.m.Y H:i', (int) ($c['decided_at'] ?? 0))) . '):</strong> ' . esc_html(Dispute::outcome_text($c))
+        . ' · Transaktion <code>' . esc_html((string) $c['transaction']) . '</code> · Vorfall für: ' . esc_html((string) $c['incident_for'])
+        . ' · Regeln: ' . esc_html(implode(', ', (array) $c['rules_applied'])) . '<br>' . esc_html((string) $c['reasoning'])
+        . (!empty($c['flags']) ? '<br><em>Hinweise: ' . esc_html(implode('; ', (array) $c['flags'])) . '</em>' : '')
+        . '<br>Kulanzantrag möglich: Käufer ' . (!empty($c['pool_claim_eligible']['buyer']) ? 'ja' : 'nein') . ', Verkäufer ' . (!empty($c['pool_claim_eligible']['seller']) ? 'ja' : 'nein') . '</p>';
+      if (empty($d['confirmed'])) {
+        $html .= '<form method="post" style="display:inline;"><input type="hidden" name="hash" value="' . esc_attr($r->payment_hash) . '"><input type="hidden" name="weo_nonce" value="' . esc_attr($nonce) . '"><input type="hidden" name="weo_action" value="confirm_decision">'
+          . '<button class="button button-primary">Entscheidung bestätigen und Transaktion bauen</button></form> ';
+      } else {
+        $html .= '<p>Bestätigt am ' . esc_html(wp_date('d.m.Y H:i', (int) $d['confirmed']['at'])) . ' (' . esc_html((string) $d['confirmed']['type']) . '). Abweichen unten nur mit Begründung im Chat.</p>';
+      }
+    } else {
+      $html .= '<p>Noch keine Entscheidung' . (!empty($d['decide_error']) ? ' · letzter Fehler: ' . esc_html((string) $d['decide_error']) : '') . ' · Versuche: ' . (int) ($d['decide_attempts'] ?? 0) . '</p>';
+      $html .= '<form method="post" style="display:inline;"><input type="hidden" name="hash" value="' . esc_attr($r->payment_hash) . '"><input type="hidden" name="weo_nonce" value="' . esc_attr($nonce) . '"><input type="hidden" name="weo_action" value="decide">'
+        . '<button class="button">Entscheidung nach dem Regelwerk einholen</button></form>';
+    }
+
+    return $html . '</div>';
+  }
+
   private function handle_action(object $row, string $action) {
     $meta = Rows::meta($row);
     if (empty($meta['order_id'])) {
       echo '<div class="notice notice-error"><p>Kein API-Auftrag zu dieser Zeile.</p></div>';
+      return;
+    }
+
+    if ($action === 'decide') {
+      Rows::save_meta($row->payment_hash, ['dispute' => array_merge(Dispute::get($row), ['decide_attempts' => 0])]);
+      $ok = Dispute::decide(Rows::get($row->payment_hash));
+      echo '<div class="notice notice-' . ($ok ? 'success' : 'error') . '"><p>' . ($ok ? 'Entscheidung liegt vor.' : esc_html('Keine Entscheidung: ' . (string) (Dispute::get(Rows::get($row->payment_hash))['decide_error'] ?? ''))) . '</p></div>';
+      return;
+    }
+
+    if ($action === 'confirm_decision') {
+      $error = Dispute::confirm($row, get_current_user_id());
+      echo '<div class="notice notice-' . ($error === '' ? 'success' : 'error') . '"><p>' . esc_html($error === '' ? 'Bestätigt. PSBT gebaut, jetzt extern signieren und unten einreichen.' : $error) . '</p></div>';
+      return;
+    }
+
+    if ($action === 'return_tracking') {
+      $state = sanitize_key(wp_unslash($_POST['state'] ?? ''));
+      if (!in_array($state, ['in_transit', 'delivered', 'refused', 'lost'], true)) {
+        return;
+      }
+      $delivered = strtotime(sanitize_text_field(wp_unslash($_POST['delivered_at'] ?? '')) . ' 12:00:00') ?: time();
+      Dispute::record_return_tracking($row->payment_hash, $state, $delivered, absint($_POST['weight_g'] ?? 0), 'manual', get_current_user_id());
+      Dispute::tick(Rows::get($row->payment_hash));
+      echo '<div class="notice notice-success"><p>Rücksendungsstatus eingetragen.</p></div>';
       return;
     }
 

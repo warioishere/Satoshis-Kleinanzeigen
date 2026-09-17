@@ -314,6 +314,26 @@
         else if (b.classList.contains('weo-accept-go')) { accept(b); }
         else if (b.classList.contains('weo-decline')) { simple(b, 'weo_decline', 'confirmDecline', { reason: window.prompt('Grund (optional):') || '' }); }
         else if (b.classList.contains('weo-cancel')) { simple(b, 'weo_cancel', 'confirmCancel'); }
+        else if (b.classList.contains('weo-report-go')) {
+            var kind = b.getAttribute('data-kind');
+            var text = window.prompt(t(kind === 'not_received' ? 'reportNotReceived' : 'reportNotAsDescribed'));
+            if (text === null) { return; }
+            simple(b, 'weo_report', 'confirmReport', { kind: kind, text: text });
+        }
+        else if (b.classList.contains('weo-statement-go')) {
+            var st = window.prompt(t('statementPrompt'));
+            if (st) { simple(b, 'weo_statement', null, { text: st }); }
+        }
+        else if (b.classList.contains('weo-return-go')) {
+            var box = b.closest('.weo-return');
+            simple(b, 'weo_return', null, { carrier: $('.weo-return-carrier', box).value, number: $('.weo-return-number', box).value.trim() });
+        }
+        else if (b.classList.contains('weo-propose-go')) {
+            var pct = parseInt($('.weo-propose-pct', b.closest('.weo-propose')).value, 10);
+            if (isNaN(pct)) { return; }
+            simple(b, 'weo_propose', null, { buyer_pct: pct });
+        }
+        else if (b.classList.contains('weo-accept-proposal')) { simple(b, 'weo_accept_proposal', 'confirmProposal'); }
         else if (b.classList.contains('weo-sign-start')) { signStart(b); }
         else if (b.classList.contains('weo-sign-confirm')) { signConfirm(b); }
         else if (b.classList.contains('weo-sign-upload')) { signUpload(b); }

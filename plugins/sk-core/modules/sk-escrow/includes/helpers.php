@@ -212,6 +212,11 @@ function weo_enqueue_signer() {
       'confirmRefund'  => __('Du erstattest den vollen Betrag abzüglich Netzwerkgebühr an den Käufer.', 'sk-core'),
       'confirmDecline' => __('Anfrage wirklich ablehnen?', 'sk-core'),
       'confirmCancel'  => __('Anfrage wirklich zurückziehen?', 'sk-core'),
+      'confirmReport'  => __('Die Treuhand wird eingefroren und der Fall nach dem Regelwerk entschieden. Fortfahren?', 'sk-core'),
+      'confirmProposal' => __('Du nimmst die vorgeschlagene Aufteilung an. Danach signieren beide Seiten.', 'sk-core'),
+      'reportNotReceived' => __('Nicht erhalten: Was möchtest du dazu sagen? (optional)', 'sk-core'),
+      'reportNotAsDescribed' => __('Nicht wie beschrieben: Was weicht ab? Du schickst die Ware danach innerhalb von 5 Werktagen mit Sendungsverfolgung zurück.', 'sk-core'),
+      'statementPrompt' => __('Deine Stellungnahme (bis 2000 Zeichen). Sie wird als Angabe gelesen, nicht als Tatsache.', 'sk-core'),
       'copied'       => __('Kopiert', 'sk-core'),
     ],
   ]);

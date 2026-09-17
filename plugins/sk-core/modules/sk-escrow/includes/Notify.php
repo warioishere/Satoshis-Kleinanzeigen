@@ -113,6 +113,27 @@ final class Notify {
         self::mail( (int) $row->vendor_id, sprintf( __( 'Treuhand abgeschlossen: %s', 'sk-core' ), self::title( $row ) ), $text );
     }
 
+    /** The rulebook was applied; the marketplace still has to confirm. */
+    public static function decided( object $row, array $decision ): void {
+        $text = sprintf(
+            /* translators: 1: outcome, 2: reasoning, 3: rules */
+            __( "Entscheidung nach dem Treuhand-Regelwerk: %1\$s\n%2\$s (%3\$s)\nDer Marktplatz prüft, dass die Entscheidung dem Regelwerk folgt, und bestätigt sie.", 'sk-core' ),
+            Dispute::outcome_text( $decision ),
+            (string) ( $decision['reasoning'] ?? '' ),
+            implode( ', ', (array) ( $decision['rules_applied'] ?? [] ) )
+        );
+
+        self::chat( $row, 0, $text );
+        foreach ( [ (int) $row->buyer_id, (int) $row->vendor_id ] as $user_id ) {
+            self::mail( $user_id, sprintf( __( 'Treuhand: Entscheidung zu %s', 'sk-core' ), self::title( $row ) ), $text );
+        }
+
+        $admin = get_option( 'admin_email' );
+        if ( $admin ) {
+            wp_mail( $admin, sprintf( 'Escrow-Entscheidung: %s', self::title( $row ) ), $text . "\n" . admin_url( 'admin.php?page=weo-disputes' ) );
+        }
+    }
+
     /** A deadline of the rulebook passed; the prescribed transaction awaits the signatures. */
     public static function escalated( object $row, string $type, string $reason ): void {
         $who = $type === 'payout'

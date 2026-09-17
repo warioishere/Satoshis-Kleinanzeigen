@@ -151,10 +151,14 @@ final class Deadlines {
 
     // ── The clock ───────────────────────────────────────────────────────
 
-    /** Every funded escrow that is still open, against the deadlines. */
+    /** Every funded escrow that is still open, against the deadlines; open disputes against the return's. */
     public static function run(): void {
         foreach ( Rows::by_status( [ 'confirmed' ], 200 ) as $row ) {
             self::check( $row );
+        }
+
+        foreach ( Rows::by_status( [ 'disputed' ], 200 ) as $row ) {
+            Dispute::tick( $row );
         }
     }
 

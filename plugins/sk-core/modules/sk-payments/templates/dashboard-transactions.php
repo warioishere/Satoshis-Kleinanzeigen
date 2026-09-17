@@ -437,7 +437,8 @@ do_action( 'sk_dashboard_wrap_start' );
 
                         // Escrow: receipt is confirmed by signing the payout, not by a button here.
                         $can_confirm_delivery = $tab === 'purchases' && $p->status === 'confirmed' && ! $is_escrow;
-                        $can_dispute = $tab === 'purchases' && $p->status === 'confirmed';
+                        // Escrow: the report has its own two buttons on the escrow card (§4, §5).
+                        $can_dispute = $tab === 'purchases' && $p->status === 'confirmed' && ! $is_escrow;
                     ?>
                         <li class="sk-review-card">
                             <?php if ( $avatar_url ) : ?>

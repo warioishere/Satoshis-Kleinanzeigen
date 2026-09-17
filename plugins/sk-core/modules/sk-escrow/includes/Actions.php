@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
 final class Actions {
 
     public function __construct() {
-        foreach ( [ 'accept', 'decline', 'cancel', 'status', 'psbt', 'partial' ] as $a ) {
+        foreach ( [ 'accept', 'decline', 'cancel', 'status', 'psbt', 'partial', 'report', 'statement', 'return', 'propose', 'accept_proposal' ] as $a ) {
             add_action( 'wp_ajax_weo_' . $a, [ $this, 'ajax_' . $a ] );
         }
         add_action( 'sk_payment_disputed', [ __CLASS__, 'on_disputed' ] );
@@ -275,14 +275,18 @@ final class Actions {
             return __( 'Für diesen Handel läuft bereits eine andere Transaktion.', 'sk-core' );
         }
 
-        // In a dispute only the admin opens a transaction; the favoured
-        // party counter-signs it.
+        // In a dispute the transaction comes from an accepted settlement
+        // (both parties sign) or from the confirmed decision (the favoured
+        // party counter-signs the marketplace).
         if ( $row->status === 'disputed' ) {
+            if ( $open === 'split' && $type === 'split' ) {
+                return '';
+            }
             $favoured = $type === 'payout' ? 'seller' : 'buyer';
             if ( $open === $type && $role === $favoured ) {
                 return '';
             }
-            return __( 'Im Dispute entscheidet der Marktplatz, welche Transaktion gebaut wird.', 'sk-core' );
+            return __( 'Im Dispute entscheidet das Regelwerk, welche Transaktion gebaut wird.', 'sk-core' );
         }
 
         if ( $type === 'payout' ) {
@@ -311,8 +315,11 @@ final class Actions {
      *             never shipped (§3) or refunds before shipping.
      * refund_fee: price back to the buyer, fee to the marketplace — every
      *             other refund (§2). Only the admin opens this one.
+     * split:      the buyer's share, the seller's share and the fee — an
+     *             accepted proposal (§6) or a confirmed decision; the two
+     *             parties sign it without the marketplace.
      */
-    const TYPES = [ 'payout', 'refund', 'refund_fee' ];
+    const TYPES = [ 'payout', 'refund', 'refund_fee', 'split' ];
 
     private function posted_type(): string {
         $type = sanitize_key( wp_unslash( $_POST['type'] ?? 'payout' ) );
@@ -325,10 +332,21 @@ final class Actions {
      * from the stored refund address; the other two name their outputs.
      */
     public static function outputs( object $row, string $type ): array {
-        $meta = Rows::meta( $row );
-        $fee  = (int) ( $meta['fee_sat'] ?? 0 );
-        $to   = (string) ( $type === 'payout' ? ( $meta['payout_address'] ?? '' ) : ( $meta['refund_address'] ?? '' ) );
-        $out  = [ $to => (int) $row->amount_sats ];
+        $meta  = Rows::meta( $row );
+        $fee   = (int) ( $meta['fee_sat'] ?? 0 );
+        $price = (int) $row->amount_sats;
+
+        if ( $type === 'split' ) {
+            // Buyer first (sweeps the remainder), the seller's share fixed.
+            $seller_sat = intdiv( $price * ( 100 - Dispute::buyer_pct( $row ) ), 100 );
+            $out        = [ (string) ( $meta['refund_address'] ?? '' ) => $price - $seller_sat ];
+            if ( $seller_sat > 0 ) {
+                $out[ (string) ( $meta['payout_address'] ?? '' ) ] = $seller_sat;
+            }
+        } else {
+            $to  = (string) ( $type === 'payout' ? ( $meta['payout_address'] ?? '' ) : ( $meta['refund_address'] ?? '' ) );
+            $out = [ $to => $price ];
+        }
 
         $fee_address = (string) weo_get_option( 'fee_address', '' );
         if ( $fee > 0 && $fee_address !== '' && $type !== 'refund' ) {
@@ -541,6 +559,71 @@ final class Actions {
     }
 
     // ---- disputes ----
+
+    /** The buyer opens a dispute: not received, or not as described (§4, §5). */
+    public function ajax_report(): void {
+        [ $row, $role ] = $this->party( 'confirmed' );
+        $this->require_role( $role, 'buyer' );
+
+        $error = Dispute::open(
+            $row,
+            get_current_user_id(),
+            sanitize_key( wp_unslash( $_POST['kind'] ?? '' ) ),
+            (string) wp_unslash( $_POST['text'] ?? '' )
+        );
+        if ( $error !== '' ) {
+            wp_send_json_error( [ 'message' => $error ] );
+        }
+
+        wp_send_json_success( [ 'message' => __( 'Problem gemeldet. Die Treuhand ist eingefroren.', 'sk-core' ) ] );
+    }
+
+    /** Either party adds a statement to an open dispute. */
+    public function ajax_statement(): void {
+        [ $row, $role ] = $this->party( 'disputed' );
+        Dispute::statement( $row, $role, (string) wp_unslash( $_POST['text'] ?? '' ) );
+        wp_send_json_success( [ 'message' => __( 'Gespeichert.', 'sk-core' ) ] );
+    }
+
+    /** The buyer records the return shipment (§5). */
+    public function ajax_return(): void {
+        [ $row, $role ] = $this->party( 'disputed' );
+        $this->require_role( $role, 'buyer' );
+
+        $error = Dispute::return_shipped(
+            $row,
+            sanitize_key( wp_unslash( $_POST['carrier'] ?? '' ) ),
+            sanitize_text_field( wp_unslash( $_POST['number'] ?? '' ) )
+        );
+        if ( $error !== '' ) {
+            wp_send_json_error( [ 'message' => $error ] );
+        }
+
+        wp_send_json_success( [ 'message' => __( 'Rücksendung eingetragen.', 'sk-core' ) ] );
+    }
+
+    /** A settlement proposal (§6): the buyer's share of the price in percent. */
+    public function ajax_propose(): void {
+        [ $row, $role ] = $this->party( 'disputed' );
+
+        $error = Dispute::propose( $row, $role, (int) ( $_POST['buyer_pct'] ?? -1 ) );
+        if ( $error !== '' ) {
+            wp_send_json_error( [ 'message' => $error ] );
+        }
+
+        wp_send_json_success( [ 'message' => __( 'Vorschlag gesendet.', 'sk-core' ) ] );
+    }
+
+    public function ajax_accept_proposal(): void {
+        [ $row, $role ] = $this->party( 'disputed' );
+
+        $error = Dispute::accept_proposal( $row, $role );
+        if ( $error !== '' ) {
+            wp_send_json_error( [ 'message' => $error ] );
+        }
+
+        wp_send_json_success( [ 'message' => __( 'Einigung angenommen. Bitte signieren.', 'sk-core' ) ] );
+    }
 
     /** "Problem melden" on an escrow row freezes the order at the API as well. */
     public static function on_disputed( string $hash ): void {
