@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
 final class Actions {
 
     public function __construct() {
-        foreach ( [ 'accept', 'decline', 'cancel', 'status', 'psbt', 'partial', 'report', 'statement', 'return', 'propose', 'accept_proposal' ] as $a ) {
+        foreach ( [ 'accept', 'decline', 'cancel', 'status', 'psbt', 'partial', 'report', 'statement', 'return', 'propose', 'accept_proposal', 'claim' ] as $a ) {
             add_action( 'wp_ajax_weo_' . $a, [ $this, 'ajax_' . $a ] );
         }
         add_action( 'sk_payment_disputed', [ __CLASS__, 'on_disputed' ] );
@@ -612,6 +612,18 @@ final class Actions {
         }
 
         wp_send_json_success( [ 'message' => __( 'Vorschlag gesendet.', 'sk-core' ) ] );
+    }
+
+    /** After settlement: the side the decision names asks the goodwill fund (§7). */
+    public function ajax_claim(): void {
+        [ $row, $role ] = $this->party( 'delivered', 'refunded' );
+
+        $error = Dispute::claim( $row, $role, (string) wp_unslash( $_POST['pay_to'] ?? '' ) );
+        if ( $error !== '' ) {
+            wp_send_json_error( [ 'message' => $error ] );
+        }
+
+        wp_send_json_success( [ 'message' => __( 'Antrag gestellt. Der Marktplatz zahlt aus Kulanz, sobald er ihn geprüft hat.', 'sk-core' ) ] );
     }
 
     public function ajax_accept_proposal(): void {

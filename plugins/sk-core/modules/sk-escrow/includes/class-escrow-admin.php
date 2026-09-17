@@ -5,6 +5,7 @@ use SK\Modules\Escrow\Actions;
 use SK\Modules\Escrow\Deadlines;
 use SK\Modules\Escrow\Dispute;
 use SK\Modules\Escrow\Notify;
+use SK\Modules\Escrow\Pool;
 use SK\Modules\Escrow\Rows;
 
 /**
@@ -167,6 +168,25 @@ class WEO_Admin {
       echo '</div>';
     }
 
+    echo '<h2 style="margin-top:24px;">Kulanzanträge (§7)</h2>';
+    echo '<p>Fonds: ' . esc_html(number_format_i18n(Pool::balance())) . ' sats. Auszahlung von Hand aus der Plattform-Wallet an die angegebene Adresse, dann hier als bezahlt eintragen; das bucht den Betrag vom Fonds ab.</p>';
+    $claims = Dispute::pending_claims();
+    if (!$claims) {
+      echo '<p>Keine offenen Anträge.</p>';
+    }
+    foreach ($claims as $r) {
+      $c     = Dispute::get($r)['claim'];
+      $nonce = wp_create_nonce('weo_admin_' . $r->payment_hash);
+      echo '<div class="card" style="max-width:900px;padding:12px;margin-top:12px;">';
+      echo '<p>#' . (int) $r->id . ' · ' . esc_html($r->product_id ? get_the_title((int) $r->product_id) : '—') . ' · Antrag von ' . esc_html($c['by'] === 'buyer' ? 'Käufer ' : 'Verkäufer ') . esc_html($this->user_label((int) $c['user_id']))
+        . ' · <strong>' . esc_html(number_format_i18n((int) $c['amount'])) . ' sats</strong> an <code>' . esc_html((string) $c['pay_to']) . '</code> · gestellt ' . esc_html(wp_date('d.m.Y', (int) $c['at'])) . '</p>';
+      foreach (['claim_paid' => ['button-primary', 'Als bezahlt eintragen'], 'claim_rejected' => ['', 'Ablehnen']] as $action => [$class, $label]) {
+        echo '<form method="post" style="display:inline;margin-right:6px;"><input type="hidden" name="hash" value="' . esc_attr($r->payment_hash) . '"><input type="hidden" name="weo_nonce" value="' . esc_attr($nonce) . '"><input type="hidden" name="weo_action" value="' . esc_attr($action) . '">'
+          . '<input type="text" name="note" placeholder="' . ($action === 'claim_paid' ? 'Zahlungsreferenz' : 'Grund') . '" style="width:220px;"> <button class="button ' . esc_attr($class) . '">' . esc_html($label) . '</button></form>';
+      }
+      echo '</div>';
+    }
+
     echo '</div>';
   }
 
@@ -218,6 +238,12 @@ class WEO_Admin {
   }
 
   private function handle_action(object $row, string $action) {
+    if ($action === 'claim_paid' || $action === 'claim_rejected') {
+      $error = Dispute::claim_settle($row, get_current_user_id(), $action === 'claim_paid', sanitize_text_field(wp_unslash($_POST['note'] ?? '')));
+      echo '<div class="notice notice-' . ($error === '' ? 'success' : 'error') . '"><p>' . esc_html($error === '' ? 'Antrag erledigt.' : $error) . '</p></div>';
+      return;
+    }
+
     $meta = Rows::meta($row);
     if (empty($meta['order_id'])) {
       echo '<div class="notice notice-error"><p>Kein API-Auftrag zu dieser Zeile.</p></div>';

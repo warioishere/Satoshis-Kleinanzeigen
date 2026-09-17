@@ -334,6 +334,9 @@
             simple(b, 'weo_propose', null, { buyer_pct: pct });
         }
         else if (b.classList.contains('weo-accept-proposal')) { simple(b, 'weo_accept_proposal', 'confirmProposal'); }
+        else if (b.classList.contains('weo-claim-go')) {
+            simple(b, 'weo_claim', null, { pay_to: $('.weo-claim-to', b.closest('.weo-claim')).value.trim() });
+        }
         else if (b.classList.contains('weo-sign-start')) { signStart(b); }
         else if (b.classList.contains('weo-sign-confirm')) { signConfirm(b); }
         else if (b.classList.contains('weo-sign-upload')) { signUpload(b); }

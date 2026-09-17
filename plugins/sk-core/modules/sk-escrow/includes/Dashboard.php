@@ -242,6 +242,19 @@ final class Dashboard {
 
             <?php if ( $done ) : ?>
                 <p><a href="https://mempool.space/tx/<?php echo esc_attr( $meta['settled_txid'] ); ?>" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> <?php esc_html_e( 'Transaktion ansehen', 'sk-core' ); ?></a></p>
+                <?php $claim = Dispute::get( $p )['claim'] ?? null; ?>
+                <?php if ( $claim && ( $claim['by'] ?? '' ) === $role ) : ?>
+                    <p class="description"><?php
+                        $labels = [ 'pending' => __( 'Kulanzantrag gestellt, der Marktplatz prüft.', 'sk-core' ), 'paid' => __( 'Kulanzantrag ausgezahlt.', 'sk-core' ), 'rejected' => __( 'Kulanzantrag abgelehnt.', 'sk-core' ) ];
+                        echo esc_html( sprintf( '%s %s Sats.', $labels[ $claim['status'] ] ?? '', number_format_i18n( (int) $claim['amount'] ) ) . ( ! empty( $claim['note'] ) ? ' ' . $claim['note'] : '' ) );
+                    ?></p>
+                <?php elseif ( Dispute::claim_eligible( $p, $role ) === '' ) : ?>
+                    <p class="weo-claim">
+                        <span class="description"><?php echo esc_html( sprintf( __( 'Nach §7 kannst du einen Antrag an den Kulanzfonds stellen: %s Sats, aus Kulanz, ohne Anspruch.', 'sk-core' ), number_format_i18n( Dispute::claim_amount( $p ) ) ) ); ?></span><br>
+                        <input type="text" class="weo-claim-to" placeholder="<?php esc_attr_e( 'Lightning-Adresse oder Rechnung', 'sk-core' ); ?>">
+                        <button type="button" class="sk-btn sk-btn-sm weo-claim-go"><i class="fas fa-hand-holding"></i> <?php esc_html_e( 'Antrag stellen', 'sk-core' ); ?></button>
+                    </p>
+                <?php endif; ?>
             <?php endif; ?>
 
             <?php if ( ! empty( $meta['descriptor'] ) && ! $done && $status !== 'expired' ) : ?>

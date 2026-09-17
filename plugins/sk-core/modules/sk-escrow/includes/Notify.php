@@ -113,6 +113,29 @@ final class Notify {
         self::mail( (int) $row->vendor_id, sprintf( __( 'Treuhand abgeschlossen: %s', 'sk-core' ), self::title( $row ) ), $text );
     }
 
+    /** A goodwill claim (§7) was filed: the admin has to pay or decline it. */
+    public static function claim_filed( object $row, string $role, int $amount ): void {
+        $admin = get_option( 'admin_email' );
+        if ( $admin ) {
+            wp_mail(
+                $admin,
+                sprintf( 'Kulanzantrag: %s', self::title( $row ) ),
+                sprintf( "%s beantragt %s aus dem Kulanzfonds.\n%s", $role === 'buyer' ? 'Der Käufer' : 'Der Verkäufer', self::sats( $amount ), admin_url( 'admin.php?page=weo-disputes' ) )
+            );
+        }
+    }
+
+    public static function claim_settled( object $row, array $claim ): void {
+        $text = 'paid' === ( $claim['status'] ?? '' )
+            ? sprintf( __( 'Dein Kulanzantrag wurde ausgezahlt: %s.', 'sk-core' ), self::sats( (int) $claim['amount'] ) )
+            : __( 'Dein Kulanzantrag wurde abgelehnt.', 'sk-core' );
+        if ( ! empty( $claim['note'] ) ) {
+            $text .= ' ' . $claim['note'];
+        }
+
+        self::mail( (int) $claim['user_id'], sprintf( __( 'Treuhand: Kulanzantrag zu %s', 'sk-core' ), self::title( $row ) ), $text );
+    }
+
     /** The rulebook was applied; the marketplace still has to confirm. */
     public static function decided( object $row, array $decision ): void {
         $text = sprintf(

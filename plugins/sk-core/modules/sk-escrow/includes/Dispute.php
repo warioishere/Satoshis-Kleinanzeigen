@@ -519,6 +519,113 @@ final class Dispute {
         ];
     }
 
+    // ── Goodwill claims (§7) ────────────────────────────────────────────
+
+    /**
+     * May this party ask the fund? '' when yes, else the reason. The
+     * decision names who lost although the facts do not burden them;
+     * the account rules do the rest.
+     */
+    public static function claim_eligible( object $row, string $role ): string {
+        $d = self::get( $row );
+        $c = $d['decision'] ?? null;
+
+        if ( ! in_array( (string) $row->status, [ 'delivered', 'refunded' ], true ) || empty( Rows::meta( $row )['settled_txid'] ) ) {
+            return __( 'Ein Antrag ist erst nach Abschluss des Handels möglich.', 'sk-core' );
+        }
+        if ( ! $c || empty( $c['pool_claim_eligible'][ $role ] ) ) {
+            return __( 'Nach der Entscheidung ist für diese Seite kein Antrag vorgesehen (§7).', 'sk-core' );
+        }
+        if ( ! empty( $d['claim'] ) ) {
+            return __( 'Zu diesem Handel liegt schon ein Antrag vor.', 'sk-core' );
+        }
+
+        $user_id = $role === 'buyer' ? (int) $row->buyer_id : (int) $row->vendor_id;
+
+        if ( Rules::tier( $user_id ) < 1 ) {
+            return __( 'Anträge an den Kulanzfonds sind ab Stufe 1 möglich (§7, §8).', 'sk-core' );
+        }
+        if ( (int) get_user_meta( $user_id, Rules::CLAIM_AT_META, true ) > time() - Rules::CLAIM_EVERY ) {
+            return __( 'Höchstens ein Antrag je Konto in 12 Monaten (§7).', 'sk-core' );
+        }
+        if ( self::claim_amount( $row ) <= 0 ) {
+            return __( 'Der Kulanzfonds ist derzeit leer (§2).', 'sk-core' );
+        }
+
+        return '';
+    }
+
+    /** Half the price, capped, and never more than the fund holds. */
+    public static function claim_amount( object $row ): int {
+        return max( 0, min( intdiv( (int) $row->amount_sats * Rules::CLAIM_PERCENT, 100 ), Rules::CLAIM_MAX_SAT, Pool::balance() ) );
+    }
+
+    /** File the claim: amount fixed now, the other side gets an incident, the admin a mail. */
+    public static function claim( object $row, string $role, string $pay_to ): string {
+        $error = self::claim_eligible( $row, $role );
+        if ( '' !== $error ) {
+            return $error;
+        }
+
+        $pay_to = sanitize_text_field( $pay_to );
+        if ( ! is_email( $pay_to ) && ! preg_match( '/^ln(bc|tb)[0-9a-z]{20,}$/i', $pay_to ) ) {
+            return __( 'Bitte eine Lightning-Adresse (name@domain) oder eine Rechnung (lnbc…) angeben.', 'sk-core' );
+        }
+
+        $user_id = $role === 'buyer' ? (int) $row->buyer_id : (int) $row->vendor_id;
+        $other   = $role === 'buyer' ? (int) $row->vendor_id : (int) $row->buyer_id;
+        $amount  = self::claim_amount( $row );
+
+        self::save( $row->payment_hash, [ 'claim' => [
+            'by'      => $role,
+            'user_id' => $user_id,
+            'at'      => time(),
+            'amount'  => $amount,
+            'pay_to'  => $pay_to,
+            'status'  => 'pending',
+        ] ] );
+        update_user_meta( $user_id, Rules::CLAIM_AT_META, time() );
+        Rules::incident( $other, 'claim_by_other_side', $row->payment_hash );
+        Notify::claim_filed( $row, $role, $amount );
+
+        return '';
+    }
+
+    /** The admin paid it out of the platform's wallet, or turned it down. */
+    public static function claim_settle( object $row, int $admin, bool $paid, string $note ): string {
+        $d = self::get( $row );
+        $c = $d['claim'] ?? null;
+
+        if ( ! $c || ( $c['status'] ?? '' ) !== 'pending' ) {
+            return __( 'Kein offener Antrag.', 'sk-core' );
+        }
+
+        $c['status']     = $paid ? 'paid' : 'rejected';
+        $c['settled_by'] = $admin;
+        $c['settled_at'] = time();
+        $c['note']       = sanitize_text_field( $note );
+        self::save( $row->payment_hash, [ 'claim' => $c ] );
+
+        if ( $paid ) {
+            Pool::add( Pool::KIND_CLAIM, -(int) $c['amount'], $row->payment_hash, (int) $c['user_id'] );
+        }
+
+        Notify::claim_settled( $row, $c );
+
+        return '';
+    }
+
+    /** Settled escrows with a claim still pending, for the admin. */
+    public static function pending_claims(): array {
+        global $wpdb;
+
+        return $wpdb->get_results( $wpdb->prepare(
+            'SELECT * FROM ' . Rows::table() . " WHERE context = %s AND status IN ('delivered', 'refunded') AND metadata LIKE %s ORDER BY id DESC LIMIT 100",
+            Rows::CONTEXT,
+            '%"claim":{%"status":"pending"%'
+        ) ) ?: [];
+    }
+
     private static function clean( string $text ): string {
         return trim( mb_substr( sanitize_textarea_field( $text ), 0, self::STATEMENT_MAX ) );
     }

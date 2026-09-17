@@ -266,6 +266,45 @@ Dispute::open( Rows::get( $i->payment_hash ), $buyer, 'not_received', '' );
 $di = Dispute::get( Rows::get( $i->payment_hash ) );
 sk_check_eq( [ isset( $di['decision'] ), $di['decide_attempts'], '' !== $di['decide_error'] ], [ false, 1, true ], 'decide(): an unreadable answer is noted, not applied' );
 
+// ── Goodwill claims (§7) ──────────────────────────────────────────────────
+// The buyer of $f lost by decision and is named eligible. Settle the row,
+// give the buyer three completed trades for tier 1 and the fund a balance.
+$saved_claim_at = get_user_meta( $buyer, Rules::CLAIM_AT_META, true );
+delete_user_meta( $buyer, Rules::CLAIM_AT_META );
+$wpdb->update( Rows::table(), [ 'status' => 'delivered' ], [ 'payment_hash' => $f->payment_hash ] );
+Rows::save_meta( $f->payment_hash, [ 'settled_txid' => 'ab12' ] );
+for ( $i = 0; $i < 3; $i++ ) {
+    $mk_row( [ 'status' => 'delivered', 'vendor_id' => 610 ], [ 'settled_txid' => 'done' . $i ] );
+}
+$fund_hash = bin2hex( random_bytes( 32 ) );
+Pool::add( Pool::KIND_FEE_SHARE, 5000, $fund_hash );
+$fund_before = Pool::balance();
+$f = Rows::get( $f->payment_hash );
+
+sk_check( Rules::tier( $buyer ) >= 1, 'tier(): three completed trades make tier 1', (string) Rules::tier( $buyer ) );
+sk_check( '' !== Dispute::claim_eligible( $f, 'seller' ), 'claim_eligible(): the side the decision favoured may not claim' );
+sk_check_eq( Dispute::claim_eligible( $f, 'buyer' ), '', 'claim_eligible(): the named side may' );
+sk_check_eq( Dispute::claim_amount( $f ), min( 50000, $fund_before ), 'claim_amount(): half the price, never more than the fund' );
+sk_check( '' !== Dispute::claim( $f, 'buyer', 'not an address' ), 'claim(): needs a Lightning address or invoice' );
+$n_before = Rules::incidents( $user );
+sk_check_eq( Dispute::claim( $f, 'buyer', 'me@sk.test' ), '', 'claim(): filed' );
+$f  = Rows::get( $f->payment_hash );
+$cl = Dispute::get( $f )['claim'];
+sk_check_eq( [ $cl['status'], $cl['amount'], $cl['user_id'], Rules::incidents( $user ) ], [ 'pending', min( 50000, $fund_before ), $buyer, $n_before + 1 ], 'claim(): pending, amount fixed, incident for the other side' );
+sk_check( '' !== Dispute::claim( $f, 'buyer', 'me@sk.test' ), 'claim(): only one per trade' );
+sk_check( in_array( $f->payment_hash, array_column( Dispute::pending_claims(), 'payment_hash' ), true ), 'pending_claims(): lists it for the admin' );
+sk_check_eq( Dispute::claim_settle( $f, 1, true, 'ref 123' ), '', 'claim_settle(): paid' );
+sk_check_eq( [ Dispute::get( Rows::get( $f->payment_hash ) )['claim']['status'], Pool::balance() ], [ 'paid', $fund_before - $cl['amount'] ], 'claim_settle(): the fund is debited' );
+sk_check( '' !== Dispute::claim_settle( Rows::get( $f->payment_hash ), 1, true, '' ), 'claim_settle(): not twice' );
+
+$wpdb->delete( Pool::table(), [ 'escrow_hash' => $fund_hash ], [ '%s' ] );
+$wpdb->delete( Pool::table(), [ 'escrow_hash' => $f->payment_hash ], [ '%s' ] );
+if ( '' === $saved_claim_at ) {
+    delete_user_meta( $buyer, Rules::CLAIM_AT_META );
+} else {
+    update_user_meta( $buyer, Rules::CLAIM_AT_META, $saved_claim_at );
+}
+
 foreach ( $made as $h ) {
     $wpdb->delete( Rows::table(), [ 'payment_hash' => $h ], [ '%s' ] );
 }
