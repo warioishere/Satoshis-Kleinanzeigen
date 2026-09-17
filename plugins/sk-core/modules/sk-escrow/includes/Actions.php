@@ -356,12 +356,12 @@ final class Actions {
             ] );
         }
 
-        // ponytail: refund_fee assumes /psbt/build accepts the buyer's
-        // address as an output; confirm at the API before the first
-        // real dispute, else build_refund needs a second output.
+        // The first output sweeps the remainder, the fee output is fixed;
+        // 'kind' tells the API which way the money goes.
         return weo_api_post( '/psbt/build', [
             'order_id'    => $meta['order_id'],
             'outputs'     => self::outputs( $row, $type ),
+            'kind'        => $type === 'payout' ? 'payout' : 'refund',
             'rbf'         => true,
             'target_conf' => 3,
         ] );
