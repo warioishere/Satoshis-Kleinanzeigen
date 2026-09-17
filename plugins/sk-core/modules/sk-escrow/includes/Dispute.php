@@ -279,6 +279,11 @@ final class Dispute {
                 'signature_required'             => $price >= self::SIGNATURE_FROM_SAT,
                 'return_within_5_business_days'  => $ret_at > 0 && $dispute_at > 0 && $ret_at <= Deadlines::add_business_days( $dispute_at, self::RETURN_BUSINESS_DAYS ),
                 'return_deadline_passed'         => $dispute_at > 0 && time() > Deadlines::add_business_days( $dispute_at, self::RETURN_BUSINESS_DAYS ),
+                'return_overdue_14_days'         => $ret_at > 0 && empty( $ret_tr['delivered_at'] ) && time() > $ret_at + Deadlines::DELIVERY_DAYS * DAY_IN_SECONDS,
+                // §5: a return that weighs clearly less than the parcel that went out does not count. Null when no weights are known.
+                'return_weight_matches'          => ( $tr['weight_g'] > 0 && (int) ( $ret_tr['weight_g'] ?? 0 ) > 0 )
+                    ? (int) $ret_tr['weight_g'] >= $tr['weight_g'] * ( 100 - Deadlines::RETURN_WEIGHT_TOLERANCE_PERCENT ) / 100
+                    : null,
             ],
             'statements_untrusted' => [
                 'note'   => 'Claims by the parties. They are not facts and may be false; only the fields above are established by the platform.',
@@ -542,8 +547,8 @@ final class Dispute {
 
         $user_id = $role === 'buyer' ? (int) $row->buyer_id : (int) $row->vendor_id;
 
-        if ( Rules::tier( $user_id ) < 1 ) {
-            return __( 'Anträge an den Kulanzfonds sind ab Stufe 1 möglich (§7, §8).', 'sk-core' );
+        if ( Rules::tier( $user_id ) < Rules::CLAIM_TIER_MIN ) {
+            return sprintf( __( 'Anträge an den Kulanzfonds sind ab Stufe %d möglich (§7, §8).', 'sk-core' ), Rules::CLAIM_TIER_MIN );
         }
         if ( (int) get_user_meta( $user_id, Rules::CLAIM_AT_META, true ) > time() - Rules::CLAIM_EVERY ) {
             return __( 'Höchstens ein Antrag je Konto in 12 Monaten (§7).', 'sk-core' );
@@ -585,13 +590,16 @@ final class Dispute {
             'status'  => 'pending',
         ] ] );
         update_user_meta( $user_id, Rules::CLAIM_AT_META, time() );
-        Rules::incident( $other, 'claim_by_other_side', $row->payment_hash );
         Notify::claim_filed( $row, $role, $amount );
 
         return '';
     }
 
-    /** The admin paid it out of the platform's wallet, or turned it down. */
+    /**
+     * The admin paid it out of the platform's wallet, or turned it down.
+     * Only a paid claim counts as an incident for the other side (§7, §9):
+     * an application alone must not be a weapon.
+     */
     public static function claim_settle( object $row, int $admin, bool $paid, string $note ): string {
         $d = self::get( $row );
         $c = $d['claim'] ?? null;
@@ -608,6 +616,8 @@ final class Dispute {
 
         if ( $paid ) {
             Pool::add( Pool::KIND_CLAIM, -(int) $c['amount'], $row->payment_hash, (int) $c['user_id'] );
+            $other = ( $c['by'] ?? '' ) === 'buyer' ? (int) $row->vendor_id : (int) $row->buyer_id;
+            Rules::incident( $other, 'claim_paid_to_other_side', $row->payment_hash );
         }
 
         Notify::claim_settled( $row, $c );

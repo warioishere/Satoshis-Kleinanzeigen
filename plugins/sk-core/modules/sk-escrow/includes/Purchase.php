@@ -33,7 +33,8 @@ final class Purchase {
     }
 
     public static function available( int $vendor_id, int $buyer_id ): bool {
-        return weo_enabled() && $vendor_id && $buyer_id && $vendor_id !== $buyer_id && self::seller_ready( $vendor_id );
+        return weo_enabled() && $vendor_id && $buyer_id && $vendor_id !== $buyer_id && self::seller_ready( $vendor_id )
+            && Rules::tier( $buyer_id ) >= (int) get_user_meta( $vendor_id, Rules::MIN_BUYER_TIER_META, true );
     }
 
     public function enqueue(): void {

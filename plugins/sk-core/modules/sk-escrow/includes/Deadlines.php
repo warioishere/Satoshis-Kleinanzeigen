@@ -27,8 +27,11 @@ final class Deadlines {
     /** §3: days after the delivery scan within which the buyer may report a problem. */
     const REPORT_DAYS = 3;
 
-    /** §10: a parcel lighter than the listing by more than this share counts double. */
+    /** §10: a parcel lighter than the listing by more than this share was never the goods. */
     const WEIGHT_TOLERANCE_PERCENT = 30;
+
+    /** §5: a return lighter than the outbound parcel by more than this share does not count. */
+    const RETURN_WEIGHT_TOLERANCE_PERCENT = 10;
 
     // ── Calendar ────────────────────────────────────────────────────────
 
@@ -202,7 +205,10 @@ final class Deadlines {
             return;
         }
 
-        self::weight_check( $row );
+        // §10: a parcel far too light was never the goods; that ends it here.
+        if ( self::weight_check( $row ) ) {
+            return;
+        }
 
         if ( time() > $delivered + self::REPORT_DAYS * DAY_IN_SECONDS ) {
             self::escalate(
@@ -249,29 +255,42 @@ final class Deadlines {
 
     /**
      * §10, once per row: the carrier's parcel weight against the listing's.
-     * Only the outbound parcel and only where a weight was recorded.
+     * A parcel lighter by more than the tolerance was never the goods: it
+     * counts as not shipped — full refund, incident for the seller, no
+     * return to make. Only the outbound parcel, only where a weight was
+     * recorded. True when it escalated.
      */
-    public static function weight_check( object $row ): void {
+    public static function weight_check( object $row ): bool {
         $meta = Rows::meta( $row );
 
         if ( ! empty( $meta['weight_checked'] ) ) {
-            return;
+            return false;
         }
 
         $parcel = self::tracking( $row )['weight_g'];
         $listed = self::listed_weight_g( (int) $row->product_id );
 
         if ( $parcel <= 0 || $listed <= 0 ) {
-            return;
+            return false;
         }
 
         $short = $parcel < $listed * ( 100 - self::WEIGHT_TOLERANCE_PERCENT ) / 100;
 
         Rows::save_meta( $row->payment_hash, [ 'weight_checked' => [ 'parcel_g' => $parcel, 'listed_g' => $listed, 'short' => $short, 'at' => time() ] ] );
 
-        if ( $short ) {
-            Rules::incident( (int) $row->vendor_id, 'weight', $row->payment_hash, 2 );
+        if ( ! $short || (string) $row->status !== 'confirmed' || ! empty( $meta['psbt_type'] ) ) {
+            return false;
         }
+
+        self::escalate(
+            Rows::get( $row->payment_hash ),
+            'refund',
+            sprintf( __( '§10: das Paket wog %1$d g, das Inserat nennt %2$d g. Es gilt als nicht versendet; Kaufpreis und Gebühr gehen an den Käufer zurück.', 'sk-core' ), $parcel, $listed ),
+            (int) $row->vendor_id,
+            'weight'
+        );
+
+        return true;
     }
 
     /** The listing's shipping weight in grams, from WooCommerce's weight field. */

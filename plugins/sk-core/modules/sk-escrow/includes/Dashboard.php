@@ -93,6 +93,16 @@ final class Dashboard {
             </div>
 
             <div class="sk-form-group">
+                <label class="sk-form-label" for="weo_min_buyer_tier"><?php esc_html_e( 'Treuhand anbieten für Käufer ab Stufe', 'sk-core' ); ?></label>
+                <select class="sk-form-control" name="weo_min_buyer_tier" id="weo_min_buyer_tier">
+                    <?php foreach ( [ 0 => __( 'Stufe 0 – jeder', 'sk-core' ), 1 => __( 'Stufe 1 – mit abgeschlossenen Handeln oder Web of Trust', 'sk-core' ), 2 => __( 'Stufe 2 – erfahrene Konten', 'sk-core' ) ] as $tier => $label ) : ?>
+                        <option value="<?php echo (int) $tier; ?>" <?php selected( (int) get_user_meta( $user_id, Rules::MIN_BUYER_TIER_META, true ), $tier ); ?>><?php echo esc_html( $label ); ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <p class="help-block"><?php esc_html_e( 'Stufen nach §8 des Regelwerks. Neue Konten dürfen ohnehin nur bis 200’000 Sats über die Treuhand kaufen.', 'sk-core' ); ?></p>
+            </div>
+
+            <div class="sk-form-group">
                 <input type="submit" class="sk-btn sk-btn-theme" value="<?php esc_attr_e( 'Speichern', 'sk-core' ); ?>">
             </div>
         </form>
@@ -127,6 +137,7 @@ final class Dashboard {
             sk_add_notice( __( 'Ohne gültige Auszahlungsadresse lässt sich die Treuhand nicht anbieten.', 'sk-core' ), 'error' );
         }
         update_user_meta( $user_id, self::ENABLED_META, $enabled ? '1' : '' );
+        update_user_meta( $user_id, Rules::MIN_BUYER_TIER_META, max( 0, min( 2, (int) ( $_POST['weo_min_buyer_tier'] ?? 0 ) ) ) );
 
         if ( ! $errors ) {
             sk_add_notice( __( 'Treuhand-Einstellungen gespeichert.', 'sk-core' ), 'success' );

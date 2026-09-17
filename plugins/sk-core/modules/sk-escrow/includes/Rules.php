@@ -14,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
 final class Rules {
 
     /** The rulebook version new escrows are opened under (§12). */
-    const VERSION = '1.1';
+    const VERSION = '1.2';
 
     /** Service fee: percent of the price, and the floor in sats (§2). */
     const FEE_PERCENT = 10;
@@ -30,19 +30,26 @@ final class Rules {
     const TRADES_TIER1 = 3;
     const TRADES_TIER2 = 10;
 
+    /** §8: a trade counts for the tier from this price on, once per counterparty. */
+    const TRADE_MIN_SAT = 20000;
+
     /** Incidents within a year that force tier 0, and that block the escrow (§9). */
-    const INCIDENTS_DEMOTE = 2;
+    const INCIDENTS_DEMOTE = 1;
     const INCIDENTS_BLOCK  = 3;
     const INCIDENT_WINDOW  = YEAR_IN_SECONDS;
 
-    /** Goodwill claims (§7): share of the price, the cap, and one claim per this many seconds. */
-    const CLAIM_PERCENT = 50;
-    const CLAIM_MAX_SAT = 500000;
-    const CLAIM_EVERY   = YEAR_IN_SECONDS;
+    /** Goodwill claims (§7): tier needed, share of the price, the cap, and one claim per this many seconds. */
+    const CLAIM_TIER_MIN = 2;
+    const CLAIM_PERCENT  = 25;
+    const CLAIM_MAX_SAT  = 250000;
+    const CLAIM_EVERY    = YEAR_IN_SECONDS;
 
     const INCIDENTS_META = 'sk_escrow_incidents';
     const BLOCKED_META   = 'weo_escrow_blocked';
     const CLAIM_AT_META  = 'sk_escrow_claim_at';
+
+    /** Seller's choice (§8): the lowest buyer tier they accept an escrow from. */
+    const MIN_BUYER_TIER_META = 'weo_min_buyer_tier';
 
     // ── Fee ─────────────────────────────────────────────────────────────
 
@@ -58,9 +65,10 @@ final class Rules {
 
     /**
      * Escrows this user completed as buyer or seller: paid out, never
-     * disputed.
+     * disputed. Any price, any counterparty — used only to judge whether
+     * a counterparty is real (see trusted_counterparty()).
      */
-    public static function completed_trades( int $user_id ): int {
+    public static function raw_trades( int $user_id ): int {
         global $wpdb;
 
         return (int) $wpdb->get_var( $wpdb->prepare(
@@ -73,6 +81,73 @@ final class Rules {
             '%"settled_txid":"%',
             '%"dispute_at"%'
         ) );
+    }
+
+    /** A counterparty whose trades may count for someone else's tier: in the web of trust, or with trades of their own. */
+    public static function trusted_counterparty( int $user_id ): bool {
+        return self::in_web_of_trust( $user_id ) || self::raw_trades( $user_id ) >= self::TRADES_TIER1;
+    }
+
+    /**
+     * Completed trades that count for the tier (§8): paid out, never
+     * disputed, at least TRADE_MIN_SAT, each counterparty once, only
+     * trusted counterparties, and never with an account that shares a
+     * Bitcoin address with this one — two wallets of one person trading
+     * with each other are not trades.
+     */
+    public static function completed_trades( int $user_id ): int {
+        global $wpdb;
+
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            'SELECT buyer_id, vendor_id, metadata FROM ' . Rows::table() . " WHERE context = %s AND status = 'delivered'
+             AND ( buyer_id = %d OR vendor_id = %d ) AND amount_sats >= %d
+             AND metadata LIKE %s AND metadata NOT LIKE %s",
+            Rows::CONTEXT,
+            $user_id,
+            $user_id,
+            self::TRADE_MIN_SAT,
+            '%"settled_txid":"%',
+            '%"dispute_at"%'
+        ) ) ?: [];
+
+        // Every address this account has used, on its rows and in its settings.
+        $mine = array_filter( [
+            (string) get_user_meta( $user_id, Dashboard::PAYOUT_META, true ),
+            (string) get_user_meta( $user_id, Purchase::REFUND_META, true ),
+        ] );
+        $sides = [];
+
+        foreach ( $rows as $r ) {
+            $e         = json_decode( (string) $r->metadata, true )['escrow'] ?? [];
+            $is_buyer  = (int) $r->buyer_id === $user_id;
+            $mine[]    = (string) ( $is_buyer ? ( $e['refund_address'] ?? '' ) : ( $e['payout_address'] ?? '' ) );
+            $sides[]   = [ 'other' => $is_buyer ? (int) $r->vendor_id : (int) $r->buyer_id, 'theirs' => (string) ( $is_buyer ? ( $e['payout_address'] ?? '' ) : ( $e['refund_address'] ?? '' ) ) ];
+        }
+
+        $mine  = array_filter( array_unique( $mine ) );
+        $seen  = [];
+        $count = 0;
+
+        foreach ( $sides as $s ) {
+            $other = $s['other'];
+            if ( $other <= 0 || $other === $user_id || isset( $seen[ $other ] ) ) {
+                continue;
+            }
+            $seen[ $other ] = true;
+
+            $theirs = array_filter( [
+                $s['theirs'],
+                (string) get_user_meta( $other, Dashboard::PAYOUT_META, true ),
+                (string) get_user_meta( $other, Purchase::REFUND_META, true ),
+            ] );
+            if ( array_intersect( $mine, $theirs ) || ! self::trusted_counterparty( $other ) ) {
+                continue;
+            }
+
+            $count++;
+        }
+
+        return $count;
     }
 
     /** Is the user's proven key inside the marketplace's web of trust? */

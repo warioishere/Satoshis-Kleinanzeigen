@@ -11,7 +11,7 @@ require dirname( __DIR__ ) . '/tools/nostr-test/php/bootstrap.php';
 
 defined( 'WEO_OPT' ) || define( 'WEO_OPT', 'weo_options' );
 defined( 'WEO_DIR' ) || define( 'WEO_DIR', dirname( __DIR__ ) . '/modules/sk-escrow/' );
-foreach ( [ 'helpers', 'Rows', 'Rules', 'Pool', 'Deadlines', 'Dispute', 'Notify', 'Actions' ] as $f ) {
+foreach ( [ 'helpers', 'Rows', 'Rules', 'Pool', 'Deadlines', 'Dispute', 'Notify', 'Actions', 'Purchase', 'Dashboard' ] as $f ) {
     require_once dirname( __DIR__ ) . '/modules/sk-escrow/includes/' . $f . '.php';
 }
 
@@ -152,7 +152,7 @@ sk_check_eq( [ $b->status, Rows::meta( $b )['psbt_type'] ?? '', Rules::incidents
 $last = end( $GLOBALS['api_calls'] );
 sk_check_eq( [ $last['body']['kind'] ?? '', $last['body']['outputs'] ?? [] ], [ 'refund', [ 'bc1qbuyer' => 100000, $fee_address => 10000 ] ], 'no delivery scan: the API got buyer first, fee fixed, kind refund' );
 
-// Shipped 8 days ago, delivered 5 days ago (too light): payout, and the weight counts double.
+// Shipped 8 days ago, delivered 5 days ago, far too light (§10): counts as not shipped.
 $c = $mk_row( [ 'product_id' => 999999901 ], [], [ 'shipping' => [ 'carrier' => 'dhl', 'number' => 'JD1', 'at' => wp_date( 'Y-m-d H:i:s', time() - 8 * DAY_IN_SECONDS ) ] ] );
 add_post_meta( 999999901, '_weight', '1.0', true );
 add_filter( 'pre_option_woocommerce_weight_unit', fn() => 'kg' );
@@ -162,8 +162,16 @@ sk_check( str_contains( Rows::state_label( $c ), 'Zugestellt' ), 'state_label():
 sk_check( '' !== Deadlines::may_report( $c ), 'may_report(): closed three days after the scan' );
 Deadlines::check( $c );
 $c = Rows::get( $c->payment_hash );
-sk_check_eq( [ $c->status, Rows::meta( $c )['psbt_type'] ?? '', Rules::incidents( $user ) ], [ 'disputed', 'payout', 3 ], 'delivered, no report: payout built; the light parcel added a double incident' );
+sk_check_eq( [ $c->status, Rows::meta( $c )['psbt_type'] ?? '', Rules::incidents( $user ) ], [ 'disputed', 'refund', 2 ], 'too light: full refund built as if never shipped, incident for the seller' );
 sk_check_eq( Rows::meta( $c )['weight_checked']['short'] ?? null, true, 'weight_check(): 500 g against 1000 g listed is short' );
+sk_check( str_contains( (string) ( Rows::all_meta( $c )['dispute_reason'] ?? '' ), '§10' ), 'too light: the reason names §10' );
+
+// Delivered with a plausible weight and no report for 5 days: payout.
+$c2 = $mk_row( [ 'product_id' => 999999901 ], [], [ 'shipping' => [ 'carrier' => 'dhl', 'number' => 'JD1b', 'at' => wp_date( 'Y-m-d H:i:s', time() - 8 * DAY_IN_SECONDS ) ] ] );
+Deadlines::record_tracking( $c2->payment_hash, 'delivered', time() - 5 * DAY_IN_SECONDS, false, 950, 'manual', 1 );
+Deadlines::check( Rows::get( $c2->payment_hash ) );
+$c2 = Rows::get( $c2->payment_hash );
+sk_check_eq( [ $c2->status, Rows::meta( $c2 )['psbt_type'] ?? '', Rules::incidents( $user ) ], [ 'disputed', 'payout', 2 ], 'delivered, no report: payout built, no incident' );
 delete_post_meta( 999999901, '_weight' );
 
 // Delivered yesterday: the window is open, nothing runs out yet.
@@ -266,43 +274,92 @@ Dispute::open( Rows::get( $i->payment_hash ), $buyer, 'not_received', '' );
 $di = Dispute::get( Rows::get( $i->payment_hash ) );
 sk_check_eq( [ isset( $di['decision'] ), $di['decide_attempts'], '' !== $di['decide_error'] ], [ false, 1, true ], 'decide(): an unreadable answer is noted, not applied' );
 
-// ── Goodwill claims (§7) ──────────────────────────────────────────────────
-// The buyer of $f lost by decision and is named eligible. Settle the row,
-// give the buyer three completed trades for tier 1 and the fund a balance.
-$saved_claim_at = get_user_meta( $buyer, Rules::CLAIM_AT_META, true );
-delete_user_meta( $buyer, Rules::CLAIM_AT_META );
-$wpdb->update( Rows::table(), [ 'status' => 'delivered' ], [ 'payment_hash' => $f->payment_hash ] );
-Rows::save_meta( $f->payment_hash, [ 'settled_txid' => 'ab12' ] );
-for ( $i = 0; $i < 3; $i++ ) {
-    $mk_row( [ 'status' => 'delivered', 'vendor_id' => 610 ], [ 'settled_txid' => 'done' . $i ] );
+// ── Tiers from real trades only (§8, 1.2) ─────────────────────────────────
+// Trades of $user (610) as seller with made-up counterparties. A trade
+// counts once per counterparty, from 20'000 sats, only with a counterparty
+// that has trades of its own, never with an account sharing an address.
+delete_user_meta( $user, Rules::INCIDENTS_META );
+$cp = 900001;
+$trade = function ( int $counterparty, int $price = 50000, array $escrow = [] ) use ( $mk_row, $user ) {
+    return $mk_row( [ 'status' => 'delivered', 'vendor_id' => $user, 'buyer_id' => $counterparty, 'amount_sats' => $price ], array_merge( [ 'settled_txid' => 'ok' ], $escrow ) );
+};
+$make_trusted = function ( int $counterparty ) use ( $mk_row ) {
+    for ( $i = 0; $i < Rules::TRADES_TIER1; $i++ ) {
+        $mk_row( [ 'status' => 'delivered', 'vendor_id' => $counterparty, 'buyer_id' => 900900 + $i, 'amount_sats' => 30000 ], [ 'settled_txid' => 'cp' ] );
+    }
+};
+$trade( $cp, 50000 );                                   // untrusted counterparty: no trades of its own
+sk_check_eq( Rules::completed_trades( $user ), 0, 'completed_trades(): a counterparty without trades of its own does not count' );
+$make_trusted( $cp );
+sk_check_eq( Rules::completed_trades( $user ), 1, 'completed_trades(): a trusted counterparty counts' );
+$trade( $cp, 80000 );
+sk_check_eq( Rules::completed_trades( $user ), 1, 'completed_trades(): the same counterparty counts once' );
+$make_trusted( $cp + 1 );
+$trade( $cp + 1, 10000 );
+sk_check_eq( Rules::completed_trades( $user ), 1, 'completed_trades(): below 20\'000 sats nothing counts' );
+$make_trusted( $cp + 2 );
+$trade( $cp + 2, 50000, [ 'payout_address' => 'bc1qshared', 'refund_address' => 'bc1qshared' ] );
+sk_check_eq( Rules::completed_trades( $user ), 1, 'completed_trades(): a counterparty sharing an address is the same person' );
+for ( $i = 3; $i < 12; $i++ ) {
+    $make_trusted( $cp + $i );
+    $trade( $cp + $i );
 }
+sk_check_eq( Rules::completed_trades( $user ), 10, 'completed_trades(): ten distinct trusted counterparties' );
+sk_check_eq( Rules::tier( $user ), Rules::in_web_of_trust( $user ) ? 2 : 1, 'tier(): ten trades give tier 2 with, tier 1 without the web of trust' );
+Rules::incident( $user, 'test', str_repeat( 'f', 64 ) );
+sk_check_eq( Rules::tier( $user ), 0, 'tier(): one incident already forces tier 0 (1.2)' );
+delete_user_meta( $user, Rules::INCIDENTS_META );
+
+// ── Goodwill claims (§7) ──────────────────────────────────────────────────
+// A case decided for the buyer with the seller (610) named eligible.
+$saved_claim_at = get_user_meta( $user, Rules::CLAIM_AT_META, true );
+delete_user_meta( $user, Rules::CLAIM_AT_META );
+$GLOBALS['claude_reply'] = [
+    'outcome' => 'buyer', 'split_buyer_pct' => 100, 'transaction' => 'refund_fee', 'rules_applied' => [ '§5' ],
+    'reasoning' => 'Rücksendung zugestellt.', 'incident_for' => 'none',
+    'pool_claim_eligible' => [ 'buyer' => false, 'seller' => true ], 'flags' => [],
+];
+$k = $mk_row( [], [], [ 'shipping' => [ 'carrier' => 'dhl', 'number' => 'JD12', 'at' => wp_date( 'Y-m-d H:i:s', time() - 6 * DAY_IN_SECONDS ) ] ] );
+Deadlines::record_tracking( $k->payment_hash, 'delivered', time() - DAY_IN_SECONDS, false, 0, 'manual', 1 );
+Dispute::open( Rows::get( $k->payment_hash ), $buyer, 'not_received', '' );
+$k = Rows::get( $k->payment_hash );
+sk_check( '' !== Dispute::claim_eligible( $k, 'seller' ), 'claim_eligible(): nothing before settlement' );
+$wpdb->update( Rows::table(), [ 'status' => 'refunded' ], [ 'payment_hash' => $k->payment_hash ] );
+Rows::save_meta( $k->payment_hash, [ 'settled_txid' => 'ab12' ] );
+$k = Rows::get( $k->payment_hash );
 $fund_hash = bin2hex( random_bytes( 32 ) );
 Pool::add( Pool::KIND_FEE_SHARE, 5000, $fund_hash );
 $fund_before = Pool::balance();
-$f = Rows::get( $f->payment_hash );
 
-sk_check( Rules::tier( $buyer ) >= 1, 'tier(): three completed trades make tier 1', (string) Rules::tier( $buyer ) );
-sk_check( '' !== Dispute::claim_eligible( $f, 'seller' ), 'claim_eligible(): the side the decision favoured may not claim' );
-sk_check_eq( Dispute::claim_eligible( $f, 'buyer' ), '', 'claim_eligible(): the named side may' );
-sk_check_eq( Dispute::claim_amount( $f ), min( 50000, $fund_before ), 'claim_amount(): half the price, never more than the fund' );
-sk_check( '' !== Dispute::claim( $f, 'buyer', 'not an address' ), 'claim(): needs a Lightning address or invoice' );
-$n_before = Rules::incidents( $user );
-sk_check_eq( Dispute::claim( $f, 'buyer', 'me@sk.test' ), '', 'claim(): filed' );
-$f  = Rows::get( $f->payment_hash );
-$cl = Dispute::get( $f )['claim'];
-sk_check_eq( [ $cl['status'], $cl['amount'], $cl['user_id'], Rules::incidents( $user ) ], [ 'pending', min( 50000, $fund_before ), $buyer, $n_before + 1 ], 'claim(): pending, amount fixed, incident for the other side' );
-sk_check( '' !== Dispute::claim( $f, 'buyer', 'me@sk.test' ), 'claim(): only one per trade' );
-sk_check( in_array( $f->payment_hash, array_column( Dispute::pending_claims(), 'payment_hash' ), true ), 'pending_claims(): lists it for the admin' );
-sk_check_eq( Dispute::claim_settle( $f, 1, true, 'ref 123' ), '', 'claim_settle(): paid' );
-sk_check_eq( [ Dispute::get( Rows::get( $f->payment_hash ) )['claim']['status'], Pool::balance() ], [ 'paid', $fund_before - $cl['amount'] ], 'claim_settle(): the fund is debited' );
-sk_check( '' !== Dispute::claim_settle( Rows::get( $f->payment_hash ), 1, true, '' ), 'claim_settle(): not twice' );
+sk_check( '' !== Dispute::claim_eligible( $k, 'buyer' ), 'claim_eligible(): the side the decision favoured may not claim' );
+if ( Rules::tier( $user ) < Rules::CLAIM_TIER_MIN ) {
+    sk_check( str_contains( Dispute::claim_eligible( $k, 'seller' ), 'Stufe' ), 'claim_eligible(): below tier 2 the fund is closed' );
+    // Put the test key into the web of trust for the rest of this section.
+    $bound = \SK\Core\Trust\VendorKey::bound( $user );
+    add_filter( 'pre_transient_' . \SK\Modules\Reputation\WebOfTrust::TRANSIENT, fn() => [ substr( $bound, 0, \SK\Modules\Reputation\WebOfTrust::PREFIX ) => 1 ] );
+}
+sk_check_eq( Rules::tier( $user ), 2, 'tier(): 2 with ten trades and the web of trust' );
+sk_check_eq( Dispute::claim_eligible( $k, 'seller' ), '', 'claim_eligible(): the named side at tier 2 may' );
+sk_check_eq( Dispute::claim_amount( $k ), min( 25000, $fund_before ), 'claim_amount(): a quarter of the price, never more than the fund' );
+sk_check( '' !== Dispute::claim( $k, 'seller', 'not an address' ), 'claim(): needs a Lightning address or invoice' );
+$b_before = Rules::incidents( $buyer );
+sk_check_eq( Dispute::claim( $k, 'seller', 'me@sk.test' ), '', 'claim(): filed' );
+$k  = Rows::get( $k->payment_hash );
+$cl = Dispute::get( $k )['claim'];
+sk_check_eq( [ $cl['status'], $cl['amount'], $cl['user_id'], Rules::incidents( $buyer ) ], [ 'pending', min( 25000, $fund_before ), $user, $b_before ], 'claim(): pending, amount fixed, no incident yet for the other side' );
+sk_check( '' !== Dispute::claim( $k, 'seller', 'me@sk.test' ), 'claim(): only one per trade' );
+sk_check( in_array( $k->payment_hash, array_column( Dispute::pending_claims(), 'payment_hash' ), true ), 'pending_claims(): lists it for the admin' );
+sk_check_eq( Dispute::claim_settle( $k, 1, true, 'ref 123' ), '', 'claim_settle(): paid' );
+sk_check_eq( [ Dispute::get( Rows::get( $k->payment_hash ) )['claim']['status'], Pool::balance(), Rules::incidents( $buyer ) ], [ 'paid', $fund_before - $cl['amount'], $b_before + 1 ], 'claim_settle(): the fund is debited and only now the other side gets the incident' );
+sk_check( '' !== Dispute::claim_settle( Rows::get( $k->payment_hash ), 1, true, '' ), 'claim_settle(): not twice' );
 
 $wpdb->delete( Pool::table(), [ 'escrow_hash' => $fund_hash ], [ '%s' ] );
-$wpdb->delete( Pool::table(), [ 'escrow_hash' => $f->payment_hash ], [ '%s' ] );
+$wpdb->delete( Pool::table(), [ 'escrow_hash' => $k->payment_hash ], [ '%s' ] );
+delete_user_meta( $buyer, Rules::INCIDENTS_META );
 if ( '' === $saved_claim_at ) {
-    delete_user_meta( $buyer, Rules::CLAIM_AT_META );
+    delete_user_meta( $user, Rules::CLAIM_AT_META );
 } else {
-    update_user_meta( $buyer, Rules::CLAIM_AT_META, $saved_claim_at );
+    update_user_meta( $user, Rules::CLAIM_AT_META, $saved_claim_at );
 }
 
 foreach ( $made as $h ) {
