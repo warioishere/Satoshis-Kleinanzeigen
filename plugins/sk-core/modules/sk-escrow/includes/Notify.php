@@ -113,6 +113,24 @@ final class Notify {
         self::mail( (int) $row->vendor_id, sprintf( __( 'Treuhand abgeschlossen: %s', 'sk-core' ), self::title( $row ) ), $text );
     }
 
+    /** A deadline of the rulebook passed; the prescribed transaction awaits the signatures. */
+    public static function escalated( object $row, string $type, string $reason ): void {
+        $who = $type === 'payout'
+            ? __( 'Der Verkäufer signiert die Auszahlung unter „Verkäufe“, der Marktplatz zeichnet gegen.', 'sk-core' )
+            : __( 'Der Käufer signiert die Erstattung unter „Käufe“, der Marktplatz zeichnet gegen.', 'sk-core' );
+        $text = sprintf( __( "Frist nach dem Treuhand-Regelwerk abgelaufen. %1\$s\n%2\$s", 'sk-core' ), $reason, $who );
+
+        self::chat( $row, (int) $row->buyer_id, $text );
+        foreach ( [ (int) $row->buyer_id, (int) $row->vendor_id ] as $user_id ) {
+            self::mail( $user_id, sprintf( __( 'Treuhand: Frist abgelaufen bei %s', 'sk-core' ), self::title( $row ) ), $text );
+        }
+
+        $admin = get_option( 'admin_email' );
+        if ( $admin ) {
+            wp_mail( $admin, sprintf( 'Escrow-Frist: %s', self::title( $row ) ), $reason . "\n" . admin_url( 'admin.php?page=weo-disputes' ) );
+        }
+    }
+
     public static function disputed( object $row ): void {
         $text = __( 'Problem gemeldet. Die Treuhand ist eingefroren, der Marktplatz prüft und entscheidet über Auszahlung oder Erstattung.', 'sk-core' );
         self::chat( $row, (int) $row->buyer_id, $text );

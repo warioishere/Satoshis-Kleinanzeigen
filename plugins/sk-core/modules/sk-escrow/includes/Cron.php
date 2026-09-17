@@ -49,5 +49,8 @@ final class Cron {
             }
             Actions::sync( $row );
         }
+
+        // The rulebook's deadlines (§3) on every funded, still open escrow.
+        Deadlines::run();
     }
 }

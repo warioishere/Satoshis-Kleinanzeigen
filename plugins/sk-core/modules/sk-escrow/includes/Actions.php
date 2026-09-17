@@ -549,12 +549,18 @@ final class Actions {
             return;
         }
 
+        self::freeze( $row );
+        Notify::disputed( $row );
+    }
+
+    /** Put the order into dispute at the API: no party builds anything now. */
+    public static function freeze( object $row ): void {
         $meta = Rows::meta( $row );
-        if ( ! empty( $meta['order_id'] ) ) {
-            $res = weo_api_post( '/psbt/finalize', [ 'order_id' => $meta['order_id'], 'psbt' => '', 'state' => 'dispute' ] );
-            Rows::save_meta( $hash, [ 'state' => is_wp_error( $res ) ? ( $meta['state'] ?? '' ) : 'dispute', 'dispute_api_error' => is_wp_error( $res ) ? $res->get_error_message() : '' ] );
+        if ( empty( $meta['order_id'] ) ) {
+            return;
         }
 
-        Notify::disputed( $row );
+        $res = weo_api_post( '/psbt/finalize', [ 'order_id' => $meta['order_id'], 'psbt' => '', 'state' => 'dispute' ] );
+        Rows::save_meta( $row->payment_hash, [ 'state' => is_wp_error( $res ) ? ( $meta['state'] ?? '' ) : 'dispute', 'dispute_api_error' => is_wp_error( $res ) ? $res->get_error_message() : '' ] );
     }
 }

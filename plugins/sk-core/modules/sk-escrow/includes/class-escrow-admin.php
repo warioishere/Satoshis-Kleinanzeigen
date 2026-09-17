@@ -2,6 +2,7 @@
 if (!defined('ABSPATH')) exit;
 
 use SK\Modules\Escrow\Actions;
+use SK\Modules\Escrow\Deadlines;
 use SK\Modules\Escrow\Notify;
 use SK\Modules\Escrow\Rows;
 
@@ -30,10 +31,15 @@ class WEO_Admin {
   public function page() {
     if (!current_user_can('manage_woocommerce')) wp_die('Nicht erlaubt.');
 
+    if (!empty($_POST['weo_tracking']) && !empty($_POST['hash'])) {
+      $this->save_tracking(sanitize_text_field(wp_unslash($_POST['hash'])));
+    }
+
     $rows = Rows::by_status(['requested','pending','confirmed','delivered','disputed','refunded','expired'], 200);
 
     echo '<div class="wrap"><h1>Escrows</h1>';
-    echo '<table class="widefat fixed"><thead><tr><th>ID</th><th>Inserat</th><th>Käufer</th><th>Verkäufer</th><th>Betrag</th><th>Status</th><th>Treuhand</th></tr></thead><tbody>';
+    echo '<p>Sendungsstatus: was der Versender auf seiner Seite zur Sendungsnummer zeigt, hier eintragen (§1, §3 des Regelwerks). Der Zustellscan startet das Meldefenster, danach baut der Cron die Auszahlung.</p>';
+    echo '<table class="widefat fixed"><thead><tr><th>ID</th><th>Inserat</th><th>Käufer</th><th>Verkäufer</th><th>Betrag</th><th>Status</th><th>Versand</th><th>Treuhand</th></tr></thead><tbody>';
     foreach ($rows as $r) {
       $meta = Rows::meta($r);
       echo '<tr>';
@@ -43,10 +49,63 @@ class WEO_Admin {
       echo '<td>' . esc_html($this->user_label($r->vendor_id)) . '</td>';
       echo '<td>' . esc_html(number_format_i18n((int) $r->amount_sats)) . ' sats</td>';
       echo '<td>' . esc_html($r->status) . '</td>';
+      echo '<td>' . $this->shipping_cell($r) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
       echo '<td>' . esc_html(($meta['state'] ?? '') . (!empty($meta['address']) ? ' · ' . $meta['address'] : '') . (!empty($meta['settled_txid']) ? ' · tx ' . $meta['settled_txid'] : '')) . '</td>';
       echo '</tr>';
     }
     echo '</tbody></table></div>';
+  }
+
+  /** Shipping entry and carrier status of a row, with the form to record the status. */
+  private function shipping_cell(object $r): string {
+    $ship = Deadlines::shipping($r);
+    if (!$ship) {
+      return '—';
+    }
+
+    $t    = Deadlines::tracking($r);
+    $html = esc_html($ship['carrier'] . ' ' . $ship['number']) . '<br><small>versendet ' . esc_html($ship['at']) . '</small>';
+    if ($t['state'] !== '') {
+      $html .= '<br><small>Status: ' . esc_html($t['state'])
+        . ($t['delivered_at'] ? ', zugestellt ' . esc_html(wp_date('d.m.Y', $t['delivered_at'])) : '')
+        . ($t['signed'] ? ', mit Unterschrift' : '')
+        . ($t['weight_g'] ? ', ' . (int) $t['weight_g'] . ' g' : '')
+        . ' (' . esc_html($t['source']) . ')</small>';
+    }
+
+    if ($r->status !== 'confirmed') {
+      return $html;
+    }
+
+    $nonce = wp_create_nonce('weo_admin_' . $r->payment_hash);
+    $html .= '<form method="post" style="margin-top:6px;">'
+      . '<input type="hidden" name="hash" value="' . esc_attr($r->payment_hash) . '"><input type="hidden" name="weo_nonce" value="' . esc_attr($nonce) . '"><input type="hidden" name="weo_tracking" value="1">'
+      . '<select name="state"><option value="in_transit">unterwegs</option><option value="delivered">zugestellt</option><option value="lost">verloren</option></select> '
+      . '<input type="date" name="delivered_at" value="' . esc_attr(wp_date('Y-m-d')) . '" style="width:130px;"> '
+      . '<label><input type="checkbox" name="signed" value="1"> Unterschrift</label> '
+      . '<input type="number" name="weight_g" placeholder="Gramm" min="0" style="width:80px;"> '
+      . '<button class="button button-small">Eintragen</button></form>';
+
+    return $html;
+  }
+
+  private function save_tracking(string $hash) {
+    if (!wp_verify_nonce($_POST['weo_nonce'] ?? '', 'weo_admin_' . $hash)) {
+      echo '<div class="notice notice-error"><p>Ungültiger Sicherheits-Token.</p></div>';
+      return;
+    }
+    $row = Rows::get($hash);
+    if (!$row || $row->status !== 'confirmed') {
+      echo '<div class="notice notice-error"><p>Nur bei einer bezahlten, offenen Treuhand.</p></div>';
+      return;
+    }
+    $state = sanitize_key(wp_unslash($_POST['state'] ?? ''));
+    if (!in_array($state, ['in_transit', 'delivered', 'lost'], true)) {
+      return;
+    }
+    $delivered = strtotime(sanitize_text_field(wp_unslash($_POST['delivered_at'] ?? '')) . ' 12:00:00') ?: time();
+    Deadlines::record_tracking($hash, $state, $delivered, !empty($_POST['signed']), absint($_POST['weight_g'] ?? 0), 'manual', get_current_user_id());
+    echo '<div class="notice notice-success"><p>Sendungsstatus eingetragen.</p></div>';
   }
 
   public function disputes_page() {

@@ -137,12 +137,15 @@ final class Shipping {
 
         $payment = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE payment_hash = %s", $hash ) );
 
-        // Only the vendor of this payment, and only on the shop plan.
+        // Only the vendor of this payment, and only on the shop plan — except
+        // for an escrow, where shipping with tracking is the rule for everyone.
         if ( ! $payment || (int) $payment->vendor_id !== get_current_user_id() ) {
             wp_send_json_error( [ 'message' => __( 'Keine Berechtigung für diese Bestellung.', 'sk-core' ) ] );
         }
 
-        if ( ! Notify::is_shop_pack( (int) $payment->vendor_id ) ) {
+        $is_escrow = ( $payment->context ?? '' ) === 'escrow';
+
+        if ( ! $is_escrow && ! Notify::is_shop_pack( (int) $payment->vendor_id ) ) {
             wp_send_json_error( [ 'message' => __( 'Die Versandangabe gehört zum Shoptarif.', 'sk-core' ) ] );
         }
 
@@ -152,6 +155,10 @@ final class Shipping {
 
         if ( ! isset( self::carriers()[ $carrier ] ) ) {
             wp_send_json_error( [ 'message' => __( 'Bitte einen Versender wählen.', 'sk-core' ) ] );
+        }
+
+        if ( $is_escrow && ( $carrier === 'andere' || $number === '' ) ) {
+            wp_send_json_error( [ 'message' => __( 'Für die Treuhand braucht es einen der gelisteten Versender und eine Sendungsnummer (§3 des Regelwerks).', 'sk-core' ) ] );
         }
 
         if ( $carrier !== 'andere' && $number === '' ) {

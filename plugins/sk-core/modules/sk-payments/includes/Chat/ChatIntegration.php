@@ -381,9 +381,17 @@ class ChatIntegration {
             wp_send_json_error( [ 'message' => 'Zahlung ist nicht im Status "bestätigt".' ] );
         }
 
-        $confirmed = strtotime( $payment->confirmed_at );
-        if ( time() - $confirmed > 7 * DAY_IN_SECONDS ) {
-            wp_send_json_error( [ 'message' => 'Die 7-Tage-Frist für Problemmeldungen ist abgelaufen.' ] );
+        if ( ( $payment->context ?? '' ) === 'escrow' && class_exists( '\SK\Modules\Escrow\Deadlines' ) ) {
+            // The rulebook's window: until three days after the delivery scan.
+            $blocked = \SK\Modules\Escrow\Deadlines::may_report( $payment );
+            if ( $blocked !== '' ) {
+                wp_send_json_error( [ 'message' => $blocked ] );
+            }
+        } else {
+            $confirmed = strtotime( $payment->confirmed_at );
+            if ( time() - $confirmed > 7 * DAY_IN_SECONDS ) {
+                wp_send_json_error( [ 'message' => 'Die 7-Tage-Frist für Problemmeldungen ist abgelaufen.' ] );
+            }
         }
 
         $existing_meta = json_decode( $payment->metadata ?? '{}', true ) ?: [];

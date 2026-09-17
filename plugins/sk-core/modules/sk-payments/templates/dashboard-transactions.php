@@ -426,12 +426,14 @@ do_action( 'sk_dashboard_wrap_start' );
 
                         // Determined once, so the button in the footer and the
                         // form below it can't drift out of sync.
+                        $is_escrow = $p->context === 'escrow';
+
+                        // An escrow needs tracked shipping from every seller (§3 of the
+                        // rulebook), not only from shops.
                         $skp_show_ship_form = $tab === 'sales'
-                            && $skp_shop
+                            && ( $skp_shop || $is_escrow )
                             && ! $skp_ship
                             && in_array( $p->status, [ 'confirmed', 'delivered' ], true );
-
-                        $is_escrow = $p->context === 'escrow';
 
                         // Escrow: receipt is confirmed by signing the payout, not by a button here.
                         $can_confirm_delivery = $tab === 'purchases' && $p->status === 'confirmed' && ! $is_escrow;

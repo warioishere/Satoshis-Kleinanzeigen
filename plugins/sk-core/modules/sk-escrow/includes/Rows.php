@@ -162,6 +162,18 @@ final class Rows {
             case 'pending':
                 return __( 'Angenommen – Einzahlung in die Treuhand offen', 'sk-core' );
             case 'confirmed':
+                $delivered = class_exists( Deadlines::class ) ? Deadlines::delivered_at( $row ) : 0;
+                if ( $delivered ) {
+                    return sprintf(
+                        /* translators: 1: delivery date, 2: end of the report window */
+                        __( 'Zugestellt am %1$s – Probleme bis %2$s melden, danach wird ausgezahlt', 'sk-core' ),
+                        wp_date( 'd.m.Y', $delivered ),
+                        wp_date( 'd.m.Y', $delivered + Deadlines::REPORT_DAYS * DAY_IN_SECONDS )
+                    );
+                }
+                if ( class_exists( Deadlines::class ) && Deadlines::shipping( $row ) ) {
+                    return __( 'Versendet – Zustellung ausstehend', 'sk-core' );
+                }
                 return __( 'Einzahlung bestätigt – Ware kann verschickt werden', 'sk-core' );
             case 'delivered':
                 if ( ! empty( $meta['settled_txid'] ) ) {

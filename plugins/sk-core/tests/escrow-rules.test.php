@@ -10,18 +10,33 @@
 require dirname( __DIR__ ) . '/tools/nostr-test/php/bootstrap.php';
 
 defined( 'WEO_OPT' ) || define( 'WEO_OPT', 'weo_options' );
-foreach ( [ 'helpers', 'Rows', 'Rules', 'Pool', 'Notify', 'Actions' ] as $f ) {
+foreach ( [ 'helpers', 'Rows', 'Rules', 'Pool', 'Deadlines', 'Notify', 'Actions' ] as $f ) {
     require_once dirname( __DIR__ ) . '/modules/sk-escrow/includes/' . $f . '.php';
 }
 
 use SK\Modules\Escrow\Actions;
+use SK\Modules\Escrow\Deadlines;
 use SK\Modules\Escrow\Pool;
+use SK\Modules\Escrow\Rows;
 use SK\Modules\Escrow\Rules;
 
 $user = (int) ( getenv( 'SK_TEST_GENERATED' ) ?: 610 );
 $fee_address = 'bc1qtestfeeaddress00000000000000000000000';
 
-add_filter( 'pre_option_' . WEO_OPT, fn() => [ 'fee_address' => $fee_address ] );
+add_filter( 'pre_option_' . WEO_OPT, fn() => [ 'fee_address' => $fee_address, 'api_base' => 'http://127.0.0.1:1/api', 'api_key' => 'test' ] );
+
+// The escrow API, answered locally: every build hands out a PSBT, the
+// freeze is accepted. What was asked for is kept for the checks below.
+$GLOBALS['api_calls'] = [];
+add_filter( 'pre_http_request', function ( $pre, $args, $url ) {
+    if ( strpos( $url, 'http://127.0.0.1:1/api' ) !== 0 ) {
+        return $pre;
+    }
+    $GLOBALS['api_calls'][] = [ 'url' => $url, 'body' => json_decode( (string) ( $args['body'] ?? '' ), true ) ];
+    $body = strpos( $url, '/psbt/finalize' ) !== false ? [ 'hex' => '' ] : [ 'psbt' => 'cHNidP8BAFake' ];
+
+    return [ 'response' => [ 'code' => 200, 'message' => 'OK' ], 'headers' => [], 'body' => wp_json_encode( $body ), 'cookies' => [] ];
+}, 10, 3 );
 
 // ── Fee (§2) ──────────────────────────────────────────────────────────────
 sk_check_eq( Rules::fee_for( 10000 ), 3000, 'fee_for(): the floor applies below 30k' );
@@ -82,8 +97,91 @@ sk_check_eq( Pool::balance(), $before + 1500, 'Pool::balance(): sums the ledger'
 Pool::publish();
 sk_check_eq( Pool::published()['sats'], $before + 1500, 'Pool::publish(): the balance for the page' );
 
-// ── restore ───────────────────────────────────────────────────────────────
+// ── Business days (§3) ────────────────────────────────────────────────────
+$fri = strtotime( '2026-09-18 10:00:00' ); // a Friday
+sk_check_eq( wp_date( 'Y-m-d', Deadlines::add_business_days( $fri, 3 ) ), '2026-09-23', 'add_business_days(): Friday + 3 skips the weekend' );
+sk_check_eq( wp_date( 'Y-m-d', Deadlines::add_business_days( strtotime( '2026-12-24 10:00:00' ), 1 ) ), '2026-12-28', 'add_business_days(): Christmas and Boxing Day and the weekend are skipped' );
+sk_check_eq( Deadlines::is_business_day( strtotime( '2026-04-03 12:00:00' ) ), false, 'is_business_day(): Good Friday 2026 is none' );
+
+// ── Deadlines on rows (§3, §10), against the local fake API ───────────────
 global $wpdb;
+$buyer   = 1;
+$made    = [];
+$mk_row  = function ( array $over, array $escrow, array $top = [] ) use ( &$made, $wpdb, $user, $buyer ) {
+    $h = bin2hex( random_bytes( 32 ) );
+    $wpdb->insert( Rows::table(), array_merge( [
+        'vendor_id'       => $user,
+        'buyer_id'        => $buyer,
+        'product_id'      => 0,
+        'amount_sats'     => 100000,
+        'payment_hash'    => $h,
+        'payment_request' => '',
+        'status'          => 'confirmed',
+        'context'         => 'escrow',
+        'created_at'      => current_time( 'mysql' ),
+        'confirmed_at'    => wp_date( 'Y-m-d H:i:s', time() - 10 * DAY_IN_SECONDS ),
+        'metadata'        => wp_json_encode( array_merge( [ 'escrow' => array_merge( [ 'order_id' => 'e' . substr( $h, 0, 31 ), 'fee_sat' => 10000, 'payout_address' => 'bc1qseller', 'refund_address' => 'bc1qbuyer' ], $escrow ) ], $top ) ),
+    ], $over ) );
+    $made[] = $h;
+
+    return Rows::get( $h );
+};
+delete_user_meta( $user, Rules::INCIDENTS_META );
+delete_user_meta( $user, Rules::BLOCKED_META );
+
+// Not shipped within three business days: full refund, incident for the seller.
+$a = $mk_row( [], [] );
+Deadlines::check( $a );
+$a = Rows::get( $a->payment_hash );
+sk_check_eq( [ $a->status, Rows::meta( $a )['psbt_type'] ?? '', Rules::incidents( $user ) ], [ 'disputed', 'refund', 1 ], 'not shipped: disputed, full refund built, seller incident' );
+sk_check( str_contains( (string) ( Rows::all_meta( $a )['dispute_reason'] ?? '' ), '§3' ), 'not shipped: the reason names §3' );
+sk_check( in_array( '/psbt/build_refund', array_map( fn( $c ) => substr( $c['url'], strlen( 'http://127.0.0.1:1/api' ) ), $GLOBALS['api_calls'] ), true ), 'not shipped: build_refund was asked of the API' );
+
+// Shipped, but still within the three business days at the time: nothing happens.
+$fresh = $mk_row( [ 'confirmed_at' => wp_date( 'Y-m-d H:i:s', time() - HOUR_IN_SECONDS ) ], [] );
+Deadlines::check( $fresh );
+sk_check_eq( Rows::get( $fresh->payment_hash )->status, 'confirmed', 'freshly paid: the clock has not run out' );
+
+// Shipped 20 days ago, no delivery scan: refund with the fee kept, no incident.
+$b = $mk_row( [], [], [ 'shipping' => [ 'carrier' => 'post-ch', 'number' => '99.00.123', 'at' => wp_date( 'Y-m-d H:i:s', time() - 20 * DAY_IN_SECONDS ) ] ] );
+Deadlines::check( $b );
+$b = Rows::get( $b->payment_hash );
+sk_check_eq( [ $b->status, Rows::meta( $b )['psbt_type'] ?? '', Rules::incidents( $user ) ], [ 'disputed', 'refund_fee', 1 ], 'no delivery scan in 14 days: refund with fee kept, no new incident' );
+$last = end( $GLOBALS['api_calls'] );
+sk_check_eq( [ $last['body']['kind'] ?? '', $last['body']['outputs'] ?? [] ], [ 'refund', [ 'bc1qbuyer' => 100000, $fee_address => 10000 ] ], 'no delivery scan: the API got buyer first, fee fixed, kind refund' );
+
+// Shipped 8 days ago, delivered 5 days ago (too light): payout, and the weight counts double.
+$c = $mk_row( [ 'product_id' => 999999901 ], [], [ 'shipping' => [ 'carrier' => 'dhl', 'number' => 'JD1', 'at' => wp_date( 'Y-m-d H:i:s', time() - 8 * DAY_IN_SECONDS ) ] ] );
+add_post_meta( 999999901, '_weight', '1.0', true );
+add_filter( 'pre_option_woocommerce_weight_unit', fn() => 'kg' );
+Deadlines::record_tracking( $c->payment_hash, 'delivered', time() - 5 * DAY_IN_SECONDS, false, 500, 'manual', 1 );
+$c = Rows::get( $c->payment_hash );
+sk_check( str_contains( Rows::state_label( $c ), 'Zugestellt' ), 'state_label(): shows the delivery' );
+sk_check( '' !== Deadlines::may_report( $c ), 'may_report(): closed three days after the scan' );
+Deadlines::check( $c );
+$c = Rows::get( $c->payment_hash );
+sk_check_eq( [ $c->status, Rows::meta( $c )['psbt_type'] ?? '', Rules::incidents( $user ) ], [ 'disputed', 'payout', 3 ], 'delivered, no report: payout built; the light parcel added a double incident' );
+sk_check_eq( Rows::meta( $c )['weight_checked']['short'] ?? null, true, 'weight_check(): 500 g against 1000 g listed is short' );
+delete_post_meta( 999999901, '_weight' );
+
+// Delivered yesterday: the window is open, nothing runs out yet.
+$d = $mk_row( [], [], [ 'shipping' => [ 'carrier' => 'dhl', 'number' => 'JD2', 'at' => wp_date( 'Y-m-d H:i:s', time() - 3 * DAY_IN_SECONDS ) ] ] );
+Deadlines::record_tracking( $d->payment_hash, 'delivered', time() - DAY_IN_SECONDS, true, 0, 'manual', 1 );
+$d = Rows::get( $d->payment_hash );
+sk_check_eq( Deadlines::may_report( $d ), '', 'may_report(): open the day after delivery' );
+Deadlines::check( $d );
+sk_check_eq( Rows::get( $d->payment_hash )->status, 'confirmed', 'delivered yesterday: still open' );
+
+// A transaction already being signed is left alone.
+$e = $mk_row( [], [ 'psbt_type' => 'payout', 'psbt' => 'x' ] );
+Deadlines::check( $e );
+sk_check_eq( Rows::get( $e->payment_hash )->status, 'confirmed', 'signing in progress: the clock does not interfere' );
+
+foreach ( $made as $h ) {
+    $wpdb->delete( Rows::table(), [ 'payment_hash' => $h ], [ '%s' ] );
+}
+
+// ── restore ───────────────────────────────────────────────────────────────
 $wpdb->delete( Pool::table(), [ 'escrow_hash' => $hash ], [ '%s' ] );
 Pool::publish();
 foreach ( [ Rules::INCIDENTS_META => $saved_incidents, Rules::BLOCKED_META => $saved_blocked ] as $k => $v ) {
