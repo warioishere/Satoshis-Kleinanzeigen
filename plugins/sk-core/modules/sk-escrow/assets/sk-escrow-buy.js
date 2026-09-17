@@ -41,6 +41,7 @@
         $('#weo-escrow-error').hide();
         if (!/^bc1[0-9a-z]{8,87}$/i.test(refund)) { error(t('addrBad')); return; }
         if (!xpub) { error(t('xpubMissing')); return; }
+        if (!$('#weo_rules_ok').is(':checked')) { error(t('rulesMissing')); return; }
 
         $btn.prop('disabled', true).text(t('working'));
 
@@ -51,7 +52,8 @@
             variant: pending.variant,
             note: pending.note,
             xpub: xpub,
-            refund_address: refund
+            refund_address: refund,
+            rules_ok: 1
         }, function (res) {
             $btn.prop('disabled', false).text($btn.data('label') || $btn.text());
             if (res && res.success) {

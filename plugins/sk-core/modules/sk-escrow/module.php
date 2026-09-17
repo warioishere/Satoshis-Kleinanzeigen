@@ -48,6 +48,8 @@ final class Module {
         }
 
         require_once WEO_DIR . 'includes/Rows.php';
+        require_once WEO_DIR . 'includes/Rules.php';
+        require_once WEO_DIR . 'includes/Pool.php';
         require_once WEO_DIR . 'includes/Notify.php';
         require_once WEO_DIR . 'includes/Purchase.php';
         require_once WEO_DIR . 'includes/Actions.php';

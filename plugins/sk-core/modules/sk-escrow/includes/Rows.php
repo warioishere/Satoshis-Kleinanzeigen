@@ -25,8 +25,9 @@ defined( 'ABSPATH' ) || exit;
  * metadata.escrow keys:
  *   buyer_xpub, refund_address, seller_xpub, payout_address, descriptor,
  *   address, watch_id, order_id, deposit_sat, fee_est_sat, state (API state),
- *   funding_txid, requested_at, accepted_at, psbt_type (payout|refund),
- *   signed (list of roles), settled_txid, note (decline reason)
+ *   funding_txid, requested_at, accepted_at, psbt_type (payout|refund|refund_fee),
+ *   signed (list of roles), settled_txid, note (decline reason),
+ *   fee_sat (service fee held with the price, §2), rules_version (§12)
  */
 final class Rows {
 

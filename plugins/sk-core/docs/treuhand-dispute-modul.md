@@ -4,10 +4,16 @@ Stand 17.09.2026. Regelwerk: `docs/treuhand-regelwerk-v1.html`, Fassung 1.1 (§-
 
 **Leitplanke aus §1:** Satoshis Kleinanzeigen darf das Treuhandgeld nie allein bewegen können. Jede Änderung am Modul, die dem Marktplatzschlüssel allein eine Auszahlung erlaubt, verletzt das Regelwerk und die rechtliche Grundlage. Es gibt kein Pfand mehr (1.0 hatte eines); nichts wird von Verkäufern gehalten.
 
+## Stand der Umsetzung
+
+- **Stufe A gebaut (17.09.2026, dev):** `Rules.php` (Zahlen des Regelwerks, Stufen, Vorfälle, `refusal()`), `Pool.php` (Kontobuch `sk_escrow_pool`, Tagesstand in Option `sk_escrow_pool_published`), Gebühr in der Einzahlung mit eigenem Ausgang, Regelwerks-Haken und Fassung auf der Zeile, Stufen-Limit beim Kauf, Sperre bei Annahme, drei PSBT-Typen (`payout`, `refund`, `refund_fee`) mit gemeinsamem `Actions::build()`. Prüfskript: `tests/escrow-rules.test.php`.
+- **Entschieden:** Gebühr liegt mit dem Preis in der 2-aus-3-Einzahlung (nicht per Lightning), damit niemand einer Rechnung nachläuft und eine Einigung nach §6 die Gebühr mit aufteilen kann. Einstellung `fee_address` (SK-Ausgang) ist Pflicht für `weo_enabled()`.
+- **Offen:** ob `/psbt/build` an der Escrow-API die Käuferadresse als Ausgang zulässt (`refund_fee`); Fondsstand auf der Seite anzeigen (Shortcode erst bei Freischaltung, das Modul ist auf beiden Seiten aus); Tracking-Quelle für Stufe B (Aggregator wie Ship24/17TRACK gegen kleinen Monatsbetrag, mit manueller Admin-Eintragung als Rückfall; Entscheidung des Betreibers offen).
+
 ## 1. Geld: Gebühr und Kulanzfonds (§2, §7)
 
-- **Servicegebühr 10 %, min. 3'000 Sats**, vom Käufer zusätzlich zum Kaufpreis eingezahlt. Beim Einzahlen als eigener Betrag geführt (Meta auf der Escrow-Zeile: `fee_sats`), nie Teil der Auszahlung an den Verkäufer. Erstattung nur nach §3 Zeile 1 (Verkäufer versendet nicht).
-- **Kulanzfonds**: ein Kontobuch über Plattformgeld, keine fremden Gelder. Tabelle `sk_escrow_pool` (`id, ts, escrow_id, kind ∈ {fee_share, claim_payout}, sats, user_id`). Stand = Summe; monatlich per Cron in eine Option, die Regelwerk-Seite zeigt sie. Auszahlung eines Antrags über die bestehende NWC-Verbindung der Plattform-Wallet an eine Lightning-Adresse des Antragstellers.
+- **Servicegebühr 10 %, min. 3'000 Sats** (`Rules::fee_for`), liegt mit dem Kaufpreis in der Treuhand (Meta `fee_sat`; API-Betrag = Preis + Gebühr, Einzahlung = plus Netzwerkreserve). Bei `payout` und `refund_fee` geht sie als zweiter Ausgang an `fee_address`, bei `refund` (nicht versendet, §3) zurück an den Käufer.
+- **Kulanzfonds**: ein Kontobuch über Plattformgeld, keine fremden Gelder. Tabelle `sk_escrow_pool` (`id, ts, kind ∈ {fee_share, claim_payout}, sats, escrow_hash, user_id`), je Escrow und Art nur einmal. `settle()` bucht die Hälfte der Gebühr. Stand = Summe; der Cron schreibt ihn täglich in die Option, die Regelwerk-Seite soll sie zeigen. Auszahlung eines Antrags über die bestehende NWC-Verbindung der Plattform-Wallet an eine Lightning-Adresse des Antragstellers.
 - **Anträge (§7)**: Formular im Dashboard der Seite, die nach §4/§5 verloren hat, nach Abschluss des Disputs. Prüfung automatisch: Stufe ≥ 1, kein Antrag in 12 Monaten (User-Meta `sk_escrow_claim_at`), Betrag = min(50 % Kaufpreis, 500'000, Fondsstand). Vorfall beim Gegenkonto zählen (User-Meta `sk_escrow_incidents`, Liste von Zeitstempeln). Auszahlung nach Bestätigung durch SK. Wortlaut überall „Kulanz“, nie „Anspruch“, „Versicherung“, „Schutz“ oder „Prämie“.
 
 ## 2. Versand: Tracking als einzige Tatsache (§1, §3, §4, §5, §10)

@@ -33,6 +33,11 @@ final class Cron {
             }
         }
 
+        // The fund's balance for the rulebook page (§2), once a day.
+        if ( Pool::published()['at'] !== wp_date( 'Y-m-d' ) ) {
+            Pool::publish();
+        }
+
         if ( ! weo_enabled() ) {
             return;
         }

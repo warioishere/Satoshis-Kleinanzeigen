@@ -87,10 +87,18 @@ final class Actions {
             wp_send_json_error( [ 'message' => __( 'Die drei Schlüssel müssen verschieden sein.', 'sk-core' ) ] );
         }
 
+        // The seller's standing (§9); the buyer's tier was checked at the request.
+        if ( Rules::blocked( (int) $row->vendor_id ) ) {
+            wp_send_json_error( [ 'message' => __( 'Für dein Konto ist die Treuhand gesperrt (§9 des Regelwerks).', 'sk-core' ) ] );
+        }
+
+        // Price and service fee sit in the escrow together (§2); the fee
+        // leaves as its own output at settlement.
+        $escrowed = (int) $row->amount_sats + (int) ( $meta['fee_sat'] ?? 0 );
         $order_id = Rows::order_id( $row );
         $res      = weo_api_post( '/orders', [
             'order_id'   => $order_id,
-            'amount_sat' => (int) $row->amount_sats,
+            'amount_sat' => $escrowed,
             'buyer'      => [ 'xpub' => $meta['buyer_xpub'] ],
             'seller'     => [ 'xpub' => $seller_xpub ],
             'escrow'     => [ 'xpub' => $escrow_xpub ],
@@ -108,7 +116,7 @@ final class Actions {
 
         $status  = weo_api_get( '/orders/' . rawurlencode( $order_id ) . '/status' );
         $fee_est = is_wp_error( $status ) ? 0 : (int) ( $status['fee_est_sat'] ?? 0 );
-        $deposit = (int) $row->amount_sats + $fee_est;
+        $deposit = $escrowed + $fee_est;
         $bip21   = 'bitcoin:' . $res['escrow_address'] . '?amount=' . number_format( $deposit / 100000000, 8, '.', '' );
 
         if ( ! Rows::set_status( $row->payment_hash, 'requested', 'pending', [ 'verify_url' => $res['escrow_address'], 'payment_request' => $bip21 ] ) ) {
@@ -270,7 +278,7 @@ final class Actions {
         // In a dispute only the admin opens a transaction; the favoured
         // party counter-signs it.
         if ( $row->status === 'disputed' ) {
-            $favoured = $type === 'refund' ? 'buyer' : 'seller';
+            $favoured = $type === 'payout' ? 'seller' : 'buyer';
             if ( $open === $type && $role === $favoured ) {
                 return '';
             }
@@ -297,10 +305,66 @@ final class Actions {
         return __( 'Dieser Schritt ist im aktuellen Zustand nicht möglich.', 'sk-core' );
     }
 
+    /**
+     * payout:     price to the seller, fee to the marketplace.
+     * refund:     everything back to the buyer, fee included — the seller
+     *             never shipped (§3) or refunds before shipping.
+     * refund_fee: price back to the buyer, fee to the marketplace — every
+     *             other refund (§2). Only the admin opens this one.
+     */
+    const TYPES = [ 'payout', 'refund', 'refund_fee' ];
+
     private function posted_type(): string {
         $type = sanitize_key( wp_unslash( $_POST['type'] ?? 'payout' ) );
 
-        return $type === 'refund' ? 'refund' : 'payout';
+        return in_array( $type, self::TYPES, true ) ? $type : 'payout';
+    }
+
+    /**
+     * What a settlement pays (§2). The full refund is built by the API
+     * from the stored refund address; the other two name their outputs.
+     */
+    public static function outputs( object $row, string $type ): array {
+        $meta = Rows::meta( $row );
+        $fee  = (int) ( $meta['fee_sat'] ?? 0 );
+        $to   = (string) ( $type === 'payout' ? ( $meta['payout_address'] ?? '' ) : ( $meta['refund_address'] ?? '' ) );
+        $out  = [ $to => (int) $row->amount_sats ];
+
+        $fee_address = (string) weo_get_option( 'fee_address', '' );
+        if ( $fee > 0 && $fee_address !== '' && $type !== 'refund' ) {
+            $out[ $fee_address ] = ( $out[ $fee_address ] ?? 0 ) + $fee;
+        }
+
+        return $out;
+    }
+
+    /**
+     * Build the transaction at the API. Shared by the parties' signing
+     * flow and the admin's dispute resolution.
+     *
+     * @return array|\WP_Error the API answer with 'psbt'
+     */
+    public static function build( object $row, string $type ) {
+        $meta = Rows::meta( $row );
+
+        if ( $type === 'refund' ) {
+            return weo_api_post( '/psbt/build_refund', [
+                'order_id'    => $meta['order_id'],
+                'address'     => $meta['refund_address'],
+                'rbf'         => true,
+                'target_conf' => 3,
+            ] );
+        }
+
+        // ponytail: refund_fee assumes /psbt/build accepts the buyer's
+        // address as an output; confirm at the API before the first
+        // real dispute, else build_refund needs a second output.
+        return weo_api_post( '/psbt/build', [
+            'order_id'    => $meta['order_id'],
+            'outputs'     => self::outputs( $row, $type ),
+            'rbf'         => true,
+            'target_conf' => 3,
+        ] );
     }
 
     public function ajax_psbt(): void {
@@ -330,22 +394,7 @@ final class Actions {
             return $meta;
         }
 
-        $order_id = $meta['order_id'];
-        if ( $type === 'refund' ) {
-            $res = weo_api_post( '/psbt/build_refund', [
-                'order_id'    => $order_id,
-                'address'     => $meta['refund_address'],
-                'rbf'         => true,
-                'target_conf' => 3,
-            ] );
-        } else {
-            $res = weo_api_post( '/psbt/build', [
-                'order_id'    => $order_id,
-                'outputs'     => [ $meta['payout_address'] => (int) $row->amount_sats ],
-                'rbf'         => true,
-                'target_conf' => 3,
-            ] );
-        }
+        $res = self::build( $row, $type );
 
         if ( is_wp_error( $res ) || empty( $res['psbt'] ) ) {
             wp_send_json_error( [ 'message' => is_wp_error( $res ) ? $res->get_error_message() : __( 'PSBT konnte nicht erstellt werden.', 'sk-core' ) ] );
@@ -437,9 +486,15 @@ final class Actions {
         }
 
         $txid = (string) $tx['txid'];
-        Rows::save_meta( $row->payment_hash, [ 'settled_txid' => $txid, 'settled_at' => current_time( 'mysql' ), 'state' => $type === 'refund' ? 'refunded' : 'completed' ] );
+        Rows::save_meta( $row->payment_hash, [ 'settled_txid' => $txid, 'settled_at' => current_time( 'mysql' ), 'state' => $type === 'payout' ? 'completed' : 'refunded' ] );
 
-        if ( $type === 'refund' ) {
+        // The fee reached the marketplace: half of it is the fund's (§2).
+        $fee = (int) ( $meta['fee_sat'] ?? 0 );
+        if ( $type !== 'refund' && $fee > 0 ) {
+            Pool::add( Pool::KIND_FEE_SHARE, Rules::fund_share( $fee ), $row->payment_hash );
+        }
+
+        if ( $type !== 'payout' ) {
             Rows::set_status( $row->payment_hash, (string) $row->status, 'refunded' );
         } else {
             // Disputes resolved in favour of the seller end up here too.

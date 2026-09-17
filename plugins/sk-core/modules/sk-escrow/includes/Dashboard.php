@@ -180,7 +180,7 @@ final class Dashboard {
                 <div class="weo-deposit">
                     <?php if ( $role === 'buyer' ) : ?>
                         <p><strong><?php echo esc_html( sprintf( __( 'Einzuzahlen: %s sats', 'sk-core' ), number_format_i18n( (int) ( $meta['deposit_sat'] ?? $p->amount_sats ) ) ) ); ?></strong>
-                            <span class="description"><?php echo esc_html( sprintf( __( '(Preis %1$s + Reserve für die Netzwerkgebühr %2$s)', 'sk-core' ), number_format_i18n( (int) $p->amount_sats ), number_format_i18n( (int) ( $meta['fee_est_sat'] ?? 0 ) ) ) ); ?></span></p>
+                            <span class="description"><?php echo esc_html( sprintf( __( '(Preis %1$s + Servicegebühr %2$s + Reserve für die Netzwerkgebühr %3$s)', 'sk-core' ), number_format_i18n( (int) $p->amount_sats ), number_format_i18n( (int) ( $meta['fee_sat'] ?? 0 ) ), number_format_i18n( (int) ( $meta['fee_est_sat'] ?? 0 ) ) ) ); ?></span></p>
                         <p class="weo-verify" aria-live="polite"></p>
                         <div class="weo-qr-box">
                             <?php if ( class_exists( QrImage::class ) && ! empty( $p->payment_request ) ) : ?>
@@ -216,11 +216,11 @@ final class Dashboard {
                     <?php
                     // In a dispute the admin picks the transaction; only the
                     // favoured party gets a button.
-                    $may_counter = $status !== 'disputed' || $role === ( $type === 'refund' ? 'buyer' : 'seller' );
+                    $may_counter = $status !== 'disputed' || $role === ( $type === 'payout' ? 'seller' : 'buyer' );
                     ?>
                     <?php if ( $type !== '' && ! $mine && $may_counter ) : ?>
                         <p><button type="button" class="sk-btn sk-btn-theme sk-btn-sm weo-sign-start" data-type="<?php echo esc_attr( $type ); ?>"><i class="fas fa-pen"></i>
-                            <?php echo $type === 'refund' ? esc_html__( 'Erstattung signieren', 'sk-core' ) : esc_html__( 'Auszahlung signieren', 'sk-core' ); ?></button></p>
+                            <?php echo $type === 'payout' ? esc_html__( 'Auszahlung signieren', 'sk-core' ) : esc_html__( 'Erstattung signieren', 'sk-core' ); ?></button></p>
                     <?php elseif ( $type !== '' && $mine ) : ?>
                         <p class="description"><?php echo esc_html( sprintf( __( 'Deine Signatur liegt vor. Es fehlt noch die des %s.', 'sk-core' ), $other === 'buyer' ? __( 'Käufers', 'sk-core' ) : __( 'Verkäufers', 'sk-core' ) ) ); ?></p>
                     <?php endif; ?>

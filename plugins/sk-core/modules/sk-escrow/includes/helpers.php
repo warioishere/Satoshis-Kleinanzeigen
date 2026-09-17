@@ -14,7 +14,8 @@ function weo_enabled() {
   return weo_get_option('vendor_escrow_enabled', '') === '1'
     && weo_get_option('api_base', '') !== ''
     && weo_get_option('api_key', '') !== ''
-    && weo_get_option('escrow_xpub', '') !== '';
+    && weo_get_option('escrow_xpub', '') !== ''
+    && weo_validate_btc_address((string) weo_get_option('fee_address', ''));
 }
 
 function weo_api_post($endpoint, $body = []) {
@@ -204,6 +205,7 @@ function weo_enqueue_signer() {
       'invalidWords' => __('Ungültige Wortliste.', 'sk-core'),
       'addrBad'      => __('Bitte eine gültige Bitcoin-Adresse (bc1…) angeben.', 'sk-core'),
       'xpubMissing'  => __('Bitte zuerst einen Schlüssel erzeugen oder einen xpub eintragen.', 'sk-core'),
+      'rulesMissing' => __('Bitte bestätige, dass du das Treuhand-Regelwerk gelesen hast.', 'sk-core'),
       'working'      => __('Bitte warten …', 'sk-core'),
       'netError'     => __('Verbindungsfehler. Bitte erneut versuchen.', 'sk-core'),
       'confirmRelease' => __('Du bestätigst den Erhalt und gibst die Auszahlung an den Verkäufer frei. Das lässt sich nicht rückgängig machen.', 'sk-core'),

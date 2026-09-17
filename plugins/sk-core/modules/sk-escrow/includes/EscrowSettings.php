@@ -85,6 +85,13 @@ class EscrowSettings {
                 'default' => $this->legacy( 'escrow_xpub', '' ),
                 'desc'    => __( 'Der dritte Schlüssel im 2-von-3-Multisig.', 'sk-core' ),
             ],
+            'fee_address' => [
+                'name'    => 'fee_address',
+                'label'   => __( 'Adresse für die Servicegebühr (bc1…)', 'sk-core' ),
+                'type'    => 'text',
+                'default' => $this->legacy( 'fee_address', '' ),
+                'desc'    => __( 'Die Gebühr liegt mit dem Kaufpreis in der Treuhand und wird bei der Auszahlung als zweiter Ausgang hierhin gezahlt (§2 des Regelwerks). Ohne Adresse ist die Treuhand nicht verfügbar.', 'sk-core' ),
+            ],
             'weo_flow_header' => [
                 'name'  => 'weo_flow_header',
                 'label' => __( 'Ablauf', 'sk-core' ),
@@ -140,7 +147,7 @@ class EscrowSettings {
          */
         $merged = $current;
 
-        foreach ( [ 'api_base', 'escrow_xpub', 'min_conf', 'api_key', 'hmac_secret', 'timeout_days' ] as $key ) {
+        foreach ( [ 'api_base', 'escrow_xpub', 'fee_address', 'min_conf', 'api_key', 'hmac_secret', 'timeout_days' ] as $key ) {
             if ( isset( $new_values[ $key ] ) ) {
                 $merged[ $key ] = $new_values[ $key ];
             }

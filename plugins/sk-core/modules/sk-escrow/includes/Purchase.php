@@ -70,6 +70,23 @@ final class Purchase {
                     <input type="text" id="weo_buyer_xpub" value="" placeholder="xpub…" autocomplete="off" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e8ecf0;font-size:13px;padding:8px;font-family:monospace;">
                 </label></p>
                 <?php echo weo_keygen_html( 'weo_buyer_xpub' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                <p style="margin:12px 0 0;color:#8a9bb0;font-size:13px;line-height:1.5;">
+                    <?php echo esc_html( sprintf(
+                        /* translators: 1: fee percent, 2: minimum fee in sats */
+                        __( 'Servicegebühr: %1$d %% des Preises, mindestens %2$s Sats. Sie wird mit dem Preis in die Treuhand eingezahlt und bei der Auszahlung an den Marktplatz gezahlt.', 'sk-core' ),
+                        Rules::FEE_PERCENT,
+                        number_format_i18n( Rules::FEE_MIN_SAT )
+                    ) ); ?>
+                </p>
+                <p style="margin:8px 0 0;font-size:13px;"><label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;">
+                    <input type="checkbox" id="weo_rules_ok" value="1" style="margin-top:3px;">
+                    <span><?php echo wp_kses( sprintf(
+                        /* translators: 1: link to the rulebook, 2: rulebook version */
+                        __( 'Ich habe das <a href="%1$s" target="_blank" rel="noopener" style="color:#f7931a;">Treuhand-Regelwerk</a> (Fassung %2$s) gelesen. Es legt vorab fest, wie jeder Streitfall ausgeht.', 'sk-core' ),
+                        esc_url( home_url( '/treuhand-regelwerk/' ) ),
+                        Rules::VERSION
+                    ), [ 'a' => [ 'href' => [], 'target' => [], 'rel' => [], 'style' => [] ] ] ); ?></span>
+                </label></p>
                 <p id="weo-escrow-error" style="display:none;margin:8px 0 0;color:#e05252;font-size:13px;"></p>
                 <button type="button" id="weo-escrow-submit" data-product="<?php echo esc_attr( $product_id ); ?>"
                         style="display:block;width:100%;padding:12px;margin-top:14px;background:#f7931a;border:none;border-radius:8px;color:#fff;font-size:15px;font-weight:600;cursor:pointer;">
@@ -117,6 +134,17 @@ final class Purchase {
         $title       = Variant::title( $product, $variant_key );
         if ( ! weo_validate_amount( $amount_sats ) ) {
             wp_send_json_error( [ 'message' => __( 'Inserat hat keinen gültigen Preis.', 'sk-core' ) ] );
+        }
+
+        if ( empty( $_POST['rules_ok'] ) ) {
+            wp_send_json_error( [ 'message' => __( 'Bitte bestätige, dass du das Treuhand-Regelwerk gelesen hast.', 'sk-core' ) ] );
+        }
+
+        // The buyer's tier and standing (§8, §9); the seller's are checked
+        // when they accept.
+        $refusal = Rules::refusal( $buyer_id, $amount_sats );
+        if ( $refusal !== '' ) {
+            wp_send_json_error( [ 'message' => $refusal ] );
         }
 
         $note = isset( $_POST['note'] ) ? trim( mb_substr( sanitize_textarea_field( wp_unslash( $_POST['note'] ) ), 0, 500 ) ) : '';
@@ -173,6 +201,8 @@ final class Purchase {
                 'buyer_xpub'     => $xpub,
                 'refund_address' => $refund,
                 'requested_at'   => current_time( 'mysql' ),
+                'fee_sat'        => Rules::fee_for( $amount_sats ),
+                'rules_version'  => Rules::VERSION,
             ],
         ];
 

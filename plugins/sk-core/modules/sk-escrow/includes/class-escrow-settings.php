@@ -10,6 +10,10 @@ class WEO_Settings {
     $clean = [];
     $clean['api_base']   = esc_url_raw($opts['api_base'] ?? '');
     $clean['escrow_xpub']= weo_sanitize_xpub($opts['escrow_xpub'] ?? '');
+    $clean['fee_address']= weo_sanitize_btc_address($opts['fee_address'] ?? '');
+    if ($clean['fee_address'] !== '' && !weo_validate_btc_address($clean['fee_address'])) {
+      $clean['fee_address'] = '';
+    }
     $clean['min_conf']   = max(0, intval($opts['min_conf'] ?? 1));
     $clean['api_key']    = sanitize_text_field($opts['api_key'] ?? '');
     $clean['hmac_secret']= sanitize_text_field($opts['hmac_secret'] ?? '');

@@ -82,7 +82,14 @@ class WEO_Admin {
         echo '<p><label>PSBT (unsigniert, Base64)</label><br><textarea rows="4" style="width:100%;" readonly>' . esc_textarea((string) $meta['psbt']) . '</textarea></p>';
       }
 
-      foreach (['payout' => 'Auszahlung an Verkäufer bauen', 'refund' => 'Erstattung an Käufer bauen'] as $type => $label) {
+      $fee = (int) ($meta['fee_sat'] ?? 0);
+      echo '<p>Servicegebühr in der Treuhand: ' . esc_html(number_format_i18n($fee)) . ' sats · Regelwerk ' . esc_html((string) ($meta['rules_version'] ?? '–')) . '</p>';
+
+      foreach ([
+        'payout'     => 'Auszahlung an Verkäufer bauen (Gebühr an Marktplatz)',
+        'refund_fee' => 'Erstattung an Käufer bauen (Gebühr bleibt beim Marktplatz)',
+        'refund'     => 'Volle Erstattung an Käufer bauen (nicht versendet, §3)',
+      ] as $type => $label) {
         echo '<form method="post" style="display:inline;margin-right:6px;">';
         echo '<input type="hidden" name="hash" value="' . esc_attr($r->payment_hash) . '"><input type="hidden" name="weo_nonce" value="' . esc_attr($nonce) . '"><input type="hidden" name="weo_action" value="build_' . $type . '">';
         echo '<button class="button">' . esc_html($label) . '</button></form>';
@@ -118,21 +125,20 @@ class WEO_Admin {
       return;
     }
 
-    if ($action === 'build_payout' || $action === 'build_refund') {
-      $type = $action === 'build_payout' ? 'payout' : 'refund';
-      if ($type === 'refund') {
-        $res = weo_api_post('/psbt/build_refund', ['order_id' => $meta['order_id'], 'address' => $meta['refund_address'], 'rbf' => true, 'target_conf' => 3]);
-      } else {
-        $res = weo_api_post('/psbt/build', ['order_id' => $meta['order_id'], 'outputs' => [$meta['payout_address'] => (int) $row->amount_sats], 'rbf' => true, 'target_conf' => 3]);
+    if (strpos($action, 'build_') === 0) {
+      $type = substr($action, 6);
+      if (!in_array($type, Actions::TYPES, true)) {
+        return;
       }
+      $res = Actions::build($row, $type);
       if (is_wp_error($res) || empty($res['psbt'])) {
         echo '<div class="notice notice-error"><p>' . esc_html(is_wp_error($res) ? $res->get_error_message() : 'PSBT konnte nicht erstellt werden.') . '</p></div>';
         return;
       }
       Rows::save_meta($row->payment_hash, ['psbt_type' => $type, 'psbt' => (string) $res['psbt'], 'signed' => []]);
-      Notify::chat($row, get_current_user_id(), $type === 'refund'
-        ? __('Der Marktplatz hat entschieden: Erstattung an den Käufer. Der Käufer signiert unter „Käufe“, der Marktplatz zeichnet gegen.', 'sk-core')
-        : __('Der Marktplatz hat entschieden: Auszahlung an den Verkäufer. Der Verkäufer signiert unter „Verkäufe“, der Marktplatz zeichnet gegen.', 'sk-core'));
+      Notify::chat($row, get_current_user_id(), $type === 'payout'
+        ? __('Der Marktplatz hat entschieden: Auszahlung an den Verkäufer. Der Verkäufer signiert unter „Verkäufe“, der Marktplatz zeichnet gegen.', 'sk-core')
+        : __('Der Marktplatz hat entschieden: Erstattung an den Käufer. Der Käufer signiert unter „Käufe“, der Marktplatz zeichnet gegen.', 'sk-core'));
       echo '<div class="notice notice-success"><p>PSBT gebaut. Jetzt extern signieren und unten einreichen; die Gegenpartei signiert im Dashboard.</p></div>';
       return;
     }
