@@ -1,0 +1,83 @@
+<!-- Treuhand-Regelwerk, Fassung 1.0 vom 17.09.2026. Quelle fuer die Seite "Treuhand-Regelwerk"; Aenderungen nur mit neuer Fassungsnummer und Datum (§13). -->
+<p><strong>Fassung 1.0 vom 17. September 2026, gilt ab Freischaltung der Treuhand.</strong> Diese Regeln gelten für jeden Kauf, der über die Treuhand von Satoshis Kleinanzeigen abgewickelt wird. Sie stehen vorher fest, damit beide Seiten wissen, wie jeder Fall ausgeht.</p>
+
+<h2>§1 Grundsatz</h2>
+<p>Entschieden wird nur nach Tatsachen, die die Plattform selbst feststellen kann: Zahlung, Sendungsverfolgung direkt beim Versender abgefragt, Fristen und Kontostufe. Fotos, Videos, Belege und Chatverläufe werden nicht bewertet. Sie können echt oder gefälscht sein, das kann heute niemand mehr unterscheiden. Deshalb spielen sie bei der Entscheidung keine Rolle.</p>
+
+<h2>§2 Gebühr und Schutztopf</h2>
+<ul>
+<li>Der Käufer zahlt 10 % des Kaufpreises als Treuhandgebühr, mindestens 3'000 Sats.</li>
+<li>Die Gebühr wird auch bei Rückabwicklung nicht erstattet. Sie ist die Prämie für den Schutztopf. Einzige Ausnahme: Der Verkäufer versendet nicht (§4, erste Zeile), dann erhält der Käufer auch die Gebühr zurück.</li>
+<li>Die Hälfte der Gebühr fließt in den Schutztopf, die andere Hälfte an die Plattform.</li>
+<li>Der Stand des Schutztopfs wird monatlich veröffentlicht. Der Topf zahlt nur, was in ihm ist.</li>
+</ul>
+
+<h2>§3 Pfand des Verkäufers</h2>
+<p>Der Verkäufer sperrt 5 % des Kaufpreises als Pfand. Es kommt bei Abschluss des Handels zurück. Es verfällt an den Schutztopf, wenn der Verkäufer nach §4, §5 oder §6 verliert.</p>
+
+<h2>§4 Ablauf im Normalfall</h2>
+<table>
+<thead><tr><th>Schritt</th><th>Frist</th><th>Wenn die Frist verstreicht</th></tr></thead>
+<tbody>
+<tr><td>Verkäufer versendet mit Sendungsverfolgung und trägt die Nummer ein</td><td>3 Werktage nach Zahlungseingang</td><td>Käufer erhält Kaufpreis und Gebühr zurück; Pfand des Verkäufers verfällt</td></tr>
+<tr><td>Zustellscan des Versenders</td><td>14 Tage nach Versand</td><td>Käufer erhält den Kaufpreis zurück; Pfand geht an den Verkäufer zurück</td></tr>
+<tr><td>Käufer meldet ein Problem</td><td>3 Tage nach Zustellscan</td><td>Kaufpreis wird an den Verkäufer freigegeben; Pfand geht zurück</td></tr>
+</tbody>
+</table>
+<p>Ohne Sendungsverfolgung ist kein Treuhandhandel möglich. Die Plattform fragt den Sendungsstatus beim Versender ab, nicht beim Verkäufer.</p>
+
+<h2>§5 „Nicht erhalten"</h2>
+<ul>
+<li>Liegt ein Zustellscan an die beim Kauf hinterlegte Adresse vor, gewinnt der Verkäufer.</li>
+<li>Liegt keiner vor, gewinnt der Käufer.</li>
+<li>Ab 1'000'000 Sats Kaufpreis braucht der Verkäufer eine Zustellung gegen Unterschrift. Ohne sie gilt die Zustellung als nicht belegt.</li>
+</ul>
+
+<h2>§6 „Nicht wie beschrieben"</h2>
+<p>Dieser Fall wird nicht beurteilt, sondern rückabgewickelt.</p>
+<ul>
+<li>Der Käufer schickt die Ware innerhalb von 5 Werktagen mit Sendungsverfolgung an die Adresse des Verkäufers zurück.</li>
+<li>Rücksendung zugestellt: Der Käufer erhält den Kaufpreis zurück. Der Verkäufer trägt das Rückporto.</li>
+<li>Der Käufer schickt nicht fristgerecht zurück: Der Kaufpreis wird an den Verkäufer freigegeben.</li>
+<li>Der Verkäufer nimmt die Rücksendung nicht an: Der Käufer gewinnt, das Pfand verfällt.</li>
+</ul>
+
+<h2>§7 Einigung geht vor</h2>
+<p>Solange ein Fall offen ist, kann jede Seite eine Aufteilung des Kaufpreises vorschlagen. Nimmt die andere Seite an, wird sie sofort ausgeführt. Damit lassen sich kleine Mängel ohne Rücksendung lösen.</p>
+
+<h2>§8 Der Rest: Schutztopf statt Urteil</h2>
+<p>§5 und §6 führen immer zu einem Ergebnis. Es kann die ehrliche Seite treffen, etwa wenn das Paket leer war oder das Rückpaket leer war. Diese Seite kann einen Antrag an den Schutztopf stellen. Der Topf zahlt ohne Prüfung des Einzelfalls, nur nach Konto:</p>
+<ul>
+<li>nur an Konten ab Stufe 1 (§9),</li>
+<li>höchstens 50 % des Kaufpreises, höchstens 500'000 Sats,</li>
+<li>höchstens ein Antrag je Konto innerhalb von 12 Monaten,</li>
+<li>jeder Antrag wird beim Konto der Gegenseite als Vorfall gezählt.</li>
+</ul>
+<p>Der Topf zahlt aus Kulanz. Ein Anspruch entsteht nicht. Wer mehr will, kann den Rechtsweg gegen die Gegenseite gehen; deren Anschrift ist über den Versand bekannt.</p>
+
+<h2>§9 Kontostufen und Limits</h2>
+<table>
+<thead><tr><th>Stufe</th><th>Bedingung</th><th>Treuhand bis</th><th>Schutztopf</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>neuer Schlüssel</td><td>200'000 Sats</td><td>nein</td></tr>
+<tr><td>1</td><td>3 abgeschlossene Handel oder Web of Trust</td><td>2'000'000 Sats</td><td>ja</td></tr>
+<tr><td>2</td><td>10 abgeschlossene Handel und Web of Trust</td><td>10'000'000 Sats</td><td>ja</td></tr>
+</tbody>
+</table>
+
+<h2>§10 Kontoebene</h2>
+<ul>
+<li>Zwei Vorfälle nach §8 innerhalb von 12 Monaten: Rückstufung auf Stufe 0, keine Anträge an den Topf mehr.</li>
+<li>Drei Vorfälle: Sperre für die Treuhand.</li>
+<li>Muster über mehrere Schlüssel, etwa gleiche Adresse oder gleiche Zahlwege, werden zusammengezählt.</li>
+</ul>
+<p>Kein einzelner Fall muss bewiesen werden. Das Muster genügt.</p>
+
+<h2>§11 Gewichtsabgleich</h2>
+<p>Wo der Versender das Paketgewicht erfasst, wird es mit dem im Inserat angegebenen Gewicht verglichen. Eine Abweichung von mehr als 30 % nach unten zählt beim Konto der versendenden Seite als doppelter Vorfall.</p>
+
+<h2>§12 Entscheidung</h2>
+<p>Eine KI (Claude) wendet §4 bis §11 auf die festgestellten Tatsachen an und entscheidet den Fall nach diesen Regeln. Sie sieht keine hochgeladenen Bilder, Videos oder Belege, nur die Tatsachen aus §1 und die Textangaben beider Seiten. Satoshis Kleinanzeigen prüft, dass die Entscheidung dem Regelwerk folgt, bestätigt sie und gibt das Geld mit dem eigenen Schlüssel frei. Beide Seiten erhalten die Entscheidung mit der Angabe, welche Regel angewendet wurde.</p>
+
+<h2>§13 Geltung</h2>
+<p>Für jeden Handel gilt die Fassung, die zum Zeitpunkt des Kaufs veröffentlicht war. Änderungen erhalten eine neue Fassungsnummer und ein Datum und sind hier einsehbar.</p>
