@@ -252,7 +252,7 @@ function telegram_build_caption_and_media($post_id) {
              * cache — the server never sees the #.
              */
             $caption .= "\n\n👉 Zum Inserat: " . tn_tg_html_esc($permalink);
-            $caption .= "\n💬 Direkt anschreiben: " . tn_tg_html_esc($permalink . '#chat');
+            $caption .= "\n\n💬 Direkt anschreiben: " . tn_tg_html_esc($permalink . '#chat');
         }
         return $caption;
     };
