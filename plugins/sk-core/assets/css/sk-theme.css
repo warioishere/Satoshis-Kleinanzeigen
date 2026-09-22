@@ -12527,8 +12527,8 @@ textarea.wp-editor-area.post_content {
 
 .sk-pakete__facts span { font-weight: 700; color: #F7931A; }
 
-/* Sechs Spalten passen auf einem Telefon nicht — dann wird geschoben statt
-   abgeschnitten, und die Merkmalsspalte bleibt dabei stehen. */
+/* Six columns do not fit on a phone: the whole table scrolls sideways as
+   one piece; no column stays pinned and eats the width. */
 .sk-pakete__scroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -12562,10 +12562,7 @@ textarea.wp-editor-area.post_content {
 
 .sk-pakete__table thead th:first-child,
 .sk-pakete__table tbody th:first-child {
-  position: sticky;
-  left: 0;
-  background: #1a2230;
-  min-width: 230px;
+  min-width: 190px;
 }
 
 .sk-pakete__break th {
