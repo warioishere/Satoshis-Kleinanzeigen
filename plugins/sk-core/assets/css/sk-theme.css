@@ -12516,6 +12516,13 @@ textarea.wp-editor-area.post_content {
   list-style: none;
 }
 
+/* Two classes deep: the theme's list indent in page content otherwise
+   wins and pushes the centred pills to the right. */
+.sk-pakete .sk-pakete__facts {
+  padding: 0;
+  margin-left: 0;
+}
+
 .sk-pakete__facts li {
   margin: 0;
   padding: 8px 16px;
