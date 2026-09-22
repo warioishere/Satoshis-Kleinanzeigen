@@ -11918,10 +11918,23 @@ textarea.wp-editor-area.post_content {
 	flex: none;
 }
 
-/* Auf dem Inserat sitzt es rechts in der Anbieterbox, mittig zur Hoehe. */
-.sk-vendor-info-wrap .sk-verify-badge {
+/* Product page: zaps, social graph and verification stacked in one column
+   at the right end of the vendor box, flush left with each other. */
+.sk-vendor-info-wrap .sk-vendor-badges {
 	margin-left: auto;
-	align-self: center;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 6px;
+}
+.sk-vendor-info-wrap .sk-vendor-badges > * {
+	margin: 0;
+}
+/* Narrow screens: the box is a column, the badges sit under the name. */
+@media (max-width: 560px) {
+	.sk-vendor-info-wrap .sk-vendor-badges {
+		margin-left: 0;
+	}
 }
 
 /* Auf der Produktkarte im Shop direkt hinter dem Anbieternamen. */

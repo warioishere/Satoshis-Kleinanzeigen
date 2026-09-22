@@ -31,14 +31,13 @@
         <?php endif; ?>
     </div>
     <?php
-    // Trust strip (zaps received, later the social graph line and Lightning
-    // proofs), left of the verification badge at the right end of the box.
-    \SK\Core\Trust\TrustSignals::render( (int) $vendor->get_id(), \SK\Core\Trust\TrustSignals::CONTEXT_PRODUCT );
+    // Trust chips (zaps received, social graph) and the verification badge,
+    // stacked flush in one column at the right end of the box.
+    $sk_badges = \SK\Core\Trust\TrustSignals::html( (int) $vendor->get_id(), \SK\Core\Trust\TrustSignals::CONTEXT_PRODUCT )
+        . ( function_exists( 'sk_verified_badge' ) ? sk_verified_badge( $vendor->get_id() ) : '' );
 
-    // Rechts am Ende der Box, mittig zur Hoehe — die Ausrichtung macht das
-    // margin-left:auto in .sk-vendor-info-wrap .sk-verify-badge.
-    if ( function_exists( 'sk_verified_badge' ) ) {
-        echo sk_verified_badge( $vendor->get_id() ); // phpcs:ignore WordPress.Security.EscapeOutput
+    if ( '' !== trim( $sk_badges ) ) {
+        echo '<div class="sk-vendor-badges">' . $sk_badges . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput -- each renderer escapes its own markup.
     }
     ?>
 </div>

@@ -8,14 +8,12 @@
 /* One sentence per line under the store banner. */
 .sk-store-info .sk-trust-graph .sk-trust-graph-text { display: inline-block; line-height: 1.4; vertical-align: top; }
 
-/* Product page: at the right end of the vendor box, ahead of the zaps. */
+/* Product page: one line in the badge column of the vendor box. */
 .sk-vendor-info-wrap .sk-trust-graph {
-    display: inline-flex; align-items: center; gap: 4px; align-self: center;
-    margin-left: auto; font-size: 13px; text-align: right; position: relative;
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 13px; text-align: left; position: relative;
 }
 .sk-vendor-info-wrap .sk-trust-graph i { color: #8b5cf6; }
-.sk-vendor-info-wrap .sk-trust-graph + .sk-vendor-zaps,
-.sk-vendor-info-wrap .sk-trust-graph + .sk-verify-badge { margin-left: 10px; }
 
 /* Product card: badge only, next to the vendor name. */
 .produkt-vendor-info .sk-trust-graph { display: inline-flex; align-items: center; font-size: 12px; position: relative; }
