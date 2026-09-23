@@ -41,6 +41,13 @@ class SocialGraph {
      * in once it knows the viewer's graph — or leaves it hidden.
      */
     public function chip( int $vendor_id, string $context ): string {
+        // Logged-in viewers only: for a visitor the script would ask the
+        // browser extension for a key on page load, and the extension
+        // prompts for it.
+        if ( ! is_user_logged_in() ) {
+            return '';
+        }
+
         $pubkey = VendorKey::bound( $vendor_id );
 
         if ( '' === $pubkey ) {
