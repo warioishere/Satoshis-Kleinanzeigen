@@ -316,30 +316,8 @@ class Products {
         $clone_product = $wc_duplicator->product_duplicate( $product );
         $clone_product->update_meta_data( '_sk_new_product_email_sent', 'no' );
 
-        /*
-         * WooCommerce copies every meta field, which hands the copy things
-         * that belong to the original alone:
-         *
-         * - the Telegram message and the Nostr events it was announced with.
-         *   Deleting the copy would then delete the original's announcement.
-         * - the view counter, so a fresh listing would start with someone
-         *   else's numbers.
-         * - the import key, which is what the catalog is matched by. Two
-         *   listings under one key and the nightly run updates the wrong one.
-         */
-        foreach ( [
-            '_telegram_message_id',
-            '_nap_nostr_event_id',
-            '_nap_nostr_relays',
-            '_sk_nostr_market_event_id',
-            '_sk_nostr_market_relays',
-            'pageview',
-            '_sk_import_key',
-            '_sk_import_run',
-            '_sk_import_source',
-        ] as $own_to_the_original ) {
-            $clone_product->delete_meta_data( $own_to_the_original );
-        }
+        // Fields that belong to the original alone are left out by
+        // remove_unwanted_meta(), for this path and WooCommerce's own.
 
         // Make the newly created product status to "draft", before saving.
         $clone_product->set_status( 'draft' );
@@ -477,9 +455,35 @@ class Products {
      * @return array $meta_keys
      */
     public function remove_unwanted_meta( $meta_keys ) {
-        $meta_keys[] = 'pageview';
-
-        return $meta_keys;
+        /*
+         * A copy is a new listing. It has not been announced on Telegram or
+         * Nostr yet (the senders skip anything marked as posted, and deleting
+         * the copy would delete the original's announcement), it starts
+         * without views, and it has no import key (the nightly import matches
+         * by that key and would update the wrong listing).
+         */
+        return array_merge( $meta_keys, [
+            'pageview',
+            '_sk_import_key',
+            '_sk_import_run',
+            '_sk_import_source',
+            '_telegram_sent',
+            '_telegram_message_id',
+            '_telegram_message_type',
+            '_telegram_message_date',
+            '_telegram_image_sent',
+            '_telegram_job_scheduled',
+            '_telegram_deleted',
+            '_telegram_boost_message_id',
+            '_telegram_boost_last',
+            '_nap_nostr_event_id',
+            '_nap_nostr_relays',
+            '_sk_nostr_event_id',
+            '_sk_nostr_market_event_id',
+            '_sk_nostr_market_relays',
+            '_sk_nostr_market_pending_sign',
+            '_sk_nostr_market_self_signed',
+        ] );
     }
 
     /**
