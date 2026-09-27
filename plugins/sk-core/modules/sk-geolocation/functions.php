@@ -22,9 +22,8 @@ function sk_geo_get_template( $name, $args = [] ) {
 function sk_geo_get_default_location() {
     $location = sk_get_option( 'location', 'sk_geolocation' );
 
-    // Fallback when no default is configured under SK > Geolocation. The
-    // upstream code shipped the vendor's own office in Dhaka here, which is
-    // how listings without coordinates ended up on the map in Bangladesh.
+    // Map centre when no default is configured under SK > Geolocation. It
+    // only centres the map; it is never a vendor's or a listing's location.
     if ( empty( $location['latitude'] ) || empty( $location['longitude'] ) ) {
         $location              = [];
         $location['latitude']  = 52.520008;

@@ -29,8 +29,6 @@ class SK_Geolocation_Country_Filter {
 		],
 	];
 
-	private $excluded_locations = [ 'dhaka' ];
-
 	public function __construct() {
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ], 20 );
 
@@ -198,9 +196,6 @@ class SK_Geolocation_Country_Filter {
 			if ( empty( $seller->sk_geo_latitude ) || empty( $seller->sk_geo_longitude ) ) {
 				continue;
 			}
-			if ( $this->is_location_excluded( $seller->ID, 'vendor' ) ) {
-				continue;
-			}
 			if ( 'all' !== $country && $this->extract_vendor_country( $seller->ID ) !== $country ) {
 				continue;
 			}
@@ -222,25 +217,6 @@ class SK_Geolocation_Country_Filter {
 		set_transient( $cache_key, $payload, 15 * MINUTE_IN_SECONDS );
 
 		wp_send_json_success( $payload );
-	}
-
-	public function is_location_excluded( $id, $type = 'vendor' ) {
-		$address = '';
-		if ( 'vendor' === $type ) {
-			$address = get_user_meta( $id, 'sk_geo_address', true );
-		} elseif ( 'product' === $type ) {
-			$address = get_post_meta( $id, 'sk_geo_address', true );
-		}
-		if ( empty( $address ) ) {
-			return false;
-		}
-		$address_lower = strtolower( $address );
-		foreach ( $this->excluded_locations as $excluded ) {
-			if ( strpos( $address_lower, strtolower( $excluded ) ) !== false ) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	public function extract_vendor_country( $vendor_id ) {
@@ -321,14 +297,7 @@ class SK_Geolocation_Country_Filter {
 			'author__in'     => $vendor_ids,
 		] );
 
-		$product_ids = [];
-		if ( $vendor_products->have_posts() ) {
-			foreach ( $vendor_products->posts as $product_id ) {
-				if ( ! $this->is_location_excluded( $product_id, 'product' ) ) {
-					$product_ids[] = $product_id;
-				}
-			}
-		}
+		$product_ids = $vendor_products->have_posts() ? array_map( 'intval', $vendor_products->posts ) : [];
 		wp_reset_postdata();
 
 		return $product_ids;
@@ -376,9 +345,7 @@ class SK_Geolocation_Country_Filter {
 
 				if ( $all_products->have_posts() ) {
 					foreach ( $all_products->posts as $product_id ) {
-						if ( ! $this->is_location_excluded( $product_id, 'product' ) ) {
-							$product_ids[] = $product_id;
-						}
+						$product_ids[] = (int) $product_id;
 					}
 				}
 				wp_reset_postdata();

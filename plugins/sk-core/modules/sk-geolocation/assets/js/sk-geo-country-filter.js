@@ -10,7 +10,6 @@
 
         allFeatures: null,
         countryKeywords: null,
-        excludedLocations: ['dhaka'],
         mapInstance: null,
         sourceId: null,
         abortCtrl: null,
@@ -71,7 +70,6 @@
         },
 
         onMapReady: function() {
-            this.filterExcludedLocations();
             this.cacheCurrentFeatures();
 
             // If page loaded with country filter, the map only has that country's features.
@@ -133,24 +131,10 @@
                 });
 
                 if (features.length > 0) {
-                    // Filter excluded locations
-                    features = features.filter(function(f) { return !self.isExcluded(f); });
                     self.allFeatures = features;
                 }
             })
             .catch(function() { /* silent fail, keep using partial cache */ });
-        },
-
-        filterExcludedLocations: function() {
-            var self = this;
-            var source = self.mapInstance.getSource(self.sourceId);
-            if (!source || !source._data || !source._data.features) return;
-
-            var filtered = source._data.features.filter(function(f) {
-                return !self.isExcluded(f);
-            });
-
-            source.setData({ type: 'FeatureCollection', features: filtered });
         },
 
         getAddress: function(feature) {
@@ -161,15 +145,6 @@
                 try { info = JSON.parse(info); } catch (e) { return ''; }
             }
             return (info.address || '').toLowerCase();
-        },
-
-        isExcluded: function(feature) {
-            var addr = this.getAddress(feature);
-            if (!addr) return false;
-            for (var i = 0; i < this.excludedLocations.length; i++) {
-                if (addr.indexOf(this.excludedLocations[i]) !== -1) return true;
-            }
-            return false;
         },
 
         // ── URL State ──────────────────────────────────────────────────────

@@ -279,14 +279,8 @@ class Module {
         /*
          * No location without a choice.
          *
-         * This used to write the configured default location into every
-         * newly registered seller's profile as their own location, public
-         * visibility included. That's exactly how the legacy profiles came
-         * about that showed up on the map in Dhaka, without anyone ever
-         * having chosen that — and it would happen again every time a
-         * default is set under SK > Geolocation.
-         *
-         * The default location is solely the map center. Whoever hasn't
+         * A new seller starts without a location; the configured default
+         * never becomes theirs. The default location is solely the map center. Whoever hasn't
          * chosen a place has no coordinates and doesn't appear on the map.
          * Visibility stays pre-enabled so that a location chosen later shows
          * up without needing another toggle.

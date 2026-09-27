@@ -120,7 +120,7 @@ class SK_Geolocation_Widget_Product_Location extends WP_Widget {
         $address   = $product->get_meta( 'sk_geo_address', true );
 
         // Don't show map if no real address has been set by the vendor.
-        if ( empty( $address ) || 'Dhaka' === trim( $address ) ) {
+        if ( empty( $address ) ) {
             return;
         }
 
