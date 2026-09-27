@@ -5,13 +5,15 @@
  *
  */
 
-if ( empty( $map_location ) ) {
+// No map without a location the vendor chose: an empty profile stores ","
+// and must not fall back to any place.
+$location  = explode( ',', (string) ( $map_location ?? '' ) );
+$latitude  = trim( $location[0] ?? '' );
+$longitude = trim( $location[1] ?? '' );
+
+if ( ! is_numeric( $latitude ) || ! is_numeric( $longitude ) ) {
     return;
 }
-
-$location  = explode( ',', $map_location );
-$longitude = ! empty( $location[1] ) ? $location[1] : 90.40714300000002;
-$latitude  = ! empty( $location[0] ) ? $location[0] : 23.709921;
 
 $access_token = sk_get_option( 'mapbox_access_token', 'sk_appearance', null );
 

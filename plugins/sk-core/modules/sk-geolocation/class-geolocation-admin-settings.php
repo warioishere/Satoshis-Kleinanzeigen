@@ -131,11 +131,12 @@ class SK_Geolocation_Admin_Settings {
                 'label'   => __( 'Default Location', 'sk-core' ),
                 'desc'    => __( 'In case the searched store is not found, the default location will be set on the map.', 'sk-core' ),
                 'type'    => 'gmap',
+                // Map centre only, never a vendor's or a listing's location.
                 'default' => [
-                    'latitude'  => 23.709921,
-                    'longitude' => 90.40714300000002,
-                    'address'   => __( 'Dhaka', 'sk-core' ),
-                    'zoom'      => 10,
+                    'latitude'  => 52.520008,
+                    'longitude' => 13.404954,
+                    'address'   => 'Berlin, Deutschland',
+                    'zoom'      => 5,
                 ],
             ],
         ];

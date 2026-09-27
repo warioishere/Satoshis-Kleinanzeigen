@@ -44,7 +44,10 @@ class StoreLocation extends WP_Widget {
             $store_info   = sk_get_store_info( get_query_var( 'author' ) );
             $map_location = isset( $store_info['location'] ) ? esc_attr( $store_info['location'] ) : '';
 
-            if ( empty( $map_location ) || ! sk_has_map_api_key() || 'on' !== sk_get_option( 'store_map', 'sk_appearance', 'off' ) ) {
+            // Only a location the vendor chose: an empty profile stores ",".
+            $coords = array_map( 'trim', explode( ',', $map_location ) );
+
+            if ( ! is_numeric( $coords[0] ?? '' ) || ! is_numeric( $coords[1] ?? '' ) || ! sk_has_map_api_key() || 'on' !== sk_get_option( 'store_map', 'sk_appearance', 'off' ) ) {
                 return;
             }
 

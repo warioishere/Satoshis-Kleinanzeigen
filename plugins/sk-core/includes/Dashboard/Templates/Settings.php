@@ -339,19 +339,14 @@ class Settings {
                 return;
             }
 
-            $default_locations = sk_get_option( 'location', 'sk_geolocation' );
+            // Only what the vendor chose: no location stays no location, never
+            // the map's default place.
+            $find_address = ! empty( $_POST['find_address'] ) ? sanitize_text_field( wp_unslash( $_POST['find_address'] ) ) : '';
+            $location     = ! empty( $_POST['location'] ) ? sanitize_text_field( wp_unslash( $_POST['location'] ) ) : '';
 
-            if ( ! is_array( $default_locations ) || empty( $default_locations ) ) {
-                $default_locations = [
-                    'latitude'  => '',
-                    'longitude' => '',
-                    'address'   => '',
-                ];
+            if ( ',' === trim( $location ) ) {
+                $location = '';
             }
-
-            $find_address     = ! empty( $_POST['find_address'] ) ? sanitize_text_field( wp_unslash( $_POST['find_address'] ) ) : $default_locations['address'];
-            $default_location = $default_locations['latitude'] . ',' . $default_locations['longitude'];
-            $location         = ! empty( $_POST['location'] ) ? sanitize_text_field( wp_unslash( $_POST['location'] ) ) : $default_location;
 
             // Update store settings info.
             $sk_settings = [
