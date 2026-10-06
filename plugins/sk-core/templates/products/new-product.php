@@ -253,6 +253,8 @@ do_action( 'sk_new_product_wrap_before' );
                                 </div>
                             </div>
 
+                            <?php ( new \SK\Core\Dashboard\Modules\ProductForm() )->output_sats_converter_box(); ?>
+
                             <div class="sk-edit-row">
                                 <div class="sk-section-heading">
                                     <h2><i class="fas fa-align-justify"></i> <?php esc_html_e( 'Beschreibung', 'sk-core' ); ?></h2>

@@ -169,17 +169,45 @@ document.addEventListener('DOMContentLoaded', function () {
             var sats = Math.round((fiat / price) * 100000000);
             resultBox.textContent = '≈ ' + sats.toLocaleString() + ' Sats';
 
-            var satsInput = document.querySelector('input[name="regular_price"]');
-            if (satsInput) satsInput.value = sats;
+            // The bare number for the price field: the displayed one carries
+            // thousands separators, and "460'159" pasted as a price saves 460.
+            var takeBtn = document.getElementById('sats_to_price');
+            if (takeBtn) {
+                takeBtn.dataset.sats = String(sats);
+                takeBtn.style.display = '';
+            }
+            setPrice(sats);
         } catch (e) {
             resultBox.textContent = 'Fehler beim Abrufen des Wechselkurses.';
         }
+    }
+
+    function setPrice(sats) {
+        var priceInput = document.querySelector('input[name="_regular_price"]');
+        if (!priceInput || !sats) return null;
+        priceInput.value = String(sats);
+        // The form's own listeners (validation, preview) react to these.
+        priceInput.dispatchEvent(new Event('input', { bubbles: true }));
+        priceInput.dispatchEvent(new Event('change', { bubbles: true }));
+        return priceInput;
+    }
+
+    function takeIntoPrice() {
+        var btn = document.getElementById('sats_to_price');
+        var priceInput = setPrice(btn ? parseInt(btn.dataset.sats, 10) : 0);
+        if (!priceInput) return;
+        priceInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        priceInput.focus();
+        btn.innerHTML = '<i class="fas fa-check"></i> Übernommen';
+        setTimeout(function () { btn.innerHTML = '<i class="fas fa-arrow-up"></i> In den Preis übernehmen'; }, 2000);
     }
 
     document.addEventListener('DOMContentLoaded', function () {
         moveConverterBox(document);
         var btn = document.getElementById('convert_to_sats');
         if (btn) btn.addEventListener('click', convertFiatToSats);
+        var takeBtn = document.getElementById('sats_to_price');
+        if (takeBtn) takeBtn.addEventListener('click', takeIntoPrice);
         var watch = document.querySelector('.sk-dashboard-wrap') || document;
         new MutationObserver(function () { moveConverterBox(document); })
             .observe(watch, { childList: true, subtree: true });

@@ -153,7 +153,10 @@ class ProductForm {
                 <button type="button" id="convert_to_sats" class="button button-primary" style="margin-top: 10px;">
                     In Sats umrechnen
                 </button>
-                <p id="sats_result" style="margin-top: 8px;"></p>
+                <p id="sats_result" style="margin: 8px 0 6px;"></p>
+                <button type="button" id="sats_to_price" class="button" style="margin-top: 4px; display: none;">
+                    <i class="fas fa-arrow-up"></i> In den Preis übernehmen
+                </button>
             </div>
         </div>
         <?php
