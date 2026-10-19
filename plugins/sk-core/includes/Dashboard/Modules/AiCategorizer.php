@@ -44,7 +44,7 @@ class AiCategorizer {
 		if ( ! isset( $section['skai_enabled'] ) ) {
 			$section['skai_enabled']    = get_option( 'skai_enabled', 0 ) ? 'on' : 'off';
 			self::store_api_key( (string) get_option( 'skai_api_key', '' ) );
-			$section['skai_model']      = get_option( 'skai_model', 'claude-haiku-4-5-20251001' );
+			$section['skai_model']      = get_option( 'skai_model', 'claude-haiku-5-5' );
 			$section['skai_auto_apply'] = get_option( 'skai_auto_apply', 0 ) ? 'on' : 'off';
 			update_option( self::SECTION, $section );
 		}
@@ -179,11 +179,11 @@ class AiCategorizer {
 				'label'   => __( 'Claude Modell', 'sk-core' ),
 				'type'    => 'select',
 				'options' => [
-					'claude-haiku-4-5-20251001' => __( 'Claude Haiku 4.5 (schnell, günstig — empfohlen)', 'sk-core' ),
+					'claude-haiku-5-5'          => __( 'Claude Haiku 5.5 (schnell, günstig — empfohlen)', 'sk-core' ),
 					'claude-sonnet-5-5'         => __( 'Claude Sonnet 5.5 (besser, teurer)', 'sk-core' ),
 					'claude-opus-5-5'           => __( 'Claude Opus 5.5 (bestes Modell)', 'sk-core' ),
 				],
-				'default' => 'claude-haiku-4-5-20251001',
+				'default' => 'claude-haiku-5-5',
 			],
 			'skai_auto_apply' => [
 				'name'    => 'skai_auto_apply',
@@ -323,7 +323,7 @@ class AiCategorizer {
 	}
 
 	private function call_claude( string $api_key, string $prompt ): array|\WP_Error {
-		$model  = sk_get_option( 'skai_model', self::SECTION, 'claude-haiku-4-5-20251001' );
+		$model  = sk_get_option( 'skai_model', self::SECTION, 'claude-haiku-5-5' );
 		$system = 'Du bist ein Kategorisierungs-Assistent für einen Bitcoin-Marktplatz (Kleinanzeigen). '
 			. 'Wähle die am besten passende Kategorie aus der Liste für das gegebene Produkt. '
 			. 'Antworte NUR mit einem JSON-Objekt: {"term_id": <zahl>, "term_name": "<name>", "path": "<Eltern > Kind>"}. '
@@ -336,8 +336,9 @@ class AiCategorizer {
 			'messages'   => [ [ 'role' => 'user', 'content' => $prompt ] ],
 		];
 
-		// Sonnet/Opus 5.5 always think: keep effort low and leave room for the thinking tokens.
-		if ( ! str_starts_with( $model, 'claude-haiku' ) ) {
+		// 5.x models may think: keep effort low and leave room for the thinking tokens.
+		// Haiku 4.5 rejects the effort parameter.
+		if ( ! str_starts_with( $model, 'claude-haiku-4' ) ) {
 			$request['max_tokens']    = 4000;
 			$request['output_config'] = [ 'effort' => 'low' ];
 		}
