@@ -4,7 +4,7 @@
 
 namespace KadenceWP\KadenceBlocks\Composer\Autoload;
 
-class ComposerStaticInit4b2392a3bc3241129d333f4a0288545b
+class ComposerStaticInit9eef655a53a24f9b928ef0783232e256
 {
     public static $files = array (
         'dfdcea4d84cc56c3d81598b2472a5a5d' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
@@ -64,6 +64,7 @@ class ComposerStaticInit4b2392a3bc3241129d333f4a0288545b
             'KadenceWP\\KadenceBlocks\\Psr\\Container\\' => 38,
             'KadenceWP\\KadenceBlocks\\PhpOption\\' => 34,
             'KadenceWP\\KadenceBlocks\\Nyholm\\Psr7\\' => 36,
+            'KadenceWP\\KadenceBlocks\\Nexcess\\Banners\\' => 40,
             'KadenceWP\\KadenceBlocks\\Monolog\\' => 32,
             'KadenceWP\\KadenceBlocks\\LiquidWeb\\LicensingApiClient\\' => 53,
             'KadenceWP\\KadenceBlocks\\LiquidWeb\\LicensingApiClientWordPress\\' => 62,
@@ -235,6 +236,10 @@ class ComposerStaticInit4b2392a3bc3241129d333f4a0288545b
         'KadenceWP\\KadenceBlocks\\Nyholm\\Psr7\\' =>
         array (
             0 => __DIR__ . '/..' . '/nyholm/psr7/src',
+        ),
+        'KadenceWP\\KadenceBlocks\\Nexcess\\Banners\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/stellarwp/banners/src',
         ),
         'KadenceWP\\KadenceBlocks\\Monolog\\' =>
         array (
@@ -768,6 +773,11 @@ class ComposerStaticInit4b2392a3bc3241129d333f4a0288545b
         'KadenceWP\\KadenceBlocks\\Monolog\\SignalHandler' => __DIR__ . '/..' . '/monolog/monolog/src/Monolog/SignalHandler.php',
         'KadenceWP\\KadenceBlocks\\Monolog\\Test\\TestCase' => __DIR__ . '/..' . '/monolog/monolog/src/Monolog/Test/TestCase.php',
         'KadenceWP\\KadenceBlocks\\Monolog\\Utils' => __DIR__ . '/..' . '/monolog/monolog/src/Monolog/Utils.php',
+        'KadenceWP\\KadenceBlocks\\Nexcess\\Banners\\Banner' => __DIR__ . '/..' . '/stellarwp/banners/src/Banner.php',
+        'KadenceWP\\KadenceBlocks\\Nexcess\\Banners\\BannerFields' => __DIR__ . '/..' . '/stellarwp/banners/src/BannerFields.php',
+        'KadenceWP\\KadenceBlocks\\Nexcess\\Banners\\Dismissals' => __DIR__ . '/..' . '/stellarwp/banners/src/Dismissals.php',
+        'KadenceWP\\KadenceBlocks\\Nexcess\\Banners\\Package' => __DIR__ . '/..' . '/stellarwp/banners/src/Package.php',
+        'KadenceWP\\KadenceBlocks\\Nexcess\\Banners\\Registry' => __DIR__ . '/..' . '/stellarwp/banners/src/Registry.php',
         'KadenceWP\\KadenceBlocks\\Nyholm\\Psr7\\Factory\\HttplugFactory' => __DIR__ . '/..' . '/nyholm/psr7/src/Factory/HttplugFactory.php',
         'KadenceWP\\KadenceBlocks\\Nyholm\\Psr7\\Factory\\Psr17Factory' => __DIR__ . '/..' . '/nyholm/psr7/src/Factory/Psr17Factory.php',
         'KadenceWP\\KadenceBlocks\\Nyholm\\Psr7\\MessageTrait' => __DIR__ . '/..' . '/nyholm/psr7/src/MessageTrait.php',
@@ -1305,9 +1315,9 @@ class ComposerStaticInit4b2392a3bc3241129d333f4a0288545b
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit4b2392a3bc3241129d333f4a0288545b::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit4b2392a3bc3241129d333f4a0288545b::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit4b2392a3bc3241129d333f4a0288545b::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit9eef655a53a24f9b928ef0783232e256::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit9eef655a53a24f9b928ef0783232e256::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInit9eef655a53a24f9b928ef0783232e256::$classMap;
 
         }, null, ClassLoader::class);
     }

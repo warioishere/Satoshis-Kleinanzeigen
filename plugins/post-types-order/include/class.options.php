@@ -91,7 +91,7 @@
                                         <tr valign="top">
                                             <th scope="row" style="text-align: right;"><label><?php esc_html_e('Show / Hide re-order interface', 'advanced-taxonomy-terms-order') ?></label></th>
                                             <td>
-                                                <p><?php esc_html_e("Display the Taxonomy Order interface for the specified post types.", 'advanced-taxonomy-terms-order') ?></p>
+                                                <p><?php esc_html_e("Display the ReOrder interface for the specified post types.", 'advanced-taxonomy-terms-order') ?></p>
                                                 <br />
                                                 <div class="pt-list">
                                                 <?php

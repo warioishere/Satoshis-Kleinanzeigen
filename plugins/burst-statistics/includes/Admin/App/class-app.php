@@ -8,7 +8,7 @@ use Burst\Admin\Burst_Onboarding\Burst_Onboarding;
 use Burst\Admin\Reports\Reports;
 use Burst\Admin\Statistics\Filter_Registry;
 use Burst\Admin\Statistics\Goal_Statistics;
-use Burst\Admin\Tasks;
+use Burst\Admin\Statistics\Statistics_Query;
 use Burst\Admin\Tracking_Health;
 use Burst\Frontend\Endpoint;
 use Burst\Frontend\Goals\Goal;
@@ -40,7 +40,6 @@ class App {
 
 	public Menu $menu;
 	public Fields $fields;
-	public Tasks $tasks;
 	private ?array $cached_datatable_configs = null;
 
 	/**
@@ -60,7 +59,6 @@ class App {
 		add_action( 'burst_after_save_field', [ $this, 'update_for_multisite' ], 10, 4 );
 		add_action( 'rest_api_init', [ $this, 'settings_rest_route' ], 8 );
 		add_filter( 'burst_localize_script', [ $this, 'extend_localized_settings_for_dashboard' ], 10, 1 );
-		add_filter( 'burst_datatable_pre_data', [ $this, 'handle_dummy_datatable_data' ], 10, 2 );
 		add_action( 'burst_weekly', [ $this, 'init_cleanup' ] );
 		add_action( 'burst_weekly_clear_referrers_cron', [ $this, 'weekly_clear_referrers_table' ] );
 		add_action( 'burst_weekly_clear_spam_browsers_cron', [ $this, 'weekly_clear_spam_browsers' ] );
@@ -354,14 +352,14 @@ class App {
 	 */
 	public function plugin_admin_scripts(): void {
 		$js_data = $this->get_chunk_translations( 'includes/Admin/App/build' );
-		if ( empty( $js_data ) ) {
+		if ( empty( $js_data['js_file'] ) ) {
 			return;
 		}
 
 		$version = $js_data['version'];
 		wp_enqueue_style(
 			'burst-tailwind',
-			plugins_url( '/src/tailwind.generated.css', __FILE__ ),
+			plugins_url( '/build/tailwind.generated.css', __FILE__ ),
 			[],
 			$version
 		);
@@ -412,30 +410,6 @@ class App {
 		);
 
 		wp_enqueue_editor();
-	}
-
-	/**
-	 * Get available date ranges for the dashboard.
-	 *
-	 * @return string[] List of date range slugs.
-	 */
-	public function get_date_ranges(): array {
-		return apply_filters(
-			'burst_date_ranges',
-			[
-				'today',
-				'yesterday',
-				'last-7-days',
-				'last-30-days',
-				'last-90-days',
-				'last-month',
-				'last-year',
-				'week-to-date',
-				'month-to-date',
-				'year-to-date',
-				'all-time',
-			]
-		);
 	}
 
 	/**
@@ -522,6 +496,53 @@ class App {
 	}
 
 	/**
+	 * Derive the dispatch data type from the final, authorized REST action.
+	 *
+	 * Single source of truth for the AJAX fallback: the type that selects which
+	 * query runs MUST come from the same $action string the permission checks
+	 * authorized. Deriving it from a separately-parsed rest_action while
+	 * authorizing the POST body 'path' is what allowed the auth/dispatch desync,
+	 * where a share viewer named a granted endpoint in 'path' while rest_action
+	 * pointed at a non-granted one.
+	 *
+	 * @param string $action The final, authoritative REST action path.
+	 * @return array{type: string, is_ecommerce: bool} Empty type when $action is not a /data/ endpoint.
+	 */
+	private function resolve_fallback_data_type( string $action ): array {
+		$action = (string) strtok( $action, '?' );
+
+		if ( str_contains( $action, 'burst/v1/data/ecommerce/datatable/' ) ) {
+			return [
+				'type'         => 'datatable-' . str_replace( 'burst/v1/data/ecommerce/datatable/', '', $action ),
+				'is_ecommerce' => true,
+			];
+		}
+		if ( str_contains( $action, 'burst/v1/data/datatable/' ) ) {
+			return [
+				'type'         => 'datatable-' . str_replace( 'burst/v1/data/datatable/', '', $action ),
+				'is_ecommerce' => false,
+			];
+		}
+		if ( str_contains( $action, 'burst/v1/data/ecommerce/' ) ) {
+			return [
+				'type'         => strtolower( str_replace( 'burst/v1/data/ecommerce/', '', $action ) ),
+				'is_ecommerce' => true,
+			];
+		}
+		if ( str_contains( $action, 'burst/v1/data/' ) ) {
+			return [
+				'type'         => strtolower( str_replace( 'burst/v1/data/', '', $action ) ),
+				'is_ecommerce' => false,
+			];
+		}
+
+		return [
+			'type'         => '',
+			'is_ecommerce' => false,
+		];
+	}
+
+	/**
 	 * If the rest api is blocked, the code will try an admin ajax call as fall back.
 	 */
 	public function rest_api_fallback( string $context = '' ): void {
@@ -530,36 +551,21 @@ class App {
 		$action    = false;
 		$do_action = false;
 		$data      = [];
-		$data_type = false;
 
 		if ( ! $this->user_can_view() ) {
 			$error = true;
 		}
 
 		// --- Parse GET ---
+		// Only the action path is read here. The dispatch 'type' is derived later
+		// from the final, authorized $action (see resolve_fallback_data_type) — never
+		// from rest_action independently, because a POST body 'path' can override
+		// $action after this point. Deriving the type from a different field than the
+		// one that is authorized is what allowed the auth/dispatch desync.
 		// phpcs:ignore
 		if ( isset( $_GET['rest_action'] ) ) {
 			// phpcs:ignore
 			$action = sanitize_text_field( $_GET['rest_action'] );
-
-			// Handle granular datatable endpoints in fallback.
-			if ( str_contains( $action, 'burst/v1/data/ecommerce/datatable/' ) ) {
-				if ( ! $this->user_can_view_sales() ) {
-					$error = true;
-				}
-				$data_type = 'datatable-' . str_replace( 'burst/v1/data/ecommerce/datatable/', '', $action );
-				// Manually set is_ecommerce for the fallback request.
-				$_GET['is_ecommerce'] = true;
-			} elseif ( str_contains( $action, 'burst/v1/data/datatable/' ) ) {
-				$data_type = 'datatable-' . str_replace( 'burst/v1/data/datatable/', '', $action );
-			} elseif ( str_contains( $action, 'burst/v1/data/ecommerce/' ) ) {
-				if ( ! $this->user_can_view_sales() ) {
-					$error = true;
-				}
-				$data_type = strtolower( str_replace( 'burst/v1/data/ecommerce/', '', $action ) );
-			} elseif ( str_contains( $action, 'burst/v1/data/' ) ) {
-				$data_type = strtolower( str_replace( 'burst/v1/data/', '', $action ) );
-			}
 		}
 
 		// --- Collect GET params ---
@@ -572,25 +578,10 @@ class App {
 		if ( is_array( $request_data ) ) {
 			$req_path = isset( $request_data['path'] ) ? sanitize_text_field( $request_data['path'] ) : false;
 			if ( $req_path ) {
-				// override if provided by POST.
+				// Override if provided by POST. The dispatch 'type' is derived from
+				// this final $action further down, so it can never point at a
+				// different (non-granted) endpoint than the one authorized below.
 				$action = $req_path;
-				if ( ! $data_type && strpos( $action, 'burst/v1/data/' ) !== false ) {
-					// Extract data type for /data/* when using POST.
-					if ( str_contains( $action, 'burst/v1/data/ecommerce/datatable/' ) ) {
-						if ( ! $this->user_can_view_sales() ) {
-							$error = true;
-						}
-						$data_type                            = 'ecommerce-datatable-' . str_replace( 'burst/v1/data/ecommerce/datatable/', '', $action );
-						$request_data['data']['is_ecommerce'] = true;
-					} elseif ( str_contains( $action, 'burst/v1/data/datatable/' ) ) {
-						$data_type = 'datatable-' . str_replace( 'burst/v1/data/datatable/', '', $action );
-					} else {
-						if ( str_contains( $action, 'burst/v1/data/ecommerce/' ) && ! $this->user_can_view_sales() ) {
-							$error = true;
-						}
-						$data_type = strtolower( str_replace( 'burst/v1/data/', '', $action ) );
-					}
-				}
 			}
 			$data = isset( $request_data['data'] ) && is_array( $request_data['data'] ) ? $request_data['data'] : [];
 
@@ -670,9 +661,17 @@ class App {
 			}
 		}
 
-		// If we detected /data/, make sure 'type' is set from the path.
-		if ( $data_type ) {
-			$request->set_param( 'type', $data_type );
+		// Set the dispatch 'type' from the SAME authoritative $action that the
+		// permission checks above validated — the single source of truth for the
+		// fallback. Deriving it from a separately-parsed rest_action is what let a
+		// share viewer authorize a granted endpoint (in the POST body 'path') while a
+		// non-granted endpoint (in rest_action) actually dispatched.
+		$dispatch = $this->resolve_fallback_data_type( (string) $action );
+		if ( '' !== $dispatch['type'] ) {
+			$request->set_param( 'type', $dispatch['type'] );
+			if ( $dispatch['is_ecommerce'] ) {
+				$request->set_param( 'is_ecommerce', true );
+			}
 		}
 
 		// Authoritative authorization (post-override). The POST body 'path' can
@@ -693,7 +692,23 @@ class App {
 			}
 		}
 
+		// Mirror rest_pre_dispatch for the fallback: filters that short-circuit
+		// Burst REST mutations (the tour's mock mode, Tour::intercept_tour_mutations())
+		// never see admin-ajax requests, so without this a blocked REST API
+		// turns mocked writes into real ones. Same signature as rest_pre_dispatch;
+		// the method reflects the write/read split the handlers enforce above.
+		$pre_dispatch = null;
 		if ( ! $error ) {
+			$pre_dispatch_request = new \WP_REST_Request(
+				$this->is_do_action_fallback_request( (string) $action ) ? 'POST' : 'GET',
+				$authorization_request->get_route()
+			);
+			$pre_dispatch         = apply_filters( 'burst_ajax_fallback_pre_dispatch', null, rest_get_server(), $pre_dispatch_request );
+		}
+
+		if ( $pre_dispatch instanceof \WP_REST_Response ) {
+			$response = $pre_dispatch;
+		} elseif ( ! $error ) {
 			if ( str_contains( $action, '/fields/get' ) ) {
 				$response = $this->rest_api_fields_get( $request );
 			} elseif ( str_contains( $action, '/fields/set' ) ) {
@@ -1361,6 +1376,11 @@ class App {
 		if ( empty( $ajax_data ) ) {
 			$this->remove_fallback_notice();
 		}
+
+		// Capture any stray output (PHP notices/warnings) emitted while handling
+		// the action so it can never corrupt the JSON response body.
+		ob_start();
+
 		switch ( $action ) {
 			case 'plugin_actions':
 				$data = $this->plugin_actions( $request, $data );
@@ -1416,8 +1436,9 @@ class App {
 				$data = apply_filters( 'burst_do_action', [], $action, $data );
 		}
 
-		if ( ob_get_length() ) {
-			ob_clean();
+		// Discard any captured stray output; only the JSON response is returned.
+		if ( ob_get_level() > 0 ) {
+			ob_end_clean();
 		}
 
 		return $this->create_rest_response( $data );
@@ -1457,6 +1478,10 @@ class App {
 			$this->remove_fallback_notice();
 		}
 
+		// Capture any stray output (PHP notices/warnings) emitted while handling
+		// the action so it can never corrupt the JSON response body.
+		ob_start();
+
 		switch ( $action ) {
 			case 'tasks':
 				$data = burst_loader()->admin->tasks->get();
@@ -1487,8 +1512,9 @@ class App {
 				$data = apply_filters( 'burst_get_action', [], $action, $data );
 		}
 
-		if ( ob_get_length() ) {
-			ob_clean();
+		// Discard any captured stray output; only the JSON response is returned.
+		if ( ob_get_level() > 0 ) {
+			ob_end_clean();
 		}
 
 		return $this->create_rest_response( $data );
@@ -1974,6 +2000,15 @@ class App {
 				return $this->normalize_date( $value . ' 00:00:00' );
 			case 'date_end':
 				return $this->normalize_date( $value . ' 23:59:59' );
+			case 'page_id':
+				return absint( $value );
+			case 'page_url':
+				if ( ! is_string( $value ) ) {
+					return '';
+				}
+				$val = wp_strip_all_tags( $value );
+				$val = preg_replace( '/[^\w\-.~:\/?#\[\]@!$&\'()*+,;=%]/u', '', $val );
+				return (string) $val;
 			default:
 				// Allow other plugins/extensions to handle custom argument sanitization.
 				// Apply smart transformation for consistent filter interface.
@@ -2012,10 +2047,6 @@ class App {
 			// In free sources_referrers becomes statistics_referrers.
 			'statistics_referrers'  => [
 				'metrics'    => [ 'referrer', 'source_category', 'source', 'visitors', 'sessions', 'bounce_rate', 'conversions' ],
-				'capability' => 'view_burst_statistics',
-			],
-			'dummy_data'            => [
-				'metrics'    => [ 'page_url', 'pageviews', 'visitors', 'sessions', 'bounce_rate', 'avg_time_on_page', 'entrances', 'exit_rate', 'conversions', 'conversion_rate' ],
 				'capability' => 'view_burst_statistics',
 			],
 			'outgoing-links'        => [
@@ -2087,22 +2118,6 @@ class App {
 		$required_cap = $requirements[ $datatable_id ] ?? 'view_burst_statistics';
 
 		return current_user_can( $required_cap );
-	}
-
-	/**
-	 * Handle dummy datatable data generation for preview/demo purposes.
-	 *
-	 * @param mixed $data The pre-data value (null if not already set).
-	 * @param array $args Arguments passed to get_datatables_data.
-	 * @return array|null Dummy data array if id is 'dummy_data', otherwise null to use default DB query.
-	 *
-	 * Mixed $data: 'burst_datatable_pre_data' filter callback — the incoming pre-data value can be whatever earlier filters set (typically null or array); kept generic per the filter contract.
-	 */
-	public function handle_dummy_datatable_data( mixed $data, array $args ): ?array {
-		if ( 'dummy_data' === ( $args['id'] ?? null ) ) {
-			return burst_loader()->admin->statistics->get_dummy_datatable_data();
-		}
-		return $data;
 	}
 
 	/**
@@ -2183,8 +2198,9 @@ class App {
 		switch ( $type ) {
 			case 'live-visitors':
 				$is_onboarding = $request->get_param( 'isOnboarding' );
-				if ( $is_onboarding ) {
-					wp_schedule_single_event( time() + MINUTE_IN_SECONDS, 'burst_clear_test_visit' );
+				if ( $is_onboarding && ! wp_next_scheduled( 'burst_clear_test_visit' ) ) {
+					$clear_delay = ( ( defined( 'BURST_CI_ACTIVE' ) && BURST_CI_ACTIVE ) || self::is_test() ) ? DAY_IN_SECONDS : HOUR_IN_SECONDS;
+					wp_schedule_single_event( time() + $clear_delay, 'burst_clear_test_visit' );
 				}
 				$count = burst_loader()->admin->statistics->get_live_visitors_data();
 				$data  = [ 'visitors' => $count ];
@@ -3083,7 +3099,7 @@ class App {
 	}
 
 	/**
-	 * Get an array of posts
+	 * Get the pages the goals "select page" picker can choose from.
 	 *
 	 * @param \WP_REST_Request $request The REST API request object.
 	 * @param array             $ajax_data Optional AJAX data to process.
@@ -3095,52 +3111,27 @@ class App {
 			return new \WP_Error( 'rest_forbidden', 'You do not have permission to perform this action.', [ 'status' => 403 ] );
 		}
 
-		$max_post_count = 100;
-		$data           = empty( $ajax_data ) ? $request->get_params() : $ajax_data;
-		$nonce          = $data['nonce'];
-		$search         = isset( $data['search'] ) ? $data['search'] : '';
+		$data   = empty( $ajax_data ) ? $request->get_params() : $ajax_data;
+		$nonce  = isset( $data['nonce'] ) ? (string) $data['nonce'] : '';
+		$search = isset( $data['search'] ) ? sanitize_text_field( (string) $data['search'] ) : '';
 
 		if ( ! $this->verify_nonce( $nonce, 'burst_nonce' ) ) {
 			return new \WP_Error( 'rest_invalid_nonce', $this->nonce_expired_feedback, [ 'status' => 400 ] );
 		}
 
 		// do full search for string length above 3, but set a cap at 1000.
-		if ( strlen( $search ) > 3 ) {
-			$max_post_count = 1000;
-		}
+		$max_post_count = strlen( $search ) > 3 ? 1000 : 100;
 
-		global $wpdb;
-
-		$results = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT p.ID as page_id,
-            p.post_title,
-            COALESCE(s.pageviews, 0) as pageviews
-             FROM {$wpdb->prefix}posts p
-             LEFT JOIN (
-                 SELECT page_id, COUNT(*) as pageviews
-                 FROM {$wpdb->prefix}burst_statistics
-                 WHERE page_id > 0
-                 GROUP BY page_id
-             ) s ON p.ID = s.page_id
-             WHERE p.post_type IN ('post', 'page')
-               AND p.post_status = 'publish'
-             ORDER BY p.post_title ASC
-             LIMIT %d",
-				$max_post_count
-			),
-			ARRAY_A
-		);
-
-		$result_array = [];
-		foreach ( $results as $result ) {
-			$result_array[] = [
-				'page_url'   => str_replace( site_url(), '', get_permalink( $result['page_id'] ) ),
-				'page_id'    => (int) $result['page_id'],
-				'post_title' => $result['post_title'],
-				'pageviews'  => (int) $result['pageviews'],
-			];
-		}
+		// The page dictionary carries one canonical url per post id for every
+		// post type with traffic, so the picker lists WooCommerce products and
+		// other plugin post types with the url the tracker stores. The
+		// dictionary path never calls get_permalink(): burst/v1 requests run
+		// with plugin post types unregistered (REST optimizer), which makes it
+		// return a wrong url for those. Legacy post/page list until the seed
+		// completed.
+		$pages = $this->page_dictionary_ready()
+			? $this->get_goal_pages_from_dictionary( $search, $max_post_count )
+			: $this->get_goal_pages_from_posts( $search, $max_post_count );
 
 		if ( ob_get_length() ) {
 			ob_clean();
@@ -3149,11 +3140,132 @@ class App {
 		return new \WP_REST_Response(
 			[
 				'request_success' => true,
-				'posts'           => $result_array,
+				'posts'           => $this->add_pageviews_to_goal_pages( $pages ),
 				'max_post_count'  => $max_post_count,
 			],
 			200
 		);
+	}
+
+	/**
+	 * Canonical dictionary rows (one url per post id) joined to the published
+	 * post for its title, any post type. A LIKE over the dictionary's
+	 * thousands of rows replaces the old GROUP BY scan over the statistics
+	 * table.
+	 *
+	 * @param string $search Search term, matched against the url and the title.
+	 * @param int    $limit  Maximum number of rows.
+	 * @return array<int, array{page_url: string, page_id: int, post_title: string, pageviews: int}>
+	 */
+	private function get_goal_pages_from_dictionary( string $search, int $limit ): array {
+		global $wpdb;
+		$where = '';
+		if ( '' !== $search ) {
+			$like  = '%' . $wpdb->esc_like( $search ) . '%';
+			$where = $wpdb->prepare( 'AND ( d.page_url LIKE %s OR p.post_title LIKE %s )', $like, $like );
+		}
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where is prepared above.
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT d.page_url, d.page_id, p.post_title
+				FROM {$wpdb->prefix}burst_page_urls d
+				INNER JOIN {$wpdb->posts} p ON p.ID = d.page_id
+				WHERE d.is_canonical = 1 AND d.page_id > 0 AND p.post_status = 'publish' {$where}
+				ORDER BY p.post_title ASC
+				LIMIT %d",
+				$limit
+			),
+			ARRAY_A
+		);
+		// phpcs:enable
+
+		return array_map(
+			fn( array $row ): array => $this->format_goal_page( (string) $row['page_url'], (int) $row['page_id'], (string) $row['post_title'] ),
+			is_array( $rows ) ? $rows : []
+		);
+	}
+
+	/**
+	 * Legacy list for the migration window before the page dictionary is
+	 * seeded: published posts and pages from wp_posts. Only these two core
+	 * post types are listed, and core post types stay registered on burst/v1
+	 * requests, so get_permalink() resolves correctly here.
+	 *
+	 * @param string $search Search term, matched against the title.
+	 * @param int    $limit  Maximum number of rows.
+	 * @return array<int, array{page_url: string, page_id: int, post_title: string, pageviews: int}>
+	 */
+	private function get_goal_pages_from_posts( string $search, int $limit ): array {
+		global $wpdb;
+		$where = '';
+		if ( '' !== $search ) {
+			$where = $wpdb->prepare( 'AND post_title LIKE %s', '%' . $wpdb->esc_like( $search ) . '%' );
+		}
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where is prepared above.
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT ID, post_title
+				FROM {$wpdb->posts}
+				WHERE post_type IN ('post', 'page') AND post_status = 'publish' {$where}
+				ORDER BY post_title ASC
+				LIMIT %d",
+				$limit
+			),
+			ARRAY_A
+		);
+		// phpcs:enable
+
+		$site_url = site_url();
+		return array_map(
+			fn( array $row ): array => $this->format_goal_page( str_replace( $site_url, '', (string) get_permalink( (int) $row['ID'] ) ), (int) $row['ID'], (string) $row['post_title'] ),
+			is_array( $rows ) ? $rows : []
+		);
+	}
+
+	/**
+	 * One picker row in the response shape usePostsStore expects.
+	 *
+	 * @param string $page_url   Url path of the page.
+	 * @param int    $page_id    WP post id.
+	 * @param string $post_title Post title.
+	 * @return array{page_url: string, page_id: int, post_title: string, pageviews: int}
+	 */
+	private function format_goal_page( string $page_url, int $page_id, string $post_title ): array {
+		return [
+			'page_url'   => $page_url,
+			'page_id'    => $page_id,
+			'post_title' => $post_title,
+			'pageviews'  => 0,
+		];
+	}
+
+	/**
+	 * Pageview totals for the listed pages only: an indexed IN lookup on
+	 * statistics.page_id through the query executor (timeout cap, result
+	 * cache, single-flight), never a GROUP BY over the whole table.
+	 *
+	 * @param array<int, array{page_url: string, page_id: int, post_title: string, pageviews: int}> $pages Picker rows.
+	 * @return array<int, array{page_url: string, page_id: int, post_title: string, pageviews: int}>
+	 */
+	private function add_pageviews_to_goal_pages( array $pages ): array {
+		$page_ids = array_values( array_filter( array_column( $pages, 'page_id' ), static fn( int $id ): bool => $id > 0 ) );
+		if ( empty( $page_ids ) ) {
+			return $pages;
+		}
+
+		$rows = Statistics_Query::create( 'goal_pages_pageviews' )
+			->select_raw( 'statistics.page_id AS page_id, COUNT(statistics.ID) AS pageviews' )
+			->where_in( 'statistics.page_id', $page_ids, '%d' )
+			->group_by( 'statistics.page_id' )
+			->fetch( ARRAY_A );
+
+		$pageviews = array_column( $rows, 'pageviews', 'page_id' );
+		foreach ( $pages as $index => $page ) {
+			$pages[ $index ]['pageviews'] = (int) ( $pageviews[ $page['page_id'] ] ?? 0 );
+		}
+		return $pages;
 	}
 
 	/**

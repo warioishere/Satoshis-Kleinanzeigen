@@ -23,6 +23,8 @@
                     $is_configured = get_option('CPT_configured');
                     if ($is_configured == '')
                         add_action( 'admin_notices', array ( $this, 'admin_configure_notices'));
+                        
+                    $this->updater();
                     
                     add_filter('init',                      array ( $this, 'on_init'));
                     
@@ -96,6 +98,24 @@
             function compatibility()
                 {
                     include_once( CPTPATH . '/include/class.compatibility.php');                    
+                }
+                
+                
+                
+            /**
+            * Update wrapper
+            * 
+            */
+            function updater()
+                {
+                    
+                    //no not run on plugin activation
+                    if ( isset($_GET['action'])   &&  ( $_GET['action']     ==  'activate-plugin' || $_GET['action']     ==  'activate'  ) )
+                        return;
+                       
+                    //check for update from older version
+                    include_once( CPTPATH . '/include/class.updater.php');
+                    
                 }
                 
                 
@@ -553,6 +573,171 @@
                     
                     $params         =   array_merge( array( $park_at, $post_type ), array_values( $processed_ids ) );
                     
+                    /*
+                     * Restrict the update to the current WPML language
+                     * only when WPML is active.
+                     */
+                    if ( defined( 'ICL_SITEPRESS_VERSION' ) )
+                        {
+                            $current_language = apply_filters( 'wpml_current_language', null );
+
+                            // Do not modify items if the current language is unknown
+                            // or the language context includes all languages.
+                            if ( ! is_string( $current_language )
+                                || '' === $current_language
+                                || 'all' === strtolower( $current_language ) )
+                            {
+                                return;
+                            }
+
+                            $translations_table = $wpdb->prefix . 'icl_translations';
+
+                            // Get the WPML element type, e.g. "post_post" or "post_product".
+                            $element_type = apply_filters( 'wpml_element_type', $post_type );
+
+                            $sql .= " AND ID IN (
+                                        SELECT element_id
+                                        FROM {$translations_table}
+                                        WHERE element_type = %s
+                                        AND language_code = %s
+                                      )";
+
+                            $params[] = $element_type;
+                            $params[] = $current_language;
+                        }
+                        
+                        
+                    /*
+                     * Polylang support.
+                     */
+                    elseif ( function_exists( 'pll_current_language' ) )
+                        {
+                            $current_language = pll_current_language( 'slug' );
+
+                            // The admin context may not expose a current language.
+                            // In that case, use the language of the first processed post.
+                            if ( ! is_string( $current_language ) || '' === $current_language )
+                            {
+                                $current_language = function_exists( 'pll_get_post_language' )
+                                    ? pll_get_post_language( reset( array_values( $processed_ids ) ), 'slug' )
+                                    : false;
+                            }
+
+                            if ( ! is_string( $current_language )
+                                || '' === $current_language
+                                || 'all' === strtolower( $current_language ) )
+                            {
+                                return;
+                            }
+
+                            /*
+                             * Restrict the update to posts assigned to this language
+                             * through Polylang's language taxonomy.
+                             */
+                            $sql .= " AND ID IN (
+                                        SELECT tr.object_id
+                                        FROM {$wpdb->term_relationships} AS tr
+                                        INNER JOIN {$wpdb->term_taxonomy} AS tt
+                                            ON tt.term_taxonomy_id = tr.term_taxonomy_id
+                                        INNER JOIN {$wpdb->terms} AS t
+                                            ON t.term_id = tt.term_id
+                                        WHERE tt.taxonomy = %s
+                                        AND t.slug = %s
+                                      )";
+
+                            $params[] = 'language';
+                            $params[] = $current_language;
+                        }
+                    /*
+                     * Bogo support.
+                     */
+                    elseif (
+                        function_exists( 'bogo_get_post_locale' )
+                        && function_exists( 'bogo_get_default_locale' )
+                    )
+                    {
+                        // Only apply language filtering to post types managed by Bogo.
+                        if (
+                            function_exists( 'bogo_is_localizable_post_type' )
+                            && ! bogo_is_localizable_post_type( $post_type )
+                        )
+                        {
+                            return;
+                        }
+
+                        $current_locale = false;
+
+                        /*
+                         * Prefer the explicitly selected language in the admin URL.
+                         */
+                        if ( isset( $_REQUEST['lang'] ) )
+                        {
+                            if (
+                                ! is_string( $_REQUEST['lang'] )
+                                || '' === trim( $_REQUEST['lang'] )
+                            )
+                            {
+                                return;
+                            }
+
+                            $requested_language = sanitize_text_field(
+                                wp_unslash( $_REQUEST['lang'] )
+                            );
+
+                            if ( 'all' === strtolower( $requested_language ) )
+                                return;
+
+                            $current_locale = function_exists( 'bogo_get_closest_locale' )
+                                ? bogo_get_closest_locale( $requested_language )
+                                : false;
+
+                            // Do not guess when an explicit language cannot be resolved.
+                            if ( ! is_string( $current_locale ) || '' === $current_locale )
+                                return;
+                        }
+                        else
+                        {
+                            /*
+                             * Otherwise, infer the language from the first processed item.
+                             * This assumes the processed IDs belong to the same language.
+                             */
+                            $current_locale = bogo_get_post_locale(
+                                reset( $processed_ids )
+                            );
+                        }
+
+                        if ( ! is_string( $current_locale ) || '' === $current_locale )
+                            return;
+
+                        /*
+                         * Bogo stores each post's language in the _locale post meta.
+                         *
+                         * Posts without this meta belong to the default language.
+                         * Include those posts only when parking the default language.
+                         */
+                        $sql .= " AND ID IN (
+                                    SELECT p.ID
+                                    FROM {$wpdb->posts} AS p
+                                    LEFT JOIN {$wpdb->postmeta} AS pm
+                                        ON p.ID = pm.post_id
+                                        AND pm.meta_key = %s
+                                    WHERE (
+                                        pm.meta_value = %s";
+
+                        $params[] = '_locale';
+                        $params[] = $current_locale;
+
+                        if ( $current_locale === bogo_get_default_locale() )
+                        {
+                            $sql .= " OR pm.meta_id IS NULL
+                                      OR pm.meta_value = ''";
+                        }
+
+                        $sql .= " )
+                                  )";
+                    }
+                    
+                          
                     $wpdb->query( $wpdb->prepare( $sql, $params ) );
                 }
                 
@@ -675,12 +860,22 @@
                             $submitted_ids[] = absint( $submitted_id );
                         }
            
-                    array_splice(
-                        $object_ids,
-                        $edit_start_at,
-                        count( $submitted_ids ),
-                        $submitted_ids
+                    
+                    $submitted_ids = array_values( array_unique( array_map( 'absint', $submitted_ids ) ) );
+
+                    // Remove any submitted IDs from the existing full list, preserving the order
+                    // of everything else in $object_ids.
+                    $object_ids = array_values(
+                        array_filter(
+                            $object_ids,
+                            function ( $id ) use ( $submitted_ids ) {
+                                return ! in_array( $id, $submitted_ids, true );
+                            }
+                        )
                     );
+
+                    // Put the submitted IDs in front, in their submitted order.
+                    $object_ids = array_merge( $submitted_ids, $object_ids );
 
                     /*
                      * This handler renumbers the entire post-type sequence, so every

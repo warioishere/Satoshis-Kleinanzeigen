@@ -22,10 +22,13 @@ use Burst\Admin\Reports\Report_Logs;
 use Burst\Admin\Reports\Reports;
 use Burst\Admin\Search\Search;
 use Burst\Admin\Errors\Errors;
+use Burst\Admin\Export\Export_Manager;
+use Burst\Admin\Import\Import_Manager;
 use Burst\Admin\Integrations\Integrations_Settings;
 use Burst\Admin\Search_Console\Search_Console;
 use Burst\Admin\Engagement\Reading_Engagement;
 use Burst\Admin\Share\Share;
+use Burst\Admin\Tour\Tour;
 use Burst\Admin\Geo_Ip\Geo_Ip;
 use Burst\Admin\Statistics\Geo_Statistics;
 use Burst\Admin\Statistics\Goal_Statistics;
@@ -153,8 +156,18 @@ class Admin {
 			$posts = new Posts();
 			$posts->init();
 
+			$import_manager = new Import_Manager();
+			$import_manager->init();
+			$export_manager = new Export_Manager();
+			$export_manager->init();
+
+			// On init after Upgrade::check_upgrade() (priority 10): the review
+			// notice queries the statistics table, which must be upgraded first.
 			$review = new Review();
-            add_action( 'init', [ $review, 'init' ], 20 );
+			add_action( 'init', [ $review, 'init' ], 20 );
+
+			$tour = new Tour();
+			$tour->init();
 
 			// Smart update timing (Features > Smart update timing). Hooks
 			// register unconditionally and gate themselves on the settings
@@ -165,7 +178,8 @@ class Admin {
 			$plugin_updates->init();
 
 			$this->tasks = new Tasks();
-			$widget      = new Dashboard_Widget();
+			add_action( 'burst_tour_completed', [ $this->tasks, 'on_tour_completed' ] );
+			$widget = new Dashboard_Widget();
 			$widget->init();
 
 			$debug = new Debug();
@@ -177,11 +191,6 @@ class Admin {
 			if ( $this->get_option_bool( 'anonymous_usage_data' ) ) {
 				$data_sharing = new Data_Sharing();
 				$data_sharing->init();
-			}
-
-			if ( defined( 'BURST_BLUEPRINT' ) && ! get_option( 'burst_demo_data_installed' ) ) {
-				add_action( 'init', [ $this, 'install_demo_data' ] );
-				update_option( 'burst_demo_data_installed', true, false );
 			}
 
 			$this->share = new Share();
@@ -531,22 +540,6 @@ class Admin {
 	}
 
 	/**
-	 * Insert row in a table
-	 */
-	private function insert_row( string $table, array $rows ): void {
-		if ( ! $this->user_can_manage() ) {
-			return;
-		}
-		global $wpdb;
-		$table = "{$wpdb->prefix}burst_$table";
-		foreach ( $rows as $row ) {
-			// Use INSERT IGNORE so re-running (e.g. demo data via WP-CLI) does not log duplicate-key errors on the UNIQUE name column.
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is safe.
-			$wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO $table (name) VALUES (%s)", $row['name'] ) );
-		}
-	}
-
-	/**
 	 * Clean up errors after some time, to prevent them hanging around indefinitely.
 	 */
 	public function cleanup_php_error_notices(): void {
@@ -571,142 +564,6 @@ class Admin {
 			delete_option( 'burst_php_error_time' );
 			delete_option( 'burst_php_error_detected' );
 			delete_option( 'burst_php_error_count' );
-		}
-	}
-
-	/**
-	 * Get a random referrer for the demo data setup
-	 */
-	private function get_random_referrer(): string {
-		$referrers = [
-			'https://www.google.com',
-			'https://duckduckgo.com',
-			'https://bing.com',
-			'https://burst-statistics.com',
-		];
-		return $referrers[ array_rand( $referrers ) ];
-	}
-
-	/**
-	 * Install demo data in Burst if blueprint.json is active
-	 */
-	public function install_demo_data(): void {
-		// check if database installed.
-		if ( ! $this->table_exists( 'burst_statistics' ) ) {
-			return;
-		}
-
-		global $wpdb;
-
-		$data = [
-			[
-				'name' => 'Chrome',
-			],
-			[
-				'name' => 'Safari',
-			],
-			[
-				'name' => 'Firefox',
-			],
-		];
-		$this->insert_row( 'browsers', $data );
-
-		$data = [
-			[
-				'name' => 'desktop',
-			],
-			[
-				'name' => 'mobile',
-			],
-			[
-				'name' => 'tablet',
-			],
-		];
-		$this->insert_row( 'devices', $data );
-
-		$data = [
-			[
-				'name' => 'Windows',
-			],
-			[
-				'name' => 'MacOS',
-			],
-			[
-				'name' => 'Linux',
-			],
-		];
-		$this->insert_row( 'platforms', $data );
-		// get all demo pages.
-		$posts           = get_posts(
-			[
-				'post_type'      => [ 'page', 'post' ],
-				'post_status'    => 'publish',
-				'posts_per_page' => -1,
-			]
-		);
-		$start_date_unix = time();
-		$total_days      = 30;
-		// we're walking back in time, so to get an increasing nr of pageviews, we decrease the max views each day.
-		$max_views = 500;
-		for ( $i = 0; $i < $total_days; $i++ ) {
-			$stats_date_unix = $start_date_unix - ( $i * DAY_IN_SECONDS );
-			$max_views      -= $i * 2;
-			$min_views       = 10;
-			if ( $max_views <= $min_views ) {
-				$max_views = $min_views + 5;
-			}
-			foreach ( $posts as $post ) {
-				$post_id = $post->ID;
-
-				$page_url     = str_replace( home_url(), '', get_permalink( $post_id ) );
-				$visitors     = random_int( $min_views, $max_views );
-				$values       = [];
-				$placeholders = [];
-
-				for ( $j = 0; $j < $visitors; $j++ ) {
-					$uid          = random_int( 1, 1000 );
-					$bounce       = random_int( 0, 1 );
-					$browser_id   = random_int( 1, 3 );
-					$device_id    = random_int( 1, 3 );
-					$platform_id  = random_int( 1, 3 );
-					$time_on_page = wp_rand( 20, 3 * MINUTE_IN_SECONDS );
-					$referrer     = $this->get_random_referrer();
-
-					$wpdb->insert(
-						"{$wpdb->prefix}burst_sessions",
-						[
-							'referrer'         => $referrer,
-							'browser_id'       => $browser_id,
-							'device_id'        => $device_id,
-							'platform_id'      => $platform_id,
-							'bounce'           => $bounce,
-							'first_time_visit' => 1,
-						],
-						[ '%s', '%d', '%d', '%d', '%d', '%d' ]
-					);
-
-					$session_id = $wpdb->insert_id;
-
-					$placeholders[] = '(%d, %s, %d, %d, %d)';
-					$values         = array_merge(
-						$values,
-						[
-							$stats_date_unix,
-							$page_url,
-							$uid,
-							$time_on_page,
-							$session_id,
-						]
-					);
-				}
-
-				$query = "
-					INSERT INTO {$wpdb->prefix}burst_statistics
-					(time, page_url, uid_id, time_on_page, session_id)
-					VALUES " . implode( ', ', $placeholders );
-                // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- values are prepared.
-				$wpdb->query( $wpdb->prepare( $query, ...$values ) );
-			}
 		}
 	}
 
@@ -743,7 +600,7 @@ class Admin {
 		$js                .= file_get_contents( BURST_PATH . "assets/js/build/burst$cookieless_text.min.js" );
 		$ghost_mode_enabled = apply_filters( 'burst_obfuscate_filename', $this->get_option_bool( 'ghost_mode' ) );
 		$filename           = $this->get_frontend_js_filename( $ghost_mode_enabled );
-		$upload_dir         = $this->upload_dir( 'js', $ghost_mode_enabled );
+		$upload_dir         = $this->upload_dir( 'js', $ghost_mode_enabled, true );
 		$file               = $upload_dir . $filename;
 
 		// copy timeme script to uploads dir if ghost mode is enabled.
@@ -802,11 +659,11 @@ class Admin {
 
 		$files = [];
 		if ( $keep_ghost_mode !== true ) {
-			$files[] = $this->upload_dir( 'js', true ) . $this->get_frontend_js_filename( true );
-			$files[] = $this->upload_dir( 'js', true ) . 'timeme.min.js';
+			$files[] = $this->upload_dir( 'js', true, true ) . $this->get_frontend_js_filename( true );
+			$files[] = $this->upload_dir( 'js', true, true ) . 'timeme.min.js';
 		}
 		if ( $keep_ghost_mode !== false ) {
-			$files[] = $this->upload_dir( 'js' ) . $this->get_frontend_js_filename( false );
+			$files[] = $this->upload_dir( 'js', false, true ) . $this->get_frontend_js_filename( false );
 		}
 		foreach ( $files as $file ) {
 			if ( file_exists( $file ) ) {
@@ -930,6 +787,9 @@ class Admin {
 			$this->create_js_file();
 
 			$this->tasks->add_initial_tasks();
+			// Serverside task conditions (the import task's tool detection among
+			// them) run on cron only; validate once, 30 seconds after activation.
+			$this->tasks->schedule_task_validation();
 			flush_rewrite_rules();
 			if ( ! $this->table_exists( 'burst_goals' ) ) {
 				return;
@@ -1354,6 +1214,7 @@ class Admin {
 		delete_option( 'burst_db_upgrade_seed_uid_dictionary_last_id' );
 		delete_option( 'burst_db_upgrade_statistics_uid_id_last_id' );
 		delete_option( 'burst_db_upgrade_sessions_first_time_last_id' );
+		delete_option( 'burst_db_upgrade_sessions_has_pageview_last_id' );
 
 		// immediately run setup defaults, so db tables get made.
 		$this->setup_defaults();
@@ -1382,18 +1243,42 @@ class Admin {
 
 		global $wpdb;
 
-		foreach ( $this->get_table_list() as $table_name ) {
-			// guard against touching tables from other plugins, as these can be added using the tables filter.
-			if ( ! str_starts_with( $table_name, 'burst_' ) ) {
-				continue;
-			}
-			if ( ! $this->table_exists( $table_name ) ) {
-				continue;
-			}
-			$sql = "TRUNCATE TABLE {$wpdb->prefix}$table_name";
-            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name is from a predefined list.
-			$wpdb->query( $sql );
+		foreach ( $this->get_existing_burst_tables( $wpdb->prefix ) as $table ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange -- table name comes from SHOW TABLES on the burst prefix.
+			$wpdb->query( "TRUNCATE TABLE `{$table}`" );
 		}
+	}
+
+	/**
+	 * Every Burst table that actually exists for a blog prefix, as full table
+	 * names. Enumerated from the database rather than from the allowlist:
+	 * feature tables that register on burst_all_tables only while their
+	 * feature is enabled (Search Console) would otherwise be skipped by the
+	 * cleanup paths and left behind after uninstall or site deletion.
+	 * Underscores are escaped, so `wp_` never matches a subsite's `wp_2_`.
+	 * Legacy tables of old Burst versions (burst_summary, burst_known_uids,
+	 * burst_page_weights, ...) are included, which the allowlist never was.
+	 *
+	 * Another plugin that happens to use the same prefix can keep its tables
+	 * out of the cleanup via the burst_cleanup_tables filter (full names).
+	 *
+	 * @param string $prefix The blog table prefix (e.g. wp_ or wp_2_).
+	 * @return string[] Full table names.
+	 */
+	private function get_existing_burst_tables( string $prefix ): array {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$tables = $wpdb->get_col( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $prefix . 'burst_' ) . '%' ) );
+		$tables = array_map( 'strval', $tables );
+
+		/**
+		 * Filter the Burst tables the truncate / drop cleanup paths act on.
+		 *
+		 * @param string[] $tables Full table names found under {$prefix}burst_.
+		 * @param string   $prefix The blog table prefix.
+		 */
+		$tables = apply_filters( 'burst_cleanup_tables', $tables, $prefix );
+		return array_values( array_filter( $tables, static fn( $table ) => is_string( $table ) && str_starts_with( $table, $prefix . 'burst_' ) ) );
 	}
 
 	/**
@@ -1406,18 +1291,9 @@ class Admin {
 
 		global $wpdb;
 
-		// tables to delete.
-		$table_names = $this->get_table_list();
-
-		// delete tables.
-		foreach ( $table_names as $table_name ) {
-			// guard against deleting tables from other plugins, as these can be added using the tables filter.
-			if ( ! str_starts_with( $table_name, 'burst_' ) ) {
-				continue;
-			}
-			$sql = "DROP TABLE IF EXISTS {$wpdb->prefix}$table_name";
-            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name is from a predefined list.
-			$wpdb->query( $sql );
+		foreach ( $this->get_existing_burst_tables( $wpdb->prefix ) as $table ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange -- table name comes from SHOW TABLES on the burst prefix.
+			$wpdb->query( "DROP TABLE IF EXISTS `{$table}`" );
 		}
 	}
 
@@ -1486,15 +1362,7 @@ class Admin {
 	): array {
 		global $wpdb;
 
-		$table_names = $this->get_table_list();
-		foreach ( $table_names as $table_name ) {
-			if ( ! str_starts_with( $table_name, 'burst_' ) ) {
-				continue;
-			}
-			$tables[] = $wpdb->get_blog_prefix( $blog_id ) . $table_name;
-		}
-
-		return $tables;
+		return array_merge( $tables, $this->get_existing_burst_tables( $wpdb->get_blog_prefix( $blog_id ) ) );
 	}
 
 	/**

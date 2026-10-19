@@ -56,7 +56,12 @@ trait Helper {
 	 * Get an option from the burst settings and cast it to a boolean
 	 */
 	protected function get_option_bool( string $option, ?bool $default_value = null ): bool {
-		return (bool) $this->get_option( $option, $default_value );
+		$val = $this->get_option( $option, $default_value );
+		if ( function_exists( 'rest_sanitize_boolean' ) ) {
+			return rest_sanitize_boolean( $val );
+		}
+
+		return filter_var( $val, FILTER_VALIDATE_BOOLEAN );
 	}
 
 	/**
@@ -67,17 +72,119 @@ trait Helper {
 	}
 
 	/**
-	 * Get the upload dir
+	 * Get the upload dir, creating it when it does not exist yet.
+	 *
+	 * Newly created directories are hardened against direct HTTP access with
+	 * an index.php and a "Deny from all" .htaccess, unless $public is true:
+	 * the generated tracking scripts must stay reachable by the browser, so a
+	 * Deny in those directories would break tracking on Apache.
+	 *
+	 * @param string $path   Sub path below the uploads dir.
+	 * @param bool   $root   Use the uploads root instead of uploads/burst/.
+	 * @param bool   $is_public Skip the hardening files for a directory that is served to visitors.
 	 */
-	protected function upload_dir( string $path = '', bool $root = false ): string {
+	protected function upload_dir( string $path = '', bool $root = false, bool $is_public = false ): string {
 		$uploads    = wp_upload_dir();
 		$dir        = $root ? '' : 'burst/';
 		$upload_dir = trailingslashit( apply_filters( 'burst_upload_dir', $uploads['basedir'] ) ) . $dir . $path;
 		if ( ! is_dir( $upload_dir ) ) {
 			wp_mkdir_p( $upload_dir );
 		}
+		// wp_mkdir_p() fails silently when the parent is not writable (e.g. a
+		// root-owned uploads/burst/ created by WP-CLI); writing into a missing
+		// directory would only add PHP warnings, so callers check is_dir() instead.
+		if ( ! $is_public && is_dir( $upload_dir ) ) {
+			// Harden the directory against direct HTTP access.
+			if ( ! file_exists( $upload_dir . '/index.php' ) ) {
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+				file_put_contents( $upload_dir . '/index.php', "<?php\n// Silence is golden.\n" );
+			}
+			if ( ! file_exists( $upload_dir . '/.htaccess' ) ) {
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+				file_put_contents( $upload_dir . '/.htaccess', "Deny from all\n" );
+			}
+		}
+
+		// Ensure parent uploads/burst/ has an index.php to prevent directory listing.
+		if ( ! $root ) {
+			$burst_root = trailingslashit( apply_filters( 'burst_upload_dir', $uploads['basedir'] ) ) . 'burst/';
+			if ( is_dir( $burst_root ) && ! file_exists( $burst_root . 'index.php' ) ) {
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents, WordPress.PHP.NoSilencedErrors.Discouraged
+				@file_put_contents( $burst_root . 'index.php', "<?php\n// Silence is golden.\n" );
+			}
+		}
 
 		return trailingslashit( $upload_dir );
+	}
+
+	/**
+	 * Get an upload directory identified by an option containing a 32-character random token.
+	 *
+	 * Narrows the race condition when minting the token via add_option semantics,
+	 * creating and hardening the directory with index.php and .htaccess.
+	 *
+	 * @param string $option The wp_options key storing the directory token.
+	 * @param string $prefix Optional sub-path inside uploads/burst/ before the random token (e.g. 'exports').
+	 * @return string Absolute directory path with trailing slash.
+	 */
+	public function random_upload_dir( string $option, string $prefix = '' ): string {
+		$folder = (string) get_option( $option, '' );
+		if ( '' === $folder ) {
+			$folder = $this->random_token();
+			if ( ! add_option( $option, $folder, '', false ) ) {
+				$folder = (string) get_option( $option, '' );
+			}
+		} elseif ( 1 !== preg_match( '/^[a-f0-9]{32}$/', $folder ) ) {
+			$folder = $this->random_token();
+			update_option( $option, $folder, false );
+		}
+
+		$relative_path = '' !== $prefix ? trailingslashit( $prefix ) . $folder : $folder;
+		return $this->upload_dir( $relative_path );
+	}
+
+	/**
+	 * Recursively delete a directory and all of its contents including dotfiles and subdirectories.
+	 *
+	 * @param string $dir Absolute directory path.
+	 */
+	public function delete_directory( string $dir ): void {
+		if ( ! is_dir( $dir ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		$entries = @scandir( $dir );
+		if ( ! is_array( $entries ) ) {
+			return;
+		}
+
+		foreach ( $entries as $entry ) {
+			if ( '.' === $entry || '..' === $entry ) {
+				continue;
+			}
+			$path = $dir . DIRECTORY_SEPARATOR . $entry;
+			if ( is_dir( $path ) && ! is_link( $path ) ) {
+				$this->delete_directory( $path );
+			} else {
+				wp_delete_file( $path );
+			}
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir, WordPress.PHP.NoSilencedErrors.Discouraged
+		@rmdir( $dir );
+	}
+
+	/**
+	 * Generate a 32-character cryptographically secure random hex token.
+	 *
+	 * Suitable for sandboxed upload IDs, export directory hashes, and
+	 * any other context that requires an unguessable identifier.
+	 *
+	 * @return string 32-character lowercase hexadecimal string.
+	 */
+	protected function random_token(): string {
+		return bin2hex( random_bytes( 16 ) );
 	}
 
 	/**
@@ -197,7 +304,10 @@ trait Helper {
 	 * Check if we are running in a test environment
 	 */
 	protected static function is_test(): bool {
-		return getenv( 'BURST_CI_ACTIVE' ) !== false || ( defined( 'BURST_CI_ACTIVE' ) );
+		// Only Burst's own flag: a generic CI variable can survive into production
+		// images, and test mode switches off GeoIP downloads and telemetry.
+		return ( defined( 'BURST_CI_ACTIVE' ) && BURST_CI_ACTIVE )
+			|| getenv( 'BURST_CI_ACTIVE' ) !== false;
 	}
 
 	// phpcs:disable
@@ -296,6 +406,42 @@ trait Helper {
 	}
 
 	/**
+	 * Get every page ID that counts as a checkout page, with caching.
+	 *
+	 * The primary checkout page comes from burst_checkout_page_id(); funnel
+	 * builders (CartFlows) add their checkout steps through the
+	 * burst_checkout_page_ids filter. Only positive IDs are kept.
+	 *
+	 * @return int[] The checkout page IDs, empty when no checkout page is known.
+	 */
+	protected function burst_checkout_page_ids(): array {
+		$cache_key = 'burst_checkout_page_ids';
+		$page_ids  = get_transient( $cache_key );
+
+		if ( ! is_array( $page_ids ) ) {
+			$primary  = $this->burst_checkout_page_id();
+			$page_ids = $primary > 0 ? [ $primary ] : [];
+			$page_ids = apply_filters( 'burst_checkout_page_ids', $page_ids );
+			$page_ids = is_array( $page_ids ) ? array_map( 'intval', $page_ids ) : [];
+			$page_ids = array_values(
+				array_unique(
+					array_filter(
+						$page_ids,
+						static function ( int $page_id ): bool {
+							return $page_id > 0;
+						}
+					)
+				)
+			);
+
+			// Cache for 24 hours, like the single-page transient.
+			set_transient( $cache_key, $page_ids, DAY_IN_SECONDS );
+		}
+
+		return $page_ids;
+	}
+
+	/**
 	 * Get the products page ID, with caching
 	 *
 	 * @return int The checkout page ID.
@@ -320,7 +466,7 @@ trait Helper {
 	 *
 	 * @return string The burst uid.
 	 */
-	protected function get_burst_uid(): string {
+	public function get_burst_uid(): string {
 		$burst_uid = isset( $_COOKIE['burst_uid'] ) ? \Burst\burst_loader()->frontend->tracking->sanitize_uid( $_COOKIE['burst_uid'] ) : false;
 		if ( ! $burst_uid ) {
 			// try fingerprint from session.

@@ -2208,14 +2208,12 @@ class Abilities_Api {
 	 * @throws \RuntimeException When the AI client prompt builder is unavailable.
 	 */
 	private function build_chat_prompt_builder( array $messages, string $system_prompt, bool $with_abilities = true, string $preferred_model = '' ): object {
-		if ( function_exists( 'WordPress\\AI\\get_ai_service' ) ) {
+		if ( function_exists( 'wp_ai_client_prompt' ) ) {
+			$builder = wp_ai_client_prompt();
+		} elseif ( function_exists( 'WordPress\\AI\\get_ai_service' ) ) {
 			$builder = \WordPress\AI\get_ai_service()->create_textgen_prompt();
 		} else {
-			if ( ! function_exists( 'wp_ai_client_prompt' ) ) {
-				throw new \RuntimeException( 'wp_ai_client_prompt is unavailable.' );
-			}
-
-			$builder = wp_ai_client_prompt();
+			throw new \RuntimeException( 'wp_ai_client_prompt is unavailable.' );
 		}
 
 		$builder = $builder
@@ -2511,8 +2509,8 @@ class Abilities_Api {
 		$abilities_enabled = self::is_enabled();
 		$ai_plugin_active  = $this->is_wp_ai_plugin_active();
 		$ai_client_loaded  = $ai_plugin_active && (
-			function_exists( 'WordPress\\AI\\get_ai_service' )
-			|| function_exists( 'wp_ai_client_prompt' )
+			function_exists( 'wp_ai_client_prompt' )
+			|| function_exists( 'WordPress\\AI\\get_ai_service' )
 			|| class_exists( '\\WordPress\\AiClient\\AiClient' )
 		);
 
@@ -2582,6 +2580,18 @@ class Abilities_Api {
 	}
 
 	/**
+	 * Whether a provider class is already in memory.
+	 *
+	 * Never triggers the autoloader: the provider plugins are optional and
+	 * their files must not be loaded from here. The class name arrives as a
+	 * plain string on purpose, so static analysis does not resolve the
+	 * (absent) class and flag the check as always false.
+	 */
+	private function is_provider_class_loaded( string $provider_class ): bool {
+		return class_exists( $provider_class, false );
+	}
+
+	/**
 	 * Register known provider classes if they are installed but not yet registered.
 	 *
 	 * @param object $registry AI provider registry instance.
@@ -2592,14 +2602,13 @@ class Abilities_Api {
 		}
 
 		$providers = [
-			'\\WordPress\\AnthropicAiProvider\\Provider\\AnthropicProvider',
-			'\\WordPress\\OpenAiProvider\\Provider\\OpenAiProvider',
-			'\\WordPress\\GoogleAiProvider\\Provider\\GoogleProvider',
+			'WordPress\\AnthropicAiProvider\\Provider\\AnthropicProvider',
+			'WordPress\\OpenAiProvider\\Provider\\OpenAiProvider',
+			'WordPress\\GoogleAiProvider\\Provider\\GoogleProvider',
 		];
 
 		foreach ( $providers as $provider_class ) {
-			// Only register if the class is already in memory — never load files here.
-			if ( ! class_exists( $provider_class, false ) ) {
+			if ( ! $this->is_provider_class_loaded( $provider_class ) ) {
 				continue;
 			}
 

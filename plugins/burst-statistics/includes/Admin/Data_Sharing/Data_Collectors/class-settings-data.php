@@ -59,21 +59,46 @@ class Settings_Data extends Data_Collector {
 	}
 
 	/**
+	 * Read the raw Team Updraft installation source options.
+	 *
+	 * The installer writes these with update_site_option(), so on multisite
+	 * they live in the sitemeta table instead of the blog's options table.
+	 *
+	 * @return array<int, array{option_name: string, option_value: string}>
+	 */
+	private function get_installation_source_rows( string $prefix ): array {
+		global $wpdb;
+
+		if ( is_multisite() ) {
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT meta_key AS option_name, meta_value AS option_value FROM {$wpdb->sitemeta} WHERE site_id = %d AND meta_key LIKE %s",
+					get_current_network_id(),
+					$wpdb->esc_like( $prefix ) . '%'
+				),
+				ARRAY_A
+			);
+		} else {
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name LIKE %s",
+					$wpdb->esc_like( $prefix ) . '%'
+				),
+				ARRAY_A
+			);
+		}
+
+		return is_array( $rows ) ? $rows : [];
+	}
+
+	/**
 	 * Get Team Updraft plugin install source map.
 	 *
 	 * @return array<string,string>
 	 */
 	private function get_udp_plugin_install_sources(): array {
-		global $wpdb;
-
 		$prefix = 'teamupdraft_installation_source_';
-		$rows   = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name LIKE %s",
-				$wpdb->esc_like( $prefix ) . '%'
-			),
-			ARRAY_A
-		);
+		$rows   = $this->get_installation_source_rows( $prefix );
 
 		if ( empty( $rows ) ) {
 			return [];
@@ -102,18 +127,39 @@ class Settings_Data extends Data_Collector {
 	}
 
 	/**
-	 * Count active share links by type.
-	 *
-	 * @param string $type all, link, or report.
+	 * Count active (non-expired) dashboard share links, excluding report tokens.
 	 */
-	private function get_share_links_count( string $type ): int {
-		$share_links = burst_loader()->admin->share->tokens->get_share_links( $type );
+	private function get_shared_links_count(): int {
+		if ( ! isset( burst_loader()->admin, burst_loader()->admin->share, burst_loader()->admin->share->tokens ) ) {
+			return 0;
+		}
+
+		$share_links = burst_loader()->admin->share->tokens->get_share_links( 'link' );
 
 		if ( ! is_array( $share_links ) ) {
 			return 0;
 		}
 
 		return count( $share_links );
+	}
+
+	/**
+	 * Count enabled story reports, i.e. reports that are emailed with a report link.
+	 *
+	 * Report share tokens are only created when a story report is actually sent and
+	 * expire seven days later, so counting non-expired tokens (as was done before)
+	 * measured cron timing rather than usage. Counting enabled story reports
+	 * reflects how many report links are in use, independent of send timing.
+	 */
+	private function get_report_links_count(): int {
+		global $wpdb;
+
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}burst_reports WHERE enabled = 1 AND format = %s",
+				'story'
+			)
+		);
 	}
 
 	/**
@@ -181,7 +227,7 @@ class Settings_Data extends Data_Collector {
 			'archive_mode'                        => $this->get_option( 'archive_data', 'none' ),
 			'archive_months'                      => $this->get_option_int( 'archive_after_months' ),
 			'site_category'                       => $this->get_option( 'site_category', 'uncategorized' ),
-			'plugin_installed_by'                 => get_option( 'teamupdraft_installation_source_burst-statistics', '' ),
+			'plugin_installed_by'                 => get_site_option( 'teamupdraft_installation_source_burst-statistics', '' ),
 			'udp_plugin_install_sources'          => $this->get_udp_plugin_install_sources(),
 			'burst_auto_installed'                => $this->get_wordpress_option_bool( 'burst_auto_installed', false ),
 			'burst_activation_time_pro'           => $burst_activation_time_pro,
@@ -193,8 +239,8 @@ class Settings_Data extends Data_Collector {
 			'burst_geo_ip_import_error'           => get_option( 'burst_geo_ip_import_error', '' ),
 			'burst_tracking_status'               => get_option( 'burst_tracking_status', 'unknown' ),
 			'burst_share_tokens'                  => ! empty( get_option( 'burst_share_tokens', [] ) ),
-			'shared_links'                        => $this->get_share_links_count( 'link' ),
-			'report_links'                        => $this->get_share_links_count( 'report' ),
+			'shared_links'                        => $this->get_shared_links_count(),
+			'report_links'                        => $this->get_report_links_count(),
 			'burst_use_fallback_licensing_domain' => ! empty( get_transient( 'burst_use_fallback_licensing_domain' ) ),
 			'burst_license_status'                => $license_status,
 			'enable_mainwp_integration'           => $this->get_burst_setting_bool( 'enable_mainwp_integration' ),
@@ -204,6 +250,8 @@ class Settings_Data extends Data_Collector {
 			'enable_search_console'               => $this->get_burst_setting_bool( 'enable_search_console' ),
 			'plugin_update_suggestions'           => $this->get_burst_setting_bool( 'plugin_update_suggestions', true ),
 			'plugin_update_scheduling'            => $this->get_burst_setting_bool( 'plugin_update_scheduling', false ),
+			'burst_tour_completed'                => $this->get_wordpress_option_bool( 'burst_tour_completed', false ),
+			'burst_tour_last_section'             => (string) get_option( 'burst_tour_last_section', '' ),
 		];
 	}
 

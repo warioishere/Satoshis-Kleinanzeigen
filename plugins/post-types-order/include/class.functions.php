@@ -89,6 +89,16 @@
                     
                     return $options;            
                 }
+                
+            
+            /**
+            * Update the plugin options
+            * 
+            */
+            static public function update_options( $options )
+                {
+                    update_option('cpto_options', $options);    
+                }
             
             
             /**

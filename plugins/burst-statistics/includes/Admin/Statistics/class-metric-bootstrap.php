@@ -45,6 +45,7 @@ class Metric_Bootstrap {
 			new Metrics\Bounce_Rate_Metric(),
 			new Metrics\Sessions_Metric(),
 			new Metrics\Avg_Time_On_Page_Metric(),
+			new Metrics\Avg_Max_Scroll_Metric(),
 			new Metrics\Avg_Session_Duration_Metric(),
 			new Metrics\First_Time_Visitors_Metric(),
 			new Metrics\Visitors_Metric(),
@@ -135,7 +136,7 @@ class Metric_Bootstrap {
 			'device'           => 'sessions.device_id',
 			'device_id'        => 'sessions.device_id',
 			'entry_exit_pages' => 'entry_exit_pages',
-			'parameter'        => 'parameter',
+			'parameter'        => 'params.parameter',
 			'parameters'       => 'statistics.parameters',
 			'goal_id'          => 'goals.goal_id',
 			// Virtual filter: resolved against page_type in add_filter_condition(), there is no status column.

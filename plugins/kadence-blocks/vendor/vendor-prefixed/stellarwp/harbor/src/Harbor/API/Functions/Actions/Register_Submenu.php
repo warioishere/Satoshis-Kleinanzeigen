@@ -34,7 +34,7 @@ class Register_Submenu {
 
 				add_submenu_page(
 					$parent_slug,
-					__( 'Liquid Web Software Manager', 'kadence-blocks' ),
+					__( 'Nexcess Licensing', 'kadence-blocks' ),
 					__( 'Licensing', 'kadence-blocks' ),
 					'manage_options',
 					$page_url

@@ -38,6 +38,12 @@ spl_autoload_register(
 			return;
 		}
 
+		$interface_file = $plugin_path . "includes/{$dir}interface-" . str_replace( '_', '-', strtolower( $class_name ) ) . '.php';
+		if ( file_exists( $interface_file ) ) {
+			require_once $interface_file;
+			return;
+		}
+
 		$trait_file = $plugin_path . "includes/{$dir}trait-" . str_replace( '_', '-', strtolower( $class_name ) ) . '.php';
 		if ( file_exists( $trait_file ) ) {
 			require_once $trait_file;
@@ -70,10 +76,10 @@ spl_autoload_register(
 			}
 		}
 
-		// temporary fallback during upgrade.
-		$file = $plugin_path . "src/{$dir}class-" . str_replace( '_', '-', strtolower( $class_name ) ) . '.php';
-		if ( file_exists( $file ) ) {
-			require_once $file;
+		// Shared code may probe Pro classes with class_exists(); on the free
+		// plugin the Pro/ directory does not exist, so that miss is expected
+		// and must not be logged.
+		if ( ! defined( 'BURST_PRO' ) && strpos( $burst_class, 'Burst\\Pro\\' ) === 0 ) {
 			return;
 		}
 

@@ -10,7 +10,7 @@
             var $CPTO;
             
             // Max number of items queried/shown in the sortable list (performance safeguard)
-            var $items_limit           =   500;
+            var $items_limit           =   700;
             
             // Real total of items found for the current post type (set by list_pages())
             var $total_found_posts     =   0;
@@ -26,6 +26,10 @@
                     
                     global $CPTO;
                     $this->CPTO         =   $CPTO;
+                    
+                    // Allow the limit itself to be filtered, then keep it on the object
+                    // so callers (e.g. sort_page()) can compare it against found_posts.
+                    $this->items_limit = (int) apply_filters( 'pto/interface/query/limit', $this->items_limit );
                     
                     add_action( 'admin_init',                               array ( $this, 'admin_init'), 10 );
                     
@@ -628,7 +632,6 @@
                     
                     // Allow the limit itself to be filtered, then keep it on the object
                     // so callers (e.g. sort_page()) can compare it against found_posts.
-                    $this->items_limit = (int) apply_filters( 'pto/interface/query/limit', $this->items_limit );
                     
                     $args = array(
                                 'sort_column'       =>  'menu_order',

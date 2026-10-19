@@ -2,7 +2,7 @@
 # This file is distributed under the same license as the WordPress - 7.1.x - Development - Administration - Network Admin package.
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2026-09-09 19:23:44+0000\n"
+"PO-Revision-Date: 2026-09-17 22:10:53+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -289,7 +289,7 @@ msgstr "Der Benutzername und ein Link zum Festlegen des Passworts werden an dies
 #. translators: %s: New network admin email.
 #: wp-admin/network/settings.php:177
 msgid "There is a pending change of the network admin email to %s."
-msgstr "Es gibt eine ausstehende Änderung der E-Mail-Adresse des Netzwerkadministrators auf %s."
+msgstr "Eine Änderung der administrativen E-Mail-Adresse des Netzwerks auf %s steht noch aus."
 
 #: wp-admin/includes/network.php:355
 msgid "Sub-domain Installation"
@@ -1370,7 +1370,7 @@ msgstr "Dem Administrator des Netzwerks jedes Mal eine E-Mail-Benachrichtigung s
 
 #: wp-admin/includes/network.php:388 wp-admin/network/settings.php:166
 msgid "Network Admin Email"
-msgstr "E-Mail-Adresse des Netzwerkadministrators"
+msgstr "Administrative E-Mail-Adresse des Netzwerks"
 
 #: wp-admin/network/site-new.php:288
 msgid "A new user will be created if the above email address is not in the database."

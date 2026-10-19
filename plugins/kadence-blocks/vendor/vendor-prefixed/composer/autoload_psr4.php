@@ -45,6 +45,7 @@ return array(
     'KadenceWP\\KadenceBlocks\\Psr\\Container\\' => array($vendorDir . '/psr/container/src'),
     'KadenceWP\\KadenceBlocks\\PhpOption\\' => array($vendorDir . '/phpoption/phpoption/src/PhpOption'),
     'KadenceWP\\KadenceBlocks\\Nyholm\\Psr7\\' => array($vendorDir . '/nyholm/psr7/src'),
+    'KadenceWP\\KadenceBlocks\\Nexcess\\Banners\\' => array($vendorDir . '/stellarwp/banners/src'),
     'KadenceWP\\KadenceBlocks\\Monolog\\' => array($vendorDir . '/monolog/monolog/src/Monolog'),
     'KadenceWP\\KadenceBlocks\\LiquidWeb\\LicensingApiClient\\' => array($vendorDir . '/stellarwp/licensing-api-client/src'),
     'KadenceWP\\KadenceBlocks\\LiquidWeb\\LicensingApiClientWordPress\\' => array($vendorDir . '/stellarwp/licensing-api-client-wordpress/src'),

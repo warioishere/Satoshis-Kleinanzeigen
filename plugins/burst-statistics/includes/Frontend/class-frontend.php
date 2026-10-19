@@ -6,6 +6,7 @@ use Burst\Frontend\Goals\Goals_Tracker;
 use Burst\Frontend\Ip\Ip;
 use Burst\Frontend\Search\Search;
 use Burst\Frontend\Share\Share_Expired;
+use Burst\Frontend\Share\Viewer_Lockdown;
 use Burst\Frontend\Tracking\Tracking;
 use Burst\Traits\Admin_Helper;
 use Burst\Traits\Helper;
@@ -20,11 +21,6 @@ class Frontend {
 	use Admin_Helper;
 
 	public Tracking $tracking;
-
-	/**
-	 * Frontend statistics instance
-	 */
-	public Frontend_Statistics $statistics;
 
 	/**
 	 * Option holding the auto debug window state: remaining budget, collected
@@ -134,6 +130,9 @@ class Frontend {
 		$share = new Share_Expired();
 		$share->init();
 
+		$viewer_lockdown = new Viewer_Lockdown();
+		$viewer_lockdown->init();
+
 		// Check if MainWP integration option is enabled.
 		if ( $this->get_option_bool( 'enable_mainwp_integration' ) ) {
 			$mainwp_proxy = new MainWP_Proxy();
@@ -149,9 +148,7 @@ class Frontend {
 			return;
 		}
 
-		// not processing form data, only a conditional redirect, which is available only temporarily.
-		// phpcs:ignore
-		if ( ! get_transient( 'burst_redirect_to_settings_page' ) || ( isset( $_GET['page'] ) && $_GET['page'] === 'burst' ) ) {
+		if ( ! get_transient( 'burst_redirect_to_settings_page' ) ) {
 			return;
 		}
 
@@ -160,6 +157,14 @@ class Frontend {
 		}
 
 		delete_transient( 'burst_redirect_to_settings_page' );
+
+		// Already on the page the redirect leads to: the redirect is used up, so a later
+		// admin page does not unexpectedly send the user back here.
+		// not processing form data, only a conditional redirect, which is available only temporarily.
+		// phpcs:ignore
+		if ( isset( $_GET['page'] ) && $_GET['page'] === 'burst' ) {
+			return;
+		}
 
 		// we don't redirect when installed through the onboarding of another plugin.
 		if ( get_site_option( 'teamupdraft_installation_source_burst-statistics' ) ) {
@@ -552,7 +557,7 @@ class Frontend {
 			return $this->uses_obfuscated_combined_file;
 		}
 
-		$file                                = $this->upload_dir( 'js', true ) . $this->get_frontend_js_filename( true );
+		$file                                = $this->upload_dir( 'js', true, true ) . $this->get_frontend_js_filename( true );
 		$this->uses_obfuscated_combined_file = file_exists( $file );
 		return $this->uses_obfuscated_combined_file;
 	}
@@ -569,7 +574,7 @@ class Frontend {
 		$prefix = 'burst';
 		if ( $this->uses_obfuscated_combined_file() ) {
 			$prefix      = 'b';
-			$upload_path = $this->upload_dir( 'js', true );
+			$upload_path = $this->upload_dir( 'js', true, true );
 			// Fall back to the bundled file if the uploads copy is missing, so the src
 			// stays loadable while the handle keeps matching the tracking script.
 			if ( file_exists( $upload_path . 'timeme.min.js' ) ) {
@@ -642,7 +647,7 @@ class Frontend {
 				$ghost_mode_enabled = $this->uses_obfuscated_combined_file();
 				$filename           = $this->get_frontend_js_filename( $ghost_mode_enabled );
 				$upload_url         = $this->upload_url( 'js', $ghost_mode_enabled );
-				$upload_path        = $this->upload_dir( 'js', $ghost_mode_enabled );
+				$upload_path        = $this->upload_dir( 'js', $ghost_mode_enabled, true );
 
 				// Only use the written file if it exists. For ghost mode the existence check
 				// is part of uses_obfuscated_combined_file(), so the prefix always matches
