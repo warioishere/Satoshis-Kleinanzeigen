@@ -180,8 +180,8 @@ class AiCategorizer {
 				'type'    => 'select',
 				'options' => [
 					'claude-haiku-4-5-20251001' => __( 'Claude Haiku 4.5 (schnell, günstig — empfohlen)', 'sk-core' ),
-					'claude-sonnet-4-6'         => __( 'Claude Sonnet 4.6 (besser, teurer)', 'sk-core' ),
-					'claude-opus-4-6'           => __( 'Claude Opus 4.6 (bestes Modell)', 'sk-core' ),
+					'claude-sonnet-5-5'         => __( 'Claude Sonnet 5.5 (besser, teurer)', 'sk-core' ),
+					'claude-opus-5-5'           => __( 'Claude Opus 5.5 (bestes Modell)', 'sk-core' ),
 				],
 				'default' => 'claude-haiku-4-5-20251001',
 			],
@@ -329,19 +329,27 @@ class AiCategorizer {
 			. 'Antworte NUR mit einem JSON-Objekt: {"term_id": <zahl>, "term_name": "<name>", "path": "<Eltern > Kind>"}. '
 			. 'Keine Erklärung, kein Text außer dem JSON.';
 
+		$request = [
+			'model'      => $model,
+			'max_tokens' => 100,
+			'system'     => $system,
+			'messages'   => [ [ 'role' => 'user', 'content' => $prompt ] ],
+		];
+
+		// Sonnet/Opus 5.5 always think: keep effort low and leave room for the thinking tokens.
+		if ( ! str_starts_with( $model, 'claude-haiku' ) ) {
+			$request['max_tokens']    = 4000;
+			$request['output_config'] = [ 'effort' => 'low' ];
+		}
+
 		$response = wp_remote_post( 'https://api.anthropic.com/v1/messages', [
-			'timeout' => 20,
+			'timeout' => 30,
 			'headers' => [
 				'x-api-key'        => $api_key,
 				'anthropic-version' => '2023-06-01',
 				'content-type'     => 'application/json',
 			],
-			'body' => wp_json_encode( [
-				'model'      => $model,
-				'max_tokens' => 100,
-				'system'     => $system,
-				'messages'   => [ [ 'role' => 'user', 'content' => $prompt ] ],
-			] ),
+			'body' => wp_json_encode( $request ),
 		] );
 
 		if ( is_wp_error( $response ) ) {
@@ -356,7 +364,14 @@ class AiCategorizer {
 			return new \WP_Error( 'claude_error', $msg );
 		}
 
-		$text = $body['content'][0]['text'] ?? '';
+		// Thinking blocks may precede the answer; take the first text block.
+		$text = '';
+		foreach ( $body['content'] ?? [] as $block ) {
+			if ( 'text' === ( $block['type'] ?? '' ) ) {
+				$text = $block['text'];
+				break;
+			}
+		}
 
 		if ( preg_match( '/\{[^}]+\}/s', $text, $m ) ) {
 			$data = json_decode( $m[0], true );
