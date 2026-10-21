@@ -28,7 +28,12 @@ class Transients {
 		return get_transient( $this->transient_prefix . $key ) ? true : false;
 	}
 
-	public function set( $key, $signed = false, $user_id = false, $message = false ) {
+	/**
+	 * @param string|false $node_key The wallet's linking key. Kept because the
+	 *                               account found for it may hold a different
+	 *                               primary key (a linked second wallet).
+	 */
+	public function set( $key, $signed = false, $user_id = false, $message = false, $node_key = false ) {
 		// remove expired transients proactively
 		delete_expired_transients();
 
@@ -53,6 +58,7 @@ class Transients {
 				'signed'  => $signed,
 				'user_id' => $user_id,
 				'message' => $message,
+				'key'     => $node_key,
 			),
 			$expiration
 		); // expires in 5min

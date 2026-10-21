@@ -218,6 +218,18 @@ class Login {
 				$user_id     = false;
 				$user        = false;
 
+				// A second wallet linked on the Nostr/LN link page belongs to
+				// that account. Without this, every login with it created a
+				// fresh empty account, which the connector then swapped away.
+				if ( empty( $user_exists ) ) {
+					$user_exists = get_users(
+						array(
+							'meta_key'   => 'uac_linked_lnurl_node_key',
+							'meta_value' => $node_linking_key,
+						)
+					);
+				}
+
 				if ( empty( $user_exists ) ) {
 
 					// if no user exists and usercreation is off
@@ -311,7 +323,7 @@ class Login {
 				}
 
 				// set transient to signal lnurl auth ok
-				lnurl_auth()->Transients->set( $k1, true, $user_id );
+				lnurl_auth()->Transients->set( $k1, true, $user_id, false, $node_linking_key );
 
 				echo wp_json_encode( array( 'status' => 'OK' ) );
 				die;

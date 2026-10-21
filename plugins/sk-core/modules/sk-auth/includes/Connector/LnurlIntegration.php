@@ -85,9 +85,14 @@ class UAC_LNURL_Auth_Integration {
             return false;
         }
 
-        // Get the node key from the temporary user that was created
+        // The scanned key itself. The account it resolved to may hold another
+        // primary key (when the wallet is linked there as a second one), so
+        // its meta is only the fallback for sessions signed before the key
+        // was kept in the transient.
         $temp_user_id = $transient['user_id'];
-        $node_key = get_user_meta($temp_user_id, 'lnurl-auth-bjm-id', true);
+        $node_key = !empty($transient['key'])
+            ? $transient['key']
+            : get_user_meta($temp_user_id, 'lnurl-auth-bjm-id', true);
 
         if (empty($node_key)) {
             return false;
