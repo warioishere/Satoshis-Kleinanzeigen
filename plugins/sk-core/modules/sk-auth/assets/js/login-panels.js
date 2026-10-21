@@ -12,6 +12,16 @@
             document.getElementById('sk-login-' + btn.dataset.tab).classList.add('active');
         });
     });
+    /* Recovery panel: no tab of its own, opened by the link below the panels */
+    var recoveryLink = document.querySelector('.sk-login-recovery-link');
+    if (recoveryLink) {
+        recoveryLink.addEventListener('click', function() {
+            btns.forEach(function(b) { b.classList.remove('active'); });
+            panels.forEach(function(p) { p.classList.remove('active'); });
+            document.getElementById('sk-login-recovery').classList.add('active');
+            document.getElementById('sk-recovery-code-input').focus();
+        });
+    }
     /* LNURL copy button */
     var retries = 0, maxRetries = 100;
     var iv = setInterval(function() {

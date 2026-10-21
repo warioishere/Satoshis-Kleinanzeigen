@@ -127,6 +127,9 @@
             const $qrContainer = $('#uac-lnurl-qr');
             const $status = $('#uac-lnurl-status');
 
+            // Set on "use another wallet": the scanned wallet replaces the primary one.
+            this.lnurlReplace = $button.data('replace') ? '1' : '0';
+
             $button.prop('disabled', true).text(uacData.i18n.linking);
             this.showMessage($status, 'info', 'Generating QR code...');
 
@@ -192,7 +195,8 @@
                         action: 'uac_verify_lnurl_link',
                         nonce: uacData.nonce,
                         k1: k1,
-                        force: '0'
+                        force: '0',
+                        replace: this.lnurlReplace
                     }
                 }).then((response) => {
                     if (response.success) {

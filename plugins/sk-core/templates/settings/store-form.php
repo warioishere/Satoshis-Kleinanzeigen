@@ -813,6 +813,27 @@ $store_slug = $current_user_obj ? $current_user_obj->user_nicename : '';
     <div class="sk-settings-section-title">
         <i class="fas fa-exclamation-triangle"></i> <?php esc_html_e( 'Gefahrenzone', 'sk-core' ); ?>
     </div>
+    <?php if ( class_exists( 'SK\Modules\Auth\RecoveryCode' ) ) :
+        $recovery_created = \SK\Modules\Auth\RecoveryCode::created( $current_user );
+        ?>
+        <div class="sk-settings-field sk-settings-field--flat" id="sk-recovery">
+            <p class="sk-settings-danger-text">
+                <strong><?php esc_html_e( 'Notfall-Schlüssel', 'sk-core' ); ?>:</strong>
+                <?php
+                esc_html_e( 'Damit kommst du wieder in dein Konto, wenn deine Wallet oder dein Schlüssel verloren geht. Er wird nur einmal angezeigt und ist danach nur noch dir bekannt.', 'sk-core' );
+                echo ' ';
+                if ( $recovery_created ) {
+                    /* translators: %s: date the code was made. */
+                    printf( esc_html__( 'Dein aktueller Schlüssel ist vom %s.', 'sk-core' ), esc_html( wp_date( get_option( 'date_format' ), $recovery_created ) ) );
+                } else {
+                    esc_html_e( 'Du hast noch keinen.', 'sk-core' );
+                }
+                ?>
+            </p>
+            <?php \SK\Modules\Auth\RecoveryCode::render_generator( $recovery_created > 0 ); ?>
+        </div>
+        <hr class="sk-settings-danger-divider">
+    <?php endif; ?>
     <div class="sk-settings-field sk-settings-field--flat">
         <p class="sk-settings-danger-text">
             <?php esc_html_e( 'Dein Account, alle Produkte und alle Daten werden unwiderruflich gelöscht. Dieser Vorgang kann nicht rückgängig gemacht werden.', 'sk-core' ); ?>

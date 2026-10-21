@@ -108,6 +108,7 @@ class UserOnboarding {
 					<span class="uob-dot" data-slide="4"></span>
 					<span class="uob-dot" data-slide="5"></span>
 					<span class="uob-dot" data-slide="6"></span>
+					<span class="uob-dot" data-slide="7"></span>
 				</div>
 
 				<button type="button" class="uob-close" aria-label="<?php esc_attr_e( 'Schließen', 'sk-core' ); ?>">
@@ -179,7 +180,22 @@ class UserOnboarding {
 					</ul>
 				</div>
 
-				<!-- Slide 4: Your shop — the only slide that asks for something -->
+				<!-- Slide 4: Recovery code -->
+				<div class="uob-slide" data-slide="3">
+					<div class="uob-slide-icon"><i class="fas fa-life-ring"></i></div>
+					<h2><?php _e( 'Dein Notfall-Schlüssel', 'sk-core' ); ?></h2>
+					<p><?php _e( 'Du meldest dich mit deiner Wallet oder deinem Schlüssel an. Geht der verloren, kommst du nur mit einem Notfall-Schlüssel wieder in dein Konto.', 'sk-core' ); ?></p>
+					<?php if ( class_exists( 'SK\Modules\Auth\RecoveryCode' ) ) : ?>
+						<?php if ( \SK\Modules\Auth\RecoveryCode::has_code( get_current_user_id() ) ) : ?>
+							<p style="text-align:center;color:#5cb85c;font-weight:600;"><i class="fas fa-check-circle"></i> <?php _e( 'Notfall-Schlüssel bereits vorhanden!', 'sk-core' ); ?></p>
+						<?php else : ?>
+							<?php \SK\Modules\Auth\RecoveryCode::render_generator( false ); ?>
+						<?php endif; ?>
+					<?php endif; ?>
+					<p class="uob-tip"><i class="fas fa-lightbulb"></i> <?php _e( 'Später findest du ihn in den Einstellungen ganz unten.', 'sk-core' ); ?></p>
+				</div>
+
+				<!-- Slide 5: Your shop — the only slide that asks for something -->
 				<?php
 				$uob_info   = function_exists( 'sk_get_store_info' ) ? sk_get_store_info( get_current_user_id() ) : [];
 				$uob_name   = (string) ( $uob_info['store_name'] ?? '' );
@@ -187,7 +203,7 @@ class UserOnboarding {
 				$uob_avatar = (int) ( $uob_info['gravatar'] ?? 0 );
 				$uob_banner = (int) ( $uob_info['banner'] ?? 0 );
 				?>
-				<div class="uob-slide" data-slide="3">
+				<div class="uob-slide" data-slide="4">
 					<h2><?php _e( 'Dein Auftritt', 'sk-core' ); ?></h2>
 					<p><?php _e( 'Vier Angaben — alle freiwillig und später änderbar.', 'sk-core' ); ?></p>
 
@@ -232,8 +248,8 @@ class UserOnboarding {
 					<div id="uob-shop-status" class="uob-status"></div>
 				</div>
 
-				<!-- Slide 5: Communication -->
-				<div class="uob-slide" data-slide="4">
+				<!-- Slide 6: Communication -->
+				<div class="uob-slide" data-slide="5">
 					<div class="uob-slide-icon"><i class="fas fa-comments"></i></div>
 					<h2><?php _e( 'Kommunikation', 'sk-core' ); ?></h2>
 					<p><?php _e( 'Der Chat ist der direkte Weg zum Anbieter — er steht auf jedem Inserat und du brauchst dafür nichts weiter als dein Konto hier.', 'sk-core' ); ?></p>
@@ -266,9 +282,9 @@ class UserOnboarding {
 					<p class="uob-tip"><i class="fas fa-lightbulb"></i> <?php printf( __( 'Tipp: Folge uns auf <a href="%s" target="_blank" rel="noopener">Nostr</a> oder tritt dem offiziellen <a href="%s" target="_blank" rel="noopener">Telegram Kanal</a> bei', 'sk-core' ), 'https://nostrich.org/p/nprofile1qqsg3fglunsprjgg0z2efc0qpcshrjkvyksfk9lracjawpuzs0quy8cqxrg92', 'https://t.me/satoshiskleinanzeige' ); ?></p>
 				</div>
 
-				<!-- Slide 6: Nostr Identity -->
+				<!-- Slide 7: Nostr Identity -->
 				<?php $has_nostr = ! empty( get_user_meta( get_current_user_id(), 'nostr_public_key', true ) ); ?>
-				<div class="uob-slide" data-slide="5" <?php if ( $has_nostr ) echo 'data-skip="true"'; ?>>
+				<div class="uob-slide" data-slide="6" <?php if ( $has_nostr ) echo 'data-skip="true"'; ?>>
 					<div class="uob-slide-icon"><i class="fas fa-key"></i></div>
 					<h2><?php _e( 'Nostr-Identität erstellen', 'sk-core' ); ?></h2>
 					<p><?php _e( 'Wir empfehlen dir, eine Nostr-Identität zu erstellen. Damit werden deine Inserate kryptographisch signiert und deine Reputation nachweisbar.', 'sk-core' ); ?></p>
@@ -328,8 +344,8 @@ class UserOnboarding {
 					<?php endif; ?>
 				</div>
 
-				<!-- Slide 7: Get Started -->
-				<div class="uob-slide" data-slide="6">
+				<!-- Slide 8: Get Started -->
+				<div class="uob-slide" data-slide="7">
 					<div class="uob-slide-icon"><i class="fas fa-rocket"></i></div>
 					<h2><?php _e( 'Los geht\'s!', 'sk-core' ); ?></h2>
 					<p><?php _e( 'Du bist startklar! Hier sind deine nächsten Schritte:', 'sk-core' ); ?></p>

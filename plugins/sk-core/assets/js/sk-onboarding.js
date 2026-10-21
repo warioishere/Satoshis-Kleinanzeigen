@@ -6,10 +6,10 @@
 
 	var UOB = {
 		currentSlide: 0,
-		totalSlides: 7,
+		totalSlides: 8,
 
 		// The shop slide is the only one that asks for input.
-		shopSlide: 3,
+		shopSlide: 4,
 		place: { lat: 0, lng: 0 },
 
 		init: function () {

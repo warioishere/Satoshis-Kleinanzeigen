@@ -32,10 +32,12 @@ final class Module {
         require_once SK_AUTH_INCLUDES . '/NostrIdentity.php';
         require_once SK_AUTH_INCLUDES . '/NostrSettings.php';
         require_once SK_AUTH_INCLUDES . '/NostrRelaySync.php';
+        require_once SK_AUTH_INCLUDES . '/RecoveryCode.php';
         new AuthSettings();
         new NostrSettings();
         NostrIdentity::init_hooks();
         NostrRelaySync::init();
+        RecoveryCode::init();
 
         $this->load_lnurl_auth();
         $this->load_nostr_login();
@@ -187,16 +189,21 @@ final class Module {
             return '<p style="text-align:center;">Hallo <strong>' . esc_html( $user->display_name ) . '</strong>, du bist bereits eingeloggt. <a href="' . esc_url( $dashboard_url ) . '">Zum Dashboard</a></p>';
         }
 
+        RecoveryCode::enqueue_style();
+
+        // A failed recovery attempt reopens its own panel with the error.
+        $recovery = RecoveryCode::has_login_error();
+
         ob_start();
         ?>
         <div class="sk-login-tabs">
             <div class="sk-login-tab-buttons">
-                <button class="sk-login-tab-btn active" data-tab="lightning">Lightning</button>
+                <button class="sk-login-tab-btn <?php echo $recovery ? '' : 'active'; ?>" data-tab="lightning">Lightning</button>
                 <button class="sk-login-tab-btn" data-tab="bitcoin">Bitcoin</button>
                 <button class="sk-login-tab-btn" data-tab="nostr">Nostr</button>
             </div>
             <div class="sk-login-tab-content">
-                <div class="sk-login-panel active" id="sk-login-lightning">
+                <div class="sk-login-panel <?php echo $recovery ? '' : 'active'; ?>" id="sk-login-lightning">
                     <?php echo do_shortcode( '[lnurl_auth]' ); ?>
                     <div id="lnurl-copy-button-container"></div>
                 </div>
@@ -206,7 +213,13 @@ final class Module {
                 <div class="sk-login-panel" id="sk-login-nostr">
                     <?php echo do_shortcode( '[nostr_login_box]' ); ?>
                 </div>
+                <div class="sk-login-panel <?php echo $recovery ? 'active' : ''; ?>" id="sk-login-recovery">
+                    <?php echo RecoveryCode::render_login_form(); ?>
+                </div>
             </div>
+            <p class="sk-login-recovery-toggle">
+                <button type="button" class="sk-login-recovery-link"><?php esc_html_e( 'Zugang verloren? Mit Notfall-Schlüssel anmelden', 'sk-core' ); ?></button>
+            </p>
         </div>
         <?php
         return ob_get_clean();

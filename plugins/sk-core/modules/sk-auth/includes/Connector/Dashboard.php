@@ -76,6 +76,18 @@ class SK_Auth_Dashboard extends \SK\Core\Dashboard\DashboardModule {
         </div>
 
         <div class="uac-content">
+                        <?php if ( ! empty( $_GET['sk_recovered'] ) ) : ?>
+                            <div class="sk-alert sk-alert-warning">
+                                <p>
+                                    <strong>Du bist mit deinem Notfall-Schlüssel angemeldet.</strong>
+                                    Er ist damit verbraucht, und alle anderen Sitzungen wurden beendet.
+                                    Verknüpfe jetzt eine neue Wallet oder einen Nostr-Schlüssel und erstelle danach in den
+                                    <a href="<?php echo esc_url( sk_get_navigation_url( 'settings/store' ) . '#sk-recovery' ); ?>">Einstellungen</a>
+                                    einen neuen Notfall-Schlüssel.
+                                </p>
+                            </div>
+                        <?php endif; ?>
+
                         <div class="sk-alert sk-alert-info">
                             <p>
                                 Verknüpfe mehrere Authentifizierungsmethoden mit Deinem Konto. Nach der Verknüpfung kannst Du Dich mit jeder verbundenen Methode anmelden. Falls die andere Methode bereits ein eigenes Konto hat, werden die Konten automatisch zusammengeführt — das Konto mit Deinen Shop-Daten bleibt erhalten.
@@ -190,6 +202,17 @@ class SK_Auth_Dashboard extends \SK\Core\Dashboard\DashboardModule {
                                                     (Primär)
                                                 </span>
                                             </div>
+                                            <?php
+                                            // The only way to swap a lost or retired wallet for
+                                            // a new one: the primary key itself is replaced, so
+                                            // the old wallet can no longer log in.
+                                            ?>
+                                            <p class="uac-method-description" style="margin-top:12px;">
+                                                Neue Wallet? Dann ersetze die bisherige. Die alte Wallet kann sich danach nicht mehr anmelden.
+                                            </p>
+                                            <button type="button" class="button uac-link-lnurl-btn" id="uac-link-lnurl" data-replace="1">
+                                                Andere Wallet verwenden
+                                            </button>
                                         <?php elseif ($linked_methods['lnurl']): ?>
                                             <div class="uac-linked-info">
                                                 <strong>Node-Schlüssel:</strong>
@@ -202,6 +225,8 @@ class SK_Auth_Dashboard extends \SK\Core\Dashboard\DashboardModule {
                                             <button type="button" class="button button-primary uac-link-lnurl-btn" id="uac-link-lnurl">
                                                 Lightning-Wallet verknüpfen
                                             </button>
+                                        <?php endif; ?>
+                                        <?php if ( $original_lnurl || ! $linked_methods['lnurl'] ) : ?>
                                             <div class="uac-lnurl-qr-container" id="uac-lnurl-qr" style="display: none;">
                                                 <div class="uac-qr-code"></div>
                                                 <p class="uac-qr-instructions">
@@ -497,6 +522,10 @@ class SK_Auth_Dashboard extends \SK\Core\Dashboard\DashboardModule {
             }
 
             $node_key = $result['node_key'];
+
+            if ( ! empty( $_POST['replace'] ) && get_user_meta( $user_id, 'lnurl-auth-bjm-id', true ) ) {
+                $this->replace_lnurl( $user_id, $node_key );
+            }
         }
 
         // Check if this LN key already belongs to a different account
@@ -539,6 +568,44 @@ class SK_Auth_Dashboard extends \SK\Core\Dashboard\DashboardModule {
             'message' => 'Lightning-Wallet erfolgreich verknüpft!',
             'node_key' => substr($node_key, 0, 16) . '...' . substr($node_key, -8)
         ));
+    }
+
+    /**
+     * Swap the primary Lightning key for the one just scanned.
+     *
+     * Scanning an unknown wallet makes the LNURL callback create an account
+     * for it on the spot. That account is seconds old and empty, so it is
+     * removed here; a wallet that already has a real account of its own is
+     * refused instead of taken over.
+     */
+    private function replace_lnurl( int $user_id, string $node_key ): void {
+        if ( get_user_meta( $user_id, 'lnurl-auth-bjm-id', true ) === $node_key ) {
+            wp_send_json_error( array( 'message' => 'Das ist bereits die Wallet dieses Kontos.' ) );
+        }
+
+        $owner = (int) $this->account_linker->get_user_by_lnurl( $node_key );
+
+        if ( $owner && $owner !== $user_id ) {
+            $account = get_userdata( $owner );
+            $fresh   = $account
+                && time() - strtotime( $account->user_registered . ' UTC' ) < 15 * MINUTE_IN_SECONDS
+                && 0 === (int) count_user_posts( $owner, 'product', false );
+
+            if ( ! $fresh ) {
+                wp_send_json_error( array( 'message' => 'Diese Wallet gehört bereits zu einem anderen Konto.' ) );
+            }
+
+            require_once ABSPATH . 'wp-admin/includes/user.php';
+            wp_delete_user( $owner, $user_id );
+        }
+
+        update_user_meta( $user_id, 'lnurl-auth-bjm-id', $node_key );
+        clean_user_cache( $user_id );
+
+        delete_transient( 'uac_linking_session_' . $user_id );
+        delete_transient( 'uac_pending_lnurl_node_key_' . $user_id );
+
+        wp_send_json_success( array( 'message' => 'Wallet ersetzt. Ab jetzt meldest du dich mit der neuen Wallet an.' ) );
     }
 
     /**

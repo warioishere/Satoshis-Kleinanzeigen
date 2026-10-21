@@ -55,6 +55,9 @@
 #   test-marketplace-key  Keys::marketplace_privkey. A key left in the option as
 #                     plain text is encrypted on first read, keeps opening under
 #                     its own namespace and under no other, garbage is untouched.
+#   test-recovery-code  RecoveryCode. Only the hash is stored, a code opens its
+#                     own account exactly once, a new code kills the old one,
+#                     misread characters and partial codes are rejected.
 #
 # These tests are built to fail when a CHECK DISAPPEARS, not just when code
 # crashes. If one turns red after your change, it is saying "there was a
