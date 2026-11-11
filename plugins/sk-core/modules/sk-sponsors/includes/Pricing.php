@@ -23,8 +23,8 @@ final class Pricing {
     const OPTION_TOP      = 'sk_sponsors_rate_top';
     const OPTION_STANDARD = 'sk_sponsors_rate_standard';
 
-    const DEFAULT_TOP      = 25000;
-    const DEFAULT_STANDARD = 8000;
+    const DEFAULT_TOP      = 21000;
+    const DEFAULT_STANDARD = 7500;
 
     /**
      * List price of a tier in sats.
