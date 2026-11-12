@@ -6,6 +6,7 @@ return [
 	[
 		'id'                      => 'dashboard',
 		'title'                   => __( 'Overview', 'burst-statistics' ),
+		'description'             => __( 'High-level dashboard overview showing key statistics, visitor metrics, and recent performance at a glance.', 'burst-statistics' ),
 		'default_hidden'          => false,
 		'menu_items'              => [],
 		'capabilities'            => 'view_burst_statistics',
@@ -16,6 +17,7 @@ return [
 	[
 		'id'             => 'statistics',
 		'title'          => __( 'Insights', 'burst-statistics' ),
+		'description'    => __( 'Detailed insights into visitors, pageviews, bounce rates, and traffic trends over time.', 'burst-statistics' ),
 		'default_hidden' => true,
 		'menu_items'     => [],
 		'capabilities'   => 'view_burst_statistics',
@@ -26,6 +28,7 @@ return [
 	[
 		'id'             => 'sources',
 		'title'          => __( 'Sources', 'burst-statistics' ),
+		'description'    => __( 'Analyze where your traffic comes from, including search engines, social media, referrers, and UTM campaigns.', 'burst-statistics' ),
 		'default_hidden' => false,
 		'menu_items'     => [],
 		'capabilities'   => 'view_burst_statistics',
@@ -36,6 +39,7 @@ return [
 	[
 		'id'             => 'engagement',
 		'title'          => __( 'Engagement', 'burst-statistics' ),
+		'description'    => __( 'Measure visitor engagement with time on page, scroll depth, and page weight.', 'burst-statistics' ),
 		'default_hidden' => false,
 		'menu_items'     => [],
 		'capabilities'   => 'view_burst_statistics',
@@ -44,8 +48,20 @@ return [
 		'shareable'      => true,
 	],
 	[
+		'id'                      => 'goals',
+		'title'                   => __( 'Goals', 'burst-statistics' ),
+		'description'             => __( 'Track custom conversion goals, set up goal triggers, and view goal conversion metrics.', 'burst-statistics' ),
+		'default_hidden'          => false,
+		'menu_items'              => [],
+		'capabilities'            => 'manage_burst_statistics',
+		'menu_slug'               => 'burst#/goals',
+		'show_in_admin'           => true,
+		'show_in_plugin_overview' => true,
+	],
+	[
 		'id'                      => 'reporting',
 		'title'                   => __( 'Reporting', 'burst-statistics' ),
+		'description'             => __( 'Configure and schedule automated email and Slack reports, customize report metrics, and view report logs.', 'burst-statistics' ),
 		'default_hidden'          => false,
 		'capabilities'            => 'manage_burst_statistics',
 		'menu_slug'               => 'burst#/reporting/reports',
@@ -54,11 +70,12 @@ return [
 		'location'                => 'left',
 		'menu_items'              => [
 			[
-				'id'       => 'reports',
-				'group_id' => 'reports',
-				'icon'     => 'graph',
-				'title'    => __( 'Reports', 'burst-statistics' ),
-				'groups'   => [
+				'id'          => 'reports',
+				'group_id'    => 'reports',
+				'icon'        => 'graph',
+				'title'       => __( 'Reports', 'burst-statistics' ),
+				'description' => __( 'Manage scheduled reports and delivery frequencies.', 'burst-statistics' ),
+				'groups'      => [
 					[
 						'id'    => 'reports',
 						'title' => __( 'Reports', 'burst-statistics' ),
@@ -66,11 +83,12 @@ return [
 				],
 			],
 			[
-				'id'       => 'customization',
-				'group_id' => 'customization',
-				'icon'     => 'pencil',
-				'title'    => __( 'Customization', 'burst-statistics' ),
-				'groups'   => [
+				'id'          => 'customization',
+				'group_id'    => 'customization',
+				'icon'        => 'pencil',
+				'title'       => __( 'Customization', 'burst-statistics' ),
+				'description' => __( 'Customize report appearance, metrics, and email settings.', 'burst-statistics' ),
+				'groups'      => [
 					[
 						'id'    => 'customization',
 						'title' => __( 'Customization', 'burst-statistics' ),
@@ -82,11 +100,12 @@ return [
 				],
 			],
 			[
-				'id'       => 'logs',
-				'group_id' => 'logs',
-				'icon'     => 'file',
-				'title'    => __( 'Logs', 'burst-statistics' ),
-				'groups'   => [
+				'id'          => 'logs',
+				'group_id'    => 'logs',
+				'icon'        => 'file',
+				'title'       => __( 'Logs', 'burst-statistics' ),
+				'description' => __( 'View logs of sent reports and delivery statuses.', 'burst-statistics' ),
+				'groups'      => [
 					[
 						'id'    => 'logs',
 						'title' => __( 'Logs', 'burst-statistics' ),
@@ -98,6 +117,7 @@ return [
 	[
 		'id'                      => 'settings',
 		'title'                   => __( 'Settings', 'burst-statistics' ),
+		'description'             => __( 'Configure Burst tracking options, privacy levels, data archiving, integrations, notifications, and advanced settings.', 'burst-statistics' ),
 		'default_hidden'          => false,
 		'capabilities'            => 'manage_burst_statistics',
 		'menu_slug'               => 'burst#/settings/general',
@@ -107,11 +127,12 @@ return [
 		'icon'                    => 'cog',
 		'menu_items'              => [
 			[
-				'id'       => 'general',
-				'group_id' => 'general',
-				'icon'     => 'cog',
-				'title'    => __( 'General', 'burst-statistics' ),
-				'groups'   => [
+				'id'          => 'general',
+				'group_id'    => 'general',
+				'icon'        => 'cog',
+				'title'       => __( 'General', 'burst-statistics' ),
+				'description' => __( 'Configure general tracking behavior, Turbo mode, Essentials mode, privacy levels, and anonymous data collection.', 'burst-statistics' ),
+				'groups'      => [
 					[
 						'id'    => 'general',
 						'title' => __( 'General', 'burst-statistics' ),
@@ -122,28 +143,17 @@ return [
 					],
 					[
 						'id'    => 'anonymous_usage_data',
-						'title' => __( 'Anonymous usage data', 'burst-statistics' ),
+						'title' => __( 'Usage data and benchmarks', 'burst-statistics' ),
 					],
 				],
 			],
 			[
-				'id'       => 'goals',
-				'group_id' => 'goals',
-				'icon'     => 'goals',
-				'title'    => __( 'Goals', 'burst-statistics' ),
-				'groups'   => [
-					[
-						'id'    => 'goals',
-						'title' => __( 'Goals', 'burst-statistics' ),
-					],
-				],
-			],
-			[
-				'id'       => 'data',
-				'group_id' => 'archiving',
-				'icon'     => 'hard-drive',
-				'title'    => __( 'Data', 'burst-statistics' ),
-				'groups'   => [
+				'id'          => 'data',
+				'group_id'    => 'archiving',
+				'icon'        => 'hard-drive',
+				'title'       => __( 'Data', 'burst-statistics' ),
+				'description' => __( 'Manage data archiving, restore archives, import historical statistics, and export analytics backups.', 'burst-statistics' ),
+				'groups'      => [
 					[
 						'id'    => 'data_archiving',
 						'title' => __( 'Archiving', 'burst-statistics' ),
@@ -179,11 +189,12 @@ return [
 				],
 			],
 			[
-				'id'       => 'features',
-				'group_id' => 'features',
-				'icon'     => 'zap',
-				'title'    => __( 'Features', 'burst-statistics' ),
-				'groups'   => [
+				'id'          => 'features',
+				'group_id'    => 'features',
+				'icon'        => 'zap',
+				'title'       => __( 'Features', 'burst-statistics' ),
+				'description' => __( 'Enable or disable features such as external link tracking, scroll depth, bounce rate tracking, and smart update timing.', 'burst-statistics' ),
+				'groups'      => [
 					[
 						'id'    => 'features',
 						'title' => __( 'Features', 'burst-statistics' ),
@@ -195,27 +206,43 @@ return [
 				],
 			],
 			[
-				'id'       => 'notifications',
-				'group_id' => 'notifications',
-				'icon'     => 'bell',
-				'title'    => __( 'Notifications', 'burst-statistics' ),
-				'groups'   => [
+				'id'          => 'notifications',
+				'group_id'    => 'notifications',
+				'icon'        => 'bell',
+				'title'       => __( 'Notifications', 'burst-statistics' ),
+				'description' => __( 'Configure traffic spike and drop alerts, email recipients, Slack notifications, and dashboard notices.', 'burst-statistics' ),
+				'groups'      => [
 					[
-						'id'    => 'report_notifications',
-						'title' => __( 'Report notifications', 'burst-statistics' ),
+						'id'          => 'alerts',
+						'title'       => __( 'Alerts', 'burst-statistics' ),
+						'description' => __( 'Burst checks your site once a day and tells you when something needs your attention.', 'burst-statistics' ),
+					],
+					[
+						'id'    => 'email',
+						'title' => __( 'Email', 'burst-statistics' ),
+					],
+					[
+						'id'    => 'slack',
+						'title' => __( 'Slack', 'burst-statistics' ),
 						'pro'   => [
-							'url'  => 'pricing/',
-							'text' => __( 'With Pro, receive story reports, traffic anomaly alerts, and tracking health notifications directly in your Slack channel.', 'burst-statistics' ),
+							'url'   => 'pricing/',
+							'title' => __( 'Get alerts and reports in Slack', 'burst-statistics' ),
+							'text'  => __( 'With Pro, traffic spikes, traffic drops, tracking problems and story reports go straight to your Slack channel.', 'burst-statistics' ),
 						],
+					],
+					[
+						'id'    => 'dashboard_notices',
+						'title' => __( 'Dashboard notices', 'burst-statistics' ),
 					],
 				],
 			],
 			[
-				'id'       => 'advanced',
-				'group_id' => 'tracking',
-				'icon'     => 'sliders-vertical',
-				'title'    => __( 'Advanced', 'burst-statistics' ),
-				'groups'   => [
+				'id'          => 'advanced',
+				'group_id'    => 'tracking',
+				'icon'        => 'sliders-vertical',
+				'title'       => __( 'Advanced', 'burst-statistics' ),
+				'description' => __( 'Configure user role and IP exclusions, data collection cookies, script loading methods, and beta features.', 'burst-statistics' ),
+				'groups'      => [
 					[
 						'id'    => 'tracking',
 						'title' => __( 'Tracking exclusions', 'burst-statistics' ),

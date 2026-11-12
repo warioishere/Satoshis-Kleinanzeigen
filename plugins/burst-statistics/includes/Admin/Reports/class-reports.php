@@ -31,6 +31,13 @@ if ( ! class_exists( 'Burst\Admin\Reports\Reports' ) ) {
 		use Database_Helper;
 
 		/**
+		 * The plugin version this file belongs to. See Upgrade::check_upgrade().
+		 *
+		 * @var string
+		 */
+		public const BUILD = '3.7.4';
+
+		/**
 		 * Constructor
 		 */
 		public function init(): void {
@@ -43,6 +50,31 @@ if ( ! class_exists( 'Burst\Admin\Reports\Reports' ) ) {
 			add_filter( 'burst_get_action', [ $this, 'get_action_handler' ], 10, 3 );
 			add_action( 'burst_create_report_from_onboarding', [ $this, 'create_report_from_onboarding' ] );
 			add_filter( 'burst_allowed_field_types', [ $this, 'allowed_field_types' ] );
+			add_filter( 'burst_localize_script', [ $this, 'add_default_report_channels' ] );
+			add_filter( 'burst_field_value_default_report_channels', [ $this, 'show_default_report_channels' ] );
+		}
+
+		/**
+		 * Show the channel new reports actually start with while no choice is
+		 * stored, instead of an empty radio.
+		 *
+		 * @param mixed $value Stored value, '' when never chosen. Mixed: it is read
+		 *                     from the options table, so it can be any stored type.
+		 * @return string 'email' or 'both'.
+		 */
+		public function show_default_report_channels( mixed $value ): string {
+			return in_array( $value, Report::VALID_CHANNELS, true ) ? $value : Report::get_default_channels();
+		}
+
+		/**
+		 * Expose the delivery channel new reports start with to the report wizard.
+		 *
+		 * @param array<string, mixed> $data Localized settings.
+		 * @return array<string, mixed> Localized settings with 'default_report_channels'.
+		 */
+		public function add_default_report_channels( array $data ): array {
+			$data['default_report_channels'] = Report::get_default_channels();
+			return $data;
 		}
 
 		/**
@@ -430,7 +462,7 @@ if ( ! class_exists( 'Burst\Admin\Reports\Reports' ) ) {
 					->set_content( $data['content'] )
 					->set_date_range( $data['reportDateRange'] )
 					->set_recipients( $data['recipients'] )
-					->set_channels( $data['channels'] ?? burst_get_option( 'default_report_channels', 'email' ) )
+					->set_channels( $data['channels'] ?? Report::get_default_channels() )
 					->set_enabled( $data['enabled'] )
 					->set_scheduled( $data['scheduled'] );
 
@@ -705,14 +737,16 @@ if ( ! class_exists( 'Burst\Admin\Reports\Reports' ) ) {
 
 
 		/**
-		 * Install reports table
+		 * Schema of the reports table, read by install_reports_table() and the schema check.
+		 *
+		 * ID is already the PRIMARY KEY, so it is not indexed again.
+		 *
+		 * @return array<string, array{columns: string, indexes?: array<int, string[]>}>
 		 */
-		public function install_reports_table(): void {
-			global $wpdb;
-
-			$charset_collate = $wpdb->get_charset_collate();
-
-			$sql = "CREATE TABLE {$wpdb->prefix}burst_reports (
+		protected function get_schema_definition(): array {
+			return [
+				'burst_reports' => [
+					'columns' => "
 				`ID` int unsigned NOT NULL AUTO_INCREMENT,
 				`name` varchar(255) NOT NULL,
 				`date_range` varchar(32) NOT NULL,
@@ -731,29 +765,21 @@ if ( ! class_exists( 'Burst\Admin\Reports\Reports' ) ) {
 				`ai_summary` longtext DEFAULT NULL,
 				`ai_summary_period` varchar(255) DEFAULT NULL,
 				PRIMARY KEY (`ID`)
-			) {$charset_collate};";
-
-			require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-			dbDelta( $sql );
-
-			if ( ! empty( $wpdb->last_error ) ) {
-				self::error_log( 'Error creating burst_reports table: ' . $wpdb->last_error );
-			}
-
-			// Add indexes. ID is already the PRIMARY KEY, so it is not indexed again here.
-			$indexes = [
-				'burst_reports' => [
-					[ 'enabled' ],
-					[ 'frequency' ],
-					[ 'day_of_week' ],
+			",
+					'indexes' => [
+						[ 'enabled' ],
+						[ 'frequency' ],
+						[ 'day_of_week' ],
+					],
 				],
 			];
+		}
 
-			foreach ( $indexes as $table => $table_indexes ) {
-				foreach ( $table_indexes as $index ) {
-					$this->add_index( 'burst_reports', $index );
-				}
-			}
+		/**
+		 * Install reports table
+		 */
+		public function install_reports_table(): void {
+			$this->install_schema( [ 'burst_reports' ] );
 		}
 
 		/**

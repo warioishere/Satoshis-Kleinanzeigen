@@ -7,7 +7,10 @@
 
 namespace Burst\Admin\Diagnostics;
 
+use Burst\Admin\Admin_Options;
+use Burst\Admin\DomainTypes\Admin_Option_Category;
 use Burst\Admin\Mailer\Mailer;
+use Burst\Admin\Notifications\Alert_Preferences;
 use Burst\Traits\Admin_Helper;
 use Burst\Traits\Helper;
 
@@ -33,13 +36,6 @@ class Tracking_Health_Email {
 	private const DEFAULT_MIN_CONFIDENCE = 0.5;
 
 	/**
-	 * Option holding the timestamp of the last sent diagnostic email.
-	 *
-	 * @var string
-	 */
-	private const LAST_EMAIL_OPTION = 'burst_tracking_health_last_email';
-
-	/**
 	 * Register hooks.
 	 */
 	public function init(): void {
@@ -47,14 +43,15 @@ class Tracking_Health_Email {
 	}
 
 	/**
-	 * Send the diagnostic email when allowed: setting enabled, detector
-	 * confidence high enough and no diagnostic email sent in the past week.
+	 * Send the diagnostic email when allowed: the email switch of the tracking
+	 * alert is on, detector confidence is high enough and no diagnostic email
+	 * was sent in the past week.
 	 *
 	 * @param array $diagnostics   Collector results keyed by collector id.
 	 * @param array $health_result The result fired by Tracking_Health.
 	 */
 	public function maybe_send( array $diagnostics, array $health_result ): void {
-		if ( ! $this->get_option_bool( 'enable_diagnostic_email', true ) ) {
+		if ( ! ( new Alert_Preferences() )->is_enabled( 'health.degraded', 'email' ) ) {
 			return;
 		}
 
@@ -63,13 +60,13 @@ class Tracking_Health_Email {
 			return;
 		}
 
-		$last_sent = (int) get_option( self::LAST_EMAIL_OPTION, 0 );
+		$last_sent = (int) Admin_Options::get( Admin_Option_Category::DIAGNOSTICS, 'tracking_health_last_email', 0 );
 		if ( $last_sent > 0 && ( time() - $last_sent ) < WEEK_IN_SECONDS ) {
 			return;
 		}
 
 		if ( $this->send( $diagnostics, $health_result ) ) {
-			update_option( self::LAST_EMAIL_OPTION, time(), false );
+			Admin_Options::update( Admin_Option_Category::DIAGNOSTICS, 'tracking_health_last_email', time() );
 		}
 	}
 
@@ -82,12 +79,14 @@ class Tracking_Health_Email {
 	 */
 	private function send( array $diagnostics, array $health_result ): bool {
 		/**
-		 * Filter the diagnostic email recipients. Defaults to the site admin
-		 * email: this is a technical alert, not a statistics report.
+		 * Filter the diagnostic email recipients. Defaults to the alert email
+		 * recipients from Settings › Notifications › Email.
+		 *
+		 * Kept for back-compat; `burst_alert_email_recipients` covers every alert email.
 		 *
 		 * @param string[] $recipients Recipient email addresses.
 		 */
-		$recipients = apply_filters( 'burst_tracking_health_email_recipients', [ get_option( 'admin_email' ) ] );
+		$recipients = apply_filters( 'burst_tracking_health_email_recipients', ( new Alert_Preferences() )->get_email_recipients() );
 		$recipients = array_filter( (array) $recipients, 'is_email' );
 		if ( empty( $recipients ) ) {
 			return false;
@@ -154,12 +153,12 @@ class Tracking_Health_Email {
 			? $this->format_time( $last_hit )
 			: __( 'No hits found', 'burst-statistics' );
 
-		$rows  = $this->get_row( __( 'Status', 'burst-statistics' ), $status_labels[ $status ] ?? $status );
-		$rows .= $this->get_row( __( 'Hits yesterday', 'burst-statistics' ), (string) (int) ( $health_result['hits'] ?? 0 ) );
-		$rows .= $this->get_row( __( 'Normal for this weekday', 'burst-statistics' ), (string) round( (float) ( $health_result['baseline'] ?? 0 ) ) );
-		$rows .= $this->get_row( __( 'Last recorded hit', 'burst-statistics' ), $last_hit_label );
+		$rows  = Mailer::table_row( __( 'Status', 'burst-statistics' ), $status_labels[ $status ] ?? $status );
+		$rows .= Mailer::table_row( __( 'Hits yesterday', 'burst-statistics' ), (string) (int) ( $health_result['hits'] ?? 0 ) );
+		$rows .= Mailer::table_row( __( 'Normal for this weekday', 'burst-statistics' ), (string) round( (float) ( $health_result['baseline'] ?? 0 ) ) );
+		$rows .= Mailer::table_row( __( 'Last recorded hit', 'burst-statistics' ), $last_hit_label );
 		if ( ! empty( $health_result['incident_since'] ) ) {
-			$rows .= $this->get_row( __( 'Issue detected since', 'burst-statistics' ), (string) $health_result['incident_since'] );
+			$rows .= Mailer::table_row( __( 'Issue detected since', 'burst-statistics' ), (string) $health_result['incident_since'] );
 		}
 
 		return [
@@ -237,13 +236,6 @@ class Tracking_Health_Email {
 			'subtitle' => __( 'Tracking errors reported by visitor browsers', 'burst-statistics' ),
 			'table'    => $rows,
 		];
-	}
-
-	/**
-	 * A label/value table row for the email blocks.
-	 */
-	private function get_row( string $label, string $value ): string {
-		return '<tr style="line-height: 28px"><td style="text-align: left; font-weight: 400;">' . esc_html( $label ) . '</td><td style="text-align: right;">' . esc_html( $value ) . '</td></tr>';
 	}
 
 	/**

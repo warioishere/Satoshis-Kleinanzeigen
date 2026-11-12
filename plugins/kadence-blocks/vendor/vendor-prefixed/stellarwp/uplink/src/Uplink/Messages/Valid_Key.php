@@ -33,11 +33,11 @@ class Valid_Key extends Message_Abstract {
 	public function get(): string {
 		if ( $this->expiration ) {
 			$message = sprintf(
-				__( 'Valid key! Expires on %s.', '%TEXTDOMAIN%' ),
+				__( 'Valid key! Expires on %s.', 'kadence-blocks' ),
 				$this->expiration
 			);
 		} else {
-			$message = __( 'Valid key!', '%TEXTDOMAIN%' );
+			$message = __( 'Valid key!', 'kadence-blocks' );
 		}
 		$message = apply_filters( 'stellarwp/uplink/' . Config::get_hook_prefix() . '/messages/valid_key', $message, $this->expiration );
 

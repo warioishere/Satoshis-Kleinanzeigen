@@ -8,7 +8,7 @@ class Unlicensed extends Message_Abstract {
 	 */
 	public function get(): string {
         $message  = '<div class="notice notice-warning"><p>';
-        $message .= esc_html__( 'No license entered.', '%TEXTDOMAIN%' );
+        $message .= esc_html__( 'No license entered.', 'kadence-blocks' );
         $message .= '</p></div>';
 
 		return $message;

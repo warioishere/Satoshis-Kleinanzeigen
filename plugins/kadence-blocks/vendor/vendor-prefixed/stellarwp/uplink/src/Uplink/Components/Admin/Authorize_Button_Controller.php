@@ -85,7 +85,7 @@ final class Authorize_Button_Controller extends Controller {
 		$domain = $args['domain'] ?? '';
 
 		if ( empty ( $slug ) ) {
-			throw new InvalidArgumentException( __( 'The Product slug cannot be empty', '%TEXTDOMAIN%' ) );
+			throw new InvalidArgumentException( __( 'The Product slug cannot be empty', 'kadence-blocks' ) );
 		}
 
 		$url = $this->url_builder->build( $slug, $domain );
@@ -102,7 +102,7 @@ final class Authorize_Button_Controller extends Controller {
 
 		$authenticated = false;
 		$target        = '_blank';
-		$link_text     = __( 'Connect', '%TEXTDOMAIN%' );
+		$link_text     = __( 'Connect', 'kadence-blocks' );
 		$classes       = [
 			'uplink-authorize',
 			'not-authorized',
@@ -110,12 +110,12 @@ final class Authorize_Button_Controller extends Controller {
 
 		if ( ! $this->authorizer->can_auth() ) {
 			$target    = '_self';
-			$link_text = __( 'Contact your network administrator to connect', '%TEXTDOMAIN%' );
+			$link_text = __( 'Contact your network administrator to connect', 'kadence-blocks' );
 			$url       = get_admin_url( get_current_blog_id(), 'network/' );
 		} elseif ( $this->token_manager_factory->make( $plugin )->get() ) {
 			$authenticated = true;
 			$target        = '_self';
-			$link_text     = __( 'Disconnect', '%TEXTDOMAIN%' );
+			$link_text     = __( 'Disconnect', 'kadence-blocks' );
 			$url           = $this->disconnect_controller->get_url( $plugin );
 			$classes[1]    = 'authorized';
 		}

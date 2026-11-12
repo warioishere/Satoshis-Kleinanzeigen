@@ -805,15 +805,224 @@
                                 400
                             );
                         }
+                        
+                        
+                    $submitted_ids = array();
+
+                    foreach ( $order_data['post'] as $submitted_id )
+                        {
+                            if ( ! is_scalar( $submitted_id ) || absint( $submitted_id ) < 1 )
+                                {
+                                    wp_send_json_error(
+                                        array( 'message' => __( 'Invalid order data.', 'post-types-order' ) ),
+                                        400
+                                    );
+                                }
+
+                            $submitted_ids[] = absint( $submitted_id );
+                        }
+           
+                    
+                    $submitted_ids = array_values( array_unique( array_map( 'absint', $submitted_ids ) ) );
+
+                    $sql = "SELECT ID
+                            FROM {$wpdb->posts}
+                            WHERE post_type = %s
+                            AND post_status IN ('publish', 'pending', 'draft', 'private', 'future', 'inherit')";
+
+                    $sql_params = array( $post_type );
+
+                    $language_code     = null;
+                    $language_provider = null;
+                    $requested_language = null;
+                    $all_languages     = false;
+
+                    // Check the language selected in the admin interface.
+                    if ( isset( $_REQUEST['lang'] ) && is_string( $_REQUEST['lang'] ) )
+                        {
+                            $requested_language = sanitize_text_field(
+                                wp_unslash( $_REQUEST['lang'] )
+                            );
+
+                            if ( strtolower( $requested_language ) === 'all' )
+                                {
+                                    $all_languages = true;
+                                }
+                        }
+
+                    // Detect the language from the submitted items.
+                    if ( ! $all_languages && ! empty( $submitted_ids ) )
+                        {
+                            /*
+                             * WPML support.
+                             */
+                            if ( defined( 'ICL_SITEPRESS_VERSION' ) )
+                                {
+                                    $translations_table = $wpdb->prefix . 'icl_translations';
+
+                                    $element_type = apply_filters(
+                                        'wpml_element_type',
+                                        $post_type
+                                    );
+
+                                    if ( is_string( $element_type ) && '' !== $element_type )
+                                        {
+                                            $placeholders = implode(
+                                                ',',
+                                                array_fill( 0, count( $submitted_ids ), '%d' )
+                                            );
+
+                                            $translation_sql = "SELECT element_id, language_code
+                                                                FROM {$translations_table}
+                                                                WHERE element_type = %s
+                                                                AND element_id IN ($placeholders)";
+
+                                            $translation_params = array_merge(
+                                                array( $element_type ),
+                                                $submitted_ids
+                                            );
+
+                                            $translation_rows = $wpdb->get_results(
+                                                $wpdb->prepare(
+                                                    $translation_sql,
+                                                    $translation_params
+                                                )
+                                            );
+
+                                            $languages_by_id = array();
+
+                                            foreach ( $translation_rows as $row )
+                                                {
+                                                    $languages_by_id[ absint( $row->element_id ) ]
+                                                        = $row->language_code;
+                                                }
+
+                                            // Every submitted item must have a language assignment.
+                                            $all_have_language = true;
+
+                                            foreach ( $submitted_ids as $submitted_id )
+                                                {
+                                                    if (
+                                                        ! isset( $languages_by_id[ $submitted_id ] )
+                                                        || ! is_string( $languages_by_id[ $submitted_id ] )
+                                                        || '' === $languages_by_id[ $submitted_id ]
+                                                    )
+                                                        {
+                                                            $all_have_language = false;
+                                                            break;
+                                                        }
+                                                }
+
+                                            if ( $all_have_language )
+                                                {
+                                                    $languages = array_values(
+                                                        array_unique( array_values( $languages_by_id ) )
+                                                    );
+
+                                                    // Only infer a language when all submitted items
+                                                    // belong to the same language.
+                                                    if ( count( $languages ) === 1 )
+                                                        {
+                                                            $detected_language = $languages[0];
+
+                                                            if (
+                                                                null === $requested_language
+                                                                || '' === $requested_language
+                                                                || $requested_language === $detected_language
+                                                            )
+                                                                {
+                                                                    $language_code = $detected_language;
+                                                                    $language_provider = 'wpml';
+                                                                }
+                                                        }
+                                                }
+                                        }
+                                }
+
+                            /*
+                             * Polylang support.
+                             */
+                            elseif ( function_exists( 'pll_get_post_language' ) )
+                                {
+                                    $submitted_languages = array();
+                                    $all_have_language   = true;
+
+                                    foreach ( $submitted_ids as $submitted_id )
+                                        {
+                                            $language = pll_get_post_language(
+                                                $submitted_id,
+                                                'slug'
+                                            );
+
+                                            if ( ! is_string( $language ) || '' === $language )
+                                                {
+                                                    $all_have_language = false;
+                                                    break;
+                                                }
+
+                                            $submitted_languages[] = $language;
+                                        }
+
+                                    if ( $all_have_language )
+                                        {
+                                            $submitted_languages = array_values(
+                                                array_unique( $submitted_languages )
+                                            );
+
+                                            if ( count( $submitted_languages ) === 1 )
+                                                {
+                                                    $detected_language = $submitted_languages[0];
+
+                                                    if (
+                                                        null === $requested_language
+                                                        || '' === $requested_language
+                                                        || $requested_language === $detected_language
+                                                    )
+                                                        {
+                                                            $language_code = $detected_language;
+                                                            $language_provider = 'polylang';
+                                                        }
+                                                }
+                                        }
+                                }
+                        }
+
+                    /*
+                     * Restrict the complete ordering list to the detected language.
+                     */
+                    if ( 'wpml' === $language_provider )
+                        {
+                            $sql .= " AND ID IN (
+                                        SELECT element_id
+                                        FROM {$wpdb->prefix}icl_translations
+                                        WHERE element_type = %s
+                                        AND language_code = %s
+                                    )";
+
+                            $sql_params[] = apply_filters( 'wpml_element_type', $post_type );
+                            $sql_params[] = $language_code;
+                        }
+                    elseif ( 'polylang' === $language_provider )
+                        {
+                            $sql .= " AND ID IN (
+                                        SELECT tr.object_id
+                                        FROM {$wpdb->term_relationships} AS tr
+                                        INNER JOIN {$wpdb->term_taxonomy} AS tt
+                                            ON tt.term_taxonomy_id = tr.term_taxonomy_id
+                                        INNER JOIN {$wpdb->terms} AS t
+                                            ON t.term_id = tt.term_id
+                                        WHERE tt.taxonomy = %s
+                                        AND t.slug = %s
+                                    )";
+
+                            $sql_params[] = 'language';
+                            $sql_params[] = $language_code;
+                        }
+
+                    $sql .= " ORDER BY menu_order, post_date DESC";
 
                     $results = $wpdb->get_results(
-                        $wpdb->prepare(
-                            "SELECT ID FROM {$wpdb->posts}
-                             WHERE post_type = %s
-                             AND post_status IN ('publish', 'pending', 'draft', 'private', 'future', 'inherit')
-                             ORDER BY menu_order, post_date DESC",
-                            $post_type
-                        )
+                        $wpdb->prepare( $sql, $sql_params )
                     );
 
                     if ( ! is_array( $results ) || empty( $results ) )
@@ -845,24 +1054,7 @@
                         }
 
                     $edit_start_at = ( $paged - 1 ) * $objects_per_page;
-                    $submitted_ids = array();
-
-                    foreach ( $order_data['post'] as $submitted_id )
-                        {
-                            if ( ! is_scalar( $submitted_id ) || absint( $submitted_id ) < 1 )
-                                {
-                                    wp_send_json_error(
-                                        array( 'message' => __( 'Invalid order data.', 'post-types-order' ) ),
-                                        400
-                                    );
-                                }
-
-                            $submitted_ids[] = absint( $submitted_id );
-                        }
-           
-                    
-                    $submitted_ids = array_values( array_unique( array_map( 'absint', $submitted_ids ) ) );
-
+            
                     // Remove any submitted IDs from the existing full list, preserving the order
                     // of everything else in $object_ids.
                     $object_ids = array_values(
@@ -874,8 +1066,11 @@
                         )
                     );
 
-                    // Put the submitted IDs in front, in their submitted order.
-                    $object_ids = array_merge( $submitted_ids, $object_ids );
+                    // Insert the submitted IDs at the beginning of the current page,
+                    // rather than at the beginning of the entire list.
+                    $insert_at = min( $edit_start_at, count( $object_ids ) );
+
+                    array_splice( $object_ids, $insert_at, 0, $submitted_ids );
 
                     /*
                      * This handler renumbers the entire post-type sequence, so every

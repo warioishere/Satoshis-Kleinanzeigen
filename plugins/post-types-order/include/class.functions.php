@@ -544,6 +544,8 @@
                         );
                     }
 
+                    $locations  =   apply_filters( 'pto/available_menu_locations', $locations );
+                    
                     return $locations;
                 }
 

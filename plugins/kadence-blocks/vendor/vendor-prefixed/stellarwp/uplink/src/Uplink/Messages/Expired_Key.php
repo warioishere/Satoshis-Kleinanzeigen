@@ -31,9 +31,9 @@ class Expired_Key extends Message_Abstract {
 			true ) ? 'https://evnt.is/195y' : '';
 
 		$message_link        = apply_filters( 'stellarwp/uplink/' . Config::get_hook_prefix() . '/messages/expired_key_link', $default_link );
-		$renew_label         = __( 'Renew Your License Now', '%TEXTDOMAIN%' );
-		$opens_in_new_window = __( '(opens in a new window)', '%TEXTDOMAIN%' );
-		$notice_text         = __( 'Your license is expired', '%TEXTDOMAIN%' );
+		$renew_label         = __( 'Renew Your License Now', 'kadence-blocks' );
+		$opens_in_new_window = __( '(opens in a new window)', 'kadence-blocks' );
+		$notice_text         = __( 'Your license is expired', 'kadence-blocks' );
 		
 		if ( ! empty( $message_link ) ) {
 			$message_content = sprintf(

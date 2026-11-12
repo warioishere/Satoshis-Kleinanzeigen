@@ -2,7 +2,7 @@
 # This file is distributed under the same license as the WordPress - 7.1.x - Development - Administration - Network Admin package.
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2026-09-17 22:10:53+0000\n"
+"PO-Revision-Date: 2026-10-21 02:48:47+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -407,7 +407,7 @@ msgstr "Bitte wähle, ob die Websites in deinem WordPress-Netzwerk Subdomains od
 #. search for mod_rewrite.
 #: wp-admin/includes/network.php:225
 msgid "If %1$s is disabled, ask your administrator to enable that module, or look at the <a href=\"%2$s\">Apache documentation</a> or <a href=\"%3$s\">elsewhere</a> for help setting it up."
-msgstr "Wenn %1$s deaktiviert ist, bitte deinen Serveradministrator darum, das Modul zu aktivieren oder suche in der <a href=\"%2$s\">Apache-Dokumentation (engl.)</a> oder <a href=\"%3$s\">anderswo</a> nach Hilfe zur Einrichtung."
+msgstr "Wenn %1$s deaktiviert ist, bitte deinen Serveradministrator darum, das Modul zu aktivieren, oder suche in der <a href=\"%2$s\">Apache-Dokumentation (engl.)</a> oder <a href=\"%3$s\">anderswo</a> nach Hilfe zur Einrichtung."
 
 #. translators: %s: mod_rewrite
 #: wp-admin/includes/network.php:217
@@ -757,7 +757,7 @@ msgstr "Gib den <strong>Pfad oder die Domain</strong> an, um nach einer Website 
 
 #: wp-admin/network/index.php:43
 msgid "To search for a user, <strong>enter an email address or username</strong>. Use a wildcard to search for a partial username, such as user&#42;."
-msgstr "Gib eine <strong>E-Mail-Adresse oder einen Benutzernamen</strong> an, um nach einem Benutzer zu suchen. Benutze einen Platzhalter, um nach Teilen eines Benutzernamens zu suchen, wie z. B. Nutzer&#42;."
+msgstr "Gib eine <strong>E-Mail-Adresse oder einen Benutzernamen</strong> an, um nach einem Benutzer zu suchen. Benutze einen Platzhalter, um nach Teilen eines Benutzernamens zu suchen, wie z. B. Benutzer&#42;."
 
 #: wp-admin/network/index.php:41
 msgid "To add a new site, <strong>click Create a New Site</strong>."
@@ -948,7 +948,7 @@ msgstr "Dashboard führt dich zum jeweiligen Dashboard der Website."
 
 #: wp-admin/network/sites.php:34
 msgid "An Edit link to a separate Edit Site screen."
-msgstr "Bearbeiten, das zu einer eigenen Ansicht zur Website-Bearbeitung führt."
+msgstr "„Bearbeiten“ führt zu einer eigenen Ansicht für die Bearbeitung der Website."
 
 #: wp-admin/network/sites.php:31
 msgid "Add Site takes you to the screen for adding a new site to the network. You can search for a site by Name, ID number, or IP address. Screen Options allows you to choose how many sites to display on one page."

@@ -500,7 +500,8 @@
     },
     "label": {
       "type": "string",
-      "default": ""
+      "default": "",
+      "__experimentalRole": "content"
     },
     "inheritStyles": {
       "type": "string",
@@ -587,7 +588,8 @@
     },
     "hideLink": {
       "type": "boolean",
-      "default": false
+      "default": false,
+      "__experimentalRole": "content"
     },
     "noCustomDefaults": {
       "type": "boolean",
@@ -595,7 +597,8 @@
     },
     "iconTitle": {
       "type": "string",
-      "default": ""
+      "default": "",
+      "__experimentalRole": "content"
     },
     "colorTransparent": {
       "type": "string",
@@ -1200,11 +1203,13 @@
     },
     "tooltipPlacement": {
       "type": "string",
-      "default": ""
+      "default": "",
+      "__experimentalRole": "content"
     },
     "isSubmit": {
       "type": "boolean",
-      "default": false
+      "default": false,
+      "__experimentalRole": "content"
     },
     "iconReveal": {
       "type": "boolean",

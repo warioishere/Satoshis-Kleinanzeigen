@@ -148,7 +148,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway {
 			$response =  [
 				'result' => 'success',
 				'invoiceId' => $existingInvoiceId,
-				'orderCompleteLink' => $order->get_checkout_order_received_url(),
+				'orderCompleteLink' => OrderReturn::withCurrentHost( $order->get_checkout_order_received_url() ),
 				'redirect' => '',
 			];
 
@@ -176,7 +176,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway {
 			$response = [
 				'result' => 'success',
 				'invoiceId' => $invoice->getData()['id'],
-				'orderCompleteLink' => $order->get_checkout_order_received_url(),
+				'orderCompleteLink' => OrderReturn::withCurrentHost( $order->get_checkout_order_received_url() ),
 				'redirect' => '',
 			];
 
@@ -210,7 +210,24 @@ abstract class AbstractGateway extends \WC_Payment_Gateway {
 			return new \WP_Error('1', $errAmount);
 		}
 
+		// Abort if the amount is not a positive number.
+		if (!is_numeric($amount) || (float) $amount <= 0) {
+			$errAmount = __METHOD__ . ': refund amount must be a number greater than zero, aborting.';
+			Logger::debug($errAmount);
+			return new \WP_Error('1', $errAmount);
+		}
+
 		$order = wc_get_order($order_id);
+
+		// Defense-in-depth: make sure the refund does not exceed the refundable order total.
+		// WC core already validates this in wc_create_refund() and the current refund is already
+		// reflected in the refunded total when process_refund is called, so this should never trigger.
+		if ((float) $order->get_total() - $order->get_total_refunded() < 0) {
+			$errOverRefund = __METHOD__ . ': refund would exceed the refundable order total, aborting.';
+			Logger::debug($errOverRefund);
+			return new \WP_Error('1', $errOverRefund);
+		}
+
 		$refundAmount = PreciseNumber::parseString($amount);
 		$currency = $order->get_currency();
 		$originalCurrency = $order->get_currency();
@@ -474,6 +491,11 @@ abstract class AbstractGateway extends \WC_Payment_Gateway {
 	 * Process webhooks from BTCPay.
 	 */
 	public function processWebhook() {
+		if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+			header('Allow: POST');
+			wp_die('Method not allowed.', '', ['response' => 405]);
+		}
+
 		if ($rawPostData = file_get_contents("php://input")) {
 			// Validate webhook request.
 			// Note: getallheaders() CamelCases all headers for PHP-FPM/Nginx but for others maybe not, so "BTCPay-Sig" may becomes "Btcpay-Sig".
@@ -486,7 +508,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway {
 
 			if (!isset($signature) || !$this->apiHelper->validWebhookRequest($signature, $rawPostData)) {
 				Logger::debug('Failed to validate signature of webhook request.');
-				wp_die('Webhook request validation failed.');
+				wp_die('Webhook request validation failed.', '', ['response' => 400]);
 			}
 
 			try {
@@ -524,19 +546,50 @@ abstract class AbstractGateway extends \WC_Payment_Gateway {
 					wp_send_json_success(); // return 200 OK to not mess up BTCPay queue
 				}
 
-				$this->processOrderStatus($orders[0], $postData);
+				// Idempotency: skip deliveries that were already processed. BTCPay keeps the
+				// originalDeliveryId stable when redelivering an event, so this catches both
+				// replayed requests and BTCPay's own (automatic) redeliveries.
+				// Normalize defensively: only a non-empty string is a usable delivery ID.
+				// With strict_types a truthy non-string (e.g. int) would throw a TypeError
+				// in the helpers below and silently drop the event, while falsy junk
+				// like '' or '0' would silently disable idempotency.
+				$deliveryId = $postData->originalDeliveryId ?? $postData->deliveryId ?? null;
+				if (!is_string($deliveryId) || $deliveryId === '') {
+					$deliveryId = null;
+				}
+				if ($deliveryId && $this->isDeliveryProcessed($orders[0], $deliveryId)) {
+					Logger::debug('Webhook delivery ' . $deliveryId . ' was already processed, skipping.');
+					wp_send_json_success(); // return 200 OK to not mess up BTCPay queue
+				}
+
+				$handled = $this->processOrderStatus($orders[0], $postData);
+
+				// Remember the delivery so it won't be processed again. Only deliveries that
+				// were fully handled are remembered, so deferred events can still be retried.
+				if ($deliveryId && $handled) {
+					$this->markDeliveryProcessed($orders[0], $deliveryId);
+				}
 
 			} catch (\Throwable $e) {
 				Logger::debug('Error decoding webook payload: ' . $e->getMessage());
 				Logger::debug($rawPostData);
 			}
+		} else {
+			wp_die('Empty webhook request.', '', ['response' => 400]);
 		}
 	}
 
-	protected function processOrderStatus(\WC_Order $order, \stdClass $webhookData) {
+	/**
+	 * Updates the order status according to the received webhook event.
+	 *
+	 * @return bool True if the event was fully handled and can be remembered as processed,
+	 *              false if it was deferred (e.g. BTCPay invoice could not be verified yet)
+	 *              and should be allowed to be retried.
+	 */
+	protected function processOrderStatus(\WC_Order $order, \stdClass $webhookData): bool {
 		if (!in_array($webhookData->type, GreenfieldApiWebhook::WEBHOOK_EVENTS)) {
 			Logger::debug('Webhook event received but ignored: ' . $webhookData->type);
-			return;
+			return true;
 		}
 
 		Logger::debug('Updating order status with webhook event received for processing: ' . $webhookData->type);
@@ -557,8 +610,25 @@ abstract class AbstractGateway extends \WC_Payment_Gateway {
 					$webhookData->type
 				);
 				$order->add_order_note($note);
-				return;
+				return true;
 			}
+		}
+
+		// Never let events describing earlier lifecycle stages move orders out of final
+		// statuses. This protects completed/refunded orders from webhook replays and
+		// out-of-order deliveries un-completing them.
+		// Note: transitions from cancelled/failed need to stay possible (late payments after
+		// expiration, see InvoicePaymentSettled below), so those are not guarded here.
+		if (in_array($webhookData->type, ['InvoiceReceivedPayment', 'InvoiceProcessing', 'InvoiceExpired', 'InvoiceInvalid'], true)
+			&& $order->has_status(['completed', 'refunded'])
+		) {
+			$note = sprintf(
+				/* translators: %s: BTCPay webhook event type. */
+				__('Webhook (%s) received from BTCPay, but the order is already completed or refunded, skipping to update order status. Please manually check if everything is alright.', 'btcpay-greenfield-for-woocommerce'),
+				$webhookData->type
+			);
+			$order->add_order_note($note);
+			return true;
 		}
 
 		switch ($webhookData->type) {
@@ -645,7 +715,9 @@ abstract class AbstractGateway extends \WC_Payment_Gateway {
 							$webhookData->invoiceId
 						)
 					);
-					break;
+					// Request redelivery only on verification errors. Unmatched orders and
+					// verified, non-settled invoices must still receive HTTP 200.
+					wp_die('Could not verify the settled invoice.', '', ['response' => 503]);
 				}
 
 				// PaidOver is an additional invoice status. Only Settled and Settled (PaidOver) may complete an order.
@@ -675,7 +747,7 @@ abstract class AbstractGateway extends \WC_Payment_Gateway {
 							$additionalStatusForLog
 						)
 					);
-					break;
+					return false;
 				}
 
 				$order->payment_complete();
@@ -691,6 +763,35 @@ abstract class AbstractGateway extends \WC_Payment_Gateway {
 				$this->updateWCOrderPayments($order);
 				break;
 		}
+
+		return true;
+	}
+
+	/**
+	 * Checks if a webhook delivery was already processed for this order.
+	 */
+	protected function isDeliveryProcessed(\WC_Order $order, string $deliveryId): bool {
+		$processed = $order->get_meta('BTCPay_processed_deliveries');
+		return is_array($processed) && in_array($deliveryId, $processed, true);
+	}
+
+	/**
+	 * Remembers a processed webhook delivery on the order, so redeliveries and replays of
+	 * the same event are skipped. The list is bounded, oldest entries are dropped first.
+	 */
+	protected function markDeliveryProcessed(\WC_Order $order, string $deliveryId): void {
+		$processed = $order->get_meta('BTCPay_processed_deliveries');
+		if (!is_array($processed)) {
+			$processed = [];
+		}
+
+		$processed[] = $deliveryId;
+		if (count($processed) > 20) {
+			$processed = array_slice($processed, -20);
+		}
+
+		$order->update_meta_data('BTCPay_processed_deliveries', $processed);
+		$order->save();
 	}
 
 	/**
@@ -851,9 +952,26 @@ abstract class AbstractGateway extends \WC_Payment_Gateway {
 		// Promotion type set 1 token per each quantity.
 		if ($this->getTokenType() === 'promotion') {
 			$currency = $this->primaryPaymentMethod ?? null;
-			$amount = PreciseNumber::parseInt( $this->getOrderTotalItemsQuantity($order));
+			$totalItemsQuantity = $this->getOrderTotalItemsQuantity($order);
+
+			// Abort if the total item quantity is not positive, we can't create an invoice otherwise.
+			if ($totalItemsQuantity <= 0) {
+				$message = __METHOD__ . ': total item quantity of the order is not greater than zero, aborting invoice creation.';
+				Logger::debug($message, true);
+				throw new \Exception( __( "Can't process order. Please contact us if the problem persists.", 'btcpay-greenfield-for-woocommerce' ) );
+			}
+
+			$amount = PreciseNumber::parseInt( $totalItemsQuantity );
 		} else { // Defaults.
 			$currency = $order->get_currency();
+
+			// Abort if the order total is not positive, we can't create an invoice otherwise.
+			if ((float) $order->get_total() <= 0) {
+				$message = __METHOD__ . ': order total is not greater than zero, aborting invoice creation.';
+				Logger::debug($message, true);
+				throw new \Exception( __( "Can't process order. Please contact us if the problem persists.", 'btcpay-greenfield-for-woocommerce' ) );
+			}
+
 			$amount = PreciseNumber::parseString( $order->get_total() ); // unlike method signature suggests, it returns string.
 		}
 

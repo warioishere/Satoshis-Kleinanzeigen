@@ -22,6 +22,101 @@ trait Helper {
 		return defined( 'BURST_PRO' );
 	}
 
+	/**
+	 * Check if essentials mode is enabled.
+	 *
+	 * @return bool True if essentials mode is enabled, false otherwise.
+	 */
+	public function is_essentials_mode(): bool {
+		return $this->get_option_bool( 'essentials_mode', false );
+	}
+
+	/**
+	 * List of non-essential features that are disabled when essentials mode is enabled.
+	 *
+	 * Not filterable on purpose: each slug matches a module that gulpfile.js
+	 * leaves out of the prebuilt essentials scripts (goals.js, scroll.js,
+	 * page-weight.js), and a filter could not change those scripts. Keep the
+	 * two in sync when adding a feature.
+	 *
+	 * @return array<int, string> List of non-essential feature slugs.
+	 */
+	public static function get_non_essential_features(): array {
+		return [
+			'goals',
+			'scroll_depth',
+			'co2',
+		];
+	}
+
+	/**
+	 * Basename of the prebuilt tracking script for the current settings.
+	 *
+	 * Shared by the enqueued script and the combined uploads file, so both pick
+	 * the same essentials or full, cookie or cookieless build.
+	 *
+	 * @return string The file name in assets/js/build.
+	 */
+	public function get_tracking_script_basename(): string {
+		$prefix = $this->is_essentials_mode() ? 'burst-essentials' : 'burst';
+		$suffix = 'fingerprint' === $this->get_option( 'privacy_level', 'cookie' ) ? '-cookieless' : '';
+
+		return $prefix . $suffix . '.min.js';
+	}
+
+	/**
+	 * Check by slug if a feature is in the non-essentials list.
+	 *
+	 * @param string $slug Feature slug to check.
+	 * @return bool True if the feature is non-essential, false otherwise.
+	 */
+	public static function is_non_essential( string $slug ): bool {
+		return in_array( $slug, self::get_non_essential_features(), true );
+	}
+
+	/**
+	 * Check whether a feature is enabled under the current essentials mode configuration.
+	 *
+	 * When essentials mode is active, all features in the non-essentials list are disabled.
+	 * When essentials mode is off, all features are enabled (subject to their own settings).
+	 *
+	 * @param string $slug Feature slug to check.
+	 * @return bool True if enabled, false if disabled by essentials mode.
+	 */
+	public function is_feature_enabled( string $slug ): bool {
+		if ( $this->is_essentials_mode() && self::is_non_essential( $slug ) ) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Check whether a dashboard data endpoint may return data under essentials mode.
+	 *
+	 * The endpoint-to-feature map lives here, next to the non-essentials list, so
+	 * essentials mode is managed in one place. Page weight has two entries:
+	 * `page-weight` is the datatable id, `page_weight` the block's own data type.
+	 *
+	 * @param string $type Data type or datatable id, without the `datatable-` prefix.
+	 * @return bool False when the endpoint reports on a feature essentials mode turned off.
+	 */
+	public function is_data_type_enabled( string $type ): bool {
+		$feature_map = [
+			'page-weight'      => 'co2',
+			'page_weight'      => 'co2',
+			'scroll-analytics' => 'scroll_depth',
+			'goals'            => 'goals',
+			'live-goals'       => 'goals',
+		];
+
+		if ( ! isset( $feature_map[ $type ] ) ) {
+			return true;
+		}
+
+		return $this->is_feature_enabled( $feature_map[ $type ] );
+	}
+
 	// phpcs:disable
 	/**
 	 * Get an option from the burst settings
@@ -53,6 +148,31 @@ trait Helper {
 	}
 
 	/**
+	 * Tracking-path scripts that ghost mode copies into its obfuscated uploads
+	 * directory, keyed by bundled path (relative to the plugin root) with the
+	 * copy's file name as value. The combined tracking script itself is written
+	 * separately, see Admin::create_js_file().
+	 *
+	 * @return array<string, string>
+	 */
+	protected function get_ghost_mode_scripts(): array {
+		return [
+			'assets/js/timeme/timeme.min.js'      => 'timeme.min.js',
+			'assets/js/build/burst-events.min.js' => 'events.min.js',
+			'assets/js/build/burst-events-early-bootstrap.min.js' => 'events-early-bootstrap.min.js',
+		];
+	}
+
+	/**
+	 * Build the inline script that merges tracking options into window.burst.
+	 *
+	 * @param array $options Tracking options to expose to the frontend script.
+	 */
+	protected function get_burst_bootstrap_script( array $options ): string {
+		return 'window.burst = window.burst || {}; Object.assign( window.burst, ' . wp_json_encode( $options ) . ' );';
+	}
+
+	/**
 	 * Get an option from the burst settings and cast it to a boolean
 	 */
 	protected function get_option_bool( string $option, ?bool $default_value = null ): bool {
@@ -72,6 +192,22 @@ trait Helper {
 	}
 
 	/**
+	 * Get the path of an upload dir, without creating it.
+	 *
+	 * For reads and deletes that should not leave an empty directory behind.
+	 * upload_dir() builds on it, so both always point at the same place.
+	 *
+	 * @param string $path Sub path below the uploads dir.
+	 * @param bool   $root Use the uploads root instead of uploads/burst/.
+	 * @return string The directory path, with a trailing slash.
+	 */
+	protected function upload_path( string $path = '', bool $root = false ): string {
+		$basedir = apply_filters( 'burst_upload_dir', wp_upload_dir()['basedir'] );
+
+		return trailingslashit( trailingslashit( $basedir ) . ( $root ? '' : 'burst/' ) . $path );
+	}
+
+	/**
 	 * Get the upload dir, creating it when it does not exist yet.
 	 *
 	 * Newly created directories are hardened against direct HTTP access with
@@ -84,9 +220,7 @@ trait Helper {
 	 * @param bool   $is_public Skip the hardening files for a directory that is served to visitors.
 	 */
 	protected function upload_dir( string $path = '', bool $root = false, bool $is_public = false ): string {
-		$uploads    = wp_upload_dir();
-		$dir        = $root ? '' : 'burst/';
-		$upload_dir = trailingslashit( apply_filters( 'burst_upload_dir', $uploads['basedir'] ) ) . $dir . $path;
+		$upload_dir = $this->upload_path( $path, $root );
 		if ( ! is_dir( $upload_dir ) ) {
 			wp_mkdir_p( $upload_dir );
 		}
@@ -95,26 +229,26 @@ trait Helper {
 		// directory would only add PHP warnings, so callers check is_dir() instead.
 		if ( ! $is_public && is_dir( $upload_dir ) ) {
 			// Harden the directory against direct HTTP access.
-			if ( ! file_exists( $upload_dir . '/index.php' ) ) {
+			if ( ! file_exists( $upload_dir . 'index.php' ) ) {
 				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-				file_put_contents( $upload_dir . '/index.php', "<?php\n// Silence is golden.\n" );
+				file_put_contents( $upload_dir . 'index.php', "<?php\n// Silence is golden.\n" );
 			}
-			if ( ! file_exists( $upload_dir . '/.htaccess' ) ) {
+			if ( ! file_exists( $upload_dir . '.htaccess' ) ) {
 				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-				file_put_contents( $upload_dir . '/.htaccess', "Deny from all\n" );
+				file_put_contents( $upload_dir . '.htaccess', "Deny from all\n" );
 			}
 		}
 
 		// Ensure parent uploads/burst/ has an index.php to prevent directory listing.
 		if ( ! $root ) {
-			$burst_root = trailingslashit( apply_filters( 'burst_upload_dir', $uploads['basedir'] ) ) . 'burst/';
+			$burst_root = $this->upload_path();
 			if ( is_dir( $burst_root ) && ! file_exists( $burst_root . 'index.php' ) ) {
 				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents, WordPress.PHP.NoSilencedErrors.Discouraged
 				@file_put_contents( $burst_root . 'index.php', "<?php\n// Silence is golden.\n" );
 			}
 		}
 
-		return trailingslashit( $upload_dir );
+		return $upload_dir;
 	}
 
 	/**

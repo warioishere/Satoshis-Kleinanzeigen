@@ -86,7 +86,7 @@ final class Connect_Controller {
 
 		if ( ! $this->authorizer->can_auth() ) {
 			$this->notice->add( new Notice( Notice::ERROR,
-				__( 'Sorry, you do not have permission to connect a token.', '%TEXTDOMAIN%' ),
+				__( 'Sorry, you do not have permission to connect a token.', 'kadence-blocks' ),
 				true
 			) );
 
@@ -102,7 +102,7 @@ final class Connect_Controller {
 			if ( is_plugin_active( 'litespeed-cache/litespeed-cache.php' ) ) {
 				$this->notice->add( new Notice( Notice::ERROR,
 					sprintf(
-						__( 'The Litespeed plugin was detected, ensure "Store Transients" is set to ON and try again. See the <a href="%s" target="_blank">Litespeed documentation</a> for more information.', '%TEXTDOMAIN%' ),
+						__( 'The Litespeed plugin was detected, ensure "Store Transients" is set to ON and try again. See the <a href="%s" target="_blank">Litespeed documentation</a> for more information.', 'kadence-blocks' ),
 						esc_url( 'https://docs.litespeedtech.com/lscache/lscwp/cache/#store-transients' )
 					),
 					true
@@ -110,7 +110,7 @@ final class Connect_Controller {
 			}
 
 			$this->notice->add( new Notice( Notice::ERROR,
-				__( 'Unable to save token data: nonce verification failed.', '%TEXTDOMAIN%' ),
+				__( 'Unable to save token data: nonce verification failed.', 'kadence-blocks' ),
 				true
 			) );
 
@@ -122,7 +122,7 @@ final class Connect_Controller {
 
 		if ( ! $plugin ) {
 			$this->notice->add( new Notice( Notice::ERROR,
-				__( 'Plugin or Service slug not found.', '%TEXTDOMAIN%' ),
+				__( 'Plugin or Service slug not found.', 'kadence-blocks' ),
 				true
 			) );
 
@@ -132,7 +132,7 @@ final class Connect_Controller {
 		try {
 			if ( ! $this->connector->connect( $args[ self::TOKEN ] ?? '', $plugin ) ) {
 				$this->notice->add( new Notice( Notice::ERROR,
-					__( 'Error storing token.', '%TEXTDOMAIN%' ),
+					__( 'Error storing token.', 'kadence-blocks' ),
 					true
 				) );
 
@@ -156,7 +156,7 @@ final class Connect_Controller {
 
 			if ( ! $response->is_valid() ) {
 				$this->notice->add( new Notice( Notice::ERROR,
-					__( 'Provided license key is not valid.', '%TEXTDOMAIN%' ),
+					__( 'Provided license key is not valid.', 'kadence-blocks' ),
 					true
 				) );
 
@@ -165,7 +165,7 @@ final class Connect_Controller {
 
 			if ( ! $plugin->set_license_key( $license, $network ? 'network' : 'local' ) ) {
 				$this->notice->add( new Notice( Notice::ERROR,
-					__( 'Error storing license key.', '%TEXTDOMAIN%' ),
+					__( 'Error storing license key.', 'kadence-blocks' ),
 				true
 				) );
 
@@ -175,7 +175,7 @@ final class Connect_Controller {
 
 		$this->notice->add(
 			new Notice( Notice::SUCCESS,
-				__( 'Connected successfully.', '%TEXTDOMAIN%' ),
+				__( 'Connected successfully.', 'kadence-blocks' ),
 				true
 			)
 		);

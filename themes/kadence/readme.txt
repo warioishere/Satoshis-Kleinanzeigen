@@ -1,10 +1,10 @@
 === Kadence ===
 Contributors: britner, stellarwp
 Tags: translation-ready, accessibility-ready, two-columns, right-sidebar, left-sidebar, footer-widgets, blog, custom-logo, custom-background, custom-menu, rtl-language-support, editor-style, threaded-comments, custom-colors, featured-images, wide-blocks, full-width-template, theme-options, e-commerce.
-Requires at least: 6.3
-Tested up to: 6.9.1
+Requires at least: 6.6
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.5.2
+Stable tag: 1.6.0
 License: GNU General Public License v3.0 (or later)
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -25,6 +25,15 @@ Please report security bugs found in the source code of the Kadence Theme throug
 Please report security bugs found in the Kadence theme's source code through the Patchstack Vulnerability Disclosure Program https://patchstack.com/database/vdp/kadence. The Patchstack team will assist you with verification, CVE assignment, and notify the developers of this theme.
 
 = Changelog =
+
+= 1.6.0 | 5th November 2026
+* Add: Added Full Site Editing mode (Alpha), off by default. Turned on in Appearance > Kadence, it lets the header, footer and templates be edited in the Site Editor, with the Kadence palette, fonts and buttons in Global Styles.
+* Update: Raised the minimum WordPress version to 6.6.
+* Fix: Corrected the Optimized Group Block setting in the Customizer.
+* Fix: Gave Outline buttons in the block editor the Customizer's button padding, as on the front end.
+
+= 1.5.2 | 23rd July 2026
+* Update: Theme ownership and contributor metadata updated for Liquid Web.
 
 = 1.5.1 | 24th June 2026
 * fix: prevent fatal in woo_extra_body_classes on taxonomy archives

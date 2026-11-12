@@ -410,7 +410,7 @@ class Geo_Ip {
 							wp_delete_file( $unzipped );
 						}
 						if ( $wp_filesystem->move( $new_file_renamed, $unzipped ) ) {
-							update_option( 'burst_geo_ip_file', $unzipped );
+							update_option( 'burst_geo_ip_file', $unzipped, true );
 							$import_succeeded = true;
 						}
 					} else {
@@ -575,8 +575,7 @@ class Geo_Ip {
 		}
 
 		$current_file = (string) get_option( 'burst_geo_ip_file', '' );
-		$uploads      = wp_upload_dir();
-		$old_dir      = trailingslashit( apply_filters( 'burst_upload_dir', $uploads['basedir'] ) ) . 'burst/maxmind/';
+		$old_dir      = $this->upload_path( 'maxmind' );
 
 		$has_old_dir  = is_dir( $old_dir );
 		$has_old_file = '' !== $current_file && str_contains( str_replace( '\\', '/', $current_file ), '/burst/maxmind/' );
@@ -609,11 +608,11 @@ class Geo_Ip {
 				$target_file = $target_dir . basename( $current_file );
 				if ( ! file_exists( $target_file ) || (int) filemtime( $current_file ) > (int) filemtime( $target_file ) ) {
 					if ( $this->move_file( $current_file, $target_file ) ) {
-						update_option( 'burst_geo_ip_file', $target_file );
+						update_option( 'burst_geo_ip_file', $target_file, true );
 					}
 				} else {
 					wp_delete_file( $current_file );
-					update_option( 'burst_geo_ip_file', $target_file );
+					update_option( 'burst_geo_ip_file', $target_file, true );
 				}
 			}
 
@@ -637,12 +636,12 @@ class Geo_Ip {
 							if ( $this->move_file( $mmdb_file, $target_file ) ) {
 								$active_file = (string) get_option( 'burst_geo_ip_file', '' );
 								if ( '' === $active_file || ! file_exists( $active_file ) ) {
-									update_option( 'burst_geo_ip_file', $target_file );
+									update_option( 'burst_geo_ip_file', $target_file, true );
 								}
 							}
 						} elseif ( (int) filemtime( $mmdb_file ) > (int) filemtime( $target_file ) ) {
 							if ( $this->move_file( $mmdb_file, $target_file ) ) {
-								update_option( 'burst_geo_ip_file', $target_file );
+								update_option( 'burst_geo_ip_file', $target_file, true );
 							}
 						} else {
 							wp_delete_file( $mmdb_file );
@@ -659,7 +658,7 @@ class Geo_Ip {
 			if ( '' !== $active_file && str_contains( str_replace( '\\', '/', $active_file ), '/burst/maxmind/' ) ) {
 				$expected_file = $target_dir . basename( $active_file );
 				if ( file_exists( $expected_file ) ) {
-					update_option( 'burst_geo_ip_file', $expected_file );
+					update_option( 'burst_geo_ip_file', $expected_file, true );
 				}
 			}
 		} finally {

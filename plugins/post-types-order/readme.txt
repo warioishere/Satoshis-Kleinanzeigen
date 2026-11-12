@@ -3,7 +3,7 @@ Contributors: nsp-code, tdgu
 Tags: post order, posts order, post sort, posts sort, post types order
 Requires at least: 2.8
 Tested up to: 7.1.3
-Stable tag: 2.5.7
+Stable tag: 2.5.9
 Requires PHP: 5.6
 License: GPLv2 or later
 
@@ -115,6 +115,10 @@ Consider upgrading to our advanced version of this plugin, which offers these fe
 
 
 == Changelog ==
+
+= 2.5.9 =
+ - Compatibility with Blocksy: sync the ct_content_block to ct-dashboard show/hide option.
+ - Fix: Sort within the default WordPress interface; pagination issue fix. Update for WPML and Polylang. 
 
 = 2.5.7 =
  - When using WPML, Polylang, Bogo, the park items left out of an order-save runs only for current language objects. 

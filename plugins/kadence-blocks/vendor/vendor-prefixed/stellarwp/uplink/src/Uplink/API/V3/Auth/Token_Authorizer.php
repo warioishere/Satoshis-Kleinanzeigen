@@ -48,7 +48,7 @@ class Token_Authorizer implements Contracts\Token_Authorizer {
 		if ( $response instanceof WP_Error ) {
 			if ( $this->is_wp_debug() ) {
 				error_log( sprintf(
-					__( 'Authorization error occurred: License: "%s", Token: "%s", Domain: "%s". Errors: %s', '%TEXTDOMAIN%' ),
+					__( 'Authorization error occurred: License: "%s", Token: "%s", Domain: "%s". Errors: %s', 'kadence-blocks' ),
 					$license,
 					$token,
 					$domain,

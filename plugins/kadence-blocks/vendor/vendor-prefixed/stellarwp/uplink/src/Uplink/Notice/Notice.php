@@ -74,13 +74,13 @@ final class Notice {
 	) {
 		if ( ! in_array( $type, self::ALLOWED_TYPES, true ) ) {
 			throw new InvalidArgumentException( sprintf(
-					__( 'Notice $type must be one of: %s', '%TEXTDOMAIN%' ),
+					__( 'Notice $type must be one of: %s', 'kadence-blocks' ),
 					implode( ', ', self::ALLOWED_TYPES ) )
 			);
 		}
 
 		if ( empty( $message ) ) {
-			throw new InvalidArgumentException( __( 'The $message cannot be empty', '%TEXTDOMAIN%' ) );
+			throw new InvalidArgumentException( __( 'The $message cannot be empty', 'kadence-blocks' ) );
 		}
 
 		$this->type        = $type;

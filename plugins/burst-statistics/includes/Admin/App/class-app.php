@@ -3,6 +3,8 @@ namespace Burst\Admin\App;
 
 use Burst\Admin\App\Fields\Fields;
 use Burst\Admin\App\Fields\Reporting_Fields;
+use Burst\Admin\Admin_Options;
+use Burst\Admin\DomainTypes\Admin_Option_Category;
 use Burst\Admin\App\Menu\Menu;
 use Burst\Admin\Burst_Onboarding\Burst_Onboarding;
 use Burst\Admin\Reports\Reports;
@@ -148,9 +150,9 @@ class App {
 	 * Remove the fallback notice if REST API is working again
 	 */
 	public function remove_fallback_notice(): void {
-		if ( get_option( 'burst_ajax_fallback_active' ) !== false ) {
-			delete_option( 'burst_ajax_fallback_active' );
-			delete_option( 'burst_ajax_fallback_active_timestamp' );
+		if ( Admin_Options::get( Admin_Option_Category::CORE, 'ajax_fallback_active', false ) !== false ) {
+			Admin_Options::delete( Admin_Option_Category::CORE, 'ajax_fallback_active' );
+			Admin_Options::delete( Admin_Option_Category::CORE, 'ajax_fallback_active_timestamp' );
 			burst_loader()->admin->tasks->schedule_task_validation();
 		}
 	}
@@ -178,7 +180,8 @@ class App {
 
 					const getBaseHash = (url) => {
 						const [base, hash = ''] = url.split('#');
-						const section = hash.split('/')[1] || '';
+						// Ignore filter params in the hash, e.g. #/statistics?range=last-90-days&_=123.
+						const section = hash.split(/[/?]/)[1] || '';
 						return `${base}#/${section}`;
 					};
 
@@ -287,10 +290,8 @@ class App {
 				continue;
 			}
 
-			$capability = $menu_item['capabilities'] ?? 'view_burst_statistics';
-			if ( ! current_user_can( $capability ) ) {
-				continue;
-			}
+			// Menu::get() already left out the pages the user cannot open; add_submenu_page() still needs the capability.
+			$capability = $this->menu->get_item_capability( $menu_item );
 
 			$page_title = $menu_item['title'] ?? '';
 			$menu_title = $menu_item['title'] ?? '';
@@ -425,6 +426,8 @@ class App {
 		$data['community_data'] = is_array( $community_data ) ? $community_data : null;
 		$pinned_filters         = get_user_meta( get_current_user_id(), 'burst_pinned_filters', true );
 		$data['pinned_filters'] = is_array( $pinned_filters ) ? $pinned_filters : (object) [];
+
+		$data['hide_hook_goals'] = $this->fields->are_hook_goals_hidden();
 		return $data;
 	}
 
@@ -504,6 +507,8 @@ class App {
 	 * authorizing the POST body 'path' is what allowed the auth/dispatch desync,
 	 * where a share viewer named a granted endpoint in 'path' while rest_action
 	 * pointed at a non-granted one.
+	 * REST dispatch also uses this resolver to keep its type tied to the
+	 * matched route rather than overridable request parameters.
 	 *
 	 * @param string $action The final, authoritative REST action path.
 	 * @return array{type: string, is_ecommerce: bool} Empty type when $action is not a /data/ endpoint.
@@ -627,12 +632,12 @@ class App {
 		}
 
 		// Fallback notice.
-		$fallback_already_active = (int) get_option( 'burst_ajax_fallback_active_timestamp', 0 );
+		$fallback_already_active = (int) Admin_Options::get( Admin_Option_Category::CORE, 'ajax_fallback_active_timestamp', 0 );
 		if ( $fallback_already_active === 0 ) {
-			update_option( 'burst_ajax_fallback_active_timestamp', time(), false );
+			Admin_Options::update( Admin_Option_Category::CORE, 'ajax_fallback_active_timestamp', time() );
 		}
 		if ( $fallback_already_active > 0 && ( time() - $fallback_already_active ) > 48 * HOUR_IN_SECONDS ) {
-			update_option( 'burst_ajax_fallback_active', true, false );
+			Admin_Options::update( Admin_Option_Category::CORE, 'ajax_fallback_active', true );
 		}
 
 		// Normalize/merge params from GET and POST data.
@@ -721,8 +726,6 @@ class App {
 				$response = $this->rest_api_goals_upsert_for_block( $request, $data );
 			} elseif ( str_contains( $action, '/goals/delete' ) ) {
 				$response = $this->rest_api_goals_delete( $request, $data );
-			} elseif ( str_contains( $action, '/goal_fields/get' ) ) {
-				$response = $this->rest_api_goal_fields_get( $request );
 			} elseif ( str_contains( $action, '/goals/set' ) ) {
 				$response = $this->rest_api_goals_set( $request, $data );
 			} elseif ( str_contains( $action, '/posts/' ) ) {
@@ -1234,7 +1237,7 @@ class App {
 				'callback'            => function ( \WP_REST_Request $request ) {
 					$request->set_param( 'is_ecommerce', true );
 					// Prepend prefix to identify as datatable request.
-					$request->set_param( 'type', 'datatable-' . $request->get_param( 'type' ) );
+					$request->set_param( 'type', 'datatable-' . $request->get_url_params()['type'] );
 
 					return $this->get_data( $request );
 				},
@@ -1266,7 +1269,7 @@ class App {
 				'methods'             => 'GET',
 				'callback'            => function ( \WP_REST_Request $request ) {
 					// Prepend prefix to identify as datatable request.
-					$request->set_param( 'type', 'datatable-' . $request->get_param( 'type' ) );
+					$request->set_param( 'type', 'datatable-' . $request->get_url_params()['type'] );
 					return $this->get_data( $request );
 				},
 				'permission_callback' => function ( \WP_REST_Request $request ) {
@@ -1930,9 +1933,12 @@ class App {
 			];
 		}
 
+		// Dispatch from the same route that was authorized, not query or body overrides.
+		$dispatch = $this->resolve_fallback_data_type( strtolower( (string) stristr( $request->get_route(), 'burst/v1/' ) ) );
+
 		return [
 			'success' => true,
-			'type'    => sanitize_title( $request->get_param( 'type' ) ),
+			'type'    => sanitize_title( $dispatch['type'] ),
 		];
 	}
 
@@ -2152,7 +2158,18 @@ class App {
 
 		// Handle per-datatable endpoints and enforce metric allow-lists for all users.
 		if ( str_starts_with( $type, 'datatable-' ) ) {
-			$type       = str_replace( 'datatable-', '', $type );
+			$type = str_replace( 'datatable-', '', $type );
+
+			if ( ! $this->is_data_type_enabled( $type ) ) {
+				return $this->create_rest_response(
+					[
+						'columns' => [],
+						'data'    => [],
+						'metrics' => [],
+					]
+				);
+			}
+
 			$allow_list = $this->get_datatable_metric_allow_list();
 
 			if ( isset( $allow_list[ $type ] ) ) {
@@ -2193,6 +2210,10 @@ class App {
 					404
 				);
 			}
+		}
+
+		if ( ! $this->is_data_type_enabled( $type ) ) {
+			return $this->create_rest_response( [] );
 		}
 
 		switch ( $type ) {
@@ -2384,7 +2405,7 @@ class App {
 
 			// Only save if we have updates.
 			if ( ! empty( $updated_fields ) ) {
-				$updated = update_option( 'burst_options_settings', $options );
+				$updated = update_option( 'burst_options_settings', $options, true );
 
 				// Process after-save actions only for updated fields.
 				foreach ( $updated_fields as $field_id => $value ) {
@@ -2522,51 +2543,11 @@ class App {
 				'request_success'    => true,
 				'goals'              => $goals,
 				'predefinedGoals'    => $predefined_goals,
-				'goalFields'         => $this->fields->get_goal_fields(),
 				'goal_limit'         => $goal_limit,
 				'active_goals_count' => $active_goals_count,
 			],
 			200
 		);
-	}
-
-	/**
-	 * Get the rest api fields
-	 */
-	public function rest_api_goal_fields_get( \WP_REST_Request $request ): \WP_REST_Response {
-		if ( ! $this->user_can_manage() ) {
-			return new \WP_REST_Response(
-				[
-					'success' => false,
-					'message' => 'You do not have permission to perform this action.',
-				]
-			);
-		}
-
-		$nonce = $request->get_param( 'nonce' );
-		if ( ! $this->verify_nonce( $nonce, 'burst_nonce' ) ) {
-			return new \WP_REST_Response(
-				[
-					'success' => false,
-					'message' => $this->nonce_expired_feedback,
-				]
-			);
-		}
-
-		$goals = apply_filters( 'burst_rest_api_goals_get', ( new Goals() )->get_goals() );
-		if ( ob_get_length() ) {
-			ob_clean();
-		}
-
-		$response = new \WP_REST_Response(
-			[
-				'request_success' => true,
-				'goals'           => $goals,
-			]
-		);
-		$response->set_status( 200 );
-
-		return $response;
 	}
 
 	/**
@@ -3031,20 +3012,22 @@ class App {
 	 */
 	private function get_articles(): array {
 		$json_path = __DIR__ . '/posts.json';
-		// if the file is over one month old, delete it, so we can download a new one.
-		if ( file_exists( $json_path ) && ( time() - filemtime( $json_path ) > MONTH_IN_SECONDS ) ) {
-			wp_delete_file( $json_path );
+		// Refresh the file once it is over a month old. The existing file is kept until the
+		// download has been written, so a failed refresh still leaves the shipped copy in place.
+		if ( ! file_exists( $json_path ) || ( time() - filemtime( $json_path ) > MONTH_IN_SECONDS ) ) {
+			$this->download_articles_json_file( $json_path );
 		}
 
-		if ( ! file_exists( $json_path ) ) {
-			$this->download_articles_json_file();
-		}
-		if ( ! file_exists( $json_path ) ) {
-			$json_path = __DIR__ . '/posts-fallback.json';
+		if ( ! is_readable( $json_path ) ) {
+			return [];
 		}
 
 		// phpcs:disable WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		$json = file_get_contents( $json_path );
+		// phpcs:enable WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		if ( false === $json ) {
+			return [];
+		}
 		// decode the json file.
 		$decoded = json_decode( $json, true );
 		if ( ! is_array( $decoded ) ) {
@@ -3058,25 +3041,51 @@ class App {
 
 	/**
 	 * Get the posts.json file from the remote server.
+	 *
+	 * Fails silently: on hosts where the plugin directory is read-only the shipped
+	 * posts.json stays in use until the next plugin update replaces it.
+	 *
+	 * At most one attempt per month: a failed download leaves the file's age
+	 * unchanged, so without this every dashboard load would wait for the remote
+	 * request again until the server is reachable.
+	 *
+	 * @param string $json_path Absolute path of the local posts.json file.
+	 * @return void Writes the downloaded file to $json_path when possible, and
+	 *              stores the attempt time in the core admin options.
 	 */
-	private function download_articles_json_file(): void {
+	private function download_articles_json_file( string $json_path ): void {
+		// Check writability before the remote request, so read-only hosts don't download on every load.
+		if ( ! wp_is_writable( file_exists( $json_path ) ? $json_path : dirname( $json_path ) ) ) {
+			return;
+		}
+
+		$last_attempt = (int) Admin_Options::get( Admin_Option_Category::CORE, 'articles_download_attempt', 0 );
+		if ( $last_attempt > time() - MONTH_IN_SECONDS ) {
+			return;
+		}
+
+		// Stored before the request, so dashboard loads that run at the same time don't all download.
+		Admin_Options::update( Admin_Option_Category::CORE, 'articles_download_attempt', time() );
+
 		$remote_json = 'https://burst.ams3.cdn.digitaloceanspaces.com/posts/posts.json';
 		$response    = wp_remote_get( $remote_json );
 		if ( is_wp_error( $response ) || wp_remote_retrieve_response_code( $response ) !== 200 ) {
 			return;
 		}
-		$json = wp_remote_retrieve_body( $response );
-		if ( ! empty( $json ) ) {
-			require_once ABSPATH . 'wp-admin/includes/file.php';
-			global $wp_filesystem;
-			if ( ! WP_Filesystem() ) {
-				return;
-			}
 
-			if ( $wp_filesystem->is_writable( __DIR__ ) ) {
-				$wp_filesystem->put_contents( __DIR__ . '/posts.json', $json, FS_CHMOD_FILE );
-			}
+		$json = wp_remote_retrieve_body( $response );
+		// Never replace a working file with an empty or invalid download.
+		if ( empty( $json ) || ! is_array( json_decode( $json, true ) ) ) {
+			return;
 		}
+
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		global $wp_filesystem;
+		if ( ! WP_Filesystem() ) {
+			return;
+		}
+
+		$wp_filesystem->put_contents( $json_path, $json, FS_CHMOD_FILE );
 	}
 
 	/**

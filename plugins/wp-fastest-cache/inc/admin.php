@@ -13,26 +13,6 @@
 			$this->setCronJobSettings();
 			$this->addButtonOnEditor();
 			add_action('admin_enqueue_scripts', array($this, 'addJavaScript'));
-			add_filter('plugin_locale', array($this, 'my_plugin_locale_filter'), 10, 2);
-		}
-
-		public function my_plugin_locale_filter($locale, $domain){
-			if($domain === 'wp-fastest-cache'){
-
-				if(!isset($this->options->wpFastestCacheLanguage)){
-					return "en_US";
-				}
-
-				$locale = $this->options->wpFastestCacheLanguage;
-				
-				if(file_exists(WPFC_MAIN_PATH."languages/wp-fastest-cache-".$locale.".mo")){
-					return $locale;
-				}else{
-					return "en_US";
-				}
-			}
-
-			return $locale;
 		}
 
 		public function create_auto_cache_timeout($recurrance, $interval){
@@ -500,6 +480,10 @@
 				$htaccess = $this->to_move_gtranslate_rules($htaccess);
 
 				file_put_contents($path.".htaccess", $htaccess);
+
+				if(function_exists('wpfc_update_htaccess_blocked_ips') && apply_filters('wpfc_show_security_beta', false)){
+					wpfc_update_htaccess_blocked_ips();
+				}
 			}else{
 				return array(__("Options have been saved", 'wp-fastest-cache'), "updated");
 				//return array(".htaccess is not writable", "error");
@@ -843,7 +827,11 @@
 			}
 
 			$query_string = "RewriteCond %{QUERY_STRING} !.+ [OR]"."\n".
-							"RewriteCond %{QUERY_STRING} (?:^|&)(?:fbclid|yclid|yadclid|ymclid|ysclid|yzclid|yqrid|ybaip|etext)="." [NC]\n";
+							"RewriteCond %{QUERY_STRING} (?:^|&)".WPFC_FACEBOOK_QUERY_PARAM_PATTERN."="." [NC,OR]\n".
+							"RewriteCond %{QUERY_STRING} (?:^|&)(?:".WPFC_YANDEX_QUERY_PARAM_PATTERN.")="." [NC,OR]\n".
+							"RewriteCond %{QUERY_STRING} (?:^|&)".WPFC_GOOGLE_ANALYTICS_QUERY_PARAM_PATTERN."="." [NC,OR]\n".
+							"RewriteCond %{QUERY_STRING} (?:^|&)".WPFC_GOOGLE_ADS_QUERY_PARAM_PATTERN."="." [NC,OR]\n".
+							"RewriteCond %{QUERY_STRING} (?:^|&)".WPFC_GOOGLE_MERCHANT_QUERY_PARAM_PATTERN."="." [NC]\n";
 
 			$data = "# BEGIN WpFastestCache"."\n".
 					"# Modified Time: ".date("d-m-y G:i:s", current_time('timestamp'))."\n".
@@ -882,6 +870,17 @@
 			}
 
 			$data = $data.'RewriteRule ^(.*) "/'.$this->getRewriteBase().WPFC_WP_CONTENT_BASENAME.$cache_path.$this->getRewriteBase(true).'$1/index.html" [L]'."\n";
+
+			// XML responses are stored as index.xml. Keep them on the web server
+			// path as well so sitemap/feed requests do not fall back to PHP.
+			if(ABSPATH == "//"){
+				$data = $data."RewriteCond %{DOCUMENT_ROOT}/".WPFC_WP_CONTENT_BASENAME.$cache_path."$1/index.xml -f"."\n";
+			}else{
+				$data = $data."RewriteCond %{DOCUMENT_ROOT}/".WPFC_WP_CONTENT_BASENAME.$cache_path."$1/index.xml -f [or]"."\n";
+				$data = $data."RewriteCond ".$tmp_WPFC_WP_CONTENT_DIR.$cache_path.$this->getRewriteBase(true)."$1/index.xml -f"."\n";
+			}
+
+			$data = $data.'RewriteRule ^(.*) "/'.$this->getRewriteBase().WPFC_WP_CONTENT_BASENAME.$cache_path.$this->getRewriteBase(true).'$1/index.xml" [L]'."\n";
 			
 			//RewriteRule !/  "/wp-content/cache/all/index.html" [L]
 
@@ -2020,6 +2019,7 @@
 										<option value="regex">Regular Expression</option>
 
 										<option value="googleanalytics"><?php _e("has Google Analytics Parameters", "wp-fastest-cache"); ?></option>
+										<option value="googleads"><?php _e("has Google Ads Parameters", "wp-fastest-cache"); ?></option>
 										<option value="yandexclickid"><?php _e("has Yandex Metrica Parameters", "wp-fastest-cache"); ?></option>
 										<option value="facebookclickid"><?php _e("has Facebook Click ID Parameters", "wp-fastest-cache"); ?></option>
 										<option value="woocommerce_items_in_cart"><?php _e("has Woocommerce Items in Cart", "wp-fastest-cache"); ?></option>

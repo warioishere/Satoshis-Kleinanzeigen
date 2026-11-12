@@ -40,7 +40,7 @@ $form_action    = is_multisite() && is_network_admin() ? network_admin_url( 'set
 			<?php endif; ?>
 			<?php do_action( 'stellarwp/uplink/' . Config::get_hook_prefix(). '/license_field_after_field', $plugin->get_slug() ) ?>
 			<?php if ( $show_button ) : ?>
-				<?php submit_button( esc_html__( 'Save Changes', '%TEXTDOMAIN%' ) );?>
+				<?php submit_button( esc_html__( 'Save Changes', 'kadence-blocks' ) );?>
 			<?php endif; ?>
 		</form>
 		<?php do_action( 'stellarwp/uplink/' . Config::get_hook_prefix(). '/license_field_after_form', $plugin->get_slug() ) ?>

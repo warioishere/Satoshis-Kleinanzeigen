@@ -1,6 +1,8 @@
 <?php
 namespace Burst\Admin\Tour;
 
+use Burst\Admin\Admin_Options;
+use Burst\Admin\DomainTypes\Admin_Option_Category;
 use Burst\Admin\Mailer\Mailer;
 use Burst\Traits\Admin_Helper;
 use Burst\Traits\Helper;
@@ -304,7 +306,7 @@ class Tour {
 		if ( 0 === $user_id ) {
 			$user_id = get_current_user_id();
 		}
-		return (string) ( ( 0 !== $user_id ? get_user_meta( $user_id, self::LAST_SECTION_META_KEY, true ) : '' ) ?: get_option( 'burst_tour_last_section', '' ) );
+		return (string) ( ( 0 !== $user_id ? get_user_meta( $user_id, self::LAST_SECTION_META_KEY, true ) : '' ) ?: Admin_Options::get( Admin_Option_Category::CORE, 'tour_last_section', '' ) );
 	}
 
 	/**
@@ -316,7 +318,7 @@ class Tour {
 		if ( 0 === $user_id ) {
 			$user_id = get_current_user_id();
 		}
-		return (bool) ( ( 0 !== $user_id ? get_user_meta( $user_id, self::TOUR_COMPLETED_META_KEY, true ) : false ) ?: get_option( 'burst_tour_completed', false ) );
+		return (bool) ( ( 0 !== $user_id ? get_user_meta( $user_id, self::TOUR_COMPLETED_META_KEY, true ) : false ) ?: Admin_Options::get( Admin_Option_Category::CORE, 'tour_completed', false ) );
 	}
 
 	/**
@@ -1074,99 +1076,36 @@ class Tour {
 	public function get_goals_steps(): array {
 		$steps = [
 			[
-				'id'         => 'prompt_settings_tab',
+				'id'         => 'prompt_goals_tab',
 				'section'    => 'goals',
-				'title'      => __( 'Next: settings & goals ⚙️', 'burst-statistics' ),
-				'text'       => __( 'Click the "Settings" tab in the navigation above to explore conversion goals, privacy levels, and smart automation.', 'burst-statistics' ),
+				'title'      => __( 'Next: conversion goals 🎯', 'burst-statistics' ),
+				'text'       => __( 'Click "Goals" in the navigation above to track meaningful actions like button clicks, form submissions, and purchases.', 'burst-statistics' ),
 				'pro'        => false,
-				'anchor'     => '[data-tour="nav-tab-settings"]',
+				'anchor'     => '[data-tour="nav-tab-goals"]',
 				'placement'  => 'bottom',
 				'action'     => 'click_tab',
-				'target_url' => '/settings/general',
+				'target_url' => '/goals',
 				'route'      => '/reporting/customization',
 			],
 			[
-				'id'        => 'settings_goal_setup',
+				'id'        => 'goals_new_button',
 				'section'   => 'goals',
-				'title'     => __( 'Conversion goals 🎯', 'burst-statistics' ),
-				'text'      => __( 'Click "Goals" in the sidebar to track meaningful actions like button clicks, form submissions, and purchases.', 'burst-statistics' ),
+				'title'     => __( 'Create a goal 🎯', 'burst-statistics' ),
+				'text'      => __( '"New goal" opens a step-by-step wizard. Start from a preset for a plugin you use, or build your own goal for a click, element view, page visit or hook.', 'burst-statistics' ),
 				'pro'       => false,
-				'anchor'    => '[data-tour="subnav-goals"]',
-				'placement' => 'right',
-				'action'    => 'click_tab',
-				'route'     => '/settings/goals',
-			],
-			[
-				'id'        => 'settings_goals_add',
-				'section'   => 'goals',
-				'title'     => __( 'Add conversion goal 🎯', 'burst-statistics' ),
-				'text'      => __( 'Click "+ Add goal" to define custom click, view, or form conversion triggers.', 'burst-statistics' ),
-				'pro'       => false,
-				'anchor'    => '[data-tour="add-goal-button"]',
+				'anchor'    => '[data-tour="new-goal-button"]',
 				'placement' => 'bottom',
-				'action'    => 'click_element',
-				'delay'     => 1200,
-				'route'     => '/settings/goals',
+				'route'     => '/goals',
 			],
 			[
-				'id'        => 'settings_goals_name',
+				'id'        => 'goals_list_table',
 				'section'   => 'goals',
-				'title'     => __( 'Goal name 🎯', 'burst-statistics' ),
-				'text'      => __( 'Set a recognizable name (e.g. "Checkout Click" or "Contact Form") for easy tracking across reports.', 'burst-statistics' ),
+				'title'     => __( 'Your goals at a glance 📋', 'burst-statistics' ),
+				'text'      => __( 'Every goal shows what it tracks and where it counts. Switch a goal on to start counting conversions. "Needs setup" means the goal is missing what it should track.', 'burst-statistics' ),
 				'pro'       => false,
-				'anchor'    => '[data-tour="goal-field-title"]',
-				'placement' => 'bottom',
-				'route'     => '/settings/goals',
-			],
-			[
-				'id'        => 'settings_goals_type',
-				'section'   => 'goals',
-				'title'     => __( 'Trigger type ⚡', 'burst-statistics' ),
-				'text'      => __( 'Choose the conversion trigger: Clicks (button/link), Views (scrolled into view), or Visits (page URL).', 'burst-statistics' ),
-				'pro'       => false,
-				'anchor'    => '[data-tour="goal-field-type"]',
-				'placement' => 'bottom',
-				'route'     => '/settings/goals',
-			],
-			[
-				'id'        => 'settings_goals_scope',
-				'section'   => 'goals',
-				'title'     => __( 'Tracking scope 🌐', 'burst-statistics' ),
-				'text'      => __( 'Track conversions across the entire site or restrict tracking to a single specific landing page.', 'burst-statistics' ),
-				'pro'       => false,
-				'anchor'    => '[data-tour="goal-field-page_or_website"]',
-				'placement' => 'bottom',
-				'route'     => '/settings/goals',
-			],
-			[
-				'id'        => 'settings_goals_selector',
-				'section'   => 'goals',
-				'title'     => __( 'Target CSS selector 🎯', 'burst-statistics' ),
-				'text'      => __( 'Enter the CSS selector or element ID (e.g. .checkout-btn, #buy-now) to track.', 'burst-statistics' ),
-				'pro'       => false,
-				'anchor'    => '[data-tour="goal-field-selector"]',
-				'placement' => 'bottom',
-				'route'     => '/settings/goals',
-			],
-			[
-				'id'        => 'settings_goals_metric',
-				'section'   => 'goals',
-				'title'     => __( 'Conversion baseline 📊', 'burst-statistics' ),
-				'text'      => __( 'Select the baseline metric used to calculate conversion rates: Unique Visitors, Sessions, or Pageviews.', 'burst-statistics' ),
-				'pro'       => false,
-				'anchor'    => '[data-tour="goal-field-conversion_metric"]',
-				'placement' => 'bottom',
-				'route'     => '/settings/goals',
-			],
-			[
-				'id'        => 'settings_goals_toggle',
-				'section'   => 'goals',
-				'title'     => __( 'Activate goal 🚀', 'burst-statistics' ),
-				'text'      => __( 'Enable this switch to start recording live conversions immediately across your dashboard.', 'burst-statistics' ),
-				'pro'       => false,
-				'anchor'    => '[data-tour="goal-field-toggle"]',
-				'placement' => 'left',
-				'route'     => '/settings/goals',
+				'anchor'    => '[data-tour="goals-list-table"]',
+				'placement' => 'top',
+				'route'     => '/goals',
 			],
 		];
 
@@ -1177,9 +1116,9 @@ class Tour {
 				'title'     => __( 'Gutenberg block goals 🧩', 'burst-statistics' ),
 				'text'      => __( 'Embed Burst Goal blocks directly in Gutenberg to track page-specific CTAs without code.', 'burst-statistics' ),
 				'pro'       => false,
-				'anchor'    => '[data-tour="subnav-goals"]',
-				'placement' => 'right',
-				'route'     => '/settings/goals',
+				'anchor'    => '[data-tour="goals-list-table"]',
+				'placement' => 'top',
+				'route'     => '/goals',
 			];
 		}
 
@@ -1194,15 +1133,16 @@ class Tour {
 	public function get_settings_steps(): array {
 		return [
 			[
-				'id'        => 'prompt_general_settings',
-				'section'   => 'settings',
-				'title'     => __( 'General settings ⚙️', 'burst-statistics' ),
-				'text'      => __( 'Click "General" in the sidebar to configure privacy levels and core tracking options.', 'burst-statistics' ),
-				'pro'       => false,
-				'anchor'    => '[data-tour="subnav-general"]',
-				'placement' => 'right',
-				'action'    => 'click_tab',
-				'route'     => '/settings/general',
+				'id'         => 'prompt_settings_tab',
+				'section'    => 'settings',
+				'title'      => __( 'Next: settings ⚙️', 'burst-statistics' ),
+				'text'       => __( 'Click the "Settings" tab in the navigation above to configure privacy levels, core tracking options and smart automation.', 'burst-statistics' ),
+				'pro'        => false,
+				'anchor'     => '[data-tour="nav-tab-settings"]',
+				'placement'  => 'bottom',
+				'action'     => 'click_tab',
+				'target_url' => '/settings/general',
+				'route'      => '/goals',
 			],
 			[
 				'id'        => 'settings_smart_update',
@@ -1358,7 +1298,7 @@ class Tour {
 					if ( 0 !== $user_id ) {
 						update_user_meta( $user_id, self::LAST_SECTION_META_KEY, $section_id );
 					}
-					update_option( 'burst_tour_last_section', $section_id, false );
+					Admin_Options::update( Admin_Option_Category::CORE, 'tour_last_section', $section_id );
 				}
 
 				if ( $completed ) {
@@ -1366,7 +1306,7 @@ class Tour {
 						update_user_meta( $user_id, self::TOUR_COMPLETED_META_KEY, true );
 						delete_user_meta( $user_id, self::TOUR_ACTIVE_META_KEY );
 					}
-					update_option( 'burst_tour_completed', true, false );
+					Admin_Options::update( Admin_Option_Category::CORE, 'tour_completed', true );
 					do_action( 'burst_tour_completed' );
 				}
 
@@ -1407,8 +1347,8 @@ class Tour {
 					delete_user_meta( $user_id, self::TOUR_COMPLETED_META_KEY );
 					delete_user_meta( $user_id, self::TOUR_ACTIVE_META_KEY );
 				}
-				delete_option( 'burst_tour_last_section' );
-				delete_option( 'burst_tour_completed' );
+				Admin_Options::delete( Admin_Option_Category::CORE, 'tour_last_section' );
+				Admin_Options::delete( Admin_Option_Category::CORE, 'tour_completed' );
 				return [ 'success' => true ];
 
 			case 'tour_resume':
@@ -1432,10 +1372,10 @@ class Tour {
 						delete_user_meta( $user_id, self::LAST_SECTION_META_KEY );
 					}
 				}
-				$was_completed_option = (bool) get_option( 'burst_tour_completed', false );
-				delete_option( 'burst_tour_completed' );
+				$was_completed_option = (bool) Admin_Options::get( Admin_Option_Category::CORE, 'tour_completed', false );
+				Admin_Options::delete( Admin_Option_Category::CORE, 'tour_completed' );
 				if ( $was_completed_option ) {
-					delete_option( 'burst_tour_last_section' );
+					Admin_Options::delete( Admin_Option_Category::CORE, 'tour_last_section' );
 				}
 
 				return [
@@ -1610,7 +1550,7 @@ class Tour {
 			return false;
 		}
 
-		if ( get_option( 'burst_tour_completed', false ) ) {
+		if ( Admin_Options::get( Admin_Option_Category::CORE, 'tour_completed', false ) ) {
 			return false;
 		}
 

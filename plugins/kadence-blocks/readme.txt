@@ -4,7 +4,7 @@ Tags: gutenberg, blocks, page builder, editor, gutenberg blocks
 Donate link: https://www.kadencewp.com/about-us/
 Requires at least: 6.6
 Tested up to: 7.1
-Stable tag: 3.8.0
+Stable tag: 3.9.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -168,6 +168,38 @@ Please report security bugs found in the source code of the Kadence Blocks plugi
 Please report security bugs found in the Kadence Blocks plugin's source code through the Patchstack Vulnerability Disclosure Program https://patchstack.com/database/vdp/kadence-blocks. The Patchstack team will assist you with verification, CVE assignment, and notify the developers of this plugin.
 
 == Changelog ==
+
+= 3.9.1 =
+Release Date: 11th November 2026
+* Fix: Fixed a fatal error on pages using synced patterns that include each other.
+* Fix: Fixed theme palette colors 10 through 15 missing from the Style Library. They now show in a new Extended group, including on sites with a saved palette.
+* Fix: Restored the auto spacing under a transparent Header (Adv) on WordPress 7.1 when a page turned the transparent header on in its own settings.
+* Fix: Fixed a fatal error on the WPML Theme and plugins localization screen caused by untranslated license strings.
+
+= 3.9.0 =
+Release Date: 5th November 2026
+* Add: Added site-wide block styles for the Kadence theme's Full Site Editing mode, so Kadence blocks can be styled once in Appearance > Editor > Styles and every block on the site follows them.
+* Tweak: Matched block color controls and content widths to Global Styles when the Kadence theme is in Full Site Editing mode, keeping custom color swatches visible with Use only Custom Colors on.
+* Tweak: Explained on the Style Library screen that site colors are set in Global Styles when the Kadence theme is in Full Site Editing mode.
+
+= 3.8.1.1 =
+Release Date: 2nd November 2026
+* Update: Updated bundled Symfony HTTP libraries to their latest patch releases.
+
+= 3.8.1 =
+Release Date: 28th October 2026
+* Security: Improved handling of animation sources in the Lottie block.
+
+= 3.8.0.2 =
+Release Date: 22nd October 2026
+* Fix: Database queries no longer load WordPress admin files on every request, which could cause a fatal error on multisite.
+* Fix: Design tokens no longer query the database on every lookup; each token library is read once per request, including when none is saved.
+* Security: Improved handling of user-provided content in front-end scripts.
+
+= 3.8.0.1 =
+Release Date: 19th October 2026
+* Fix: Fix Design Tokens overriding palette reads for a non-active palette set, which stopped Kadence Pro dark mode from applying its dark palette.
+* Security: Improved output handling in block front-end scripts.
 
 = 3.8.0 =
 Release Date: 13th October 2026

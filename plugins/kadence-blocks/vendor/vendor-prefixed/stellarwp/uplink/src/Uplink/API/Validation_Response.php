@@ -422,7 +422,7 @@ class Validation_Response {
 	 */
 	private function parse(): void {
 		$this->current_key = $this->resource->get_license_key( $this->validation_type );
-		$this->expiration  = $this->response->expiration ?? __( 'unknown date', '%TEXTDOMAIN%' );
+		$this->expiration  = $this->response->expiration ?? __( 'unknown date', 'kadence-blocks' );
 
 		if ( ! empty( $this->response->api_inline_invalid_message ) ) {
 			$this->api_response_message = wp_kses( $this->response->api_inline_invalid_message, 'post' );

@@ -1,8 +1,10 @@
 <?php
 namespace Burst\Admin\Debug;
 
+use Burst\Admin\Admin_Options;
 use Burst\Admin\Capability\Capability;
 use Burst\Admin\DB_Upgrade\DB_Upgrade;
+use Burst\Admin\DomainTypes\Admin_Option_Category;
 use Burst\Admin\Search_Console\Diagnostic_Logs;
 use Burst\Admin\Search_Console\Sync;
 use Burst\Admin\Statistics\Query_Shapes\Session_Grain_Shape;
@@ -19,6 +21,18 @@ class Debug {
 	use Admin_Helper;
 	use Database_Helper;
 	use Helper;
+
+	/**
+	 * Options that never belong in a pasted Site Health export: the tokens
+	 * grant access to the statistics, so they are dropped whole.
+	 *
+	 * @var string[]
+	 */
+	private const REDACTED_OPTIONS = [
+		'burst_gsc_tokens',
+		'burst_share_tokens',
+	];
+
 
 	/**
 	 * Initialize the debug class.
@@ -57,15 +71,13 @@ class Debug {
 		$settings = $this->format_array_as_string( $settings );
 		unset( $settings['license'] );
 		unset( $settings['slack_webhook_url'] );
+		// Email addresses are personal data and stay out of a pasted Site Health export.
+		unset( $settings['alert_email_recipients'] );
 
 		// WordPress burst options. Get all options that start with 'burst_'.
 		$wp_options = $wpdb->get_results( $wpdb->prepare( "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( 'burst_' ) . '%' ), ARRAY_A );
 		$wp_options = wp_list_pluck( $wp_options, 'option_value', 'option_name' );
-		unset( $wp_options['burst_gsc_tokens'] );
-		// Share-link tokens are stored in plaintext and grant statistics access
-		// to anyone holding them; a pasted Site Health export must not leak them.
-		unset( $wp_options['burst_share_tokens'] );
-		unset( $wp_options['burst_slack_webhook_url'] );
+		$wp_options = $this->redact_options( $wp_options );
 		$wp_options = $this->format_array_as_string( $wp_options );
 		unset( $wp_options['burst_options_settings'] );
 
@@ -165,13 +177,14 @@ class Debug {
 	 *
 	 * @return array<string, array{label: string, value: array<string, string>}>
 	 */
-	private function get_uid_pipeline_fields(): array {
+	public function get_uid_pipeline_fields(): array {
 		$tasks = [ 'seed_uid_dictionary', 'statistics_uid_id', 'sessions_first_time', 'finalize_uid_id', 'seed_page_urls', 'statistics_page_id', 'sessions_has_pageview', 'pro_sessions_source_category' ];
 
 		// Any other registered task that is still pending (e.g. a stuck
-		// drop_session_visited_urls) disables db_upgrades_complete() just the
-		// same — list it, or this field shows every task 'done' while the
-		// fast paths stay off, exactly the diagnosis gap it exists to close.
+		// backfill_page_urls) disables db_upgrades_complete() just the same —
+		// list it, or this field shows every task 'done' while the fast paths
+		// stay off, exactly the diagnosis gap it exists to close. Non-blocking
+		// cleanups (drop_legacy_columns) are listed too, for support.
 		foreach ( ( new DB_Upgrade() )->get_all_upgrade_slugs() as $slug ) {
 			if ( ! in_array( $slug, $tasks, true ) && get_option( "burst_db_upgrade_{$slug}" ) ) {
 				$tasks[] = $slug;
@@ -189,6 +202,17 @@ class Debug {
 			'page grain index' => $this->page_grain_index_exists() ? 'present' : 'MISSING (time, page_id, uid_id) — run the table init',
 		];
 
+		$db_upgrade = new DB_Upgrade();
+		$stalled    = $db_upgrade->stalled_task();
+		if ( ! empty( $stalled['slug'] ) ) {
+			$state['stalled task'] = sprintf(
+				'%s: %s (%d attempts)',
+				(string) $stalled['slug'],
+				(string) ( $stalled['error'] ?? 'unknown error' ),
+				(int) ( $stalled['attempts'] ?? 0 )
+			);
+		}
+
 		foreach ( $tasks as $task ) {
 			$status = 'done';
 			if ( get_option( "burst_db_upgrade_{$task}" ) ) {
@@ -200,6 +224,14 @@ class Debug {
 				$progress = get_transient( "burst_progress_{$task}" );
 				if ( false !== $progress ) {
 					$status .= ', ' . round( (float) $progress * 100 ) . '%';
+				}
+				if ( ( $stalled['slug'] ?? '' ) === $task ) {
+					$status .= ' [STALLED]';
+				} else {
+					$attempts = (int) get_option( "burst_db_upgrade_{$task}_attempts", 0 );
+					if ( $attempts > 0 ) {
+						$status .= " (attempt {$attempts})";
+					}
 				}
 			}
 			$state[ "task {$task}" ] = $status;
@@ -222,7 +254,7 @@ class Debug {
 	 *
 	 * @return array<string, array{label: string, value: array<string, string>}>
 	 */
-	private function get_visitor_bitmaps_fields(): array {
+	public function get_visitor_bitmaps_fields(): array {
 		global $wpdb;
 
 		if ( ! $this->table_exists( 'burst_visitor_bitmaps' ) ) {
@@ -248,7 +280,21 @@ class Debug {
 
 		$last_error = get_option( 'burst_visitor_bitmaps_last_error' );
 		if ( is_array( $last_error ) && ! empty( $last_error['day'] ) ) {
-			$state['last builder error'] = $last_error['day'] . ' at ' . gmdate( 'Y-m-d H:i:s', (int) ( $last_error['time'] ?? 0 ) ) . ' UTC';
+			$error_text = $last_error['day'] . ' at ' . gmdate( 'Y-m-d H:i:s', (int) ( $last_error['time'] ?? 0 ) ) . ' UTC';
+			if ( ! empty( $last_error['message'] ) ) {
+				$error_text .= ' (' . $last_error['message'] . ')';
+			}
+			$state['last builder error'] = $error_text;
+		}
+
+		$day_progress = get_option( 'burst_visitor_bitmaps_day_progress' );
+		if ( is_array( $day_progress ) && ! empty( $day_progress['day'] ) ) {
+			$state['day progress'] = sprintf(
+				'%s (%s, cursor %d)',
+				$day_progress['day'],
+				$day_progress['phase'] ?? 'unknown',
+				(int) ( $day_progress['cursor'] ?? 0 )
+			);
 		}
 
 		$last_serve = get_option( 'burst_visitor_bitmaps_last_serve' );
@@ -574,6 +620,57 @@ class Debug {
 			}
 			$parts[] = $name . ': ' . ( is_bool( $item ) ? ( $item ? 'true' : 'false' ) : (string) $item );
 		}
+	}
+
+	/**
+	 * Secrets stored inside an option that also holds values worth exporting,
+	 * as option name => keys to drop. The consolidated admin option rows
+	 * (see Admin_Options) are the reason this exists: the row stays in the
+	 * export, the secret key in it does not.
+	 *
+	 * @return array<string, string[]>
+	 */
+	private function redacted_option_keys(): array {
+		return [
+			Admin_Options::option_name( Admin_Option_Category::NOTIFICATIONS ) => [ 'slack_webhook_url' ],
+		];
+	}
+
+	/**
+	 * Drop the secrets from the raw option values before they are formatted.
+	 *
+	 * Share-link and API tokens are stored in plaintext and grant statistics
+	 * access to anyone holding them, and the Slack webhook url posts into a
+	 * channel, so a pasted Site Health export must not leak either.
+	 *
+	 * @param array<string, mixed> $wp_options Raw option values keyed by option name.
+	 * @return array<string, mixed>
+	 */
+	private function redact_options( array $wp_options ): array {
+		foreach ( self::REDACTED_OPTIONS as $option_name ) {
+			unset( $wp_options[ $option_name ] );
+		}
+
+		foreach ( $this->redacted_option_keys() as $option_name => $secret_keys ) {
+			if ( ! isset( $wp_options[ $option_name ] ) ) {
+				continue;
+			}
+
+			$values = maybe_unserialize( $wp_options[ $option_name ] );
+			if ( ! is_array( $values ) ) {
+				// Not the expected shape, so the secret cannot be removed from
+				// it: drop the whole option instead of exporting it blind.
+				unset( $wp_options[ $option_name ] );
+				continue;
+			}
+
+			foreach ( $secret_keys as $secret_key ) {
+				unset( $values[ $secret_key ] );
+			}
+			$wp_options[ $option_name ] = $values;
+		}
+
+		return $wp_options;
 	}
 
 	/**
